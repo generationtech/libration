@@ -125,6 +125,56 @@ describe("ChromeTab top-band hour markers", () => {
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "analogClock", appearance: {} });
   });
 
+  it("switching from glyph with tape hour overlay to text removes tapeHourNumberOverlay immediately", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <ChromeTabTestHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "radialLine", appearance: {} },
+          tapeHourNumberOverlay: { enabled: true },
+        })}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "text" },
+    });
+
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("text");
+    expect(last!.chrome.layout.hourMarkers.tapeHourNumberOverlay).toBeUndefined();
+  });
+
+  it("switching from text to glyph does not auto-enable tape hour overlay", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <ChromeTabTestHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "radialLine" },
+    });
+
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialLine");
+    expect(last!.chrome.layout.hourMarkers.tapeHourNumberOverlay).toBeUndefined();
+  });
+
+  it("text realization does not show tape hour number overlay control", () => {
+    render(<ChromeTabTestHarness initial={baseCustomHourMarkers()} />);
+    expect(
+      screen.queryByRole("checkbox", { name: /Show boxed hour numerals on the tick tape/i }),
+    ).toBeNull();
+  });
+
   it("font change updates structured hourMarkers realization", () => {
     let last: LibrationConfigV2 | null = null;
     render(

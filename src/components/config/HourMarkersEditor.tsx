@@ -101,6 +101,24 @@ function realizationConfigForKind(
   }
 }
 
+/** Commits a realization kind change and drops glyph-only fields invalid for the new kind (e.g. tape overlay for text). */
+function hourMarkersAfterRealizationKindChange(
+  nextKind: HourMarkersRealizationConfig["kind"],
+  hm: HourMarkersConfig,
+): HourMarkersConfig {
+  const next: HourMarkersConfig = {
+    ...hm,
+    behavior: hm.behavior,
+    realization: realizationConfigForKind(nextKind, hm),
+  };
+  if (nextKind === "text") {
+    const { tapeHourNumberOverlay: _omit, ...rest } = next;
+    void _omit;
+    return rest;
+  }
+  return next;
+}
+
 function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarkersAnalogClockAppearance {
   const out: HourMarkersAnalogClockAppearance = {};
   if (a.handColor !== undefined) {
@@ -129,11 +147,7 @@ function RealizationSection({ hourMarkers, wired, updateConfig }: HourMarkerEdit
           wired && updateConfig
             ? (e) => {
                 const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
-                commitHourMarkers(updateConfig, (hm) => ({
-                  ...hm,
-                  behavior: hm.behavior,
-                  realization: realizationConfigForKind(next, hm),
-                }));
+                commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
               }
             : undefined
         }
