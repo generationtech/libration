@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import type { TopBandAnchorConfig, TopBandTimeMode, TopChromeThemeId } from "../../config/appConfig";
+import type { TopBandAnchorConfig, TopBandTimeMode } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import {
   anchorCitySelectOptions,
@@ -24,15 +24,17 @@ import {
   labelForCuratedFixedZone,
 } from "./curatedFixedTimeZones";
 import { clampLongitudeDegForAnchor } from "./topBandAnchorClamp";
+import { ChromeMajorAreaSelector } from "./ChromeMajorAreaSelector";
 import { ConfigControlRow } from "./ConfigControlRow";
-import { HourMarkersEditor } from "./HourMarkersEditor";
+import { DEFAULT_CHROME_MAJOR_AREA, type ChromeMajorAreaId } from "./chromeMajorAreaTypes";
+import { HourIndicatorsEditor } from "./HourIndicatorsEditor";
+import { NatoTimezoneEditor } from "./NatoTimezoneEditor";
+import { TickTapeEditor } from "./TickTapeEditor";
 
 const DEFAULT_FIXED_ZONE_WHEN_ENABLING = "UTC";
 const TOP_BAND_MODES: readonly TopBandTimeMode[] = ["local12", "local24", "utc24"];
 
 const ANCHOR_MODES: readonly TopBandAnchorConfig["mode"][] = ["auto", "fixedCity", "fixedLongitude"];
-
-const TOP_CHROME_THEMES: readonly TopChromeThemeId[] = ["neutral", "dark", "paper"];
 
 const DEFAULT_FIXED_CITY_ID =
   CURATED_ANCHOR_REFERENCE_CITY_OPTIONS.find((c) => c.id === "city.knoxville")?.id ??
@@ -73,6 +75,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
     tz.source === "fixed" ? fixedZoneSelectOptions(tz.timeZone) : CURATED_FIXED_IANA_TIME_ZONES;
 
   const [lonDraft, setLonDraft] = useState<string | null>(null);
+  const [chromeMajorArea, setChromeMajorArea] = useState<ChromeMajorAreaId>(DEFAULT_CHROME_MAJOR_AREA);
 
   const anchorResetKey =
     anchor.mode === "auto"
@@ -297,11 +300,11 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
         aria-labelledby="config-chrome-more-heading"
       >
         <h2 id="config-chrome-more-heading" className="config-section__title">
-          More chrome
+          Layout chrome
         </h2>
         <p className="config-section__hint">
-          Visibility for fixed instrument chrome around the map (does not change civil-time or anchor
-          semantics).
+          Fixed instrument chrome around the map. Choose an area to edit; settings are grouped by where
+          they apply on the strip (does not change civil-time or anchor semantics).
         </p>
         <ConfigControlRow label="Bottom time &amp; date readout">
           <input
@@ -324,52 +327,16 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="NATO timezone letter row">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lay.timezoneLetterRowVisible}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show NATO timezone letter row on the top strip"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.timezoneLetterRowVisible = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Top chrome theme">
-          <select
-            className="config-input"
-            value={lay.topChromeTheme}
-            disabled={!wired}
-            aria-label="Top instrument strip color theme"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const theme = e.currentTarget.value as TopChromeThemeId;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.topChromeTheme = theme;
-                    });
-                  }
-                : undefined
-            }
-          >
-            {TOP_CHROME_THEMES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <HourMarkersEditor config={config} updateConfig={updateConfig} />
+        <ChromeMajorAreaSelector value={chromeMajorArea} onChange={setChromeMajorArea} />
+        {chromeMajorArea === "hourIndicators" ? (
+          <HourIndicatorsEditor config={config} updateConfig={updateConfig} />
+        ) : null}
+        {chromeMajorArea === "tickTape" ? (
+          <TickTapeEditor config={config} updateConfig={updateConfig} />
+        ) : null}
+        {chromeMajorArea === "natoTimezone" ? (
+          <NatoTimezoneEditor config={config} updateConfig={updateConfig} />
+        ) : null}
       </section>
     </div>
   );

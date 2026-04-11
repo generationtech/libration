@@ -191,6 +191,12 @@
   font-weight: 600;
 }
 
+.config-section__title--sub {
+  margin-top: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .config-section__hint {
   margin: 0 0 var(--config-shell-space-md, 0.75rem);
   font-size: 0.8125rem;

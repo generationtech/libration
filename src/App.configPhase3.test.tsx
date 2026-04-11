@@ -660,6 +660,8 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     expect(
       screen.getByRole("checkbox", { name: "Show bottom time and date readout" }),
     ).not.toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
+    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
     expect(
       screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" }),
     ).not.toBeDisabled();
@@ -680,6 +682,8 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     expect(
       screen.getByRole("checkbox", { name: "Show bottom time and date readout" }),
     ).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
+    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
     expect(
       screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" }),
     ).toBeDisabled();
@@ -708,6 +712,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     expect(ref.current!.chrome.layout.bottomInformationBarVisible).toBe(false);
     expect(derivedAppConfigRef.current.displayChromeLayout.bottomInformationBarVisible).toBe(false);
 
+    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
     const tzCb = screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" });
     await user.click(tzCb);
     expect(ref.current!.chrome.layout.timezoneLetterRowVisible).toBe(false);

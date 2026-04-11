@@ -47,6 +47,61 @@ function ChromeTabTestHarness({
   );
 }
 
+describe("ChromeTab major areas", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders a Chrome major-area selector", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    expect(screen.getByTestId("chrome-major-area-select")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Chrome major area/i })).toHaveValue("hourIndicators");
+  });
+
+  it("defaults to the hour-indicator editor so hour-marker controls are visible", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    expect(screen.getByTestId("chrome-editor-hour-indicators")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
+  });
+
+  it("selecting tick tape shows the tick tape editor and hides hour-marker controls", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
+    expect(screen.getByTestId("chrome-editor-tick-tape")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeNull();
+    expect(screen.getByRole("combobox", { name: /Top instrument strip color theme/i })).toBeInTheDocument();
+  });
+
+  it("selecting NATO timezone area shows the NATO editor", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "natoTimezone" } });
+    expect(screen.getByTestId("chrome-editor-nato-timezone")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
+    expect(screen.getByRole("checkbox", { name: /Show NATO timezone letter row on the top strip/i })).toBeInTheDocument();
+  });
+
+  it("does not persist major-area selection in config when switching areas", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    const before = JSON.stringify(last);
+    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
+    expect(JSON.stringify(last)).toBe(before);
+  });
+});
+
 describe("ChromeTab top-band hour markers", () => {
   afterEach(() => {
     cleanup();
@@ -173,6 +228,20 @@ describe("ChromeTab top-band hour markers", () => {
     expect(
       screen.queryByRole("checkbox", { name: /Show boxed hour numerals on the tick tape/i }),
     ).toBeNull();
+  });
+
+  it("keeps boxed tape numerals under the hour-indicator area for glyph realizations", () => {
+    render(
+      <ChromeTabTestHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "radialLine", appearance: {} },
+        })}
+      />,
+    );
+    expect(screen.getByTestId("chrome-editor-hour-indicators")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: /Show boxed hour numerals on the tick tape/i }),
+    ).toBeInTheDocument();
   });
 
   it("font change updates structured hourMarkers realization", () => {
