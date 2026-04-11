@@ -68,6 +68,52 @@ describe("normalizeHourMarkersInput", () => {
     });
   });
 
+  it("custom on glyph: accepts and trims appearance fields per kind", () => {
+    expect(
+      normalizeHourMarkersInput({
+        customRepresentationEnabled: true,
+        realization: {
+          kind: "radialLine",
+          color: "#111",
+          appearance: { lineColor: "  #aabbcc  " },
+        },
+        layout: { sizeMultiplier: 1 },
+      }).realization,
+    ).toEqual({
+      kind: "radialLine",
+      color: "#111",
+      appearance: { lineColor: "#aabbcc" },
+    });
+
+    expect(
+      normalizeHourMarkersInput({
+        customRepresentationEnabled: true,
+        realization: {
+          kind: "analogClock",
+          appearance: { handColor: "#010101", faceColor: "#020202" },
+        },
+        layout: { sizeMultiplier: 1 },
+      }).realization,
+    ).toEqual({
+      kind: "analogClock",
+      appearance: { handColor: "#010101", faceColor: "#020202" },
+    });
+
+    expect(
+      normalizeHourMarkersInput({
+        customRepresentationEnabled: true,
+        realization: {
+          kind: "radialWedge",
+          appearance: { fillColor: "#030303" },
+        },
+        layout: { sizeMultiplier: 1 },
+      }).realization,
+    ).toEqual({
+      kind: "radialWedge",
+      appearance: { fillColor: "#030303" },
+    });
+  });
+
   it("unknown text font id falls back to default bundled font", () => {
     expect(
       normalizeHourMarkersInput({

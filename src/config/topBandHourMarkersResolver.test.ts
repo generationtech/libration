@@ -103,7 +103,14 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       enabled: true,
       behavior: "staticZoneAnchored",
       content: { kind: "localWallClock" },
-      realization: { kind: "analogClock" },
+      realization: {
+        kind: "analogClock",
+        resolvedAppearance: {
+          ringStroke: undefined,
+          handStroke: undefined,
+          faceFill: undefined,
+        },
+      },
       layout: { sizeMultiplier: 1 },
     });
   });
@@ -123,7 +130,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       enabled: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
-      realization: { kind: "radialLine" },
+      realization: {
+        kind: "radialLine",
+        resolvedAppearance: { lineColor: undefined },
+      },
       layout: { sizeMultiplier: 1 },
     });
   });
@@ -143,7 +153,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       enabled: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
-      realization: { kind: "radialWedge" },
+      realization: {
+        kind: "radialWedge",
+        resolvedAppearance: { fillColor: undefined },
+      },
       layout: { sizeMultiplier: 1 },
     });
   });
@@ -238,5 +251,65 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       color: "#abc",
     });
     expect(resolveEffectiveTopBandHourMarkers(structuredOnly).layout.sizeMultiplier).toBe(1.25);
+  });
+
+  it("appearance fields override legacy color for glyph realizations", () => {
+    const lay = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        customRepresentationEnabled: true,
+        realization: {
+          kind: "radialLine",
+          color: "#ff0000",
+          appearance: { lineColor: "#00ff00" },
+        },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    const eff = resolveEffectiveTopBandHourMarkers(lay);
+    expect(eff.realization).toEqual({
+      kind: "radialLine",
+      color: "#ff0000",
+      resolvedAppearance: { lineColor: "#00ff00" },
+    });
+  });
+
+  it("legacy color maps into resolved analog strokes when appearance omits hand", () => {
+    const lay = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        customRepresentationEnabled: true,
+        realization: { kind: "analogClock", color: "#abc" },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    expect(resolveEffectiveTopBandHourMarkers(lay).realization).toEqual({
+      kind: "analogClock",
+      color: "#abc",
+      resolvedAppearance: {
+        ringStroke: "#abc",
+        handStroke: "#abc",
+        faceFill: undefined,
+      },
+    });
+  });
+
+  it("analog appearance.faceColor resolves without tinting ring/hand when legacy absent", () => {
+    const lay = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        customRepresentationEnabled: true,
+        realization: {
+          kind: "analogClock",
+          appearance: { faceColor: "#112233" },
+        },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    expect(resolveEffectiveTopBandHourMarkers(lay).realization).toEqual({
+      kind: "analogClock",
+      resolvedAppearance: {
+        ringStroke: undefined,
+        handStroke: undefined,
+        faceFill: "#112233",
+      },
+    });
   });
 });

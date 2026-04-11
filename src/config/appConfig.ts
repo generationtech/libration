@@ -184,10 +184,23 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
       fontAssetId: r.fontAssetId,
       ...(r.color !== undefined ? { color: r.color } : {}),
     };
+  } else if (r.kind === "analogClock") {
+    realization = {
+      kind: "analogClock",
+      ...(r.color !== undefined ? { color: r.color } : {}),
+      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
+    };
+  } else if (r.kind === "radialLine") {
+    realization = {
+      kind: "radialLine",
+      ...(r.color !== undefined ? { color: r.color } : {}),
+      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
+    };
   } else {
     realization = {
-      kind: r.kind,
+      kind: "radialWedge",
       ...(r.color !== undefined ? { color: r.color } : {}),
+      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
     };
   }
   return {

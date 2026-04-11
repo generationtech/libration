@@ -128,12 +128,13 @@ function emitClockFaceGlyph(
   const ringR = R * (1 - cf.ringInsetFrac);
   const tip = clockFaceHourHandTip(layout, hourNorm, cf);
 
-  const ringStroke = glyph.colorOverride ?? cf.ringStroke;
-  const handStroke = glyph.colorOverride ?? cf.handStroke;
+  const ringStroke = glyph.ringStrokeOverride ?? glyph.colorOverride ?? cf.ringStroke;
+  const handStroke = glyph.handStrokeOverride ?? glyph.colorOverride ?? cf.handStroke;
+  const faceFill = glyph.faceFillOverride ?? cf.faceFill;
   out.push(
     createDescriptorPathItem({
       pathDescriptor: circlePathDescriptor(cx, cy, ringR),
-      fill: cf.faceFill,
+      fill: faceFill,
       stroke: ringStroke,
       strokeWidthPx: cf.ringStrokeWidthPx,
     }),

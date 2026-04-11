@@ -29,19 +29,6 @@ import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
 
-function radialWedgeMarkerColor(
-  sel: EffectiveTopBandHourMarkerSelection,
-  effective: EffectiveTopBandHourMarkers,
-): string | undefined {
-  if (sel.color !== undefined) {
-    return sel.color;
-  }
-  if (effective.realization.kind === "radialWedge" && effective.realization.color !== undefined) {
-    return effective.realization.color;
-  }
-  return undefined;
-}
-
 /**
  * Emits radial-wedge glyphs for each laid-out instance, including phased wrap duplicates at the viewport seam.
  */
@@ -56,7 +43,10 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
-  const markerColor = radialWedgeMarkerColor(effectiveTopBandHourMarkerSelection, effectiveTopBandHourMarkers);
+  const markerColor =
+    effectiveTopBandHourMarkers.realization.kind === "radialWedge"
+      ? effectiveTopBandHourMarkers.realization.resolvedAppearance.fillColor
+      : undefined;
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(

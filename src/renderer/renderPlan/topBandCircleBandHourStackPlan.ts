@@ -305,6 +305,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       laidOutAnalog,
       vw,
       topBandSel,
+      effectiveMarkers,
       gctx,
       items,
     );

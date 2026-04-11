@@ -481,6 +481,43 @@ export function assertIsNormalizedLibrationConfig(
   if (rColor !== undefined && typeof rColor !== "string") {
     throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers realization color");
   }
+  if (rk === "analogClock") {
+    const app = (hm.realization as { appearance?: unknown }).appearance;
+    if (app !== undefined) {
+      if (typeof app !== "object" || app === null || Array.isArray(app)) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance");
+      }
+      const o = app as { handColor?: unknown; faceColor?: unknown };
+      if (o.handColor !== undefined && typeof o.handColor !== "string") {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.handColor");
+      }
+      if (o.faceColor !== undefined && typeof o.faceColor !== "string") {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.faceColor");
+      }
+    }
+  } else if (rk === "radialLine") {
+    const app = (hm.realization as { appearance?: unknown }).appearance;
+    if (app !== undefined) {
+      if (typeof app !== "object" || app === null || Array.isArray(app)) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance");
+      }
+      const o = app as { lineColor?: unknown };
+      if (o.lineColor !== undefined && typeof o.lineColor !== "string") {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance.lineColor");
+      }
+    }
+  } else if (rk === "radialWedge") {
+    const app = (hm.realization as { appearance?: unknown }).appearance;
+    if (app !== undefined) {
+      if (typeof app !== "object" || app === null || Array.isArray(app)) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance");
+      }
+      const o = app as { fillColor?: unknown };
+      if (o.fillColor !== undefined && typeof o.fillColor !== "string") {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.fillColor");
+      }
+    }
+  }
   const hmBehavior = (hm as { behavior?: unknown }).behavior;
   if (
     hmBehavior !== undefined &&

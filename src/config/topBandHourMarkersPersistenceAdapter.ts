@@ -17,11 +17,13 @@ import {
   DEFAULT_HOUR_MARKERS_CONFIG,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
-  type TopBandHourMarkerGlyphMode,
 } from "./appConfig.ts";
 import type {
   EffectiveTopBandHourMarkerBehavior,
+  HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
+  HourMarkersRadialLineAppearance,
+  HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
 } from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
@@ -45,6 +47,46 @@ function normalizedHourMarkerBehavior(raw: unknown): EffectiveTopBandHourMarkerB
     return raw;
   }
   return undefined;
+}
+
+function normalizeAnalogClockAppearanceInput(raw: unknown): HourMarkersAnalogClockAppearance | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  const handColor = normalizedTopBandHourMarkerColor(raw.handColor);
+  const faceColor = normalizedTopBandHourMarkerColor(raw.faceColor);
+  if (handColor === undefined && faceColor === undefined) {
+    return undefined;
+  }
+  return {
+    ...(handColor !== undefined ? { handColor } : {}),
+    ...(faceColor !== undefined ? { faceColor } : {}),
+  };
+}
+
+function normalizeRadialLineAppearanceInput(raw: unknown): HourMarkersRadialLineAppearance | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  const lineColor = normalizedTopBandHourMarkerColor(raw.lineColor);
+  return lineColor !== undefined ? { lineColor } : undefined;
+}
+
+function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWedgeAppearance | undefined {
+  if (raw === undefined) {
+    return undefined;
+  }
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  const fillColor = normalizedTopBandHourMarkerColor(raw.fillColor);
+  return fillColor !== undefined ? { fillColor } : undefined;
 }
 
 /**
@@ -119,12 +161,45 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     };
   }
 
-  if (kind === "analogClock" || kind === "radialLine" || kind === "radialWedge") {
-    const glyphMode = kind as TopBandHourMarkerGlyphMode;
+  if (kind === "analogClock") {
     const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
+    const appearance = normalizeAnalogClockAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig = {
-      kind: glyphMode,
+      kind: "analogClock",
       ...(color !== undefined ? { color } : {}),
+      ...(appearance !== undefined ? { appearance } : {}),
+    };
+    return {
+      customRepresentationEnabled: true,
+      realization,
+      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
+      layout: { sizeMultiplier },
+    };
+  }
+
+  if (kind === "radialLine") {
+    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
+    const appearance = normalizeRadialLineAppearanceInput(realizationRaw.appearance);
+    const realization: HourMarkersRealizationConfig = {
+      kind: "radialLine",
+      ...(color !== undefined ? { color } : {}),
+      ...(appearance !== undefined ? { appearance } : {}),
+    };
+    return {
+      customRepresentationEnabled: true,
+      realization,
+      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
+      layout: { sizeMultiplier },
+    };
+  }
+
+  if (kind === "radialWedge") {
+    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
+    const appearance = normalizeRadialWedgeAppearanceInput(realizationRaw.appearance);
+    const realization: HourMarkersRealizationConfig = {
+      kind: "radialWedge",
+      ...(color !== undefined ? { color } : {}),
+      ...(appearance !== undefined ? { appearance } : {}),
     };
     return {
       customRepresentationEnabled: true,

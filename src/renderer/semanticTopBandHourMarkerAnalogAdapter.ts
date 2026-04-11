@@ -19,6 +19,7 @@
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
 import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import type { LaidOutSemanticTopBandAnalogClockMarker } from "../config/topBandHourMarkersLayout.ts";
+import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
@@ -30,6 +31,7 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
   laidOut: readonly LaidOutSemanticTopBandAnalogClockMarker[],
   viewportWidthPx: number,
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection,
+  effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers,
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
 ): void {
@@ -37,7 +39,11 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
   if (spec.mode !== "analogClock") {
     return;
   }
-  const colorOverride = effectiveTopBandHourMarkerSelection.color;
+  const eff = effectiveTopBandHourMarkers.realization;
+  if (eff.kind !== "analogClock") {
+    return;
+  }
+  const ra = eff.resolvedAppearance;
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(
@@ -52,7 +58,9 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
           hour: inst.continuousHour0To24,
           styleId: spec.glyphStyleId,
           showMinuteHand: false,
-          ...(colorOverride !== undefined ? { colorOverride: colorOverride } : {}),
+          ...(ra.ringStroke !== undefined ? { ringStrokeOverride: ra.ringStroke } : {}),
+          ...(ra.handStroke !== undefined ? { handStrokeOverride: ra.handStroke } : {}),
+          ...(ra.faceFill !== undefined ? { faceFillOverride: ra.faceFill } : {}),
         },
         { cx, cy: inst.centerY, size: inst.sizePx },
         glyphRenderContext,

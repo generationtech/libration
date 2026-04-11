@@ -29,19 +29,6 @@ import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
 
-function radialLineMarkerColor(
-  sel: EffectiveTopBandHourMarkerSelection,
-  effective: EffectiveTopBandHourMarkers,
-): string | undefined {
-  if (sel.color !== undefined) {
-    return sel.color;
-  }
-  if (effective.realization.kind === "radialLine" && effective.realization.color !== undefined) {
-    return effective.realization.color;
-  }
-  return undefined;
-}
-
 /**
  * Emits radial-line glyphs for each laid-out instance, including phased wrap duplicates at the viewport seam.
  */
@@ -56,7 +43,10 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
-  const markerColor = radialLineMarkerColor(effectiveTopBandHourMarkerSelection, effectiveTopBandHourMarkers);
+  const markerColor =
+    effectiveTopBandHourMarkers.realization.kind === "radialLine"
+      ? effectiveTopBandHourMarkers.realization.resolvedAppearance.lineColor
+      : undefined;
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(

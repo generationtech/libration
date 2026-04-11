@@ -45,8 +45,14 @@ export type ClockFaceGlyph = {
   hour: number;
   styleId?: HourMarkerGlyphStyleId;
   showMinuteHand?: boolean;
-  /** Top-band layout override: tints ring + hand strokes; face fill stays from style token. */
+  /** Top-band layout override: tints ring + hand strokes when per-component overrides are absent. */
   colorOverride?: string;
+  /** When set, overrides {@link colorOverride} / style for the clock face disk fill. */
+  faceFillOverride?: string;
+  /** When set, overrides {@link colorOverride} / style for the outer ring stroke. */
+  ringStrokeOverride?: string;
+  /** When set, overrides {@link colorOverride} / style for the hour hand stroke. */
+  handStrokeOverride?: string;
 };
 
 export type RadialLineGlyph = {
