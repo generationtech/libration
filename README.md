@@ -54,10 +54,11 @@ Recent simplification:
 Top-band hour markers now use a clean, explicit model:
 
 - **Behavior** — how markers move or stay anchored
-- **Content** — what they represent
 - **Realization** — text or procedural glyph mode
 - **Layout** — size and placement semantics
-- **Appearance** — styling layered on top
+- **Appearance** — realization-scoped styling layered on top
+
+At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
 
 Implemented realizations:
 - **Text**

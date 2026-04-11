@@ -44,13 +44,13 @@ Hour markers persist under:
 
 `chrome.layout.hourMarkers`
 
-Conceptually, the model carries:
-- custom representation enablement
+Conceptually, the persisted model carries:
+- optional behavior override
 - realization choice
 - layout sizing
-- optional appearance overrides such as color
+- realization-scoped appearance overrides
 
-Runtime behavior and content remain derived from that structured intent, not persisted as a second source of truth.
+Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
 
 ---
 
@@ -81,6 +81,7 @@ The truthful top-band hour-marker persistence contract is in place.
 Current follow-on config/editor work should focus on:
 - adding new hour-marker controls only when a concrete feature requires them
 - preserving the structured-only `chrome.layout.hourMarkers` contract
+- treating the hour-marker editor pattern as the finished reference example rather than reopening migration work
 - reusing the pattern elsewhere only after feature pressure justifies it
 
 ---

@@ -230,12 +230,18 @@ This means the current app runtime has one authoritative implementation rather t
 
 ## Behavioral / Representation Model
 
-For top-band hour markers, the runtime and editor distinguish explicit axes:
+For top-band hour markers, the runtime and editor now distinguish explicit persisted and derived concerns.
+
+Persisted/editor-facing axes:
 - **Behavior** — e.g. `tapeAdvected`, `staticZoneAnchored`
-- **Content** — e.g. `hour24`, `localWallClock`
 - **Realization** — text, analogClock, radialLine, radialWedge
 - **Layout** — size and placement semantics
-- **Appearance** — color and realization-specific appearance controls
+- **Appearance** — realization-specific appearance controls
+
+Derived runtime concern:
+- **Content** — e.g. `hour24`, `localWallClock`
+
+This means `content` remains part of semantic runtime modeling, but it is no longer treated as a persisted/editor-owned axis for hour markers.
 
 This model is authoritative for runtime, editor, and persistence evolution.
 
@@ -298,7 +304,7 @@ Examples:
 ### Style Layer
 Owns appearance controls layered over representation:
 - size
-- color
+- realization-scoped color and fill/stroke controls
 - future realization-specific and multi-channel controls
 
 ---
@@ -334,7 +340,7 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - semantic hour-marker resolver / planner / layout / realization adapters
 - semantic-only runtime path for in-disk hour markers
 - structured `chrome.layout.hourMarkers` persistence
-- dedicated `HourMarkersEditor` with axis-aligned sub-editors
+- dedicated `HourMarkersEditor` with canonical section structure: Behavior / Realization / Appearance / Layout
 - structured-only hour-marker authoring, normalization, and runtime consumption
 - top-band and bottom-chrome policy integration
 - backend-neutral text identity (`font.assetId`)
@@ -347,7 +353,7 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - atlas-based custom text rendering
 - RTX/native backend
 - generalized structured editor/config system across multiple UI surfaces
-- richer realization-specific appearance controls beyond the current shared color/size model
+- broader realization-specific appearance controls beyond the currently implemented hour-marker fields
 
 ### Near-Term Work
 - continue feature-forward top-band chrome and styling work on top of the completed hour-marker architecture

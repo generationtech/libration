@@ -26,17 +26,20 @@ Focus:
 
 Current truthful top-band model:
 - **Behavior** → `tapeAdvected`, `staticZoneAnchored`
-- **Content** → `hour24`, `localWallClock`
 - **Realization** → `text`, `analogClock`, `radialLine`, `radialWedge`
 - **Layout** → size / placement semantics
-- **Appearance** → layered styling controls
+- **Appearance** → realization-scoped styling controls
+- **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis
 
 Recent completed work:
 - extracted `HourMarkersEditor` from `ChromeTab`
-- reorganized hour-marker editing around the runtime axes
-- introduced realization-specific editor ownership
+- reorganized hour-marker editing around the canonical sections: Behavior / Realization / Appearance / Layout
+- introduced user-selectable behavior overrides in the structured model
+- expanded realization-specific appearance for text, analogClock, radialLine, and radialWedge
 - migrated persistence to structured `chrome.layout.hourMarkers`
 - removed legacy flat hour-marker fields
+- removed the obsolete `customRepresentationEnabled` hour-marker flag
+- completed strict config ↔ glyph ↔ renderer layering cleanup and upstream type ownership cleanup
 - switched runtime resolution to structured hour-marker input
 - verified that fresh deploys default `AppConfig.data.mode` to `static`
 - completed public repo and AGPL licensing
@@ -99,23 +102,18 @@ Important consequences:
 - kept user-visible behavior stable during the extraction
 
 ### 2. Internal Editor Structure
-- organized the hour-marker editor around:
+- organized the hour-marker editor around the canonical sections:
   - behavior
-  - content
   - realization
-  - layout
   - appearance
+  - layout
 
-### 3. Realization-Specific Ownership
-- introduced dedicated editor ownership for:
-  - `HourMarkerBehaviorEditor`
-  - `HourMarkerContentEditor`
-  - `HourMarkerRealizationEditor`
-  - `TextHourMarkerAppearanceEditor`
-  - glyph-mode-specific appearance ownership for:
-    - analogClock
-    - radialLine
-    - radialWedge
+### 3. Model Cleanup and Editor Alignment
+- made behavior a first-class optional persisted axis
+- expanded realization-specific appearance into structured per-kind `appearance` objects
+- canonicalized hour-marker styling onto `appearance` (removed legacy top-level realization color)
+- removed the obsolete `customRepresentationEnabled` hour-marker flag
+- aligned the editor so every persisted hour-marker field is directly visible and editable
 
 ### 4. Persistence and Runtime Cutover
 - introduced structured `chrome.layout.hourMarkers`
@@ -134,9 +132,9 @@ Important consequences:
 
 ### 2. Realization-Specific Appearance Controls (When Needed)
 Potential future work:
-- analog clock specific appearance controls
-- radial line specific appearance controls
-- radial wedge specific appearance controls
+- additional analog clock appearance controls
+- additional radial line appearance controls
+- additional radial wedge appearance controls
 - richer text appearance controls
 
 These should be added only in response to concrete feature needs.

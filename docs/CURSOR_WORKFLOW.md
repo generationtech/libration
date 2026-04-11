@@ -31,10 +31,10 @@ ChatGPT:
 - persistence migration is complete for hour markers
 - preserve the truthful top-band hour-marker model:
   - Behavior
-  - Content
   - Realization
   - Layout
   - Appearance
+  - derived semantic content where required at runtime
 - continue renderer-agnostic feature work without resurrecting migration scaffolding
 - preserve the intentional first-load default of `AppConfig.data.mode = "static"` unless explicitly changing product behavior
 - maintain public-repo coherence with AGPL-3.0 licensing and canonical-reference positioning
@@ -49,6 +49,7 @@ DO:
 - use semantic roles instead of raw font references in unrelated component logic
 - treat non-font glyphs as first-class renderables where appropriate
 - prefer dedicated editors when a chrome surface outgrows monolithic UI ownership
+- keep config/policy/type ownership flowing downstream (`config` → `glyphs` → `renderer`), never the reverse
 - keep style layered over representation and asset choice
 - delete obsolete migration code once a slice is complete
 - preserve existing AGPL headers when editing covered source files
