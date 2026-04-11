@@ -17,8 +17,17 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
 } from "./appConfig";
-import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
+import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
+
+describe("defaultBehaviorFor", () => {
+  it("maps realization kinds to resolver defaults", () => {
+    expect(defaultBehaviorFor("text")).toBe("tapeAdvected");
+    expect(defaultBehaviorFor("radialLine")).toBe("tapeAdvected");
+    expect(defaultBehaviorFor("radialWedge")).toBe("tapeAdvected");
+    expect(defaultBehaviorFor("analogClock")).toBe("staticZoneAnchored");
+  });
+});
 
 describe("resolveEffectiveTopBandHourMarkers", () => {
   it("custom off → enabled + default text font + tapeAdvected + hour24", () => {
@@ -62,6 +71,21 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: { kind: "text", fontAssetId: "computer" },
       layout: { sizeMultiplier: 1 },
     });
+  });
+
+  it("respects persisted behavior override", () => {
+    expect(
+      resolveEffectiveTopBandHourMarkers(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            customRepresentationEnabled: true,
+            behavior: "staticZoneAnchored",
+            realization: { kind: "text", fontAssetId: "computer" },
+            layout: { sizeMultiplier: 1 },
+          },
+        }),
+      ).behavior,
+    ).toBe("staticZoneAnchored");
   });
 
   it("analog clock → analogClock realization + localWallClock + staticZoneAnchored behavior", () => {

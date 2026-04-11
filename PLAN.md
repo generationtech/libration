@@ -38,10 +38,8 @@ Recent completed work:
 - migrated persistence to structured `chrome.layout.hourMarkers`
 - removed legacy flat hour-marker fields
 - switched runtime resolution to structured hour-marker input
-- removed hour-marker circle backgrounds from the top band
-- removed `NOON` / `MIDNIGHT` tape annotations from the top-band render plan
 - verified that fresh deploys default `AppConfig.data.mode` to `static`
-- completed public repo cleanup, rename, and AGPL licensing
+- completed public repo and AGPL licensing
 - published the initial public release (`v1.0.0`)
 
 Immediate next target:

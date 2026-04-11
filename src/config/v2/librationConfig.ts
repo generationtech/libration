@@ -481,6 +481,14 @@ export function assertIsNormalizedLibrationConfig(
   if (rColor !== undefined && typeof rColor !== "string") {
     throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers realization color");
   }
+  const hmBehavior = (hm as { behavior?: unknown }).behavior;
+  if (
+    hmBehavior !== undefined &&
+    hmBehavior !== "tapeAdvected" &&
+    hmBehavior !== "staticZoneAnchored"
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers behavior");
+  }
   const geo = c.geography;
   if (
     typeof geo !== "object" ||

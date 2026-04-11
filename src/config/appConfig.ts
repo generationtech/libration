@@ -193,6 +193,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
   return {
     customRepresentationEnabled: h.customRepresentationEnabled,
     realization,
+    ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
     layout: { sizeMultiplier: h.layout.sizeMultiplier },
   };
 }

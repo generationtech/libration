@@ -26,6 +26,7 @@ import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { ConfigControlRow } from "./ConfigControlRow";
+import { HourMarkerBehaviorEditor } from "./HourMarkerBehaviorEditor";
 
 const TOP_BAND_HOUR_MARKER_KINDS: readonly TopBandHourMarkerRepresentationKind[] = [
   "text",
@@ -77,49 +78,6 @@ function commitHourMarkers(
       producer(cloneHourMarkersConfig(draft.chrome.layout.hourMarkers)),
     );
   });
-}
-
-// -----------------------------------------------------------------------------
-// Behavior axis
-// -----------------------------------------------------------------------------
-
-export function HourMarkerBehaviorEditor({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  return (
-    <ConfigControlRow label="Custom top-band hour marker style">
-      <input
-        type="checkbox"
-        className="config-input config-input--checkbox"
-        checked={hourMarkers.customRepresentationEnabled}
-        readOnly={!wired}
-        disabled={!wired}
-        tabIndex={wired ? 0 : -1}
-        aria-label="Use custom font or glyph style for top-band 24 hour markers"
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const checked = e.currentTarget.checked;
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (!checked) {
-                    return {
-                      customRepresentationEnabled: false,
-                      realization: {
-                        kind: "text",
-                        fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-                      },
-                      layout: { sizeMultiplier: hm.layout.sizeMultiplier },
-                    };
-                  }
-                  return {
-                    ...hm,
-                    customRepresentationEnabled: true,
-                  };
-                });
-              }
-            : undefined
-        }
-      />
-    </ConfigControlRow>
-  );
 }
 
 // -----------------------------------------------------------------------------
@@ -218,13 +176,12 @@ export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }
                         ? hm.realization.fontAssetId
                         : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
                     return {
-                      customRepresentationEnabled: hm.customRepresentationEnabled,
+                      ...hm,
                       realization: {
                         kind: "text",
                         fontAssetId,
                         ...(prevColor !== undefined ? { color: prevColor } : {}),
                       },
-                      layout: hm.layout,
                     };
                   }
                   const glyphMode: TopBandHourMarkerGlyphMode =
@@ -232,12 +189,11 @@ export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }
                       ? hm.realization.kind
                       : DEFAULT_TOP_BAND_GLYPH_MODE;
                   return {
-                    customRepresentationEnabled: hm.customRepresentationEnabled,
+                    ...hm,
                     realization: {
                       kind: glyphMode,
                       ...(prevColor !== undefined ? { color: prevColor } : {}),
                     },
-                    layout: hm.layout,
                   };
                 });
               }
@@ -380,12 +336,11 @@ function GlyphHourMarkerModeSelector({ hourMarkers, wired, updateConfig }: HourM
             ? (e) => {
                 const glyphMode = e.currentTarget.value as TopBandHourMarkerGlyphMode;
                 commitHourMarkers(updateConfig, (hm) => ({
-                  customRepresentationEnabled: hm.customRepresentationEnabled,
+                  ...hm,
                   realization: {
                     kind: glyphMode,
                     ...(hm.realization.color !== undefined ? { color: hm.realization.color } : {}),
                   },
-                  layout: hm.layout,
                 }));
               }
             : undefined

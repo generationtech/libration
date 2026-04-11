@@ -17,8 +17,10 @@ import {
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
 import type {
+  EffectiveTopBandHourMarkerBehavior,
   EffectiveTopBandHourMarkers,
   EffectiveTopBandHourMarkerRealization,
+  HourMarkersRealizationConfig,
 } from "./topBandHourMarkersTypes.ts";
 
 /** Same trim/empty semantics as hour-marker selection color normalization in appConfig (invalid → no override). */
@@ -30,9 +32,15 @@ function normalizeMarkerColor(raw: unknown): string | undefined {
   return t === "" ? undefined : t;
 }
 
+/** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
+export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): EffectiveTopBandHourMarkerBehavior {
+  return kind === "analogClock" ? "staticZoneAnchored" : "tapeAdvected";
+}
+
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
- * Behavior and content are derived here (not read from separate persistence fields).
+ * Content follows realization kind; behavior uses persisted `hourMarkers.behavior` when set, else
+ * {@link defaultBehaviorFor} for the realization kind (or `"text"` when custom representation is off).
  */
 export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
@@ -45,7 +53,7 @@ export function resolveEffectiveTopBandHourMarkers(
     /** Custom representation off: still draws default top-band hour markers — not surface-disabled. */
     return {
       enabled: true,
-      behavior: "tapeAdvected",
+      behavior: hm.behavior ?? defaultBehaviorFor("text"),
       content: { kind: "hour24" },
       realization: {
         kind: "text",
@@ -56,8 +64,10 @@ export function resolveEffectiveTopBandHourMarkers(
   }
 
   const color = normalizeMarkerColor(hm.realization.color);
+  const rk = hm.realization.kind;
+  const behavior = hm.behavior ?? defaultBehaviorFor(rk);
 
-  if (hm.realization.kind === "text") {
+  if (rk === "text") {
     const fontAssetId =
       hm.realization.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
     const realization: EffectiveTopBandHourMarkerRealization = {
@@ -67,46 +77,47 @@ export function resolveEffectiveTopBandHourMarkers(
     };
     return {
       enabled: true,
-      behavior: "tapeAdvected",
+      behavior,
       content: { kind: "hour24" },
       realization,
       layout: layoutOut,
     };
   }
 
-  switch (hm.realization.kind) {
-    case "analogClock":
-      return {
-        enabled: true,
-        behavior: "staticZoneAnchored",
-        content: { kind: "localWallClock" },
-        realization: {
-          kind: "analogClock",
-          ...(color !== undefined ? { color } : {}),
-        },
-        layout: layoutOut,
-      };
-    case "radialLine":
-      return {
-        enabled: true,
-        behavior: "tapeAdvected",
-        content: { kind: "hour24" },
-        realization: {
-          kind: "radialLine",
-          ...(color !== undefined ? { color } : {}),
-        },
-        layout: layoutOut,
-      };
-    case "radialWedge":
-      return {
-        enabled: true,
-        behavior: "tapeAdvected",
-        content: { kind: "hour24" },
-        realization: {
-          kind: "radialWedge",
-          ...(color !== undefined ? { color } : {}),
-        },
-        layout: layoutOut,
-      };
+  if (rk === "analogClock") {
+    return {
+      enabled: true,
+      behavior,
+      content: { kind: "localWallClock" },
+      realization: {
+        kind: "analogClock",
+        ...(color !== undefined ? { color } : {}),
+      },
+      layout: layoutOut,
+    };
   }
+
+  if (rk === "radialLine") {
+    return {
+      enabled: true,
+      behavior,
+      content: { kind: "hour24" },
+      realization: {
+        kind: "radialLine",
+        ...(color !== undefined ? { color } : {}),
+      },
+      layout: layoutOut,
+    };
+  }
+
+  return {
+    enabled: true,
+    behavior,
+    content: { kind: "hour24" },
+    realization: {
+      kind: "radialWedge",
+      ...(color !== undefined ? { color } : {}),
+    },
+    layout: layoutOut,
+  };
 }

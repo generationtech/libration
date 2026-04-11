@@ -163,4 +163,22 @@ describe("HourMarkersEditor structured authoring", () => {
     });
     expect(last!.chrome.layout.hourMarkers.layout.sizeMultiplier).toBe(1.5);
   });
+
+  it("behavior select updates config.behavior when custom is on", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker placement behavior/i }), {
+      target: { value: "staticZoneAnchored" },
+    });
+
+    expect(last!.chrome.layout.hourMarkers.behavior).toBe("staticZoneAnchored");
+  });
 });

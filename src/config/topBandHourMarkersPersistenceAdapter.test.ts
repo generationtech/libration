@@ -87,4 +87,24 @@ describe("normalizeHourMarkersInput", () => {
       }),
     ).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
   });
+
+  it("preserves valid behavior and drops invalid behavior", () => {
+    expect(
+      normalizeHourMarkersInput({
+        customRepresentationEnabled: true,
+        behavior: "tapeAdvected",
+        realization: { kind: "text", fontAssetId: "zeroes-one" },
+        layout: { sizeMultiplier: 1 },
+      }),
+    ).toMatchObject({ behavior: "tapeAdvected" });
+
+    expect(
+      normalizeHourMarkersInput({
+        customRepresentationEnabled: true,
+        behavior: "bogus",
+        realization: { kind: "text", fontAssetId: "zeroes-one" },
+        layout: { sizeMultiplier: 1 },
+      }).behavior,
+    ).toBeUndefined();
+  });
 });

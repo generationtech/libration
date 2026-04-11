@@ -196,5 +196,8 @@ describe("ChromeTab top-band hour markers", () => {
     ).not.toBeChecked();
     expect(screen.getByRole("combobox", { name: /Top-band hour marker rendering kind/i })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeDisabled();
+    expect(
+      screen.queryByRole("combobox", { name: /Top-band hour marker placement behavior/i }),
+    ).toBeNull();
   });
 });

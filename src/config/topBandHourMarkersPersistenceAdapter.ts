@@ -19,7 +19,11 @@ import {
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   type TopBandHourMarkerGlyphMode,
 } from "./appConfig.ts";
-import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
+import type {
+  EffectiveTopBandHourMarkerBehavior,
+  HourMarkersConfig,
+  HourMarkersRealizationConfig,
+} from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
 const TOP_BAND_HOUR_MARKER_FONT_ID_SET = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
@@ -36,6 +40,13 @@ function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
 }
 
+function normalizedHourMarkerBehavior(raw: unknown): EffectiveTopBandHourMarkerBehavior | undefined {
+  if (raw === "tapeAdvected" || raw === "staticZoneAnchored") {
+    return raw;
+  }
+  return undefined;
+}
+
 /**
  * Coerces unknown `chrome.layout.hourMarkers` input to a normalized {@link HourMarkersConfig}.
  * Missing or invalid payloads yield {@link DEFAULT_HOUR_MARKERS_CONFIG} (cloned).
@@ -50,6 +61,8 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   if (typeof raw.customRepresentationEnabled !== "boolean") {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
+
+  const behaviorOpt = normalizedHourMarkerBehavior(raw.behavior);
 
   let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
   const layoutRaw = raw.layout;
@@ -70,6 +83,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         kind: "text",
         fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
       },
+      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
     };
   }
@@ -100,6 +114,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       customRepresentationEnabled: true,
       realization,
+      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
     };
   }
@@ -114,6 +129,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       customRepresentationEnabled: true,
       realization,
+      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
     };
   }

@@ -15,7 +15,8 @@ import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
 /**
  * Persisted authoring intent for top-band hour markers (`chrome.layout.hourMarkers` only).
- * Behavior/content are derived at runtime — not stored here.
+ * Content is derived at runtime when absent; optional {@link HourMarkersConfig.behavior} overrides defaults from
+ * {@link resolveEffectiveTopBandHourMarkers}.
  */
 export type HourMarkersRealizationConfig =
   | { kind: "text"; fontAssetId: FontAssetId; color?: string }
@@ -23,16 +24,18 @@ export type HourMarkersRealizationConfig =
   | { kind: "radialLine"; color?: string }
   | { kind: "radialWedge"; color?: string };
 
+/** How phased hour markers move with the longitude tape vs fixed structural columns. */
+export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
+
 export interface HourMarkersConfig {
   customRepresentationEnabled: boolean;
   realization: HourMarkersRealizationConfig;
+  /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
+  behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {
     sizeMultiplier: number;
   };
 }
-
-/** How phased hour markers move with the longitude tape vs fixed structural columns. */
-export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
 
 /**
  * What civil-time content the marker encodes: 24h tape hour vs local wall-clock for the analog face.
