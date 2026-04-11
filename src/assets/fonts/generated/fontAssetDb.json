@@ -1,0 +1,209 @@
+{
+  "version": 1,
+  "updatedAtIso": "2026-04-09T16:48:20.004Z",
+  "fonts": [
+    {
+      "id": "computer",
+      "relativeSourcePath": "COMPUTER.TTF",
+      "sourceFileName": "COMPUTER.TTF",
+      "displayName": "COMPUTER",
+      "fileInfo": {
+        "sizeBytes": 46624,
+        "modifiedTimeIso": "2026-04-09T16:33:15.260Z",
+        "contentHashSha256": "ed67adf7e443913df86364877e675b5ce1b33eca1613781b21ac284e3dd57611"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "Computer",
+        "subfamilyName": "Regular",
+        "postscriptName": "Computer",
+        "unitsPerEm": 2048,
+        "ascender": 1741,
+        "descender": -514,
+        "lineGap": 0
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "dotmatrix-regular",
+      "relativeSourcePath": "DotMatrix-Regular.ttf",
+      "sourceFileName": "DotMatrix-Regular.ttf",
+      "displayName": "DotMatrix Regular",
+      "fileInfo": {
+        "sizeBytes": 179572,
+        "modifiedTimeIso": "2026-04-09T16:33:15.278Z",
+        "contentHashSha256": "7644bb2821490993605f36861c703647fe8809aac3e7f2cf67963f73c6a5942b"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "DotMatrix",
+        "subfamilyName": "Regular",
+        "postscriptName": "DotMatrix-Regular",
+        "unitsPerEm": 2048,
+        "ascender": 1632,
+        "descender": -408,
+        "lineGap": 0
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "dseg7modern-regular",
+      "relativeSourcePath": "DSEG7Modern-Regular.ttf",
+      "sourceFileName": "DSEG7Modern-Regular.ttf",
+      "displayName": "DSEG7Modern Regular",
+      "fileInfo": {
+        "sizeBytes": 22664,
+        "modifiedTimeIso": "2026-04-09T16:33:15.296Z",
+        "contentHashSha256": "ca80947f2676aba346c2b8cce37e05ba99e74df03a43ea4eb85bf5bbed531a42"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "DSEG7 Modern",
+        "subfamilyName": "Regular",
+        "postscriptName": "DSEG7Modern-Regular",
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": 0,
+        "lineGap": 90
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "flip-clock",
+      "relativeSourcePath": "flip-clock.ttf",
+      "sourceFileName": "flip-clock.ttf",
+      "displayName": "flip clock",
+      "fileInfo": {
+        "sizeBytes": 52973,
+        "modifiedTimeIso": "2026-04-09T16:33:15.314Z",
+        "contentHashSha256": "81454c5223b392a4fb0344d9463d19037e6674af227b61bfe2bf85c1d4a9ffd9"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "FLIPclockBlack",
+        "subfamilyName": "Regular",
+        "postscriptName": "FLIPclockBlack",
+        "unitsPerEm": 2048,
+        "ascender": 1579,
+        "descender": -1020,
+        "lineGap": 137
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "kremlin",
+      "relativeSourcePath": "kremlin.ttf",
+      "sourceFileName": "kremlin.ttf",
+      "displayName": "kremlin",
+      "fileInfo": {
+        "sizeBytes": 7316,
+        "modifiedTimeIso": "2026-04-09T16:33:15.334Z",
+        "contentHashSha256": "d395aa0908746b6c124189eddcaff800ff11b8d39fb8d6ebe9a184a4222d09c1"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "Kremlin",
+        "subfamilyName": "Regular",
+        "postscriptName": "Kremlin",
+        "unitsPerEm": 2048,
+        "ascender": 1854,
+        "descender": -434,
+        "lineGap": 67
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "zeroes-one",
+      "relativeSourcePath": "zeroes one.ttf",
+      "sourceFileName": "zeroes one.ttf",
+      "displayName": "zeroes one",
+      "fileInfo": {
+        "sizeBytes": 65496,
+        "modifiedTimeIso": "2026-04-09T16:33:15.355Z",
+        "contentHashSha256": "02ba3a0f757acf09b37f944a0b54af51cd021981fa3785f175499ab3bc162be4"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "Zeroes One",
+        "subfamilyName": "Regular",
+        "postscriptName": "ZeroesOne-Regular",
+        "unitsPerEm": 1000,
+        "ascender": 927,
+        "descender": -273,
+        "lineGap": 0
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    },
+    {
+      "id": "zeroes-two",
+      "relativeSourcePath": "zeroes two.ttf",
+      "sourceFileName": "zeroes two.ttf",
+      "displayName": "zeroes two",
+      "fileInfo": {
+        "sizeBytes": 65188,
+        "modifiedTimeIso": "2026-04-09T16:33:15.378Z",
+        "contentHashSha256": "7c90448e071c22e7aef3b13826b804d3534464ddd42a239e6d54d8f469723fa8"
+      },
+      "processingInfo": {
+        "firstSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastSeenIso": "2026-04-09T16:48:20.004Z",
+        "lastProcessedIso": "2026-04-09T16:48:20.004Z",
+        "status": "active"
+      },
+      "extractedMetadata": {
+        "familyName": "Zeroes Two",
+        "subfamilyName": "Regular",
+        "postscriptName": "ZeroesTwo-Regular",
+        "unitsPerEm": 1000,
+        "ascender": 927,
+        "descender": -273,
+        "lineGap": 0
+      },
+      "classification": {
+        "format": "ttf"
+      }
+    }
+  ]
+}

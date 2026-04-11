@@ -1,0 +1,630 @@
+/* Configuration shell — layout tokens shared with future theme work */
+.config-shell {
+  --config-panel-width: min(22rem, 40vw);
+  --config-shell-border: 1px solid var(--config-shell-border-color, rgba(128, 128, 128, 0.35));
+  --config-shell-surface: var(--config-shell-bg, rgba(246, 246, 246, 0.97));
+  --config-shell-text: var(--config-shell-fg, #0f0f0f);
+
+  /*
+   * Shared data-entry controls (inputs, selects, buttons outside demo transport):
+   * elevated opaque surfaces vs the translucent panel so edges and text stay legible.
+   * Limitations (browser/OS):
+   * - <select> open menus are OS-rendered; we style the closed control and <option> where supported.
+   * - Checkboxes use accent-color + focus ring; disabled state still relies on native painting.
+   * - Number inputs: color-scheme matches the panel; stepper glyphs are browser-styled.
+   */
+  --config-control-surface: rgba(255, 255, 255, 0.98);
+  --config-control-fg: #121212;
+  --config-control-border: rgba(55, 55, 68, 0.42);
+  --config-control-border-hover: rgba(100, 108, 255, 0.55);
+  --config-control-focus-ring: rgba(100, 108, 255, 0.42);
+  --config-control-placeholder-fg: rgba(35, 35, 48, 0.5);
+  --config-control-disabled-surface: rgba(236, 236, 240, 0.97);
+  --config-control-disabled-fg: rgba(72, 72, 82, 0.82);
+  --config-control-disabled-border: rgba(118, 118, 130, 0.4);
+  --config-control-accent: rgb(88, 96, 220);
+
+  /* Legacy aliases — keep components on .config-input / .config-button working */
+  --config-input-bg: var(--config-control-surface);
+  --config-input-border: var(--config-control-border);
+
+  /* Native <select> closed state + <option> (dropdown list is OS-controlled) */
+  --config-select-bg: var(--config-control-surface);
+  --config-select-fg: var(--config-control-fg);
+  --config-select-border-strong: var(--config-control-border);
+  --config-option-bg: #ffffff;
+  --config-option-fg: #121212;
+  --config-option-selected-bg: rgba(88, 96, 220, 0.22);
+  --config-option-selected-fg: #0a0a0a;
+  --config-option-hover-bg: rgba(88, 96, 220, 0.14);
+  --config-option-disabled-fg: rgba(55, 55, 55, 0.72);
+  /* Demo playback transport — elevated surface vs panel (mirrors select contrast approach) */
+  --config-demo-transport-btn-bg: rgba(255, 255, 255, 0.94);
+  --config-demo-transport-btn-bg-hover: rgba(255, 255, 255, 1);
+  --config-demo-transport-btn-bg-active: rgba(245, 245, 250, 1);
+  --config-demo-transport-btn-fg: #141414;
+  --config-demo-transport-btn-border: rgba(55, 55, 65, 0.42);
+  --config-demo-transport-btn-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --config-demo-transport-primary-bg: rgba(88, 96, 220, 0.22);
+  --config-demo-transport-primary-bg-hover: rgba(88, 96, 220, 0.3);
+  --config-demo-transport-primary-bg-active: rgba(88, 96, 220, 0.26);
+  --config-demo-transport-primary-fg: #0d0d55;
+  --config-demo-transport-primary-border: rgba(72, 78, 200, 0.55);
+  --config-demo-transport-disabled-fg: rgba(70, 70, 78, 0.72);
+  --config-demo-transport-disabled-bg: rgba(235, 235, 238, 0.92);
+  --config-demo-transport-disabled-border: rgba(110, 110, 120, 0.38);
+  --config-demo-transport-status-fg: rgba(45, 45, 52, 0.82);
+  --config-demo-transport-status-playing-fg: rgba(35, 110, 75, 0.92);
+  --config-demo-transport-status-paused-fg: rgba(120, 85, 35, 0.92);
+  --config-demo-transport-inactive-fg: rgba(55, 55, 62, 0.78);
+
+  box-sizing: border-box;
+  width: var(--config-panel-width);
+  flex-shrink: 0;
+  min-height: min(100vh, 100%);
+  display: flex;
+  flex-direction: column;
+  border-left: var(--config-shell-border);
+  background: var(--config-shell-surface);
+  color: var(--config-shell-text);
+  box-shadow: -4px 0 18px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .config-shell {
+    --config-shell-surface: rgba(47, 47, 47, 0.98);
+    --config-shell-text: #f6f6f6;
+    --config-shell-border-color: rgba(200, 200, 200, 0.2);
+
+    --config-control-surface: rgba(26, 26, 30, 0.98);
+    --config-control-fg: #f0f0f4;
+    --config-control-border: rgba(175, 175, 195, 0.38);
+    --config-control-border-hover: rgba(140, 148, 255, 0.62);
+    --config-control-focus-ring: rgba(130, 138, 255, 0.45);
+    --config-control-placeholder-fg: rgba(200, 200, 215, 0.48);
+    --config-control-disabled-surface: rgba(20, 20, 24, 0.94);
+    --config-control-disabled-fg: rgba(175, 175, 190, 0.78);
+    --config-control-disabled-border: rgba(115, 115, 130, 0.38);
+    --config-control-accent: rgb(140, 148, 255);
+
+    --config-select-bg: var(--config-control-surface);
+    --config-select-fg: var(--config-control-fg);
+    --config-select-border-strong: var(--config-control-border);
+    --config-option-bg: #2a2a2a;
+    --config-option-fg: #f3f3f3;
+    --config-option-selected-bg: rgba(120, 130, 255, 0.35);
+    --config-option-selected-fg: #ffffff;
+    --config-option-hover-bg: rgba(120, 130, 255, 0.22);
+    --config-option-disabled-fg: rgba(200, 200, 200, 0.55);
+    --config-demo-transport-btn-bg: rgba(32, 32, 38, 0.96);
+    --config-demo-transport-btn-bg-hover: rgba(42, 42, 50, 0.98);
+    --config-demo-transport-btn-bg-active: rgba(28, 28, 34, 0.98);
+    --config-demo-transport-btn-fg: #f2f2f8;
+    --config-demo-transport-btn-border: rgba(200, 200, 215, 0.38);
+    --config-demo-transport-btn-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --config-demo-transport-primary-bg: rgba(100, 108, 255, 0.32);
+    --config-demo-transport-primary-bg-hover: rgba(110, 118, 255, 0.42);
+    --config-demo-transport-primary-bg-active: rgba(90, 98, 230, 0.36);
+    --config-demo-transport-primary-fg: #f4f5ff;
+    --config-demo-transport-primary-border: rgba(160, 168, 255, 0.55);
+    --config-demo-transport-disabled-fg: rgba(200, 200, 210, 0.72);
+    --config-demo-transport-disabled-bg: rgba(22, 22, 28, 0.88);
+    --config-demo-transport-disabled-border: rgba(130, 130, 145, 0.35);
+    --config-demo-transport-status-fg: rgba(210, 210, 220, 0.78);
+    --config-demo-transport-status-playing-fg: rgba(130, 220, 175, 0.95);
+    --config-demo-transport-status-paused-fg: rgba(255, 200, 120, 0.9);
+    --config-demo-transport-inactive-fg: rgba(185, 185, 198, 0.75);
+  }
+}
+
+.config-shell__header {
+  flex-shrink: 0;
+  padding: var(--config-shell-space-md, 0.75rem) var(--config-shell-space-lg, 1rem);
+  border-bottom: var(--config-shell-border);
+}
+
+.config-shell__title {
+  margin: 0;
+  font-size: var(--config-shell-title-size, 1rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.config-shell__empty {
+  margin: var(--config-shell-space-lg, 1rem);
+  font-size: 0.875rem;
+}
+
+.config-tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--config-shell-space-xs, 0.25rem);
+  padding: var(--config-shell-space-sm, 0.5rem) var(--config-shell-space-lg, 1rem);
+  border-bottom: var(--config-shell-border);
+  background: var(--config-shell-tab-bg, transparent);
+}
+
+.config-tab-strip__tab {
+  margin: 0;
+  padding: 0.35em 0.65em;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  border-radius: var(--config-shell-radius, 6px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: inherit;
+  background: var(--config-shell-tab-inactive, transparent);
+}
+
+.config-tab-strip__tab:hover {
+  border-color: var(--config-shell-tab-hover-border, rgba(100, 108, 255, 0.45));
+}
+
+.config-tab-strip__tab--active {
+  font-weight: 600;
+  background: var(--config-shell-tab-active, rgba(100, 108, 255, 0.15));
+  border-color: var(--config-shell-tab-active-border, rgba(100, 108, 255, 0.35));
+}
+
+.config-tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--config-shell-space-lg, 1rem);
+}
+
+.config-tab-panel[hidden] {
+  display: none !important;
+}
+
+.config-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-section-gap, 1.25rem);
+}
+
+.config-section__title {
+  margin: 0 0 var(--config-shell-space-sm, 0.5rem);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.config-section__hint {
+  margin: 0 0 var(--config-shell-space-md, 0.75rem);
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+.config-control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--config-shell-space-sm, 0.5rem);
+  align-items: center;
+  margin-bottom: var(--config-shell-space-md, 0.75rem);
+}
+
+.config-control-row__label {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.config-control-row__slot {
+  min-width: 0;
+}
+
+.config-demo-start-fields {
+  width: 100%;
+}
+
+.config-demo-start-fields__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-space-sm, 0.5rem);
+  width: 100%;
+}
+
+.config-demo-start-fields__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.config-demo-start-fields__label {
+  font-size: 0.75rem;
+  line-height: 1.25;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.9;
+}
+
+.config-demo-start-fields .config-input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.config-demo-start-fields__date {
+  max-width: 12rem;
+}
+
+.config-demo-start-fields__time {
+  max-width: 14rem;
+}
+
+.config-demo-start-fields__row--action {
+  align-items: flex-start;
+}
+
+.config-demo-start-fields__hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.85;
+}
+
+.config-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0.45em 0.55em;
+  font: inherit;
+  font-size: 0.8125rem;
+  border-radius: var(--config-shell-radius, 6px);
+  border: 1px solid var(--config-input-border);
+  color: var(--config-control-fg);
+  background: var(--config-input-bg);
+}
+
+.config-shell .config-input::placeholder {
+  color: var(--config-control-placeholder-fg);
+  opacity: 1;
+}
+
+.config-shell input.config-input:not([type="checkbox"]):hover:not(:disabled),
+.config-shell textarea.config-input:hover:not(:disabled) {
+  border-color: var(--config-control-border-hover);
+}
+
+.config-shell input.config-input:not([type="checkbox"]):focus-visible,
+.config-shell textarea.config-input:focus-visible {
+  border-color: var(--config-shell-tab-active-border, rgba(100, 108, 255, 0.45));
+  outline: 2px solid var(--config-control-focus-ring);
+  outline-offset: 1px;
+}
+
+.config-shell input.config-input[type="checkbox"] {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  vertical-align: middle;
+  accent-color: var(--config-control-accent);
+  color-scheme: light;
+}
+
+.config-shell input.config-input[type="checkbox"]:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.config-shell input.config-input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--config-control-focus-ring);
+  outline-offset: 2px;
+}
+
+.config-shell input.config-input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+  filter: grayscale(0.25);
+}
+
+.config-shell input.config-input:not([type="checkbox"]):disabled,
+.config-shell textarea.config-input:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  color: var(--config-control-disabled-fg);
+  background: var(--config-control-disabled-surface);
+  border-color: var(--config-control-disabled-border);
+}
+
+select.config-input {
+  background-color: var(--config-select-bg);
+  color: var(--config-select-fg);
+  border-color: var(--config-select-border-strong);
+  color-scheme: light;
+}
+
+select.config-input:hover:not(:disabled) {
+  border-color: var(--config-control-border-hover);
+}
+
+select.config-input:focus-visible {
+  border-color: var(--config-shell-tab-active-border, rgba(100, 108, 255, 0.45));
+  outline: 2px solid var(--config-control-focus-ring);
+  outline-offset: 1px;
+}
+
+select.config-input:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  color: var(--config-control-disabled-fg);
+  background-color: var(--config-control-disabled-surface);
+  border-color: var(--config-control-disabled-border);
+}
+
+select.config-input option {
+  background-color: var(--config-option-bg);
+  color: var(--config-option-fg);
+}
+
+select.config-input option:checked {
+  background-color: var(--config-option-selected-bg);
+  color: var(--config-option-selected-fg);
+  font-weight: 600;
+}
+
+select.config-input option:hover {
+  background-color: var(--config-option-hover-bg);
+}
+
+select.config-input option:disabled {
+  color: var(--config-option-disabled-fg);
+  opacity: 1;
+}
+
+.config-shell input.config-input:not([type="checkbox"]),
+.config-shell textarea.config-input {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  .config-shell select.config-input,
+  .config-shell input.config-input:not([type="checkbox"]),
+  .config-shell textarea.config-input {
+    color-scheme: dark;
+  }
+
+  .config-shell input.config-input[type="checkbox"] {
+    color-scheme: dark;
+  }
+
+  .config-shell .config-button {
+    color-scheme: dark;
+  }
+}
+
+.config-input--textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
+.config-input--checkbox {
+  width: auto;
+  justify-self: start;
+}
+
+.config-fieldset--plain {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.config-fieldset__legend {
+  padding: 0;
+  margin: 0 0 var(--config-shell-space-sm, 0.5rem);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.config-checkbox-grid .config-control-row {
+  margin-bottom: var(--config-shell-space-sm, 0.5rem);
+}
+
+.config-checkbox-grid .config-control-row:last-child {
+  margin-bottom: 0;
+}
+
+.config-custom-pins__row {
+  margin-bottom: var(--config-shell-space-md, 0.75rem);
+  padding-bottom: var(--config-shell-space-md, 0.75rem);
+  border-bottom: 1px solid var(--config-shell-border-color, rgba(128, 128, 128, 0.25));
+}
+
+.config-custom-pins__row:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.config-custom-pins__actions {
+  margin-top: var(--config-shell-space-sm, 0.5rem);
+}
+
+.config-section__actions {
+  margin: var(--config-shell-space-md, 0.75rem) 0 0;
+}
+
+.config-button {
+  margin: 0;
+  padding: 0.4em 0.65em;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  border-radius: var(--config-shell-radius, 6px);
+  border: 1px solid var(--config-control-border);
+  cursor: pointer;
+  color: var(--config-control-fg);
+  background: var(--config-control-surface);
+  color-scheme: light;
+}
+
+.config-button:hover:not(:disabled) {
+  border-color: var(--config-control-border-hover);
+}
+
+.config-button:focus-visible {
+  outline: 2px solid var(--config-control-focus-ring);
+  outline-offset: 2px;
+}
+
+.config-button:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  color: var(--config-control-disabled-fg);
+  background: var(--config-control-disabled-surface);
+  border-color: var(--config-control-disabled-border);
+}
+
+.config-button--primary {
+  font-weight: 600;
+  border-color: var(--config-shell-tab-active-border, rgba(100, 108, 255, 0.35));
+  background: var(--config-shell-tab-active, rgba(100, 108, 255, 0.15));
+}
+
+.config-button--danger {
+  border-color: rgba(180, 60, 60, 0.45);
+}
+
+.config-demo-transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--config-shell-space-sm, 0.5rem);
+  align-items: center;
+  width: 100%;
+}
+
+.config-demo-transport .config-button {
+  color: var(--config-demo-transport-btn-fg);
+  background: var(--config-demo-transport-btn-bg);
+  border-color: var(--config-demo-transport-btn-border);
+  box-shadow: var(--config-demo-transport-btn-shadow);
+}
+
+.config-demo-transport .config-button:hover:not(:disabled) {
+  background: var(--config-demo-transport-btn-bg-hover);
+  border-color: var(--config-shell-tab-hover-border, rgba(100, 108, 255, 0.55));
+}
+
+.config-demo-transport .config-button:active:not(:disabled) {
+  background: var(--config-demo-transport-btn-bg-active);
+}
+
+.config-demo-transport .config-button:focus-visible {
+  outline: 2px solid var(--config-shell-tab-hover-border, rgba(100, 108, 255, 0.45));
+  outline-offset: 2px;
+}
+
+.config-demo-transport .config-button:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  color: var(--config-demo-transport-disabled-fg);
+  background: var(--config-demo-transport-disabled-bg);
+  border-color: var(--config-demo-transport-disabled-border);
+  box-shadow: none;
+}
+
+.config-demo-transport .config-button--primary {
+  color: var(--config-demo-transport-primary-fg);
+  background: var(--config-demo-transport-primary-bg);
+  border-color: var(--config-demo-transport-primary-border);
+}
+
+.config-demo-transport .config-button--primary:hover:not(:disabled) {
+  background: var(--config-demo-transport-primary-bg-hover);
+  border-color: var(--config-shell-tab-hover-border, rgba(100, 108, 255, 0.65));
+}
+
+.config-demo-transport .config-button--primary:active:not(:disabled) {
+  background: var(--config-demo-transport-primary-bg-active);
+}
+
+.config-demo-transport .config-button--primary:disabled {
+  color: var(--config-demo-transport-disabled-fg);
+  background: var(--config-demo-transport-disabled-bg);
+  border-color: var(--config-demo-transport-disabled-border);
+}
+
+.config-demo-transport__status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--config-demo-transport-status-fg);
+}
+
+.config-demo-transport__status--playing {
+  color: var(--config-demo-transport-status-playing-fg);
+}
+
+.config-demo-transport__status--paused {
+  color: var(--config-demo-transport-status-paused-fg);
+}
+
+.config-demo-transport__inactive {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--config-demo-transport-inactive-fg);
+}
+
+.config-user-presets-save__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--config-shell-space-sm, 0.5rem);
+  align-items: center;
+}
+
+.config-user-presets-save__row .config-input {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.config-user-presets__error {
+  margin: 0 0 var(--config-shell-space-sm, 0.5rem);
+  font-size: 0.8125rem;
+  color: #b03030;
+}
+
+@media (prefers-color-scheme: dark) {
+  .config-user-presets__error {
+    color: #ff8a8a;
+  }
+}
+
+.config-user-presets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-space-md, 0.75rem);
+}
+
+.config-user-presets-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-space-xs, 0.25rem);
+  padding-bottom: var(--config-shell-space-md, 0.75rem);
+  border-bottom: 1px solid var(--config-shell-border-color, rgba(128, 128, 128, 0.25));
+}
+
+.config-user-presets-list__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.config-user-presets-list__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.config-user-presets-list__badge {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.config-user-presets-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--config-shell-space-xs, 0.25rem);
+}

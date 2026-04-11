@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "generatedAtIso": "2026-04-09T16:48:20.004Z",
+  "fonts": [
+    {
+      "id": "computer",
+      "displayName": "COMPUTER",
+      "relativeSourcePath": "COMPUTER.TTF",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "Computer",
+        "subfamilyName": "Regular",
+        "postscriptName": "Computer"
+      },
+      "metrics": {
+        "unitsPerEm": 2048,
+        "ascender": 1741,
+        "descender": -514,
+        "lineGap": 0
+      }
+    },
+    {
+      "id": "dotmatrix-regular",
+      "displayName": "DotMatrix Regular",
+      "relativeSourcePath": "DotMatrix-Regular.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "DotMatrix",
+        "subfamilyName": "Regular",
+        "postscriptName": "DotMatrix-Regular"
+      },
+      "metrics": {
+        "unitsPerEm": 2048,
+        "ascender": 1632,
+        "descender": -408,
+        "lineGap": 0
+      }
+    },
+    {
+      "id": "dseg7modern-regular",
+      "displayName": "DSEG7Modern Regular",
+      "relativeSourcePath": "DSEG7Modern-Regular.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "DSEG7 Modern",
+        "subfamilyName": "Regular",
+        "postscriptName": "DSEG7Modern-Regular"
+      },
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 1000,
+        "descender": 0,
+        "lineGap": 90
+      }
+    },
+    {
+      "id": "flip-clock",
+      "displayName": "flip clock",
+      "relativeSourcePath": "flip-clock.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "FLIPclockBlack",
+        "subfamilyName": "Regular",
+        "postscriptName": "FLIPclockBlack"
+      },
+      "metrics": {
+        "unitsPerEm": 2048,
+        "ascender": 1579,
+        "descender": -1020,
+        "lineGap": 137
+      }
+    },
+    {
+      "id": "kremlin",
+      "displayName": "kremlin",
+      "relativeSourcePath": "kremlin.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "Kremlin",
+        "subfamilyName": "Regular",
+        "postscriptName": "Kremlin"
+      },
+      "metrics": {
+        "unitsPerEm": 2048,
+        "ascender": 1854,
+        "descender": -434,
+        "lineGap": 67
+      }
+    },
+    {
+      "id": "zeroes-one",
+      "displayName": "zeroes one",
+      "relativeSourcePath": "zeroes one.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "Zeroes One",
+        "subfamilyName": "Regular",
+        "postscriptName": "ZeroesOne-Regular"
+      },
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 927,
+        "descender": -273,
+        "lineGap": 0
+      }
+    },
+    {
+      "id": "zeroes-two",
+      "displayName": "zeroes two",
+      "relativeSourcePath": "zeroes two.ttf",
+      "format": "ttf",
+      "sourceNames": {
+        "familyName": "Zeroes Two",
+        "subfamilyName": "Regular",
+        "postscriptName": "ZeroesTwo-Regular"
+      },
+      "metrics": {
+        "unitsPerEm": 1000,
+        "ascender": 927,
+        "descender": -273,
+        "lineGap": 0
+      }
+    }
+  ]
+}
