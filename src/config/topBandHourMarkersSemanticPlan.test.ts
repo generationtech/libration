@@ -16,7 +16,7 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
 } from "./appConfig.ts";
-import { DEFAULT_HOUR_MARKER_TEXT_FILL } from "../glyphs/glyphToRenderPlan.ts";
+import { DEFAULT_TEXT_COLOR } from "./topBandHourMarkersDefaults.ts";
 import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
 import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
@@ -85,7 +85,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     expect(eff.realization).toEqual({
       kind: "text",
       fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-      resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+      resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
     });
 
     const plan = buildSemanticTopBandHourMarkers(eff);

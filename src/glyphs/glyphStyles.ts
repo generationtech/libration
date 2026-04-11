@@ -18,12 +18,19 @@ import type {
   RadialLineGlyphStyle,
   RadialWedgeGlyphStyle,
 } from "./glyphStyleTypes.ts";
+import {
+  DEFAULT_ANALOG_FACE_FILL,
+  DEFAULT_ANALOG_HAND_COLOR,
+  DEFAULT_ANALOG_RING_COLOR,
+  DEFAULT_RADIAL_LINE_COLOR,
+  DEFAULT_RADIAL_WEDGE_FILL,
+} from "../config/topBandHourMarkersDefaults.ts";
 
 /** Centralized hour-marker glyph styles (no layout; deterministic units). */
 const TOP_BAND_DEFAULT_CLOCK: ClockFaceGlyphStyle = {
-  faceFill: "rgba(235, 246, 255, 0.97)",
-  ringStroke: "rgba(70, 140, 210, 0.55)",
-  handStroke: "rgba(8, 28, 58, 0.94)",
+  faceFill: DEFAULT_ANALOG_FACE_FILL,
+  ringStroke: DEFAULT_ANALOG_RING_COLOR,
+  handStroke: DEFAULT_ANALOG_HAND_COLOR,
   ringStrokeWidthPx: 1.25,
   handStrokeWidthPx: 2,
   handLengthRadiusFrac: 0.55,
@@ -35,14 +42,14 @@ const TOP_BAND_RADIAL_LINE: RadialLineGlyphStyle = {
   lineWidthPx: TOP_BAND_DEFAULT_CLOCK.handStrokeWidthPx,
   lengthRadiusFrac: 0.85,
   lineCap: "round",
-  stroke: TOP_BAND_DEFAULT_CLOCK.handStroke,
+  stroke: DEFAULT_RADIAL_LINE_COLOR,
 };
 
 const TOP_BAND_RADIAL_WEDGE: RadialWedgeGlyphStyle = {
   outerRadiusFrac: 0.95,
   innerRadiusFrac: 0.55,
   sweepAngleDeg: 20,
-  fill: "rgba(8, 28, 58, 0.32)",
+  fill: DEFAULT_RADIAL_WEDGE_FILL,
   stroke: "rgba(70, 140, 210, 0.45)",
   strokeWidthPx: 0.75,
 };

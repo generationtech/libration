@@ -38,6 +38,7 @@ import type {
   TextGlyph,
 } from "./glyphTypes.ts";
 import type { GlyphLayoutBox } from "./glyphLayout.ts";
+import { DEFAULT_TEXT_COLOR } from "../config/topBandHourMarkersDefaults.ts";
 
 export type GlyphRenderContext = {
   fontRegistry: FontAssetRegistry;
@@ -45,9 +46,6 @@ export type GlyphRenderContext = {
 
 /** Mutable sink for plan items (same shape as {@link RenderPlan.items}). */
 export type RenderPlanBuilder = RenderPlan["items"];
-
-/** Default hour-disk numeral fill when no explicit `TextGlyph.fill` (matches prior `glyph.fill ?? …` behavior). */
-export const DEFAULT_HOUR_MARKER_TEXT_FILL = "rgba(8, 28, 58, 0.94)";
 
 /** Legacy hour-disk tracking (em), preserved when combining with role + glyph token spacing. */
 const HOUR_DISK_BASE_LETTER_SPACING_EM = 0.02;
@@ -79,7 +77,7 @@ function emitTextGlyph(
       : HOUR_DISK_BASE_LETTER_SPACING_EM + (style.letterSpacingPx + trackingPx) / style.fontSizePx;
 
   const weight = style.fontWeight ?? 400;
-  const fill = glyph.fill ?? DEFAULT_HOUR_MARKER_TEXT_FILL;
+  const fill = glyph.fill ?? DEFAULT_TEXT_COLOR;
   out.push({
     kind: "text",
     x,

@@ -16,8 +16,14 @@ import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
-import { DEFAULT_HOUR_MARKER_TEXT_FILL } from "../glyphs/glyphToRenderPlan.ts";
-import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
+import {
+  DEFAULT_ANALOG_FACE_FILL,
+  DEFAULT_ANALOG_HAND_COLOR,
+  DEFAULT_ANALOG_RING_COLOR,
+  DEFAULT_RADIAL_LINE_COLOR,
+  DEFAULT_RADIAL_WEDGE_FILL,
+  DEFAULT_TEXT_COLOR,
+} from "./topBandHourMarkersDefaults.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveTopBandHourMarkerBehavior,
@@ -43,10 +49,9 @@ function resolveAnalogClockResolvedAppearance(
   const a = r.appearance;
   const handTint = normalizeMarkerColor(a.handColor);
   const faceFromAppearance = normalizeMarkerColor(a.faceColor);
-  const cf = resolveHourMarkerGlyphStyle("topBandHourAnalogClock").clockFace;
-  const ringStroke = handTint !== undefined ? handTint : cf.ringStroke;
-  const handStroke = handTint !== undefined ? handTint : cf.handStroke;
-  const faceFill = faceFromAppearance !== undefined ? faceFromAppearance : cf.faceFill;
+  const ringStroke = handTint !== undefined ? handTint : DEFAULT_ANALOG_RING_COLOR;
+  const handStroke = handTint !== undefined ? handTint : DEFAULT_ANALOG_HAND_COLOR;
+  const faceFill = faceFromAppearance !== undefined ? faceFromAppearance : DEFAULT_ANALOG_FACE_FILL;
   return { ringStroke, handStroke, faceFill };
 }
 
@@ -54,16 +59,14 @@ function resolveRadialLineResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialLine" }>,
 ): EffectiveRadialLineResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.lineColor);
-  const rl = resolveHourMarkerGlyphStyle("topBandHourDefault").radialLine;
-  return { lineColor: fromAppearance !== undefined ? fromAppearance : rl.stroke };
+  return { lineColor: fromAppearance !== undefined ? fromAppearance : DEFAULT_RADIAL_LINE_COLOR };
 }
 
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
 ): EffectiveRadialWedgeResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
-  const rw = resolveHourMarkerGlyphStyle("topBandHourDefault").radialWedge;
-  return { fillColor: fromAppearance !== undefined ? fromAppearance : rw.fill };
+  return { fillColor: fromAppearance !== undefined ? fromAppearance : DEFAULT_RADIAL_WEDGE_FILL };
 }
 
 /** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
@@ -92,7 +95,7 @@ export function resolveEffectiveTopBandHourMarkers(
       realization: {
         kind: "text",
         fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-        resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+        resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
       },
       layout: layoutOut,
     };
@@ -109,7 +112,7 @@ export function resolveEffectiveTopBandHourMarkers(
       kind: "text",
       fontAssetId,
       resolvedAppearance: {
-        color: textColor !== undefined ? textColor : DEFAULT_HOUR_MARKER_TEXT_FILL,
+        color: textColor !== undefined ? textColor : DEFAULT_TEXT_COLOR,
       },
     };
     return {

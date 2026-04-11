@@ -17,14 +17,16 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
 } from "./appConfig";
-import { DEFAULT_HOUR_MARKER_TEXT_FILL } from "../glyphs/glyphToRenderPlan.ts";
-import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
+import {
+  DEFAULT_ANALOG_FACE_FILL,
+  DEFAULT_ANALOG_HAND_COLOR,
+  DEFAULT_ANALOG_RING_COLOR,
+  DEFAULT_RADIAL_LINE_COLOR,
+  DEFAULT_RADIAL_WEDGE_FILL,
+  DEFAULT_TEXT_COLOR,
+} from "./topBandHourMarkersDefaults.ts";
 import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
-
-const cfAnalog = resolveHourMarkerGlyphStyle("topBandHourAnalogClock").clockFace;
-const rlDefault = resolveHourMarkerGlyphStyle("topBandHourDefault").radialLine;
-const rwDefault = resolveHourMarkerGlyphStyle("topBandHourDefault").radialWedge;
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
@@ -54,7 +56,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "text",
         fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-        resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+        resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -78,7 +80,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "text",
         fontAssetId: "computer",
-        resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+        resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -117,9 +119,9 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "analogClock",
         resolvedAppearance: {
-          ringStroke: cfAnalog.ringStroke,
-          handStroke: cfAnalog.handStroke,
-          faceFill: cfAnalog.faceFill,
+          ringStroke: DEFAULT_ANALOG_RING_COLOR,
+          handStroke: DEFAULT_ANALOG_HAND_COLOR,
+          faceFill: DEFAULT_ANALOG_FACE_FILL,
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -143,7 +145,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: { lineColor: rlDefault.stroke },
+        resolvedAppearance: { lineColor: DEFAULT_RADIAL_LINE_COLOR },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -166,7 +168,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialWedge",
-        resolvedAppearance: { fillColor: rwDefault.fill },
+        resolvedAppearance: { fillColor: DEFAULT_RADIAL_WEDGE_FILL },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -224,7 +226,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       kind: "text",
       fontAssetId: "computer",
-      resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+      resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
     });
 
     expect(
@@ -240,7 +242,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       kind: "text",
       fontAssetId: "computer",
-      resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+      resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
     });
 
     expect(
@@ -307,7 +309,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       resolvedAppearance: {
         ringStroke: "#abc",
         handStroke: "#abc",
-        faceFill: cfAnalog.faceFill,
+        faceFill: DEFAULT_ANALOG_FACE_FILL,
       },
     });
   });
@@ -326,8 +328,8 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(resolveEffectiveTopBandHourMarkers(lay).realization).toEqual({
       kind: "analogClock",
       resolvedAppearance: {
-        ringStroke: cfAnalog.ringStroke,
-        handStroke: cfAnalog.handStroke,
+        ringStroke: DEFAULT_ANALOG_RING_COLOR,
+        handStroke: DEFAULT_ANALOG_HAND_COLOR,
         faceFill: "#112233",
       },
     });
