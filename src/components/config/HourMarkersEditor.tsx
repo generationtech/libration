@@ -11,13 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type {
-  TopBandHourMarkerGlyphMode,
-  TopBandHourMarkerRepresentationKind,
-} from "../../config/appConfig";
 import {
   cloneHourMarkersConfig,
-  DEFAULT_TOP_BAND_GLYPH_MODE,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "../../config/appConfig";
@@ -25,7 +20,6 @@ import type {
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
   HourMarkersRealizationConfig,
-  HourMarkersTextAppearance,
 } from "../../config/topBandHourMarkersTypes";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
@@ -33,16 +27,12 @@ import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { HourMarkerBehaviorEditor } from "./HourMarkerBehaviorEditor";
 
-const TOP_BAND_HOUR_MARKER_KINDS: readonly TopBandHourMarkerRepresentationKind[] = [
+const HOUR_MARKER_REALIZATION_KINDS = [
   "text",
-  "glyph",
-];
-
-const TOP_BAND_HOUR_MARKER_GLYPH_MODES: readonly TopBandHourMarkerGlyphMode[] = [
   "analogClock",
   "radialLine",
   "radialWedge",
-];
+] as const satisfies readonly HourMarkersRealizationConfig["kind"][];
 
 /** Placeholder for the native color input when no override is stored (not persisted). */
 const TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER = "#335577";
@@ -53,22 +43,21 @@ type HourMarkerEditorBaseProps = {
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
 };
 
-function labelForHourMarkerKind(kind: TopBandHourMarkerRepresentationKind): string {
-  return kind === "text" ? "Text" : "Glyph";
-}
-
-function uiRepresentationKind(hm: HourMarkersConfig): TopBandHourMarkerRepresentationKind {
-  if (!hm.customRepresentationEnabled) {
-    return "text";
+function labelForRealizationKind(kind: HourMarkersRealizationConfig["kind"]): string {
+  switch (kind) {
+    case "text":
+      return "Text";
+    case "analogClock":
+      return "Analog clock";
+    case "radialLine":
+      return "Radial line";
+    case "radialWedge":
+      return "Radial wedge";
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
   }
-  return hm.realization.kind === "text" ? "text" : "glyph";
-}
-
-function uiGlyphMode(hm: HourMarkersConfig): TopBandHourMarkerGlyphMode {
-  if (hm.realization.kind === "text") {
-    return DEFAULT_TOP_BAND_GLYPH_MODE;
-  }
-  return hm.realization.kind;
 }
 
 function commitHourMarkers(
@@ -85,58 +74,74 @@ function commitHourMarkers(
   });
 }
 
-// -----------------------------------------------------------------------------
-// Realization axis (text vs glyph)
-// -----------------------------------------------------------------------------
+function realizationConfigForKind(
+  kind: HourMarkersRealizationConfig["kind"],
+  hm: HourMarkersConfig,
+): HourMarkersRealizationConfig {
+  switch (kind) {
+    case "text":
+      return {
+        kind: "text",
+        fontAssetId:
+          hm.realization.kind === "text"
+            ? hm.realization.fontAssetId
+            : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+        appearance: {},
+      };
+    case "analogClock":
+      return { kind: "analogClock", appearance: {} };
+    case "radialLine":
+      return { kind: "radialLine", appearance: {} };
+    case "radialWedge":
+      return { kind: "radialWedge", appearance: {} };
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
 
-export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
+function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarkersAnalogClockAppearance {
+  const out: HourMarkersAnalogClockAppearance = {};
+  if (a.handColor !== undefined) {
+    out.handColor = a.handColor;
+  }
+  if (a.faceColor !== undefined) {
+    out.faceColor = a.faceColor;
+  }
+  return out;
+}
+
+function BehaviorSection(props: HourMarkerEditorBaseProps) {
+  return <HourMarkerBehaviorEditor {...props} />;
+}
+
+function RealizationSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
+  const kind = hourMarkers.realization.kind;
   return (
-    <ConfigControlRow label="Hour marker rendering">
+    <ConfigControlRow label="Realization kind">
       <select
         className="config-input"
-        value={uiRepresentationKind(hourMarkers)}
-        disabled={!wired || !hourMarkers.customRepresentationEnabled}
-        aria-label="Top-band hour marker rendering kind"
+        value={kind}
+        disabled={!wired}
+        aria-label="Top-band hour marker realization kind"
         onChange={
           wired && updateConfig
             ? (e) => {
-                const kind = e.currentTarget.value as TopBandHourMarkerRepresentationKind;
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (kind === "text") {
-                    const fontAssetId =
-                      hm.realization.kind === "text"
-                        ? hm.realization.fontAssetId
-                        : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-                    const appearance: HourMarkersTextAppearance =
-                      hm.realization.kind === "text" ? { ...hm.realization.appearance } : {};
-                    return {
-                      ...hm,
-                      realization: {
-                        kind: "text",
-                        fontAssetId,
-                        appearance,
-                      },
-                    };
-                  }
-                  const glyphMode: TopBandHourMarkerGlyphMode =
-                    hm.realization.kind !== "text"
-                      ? hm.realization.kind
-                      : DEFAULT_TOP_BAND_GLYPH_MODE;
-                  return {
-                    ...hm,
-                    realization: {
-                      kind: glyphMode,
-                      appearance: {},
-                    },
-                  };
-                });
+                const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
+                commitHourMarkers(updateConfig, (hm) => ({
+                  ...hm,
+                  customRepresentationEnabled: true,
+                  behavior: hm.behavior,
+                  realization: realizationConfigForKind(next, hm),
+                }));
               }
             : undefined
         }
       >
-        {TOP_BAND_HOUR_MARKER_KINDS.map((k) => (
+        {HOUR_MARKER_REALIZATION_KINDS.map((k) => (
           <option key={k} value={k}>
-            {labelForHourMarkerKind(k)}
+            {labelForRealizationKind(k)}
           </option>
         ))}
       </select>
@@ -144,115 +149,280 @@ export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }
   );
 }
 
-// -----------------------------------------------------------------------------
-// Content axis (text font selection)
-// -----------------------------------------------------------------------------
-
-export type HourMarkerContentEditorProps = HourMarkerEditorBaseProps & {
-  hourMarkerTextControlsActive: boolean;
+type AppearanceSectionProps = HourMarkerEditorBaseProps & {
   hourMarkerFontOptions: readonly { id: FontAssetId; label: string }[];
 };
 
-export function HourMarkerContentEditor({
-  hourMarkers,
-  wired,
-  updateConfig,
-  hourMarkerTextControlsActive,
-  hourMarkerFontOptions,
-}: HourMarkerContentEditorProps) {
-  const fontId =
-    hourMarkers.realization.kind === "text"
-      ? hourMarkers.realization.fontAssetId
-      : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-  return (
-    <ConfigControlRow label="Hour marker font">
-      <select
-        className="config-input"
-        value={fontId}
-        disabled={!wired || !hourMarkerTextControlsActive}
-        aria-label="Font for top-band hour disk numerals"
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const v = e.currentTarget.value;
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (hm.realization.kind !== "text") {
-                    return hm;
+function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOptions }: AppearanceSectionProps) {
+  const rk = hourMarkers.realization.kind;
+
+  if (rk === "text") {
+    const r = hourMarkers.realization;
+    const fontId = r.fontAssetId;
+    const textColor = r.appearance.color;
+    return (
+      <>
+        <ConfigControlRow label="Hour marker font">
+          <select
+            className="config-input"
+            value={fontId}
+            disabled={!wired}
+            aria-label="Font for top-band hour disk numerals"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "text") {
+                        return hm;
+                      }
+                      const nextFont: FontAssetId =
+                        v === "" ? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID : (v as FontAssetId);
+                      return {
+                        ...hm,
+                        customRepresentationEnabled: true,
+                        realization: {
+                          kind: "text",
+                          fontAssetId: nextFont,
+                          appearance:
+                            hm.realization.kind === "text" ? { ...hm.realization.appearance } : {},
+                        },
+                      };
+                    });
                   }
-                  const nextFont: FontAssetId =
-                    v === "" ? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID : (v as FontAssetId);
-                  return {
-                    ...hm,
-                    realization: {
-                      kind: "text",
-                      fontAssetId: nextFont,
-                      appearance:
-                        hm.realization.kind === "text" ? { ...hm.realization.appearance } : {},
-                    },
-                  };
-                });
-              }
-            : undefined
-        }
-      >
-        <option value="">Default (typography role)</option>
-        {hourMarkerFontOptions.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </ConfigControlRow>
-  );
-}
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            {hourMarkerFontOptions.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Hour marker color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band hour marker color"
+            title={
+              textColor === undefined
+                ? "No color override — picker shows a neutral placeholder"
+                : "Custom color for top-band hour markers"
+            }
+            value={textColor ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "text") {
+                        return hm;
+                      }
+                      return {
+                        ...hm,
+                        customRepresentationEnabled: true,
+                        realization: {
+                          kind: "text",
+                          fontAssetId: hm.realization.fontAssetId,
+                          appearance: { ...hm.realization.appearance, color: v },
+                        },
+                      };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear hour marker color override"
+            disabled={!wired || textColor === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "text") {
+                        return hm;
+                      }
+                      const { color, ...rest } = hm.realization.appearance;
+                      void color;
+                      return {
+                        ...hm,
+                        customRepresentationEnabled: true,
+                        realization: {
+                          kind: "text",
+                          fontAssetId: hm.realization.fontAssetId,
+                          appearance: rest,
+                        },
+                      };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Use default colors
+          </button>
+        </ConfigControlRow>
+      </>
+    );
+  }
 
-// -----------------------------------------------------------------------------
-// Text appearance axis (structured layout + text realization appearance.color)
-// -----------------------------------------------------------------------------
+  if (rk === "analogClock") {
+    const r = hourMarkers.realization;
+    const hand = r.appearance.handColor;
+    const face = r.appearance.faceColor;
+    return (
+      <>
+        <ConfigControlRow label="Hand color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band analog hour marker hand color"
+            title={hand === undefined ? "No hand color override" : "Hand stroke color"}
+            value={hand ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "analogClock") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "analogClock",
+                        appearance: compactAnalogAppearance({
+                          ...cur.appearance,
+                          handColor: v,
+                        }),
+                      };
+                      return { ...hm, customRepresentationEnabled: true, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear analog hand color override"
+            disabled={!wired || hand === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "analogClock") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "analogClock",
+                        appearance: compactAnalogAppearance({
+                          ...cur.appearance,
+                          handColor: undefined,
+                        }),
+                      };
+                      return { ...hm, customRepresentationEnabled: true, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Face color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band analog hour marker face color"
+            title={face === undefined ? "No face color override" : "Clock face fill color"}
+            value={face ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "analogClock") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "analogClock",
+                        appearance: compactAnalogAppearance({
+                          ...cur.appearance,
+                          faceColor: v,
+                        }),
+                      };
+                      return { ...hm, customRepresentationEnabled: true, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear analog face color override"
+            disabled={!wired || face === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "analogClock") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "analogClock",
+                        appearance: compactAnalogAppearance({
+                          ...cur.appearance,
+                          faceColor: undefined,
+                        }),
+                      };
+                      return { ...hm, customRepresentationEnabled: true, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+      </>
+    );
+  }
 
-export type TextHourMarkerAppearanceEditorProps = HourMarkerEditorBaseProps & {
-  hourMarkerTextControlsActive: boolean;
-};
-
-export function TextHourMarkerAppearanceEditor({
-  hourMarkers,
-  wired,
-  updateConfig,
-  hourMarkerTextControlsActive,
-}: TextHourMarkerAppearanceEditorProps) {
-  const sm = hourMarkers.layout.sizeMultiplier;
-  const textColor =
-    hourMarkers.realization.kind === "text" ? hourMarkers.realization.appearance.color : undefined;
-  return (
-    <>
-      <ConfigControlRow label="Hour marker color (optional)">
+  if (rk === "radialLine") {
+    const r = hourMarkers.realization;
+    const line = r.appearance.lineColor;
+    return (
+      <ConfigControlRow label="Line color (optional)">
         <input
           type="color"
           className="config-input"
-          aria-label="Top-band hour marker color"
-          title={
-            textColor === undefined
-              ? "No color override — picker shows a neutral placeholder"
-              : "Custom color for top-band hour markers"
-          }
-          value={textColor ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={!wired || !hourMarkerTextControlsActive}
+          aria-label="Top-band radial line hour marker color"
+          title={line === undefined ? "No line color override" : "Radial line stroke color"}
+          value={line ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+          disabled={!wired}
           onChange={
             wired && updateConfig
               ? (e) => {
                   const v = e.currentTarget.value;
                   commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "text") {
+                    if (hm.realization.kind !== "radialLine") {
                       return hm;
                     }
-                    return {
-                      ...hm,
-                      realization: {
-                        kind: "text",
-                        fontAssetId: hm.realization.fontAssetId,
-                        appearance: { ...hm.realization.appearance, color: v },
-                      },
+                    const realization: HourMarkersRealizationConfig = {
+                      kind: "radialLine",
+                      appearance: { lineColor: v },
                     };
+                    return { ...hm, customRepresentationEnabled: true, realization };
                   });
                 }
               : undefined
@@ -261,33 +431,95 @@ export function TextHourMarkerAppearanceEditor({
         <button
           type="button"
           className="config-input"
-          aria-label="Clear hour marker color override"
-          disabled={!wired || !hourMarkerTextControlsActive || textColor === undefined}
+          aria-label="Clear radial line color override"
+          disabled={!wired || line === undefined}
           onClick={
             wired && updateConfig
               ? () => {
                   commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "text") {
+                    if (hm.realization.kind !== "radialLine") {
                       return hm;
                     }
-                    const { color, ...rest } = hm.realization.appearance;
-                    void color;
-                    return {
-                      ...hm,
-                      realization: {
-                        kind: "text",
-                        fontAssetId: hm.realization.fontAssetId,
-                        appearance: rest,
-                      },
+                    const realization: HourMarkersRealizationConfig = {
+                      kind: "radialLine",
+                      appearance: {},
                     };
+                    return { ...hm, customRepresentationEnabled: true, realization };
                   });
                 }
               : undefined
           }
         >
-          Use default colors
+          Default
         </button>
       </ConfigControlRow>
+    );
+  }
+
+  if (rk === "radialWedge") {
+    const r = hourMarkers.realization;
+    const fill = r.appearance.fillColor;
+    return (
+      <ConfigControlRow label="Fill color (optional)">
+        <input
+          type="color"
+          className="config-input"
+          aria-label="Top-band radial wedge hour marker fill color"
+          title={fill === undefined ? "No fill color override" : "Wedge fill color"}
+          value={fill ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+          disabled={!wired}
+          onChange={
+            wired && updateConfig
+              ? (e) => {
+                  const v = e.currentTarget.value;
+                  commitHourMarkers(updateConfig, (hm) => {
+                    if (hm.realization.kind !== "radialWedge") {
+                      return hm;
+                    }
+                    const realization: HourMarkersRealizationConfig = {
+                      kind: "radialWedge",
+                      appearance: { fillColor: v },
+                    };
+                    return { ...hm, customRepresentationEnabled: true, realization };
+                  });
+                }
+              : undefined
+          }
+        />
+        <button
+          type="button"
+          className="config-input"
+          aria-label="Clear radial wedge fill color override"
+          disabled={!wired || fill === undefined}
+          onClick={
+            wired && updateConfig
+              ? () => {
+                  commitHourMarkers(updateConfig, (hm) => {
+                    if (hm.realization.kind !== "radialWedge") {
+                      return hm;
+                    }
+                    const realization: HourMarkersRealizationConfig = {
+                      kind: "radialWedge",
+                      appearance: {},
+                    };
+                    return { ...hm, customRepresentationEnabled: true, realization };
+                  });
+                }
+              : undefined
+          }
+        >
+          Default
+        </button>
+      </ConfigControlRow>
+    );
+  }
+
+  throw new Error(`Unhandled hour marker realization kind: ${String(rk)}`);
+}
+
+function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
+  const sm = hourMarkers.layout.sizeMultiplier;
+  return (
     <ConfigControlRow label="Hour marker size">
       <input
         type="range"
@@ -295,8 +527,8 @@ export function TextHourMarkerAppearanceEditor({
         min={0.5}
         max={2}
         step={0.05}
-        disabled={!wired || !hourMarkerTextControlsActive}
-        aria-label="Hour marker text size multiplier"
+        disabled={!wired}
+        aria-label="Hour marker size multiplier"
         value={sm}
         onChange={
           wired && updateConfig
@@ -317,324 +549,6 @@ export function TextHourMarkerAppearanceEditor({
         {sm.toFixed(2)}×
       </span>
     </ConfigControlRow>
-    </>
-  );
-}
-
-// -----------------------------------------------------------------------------
-// Glyph appearance axis (glyph realization kind + per-mode presentation)
-// -----------------------------------------------------------------------------
-
-function GlyphHourMarkerModeSelector({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  return (
-    <ConfigControlRow label="Hour marker glyph style">
-      <select
-        className="config-input"
-        value={uiGlyphMode(hourMarkers)}
-        disabled={!wired || !hourMarkers.customRepresentationEnabled}
-        aria-label="Top-band hour marker glyph style"
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const glyphMode = e.currentTarget.value as TopBandHourMarkerGlyphMode;
-                commitHourMarkers(updateConfig, (hm) => ({
-                  ...hm,
-                  realization: {
-                    kind: glyphMode,
-                    appearance: {},
-                  },
-                }));
-              }
-            : undefined
-        }
-      >
-        {TOP_BAND_HOUR_MARKER_GLYPH_MODES.map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
-    </ConfigControlRow>
-  );
-}
-
-function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarkersAnalogClockAppearance {
-  const out: HourMarkersAnalogClockAppearance = {};
-  if (a.handColor !== undefined) {
-    out.handColor = a.handColor;
-  }
-  if (a.faceColor !== undefined) {
-    out.faceColor = a.faceColor;
-  }
-  return out;
-}
-
-/** analogClock: optional hand and face colors (`realization.appearance`). */
-function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  if (hourMarkers.realization.kind !== "analogClock") {
-    return null;
-  }
-  const r = hourMarkers.realization;
-  const hand = r.appearance.handColor;
-  const face = r.appearance.faceColor;
-  return (
-    <>
-      <ConfigControlRow label="Hand color (optional)">
-        <input
-          type="color"
-          className="config-input"
-          aria-label="Top-band analog hour marker hand color"
-          title={hand === undefined ? "No hand color override" : "Hand stroke color"}
-          value={hand ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={!wired || !hourMarkers.customRepresentationEnabled}
-          onChange={
-            wired && updateConfig
-              ? (e) => {
-                  const v = e.currentTarget.value;
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "analogClock") {
-                      return hm;
-                    }
-                    const cur = hm.realization;
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "analogClock",
-                      appearance: compactAnalogAppearance({
-                        ...cur.appearance,
-                        handColor: v,
-                      }),
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        />
-        <button
-          type="button"
-          className="config-input"
-          aria-label="Clear analog hand color override"
-          disabled={!wired || !hourMarkers.customRepresentationEnabled || hand === undefined}
-          onClick={
-            wired && updateConfig
-              ? () => {
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "analogClock") {
-                      return hm;
-                    }
-                    const cur = hm.realization;
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "analogClock",
-                      appearance: compactAnalogAppearance({
-                        ...cur.appearance,
-                        handColor: undefined,
-                      }),
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        >
-          Default
-        </button>
-      </ConfigControlRow>
-      <ConfigControlRow label="Face color (optional)">
-        <input
-          type="color"
-          className="config-input"
-          aria-label="Top-band analog hour marker face color"
-          title={face === undefined ? "No face color override" : "Clock face fill color"}
-          value={face ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={!wired || !hourMarkers.customRepresentationEnabled}
-          onChange={
-            wired && updateConfig
-              ? (e) => {
-                  const v = e.currentTarget.value;
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "analogClock") {
-                      return hm;
-                    }
-                    const cur = hm.realization;
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "analogClock",
-                      appearance: compactAnalogAppearance({
-                        ...cur.appearance,
-                        faceColor: v,
-                      }),
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        />
-        <button
-          type="button"
-          className="config-input"
-          aria-label="Clear analog face color override"
-          disabled={!wired || !hourMarkers.customRepresentationEnabled || face === undefined}
-          onClick={
-            wired && updateConfig
-              ? () => {
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "analogClock") {
-                      return hm;
-                    }
-                    const cur = hm.realization;
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "analogClock",
-                      appearance: compactAnalogAppearance({
-                        ...cur.appearance,
-                        faceColor: undefined,
-                      }),
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        >
-          Default
-        </button>
-      </ConfigControlRow>
-    </>
-  );
-}
-
-/** radialLine: optional line color (`realization.appearance`). */
-function GlyphHourMarkerRadialLineAppearance({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  if (hourMarkers.realization.kind !== "radialLine") {
-    return null;
-  }
-  const r = hourMarkers.realization;
-  const line = r.appearance.lineColor;
-  return (
-    <ConfigControlRow label="Line color (optional)">
-      <input
-        type="color"
-        className="config-input"
-        aria-label="Top-band radial line hour marker color"
-        title={line === undefined ? "No line color override" : "Radial line stroke color"}
-        value={line ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-        disabled={!wired || !hourMarkers.customRepresentationEnabled}
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const v = e.currentTarget.value;
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (hm.realization.kind !== "radialLine") {
-                    return hm;
-                  }
-                  const realization: HourMarkersRealizationConfig = {
-                    kind: "radialLine",
-                    appearance: { lineColor: v },
-                  };
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      />
-      <button
-        type="button"
-        className="config-input"
-        aria-label="Clear radial line color override"
-        disabled={!wired || !hourMarkers.customRepresentationEnabled || line === undefined}
-        onClick={
-          wired && updateConfig
-            ? () => {
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (hm.realization.kind !== "radialLine") {
-                    return hm;
-                  }
-                  const realization: HourMarkersRealizationConfig = {
-                    kind: "radialLine",
-                    appearance: {},
-                  };
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      >
-        Default
-      </button>
-    </ConfigControlRow>
-  );
-}
-
-/** radialWedge: optional fill color (`realization.appearance`). */
-function GlyphHourMarkerRadialWedgeAppearance({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  if (hourMarkers.realization.kind !== "radialWedge") {
-    return null;
-  }
-  const r = hourMarkers.realization;
-  const fill = r.appearance.fillColor;
-  return (
-    <ConfigControlRow label="Fill color (optional)">
-      <input
-        type="color"
-        className="config-input"
-        aria-label="Top-band radial wedge hour marker fill color"
-        title={fill === undefined ? "No fill color override" : "Wedge fill color"}
-        value={fill ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-        disabled={!wired || !hourMarkers.customRepresentationEnabled}
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const v = e.currentTarget.value;
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (hm.realization.kind !== "radialWedge") {
-                    return hm;
-                  }
-                  const realization: HourMarkersRealizationConfig = {
-                    kind: "radialWedge",
-                    appearance: { fillColor: v },
-                  };
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      />
-      <button
-        type="button"
-        className="config-input"
-        aria-label="Clear radial wedge fill color override"
-        disabled={!wired || !hourMarkers.customRepresentationEnabled || fill === undefined}
-        onClick={
-          wired && updateConfig
-            ? () => {
-                commitHourMarkers(updateConfig, (hm) => {
-                  if (hm.realization.kind !== "radialWedge") {
-                    return hm;
-                  }
-                  const realization: HourMarkersRealizationConfig = {
-                    kind: "radialWedge",
-                    appearance: {},
-                  };
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      >
-        Default
-      </button>
-    </ConfigControlRow>
-  );
-}
-
-export function GlyphHourMarkerAppearanceEditor(props: HourMarkerEditorBaseProps) {
-  const { hourMarkers } = props;
-  const mode = uiGlyphMode(hourMarkers);
-  return (
-    <>
-      <GlyphHourMarkerModeSelector {...props} />
-      {mode === "analogClock" ? <GlyphHourMarkerAnalogClockAppearance {...props} /> : null}
-      {mode === "radialLine" ? <GlyphHourMarkerRadialLineAppearance {...props} /> : null}
-      {mode === "radialWedge" ? <GlyphHourMarkerRadialWedgeAppearance {...props} /> : null}
-    </>
   );
 }
 
@@ -648,8 +562,6 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
   const lay = config.chrome.layout;
   const hourMarkers = lay.hourMarkers;
   const wired = Boolean(updateConfig);
-  const hourMarkerTextControlsActive =
-    hourMarkers.customRepresentationEnabled && hourMarkers.realization.kind === "text";
   const hourMarkerFontOptions = TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
     const rec = defaultFontAssetRegistry.getById(id);
     return rec ? { id: rec.id as FontAssetId, label: rec.displayName } : null;
@@ -659,20 +571,22 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
 
   return (
     <>
-      <HourMarkerBehaviorEditor {...baseProps} />
-      <HourMarkerRealizationEditor {...baseProps} />
-      {uiRepresentationKind(hourMarkers) === "text" ? (
-        <>
-          <HourMarkerContentEditor
-            {...baseProps}
-            hourMarkerTextControlsActive={hourMarkerTextControlsActive}
-            hourMarkerFontOptions={hourMarkerFontOptions}
-          />
-          <TextHourMarkerAppearanceEditor {...baseProps} hourMarkerTextControlsActive={hourMarkerTextControlsActive} />
-        </>
-      ) : (
-        <GlyphHourMarkerAppearanceEditor {...baseProps} />
-      )}
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Behavior</legend>
+        <BehaviorSection {...baseProps} />
+      </fieldset>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Realization</legend>
+        <RealizationSection {...baseProps} />
+      </fieldset>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Appearance</legend>
+        <AppearanceSection {...baseProps} hourMarkerFontOptions={hourMarkerFontOptions} />
+      </fieldset>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Layout</legend>
+        <LayoutSection {...baseProps} />
+      </fieldset>
     </>
   );
 }

@@ -81,19 +81,19 @@ describe("ChromeTab top-band hour markers", () => {
     expect(screen.queryByLabelText(/hour marker text style/i)).toBeNull();
   });
 
-  it("text branch shows font and size (no glyph style control)", () => {
+  it("text branch shows font, color, and size", () => {
     const initial = baseCustomHourMarkers({
       realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
     });
     render(<ChromeTabTestHarness initial={initial} />);
 
-    expect(screen.getByRole("combobox", { name: /Top-band hour marker rendering kind/i })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeEnabled();
-    expect(screen.getByRole("slider", { name: /Hour marker text size multiplier/i })).toBeEnabled();
-    expect(screen.queryByRole("combobox", { name: /Top-band hour marker glyph style/i })).toBeNull();
+    expect(screen.getByLabelText(/Top-band hour marker color/i)).toBeEnabled();
+    expect(screen.getByRole("slider", { name: /Hour marker size multiplier/i })).toBeEnabled();
   });
 
-  it("glyph branch shows glyph style only (no font or size controls)", () => {
+  it("analog branch shows realization kind, analog colors, and size (no font selector)", () => {
     render(
       <ChromeTabTestHarness
         initial={baseCustomHourMarkers({
@@ -102,12 +102,13 @@ describe("ChromeTab top-band hour markers", () => {
       />,
     );
 
-    expect(screen.getByRole("combobox", { name: /Top-band hour marker glyph style/i })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeNull();
-    expect(screen.queryByRole("slider", { name: /Hour marker text size multiplier/i })).toBeNull();
+    expect(screen.getByLabelText(/Top-band analog hour marker hand color/i)).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /Hour marker size multiplier/i })).toBeEnabled();
   });
 
-  it("switching hour marker rendering to Glyph updates structured realization", () => {
+  it("switching hour marker realization to analog clock updates structured realization", () => {
     let last: LibrationConfigV2 | null = null;
     render(
       <ChromeTabTestHarness initial={baseCustomHourMarkers()}>
@@ -118,8 +119,8 @@ describe("ChromeTab top-band hour markers", () => {
       </ChromeTabTestHarness>,
     );
 
-    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker rendering kind/i }), {
-      target: { value: "glyph" },
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "analogClock" },
     });
 
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "analogClock", appearance: {} });
@@ -173,7 +174,8 @@ describe("ChromeTab top-band hour markers", () => {
     ).toBeUndefined();
   });
 
-  it("custom off keeps controls inert", () => {
+  it("custom off still exposes behavior, realization, layout; font change enables custom representation", () => {
+    let last: LibrationConfigV2 | null = null;
     const initial = appConfigToV2(DEFAULT_APP_CONFIG);
     const lay = initial.chrome.layout;
     const rich = normalizeLibrationConfig({
@@ -191,17 +193,27 @@ describe("ChromeTab top-band hour markers", () => {
       },
     });
 
-    render(<ChromeTabTestHarness initial={rich} />);
+    render(
+      <ChromeTabTestHarness initial={rich}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
 
-    expect(
-      screen.getByRole("checkbox", {
-        name: /Use custom font or glyph style for top-band 24 hour markers/i,
-      }),
-    ).not.toBeChecked();
-    expect(screen.getByRole("combobox", { name: /Top-band hour marker rendering kind/i })).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeDisabled();
-    expect(
-      screen.queryByRole("combobox", { name: /Top-band hour marker placement behavior/i }),
-    ).toBeNull();
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeEnabled();
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker placement behavior/i })).toBeEnabled();
+    expect(screen.getByRole("slider", { name: /Hour marker size multiplier/i })).toBeEnabled();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i }), {
+      target: { value: "computer" },
+    });
+    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      kind: "text",
+      fontAssetId: "computer",
+    });
   });
 });

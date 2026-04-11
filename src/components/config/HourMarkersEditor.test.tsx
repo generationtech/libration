@@ -73,10 +73,14 @@ describe("HourMarkersEditor structured authoring", () => {
     cleanup();
   });
 
-  it("toggles customRepresentationEnabled on structured hourMarkers", () => {
+  it("realization kind change sets customRepresentationEnabled and resets appearance", () => {
     let last: LibrationConfigV2 | null = null;
     render(
-      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#112233" } },
+        })}
+      >
         {({ config }) => {
           last = config;
           return null;
@@ -84,16 +88,12 @@ describe("HourMarkersEditor structured authoring", () => {
       </HourMarkersHarness>,
     );
 
-    fireEvent.click(
-      screen.getByRole("checkbox", { name: /Use custom font or glyph style for top-band 24 hour markers/i }),
-    );
-
-    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(false);
-    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
-      kind: "text",
-      fontAssetId: "zeroes-one",
-      appearance: {},
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "radialLine" },
     });
+
+    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "radialLine", appearance: {} });
   });
 
   it("text path: font change updates structured realization", () => {
@@ -119,9 +119,10 @@ describe("HourMarkersEditor structured authoring", () => {
       kind: "text",
       fontAssetId: "computer",
     });
+    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
   });
 
-  it("glyph path: structured realization kind tracks glyph mode", () => {
+  it("realization kind select updates glyph mode", () => {
     let last: LibrationConfigV2 | null = null;
     render(
       <HourMarkersHarness
@@ -136,7 +137,7 @@ describe("HourMarkersEditor structured authoring", () => {
       </HourMarkersHarness>,
     );
 
-    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker glyph style/i }), {
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
       target: { value: "radialWedge" },
     });
 
@@ -161,13 +162,13 @@ describe("HourMarkersEditor structured authoring", () => {
       appearance: { color: "#aabbcc" },
     });
 
-    fireEvent.change(screen.getByRole("slider", { name: /Hour marker text size multiplier/i }), {
+    fireEvent.change(screen.getByRole("slider", { name: /Hour marker size multiplier/i }), {
       target: { value: "1.5" },
     });
     expect(last!.chrome.layout.hourMarkers.layout.sizeMultiplier).toBe(1.5);
   });
 
-  it("behavior select updates config.behavior when custom is on", () => {
+  it("behavior select updates config.behavior", () => {
     let last: LibrationConfigV2 | null = null;
     render(
       <HourMarkersHarness initial={baseCustomHourMarkers()}>

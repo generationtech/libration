@@ -13,7 +13,6 @@
 
 import {
   cloneHourMarkersConfig,
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
 } from "../../config/appConfig";
 import { defaultBehaviorFor } from "../../config/topBandHourMarkersResolver";
 import type { EffectiveTopBandHourMarkerBehavior, HourMarkersConfig } from "../../config/topBandHourMarkersTypes";
@@ -48,69 +47,30 @@ function commitHourMarkers(
 export function HourMarkerBehaviorEditor({ hourMarkers, wired, updateConfig }: HourMarkerBehaviorEditorProps) {
   const selectValue = hourMarkers.behavior ?? defaultBehaviorFor(hourMarkers.realization.kind);
   return (
-    <>
-      <ConfigControlRow label="Custom top-band hour marker style">
-        <input
-          type="checkbox"
-          className="config-input config-input--checkbox"
-          checked={hourMarkers.customRepresentationEnabled}
-          readOnly={!wired}
-          disabled={!wired}
-          tabIndex={wired ? 0 : -1}
-          aria-label="Use custom font or glyph style for top-band 24 hour markers"
-          onChange={
-            wired && updateConfig
-              ? (e) => {
-                  const checked = e.currentTarget.checked;
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (!checked) {
-                      return {
-                        customRepresentationEnabled: false,
-                        realization: {
-                          kind: "text",
-                          fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-                          appearance: {},
-                        },
-                        layout: { sizeMultiplier: hm.layout.sizeMultiplier },
-                      };
-                    }
-                    return {
-                      ...hm,
-                      customRepresentationEnabled: true,
-                    };
-                  });
-                }
-              : undefined
-          }
-        />
-      </ConfigControlRow>
-      {hourMarkers.customRepresentationEnabled ? (
-        <ConfigControlRow label="Hour marker behavior">
-          <select
-            className="config-input"
-            value={selectValue}
-            disabled={!wired}
-            aria-label="Top-band hour marker placement behavior"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const v = e.currentTarget.value as EffectiveTopBandHourMarkerBehavior;
-                    commitHourMarkers(updateConfig, (hm) => ({
-                      ...hm,
-                      behavior: v,
-                    }));
-                  }
-                : undefined
-            }
-          >
-            {HOUR_MARKER_BEHAVIOR_OPTIONS.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-      ) : null}
-    </>
+    <ConfigControlRow label="Hour marker behavior">
+      <select
+        className="config-input"
+        value={selectValue}
+        disabled={!wired}
+        aria-label="Top-band hour marker placement behavior"
+        onChange={
+          wired && updateConfig
+            ? (e) => {
+                const v = e.currentTarget.value as EffectiveTopBandHourMarkerBehavior;
+                commitHourMarkers(updateConfig, (hm) => ({
+                  ...hm,
+                  behavior: v,
+                }));
+              }
+            : undefined
+        }
+      >
+        {HOUR_MARKER_BEHAVIOR_OPTIONS.map((b) => (
+          <option key={b} value={b}>
+            {b}
+          </option>
+        ))}
+      </select>
+    </ConfigControlRow>
   );
 }
