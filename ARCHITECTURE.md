@@ -4,7 +4,7 @@
 
 libration is a precision-rendered world time instrument built on a **render-plan-driven architecture**.
 
-All visual output is expressed as explicit render intent (RenderPlan) before backend execution.
+All visual output is expressed as explicit render intent (`RenderPlan`) before backend execution.
 
 Core goals:
 - Renderer-agnostic rendering semantics
@@ -12,6 +12,7 @@ Core goals:
 - Strict separation of concerns
 - High perceptual fidelity
 - Future multi-backend support (Canvas, GPU)
+- Clear separation between representation, semantic planning, layout, execution, and persistence intent
 
 ---
 
@@ -25,7 +26,7 @@ Owns:
 - render loop orchestration
 
 Produces:
-- SceneRenderInput
+- `SceneRenderInput`
 
 ---
 
@@ -43,100 +44,319 @@ Renderer-agnostic and deterministic.
 
 All rendering flows through:
 
-**Plan Builders → RenderPlan → Executor**
+**Resolvers / Plan Builders → Semantic Planning → Layout → RenderPlan → Executor**
 
-#### Responsibilities
+`RenderPlan` remains backend-neutral and is the only rendering intent consumed by execution.
 
-| Layer | Responsibility |
-|------|--------------|
-| Plan Builders | Resolve geometry, styling, ordering |
-| RenderPlan | Declarative render intent |
-| Executor | Mechanical drawing only |
-
----
-
-### RenderPlan Primitives
-
+Current shared primitive surface includes:
 - rect
 - line
-- text (fill + optional stroke/shadow)
-- path2d (+ optional clip: Path2D or descriptor payload)
-- linearGradientRect
-- radialGradientFill
-- rasterPatch (generated RGBA)
-- imageBlit (URL-backed image)
+- text
+- path2d
+- gradients
+- rasterPatch
+- imageBlit
 
-Key distinction:
-- rasterPatch = computed pixels
-- imageBlit = external asset reference
+Path items support explicit payload identity:
+- descriptor-backed path payloads for shared intent
+- transitional `Path2D` payloads where still needed
+- descriptor-backed or `Path2D` clip payloads
 
 ---
 
 ### 4. Renderer Backend
 
-CanvasRenderBackend owns:
-- DPR setup
-- clearing
-- layer dispatch
-- image lifecycle (load/cache/repaint)
+`CanvasRenderBackend` owns execution only.
 
-It MUST NOT:
-- contain product semantics
-- decide geometry or layout
+Canvas-specific realization is isolated behind bridge modules:
+- `canvasTextFontBridge`
+- `canvasPaintBridge`
+- `canvasPathBridge`
+- bundled Canvas font loading / registration helpers
 
----
-
-### 5. Display Chrome (NON-LAYER)
-
-- top instrument band
-- lower overlay
-
-Rendered via RenderPlan but orchestrated outside the layer system.
+Future renderers must consume the same upstream intent without introducing product semantics.
 
 ---
 
-### 6. Layer System
+### 5. Display Chrome
 
-Each layer:
-- pure function of time + config
-- produces renderable state
-- feeds plan builders
+The display chrome is a **screen-space instrument system**, not part of layers.
+
+Current top-band design:
+- Hour markers
+- Tickmark tape (hour / 15 / 5 hierarchy)
+- NATO timezone strip (rectangular, continuous band)
+- Theme-driven chrome colors (neutral / dark / paper)
+- Fully RenderPlan-driven
+
+Recent chrome simplification:
+- hour-marker circle backgrounds have been removed from the top-band render plan
+- `NOON` / `MIDNIGHT` tape annotations are no longer emitted in the top-band render plan
+- marker placement, timing, and tape alignment remain unchanged
+
+Chrome is:
+- visually integrated
+- architecturally separate from layers
+- free to evolve representation styles without changing the time model
 
 ---
 
-## Rendering Flow
+## Chrome Representation Direction
 
-1. App builds SceneRenderInput
-2. Layers resolve state
-3. Plan builders emit RenderPlans
-4. Executor renders primitives
-5. Chrome rendered in second pass
+The top band no longer uses a single fixed numeric style.
+
+Top-band hour markers now use a truthful split:
+- **Text** → selected bundled font asset + styling
+- **Procedural glyph** → selected glyph mode + styling
+
+These fall into two major categories:
+
+### A. Font-backed representations
+Examples currently in inventory/use:
+- Zeroes One
+- Zeroes Two
+- DSEG7Modern-Regular
+- DotMatrix-Regular
+- COMPUTER
+- Flip Clock
+- Kremlin
+
+These are integrated through a renderer-agnostic font asset / typography system.
+
+### B. Procedural representations
+Implemented modes:
+- Analog clock faces
+- Radial wedge
+- Radial line
+
+These are **not fonts**. They are symbolic glyph modes rendered from primitives.
 
 ---
 
-## Boundary Rules
+## Typography and Glyph Architecture
 
-Strict separation:
-- UI
-- Layers
-- RenderPlan builders
-- Backend execution
-- Resource lifecycle
+The system distinguishes between:
+
+- **Font assets** — packaged font resources with stable IDs
+- **Typography roles** — semantic uses of text, not raw file references
+- **Representation kind** — whether a surface is using text or procedural glyphs
+- **Procedural glyphs** — non-font symbolic renderables built from primitives
+- **Style** — appearance controls layered on top of representation and asset choice
+
+### Architectural Rule
+
+> Font files are assets.
+>
+> Typography is a semantic system.
+>
+> Glyph modes are representation choices.
+>
+> Style is layered on top.
+>
+> Backends only realize already-resolved intent.
+
+This keeps the system compatible with:
+- current Canvas execution
+- future native / RTX execution
+- deterministic layout and rendering behavior
+
+---
+
+## Font Pipeline Status
+
+The current font preprocessing pipeline produces:
+- `fontAssetDb.json`
+- `fontAssetManifest.json`
+- stable font asset IDs
+- extracted metadata / metrics
+
+It does **not** currently produce:
+- glyph outline datasets
+- per-character path command tables
+- bitmap or SDF atlases
+- renderer-owned glyph geometry caches
+
+### Runtime Meaning Today
+
+At runtime the live text path is:
+
+`fontAssetId → FontAssetRegistry → TypographyRole / resolveTextStyle → RenderPlan text item → Canvas text bridge → Canvas native text rendering`
+
+So the current system is:
+- **font-identity-aware**
+- **typography-role-aware**
+- **renderer-agnostic at the planning level**
+
+But it is **not yet a custom glyph-shape rendering runtime**.
+
+Canvas still performs final text rasterization in the current backend.
+
+---
+
+## Top-Band Hour Marker Runtime Architecture (CURRENT)
+
+Top-band hour-marker rendering uses a strict semantic pipeline.
+
+### Authoritative runtime flow
+
+`normalize hourMarkers config → resolveEffectiveTopBandHourMarkers → buildSemanticTopBandHourMarkers → layoutSemanticTopBandHourMarkers / realization-specific layout → realization adapter → RenderPlan`
+
+Implemented semantic realizations:
+- text
+- analogClock
+- radialLine
+- radialWedge
+
+### Important status
+
+- The semantic pipeline is now the **only supported runtime path** for in-disk top-band hour markers.
+- The old tape-column fallback path has been removed.
+- Runtime now requires full semantic inputs for the supported path.
+- Tests use shared semantic fixtures instead of degraded single-marker fallback behavior.
+
+### Runtime contract
+
+For in-disk top-band hour markers, the supported contract is:
+- structured `chrome.layout.hourMarkers` present in normalized config
+- full 24-marker input after semantic planning
+- realization consistent with selection
+- analog clock additionally requires:
+  - `referenceNowMs`
+  - `structuralZoneCenterXPx` with 24 entries
+
+This means the current app runtime has one authoritative implementation rather than parallel semantic and fallback paths.
+
+---
+
+## Behavioral / Representation Model
+
+For top-band hour markers, the runtime and editor distinguish explicit axes:
+- **Behavior** — e.g. `tapeAdvected`, `staticZoneAnchored`
+- **Content** — e.g. `hour24`, `localWallClock`
+- **Realization** — text, analogClock, radialLine, radialWedge
+- **Layout** — size and placement semantics
+- **Appearance** — color and realization-specific appearance controls
+
+This model is authoritative for runtime, editor, and persistence evolution.
+
+---
+
+## Structured Persistence Model
+
+Hour markers now persist through a single structured config surface:
+
+`chrome.layout.hourMarkers`
+
+This structured model is authoritative for:
+- editor authoring
+- normalization
+- runtime resolution
+- persistence
+
+Legacy flat hour-marker persistence fields have been removed.
+
+That means:
+- no dual config truth remains for hour markers
+- no flat compatibility regeneration remains
+- old saved configs that only used flat hour-marker fields are no longer compatible
+
+---
+
+## Recommended Shared Abstractions
+
+### Font Asset Layer
+Owns:
+- logical font IDs
+- runtime manifest
+- asset metadata
+- backend loading / realization hooks
+
+### Typography Role Layer
+Owns semantic roles such as:
+- chromeHourPrimary
+- chromeHourEmphasis
+- chromeZoneLabel
+- chromeDenseMono
+- chromeSegment
+- chromeDotMatrix
+
+### Representation Layer
+Owns surface-specific representation choice.
+
+For top-band hour markers:
+- text with a selected bundled font asset
+- procedural glyph with a selected glyph mode
+
+### Procedural Glyph Layer
+Owns symbolic glyph generation via primitives.
+
+Examples:
+- circle + hand(s) for analog clock
+- arc/wedge for radial wedge
+- center-out line for radial line
+
+### Style Layer
+Owns appearance controls layered over representation:
+- size
+- color
+- future realization-specific and multi-channel controls
+
+---
+
+## Layout vs Rendering Rule
+
+Chrome layout must not become dependent on backend-specific font behavior.
+
+That means:
+- sector/grid placement stays structural
+- semantic planning resolves meaning before primitive emission
+- measurement is an explicit capability, not implicit browser behavior
+- procedural glyphs obey the same layout contract as text-based markers
+- backends do not infer behavior, realization choice, or content semantics
 
 ---
 
 ## Architectural Status
 
-Renderer-agnostic preparation is **COMPLETE**.
+Renderer-agnostic architecture is COMPLETE enough for feature-forward work.
 
-All major rendering categories:
-- chrome
-- vector overlays
-- text overlays
-- markers
-- raster overlays
-- base map
+Top-band hour-marker runtime migration is COMPLETE for the current production path.
 
-are now RenderPlan-driven.
+Hour-marker editor and persistence migration are COMPLETE for the current production path.
 
-Future work builds on this foundation.
+Typography / glyph subsystem is FUNCTIONAL and in active use.
+
+### What is implemented
+- font asset preprocessing + runtime manifest
+- typography role resolution
+- TextGlyph + procedural glyph unification
+- top-band hour-marker text/glyph split
+- semantic hour-marker resolver / planner / layout / realization adapters
+- semantic-only runtime path for in-disk hour markers
+- structured `chrome.layout.hourMarkers` persistence
+- dedicated `HourMarkersEditor` with axis-aligned sub-editors
+- structured-only hour-marker authoring, normalization, and runtime consumption
+- top-band and bottom-chrome policy integration
+- backend-neutral text identity (`font.assetId`)
+- explicit Canvas bridge modules for text, paint, and paths
+- Canvas bundled-font loading/registration at runtime
+- descriptor-backed path and clip support
+
+### What is not yet implemented
+- renderer-owned glyph outline rendering from preprocessed font data
+- atlas-based custom text rendering
+- RTX/native backend
+- generalized structured editor/config system across multiple UI surfaces
+- richer realization-specific appearance controls beyond the current shared color/size model
+
+### Near-Term Work
+- continue feature-forward top-band chrome and styling work on top of the completed hour-marker architecture
+- add new realization-specific appearance controls only when a concrete feature requires them
+- apply the same structured editor/persistence pattern to other chrome surfaces only after feature pressure justifies it
+
+### Ongoing Constraints
+- No backend-owned product semantics
+- No coupling between time model and display style
+- No reintroduction of degraded runtime fallback behavior for hour markers
+- No resurrection of legacy flat hour-marker persistence
+- No speculative architecture churn without feature pressure
