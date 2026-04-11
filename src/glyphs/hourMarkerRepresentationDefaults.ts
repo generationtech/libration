@@ -11,4 +11,4 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-export { resolveDefaultHourMarkerRepresentationSpec } from "../config/hourMarkerRepresentationSpec.ts";
+export { resolveDefaultHourMarkerRepresentationSpec } from "../config/types/hourMarkerRepresentationSpec.ts";

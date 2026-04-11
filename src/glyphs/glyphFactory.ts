@@ -20,7 +20,7 @@ import type { TopChromeStyle } from "../config/topChromeStyle.ts";
 import { createTopBandTextGlyph } from "./topBandTextGlyphFromPolicy.ts";
 import type { HourMarkerContent } from "./hourMarkerContent.ts";
 import { resolveDefaultHourMarkerRepresentationSpec } from "./hourMarkerRepresentationDefaults.ts";
-import type { HourMarkerRepresentationSpec } from "./hourMarkerRepresentation.ts";
+import type { HourMarkerRepresentationSpec } from "../config/types/hourMarkerRepresentationSpec.ts";
 import type { ResolveTextStyleOverrides } from "../typography/typographyTypes.ts";
 import type { GlyphRenderable, TextGlyph } from "./glyphTypes.ts";
 import type { TopBandAnnotationContent, TopBandHourNumeralContent } from "./topBandContent.ts";

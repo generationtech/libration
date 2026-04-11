@@ -11,6 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+// ARCHITECTURE RULE:
+// Types under src/config/types/ define policy/semantics. This module must not import from
+// src/glyphs/** or src/renderer/**.
+
 /**
  * Backend-neutral style tokens for hour-marker rendering. Layout supplies the box;
  * these tokens control drawing inside the box.

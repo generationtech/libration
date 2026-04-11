@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+// ARCHITECTURE RULE:
+// This file must not import from src/glyphs/** or src/renderer/**.
+
 /**
  * Centralized presentation policy for top-band text/glyphs (fills, roles, glyph style tokens, optional
  * typography overrides). Layout (x/y, row heights, font size) stays in stack planners and layout metrics.
@@ -20,13 +23,13 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
-import type { HourMarkerGlyphStyleId } from "./hourMarkerGlyphStyleIds.ts";
+import type { HourMarkerGlyphStyleId } from "./types/hourMarkerGlyphStyleIds.ts";
 import {
   resolveDefaultHourMarkerRepresentationSpec,
   resolveTopBandAnnotationSpec,
   resolveTopBandHourNumeralSpec,
   type HourMarkerRepresentationSpec,
-} from "./hourMarkerRepresentationSpec.ts";
+} from "./types/hourMarkerRepresentationSpec.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
 import type { TopChromeStyle } from "./topChromeStyle.ts";
 import { TOP_CHROME_CIRCLE_STACK_LAYOUT } from "./topChromeStyle.ts";

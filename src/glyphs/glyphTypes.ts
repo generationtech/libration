@@ -13,7 +13,7 @@
 
 import type { RenderTextShadowStyle } from "../renderer/renderPlan/renderPlanTypes.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
-import type { HourMarkerGlyphStyleId } from "./glyphStyleTypes.ts";
+import type { HourMarkerGlyphStyleId } from "../config/types/hourMarkerGlyphStyleIds.ts";
 
 export type GlyphRenderable = TextGlyph | ClockFaceGlyph | RadialLineGlyph | RadialWedgeGlyph;
 

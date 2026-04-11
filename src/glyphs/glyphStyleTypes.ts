@@ -16,8 +16,6 @@
  * these tokens control drawing inside the box.
  */
 
-export type { HourMarkerGlyphStyleId } from "../config/hourMarkerGlyphStyleIds.ts";
-
 export type ClockFaceGlyphStyle = {
   /** Face + ring fill (CSS color string). */
   faceFill: string;

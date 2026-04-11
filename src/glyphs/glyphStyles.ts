@@ -11,9 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { HourMarkerGlyphStyleId } from "../config/types/hourMarkerGlyphStyleIds.ts";
 import type {
   ClockFaceGlyphStyle,
-  HourMarkerGlyphStyleId,
   HourMarkerGlyphStyleSpec,
   RadialLineGlyphStyle,
   RadialWedgeGlyphStyle,

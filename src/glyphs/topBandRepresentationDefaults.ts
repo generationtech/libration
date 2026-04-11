@@ -14,4 +14,4 @@
 export {
   resolveTopBandAnnotationSpec,
   resolveTopBandHourNumeralSpec,
-} from "../config/hourMarkerRepresentationSpec.ts";
+} from "../config/types/hourMarkerRepresentationSpec.ts";

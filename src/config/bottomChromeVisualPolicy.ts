@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+// ARCHITECTURE RULE:
+// This file must not import from src/glyphs/** or src/renderer/**.
+
 /**
  * Centralized presentation policy for bottom chrome floating readouts (roles, fills, optional letter spacing,
  * typography overrides). Geometry (x/y, font sizes from viewport) stays in {@link buildBottomChromeBandRenderPlan}.
@@ -24,7 +27,7 @@
  * | Right date line      | `chromeZoneLabel`  | Weight 700; fill matches primary time     |
  */
 
-import type { HourMarkerGlyphStyleId } from "./hourMarkerGlyphStyleIds.ts";
+import type { HourMarkerGlyphStyleId } from "./types/hourMarkerGlyphStyleIds.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
 import { BOTTOM_CHROME_STYLE } from "./bottomChromeStyle.ts";
 import type { BottomChromeColorTokens } from "./bottomChromeStyle.ts";

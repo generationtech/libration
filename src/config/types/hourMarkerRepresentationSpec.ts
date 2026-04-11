@@ -11,9 +11,13 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { NumericRepresentationMode } from "./appConfig.ts";
+// ARCHITECTURE RULE:
+// Types under src/config/types/ define policy/semantics. This module must not import from
+// src/glyphs/** or src/renderer/**.
+
+import type { NumericRepresentationMode } from "../appConfig.ts";
 import type { HourMarkerGlyphStyleId } from "./hourMarkerGlyphStyleIds.ts";
-import type { TypographyRole } from "../typography/typographyTypes.ts";
+import type { TypographyRole } from "../../typography/typographyTypes.ts";
 
 /**
  * Which representation family is used for an hour marker. Broader than {@link NumericRepresentationMode}
