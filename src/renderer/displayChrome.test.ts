@@ -27,7 +27,7 @@ import {
   computeBottomChromeOverlayBottomMarginPx,
   computeBottomHudMapFadeOverlayRect,
 } from "./bottomChromeLayout";
-import { TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "./topChromeStyle";
+import { TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "../config/topChromeStyle.ts";
 import {
   buildBottomInformationBarState,
   buildDisplayChromeState,

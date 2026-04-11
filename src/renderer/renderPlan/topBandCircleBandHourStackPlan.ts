@@ -41,7 +41,7 @@ import {
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
   TOP_CHROME_STYLE,
   type TopChromeStyle,
-} from "../topChromeStyle";
+} from "../../config/topChromeStyle.ts";
 import { emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan } from "../semanticTopBandHourMarkerAnalogAdapter.ts";
 import { emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan } from "../semanticTopBandHourMarkerRadialLineAdapter.ts";
 import { emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan } from "../semanticTopBandHourMarkerRadialWedgeAdapter.ts";

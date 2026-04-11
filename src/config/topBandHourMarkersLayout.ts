@@ -21,7 +21,7 @@ import type { EffectiveTopBandHourMarkerBehavior } from "./topBandHourMarkersTyp
 import {
   TOP_BAND_DISK_WRAP_HALO_PAD_PX,
   topBandDiskWrapHalfExtentPx,
-} from "../renderer/topBandHourDiskWrapExtents.ts";
+} from "./topBandDiskWrapGeometry.ts";
 
 /**
  * Vertical slice of the circle band stack (same fields as {@link buildTopBandCircleBandHourStackRenderPlan} options).

@@ -17,20 +17,20 @@ import {
   computeTopBandCircleStackMetrics,
   computeUtcTopScaleRowMetrics,
   resolveTopBandTimeFromConfig,
-} from "../renderer/displayChrome";
+} from "./displayChrome";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
-} from "./appConfig";
-import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
-import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
-import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
+  DEFAULT_HOUR_MARKERS_CONFIG,
+} from "../config/appConfig";
+import { buildSemanticTopBandHourMarkers } from "../config/topBandHourMarkersSemanticPlan.ts";
+import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
   layoutSemanticTopBandAnalogClockMarkers,
   layoutSemanticTopBandHourMarkers,
   layoutSemanticTopBandRadialLineMarkers,
   layoutSemanticTopBandRadialWedgeMarkers,
-} from "./topBandHourMarkersLayout.ts";
+} from "../config/topBandHourMarkersLayout.ts";
 
 const RESOLVED_UTC = resolveTopBandTimeFromConfig({
   ...DEFAULT_DISPLAY_TIME_CONFIG,
@@ -38,6 +38,20 @@ const RESOLVED_UTC = resolveTopBandTimeFromConfig({
   topBandMode: "utc24",
   topBandAnchor: { mode: "auto" },
 });
+
+function hourMarkerLayout(
+  realization: (typeof DEFAULT_HOUR_MARKERS_CONFIG)["realization"],
+): typeof DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG {
+  return {
+    ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+    hourMarkers: {
+      ...DEFAULT_HOUR_MARKERS_CONFIG,
+      customRepresentationEnabled: true,
+      realization,
+      layout: { sizeMultiplier: 1 },
+    },
+  };
+}
 
 describe("layoutSemanticTopBandHourMarkers", () => {
   it("produces 24 laid-out text instances aligned to the semantic plan", () => {
@@ -80,13 +94,7 @@ describe("layoutSemanticTopBandHourMarkers", () => {
     const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
     const structuralX = scale.segments.map((s) => s.centerX);
     const eff = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          customRepresentationEnabled: true,
-          realization: { kind: "analogClock" },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
+      hourMarkerLayout({ kind: "analogClock", appearance: {} }),
     );
     const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 6, 0, 0) });
     const tapeMarkers = scale.circleMarkers.map((m) => ({
@@ -129,13 +137,7 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
       currentHourLabel: m.currentHourLabel,
     }));
     const eff = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          customRepresentationEnabled: true,
-          realization: { kind: "radialLine" },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
+      hourMarkerLayout({ kind: "radialLine", appearance: {} }),
     );
     const plan = buildSemanticTopBandHourMarkers(eff);
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(plan, {
@@ -177,13 +179,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
       currentHourLabel: m.currentHourLabel,
     }));
     const eff = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          customRepresentationEnabled: true,
-          realization: { kind: "radialWedge" },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
+      hourMarkerLayout({ kind: "radialWedge", appearance: {} }),
     );
     const plan = buildSemanticTopBandHourMarkers(eff);
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(plan, {
@@ -196,15 +192,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
     });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(
       buildSemanticTopBandHourMarkers(
-        resolveEffectiveTopBandHourMarkers(
-          normalizeDisplayChromeLayout({
-            hourMarkers: {
-              customRepresentationEnabled: true,
-              realization: { kind: "radialLine" },
-              layout: { sizeMultiplier: 1 },
-            },
-          }),
-        ),
+        resolveEffectiveTopBandHourMarkers(hourMarkerLayout({ kind: "radialLine", appearance: {} })),
       ),
       {
         viewportWidthPx: w,

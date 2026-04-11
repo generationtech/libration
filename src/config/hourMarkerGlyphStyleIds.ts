@@ -11,4 +11,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-export { resolveDefaultHourMarkerRepresentationSpec } from "../config/hourMarkerRepresentationSpec.ts";
+/**
+ * Backend-neutral style tokens for hour-marker rendering. Layout supplies the box;
+ * these tokens control drawing inside the box.
+ */
+export type HourMarkerGlyphStyleId =
+  | "topBandHourDefault"
+  | "topBandHourSegment"
+  | "topBandHourDotMatrix"
+  | "topBandHourTerminal"
+  | "topBandHourAnalogClock"
+  | "topBandChromeUpperNumeral"
+  | "topBandChromeAnnotation";

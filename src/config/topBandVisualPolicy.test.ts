@@ -13,7 +13,6 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  createTopBandTextGlyph,
   getDefaultTopBandRowVisibilityPolicy,
   hourMarkerRepresentationSpecForTopBandEffectiveSelection,
   resolveTopBandAnnotationPolicy,
@@ -23,7 +22,7 @@ import {
   resolveTimezoneStripLetterPolicy,
   shouldRenderTopBandUpperNumerals,
 } from "./topBandVisualPolicy.ts";
-import { TOP_CHROME_STYLE, getTopChromeStyle } from "../renderer/topChromeStyle.ts";
+import { TOP_CHROME_STYLE, getTopChromeStyle } from "./topChromeStyle.ts";
 
 describe("topBandVisualPolicy", () => {
   it("resolveTopBandUpperNumeralPolicy matches representation defaults + chrome fill", () => {
@@ -60,15 +59,6 @@ describe("topBandVisualPolicy", () => {
     const dark = getTopChromeStyle("dark");
     expect(resolveTimezoneStripLetterPolicy(dark).fill).toBe(dark.zoneText.letter);
     expect(resolveTimezoneStripCaptionPolicy(dark).fill).toBe(dark.zoneText.geographyCaption);
-  });
-
-  it("createTopBandTextGlyph copies policy fields onto a TextGlyph", () => {
-    const g = createTopBandTextGlyph("Z", resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE));
-    expect(g.kind).toBe("text");
-    expect(g.text).toBe("Z");
-    expect(g.role).toBe("chromeZoneLabel");
-    expect(g.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
-    expect(g.typographyOverrides).toEqual({ fontWeight: 800 });
   });
 
   it("shouldRenderTopBandUpperNumerals matches current gate (positive height, meets floor)", () => {

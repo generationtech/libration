@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { solarLocalWallClockStateFromUtcMs } from "../renderer/displayChrome.ts";
+import { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 import type { EffectiveTopBandHourMarkers } from "./topBandHourMarkersTypes.ts";
 import {
   buildStructuralAnchor,

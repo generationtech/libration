@@ -20,17 +20,19 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
+import type { HourMarkerGlyphStyleId } from "./hourMarkerGlyphStyleIds.ts";
 import {
+  resolveDefaultHourMarkerRepresentationSpec,
   resolveTopBandAnnotationSpec,
   resolveTopBandHourNumeralSpec,
-} from "../glyphs/topBandRepresentationDefaults.ts";
-import { resolveDefaultHourMarkerRepresentationSpec } from "../glyphs/hourMarkerRepresentationDefaults.ts";
-import type { HourMarkerRepresentationSpec } from "../glyphs/hourMarkerRepresentation.ts";
-import type { TextGlyph } from "../glyphs/glyphTypes.ts";
-import type { HourMarkerGlyphStyleId } from "../glyphs/glyphStyleTypes.ts";
+  type HourMarkerRepresentationSpec,
+} from "./hourMarkerRepresentationSpec.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
-import type { TopChromeStyle } from "../renderer/topChromeStyle.ts";
-import { TOP_CHROME_CIRCLE_STACK_LAYOUT } from "../renderer/topChromeStyle.ts";
+import type { TopChromeStyle } from "./topChromeStyle.ts";
+import { TOP_CHROME_CIRCLE_STACK_LAYOUT } from "./topChromeStyle.ts";
+
+/** Canvas text baselines used for top-band policy (aligned with text glyph emission). */
+export type TopBandPolicyTextBaseline = "alphabetic" | "bottom" | "middle" | "top";
 
 /** Presentation-only defaults for a top-band text glyph; geometry lives in planners. */
 export type TopBandTextVisualPolicy = {
@@ -38,7 +40,7 @@ export type TopBandTextVisualPolicy = {
   glyphStyleId?: HourMarkerGlyphStyleId;
   fill?: string;
   typographyOverrides?: ResolveTextStyleOverrides;
-  textBaseline?: TextGlyph["textBaseline"];
+  textBaseline?: TopBandPolicyTextBaseline;
 };
 
 /** Documents the layout floor for the upper numeral row (mirrors {@link TOP_CHROME_CIRCLE_STACK_LAYOUT.upperRowMinPx}). */
@@ -141,29 +143,4 @@ export function resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSele
     return undefined;
   }
   return out;
-}
-
-/** Builds a {@link TextGlyph} from centralized top-band policy (no layout). */
-export function createTopBandTextGlyph(text: string, policy: TopBandTextVisualPolicy): TextGlyph {
-  const glyph: TextGlyph = {
-    kind: "text",
-    text,
-    role: policy.role,
-  };
-  if (policy.glyphStyleId !== undefined) {
-    glyph.styleId = policy.glyphStyleId;
-  }
-  if (policy.fill !== undefined) {
-    glyph.fill = policy.fill;
-  }
-  if (
-    policy.typographyOverrides !== undefined &&
-    Object.keys(policy.typographyOverrides).length > 0
-  ) {
-    glyph.typographyOverrides = policy.typographyOverrides;
-  }
-  if (policy.textBaseline !== undefined) {
-    glyph.textBaseline = policy.textBaseline;
-  }
-  return glyph;
 }

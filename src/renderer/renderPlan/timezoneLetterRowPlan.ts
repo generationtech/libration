@@ -18,10 +18,10 @@
 
 import type { GeographyConfig } from "../../config/appConfig";
 import {
-  createTopBandTextGlyph,
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
 } from "../../config/topBandVisualPolicy.ts";
+import { createTopBandTextGlyph } from "../../glyphs/topBandTextGlyphFromPolicy.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
 import { alignCrispLineX } from "../crispLines";
 import {
@@ -33,7 +33,7 @@ import {
   TOP_CHROME_STYLE,
   computeTimezoneLetterSizePx,
   type TopChromeStyle,
-} from "../topChromeStyle";
+} from "../../config/topChromeStyle.ts";
 import { topBandWrapOffsetsForCenteredExtent, topBandWrapOffsetsForSpan } from "../topBandWrapOffsets";
 import type { RenderPlan } from "./renderPlanTypes";
 

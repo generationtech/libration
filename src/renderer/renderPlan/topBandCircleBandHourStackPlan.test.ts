@@ -29,7 +29,7 @@ import {
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../topChromeStyle";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
 import { topBandDiskWrapHalfExtentPx } from "../topBandHourDiskWrapExtents";
 import {
   buildTopBandCircleBandHourStackRenderPlan,

@@ -33,8 +33,8 @@ import {
 import { resolveDisplayTimeReferenceZone } from "../core/displayTimeReference";
 import { formatWallClockInTimeZone } from "../core/timeFormat";
 import { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
-
 export { resolveDisplayTimeReferenceZone, isValidIanaTimeZone } from "../core/displayTimeReference";
+export { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
@@ -53,7 +53,7 @@ import {
   computeHourDiskLabelSizePx,
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
   getTopChromeStyle,
-} from "./topChromeStyle";
+} from "../config/topChromeStyle";
 import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
@@ -93,7 +93,6 @@ export { utcOffsetHoursForTimeZone } from "../core/timeZoneOffset";
 
 const MS_PER_DAY = 86_400_000;
 const MS_PER_HOUR = 3_600_000;
-const MS_PER_MINUTE = 60_000;
 
 /** UTC epoch ms at 00:00:00.000 on the UTC calendar day containing {@code nowMs}. */
 export function utcDayStartMs(nowMs: number): number {
@@ -629,30 +628,6 @@ export function solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay: number, lonDeg: nu
   const offsetMs = (lonDeg / 15) * MS_PER_HOUR;
   const localMs = ((utcMsOfDay + offsetMs) % MS_PER_DAY + MS_PER_DAY) % MS_PER_DAY;
   return Math.floor(localMs / MS_PER_HOUR);
-}
-
-function utcMsOfDayFromUtcMs(referenceNowMs: number): number {
-  const d = new Date(referenceNowMs);
-  return (
-    (((d.getUTCHours() * 60 + d.getUTCMinutes()) * 60 + d.getUTCSeconds()) * 1000) + d.getUTCMilliseconds()
-  );
-}
-
-/**
- * Mean-solar local wall-clock state at {@code lonDeg} for the UTC calendar day containing {@code referenceNowMs}.
- * Same offset model as {@link solarLocalHour0To23FromUtcMsOfDay} (continuous lon/15 hours), with fractional hour for clock hands.
- */
-export function solarLocalWallClockStateFromUtcMs(
-  referenceNowMs: number,
-  lonDeg: number,
-): { hour0To23: number; minute0To59: number; continuousHour0To24: number } {
-  const utcMsOfDay = utcMsOfDayFromUtcMs(referenceNowMs);
-  const offsetMs = (lonDeg / 15) * MS_PER_HOUR;
-  const localMs = ((utcMsOfDay + offsetMs) % MS_PER_DAY + MS_PER_DAY) % MS_PER_DAY;
-  const continuousHour0To24 = localMs / MS_PER_HOUR;
-  const hour0To23 = Math.floor(continuousHour0To24) % 24;
-  const minute0To59 = Math.floor((localMs % MS_PER_HOUR) / MS_PER_MINUTE);
-  return { hour0To23, minute0To59, continuousHour0To24 };
 }
 
 const EAST_OF_ZULU_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M"] as const;

@@ -11,27 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { TypographyRole } from "../typography/typographyTypes.ts";
-import type { HourMarkerGlyphStyleId } from "./glyphStyleTypes.ts";
-
-/**
- * Which representation family is used for an hour marker. Broader than {@link NumericRepresentationMode}
- * (app config) so future modes can be declared without widening user-facing config yet.
- */
-export type HourMarkerRepresentationMode =
-  | "geometric"
-  | "segment"
-  | "dotmatrix"
-  | "terminal"
-  | "analogClock"
-  | "radialWedge"
-  | "radialLine";
-
-/**
- * Declarative policy: mode + typography role for text paths + procedural/text style tokens.
- */
-export type HourMarkerRepresentationSpec = {
-  mode: HourMarkerRepresentationMode;
-  textRole: TypographyRole;
-  glyphStyleId: HourMarkerGlyphStyleId;
-};
+export type {
+  HourMarkerRepresentationMode,
+  HourMarkerRepresentationSpec,
+} from "../config/hourMarkerRepresentationSpec.ts";

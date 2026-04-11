@@ -14,7 +14,6 @@
 import { describe, expect, it } from "vitest";
 import { BOTTOM_CHROME_STYLE } from "./bottomChromeStyle";
 import {
-  createBottomChromeTextGlyph,
   resolveBottomChromeDatePolicy,
   resolveBottomChromeLabelPolicy,
   resolveBottomChromeTimePolicy,
@@ -47,22 +46,4 @@ describe("bottomChromeVisualPolicy", () => {
     expect(p.letterSpacingEm).toBe(0);
   });
 
-  it("createBottomChromeTextGlyph maps policy into a TextGlyph for emitGlyphToRenderPlan", () => {
-    const p = resolveBottomChromeTimePolicy(colors);
-    const shadow = {
-      color: "rgba(0,0,0,1)",
-      blurPx: 1,
-      offsetXPx: 0,
-      offsetYPx: 0,
-    };
-    const g = createBottomChromeTextGlyph("12:00", p, { textAlign: "left", shadow });
-    expect(g.kind).toBe("text");
-    expect(g.text).toBe("12:00");
-    expect(g.role).toBe("chromeHourPrimary");
-    expect(g.fill).toBe(colors.primaryTime);
-    expect(g.typographyOverrides?.fontWeight).toBe(700);
-    expect(g.letterSpacingEm).toBe(0);
-    expect(g.textAlign).toBe("left");
-    expect(g.shadow).toEqual(shadow);
-  });
 });

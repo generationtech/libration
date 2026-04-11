@@ -13,11 +13,11 @@
 
 import type { NumericRepresentationMode } from "../config/appConfig.ts";
 import {
-  createTopBandTextGlyph,
   resolveTopBandAnnotationPolicy,
   resolveTopBandUpperNumeralPolicy,
 } from "../config/topBandVisualPolicy.ts";
-import type { TopChromeStyle } from "../renderer/topChromeStyle.ts";
+import type { TopChromeStyle } from "../config/topChromeStyle.ts";
+import { createTopBandTextGlyph } from "./topBandTextGlyphFromPolicy.ts";
 import type { HourMarkerContent } from "./hourMarkerContent.ts";
 import { resolveDefaultHourMarkerRepresentationSpec } from "./hourMarkerRepresentationDefaults.ts";
 import type { HourMarkerRepresentationSpec } from "./hourMarkerRepresentation.ts";

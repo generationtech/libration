@@ -24,12 +24,13 @@
  * | Right date line      | `chromeZoneLabel`  | Weight 700; fill matches primary time     |
  */
 
-import type { TextGlyph } from "../glyphs/glyphTypes.ts";
-import type { HourMarkerGlyphStyleId } from "../glyphs/glyphStyleTypes.ts";
-import type { RenderTextShadowStyle } from "../renderer/renderPlan/renderPlanTypes.ts";
+import type { HourMarkerGlyphStyleId } from "./hourMarkerGlyphStyleIds.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
 import { BOTTOM_CHROME_STYLE } from "./bottomChromeStyle.ts";
 import type { BottomChromeColorTokens } from "./bottomChromeStyle.ts";
+
+/** Canvas text baselines for bottom-chrome policy (aligned with text glyph emission). */
+export type BottomChromePolicyTextBaseline = "alphabetic" | "bottom" | "middle" | "top";
 
 /** Presentation-only defaults for a bottom-chrome text glyph; layout lives in the band plan. */
 export type BottomChromeTextVisualPolicy = {
@@ -37,10 +38,10 @@ export type BottomChromeTextVisualPolicy = {
   glyphStyleId?: HourMarkerGlyphStyleId;
   fill?: string;
   typographyOverrides?: ResolveTextStyleOverrides;
-  textBaseline?: TextGlyph["textBaseline"];
+  textBaseline?: BottomChromePolicyTextBaseline;
   /**
-   * When set, passed through to {@link TextGlyph.letterSpacingEm} so spacing matches legacy readouts
-   * (bypasses the hour-disk letter-spacing path in {@link emitGlyphToRenderPlan}).
+   * When set, passed through as `letterSpacingEm` on the emitted text glyph so spacing matches legacy readouts
+   * (bypasses the hour-disk letter-spacing path in the glyph emitter).
    */
   letterSpacingEm?: number;
 };
@@ -73,37 +74,4 @@ export function resolveBottomChromeDatePolicy(colors: BottomChromeColorTokens): 
     typographyOverrides: { fontWeight: 700 },
     letterSpacingEm: 0,
   };
-}
-
-export function createBottomChromeTextGlyph(
-  text: string,
-  policy: BottomChromeTextVisualPolicy,
-  options: {
-    textAlign: "left" | "center" | "right";
-    shadow: RenderTextShadowStyle;
-  },
-): TextGlyph {
-  const glyph: TextGlyph = {
-    kind: "text",
-    text,
-    role: policy.role,
-    textAlign: options.textAlign,
-    shadow: options.shadow,
-  };
-  if (policy.glyphStyleId !== undefined) {
-    glyph.styleId = policy.glyphStyleId;
-  }
-  if (policy.fill !== undefined) {
-    glyph.fill = policy.fill;
-  }
-  if (policy.typographyOverrides !== undefined && Object.keys(policy.typographyOverrides).length > 0) {
-    glyph.typographyOverrides = policy.typographyOverrides;
-  }
-  if (policy.textBaseline !== undefined) {
-    glyph.textBaseline = policy.textBaseline;
-  }
-  if (policy.letterSpacingEm !== undefined) {
-    glyph.letterSpacingEm = policy.letterSpacingEm;
-  }
-  return glyph;
 }

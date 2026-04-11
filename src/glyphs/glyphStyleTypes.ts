@@ -16,14 +16,7 @@
  * these tokens control drawing inside the box.
  */
 
-export type HourMarkerGlyphStyleId =
-  | "topBandHourDefault"
-  | "topBandHourSegment"
-  | "topBandHourDotMatrix"
-  | "topBandHourTerminal"
-  | "topBandHourAnalogClock"
-  | "topBandChromeUpperNumeral"
-  | "topBandChromeAnnotation";
+export type { HourMarkerGlyphStyleId } from "../config/hourMarkerGlyphStyleIds.ts";
 
 export type ClockFaceGlyphStyle = {
   /** Face + ring fill (CSS color string). */

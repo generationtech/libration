@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { TOP_CHROME_STYLE } from "../renderer/topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import {
   createHourGlyph,
   createHourMarkerGlyph,

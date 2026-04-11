@@ -17,11 +17,11 @@
  */
 
 import {
-  createBottomChromeTextGlyph,
   resolveBottomChromeDatePolicy,
   resolveBottomChromeLabelPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
+import { createBottomChromeTextGlyph } from "../../glyphs/bottomChromeTextGlyphFromPolicy.ts";
 import { BOTTOM_CHROME_STYLE, type BottomChromeColorTokens } from "../../config/bottomChromeStyle";
 import { bottomChromeReadoutContentFromInformationBar } from "../../glyphs/bottomChromeContent.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";

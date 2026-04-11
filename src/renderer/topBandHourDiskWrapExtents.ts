@@ -16,22 +16,12 @@
  * Shared by {@link renderDisplayChrome} legacy paths and {@link buildTopBandCircleBandHourStackRenderPlan}.
  */
 
-/**
- * Outer padding (glow + stroke) around the hour disk radius used when deciding whether a phased marker needs a ±width
- * duplicate draw at the viewport seam ({@link topBandWrapOffsetsForCenteredExtent}).
- */
-export const TOP_BAND_DISK_WRAP_HALO_PAD_PX = 1.38 + 1;
+import {
+  TOP_BAND_DISK_WRAP_HALO_PAD_PX,
+  topBandDiskWrapHalfExtentPx,
+} from "../config/topBandDiskWrapGeometry.ts";
 
-/**
- * Half-extent from phased marker center (px) for circle disks, including rim/glow strokes, for wrap tiling.
- */
-export function topBandDiskWrapHalfExtentPx(radiusPx: number): number {
-  const r = radiusPx;
-  if (!(r > 0) || !Number.isFinite(r)) {
-    return 0;
-  }
-  return r + TOP_BAND_DISK_WRAP_HALO_PAD_PX;
-}
+export { TOP_BAND_DISK_WRAP_HALO_PAD_PX, topBandDiskWrapHalfExtentPx };
 
 /**
  * Half-extent for the upper next-hour numerals: at least the disk halo so glyphs stay continuous with disks, and at

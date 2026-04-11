@@ -20,7 +20,7 @@ import {
   computeUtcTopScaleRowMetrics,
 } from "../displayChrome";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../topChromeStyle";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };

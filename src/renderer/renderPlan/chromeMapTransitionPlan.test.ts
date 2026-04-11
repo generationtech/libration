@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { alignCrispLineY } from "../crispLines";
-import { TOP_CHROME_STYLE } from "../topChromeStyle";
+import { TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
 import { buildChromeMapTransitionRenderPlan } from "./chromeMapTransitionPlan";
 
 describe("buildChromeMapTransitionRenderPlan", () => {

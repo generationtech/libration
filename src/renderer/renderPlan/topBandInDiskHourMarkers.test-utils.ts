@@ -29,7 +29,7 @@ import {
 } from "../../config/appConfig.ts";
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
-import { computeHourDiskLabelSizePx } from "../topChromeStyle.ts";
+import { computeHourDiskLabelSizePx } from "../../config/topChromeStyle.ts";
 
 /** Shared resolved UTC top-band time for deterministic tests (matches prior test defaults). */
 export const RESOLVED_UTC_FOR_HOUR_DISK_TESTS = resolveTopBandTimeFromConfig({
