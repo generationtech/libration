@@ -25,6 +25,7 @@ import type {
   HourMarkersRadialLineAppearance,
   HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
+  HourMarkersTextAppearance,
 } from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
@@ -49,44 +50,56 @@ function normalizedHourMarkerBehavior(raw: unknown): EffectiveTopBandHourMarkerB
   return undefined;
 }
 
-function normalizeAnalogClockAppearanceInput(raw: unknown): HourMarkersAnalogClockAppearance | undefined {
-  if (raw === undefined) {
-    return undefined;
+function normalizeTextAppearanceInput(raw: unknown): HourMarkersTextAppearance {
+  if (raw === undefined || raw === null) {
+    return {};
   }
   if (!isPlainObject(raw)) {
-    return undefined;
+    return {};
+  }
+  const color = normalizedTopBandHourMarkerColor(raw.color);
+  return color !== undefined ? { color } : {};
+}
+
+function normalizeAnalogClockAppearanceInput(raw: unknown): HourMarkersAnalogClockAppearance {
+  if (raw === undefined || raw === null) {
+    return {};
+  }
+  if (!isPlainObject(raw)) {
+    return {};
   }
   const handColor = normalizedTopBandHourMarkerColor(raw.handColor);
   const faceColor = normalizedTopBandHourMarkerColor(raw.faceColor);
-  if (handColor === undefined && faceColor === undefined) {
-    return undefined;
+  const out: HourMarkersAnalogClockAppearance = {};
+  if (handColor !== undefined) {
+    out.handColor = handColor;
   }
-  return {
-    ...(handColor !== undefined ? { handColor } : {}),
-    ...(faceColor !== undefined ? { faceColor } : {}),
-  };
+  if (faceColor !== undefined) {
+    out.faceColor = faceColor;
+  }
+  return out;
 }
 
-function normalizeRadialLineAppearanceInput(raw: unknown): HourMarkersRadialLineAppearance | undefined {
-  if (raw === undefined) {
-    return undefined;
+function normalizeRadialLineAppearanceInput(raw: unknown): HourMarkersRadialLineAppearance {
+  if (raw === undefined || raw === null) {
+    return {};
   }
   if (!isPlainObject(raw)) {
-    return undefined;
+    return {};
   }
   const lineColor = normalizedTopBandHourMarkerColor(raw.lineColor);
-  return lineColor !== undefined ? { lineColor } : undefined;
+  return lineColor !== undefined ? { lineColor } : {};
 }
 
-function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWedgeAppearance | undefined {
-  if (raw === undefined) {
-    return undefined;
+function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWedgeAppearance {
+  if (raw === undefined || raw === null) {
+    return {};
   }
   if (!isPlainObject(raw)) {
-    return undefined;
+    return {};
   }
   const fillColor = normalizedTopBandHourMarkerColor(raw.fillColor);
-  return fillColor !== undefined ? { fillColor } : undefined;
+  return fillColor !== undefined ? { fillColor } : {};
 }
 
 /**
@@ -124,6 +137,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       realization: {
         kind: "text",
         fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+        appearance: {},
       },
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
@@ -147,11 +161,11 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     } else {
       fontAssetId = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
     }
-    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
+    const appearance = normalizeTextAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig = {
       kind: "text",
       fontAssetId,
-      ...(color !== undefined ? { color } : {}),
+      appearance,
     };
     return {
       customRepresentationEnabled: true,
@@ -162,12 +176,10 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   }
 
   if (kind === "analogClock") {
-    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
     const appearance = normalizeAnalogClockAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig = {
       kind: "analogClock",
-      ...(color !== undefined ? { color } : {}),
-      ...(appearance !== undefined ? { appearance } : {}),
+      appearance,
     };
     return {
       customRepresentationEnabled: true,
@@ -178,12 +190,10 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   }
 
   if (kind === "radialLine") {
-    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
     const appearance = normalizeRadialLineAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig = {
       kind: "radialLine",
-      ...(color !== undefined ? { color } : {}),
-      ...(appearance !== undefined ? { appearance } : {}),
+      appearance,
     };
     return {
       customRepresentationEnabled: true,
@@ -194,12 +204,10 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   }
 
   if (kind === "radialWedge") {
-    const color = normalizedTopBandHourMarkerColor(realizationRaw.color);
     const appearance = normalizeRadialWedgeAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig = {
       kind: "radialWedge",
-      ...(color !== undefined ? { color } : {}),
-      ...(appearance !== undefined ? { appearance } : {}),
+      appearance,
     };
     return {
       customRepresentationEnabled: true,

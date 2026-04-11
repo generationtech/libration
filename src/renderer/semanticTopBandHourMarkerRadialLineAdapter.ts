@@ -40,13 +40,15 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
 ): void {
+  const realization = effectiveTopBandHourMarkers.realization;
+  if (realization.kind !== "radialLine") {
+    return;
+  }
+  const markerColor = realization.resolvedAppearance.lineColor;
+
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
-  const markerColor =
-    effectiveTopBandHourMarkers.realization.kind === "radialLine"
-      ? effectiveTopBandHourMarkers.realization.resolvedAppearance.lineColor
-      : undefined;
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(

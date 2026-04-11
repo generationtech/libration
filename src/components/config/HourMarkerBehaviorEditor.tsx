@@ -69,6 +69,7 @@ export function HourMarkerBehaviorEditor({ hourMarkers, wired, updateConfig }: H
                         realization: {
                           kind: "text",
                           fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+                          appearance: {},
                         },
                         layout: { sizeMultiplier: hm.layout.sizeMultiplier },
                       };

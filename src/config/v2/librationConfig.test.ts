@@ -115,7 +115,11 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         hourMarkers: {
           customRepresentationEnabled: true,
-          realization: { kind: "text", fontAssetId: "zeroes-one", color: "  #aabbcc  " },
+          realization: {
+            kind: "text",
+            fontAssetId: "zeroes-one",
+            appearance: { color: "  #aabbcc  " },
+          },
           layout: { sizeMultiplier: 5 },
         },
       }),
@@ -123,7 +127,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
         customRepresentationEnabled: true,
-        realization: { kind: "text", fontAssetId: "zeroes-one", color: "#aabbcc" },
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#aabbcc" } },
         layout: { sizeMultiplier: 2 },
       },
     });
@@ -131,7 +135,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         hourMarkers: {
           customRepresentationEnabled: true,
-          realization: { kind: "text", fontAssetId: "kremlin" },
+          realization: { kind: "text", fontAssetId: "kremlin", appearance: {} },
           layout: { sizeMultiplier: 0.25 },
         },
       }).hourMarkers.layout.sizeMultiplier,
@@ -147,11 +151,11 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(
       effectiveTopBandHourMarkerSelection(
         normalizeDisplayChromeLayout({
-          hourMarkers: {
-            customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "dotmatrix-regular" },
-            layout: { sizeMultiplier: 1 },
-          },
+        hourMarkers: {
+          customRepresentationEnabled: true,
+          realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
         }),
       ),
     ).toEqual({
@@ -162,11 +166,11 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(
       effectiveTopBandHourMarkerSelection(
         normalizeDisplayChromeLayout({
-          hourMarkers: {
-            customRepresentationEnabled: true,
-            realization: { kind: "radialWedge" },
-            layout: { sizeMultiplier: 1 },
-          },
+        hourMarkers: {
+          customRepresentationEnabled: true,
+          realization: { kind: "radialWedge", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
         }),
       ),
     ).toEqual({ kind: "glyph", glyphMode: "radialWedge", sizeMultiplier: 1 });
@@ -324,7 +328,11 @@ describe("librationConfig v2 (Phase 1)", () => {
     const displayChromeLayout = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: true,
-        realization: { kind: "text", fontAssetId: "zeroes-one", color: "#aabbcc" },
+        realization: {
+          kind: "text",
+          fontAssetId: "zeroes-one",
+          appearance: { color: "#aabbcc" },
+        },
         layout: { sizeMultiplier: 1 },
       },
     });
@@ -475,6 +483,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(lay.hourMarkers.realization).toEqual({
       kind: "text",
       fontAssetId: "zeroes-one",
+      appearance: {},
     });
     expect(lay.hourMarkers.layout.sizeMultiplier).toBe(1.5);
   });
@@ -489,7 +498,7 @@ describe("librationConfig v2 (Phase 1)", () => {
           layout: normalizeDisplayChromeLayout({
             hourMarkers: {
               customRepresentationEnabled: true,
-              realization: { kind: "text", fontAssetId: "flip-clock" },
+              realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
               layout: { sizeMultiplier: 1.75 },
             },
           }),

@@ -59,7 +59,7 @@ function baseCustomHourMarkers(
         hourMarkers: {
           ...hm,
           customRepresentationEnabled: true,
-          realization: { kind: "text", fontAssetId: "zeroes-one" },
+          realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
           layout: { sizeMultiplier: 1 },
           ...overrides,
         },
@@ -92,6 +92,7 @@ describe("HourMarkersEditor structured authoring", () => {
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({
       kind: "text",
       fontAssetId: "zeroes-one",
+      appearance: {},
     });
   });
 
@@ -100,7 +101,7 @@ describe("HourMarkersEditor structured authoring", () => {
     render(
       <HourMarkersHarness
         initial={baseCustomHourMarkers({
-          realization: { kind: "text", fontAssetId: "dseg7modern-regular" },
+          realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
         })}
       >
         {({ config }) => {
@@ -125,7 +126,7 @@ describe("HourMarkersEditor structured authoring", () => {
     render(
       <HourMarkersHarness
         initial={baseCustomHourMarkers({
-          realization: { kind: "analogClock" },
+          realization: { kind: "analogClock", appearance: {} },
         })}
       >
         {({ config }) => {
@@ -139,7 +140,7 @@ describe("HourMarkersEditor structured authoring", () => {
       target: { value: "radialWedge" },
     });
 
-    expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "radialWedge" });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "radialWedge", appearance: {} });
   });
 
   it("color and size write structured fields only", () => {
@@ -156,7 +157,9 @@ describe("HourMarkersEditor structured authoring", () => {
     fireEvent.change(screen.getByLabelText(/Top-band hour marker color/i), {
       target: { value: "#aabbcc" },
     });
-    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({ color: "#aabbcc" });
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      appearance: { color: "#aabbcc" },
+    });
 
     fireEvent.change(screen.getByRole("slider", { name: /Hour marker text size multiplier/i }), {
       target: { value: "1.5" },

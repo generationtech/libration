@@ -17,8 +17,14 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
 } from "./appConfig";
+import { DEFAULT_HOUR_MARKER_TEXT_FILL } from "../glyphs/glyphToRenderPlan.ts";
+import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
 import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
+
+const cfAnalog = resolveHourMarkerGlyphStyle("topBandHourAnalogClock").clockFace;
+const rlDefault = resolveHourMarkerGlyphStyle("topBandHourDefault").radialLine;
+const rwDefault = resolveHourMarkerGlyphStyle("topBandHourDefault").radialWedge;
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
@@ -36,7 +42,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: false,
-            realization: { kind: "text", fontAssetId: "dseg7modern-regular" },
+            realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -48,6 +54,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "text",
         fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+        resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -59,7 +66,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "computer" },
+            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -68,7 +75,11 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       enabled: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
-      realization: { kind: "text", fontAssetId: "computer" },
+      realization: {
+        kind: "text",
+        fontAssetId: "computer",
+        resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+      },
       layout: { sizeMultiplier: 1 },
     });
   });
@@ -80,7 +91,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
           hourMarkers: {
             customRepresentationEnabled: true,
             behavior: "staticZoneAnchored",
-            realization: { kind: "text", fontAssetId: "computer" },
+            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -94,7 +105,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "analogClock" },
+            realization: { kind: "analogClock", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -106,9 +117,9 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "analogClock",
         resolvedAppearance: {
-          ringStroke: undefined,
-          handStroke: undefined,
-          faceFill: undefined,
+          ringStroke: cfAnalog.ringStroke,
+          handStroke: cfAnalog.handStroke,
+          faceFill: cfAnalog.faceFill,
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -121,7 +132,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "radialLine" },
+            realization: { kind: "radialLine", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -132,7 +143,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: { lineColor: undefined },
+        resolvedAppearance: { lineColor: rlDefault.stroke },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -144,7 +155,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "radialWedge" },
+            realization: { kind: "radialWedge", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
@@ -155,7 +166,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialWedge",
-        resolvedAppearance: { fillColor: undefined },
+        resolvedAppearance: { fillColor: rwDefault.fill },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -167,7 +178,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: false,
-            realization: { kind: "text", fontAssetId: "zeroes-one" },
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: Number.NaN },
           },
         }),
@@ -179,7 +190,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "zeroes-one" },
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: 0.3 },
           },
         }),
@@ -191,7 +202,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "zeroes-one" },
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: 3 },
           },
         }),
@@ -199,67 +210,78 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toBe(TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX);
   });
 
-  it("color omitted when absent or blank; present when set (custom on)", () => {
+  it("appearance.color omitted when absent or blank; present when set (custom on)", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "computer" },
+            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),
       ).realization,
-    ).toEqual({ kind: "text", fontAssetId: "computer" });
+    ).toEqual({
+      kind: "text",
+      fontAssetId: "computer",
+      resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+    });
 
     expect(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "computer", color: "  " },
+            realization: { kind: "text", fontAssetId: "computer", appearance: { color: "  " } },
             layout: { sizeMultiplier: 1 },
           },
         }),
       ).realization,
-    ).toEqual({ kind: "text", fontAssetId: "computer" });
+    ).toEqual({
+      kind: "text",
+      fontAssetId: "computer",
+      resolvedAppearance: { color: DEFAULT_HOUR_MARKER_TEXT_FILL },
+    });
 
     expect(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
           hourMarkers: {
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "computer", color: "#abc" },
+            realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
             layout: { sizeMultiplier: 1 },
           },
         }),
       ).realization,
-    ).toEqual({ kind: "text", fontAssetId: "computer", color: "#abc" });
+    ).toEqual({
+      kind: "text",
+      fontAssetId: "computer",
+      resolvedAppearance: { color: "#abc" },
+    });
   });
 
   it("structured hourMarkers payload resolves consistently", () => {
     const structuredOnly = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: true,
-        realization: { kind: "text", fontAssetId: "computer", color: "#abc" },
+        realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
         layout: { sizeMultiplier: 1.25 },
       },
     });
     expect(resolveEffectiveTopBandHourMarkers(structuredOnly).realization).toEqual({
       kind: "text",
       fontAssetId: "computer",
-      color: "#abc",
+      resolvedAppearance: { color: "#abc" },
     });
     expect(resolveEffectiveTopBandHourMarkers(structuredOnly).layout.sizeMultiplier).toBe(1.25);
   });
 
-  it("appearance fields override legacy color for glyph realizations", () => {
+  it("appearance fields override defaults for glyph realizations", () => {
     const lay = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: true,
         realization: {
           kind: "radialLine",
-          color: "#ff0000",
           appearance: { lineColor: "#00ff00" },
         },
         layout: { sizeMultiplier: 1 },
@@ -268,31 +290,29 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(lay);
     expect(eff.realization).toEqual({
       kind: "radialLine",
-      color: "#ff0000",
       resolvedAppearance: { lineColor: "#00ff00" },
     });
   });
 
-  it("legacy color maps into resolved analog strokes when appearance omits hand", () => {
+  it("analog appearance.handColor tints ring and hand when set", () => {
     const lay = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: true,
-        realization: { kind: "analogClock", color: "#abc" },
+        realization: { kind: "analogClock", appearance: { handColor: "#abc" } },
         layout: { sizeMultiplier: 1 },
       },
     });
     expect(resolveEffectiveTopBandHourMarkers(lay).realization).toEqual({
       kind: "analogClock",
-      color: "#abc",
       resolvedAppearance: {
         ringStroke: "#abc",
         handStroke: "#abc",
-        faceFill: undefined,
+        faceFill: cfAnalog.faceFill,
       },
     });
   });
 
-  it("analog appearance.faceColor resolves without tinting ring/hand when legacy absent", () => {
+  it("analog appearance.faceColor resolves without tinting ring/hand when hand absent", () => {
     const lay = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: true,
@@ -306,8 +326,8 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(resolveEffectiveTopBandHourMarkers(lay).realization).toEqual({
       kind: "analogClock",
       resolvedAppearance: {
-        ringStroke: undefined,
-        handStroke: undefined,
+        ringStroke: cfAnalog.ringStroke,
+        handStroke: cfAnalog.handStroke,
         faceFill: "#112233",
       },
     });

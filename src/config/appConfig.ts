@@ -137,15 +137,6 @@ export function clampTopBandHourMarkerSizeMultiplier(n: number): number {
   );
 }
 
-/** Non-empty trimmed string, or undefined (invalid / empty → no override). */
-function normalizedTopBandHourMarkerColor(raw: unknown): string | undefined {
-  if (typeof raw !== "string") {
-    return undefined;
-  }
-  const t = raw.trim();
-  return t === "" ? undefined : t;
-}
-
 /**
  * Maps historical text-style preset labels to bundled font asset ids (tests/tooling; not persisted on `chrome.layout`).
  */
@@ -168,6 +159,7 @@ export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
   realization: {
     kind: "text",
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    appearance: {},
   },
   layout: { sizeMultiplier: 1.0 },
 };
@@ -182,25 +174,22 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
     realization = {
       kind: "text",
       fontAssetId: r.fontAssetId,
-      ...(r.color !== undefined ? { color: r.color } : {}),
+      appearance: { ...r.appearance },
     };
   } else if (r.kind === "analogClock") {
     realization = {
       kind: "analogClock",
-      ...(r.color !== undefined ? { color: r.color } : {}),
-      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
+      appearance: { ...r.appearance },
     };
   } else if (r.kind === "radialLine") {
     realization = {
       kind: "radialLine",
-      ...(r.color !== undefined ? { color: r.color } : {}),
-      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
+      appearance: { ...r.appearance },
     };
   } else {
     realization = {
       kind: "radialWedge",
-      ...(r.color !== undefined ? { color: r.color } : {}),
-      ...(r.appearance !== undefined ? { appearance: { ...r.appearance } } : {}),
+      appearance: { ...r.appearance },
     };
   }
   return {
@@ -213,7 +202,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
 
 /**
  * Authoritative runtime intent for top-band hour markers (font-first text, glyph-first procedural).
- * {@link color} is a CSS color string for optional single-color styling; aligns with render-plan color strings.
+ * Optional per-realization colors live on {@link HourMarkersRealizationConfig.appearance} and resolved models.
  */
 export type EffectiveTopBandHourMarkerSelection =
   | {
@@ -221,14 +210,11 @@ export type EffectiveTopBandHourMarkerSelection =
       /** Bundled font for hour-disk numerals when custom style is on; omitted when custom is off (default strip look). */
       fontAssetId?: FontAssetId;
       sizeMultiplier: number;
-      /** When set (custom hour markers on + layout override), tints text and procedural disk content. */
-      color?: string;
     }
   | {
       kind: "glyph";
       glyphMode: TopBandHourMarkerGlyphMode;
       sizeMultiplier: number;
-      color?: string;
     };
 
 /**
@@ -243,27 +229,22 @@ export function effectiveTopBandHourMarkerSelection(
 ): EffectiveTopBandHourMarkerSelection {
   const hm = layout.hourMarkers;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
-  const color = hm.customRepresentationEnabled
-    ? normalizedTopBandHourMarkerColor(hm.realization.color)
-    : undefined;
 
   if (!hm.customRepresentationEnabled) {
     return { kind: "text", fontAssetId: undefined, sizeMultiplier };
   }
   if (hm.realization.kind !== "text") {
-    const sel: EffectiveTopBandHourMarkerSelection = {
+    return {
       kind: "glyph",
       glyphMode: hm.realization.kind,
       sizeMultiplier,
     };
-    return color !== undefined ? { ...sel, color } : sel;
   }
-  const sel: EffectiveTopBandHourMarkerSelection = {
+  return {
     kind: "text",
     fontAssetId: hm.realization.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     sizeMultiplier,
   };
-  return color !== undefined ? { ...sel, color } : sel;
 }
 
 /**

@@ -35,26 +35,26 @@ describe("normalizeHourMarkersInput", () => {
       }),
     ).toEqual({
       customRepresentationEnabled: false,
-      realization: { kind: "text", fontAssetId: "zeroes-one" },
+      realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
       layout: { sizeMultiplier: 1.5 },
     });
   });
 
-  it("custom on text: clamps size, trims color, keeps known font ids", () => {
+  it("custom on text: clamps size, trims appearance.color, keeps known font ids", () => {
     expect(
       normalizeHourMarkersInput({
         customRepresentationEnabled: true,
-        realization: { kind: "text", fontAssetId: "computer", color: "  #abc  " },
+        realization: { kind: "text", fontAssetId: "computer", appearance: { color: "  #abc  " } },
         layout: { sizeMultiplier: 3 },
       }),
     ).toEqual({
       customRepresentationEnabled: true,
-      realization: { kind: "text", fontAssetId: "computer", color: "#abc" },
+      realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
       layout: { sizeMultiplier: 2 },
     });
   });
 
-  it("custom on glyph: clamps size and preserves color", () => {
+  it("custom on glyph: clamps size; ignores legacy top-level color", () => {
     expect(
       normalizeHourMarkersInput({
         customRepresentationEnabled: true,
@@ -63,7 +63,7 @@ describe("normalizeHourMarkersInput", () => {
       }),
     ).toEqual({
       customRepresentationEnabled: true,
-      realization: { kind: "radialWedge", color: "#fff" },
+      realization: { kind: "radialWedge", appearance: {} },
       layout: { sizeMultiplier: 0.5 },
     });
   });
@@ -81,7 +81,6 @@ describe("normalizeHourMarkersInput", () => {
       }).realization,
     ).toEqual({
       kind: "radialLine",
-      color: "#111",
       appearance: { lineColor: "#aabbcc" },
     });
 
@@ -121,7 +120,7 @@ describe("normalizeHourMarkersInput", () => {
         realization: { kind: "text", fontAssetId: "not-a-font" },
         layout: { sizeMultiplier: 1 },
       }).realization,
-    ).toEqual({ kind: "text", fontAssetId: "zeroes-one" });
+    ).toEqual({ kind: "text", fontAssetId: "zeroes-one", appearance: {} });
   });
 
   it("invalid custom realization kind returns default hour markers", () => {

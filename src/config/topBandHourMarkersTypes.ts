@@ -13,18 +13,23 @@
 
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
-/** Optional structured colors for analog-clock hour markers (persisted under `realization.appearance`). */
+/** Optional text styling for text hour markers (`realization.appearance`). */
+export type HourMarkersTextAppearance = {
+  color?: string;
+};
+
+/** Structured colors for analog-clock hour markers (`realization.appearance`). */
 export type HourMarkersAnalogClockAppearance = {
   handColor?: string;
   faceColor?: string;
 };
 
-/** Optional structured colors for radial-line hour markers. */
+/** Structured colors for radial-line hour markers. */
 export type HourMarkersRadialLineAppearance = {
   lineColor?: string;
 };
 
-/** Optional structured colors for radial-wedge hour markers. */
+/** Structured colors for radial-wedge hour markers. */
 export type HourMarkersRadialWedgeAppearance = {
   fillColor?: string;
 };
@@ -35,10 +40,10 @@ export type HourMarkersRadialWedgeAppearance = {
  * {@link resolveEffectiveTopBandHourMarkers}.
  */
 export type HourMarkersRealizationConfig =
-  | { kind: "text"; fontAssetId: FontAssetId; color?: string }
-  | { kind: "analogClock"; color?: string; appearance?: HourMarkersAnalogClockAppearance }
-  | { kind: "radialLine"; color?: string; appearance?: HourMarkersRadialLineAppearance }
-  | { kind: "radialWedge"; color?: string; appearance?: HourMarkersRadialWedgeAppearance };
+  | { kind: "text"; fontAssetId: FontAssetId; appearance: HourMarkersTextAppearance }
+  | { kind: "analogClock"; appearance: HourMarkersAnalogClockAppearance }
+  | { kind: "radialLine"; appearance: HourMarkersRadialLineAppearance }
+  | { kind: "radialWedge"; appearance: HourMarkersRadialWedgeAppearance };
 
 /** How phased hour markers move with the longitude tape vs fixed structural columns. */
 export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
@@ -64,22 +69,22 @@ export type EffectiveTopBandHourMarkerContent =
  * Visual realization on the hour disk. Distinct from {@link EffectiveTopBandHourMarkerContent}, which names the
  * time basis; this names drawable mechanics (text vs procedural variants).
  */
-/**
- * Resolver output for analog clocks: undefined field means use the glyph style token default in the emitter.
- * Legacy `realization.color` maps to both ring and hand strokes when no `appearance.handColor` is set.
- */
 export type EffectiveAnalogClockResolvedAppearance = {
-  ringStroke: string | undefined;
-  handStroke: string | undefined;
-  faceFill: string | undefined;
+  ringStroke: string;
+  handStroke: string;
+  faceFill: string;
 };
 
 export type EffectiveRadialLineResolvedAppearance = {
-  lineColor: string | undefined;
+  lineColor: string;
 };
 
 export type EffectiveRadialWedgeResolvedAppearance = {
-  fillColor: string | undefined;
+  fillColor: string;
+};
+
+export type EffectiveTextResolvedAppearance = {
+  color: string;
 };
 
 export type EffectiveTopBandHourMarkerRealization =
@@ -87,12 +92,11 @@ export type EffectiveTopBandHourMarkerRealization =
       kind: "text";
       /** Bundled font id; {@link resolveEffectiveTopBandHourMarkers} supplies the default when custom is off. */
       fontAssetId?: FontAssetId;
-      /** CSS color string; omitted when chrome/role defaults apply. */
-      color?: string;
+      resolvedAppearance: EffectiveTextResolvedAppearance;
     }
-  | { kind: "analogClock"; color?: string; resolvedAppearance: EffectiveAnalogClockResolvedAppearance }
-  | { kind: "radialLine"; color?: string; resolvedAppearance: EffectiveRadialLineResolvedAppearance }
-  | { kind: "radialWedge"; color?: string; resolvedAppearance: EffectiveRadialWedgeResolvedAppearance };
+  | { kind: "analogClock"; resolvedAppearance: EffectiveAnalogClockResolvedAppearance }
+  | { kind: "radialLine"; resolvedAppearance: EffectiveRadialLineResolvedAppearance }
+  | { kind: "radialWedge"; resolvedAppearance: EffectiveRadialWedgeResolvedAppearance };
 
 export type EffectiveTopBandHourMarkerLayout = {
   /** Finite check, default 1.0 when absent/invalid, then clamp to the v2 [0.5, 2] range. */

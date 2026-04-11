@@ -469,53 +469,54 @@ export function assertIsNormalizedLibrationConfig(
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.hourMarkers");
   }
   const rk = (hm.realization as { kind: string }).kind;
+  if (Object.prototype.hasOwnProperty.call(hm.realization, "color")) {
+    throw new Error("assertIsNormalizedLibrationConfig: hourMarkers realization must not use legacy color");
+  }
   if (rk === "text") {
     const fontAssetId = (hm.realization as { fontAssetId?: unknown }).fontAssetId;
     if (typeof fontAssetId !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fontAssetId)) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers text fontAssetId");
     }
+    const app = (hm.realization as { appearance?: unknown }).appearance;
+    if (typeof app !== "object" || app === null || Array.isArray(app)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers text appearance");
+    }
+    const o = app as { color?: unknown };
+    if (o.color !== undefined && typeof o.color !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers text appearance.color");
+    }
   } else if (rk !== "analogClock" && rk !== "radialLine" && rk !== "radialWedge") {
     throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers realization kind");
   }
-  const rColor = (hm.realization as { color?: unknown }).color;
-  if (rColor !== undefined && typeof rColor !== "string") {
-    throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers realization color");
-  }
   if (rk === "analogClock") {
     const app = (hm.realization as { appearance?: unknown }).appearance;
-    if (app !== undefined) {
-      if (typeof app !== "object" || app === null || Array.isArray(app)) {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance");
-      }
-      const o = app as { handColor?: unknown; faceColor?: unknown };
-      if (o.handColor !== undefined && typeof o.handColor !== "string") {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.handColor");
-      }
-      if (o.faceColor !== undefined && typeof o.faceColor !== "string") {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.faceColor");
-      }
+    if (typeof app !== "object" || app === null || Array.isArray(app)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance");
+    }
+    const o = app as { handColor?: unknown; faceColor?: unknown };
+    if (o.handColor !== undefined && typeof o.handColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.handColor");
+    }
+    if (o.faceColor !== undefined && typeof o.faceColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers analogClock appearance.faceColor");
     }
   } else if (rk === "radialLine") {
     const app = (hm.realization as { appearance?: unknown }).appearance;
-    if (app !== undefined) {
-      if (typeof app !== "object" || app === null || Array.isArray(app)) {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance");
-      }
-      const o = app as { lineColor?: unknown };
-      if (o.lineColor !== undefined && typeof o.lineColor !== "string") {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance.lineColor");
-      }
+    if (typeof app !== "object" || app === null || Array.isArray(app)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance");
+    }
+    const o = app as { lineColor?: unknown };
+    if (o.lineColor !== undefined && typeof o.lineColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance.lineColor");
     }
   } else if (rk === "radialWedge") {
     const app = (hm.realization as { appearance?: unknown }).appearance;
-    if (app !== undefined) {
-      if (typeof app !== "object" || app === null || Array.isArray(app)) {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance");
-      }
-      const o = app as { fillColor?: unknown };
-      if (o.fillColor !== undefined && typeof o.fillColor !== "string") {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.fillColor");
-      }
+    if (typeof app !== "object" || app === null || Array.isArray(app)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance");
+    }
+    const o = app as { fillColor?: unknown };
+    if (o.fillColor !== undefined && typeof o.fillColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.fillColor");
     }
   }
   const hmBehavior = (hm as { behavior?: unknown }).behavior;

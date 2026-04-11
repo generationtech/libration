@@ -66,7 +66,7 @@ describe("ChromeTab top-band hour markers", () => {
           hourMarkers: {
             ...hm,
             customRepresentationEnabled: true,
-            realization: { kind: "text", fontAssetId: "zeroes-one" },
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: 1 },
             ...overrides,
           },
@@ -83,7 +83,7 @@ describe("ChromeTab top-band hour markers", () => {
 
   it("text branch shows font and size (no glyph style control)", () => {
     const initial = baseCustomHourMarkers({
-      realization: { kind: "text", fontAssetId: "zeroes-one" },
+      realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
     });
     render(<ChromeTabTestHarness initial={initial} />);
 
@@ -97,7 +97,7 @@ describe("ChromeTab top-band hour markers", () => {
     render(
       <ChromeTabTestHarness
         initial={baseCustomHourMarkers({
-          realization: { kind: "analogClock" },
+          realization: { kind: "analogClock", appearance: {} },
         })}
       />,
     );
@@ -122,7 +122,7 @@ describe("ChromeTab top-band hour markers", () => {
       target: { value: "glyph" },
     });
 
-    expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "analogClock" });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "analogClock", appearance: {} });
   });
 
   it("font change updates structured hourMarkers realization", () => {
@@ -130,7 +130,7 @@ describe("ChromeTab top-band hour markers", () => {
     render(
       <ChromeTabTestHarness
         initial={baseCustomHourMarkers({
-          realization: { kind: "text", fontAssetId: "dseg7modern-regular" },
+          realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
         })}
       >
         {({ config }) => {
@@ -163,10 +163,14 @@ describe("ChromeTab top-band hour markers", () => {
 
     const colorInput = screen.getByLabelText(/Top-band hour marker color/i);
     fireEvent.change(colorInput, { target: { value: "#abcdef" } });
-    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({ color: "#abcdef" });
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      appearance: { color: "#abcdef" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /Clear hour marker color override/i }));
-    expect((last!.chrome.layout.hourMarkers.realization as { color?: string }).color).toBeUndefined();
+    expect(
+      (last!.chrome.layout.hourMarkers.realization as { appearance?: { color?: string } }).appearance?.color,
+    ).toBeUndefined();
   });
 
   it("custom off keeps controls inert", () => {
@@ -180,7 +184,7 @@ describe("ChromeTab top-band hour markers", () => {
           ...lay,
           hourMarkers: {
             customRepresentationEnabled: false,
-            realization: { kind: "text", fontAssetId: "dotmatrix-regular" },
+            realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         },

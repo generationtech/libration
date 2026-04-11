@@ -287,7 +287,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       markers,
       diskLabelSizePx: labelSize,
     });
-    emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, gctx, items);
+    emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, effectiveMarkers, gctx, items);
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,

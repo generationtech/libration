@@ -40,13 +40,15 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
 ): void {
+  const realization = effectiveTopBandHourMarkers.realization;
+  if (realization.kind !== "radialWedge") {
+    return;
+  }
+  const markerColor = realization.resolvedAppearance.fillColor;
+
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
-  const markerColor =
-    effectiveTopBandHourMarkers.realization.kind === "radialWedge"
-      ? effectiveTopBandHourMarkers.realization.resolvedAppearance.fillColor
-      : undefined;
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(

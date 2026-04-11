@@ -13,7 +13,7 @@
 
 /**
  * Text realization adapter: laid-out semantic top-band hour-disk text → existing hour-marker text glyph →
- * {@link RenderPlan} items (default or explicit font/color from {@link EffectiveTopBandHourMarkerSelection}).
+ * {@link RenderPlan} items (typography from selection; fill from {@link EffectiveTopBandHourMarkers} resolution).
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -22,6 +22,7 @@ import {
   resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection,
 } from "../config/topBandVisualPolicy.ts";
 import type { LaidOutSemanticTopBandHourTextMarker } from "../config/topBandHourMarkersLayout.ts";
+import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
@@ -35,9 +36,16 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
   laidOut: readonly LaidOutSemanticTopBandHourTextMarker[],
   viewportWidthPx: number,
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection,
+  effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers,
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
 ): void {
+  const realization = effectiveTopBandHourMarkers.realization;
+  if (realization.kind !== "text") {
+    return;
+  }
+  const markerColor = realization.resolvedAppearance.color;
+
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
@@ -57,7 +65,7 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
         hourContent,
         hourSpec,
         typographyOverrides,
-        effectiveTopBandHourMarkerSelection.color,
+        markerColor,
       );
       emitGlyphToRenderPlan(glyph, { cx, cy: inst.centerY, size: inst.sizePx }, glyphRenderContext, out);
     }

@@ -24,9 +24,8 @@ import {
 import type {
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
-  HourMarkersRadialLineAppearance,
-  HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
+  HourMarkersTextAppearance,
 } from "../../config/topBandHourMarkersTypes";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
@@ -87,104 +86,6 @@ function commitHourMarkers(
 }
 
 // -----------------------------------------------------------------------------
-// Shared optional color (structured realization.color)
-// -----------------------------------------------------------------------------
-
-function HourMarkerOptionalColorEditor({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
-  const color = hourMarkers.realization.color;
-  return (
-    <ConfigControlRow label="Hour marker color (optional)">
-      <input
-        type="color"
-        className="config-input"
-        aria-label="Top-band hour marker color"
-        title={
-          color === undefined
-            ? "No color override — picker shows a neutral placeholder"
-            : "Custom color for top-band hour markers"
-        }
-        value={color ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-        disabled={!wired || !hourMarkers.customRepresentationEnabled}
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const v = e.currentTarget.value;
-                commitHourMarkers(updateConfig, (hm) => {
-                  const r = hm.realization;
-                  let realization: HourMarkersRealizationConfig;
-                  if (r.kind === "text") {
-                    realization = {
-                      kind: "text",
-                      fontAssetId: r.fontAssetId,
-                      color: v,
-                    };
-                  } else if (r.kind === "analogClock") {
-                    realization = {
-                      kind: "analogClock",
-                      color: v,
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  } else if (r.kind === "radialLine") {
-                    realization = {
-                      kind: "radialLine",
-                      color: v,
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  } else {
-                    realization = {
-                      kind: "radialWedge",
-                      color: v,
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  }
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      />
-      <button
-        type="button"
-        className="config-input"
-        aria-label="Clear hour marker color override"
-        disabled={!wired || !hourMarkers.customRepresentationEnabled || color === undefined}
-        onClick={
-          wired && updateConfig
-            ? () => {
-                commitHourMarkers(updateConfig, (hm) => {
-                  const r = hm.realization;
-                  let realization: HourMarkersRealizationConfig;
-                  if (r.kind === "text") {
-                    realization = { kind: "text", fontAssetId: r.fontAssetId };
-                  } else if (r.kind === "analogClock") {
-                    realization = {
-                      kind: "analogClock",
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  } else if (r.kind === "radialLine") {
-                    realization = {
-                      kind: "radialLine",
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  } else {
-                    realization = {
-                      kind: "radialWedge",
-                      ...(r.appearance !== undefined ? { appearance: r.appearance } : {}),
-                    };
-                  }
-                  return { ...hm, realization };
-                });
-              }
-            : undefined
-        }
-      >
-        Use default colors
-      </button>
-    </ConfigControlRow>
-  );
-}
-
-// -----------------------------------------------------------------------------
 // Realization axis (text vs glyph)
 // -----------------------------------------------------------------------------
 
@@ -201,18 +102,19 @@ export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }
             ? (e) => {
                 const kind = e.currentTarget.value as TopBandHourMarkerRepresentationKind;
                 commitHourMarkers(updateConfig, (hm) => {
-                  const prevColor = hm.realization.color;
                   if (kind === "text") {
                     const fontAssetId =
                       hm.realization.kind === "text"
                         ? hm.realization.fontAssetId
                         : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+                    const appearance: HourMarkersTextAppearance =
+                      hm.realization.kind === "text" ? { ...hm.realization.appearance } : {};
                     return {
                       ...hm,
                       realization: {
                         kind: "text",
                         fontAssetId,
-                        ...(prevColor !== undefined ? { color: prevColor } : {}),
+                        appearance,
                       },
                     };
                   }
@@ -224,7 +126,7 @@ export function HourMarkerRealizationEditor({ hourMarkers, wired, updateConfig }
                     ...hm,
                     realization: {
                       kind: glyphMode,
-                      ...(prevColor !== undefined ? { color: prevColor } : {}),
+                      appearance: {},
                     },
                   };
                 });
@@ -284,7 +186,8 @@ export function HourMarkerContentEditor({
                     realization: {
                       kind: "text",
                       fontAssetId: nextFont,
-                      ...(hm.realization.color !== undefined ? { color: hm.realization.color } : {}),
+                      appearance:
+                        hm.realization.kind === "text" ? { ...hm.realization.appearance } : {},
                     },
                   };
                 });
@@ -304,7 +207,7 @@ export function HourMarkerContentEditor({
 }
 
 // -----------------------------------------------------------------------------
-// Text appearance axis (structured layout + text realization color)
+// Text appearance axis (structured layout + text realization appearance.color)
 // -----------------------------------------------------------------------------
 
 export type TextHourMarkerAppearanceEditorProps = HourMarkerEditorBaseProps & {
@@ -318,7 +221,73 @@ export function TextHourMarkerAppearanceEditor({
   hourMarkerTextControlsActive,
 }: TextHourMarkerAppearanceEditorProps) {
   const sm = hourMarkers.layout.sizeMultiplier;
+  const textColor =
+    hourMarkers.realization.kind === "text" ? hourMarkers.realization.appearance.color : undefined;
   return (
+    <>
+      <ConfigControlRow label="Hour marker color (optional)">
+        <input
+          type="color"
+          className="config-input"
+          aria-label="Top-band hour marker color"
+          title={
+            textColor === undefined
+              ? "No color override — picker shows a neutral placeholder"
+              : "Custom color for top-band hour markers"
+          }
+          value={textColor ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+          disabled={!wired || !hourMarkerTextControlsActive}
+          onChange={
+            wired && updateConfig
+              ? (e) => {
+                  const v = e.currentTarget.value;
+                  commitHourMarkers(updateConfig, (hm) => {
+                    if (hm.realization.kind !== "text") {
+                      return hm;
+                    }
+                    return {
+                      ...hm,
+                      realization: {
+                        kind: "text",
+                        fontAssetId: hm.realization.fontAssetId,
+                        appearance: { ...hm.realization.appearance, color: v },
+                      },
+                    };
+                  });
+                }
+              : undefined
+          }
+        />
+        <button
+          type="button"
+          className="config-input"
+          aria-label="Clear hour marker color override"
+          disabled={!wired || !hourMarkerTextControlsActive || textColor === undefined}
+          onClick={
+            wired && updateConfig
+              ? () => {
+                  commitHourMarkers(updateConfig, (hm) => {
+                    if (hm.realization.kind !== "text") {
+                      return hm;
+                    }
+                    const { color, ...rest } = hm.realization.appearance;
+                    void color;
+                    return {
+                      ...hm,
+                      realization: {
+                        kind: "text",
+                        fontAssetId: hm.realization.fontAssetId,
+                        appearance: rest,
+                      },
+                    };
+                  });
+                }
+              : undefined
+          }
+        >
+          Use default colors
+        </button>
+      </ConfigControlRow>
     <ConfigControlRow label="Hour marker size">
       <input
         type="range"
@@ -348,6 +317,7 @@ export function TextHourMarkerAppearanceEditor({
         {sm.toFixed(2)}×
       </span>
     </ConfigControlRow>
+    </>
   );
 }
 
@@ -371,7 +341,7 @@ function GlyphHourMarkerModeSelector({ hourMarkers, wired, updateConfig }: HourM
                   ...hm,
                   realization: {
                     kind: glyphMode,
-                    ...(hm.realization.color !== undefined ? { color: hm.realization.color } : {}),
+                    appearance: {},
                   },
                 }));
               }
@@ -388,10 +358,7 @@ function GlyphHourMarkerModeSelector({ hourMarkers, wired, updateConfig }: HourM
   );
 }
 
-function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance | undefined): HourMarkersAnalogClockAppearance | undefined {
-  if (a === undefined) {
-    return undefined;
-  }
+function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarkersAnalogClockAppearance {
   const out: HourMarkersAnalogClockAppearance = {};
   if (a.handColor !== undefined) {
     out.handColor = a.handColor;
@@ -399,7 +366,7 @@ function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance | undefined
   if (a.faceColor !== undefined) {
     out.faceColor = a.faceColor;
   }
-  return Object.keys(out).length > 0 ? out : undefined;
+  return out;
 }
 
 /** analogClock: optional hand and face colors (`realization.appearance`). */
@@ -408,8 +375,8 @@ function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig
     return null;
   }
   const r = hourMarkers.realization;
-  const hand = r.appearance?.handColor;
-  const face = r.appearance?.faceColor;
+  const hand = r.appearance.handColor;
+  const face = r.appearance.faceColor;
   return (
     <>
       <ConfigControlRow label="Hand color (optional)">
@@ -429,14 +396,12 @@ function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig
                       return hm;
                     }
                     const cur = hm.realization;
-                    const nextApp = compactAnalogAppearance({
-                      ...cur.appearance,
-                      handColor: v,
-                    });
                     const realization: HourMarkersRealizationConfig = {
                       kind: "analogClock",
-                      ...(cur.color !== undefined ? { color: cur.color } : {}),
-                      ...(nextApp !== undefined ? { appearance: nextApp } : {}),
+                      appearance: compactAnalogAppearance({
+                        ...cur.appearance,
+                        handColor: v,
+                      }),
                     };
                     return { ...hm, realization };
                   });
@@ -457,14 +422,12 @@ function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig
                       return hm;
                     }
                     const cur = hm.realization;
-                    const nextApp = compactAnalogAppearance({
-                      ...cur.appearance,
-                      handColor: undefined,
-                    });
                     const realization: HourMarkersRealizationConfig = {
                       kind: "analogClock",
-                      ...(cur.color !== undefined ? { color: cur.color } : {}),
-                      ...(nextApp !== undefined ? { appearance: nextApp } : {}),
+                      appearance: compactAnalogAppearance({
+                        ...cur.appearance,
+                        handColor: undefined,
+                      }),
                     };
                     return { ...hm, realization };
                   });
@@ -492,14 +455,12 @@ function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig
                       return hm;
                     }
                     const cur = hm.realization;
-                    const nextApp = compactAnalogAppearance({
-                      ...cur.appearance,
-                      faceColor: v,
-                    });
                     const realization: HourMarkersRealizationConfig = {
                       kind: "analogClock",
-                      ...(cur.color !== undefined ? { color: cur.color } : {}),
-                      ...(nextApp !== undefined ? { appearance: nextApp } : {}),
+                      appearance: compactAnalogAppearance({
+                        ...cur.appearance,
+                        faceColor: v,
+                      }),
                     };
                     return { ...hm, realization };
                   });
@@ -520,14 +481,12 @@ function GlyphHourMarkerAnalogClockAppearance({ hourMarkers, wired, updateConfig
                       return hm;
                     }
                     const cur = hm.realization;
-                    const nextApp = compactAnalogAppearance({
-                      ...cur.appearance,
-                      faceColor: undefined,
-                    });
                     const realization: HourMarkersRealizationConfig = {
                       kind: "analogClock",
-                      ...(cur.color !== undefined ? { color: cur.color } : {}),
-                      ...(nextApp !== undefined ? { appearance: nextApp } : {}),
+                      appearance: compactAnalogAppearance({
+                        ...cur.appearance,
+                        faceColor: undefined,
+                      }),
                     };
                     return { ...hm, realization };
                   });
@@ -548,7 +507,7 @@ function GlyphHourMarkerRadialLineAppearance({ hourMarkers, wired, updateConfig 
     return null;
   }
   const r = hourMarkers.realization;
-  const line = r.appearance?.lineColor;
+  const line = r.appearance.lineColor;
   return (
     <ConfigControlRow label="Line color (optional)">
       <input
@@ -566,12 +525,9 @@ function GlyphHourMarkerRadialLineAppearance({ hourMarkers, wired, updateConfig 
                   if (hm.realization.kind !== "radialLine") {
                     return hm;
                   }
-                  const cur = hm.realization;
-                  const appearance: HourMarkersRadialLineAppearance = { lineColor: v };
                   const realization: HourMarkersRealizationConfig = {
                     kind: "radialLine",
-                    ...(cur.color !== undefined ? { color: cur.color } : {}),
-                    appearance,
+                    appearance: { lineColor: v },
                   };
                   return { ...hm, realization };
                 });
@@ -591,10 +547,9 @@ function GlyphHourMarkerRadialLineAppearance({ hourMarkers, wired, updateConfig 
                   if (hm.realization.kind !== "radialLine") {
                     return hm;
                   }
-                  const cur = hm.realization;
                   const realization: HourMarkersRealizationConfig = {
                     kind: "radialLine",
-                    ...(cur.color !== undefined ? { color: cur.color } : {}),
+                    appearance: {},
                   };
                   return { ...hm, realization };
                 });
@@ -614,7 +569,7 @@ function GlyphHourMarkerRadialWedgeAppearance({ hourMarkers, wired, updateConfig
     return null;
   }
   const r = hourMarkers.realization;
-  const fill = r.appearance?.fillColor;
+  const fill = r.appearance.fillColor;
   return (
     <ConfigControlRow label="Fill color (optional)">
       <input
@@ -632,12 +587,9 @@ function GlyphHourMarkerRadialWedgeAppearance({ hourMarkers, wired, updateConfig
                   if (hm.realization.kind !== "radialWedge") {
                     return hm;
                   }
-                  const cur = hm.realization;
-                  const appearance: HourMarkersRadialWedgeAppearance = { fillColor: v };
                   const realization: HourMarkersRealizationConfig = {
                     kind: "radialWedge",
-                    ...(cur.color !== undefined ? { color: cur.color } : {}),
-                    appearance,
+                    appearance: { fillColor: v },
                   };
                   return { ...hm, realization };
                 });
@@ -657,10 +609,9 @@ function GlyphHourMarkerRadialWedgeAppearance({ hourMarkers, wired, updateConfig
                   if (hm.realization.kind !== "radialWedge") {
                     return hm;
                   }
-                  const cur = hm.realization;
                   const realization: HourMarkersRealizationConfig = {
                     kind: "radialWedge",
-                    ...(cur.color !== undefined ? { color: cur.color } : {}),
+                    appearance: {},
                   };
                   return { ...hm, realization };
                 });
@@ -709,7 +660,6 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
   return (
     <>
       <HourMarkerBehaviorEditor {...baseProps} />
-      <HourMarkerOptionalColorEditor {...baseProps} />
       <HourMarkerRealizationEditor {...baseProps} />
       {uiRepresentationKind(hourMarkers) === "text" ? (
         <>
