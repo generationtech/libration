@@ -35,7 +35,6 @@ describe("top-band hour marker contract", () => {
         // Obsolete flat-field name; must not influence `hourMarkers`.
         hourMarkerNumericRepresentation: "segment",
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -55,23 +54,21 @@ describe("top-band hour marker contract", () => {
   });
 
   describe("effectiveTopBandHourMarkerSelection", () => {
-    it("custom off → default strip text (no font in effective selection)", () => {
+    it("non-baseline text → font in effective selection", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: false,
             realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
             layout: { sizeMultiplier: 1 },
           }),
         ),
-      ).toEqual({ kind: "text", fontAssetId: undefined, sizeMultiplier: 1 });
+      ).toEqual({ kind: "text", fontAssetId: "dseg7modern-regular", sizeMultiplier: 1 });
     });
 
-    it("custom on + text → font-first result", () => {
+    it("text + explicit font → font-first result", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: true,
             realization: { kind: "text", fontAssetId: "computer", appearance: {} },
             layout: { sizeMultiplier: 1 },
           }),
@@ -79,11 +76,10 @@ describe("top-band hour marker contract", () => {
       ).toEqual({ kind: "text", fontAssetId: "computer", sizeMultiplier: 1 });
     });
 
-    it("custom on + glyph → glyph-first result", () => {
+    it("glyph realization → glyph-first result", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: true,
             realization: { kind: "radialLine", appearance: {} },
             layout: { sizeMultiplier: 1 },
           }),
@@ -95,7 +91,6 @@ describe("top-band hour marker contract", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: true,
             realization: {
               kind: "text",
               fontAssetId: "computer",
@@ -112,7 +107,6 @@ describe("top-band hour marker contract", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: true,
             realization: { kind: "radialWedge", appearance: { fillColor: "rgb(1, 2, 3)" } },
             layout: { sizeMultiplier: 1 },
           }),
@@ -124,11 +118,10 @@ describe("top-band hour marker contract", () => {
       });
     });
 
-    it("ignores color when custom hour markers are off", () => {
+    it("canonical default text realization → undefined font (typography role only)", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay({
-            customRepresentationEnabled: false,
             realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: 1 },
           }),

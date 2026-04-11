@@ -114,7 +114,6 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: {
             kind: "text",
             fontAssetId: "zeroes-one",
@@ -126,7 +125,6 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#aabbcc" } },
         layout: { sizeMultiplier: 2 },
       },
@@ -134,7 +132,6 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "kremlin", appearance: {} },
           layout: { sizeMultiplier: 0.25 },
         },
@@ -152,7 +149,6 @@ describe("librationConfig v2 (Phase 1)", () => {
       effectiveTopBandHourMarkerSelection(
         normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -167,7 +163,6 @@ describe("librationConfig v2 (Phase 1)", () => {
       effectiveTopBandHourMarkerSelection(
         normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "radialWedge", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -327,7 +322,6 @@ describe("librationConfig v2 (Phase 1)", () => {
   it("round-trip preserves hour marker color on AppConfig (structured hourMarkers)", () => {
     const displayChromeLayout = normalizeDisplayChromeLayout({
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: {
           kind: "text",
           fontAssetId: "zeroes-one",
@@ -466,23 +460,23 @@ describe("librationConfig v2 (Phase 1)", () => {
 
   it("normalizeDisplayChromeLayout: unusable hourMarkers falls back to defaults", () => {
     expect(normalizeDisplayChromeLayout({ hourMarkers: {} })).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
-    expect(normalizeDisplayChromeLayout({ hourMarkers: { customRepresentationEnabled: true } })).toEqual(
-      DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
-    );
+    expect(
+      normalizeDisplayChromeLayout({ hourMarkers: { layout: { sizeMultiplier: 1 } } }),
+    ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });
 
-  it("customRepresentationEnabled false on structured input resets canonical default text realization", () => {
+  it("legacy customRepresentationEnabled is ignored; structured realization is canonical", () => {
     const lay = normalizeDisplayChromeLayout({
       hourMarkers: {
         customRepresentationEnabled: false,
-        realization: { kind: "text", fontAssetId: "flip-clock" },
+        realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
         layout: { sizeMultiplier: 1.5 },
       },
     });
-    expect(lay.hourMarkers.customRepresentationEnabled).toBe(false);
+    expect(lay.hourMarkers).not.toHaveProperty("customRepresentationEnabled");
     expect(lay.hourMarkers.realization).toEqual({
       kind: "text",
-      fontAssetId: "zeroes-one",
+      fontAssetId: "flip-clock",
       appearance: {},
     });
     expect(lay.hourMarkers.layout.sizeMultiplier).toBe(1.5);
@@ -497,7 +491,6 @@ describe("librationConfig v2 (Phase 1)", () => {
           ...defaultLibrationConfigV2().chrome,
           layout: normalizeDisplayChromeLayout({
             hourMarkers: {
-              customRepresentationEnabled: true,
               realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
               layout: { sizeMultiplier: 1.75 },
             },

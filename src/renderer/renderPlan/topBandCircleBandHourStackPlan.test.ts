@@ -53,7 +53,6 @@ const EFF_TEXT_DEFAULT = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHRO
 const LAYOUT_LEGACY_SEGMENT_TEXT: DisplayChromeLayoutConfig = {
   ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   hourMarkers: {
-    customRepresentationEnabled: true,
     realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
     layout: { sizeMultiplier: 1 },
   },
@@ -63,7 +62,6 @@ const LAYOUT_LEGACY_SEGMENT_TEXT: DisplayChromeLayoutConfig = {
 const LAYOUT_LEGACY_ANALOG_GLYPH: DisplayChromeLayoutConfig = {
   ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   hourMarkers: {
-    customRepresentationEnabled: true,
     realization: { kind: "analogClock", appearance: {} },
     layout: { sizeMultiplier: 1 },
   },
@@ -107,7 +105,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
   const effText = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
-      customRepresentationEnabled: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: {} },
       layout: { sizeMultiplier: 1 },
     },
@@ -115,7 +112,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
   const effAnalog = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
-      customRepresentationEnabled: true,
       realization: { kind: "analogClock", appearance: {} },
       layout: { sizeMultiplier: 1 },
     },
@@ -125,7 +121,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
   const effRadialLine = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
-      customRepresentationEnabled: true,
       realization: { kind: "radialLine", appearance: {} },
       layout: { sizeMultiplier: 1 },
     },
@@ -133,7 +128,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
   const effRadialWedge = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
-      customRepresentationEnabled: true,
       realization: { kind: "radialWedge", appearance: {} },
       layout: { sizeMultiplier: 1 },
     },
@@ -295,7 +289,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       eff: effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -310,7 +303,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       eff: effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 2 },
         },
@@ -339,7 +331,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       eff: effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -358,7 +349,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const eff = effectiveTopBandHourMarkersForLayout({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "analogClock", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -383,7 +373,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const eff = effectiveTopBandHourMarkersForLayout({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "analogClock", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -534,7 +523,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_TEXT_COMPUTER: DisplayChromeLayoutConfig = {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "text", fontAssetId: "computer", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -543,7 +531,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_TEXT_COLORED: DisplayChromeLayoutConfig = {
       ...LAYOUT_TEXT_COMPUTER,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#c0ffee" } },
         layout: { sizeMultiplier: 1 },
       },
@@ -613,7 +600,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const layout2x: DisplayChromeLayoutConfig = {
         ...LAYOUT_TEXT_COMPUTER,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 2 },
         },
@@ -672,7 +658,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_ANALOG_GLYPH: DisplayChromeLayoutConfig = {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "analogClock", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -737,7 +722,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_RADIAL_LINE: DisplayChromeLayoutConfig = {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -746,7 +730,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_RADIAL_COLORED: DisplayChromeLayoutConfig = {
       ...LAYOUT_RADIAL_LINE,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "radialLine", appearance: { lineColor: "#ee00aa" } },
         layout: { sizeMultiplier: 1 },
       },
@@ -851,7 +834,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_RADIAL_WEDGE: DisplayChromeLayoutConfig = {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "radialWedge", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -860,7 +842,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const LAYOUT_WEDGE_COLORED: DisplayChromeLayoutConfig = {
       ...LAYOUT_RADIAL_WEDGE,
       hourMarkers: {
-        customRepresentationEnabled: true,
         realization: { kind: "radialWedge", appearance: { fillColor: "#ee00aa" } },
         layout: { sizeMultiplier: 1 },
       },
@@ -977,7 +958,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const sel = effectiveTopBandHourMarkerSelection({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -985,7 +965,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -1006,7 +985,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const sel = effectiveTopBandHourMarkerSelection({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -1014,7 +992,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -1059,7 +1036,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -1085,7 +1061,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -1112,7 +1087,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#c0ffee" } },
           layout: { sizeMultiplier: 1 },
         },
@@ -1138,7 +1112,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "radialLine", appearance: { lineColor: "#ee00aa" } },
           layout: { sizeMultiplier: 1 },
         },
@@ -1161,7 +1134,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "radialWedge", appearance: { fillColor: "#aabbcc" } },
           layout: { sizeMultiplier: 1 },
         },
@@ -1186,7 +1158,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const eff = effectiveTopBandHourMarkersForLayout({
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "analogClock", appearance: { handColor: "#4466ff" } },
           layout: { sizeMultiplier: 1 },
         },

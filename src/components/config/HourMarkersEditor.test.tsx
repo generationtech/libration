@@ -58,7 +58,6 @@ function baseCustomHourMarkers(
         ...d.chrome.layout,
         hourMarkers: {
           ...hm,
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
           layout: { sizeMultiplier: 1 },
           ...overrides,
@@ -73,7 +72,7 @@ describe("HourMarkersEditor structured authoring", () => {
     cleanup();
   });
 
-  it("realization kind change sets customRepresentationEnabled and resets appearance", () => {
+  it("realization kind change resets appearance for the new kind", () => {
     let last: LibrationConfigV2 | null = null;
     render(
       <HourMarkersHarness
@@ -92,7 +91,6 @@ describe("HourMarkersEditor structured authoring", () => {
       target: { value: "radialLine" },
     });
 
-    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "radialLine", appearance: {} });
   });
 
@@ -119,7 +117,6 @@ describe("HourMarkersEditor structured authoring", () => {
       kind: "text",
       fontAssetId: "computer",
     });
-    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
   });
 
   it("realization kind select updates glyph mode", () => {

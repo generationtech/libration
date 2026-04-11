@@ -49,7 +49,6 @@ export type HourMarkersRealizationConfig =
 export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
 
 export interface HourMarkersConfig {
-  customRepresentationEnabled: boolean;
   realization: HourMarkersRealizationConfig;
   /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
   behavior?: EffectiveTopBandHourMarkerBehavior;
@@ -90,7 +89,7 @@ export type EffectiveTextResolvedAppearance = {
 export type EffectiveTopBandHourMarkerRealization =
   | {
       kind: "text";
-      /** Bundled font id; {@link resolveEffectiveTopBandHourMarkers} supplies the default when custom is off. */
+      /** Bundled font id; when omitted, resolution uses the canonical default bundled font. */
       fontAssetId?: FontAssetId;
       resolvedAppearance: EffectiveTextResolvedAppearance;
     }

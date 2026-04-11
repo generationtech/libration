@@ -155,7 +155,6 @@ export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zer
 
 /** Default structured hour markers for {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG}. */
 export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
-  customRepresentationEnabled: false,
   realization: {
     kind: "text",
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -193,7 +192,6 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
     };
   }
   return {
-    customRepresentationEnabled: h.customRepresentationEnabled,
     realization,
     ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
     layout: { sizeMultiplier: h.layout.sizeMultiplier },
@@ -207,7 +205,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
 export type EffectiveTopBandHourMarkerSelection =
   | {
       kind: "text";
-      /** Bundled font for hour-disk numerals when custom style is on; omitted when custom is off (default strip look). */
+      /** Bundled font override; omitted for the canonical default text realization (typography role only). */
       fontAssetId?: FontAssetId;
       sizeMultiplier: number;
     }
@@ -230,15 +228,15 @@ export function effectiveTopBandHourMarkerSelection(
   const hm = layout.hourMarkers;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
 
-  if (!hm.customRepresentationEnabled) {
-    return { kind: "text", fontAssetId: undefined, sizeMultiplier };
-  }
   if (hm.realization.kind !== "text") {
     return {
       kind: "glyph",
       glyphMode: hm.realization.kind,
       sizeMultiplier,
     };
+  }
+  if (isBaselineDefaultTopBandHourMarkerSelectionInput(layout)) {
+    return { kind: "text", fontAssetId: undefined, sizeMultiplier };
   }
   return {
     kind: "text",
@@ -259,7 +257,7 @@ export interface DisplayChromeLayoutConfig {
   /** Top-strip canvas palette (neutral default). */
   topChromeTheme: TopChromeThemeId;
   /**
-   * Sole persistence model for top-band hour markers (custom style, realization, layout).
+   * Sole persistence model for top-band hour markers (realization, optional behavior, layout).
    * Legacy flat `chrome.layout` hour-marker keys have been removed; normalization reads only this object.
    */
   hourMarkers: HourMarkersConfig;
@@ -284,6 +282,27 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
     );
   }
   return clampTopBandHourMarkerSizeMultiplier(raw);
+}
+
+/** Matches {@link DEFAULT_HOUR_MARKERS_CONFIG} for typography selection (undefined font → role-only path). */
+function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeLayoutConfig): boolean {
+  const hm = layout.hourMarkers;
+  if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== 1) {
+    return false;
+  }
+  if (hm.realization.kind !== "text") {
+    return false;
+  }
+  const eff = hm.behavior ?? "tapeAdvected";
+  if (eff !== "tapeAdvected") {
+    return false;
+  }
+  const r = hm.realization;
+  const font = r.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+  if (font !== DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
+    return false;
+  }
+  return Object.keys(r.appearance).length === 0;
 }
 
 /**

@@ -37,7 +37,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -75,7 +74,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: false,
           realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -100,7 +98,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -120,7 +117,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          customRepresentationEnabled: true,
           realization: { kind: "analogClock", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -160,7 +156,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
           hourMarkers: {
-            customRepresentationEnabled: true,
             realization: { kind: "radialLine", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
@@ -177,7 +172,6 @@ describe("buildSemanticTopBandHourMarkers", () => {
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
           hourMarkers: {
-            customRepresentationEnabled: true,
             realization: { kind: "radialWedge", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },

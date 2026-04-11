@@ -22,56 +22,50 @@ describe("normalizeHourMarkersInput", () => {
     expect(normalizeHourMarkersInput("x")).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
   });
 
-  it("returns default when customRepresentationEnabled is missing", () => {
+  it("returns default when realization is missing", () => {
     expect(normalizeHourMarkersInput({})).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
   });
 
-  it("custom off: canonical default font and size from layout", () => {
+  it("legacy customRepresentationEnabled is ignored; structured realization wins", () => {
     expect(
       normalizeHourMarkersInput({
         customRepresentationEnabled: false,
-        realization: { kind: "text", fontAssetId: "flip-clock" },
+        realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
         layout: { sizeMultiplier: 1.5 },
       }),
     ).toEqual({
-      customRepresentationEnabled: false,
-      realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+      realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
       layout: { sizeMultiplier: 1.5 },
     });
   });
 
-  it("custom on text: clamps size, trims appearance.color, keeps known font ids", () => {
+  it("structured text: clamps size, trims appearance.color, keeps known font ids", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: { kind: "text", fontAssetId: "computer", appearance: { color: "  #abc  " } },
         layout: { sizeMultiplier: 3 },
       }),
     ).toEqual({
-      customRepresentationEnabled: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
       layout: { sizeMultiplier: 2 },
     });
   });
 
-  it("custom on glyph: clamps size; ignores legacy top-level color", () => {
+  it("glyph realization: clamps size; ignores legacy top-level color", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: { kind: "radialWedge", color: "#fff" },
         layout: { sizeMultiplier: 0.25 },
       }),
     ).toEqual({
-      customRepresentationEnabled: true,
       realization: { kind: "radialWedge", appearance: {} },
       layout: { sizeMultiplier: 0.5 },
     });
   });
 
-  it("custom on glyph: accepts and trims appearance fields per kind", () => {
+  it("glyph: accepts and trims appearance fields per kind", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: {
           kind: "radialLine",
           color: "#111",
@@ -86,7 +80,6 @@ describe("normalizeHourMarkersInput", () => {
 
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: {
           kind: "analogClock",
           appearance: { handColor: "#010101", faceColor: "#020202" },
@@ -100,7 +93,6 @@ describe("normalizeHourMarkersInput", () => {
 
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: {
           kind: "radialWedge",
           appearance: { fillColor: "#030303" },
@@ -116,7 +108,6 @@ describe("normalizeHourMarkersInput", () => {
   it("unknown text font id falls back to default bundled font", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: { kind: "text", fontAssetId: "not-a-font" },
         layout: { sizeMultiplier: 1 },
       }).realization,
@@ -126,7 +117,6 @@ describe("normalizeHourMarkersInput", () => {
   it("invalid custom realization kind returns default hour markers", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         realization: { kind: "bogus" },
         layout: { sizeMultiplier: 1 },
       }),
@@ -136,7 +126,6 @@ describe("normalizeHourMarkersInput", () => {
   it("preserves valid behavior and drops invalid behavior", () => {
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         behavior: "tapeAdvected",
         realization: { kind: "text", fontAssetId: "zeroes-one" },
         layout: { sizeMultiplier: 1 },
@@ -145,7 +134,6 @@ describe("normalizeHourMarkersInput", () => {
 
     expect(
       normalizeHourMarkersInput({
-        customRepresentationEnabled: true,
         behavior: "bogus",
         realization: { kind: "text", fontAssetId: "zeroes-one" },
         layout: { sizeMultiplier: 1 },

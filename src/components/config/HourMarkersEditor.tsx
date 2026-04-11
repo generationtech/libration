@@ -131,7 +131,6 @@ function RealizationSection({ hourMarkers, wired, updateConfig }: HourMarkerEdit
                 const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
                 commitHourMarkers(updateConfig, (hm) => ({
                   ...hm,
-                  customRepresentationEnabled: true,
                   behavior: hm.behavior,
                   realization: realizationConfigForKind(next, hm),
                 }));
@@ -180,7 +179,6 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                         v === "" ? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID : (v as FontAssetId);
                       return {
                         ...hm,
-                        customRepresentationEnabled: true,
                         realization: {
                           kind: "text",
                           fontAssetId: nextFont,
@@ -223,7 +221,6 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       }
                       return {
                         ...hm,
-                        customRepresentationEnabled: true,
                         realization: {
                           kind: "text",
                           fontAssetId: hm.realization.fontAssetId,
@@ -251,7 +248,6 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       void color;
                       return {
                         ...hm,
-                        customRepresentationEnabled: true,
                         realization: {
                           kind: "text",
                           fontAssetId: hm.realization.fontAssetId,
@@ -300,7 +296,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                           handColor: v,
                         }),
                       };
-                      return { ...hm, customRepresentationEnabled: true, realization };
+                      return { ...hm, realization };
                     });
                   }
                 : undefined
@@ -326,7 +322,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                           handColor: undefined,
                         }),
                       };
-                      return { ...hm, customRepresentationEnabled: true, realization };
+                      return { ...hm, realization };
                     });
                   }
                 : undefined
@@ -359,7 +355,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                           faceColor: v,
                         }),
                       };
-                      return { ...hm, customRepresentationEnabled: true, realization };
+                      return { ...hm, realization };
                     });
                   }
                 : undefined
@@ -385,7 +381,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                           faceColor: undefined,
                         }),
                       };
-                      return { ...hm, customRepresentationEnabled: true, realization };
+                      return { ...hm, realization };
                     });
                   }
                 : undefined
@@ -422,7 +418,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       kind: "radialLine",
                       appearance: { lineColor: v },
                     };
-                    return { ...hm, customRepresentationEnabled: true, realization };
+                    return { ...hm, realization };
                   });
                 }
               : undefined
@@ -444,7 +440,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       kind: "radialLine",
                       appearance: {},
                     };
-                    return { ...hm, customRepresentationEnabled: true, realization };
+                    return { ...hm, realization };
                   });
                 }
               : undefined
@@ -480,7 +476,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       kind: "radialWedge",
                       appearance: { fillColor: v },
                     };
-                    return { ...hm, customRepresentationEnabled: true, realization };
+                    return { ...hm, realization };
                   });
                 }
               : undefined
@@ -502,7 +498,7 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                       kind: "radialWedge",
                       appearance: {},
                     };
-                    return { ...hm, customRepresentationEnabled: true, realization };
+                    return { ...hm, realization };
                   });
                 }
               : undefined

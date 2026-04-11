@@ -65,7 +65,6 @@ describe("ChromeTab top-band hour markers", () => {
           ...d.chrome.layout,
           hourMarkers: {
             ...hm,
-            customRepresentationEnabled: true,
             realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
             layout: { sizeMultiplier: 1 },
             ...overrides,
@@ -174,7 +173,7 @@ describe("ChromeTab top-band hour markers", () => {
     ).toBeUndefined();
   });
 
-  it("custom off still exposes behavior, realization, layout; font change enables custom representation", () => {
+  it("structured hour markers: controls stay wired; font change updates realization", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = appConfigToV2(DEFAULT_APP_CONFIG);
     const lay = initial.chrome.layout;
@@ -185,7 +184,6 @@ describe("ChromeTab top-band hour markers", () => {
         layout: {
           ...lay,
           hourMarkers: {
-            customRepresentationEnabled: false,
             realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
@@ -210,7 +208,6 @@ describe("ChromeTab top-band hour markers", () => {
     fireEvent.change(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i }), {
       target: { value: "computer" },
     });
-    expect(last!.chrome.layout.hourMarkers.customRepresentationEnabled).toBe(true);
     expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
       kind: "text",
       fontAssetId: "computer",

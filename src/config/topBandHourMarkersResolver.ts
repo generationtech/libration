@@ -77,7 +77,7 @@ export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): 
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
  * Content follows realization kind; behavior uses persisted `hourMarkers.behavior` when set, else
- * {@link defaultBehaviorFor} for the realization kind (or `"text"` when custom representation is off).
+ * {@link defaultBehaviorFor} for the realization kind.
  */
 export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
@@ -85,21 +85,6 @@ export function resolveEffectiveTopBandHourMarkers(
   const hm = layout.hourMarkers;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const layoutOut = { sizeMultiplier };
-
-  if (!hm.customRepresentationEnabled) {
-    /** Custom representation off: still draws default top-band hour markers — not surface-disabled. */
-    return {
-      enabled: true,
-      behavior: hm.behavior ?? defaultBehaviorFor("text"),
-      content: { kind: "hour24" },
-      realization: {
-        kind: "text",
-        fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-        resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
-      },
-      layout: layoutOut,
-    };
-  }
 
   const rk = hm.realization.kind;
   const behavior = hm.behavior ?? defaultBehaviorFor(rk);

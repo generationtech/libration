@@ -46,7 +46,6 @@ function hourMarkerLayout(
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
       ...DEFAULT_HOUR_MARKERS_CONFIG,
-      customRepresentationEnabled: true,
       realization,
       layout: { sizeMultiplier: 1 },
     },
