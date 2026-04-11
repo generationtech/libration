@@ -85,6 +85,10 @@ export function resolveEffectiveTopBandHourMarkers(
   const hm = layout.hourMarkers;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const layoutOut = { sizeMultiplier };
+  const tapeHourNumberOverlay =
+    hm.realization.kind !== "text" && hm.tapeHourNumberOverlay?.enabled === true
+      ? ({ enabled: true } as const)
+      : undefined;
 
   const rk = hm.realization.kind;
   const behavior = hm.behavior ?? defaultBehaviorFor(rk);
@@ -106,6 +110,7 @@ export function resolveEffectiveTopBandHourMarkers(
       content: { kind: "hour24" },
       realization,
       layout: layoutOut,
+      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -120,6 +125,7 @@ export function resolveEffectiveTopBandHourMarkers(
         resolvedAppearance: resolveAnalogClockResolvedAppearance(r),
       },
       layout: layoutOut,
+      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -134,6 +140,7 @@ export function resolveEffectiveTopBandHourMarkers(
         resolvedAppearance: resolveRadialLineResolvedAppearance(r),
       },
       layout: layoutOut,
+      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -147,5 +154,6 @@ export function resolveEffectiveTopBandHourMarkers(
       resolvedAppearance: resolveRadialWedgeResolvedAppearance(r),
     },
     layout: layoutOut,
+    ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
   };
 }

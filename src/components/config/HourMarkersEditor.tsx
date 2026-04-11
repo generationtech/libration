@@ -515,36 +515,64 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
 
 function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
   const sm = hourMarkers.layout.sizeMultiplier;
+  const rk = hourMarkers.realization.kind;
+  const tapeOn = hourMarkers.tapeHourNumberOverlay?.enabled === true;
   return (
-    <ConfigControlRow label="Hour marker size">
-      <input
-        type="range"
-        className="config-input"
-        min={0.5}
-        max={2}
-        step={0.05}
-        disabled={!wired}
-        aria-label="Hour marker size multiplier"
-        value={sm}
-        onChange={
-          wired && updateConfig
-            ? (e) => {
-                const n = Number(e.currentTarget.value);
-                if (!Number.isFinite(n)) {
-                  return;
+    <>
+      <ConfigControlRow label="Hour marker size">
+        <input
+          type="range"
+          className="config-input"
+          min={0.5}
+          max={2}
+          step={0.05}
+          disabled={!wired}
+          aria-label="Hour marker size multiplier"
+          value={sm}
+          onChange={
+            wired && updateConfig
+              ? (e) => {
+                  const n = Number(e.currentTarget.value);
+                  if (!Number.isFinite(n)) {
+                    return;
+                  }
+                  commitHourMarkers(updateConfig, (hm) => ({
+                    ...hm,
+                    layout: { sizeMultiplier: n },
+                  }));
                 }
-                commitHourMarkers(updateConfig, (hm) => ({
-                  ...hm,
-                  layout: { sizeMultiplier: n },
-                }));
+              : undefined
+          }
+        />
+        <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
+          {sm.toFixed(2)}×
+        </span>
+      </ConfigControlRow>
+      {rk !== "text" ? (
+        <ConfigControlRow label="Tape hour numbers">
+          <label className="config-control-row__checkbox">
+            <input
+              type="checkbox"
+              disabled={!wired}
+              aria-label="Show boxed hour numerals on the tick tape (glyph mode)"
+              checked={tapeOn}
+              onChange={
+                wired && updateConfig
+                  ? (e) => {
+                      const on = e.currentTarget.checked;
+                      commitHourMarkers(updateConfig, (hm) => ({
+                        ...hm,
+                        tapeHourNumberOverlay: on ? { enabled: true } : undefined,
+                      }));
+                    }
+                  : undefined
               }
-            : undefined
-        }
-      />
-      <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
-        {sm.toFixed(2)}×
-      </span>
-    </ConfigControlRow>
+            />
+            <span>Boxed numerals on tick tape</span>
+          </label>
+        </ConfigControlRow>
+      ) : null}
+    </>
   );
 }
 

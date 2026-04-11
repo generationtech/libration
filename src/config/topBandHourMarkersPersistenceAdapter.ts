@@ -25,6 +25,7 @@ import type {
   HourMarkersRadialLineAppearance,
   HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
+  HourMarkersTapeHourNumberOverlay,
   HourMarkersTextAppearance,
 } from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
@@ -102,6 +103,22 @@ function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWed
   return fillColor !== undefined ? { fillColor } : {};
 }
 
+function normalizedTapeHourNumberOverlay(
+  raw: unknown,
+  realizationKind: string,
+): HourMarkersTapeHourNumberOverlay | undefined {
+  if (realizationKind === "text") {
+    return undefined;
+  }
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  if (raw.enabled === true) {
+    return { enabled: true };
+  }
+  return undefined;
+}
+
 /**
  * Coerces unknown `chrome.layout.hourMarkers` input to a normalized {@link HourMarkersConfig}.
  * Missing or invalid payloads yield {@link DEFAULT_HOUR_MARKERS_CONFIG} (cloned).
@@ -138,6 +155,8 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
 
+  const tapeOpt = normalizedTapeHourNumberOverlay(raw.tapeHourNumberOverlay, kind);
+
   if (kind === "text") {
     const fid = realizationRaw.fontAssetId;
     let fontAssetId: FontAssetId;
@@ -156,6 +175,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
+      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
 
@@ -169,6 +189,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
+      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
 
@@ -182,6 +203,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
+      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
 
@@ -195,6 +217,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
+      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
 

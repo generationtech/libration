@@ -55,6 +55,8 @@ export type SemanticTopBandHourMarkerLayoutContext = {
   /** Typically 24 columns (full UTC tape); must match the render-plan marker count for in-disk semantic paths. */
   markers: readonly TopBandHourMarkerTapeColumn[];
   diskLabelSizePx: number;
+  /** Scaled disk-interior content size (text/glyph); defaults to {@link diskLabelSizePx}. */
+  markerContentSizePx?: number;
   /**
    * Structural (NATO) column center x from {@link UtcTopScaleHourSegment.centerX}, length 24.
    * Used when {@link EffectiveTopBandHourMarkers.behavior} is `staticZoneAnchored` for analog clocks.
@@ -82,6 +84,7 @@ export type LaidOutSemanticTopBandAnalogClockMarker = {
   sizePx: number;
   wrapHalfExtentPx: number;
   continuousHour0To24: number;
+  continuousMinute0To60: number;
 };
 
 /** Laid-out radial line disk interior (tape column x + same vertical center as hour-disk text / analog). */
@@ -169,7 +172,7 @@ export function layoutSemanticTopBandHourMarkers(
   const y0 = ctx.topBandYPx;
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
-  const labelSize = ctx.diskLabelSizePx;
+  const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
   const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
@@ -220,7 +223,7 @@ export function layoutSemanticTopBandRadialLineMarkers(
   const y0 = ctx.topBandYPx;
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
-  const labelSize = ctx.diskLabelSizePx;
+  const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
   const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
@@ -274,7 +277,7 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
   const y0 = ctx.topBandYPx;
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
-  const labelSize = ctx.diskLabelSizePx;
+  const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
   const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
@@ -340,7 +343,7 @@ export function layoutSemanticTopBandAnalogClockMarkers(
   const y0 = ctx.topBandYPx;
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
-  const labelSize = ctx.diskLabelSizePx;
+  const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
   const zoneX = ctx.structuralZoneCenterXPx;
 
   const yCircleBottom = y0 + circleH;
@@ -379,6 +382,7 @@ export function layoutSemanticTopBandAnalogClockMarkers(
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
       continuousHour0To24: inst.content.wallClock.continuousHour0To24,
+      continuousMinute0To60: inst.content.wallClock.continuousMinute0To60,
     });
   }
 

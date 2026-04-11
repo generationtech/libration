@@ -24,6 +24,12 @@ export function hourToTheta(hour: number): number {
   return (hour12 / 12) * 2 * Math.PI - Math.PI / 2;
 }
 
+/** Minute hand angle: 60-minute cycle, 0 at top (same polar convention as {@link hourToTheta}). */
+export function minuteToTheta(minute: number): number {
+  const m = ((minute % 60) + 60) % 60;
+  return (m / 60) * 2 * Math.PI - Math.PI / 2;
+}
+
 export function polarToCartesian(
   cx: number,
   cy: number,

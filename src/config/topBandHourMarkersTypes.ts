@@ -48,6 +48,14 @@ export type HourMarkersRealizationConfig =
 /** How phased hour markers move with the longitude tape vs fixed structural columns. */
 export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
 
+/**
+ * Optional tick-tape presentation: boxed hour numerals on the middle tick rail (glyph contexts).
+ * Not a separate realization kind — companion chrome only.
+ */
+export type HourMarkersTapeHourNumberOverlay = {
+  enabled: boolean;
+};
+
 export interface HourMarkersConfig {
   realization: HourMarkersRealizationConfig;
   /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
@@ -55,6 +63,8 @@ export interface HourMarkersConfig {
   layout: {
     sizeMultiplier: number;
   };
+  /** Optional boxed numerals carried on the hourly tick tape (glyph realization contexts). */
+  tapeHourNumberOverlay?: HourMarkersTapeHourNumberOverlay;
 }
 
 /**
@@ -112,4 +122,6 @@ export type EffectiveTopBandHourMarkers = {
   content: EffectiveTopBandHourMarkerContent;
   realization: EffectiveTopBandHourMarkerRealization;
   layout: EffectiveTopBandHourMarkerLayout;
+  /** Resolved optional tape overlay (companion presentation, not a realization kind). */
+  tapeHourNumberOverlay?: { enabled: boolean };
 };

@@ -1051,6 +1051,7 @@ describe("buildDisplayChromeState", () => {
         RESOLVED_UTC_UTC24,
         undefined,
         chrome.displayChromeLayout,
+        chrome.utcTopScale.rows,
       ),
     ).toEqual(chrome.utcTopScale);
     expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
@@ -1115,6 +1116,7 @@ describe("buildDisplayChromeState", () => {
         resolved,
         geo,
         chrome.displayChromeLayout,
+        chrome.utcTopScale.rows,
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1152,6 +1154,7 @@ describe("buildDisplayChromeState", () => {
         resolved,
         geo,
         chrome.displayChromeLayout,
+        chrome.utcTopScale.rows,
       ),
     ).toEqual(chrome.utcTopScale);
   });

@@ -56,8 +56,9 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
         {
           kind: "clockFace",
           hour: inst.continuousHour0To24,
+          minute: inst.continuousMinute0To60,
           styleId: spec.glyphStyleId,
-          showMinuteHand: false,
+          showMinuteHand: true,
           ringStrokeOverride: ra.ringStroke,
           handStrokeOverride: ra.handStroke,
           faceFillOverride: ra.faceFill,

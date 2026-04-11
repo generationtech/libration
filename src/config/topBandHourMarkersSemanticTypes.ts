@@ -50,6 +50,8 @@ export type SemanticLocalWallClockState = {
   minute0To59: number;
   /** Fractional hour-of-day [0,24) for continuous hour-hand placement (mean solar). */
   continuousHour0To24: number;
+  /** Fractional minute-of-hour [0,60) for continuous minute-hand placement (mean solar). */
+  continuousMinute0To60: number;
 };
 
 export type SemanticHourMarkerContent =

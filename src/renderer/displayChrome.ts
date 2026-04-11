@@ -15,8 +15,10 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
+  resolvedHourMarkerLayoutSizeMultiplier,
   type DisplayChromeLayoutConfig,
   type DisplayTimeConfig,
+  type EffectiveTopBandHourMarkerSelection,
   type GeographyConfig,
   type TopBandAnchorConfig,
   type TopBandTimeMode,
@@ -53,7 +55,9 @@ import {
   computeHourDiskLabelSizePx,
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
   getTopChromeStyle,
+  type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
+import { hourCircleHeadMetrics } from "../config/topBandHourMarkersLayout.ts";
 import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
@@ -61,6 +65,7 @@ import { buildTopBandPresentTimeTickRenderPlan } from "./renderPlan/topBandPrese
 import { buildTopBandTickRailRenderPlan } from "./renderPlan/topBandTickRailPlan";
 import { buildTimezoneLetterRowRenderPlan } from "./renderPlan/timezoneLetterRowPlan";
 import { buildTopBandCircleBandHourStackRenderPlan } from "./renderPlan/topBandCircleBandHourStackPlan";
+import { buildTopBandTapeHourNumberOverlayRenderPlan } from "./renderPlan/topBandTapeHourNumberOverlayPlan.ts";
 import {
   buildTopBandChromeBackgroundRenderPlan,
   buildTopBandInterBandSeamLinesRenderPlan,
@@ -946,6 +951,137 @@ export function computeTopBandCircleStackMetrics(circleBandH: number): TopBandCi
   };
 }
 
+/** Default procedural glyph disk readout is larger than the legacy baseline at 1× sizing. */
+export const TOP_BAND_GLYPH_DISK_CONTENT_SCALE = 1.32 as const;
+
+const HOUR_MARKER_DISK_PAD_FRAC = 0.38 as const;
+
+/**
+ * Adds height only to the circle band; tick rail and NATO row keep their prior pixel heights.
+ */
+export function expandTopBandCircleBandPreservingLowerBands(
+  rows: UtcTopScaleRowMetrics,
+  addCirclePx: number,
+): UtcTopScaleRowMetrics {
+  const d = Math.max(0, Math.round(addCirclePx));
+  if (d === 0) {
+    return rows;
+  }
+  return {
+    topBandHeightPx: rows.topBandHeightPx + d,
+    circleBandH: rows.circleBandH + d,
+    tickBandH: rows.tickBandH,
+    timezoneBandH: rows.timezoneBandH,
+  };
+}
+
+function hourMarkerDiskContentNominalPx(args: {
+  diskBandH: number;
+  viewportWidthPx: number;
+  segmentWidthPx: number;
+  hourDiskLabelTokens: TopChromeHourDiskLabelTokens;
+  sizeMultiplier: number;
+  selection: EffectiveTopBandHourMarkerSelection;
+}): number {
+  const r = computeUtcCircleMarkerRadius(args.diskBandH, args.segmentWidthPx);
+  const baseLabel = computeHourDiskLabelSizePx(r, args.viewportWidthPx, args.hourDiskLabelTokens);
+  const boost = args.selection.kind === "glyph" ? TOP_BAND_GLYPH_DISK_CONTENT_SCALE : 1;
+  return baseLabel * args.sizeMultiplier * boost;
+}
+
+function minimumDiskBandHeightForContentPx(args: {
+  contentNominalPx: number;
+  segmentWidthPx: number;
+  viewportWidthPx: number;
+  floorDiskBandH: number;
+}): number {
+  const targetHeadD = args.contentNominalPx * (1 + HOUR_MARKER_DISK_PAD_FRAC);
+  const { segmentWidthPx: sw, viewportWidthPx: vw } = args;
+  let lo = args.floorDiskBandH;
+  let hi = args.floorDiskBandH + 140;
+  const headDAt = (diskH: number): number => {
+    const r = computeUtcCircleMarkerRadius(diskH, sw);
+    return hourCircleHeadMetrics(r, diskH, vw).headD;
+  };
+  if (headDAt(lo) >= targetHeadD) {
+    return lo;
+  }
+  while (headDAt(hi) < targetHeadD && hi < args.floorDiskBandH + 400) {
+    hi += 24;
+  }
+  for (let i = 0; i < 40; i += 1) {
+    const mid = (lo + hi) * 0.5;
+    const diskH = Math.round(mid);
+    const hd = headDAt(diskH);
+    if (hd >= targetHeadD) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return Math.max(args.floorDiskBandH, Math.ceil(hi));
+}
+
+function resolveMinimumDiskBandHeightPx(args: {
+  initialDiskBandH: number;
+  segmentWidthPx: number;
+  viewportWidthPx: number;
+  hourDiskLabelTokens: TopChromeHourDiskLabelTokens;
+  layout: DisplayChromeLayoutConfig;
+  selection: EffectiveTopBandHourMarkerSelection;
+}): number {
+  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
+  let diskH = Math.max(0, args.initialDiskBandH);
+  for (let iter = 0; iter < 12; iter += 1) {
+    const nominal = hourMarkerDiskContentNominalPx({
+      diskBandH: diskH,
+      viewportWidthPx: args.viewportWidthPx,
+      segmentWidthPx: args.segmentWidthPx,
+      hourDiskLabelTokens: args.hourDiskLabelTokens,
+      sizeMultiplier: sm,
+      selection: args.selection,
+    });
+    const need = minimumDiskBandHeightForContentPx({
+      contentNominalPx: nominal,
+      segmentWidthPx: args.segmentWidthPx,
+      viewportWidthPx: args.viewportWidthPx,
+      floorDiskBandH: args.initialDiskBandH,
+    });
+    if (need <= diskH + 0.25) {
+      return diskH;
+    }
+    diskH = need;
+  }
+  return diskH;
+}
+
+/**
+ * Pixel amount to add to the circle band (and total top band) so the disk row fits hour-marker content.
+ */
+export function computeHourMarkerCircleBandExpansionPx(args: {
+  baseRows: UtcTopScaleRowMetrics;
+  viewportWidthPx: number;
+  hourDiskLabelTokens: TopChromeHourDiskLabelTokens;
+  layout: DisplayChromeLayoutConfig;
+  selection: EffectiveTopBandHourMarkerSelection;
+}): number {
+  const vw = args.viewportWidthPx;
+  if (!(vw > 0)) {
+    return 0;
+  }
+  const stack = computeTopBandCircleStackMetrics(args.baseRows.circleBandH);
+  const sw = vw / 24;
+  const needDiskH = resolveMinimumDiskBandHeightPx({
+    initialDiskBandH: stack.diskBandH,
+    segmentWidthPx: sw,
+    viewportWidthPx: vw,
+    hourDiskLabelTokens: args.hourDiskLabelTokens,
+    layout: args.layout,
+    selection: args.selection,
+  });
+  return Math.max(0, Math.round(needDiskH - stack.diskBandH));
+}
+
 function buildTopBandLayoutFromRows(widthPx: number, rows: UtcTopScaleRowMetrics): TopBandLayout {
   const h = rows.topBandHeightPx;
   const c = rows.circleBandH;
@@ -967,6 +1103,8 @@ function buildTopBandLayoutFromRows(widthPx: number, rows: UtcTopScaleRowMetrics
  * phase follow {@link ResolvedTopBandTime}.
  * Pure geometry for tests; {@link buildDisplayChromeState} embeds the same result for the top band width.
  * Pass {@link topBandHeightPx} to attach {@link UtcTopScaleRowMetrics} for multi-row chrome.
+ * When {@link rowMetricsOverride} is set (e.g. after hour-marker disk-row expansion), it replaces
+ * {@link computeUtcTopScaleRowMetrics} so tick + NATO band heights stay fixed while the circle band grows.
  */
 export function buildUtcTopScaleLayout(
   nowMs: number,
@@ -975,6 +1113,7 @@ export function buildUtcTopScaleLayout(
   resolved?: ResolvedTopBandTime,
   geography?: GeographyConfig,
   chromeRowLayout?: Pick<DisplayChromeLayoutConfig, "timezoneLetterRowVisible">,
+  rowMetricsOverride?: UtcTopScaleRowMetrics,
 ): UtcTopScaleLayout {
   const w = Math.max(0, widthPx);
   const rt = resolved ?? resolveTopBandTimeFromConfig(DEFAULT_DISPLAY_TIME_CONFIG);
@@ -1079,9 +1218,11 @@ export function buildUtcTopScaleLayout(
   const nowX = segments[structuralIdxForPresentTime]!.centerX;
 
   const rows =
-    topBandHeightPx !== undefined && topBandHeightPx > 0
-      ? computeUtcTopScaleRowMetrics(topBandHeightPx, chromeRowLayout)
-      : undefined;
+    rowMetricsOverride !== undefined
+      ? rowMetricsOverride
+      : topBandHeightPx !== undefined && topBandHeightPx > 0
+        ? computeUtcTopScaleRowMetrics(topBandHeightPx, chromeRowLayout)
+        : undefined;
 
   const topBandLayout = rows !== undefined ? buildTopBandLayoutFromRows(w, rows) : undefined;
   const circleStack =
@@ -1163,11 +1304,26 @@ export function buildDisplayChromeState(options: {
   };
   const w = Math.max(0, viewport.width);
   const h = Math.max(0, viewport.height);
-  const { top, bottom } = computeBandHeights(h, layout);
+  const { top: baseTop, bottom } = computeBandHeights(h, layout);
   const bottomOverlayMarginPx =
     layout.bottomInformationBarVisible === false
       ? 0
       : computeBottomChromeOverlayBottomMarginPx(h);
+  const stForRows = getTopChromeStyle(layout.topChromeTheme);
+  const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
+  const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
+  const circleExpansionPx = computeHourMarkerCircleBandExpansionPx({
+    baseRows,
+    viewportWidthPx: w,
+    hourDiskLabelTokens: stForRows.hourDiskLabel,
+    layout,
+    selection: hourMarkerSel,
+  });
+  const rowMetrics =
+    circleExpansionPx > 0
+      ? expandTopBandCircleBandPreservingLowerBands(baseRows, circleExpansionPx)
+      : baseRows;
+  const top = rowMetrics.topBandHeightPx;
   const utcTopScale = buildUtcTopScaleLayout(
     time.now,
     w,
@@ -1175,6 +1331,7 @@ export function buildDisplayChromeState(options: {
     resolved,
     options.geography,
     layout,
+    rowMetrics,
   );
   const bottomBand: DisplayChromeBandRect = {
     x: 0,
@@ -1295,6 +1452,10 @@ export function renderDisplayChrome(
   const sw = vw > 0 ? vw / 24 : 0;
   const markerRadiusPx = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
   const diskLabelSizePx = computeHourDiskLabelSizePx(markerRadiusPx, vw, st.hourDiskLabel);
+  const hourMarkerSel = effectiveTopBandHourMarkerSelection(chrome.displayChromeLayout);
+  const hourMarkerSizeMult = resolvedHourMarkerLayoutSizeMultiplier(chrome.displayChromeLayout);
+  const glyphDiskBoost = hourMarkerSel.kind === "glyph" ? TOP_BAND_GLYPH_DISK_CONTENT_SCALE : 1;
+  const markerDiskContentSizePx = diskLabelSizePx * hourMarkerSizeMult * glyphDiskBoost;
 
   const nowTickLineWidth = st.ticks.lineWidth * st.ticks.presentTimeTickWidthMulTapeTick;
   const tickHaloW = nowTickLineWidth * st.ticks.presentTimeHaloWidthMul;
@@ -1421,6 +1582,27 @@ export function renderDisplayChrome(
           })
         : [];
 
+  if (chrome.effectiveTopBandHourMarkers.tapeHourNumberOverlay?.enabled === true) {
+    executeRenderPlanOnCanvas(
+      ctx,
+      buildTopBandTapeHourNumberOverlayRenderPlan({
+        viewportWidthPx: vw,
+        tickBaselineY,
+        tickBandHeightPx: tickH,
+        markers: markers.map((m) => ({
+          centerX: m.centerX,
+          structuralHour0To23: m.utcHour,
+        })),
+        topBandMode: scale.topBandMode,
+        textFill: st.ticks.stroke,
+        boxFill: "rgba(6, 26, 54, 0.94)",
+        boxStroke: "rgba(130, 188, 228, 0.42)",
+        fontSizePx: Math.max(6, diskLabelSizePx * 0.48),
+        glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
+      }),
+    );
+  }
+
   executeRenderPlanOnCanvas(
     ctx,
     buildTopBandCircleBandHourStackRenderPlan({
@@ -1439,6 +1621,7 @@ export function renderDisplayChrome(
         structuralHour0To23: m.utcHour,
       })),
       diskLabelSizePx,
+      markerDiskContentSizePx,
       tickBandHeightPx: tickH,
       chromeStyle: st,
       effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(

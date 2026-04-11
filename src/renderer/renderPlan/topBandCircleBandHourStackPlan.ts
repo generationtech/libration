@@ -165,6 +165,8 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     structuralHour0To23: number;
   }[];
   diskLabelSizePx: number;
+  /** Scaled hour-disk interior size (text/glyph); defaults to {@link diskLabelSizePx} when omitted. */
+  markerDiskContentSizePx?: number;
   /** Authoritative top-band hour-disk intent ({@link effectiveTopBandHourMarkerSelection}). */
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection;
   /**
@@ -251,6 +253,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   const yUpperRow0 = y0 + circleStack.padTopPx;
 
   const labelSize = options.diskLabelSizePx;
+  const markerContentSizePx = options.markerDiskContentSizePx ?? labelSize;
   const upperNumeralSizePx = labelSize * st.topHourNumeral.sizeFracOfDiskLabel;
 
   if (
@@ -286,6 +289,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       circleStack,
       markers,
       diskLabelSizePx: labelSize,
+      markerContentSizePx,
     });
     emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, effectiveMarkers, gctx, items);
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
@@ -299,6 +303,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       circleStack,
       markers,
       diskLabelSizePx: labelSize,
+      markerContentSizePx,
       structuralZoneCenterXPx: options.structuralZoneCenterXPx,
     });
     emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
@@ -318,6 +323,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       circleStack,
       markers,
       diskLabelSizePx: labelSize,
+      markerContentSizePx,
     });
     emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
       laidOutRadial,
@@ -336,6 +342,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       circleStack,
       markers,
       diskLabelSizePx: labelSize,
+      markerContentSizePx,
     });
     emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
       laidOutWedge,

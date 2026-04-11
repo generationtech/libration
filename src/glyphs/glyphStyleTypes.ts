@@ -25,6 +25,10 @@ export type ClockFaceGlyphStyle = {
   handStrokeWidthPx: number;
   /** Hour-hand tip distance from center as a fraction of nominal radius {@code layout.size * 0.5}. */
   handLengthRadiusFrac: number;
+  /** Minute-hand tip distance from center as a fraction of nominal radius (nearly to inner face edge). */
+  minuteHandLengthRadiusFrac: number;
+  /** Minute hand stroke width (px); typically slightly thinner than the hour hand for hierarchy. */
+  minuteHandStrokeWidthPx: number;
   /** Shrinks the ring path relative to the layout disk (0 = full radius, unchanged from legacy). */
   ringInsetFrac: number;
   lineCap: "butt" | "round" | "square";

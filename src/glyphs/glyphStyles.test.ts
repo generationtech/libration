@@ -22,7 +22,9 @@ describe("resolveHourMarkerGlyphStyle", () => {
     const spec = resolveHourMarkerGlyphStyle("topBandHourAnalogClock");
     expect(spec.clockFace.ringStrokeWidthPx).toBe(1.25);
     expect(spec.clockFace.handStrokeWidthPx).toBe(2);
-    expect(spec.clockFace.handLengthRadiusFrac).toBe(0.55);
+    expect(spec.clockFace.handLengthRadiusFrac).toBe(0.52);
+    expect(spec.clockFace.minuteHandLengthRadiusFrac).toBe(0.88);
+    expect(spec.clockFace.minuteHandStrokeWidthPx).toBe(1.35);
     expect(spec.clockFace.ringInsetFrac).toBe(0);
     expect(spec.clockFace.lineCap).toBe("round");
   });

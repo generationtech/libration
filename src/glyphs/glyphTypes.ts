@@ -43,6 +43,8 @@ export type ClockFaceGlyph = {
   kind: "clockFace";
   /** Civil / structural hour 0–23 (column index in the top band). */
   hour: number;
+  /** Continuous minute-of-hour [0,60) for wall-clock layouts; paired with {@link showMinuteHand}. */
+  minute?: number;
   styleId?: HourMarkerGlyphStyleId;
   showMinuteHand?: boolean;
   /** Top-band layout override: tints ring + hand strokes when per-component overrides are absent. */

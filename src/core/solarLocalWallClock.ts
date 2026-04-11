@@ -30,12 +30,19 @@ function utcMsOfDayFromUtcMs(referenceNowMs: number): number {
 export function solarLocalWallClockStateFromUtcMs(
   referenceNowMs: number,
   lonDeg: number,
-): { hour0To23: number; minute0To59: number; continuousHour0To24: number } {
+): {
+  hour0To23: number;
+  minute0To59: number;
+  continuousHour0To24: number;
+  /** Fractional minute-of-hour [0, 60) for smooth minute-hand motion. */
+  continuousMinute0To60: number;
+} {
   const utcMsOfDay = utcMsOfDayFromUtcMs(referenceNowMs);
   const offsetMs = (lonDeg / 15) * MS_PER_HOUR;
   const localMs = ((utcMsOfDay + offsetMs) % MS_PER_DAY + MS_PER_DAY) % MS_PER_DAY;
   const continuousHour0To24 = localMs / MS_PER_HOUR;
   const hour0To23 = Math.floor(continuousHour0To24) % 24;
   const minute0To59 = Math.floor((localMs % MS_PER_HOUR) / MS_PER_MINUTE);
-  return { hour0To23, minute0To59, continuousHour0To24 };
+  const continuousMinute0To60 = (localMs % MS_PER_HOUR) / MS_PER_MINUTE;
+  return { hour0To23, minute0To59, continuousHour0To24, continuousMinute0To60 };
 }

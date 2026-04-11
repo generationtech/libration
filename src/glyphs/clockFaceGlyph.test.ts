@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { clockFaceHourHandTip } from "./glyphToRenderPlan.ts";
+import { clockFaceHourHandTip, clockFaceMinuteHandTip } from "./glyphToRenderPlan.ts";
 import { resolveHourMarkerGlyphStyle } from "./glyphStyles.ts";
 
 describe("clockFaceHourHandTip", () => {
@@ -43,5 +43,24 @@ describe("clockFaceHourHandTip", () => {
     const t = clockFaceHourHandTip(layout, 9, cf);
     expect(t.x).toBeCloseTo(100 - reach, 5);
     expect(t.y).toBeCloseTo(50, 5);
+  });
+});
+
+describe("clockFaceMinuteHandTip", () => {
+  const layout = { cx: 100, cy: 50, size: 40 };
+  const cf = resolveHourMarkerGlyphStyle("topBandHourAnalogClock").clockFace;
+  const R = 40 * 0.5;
+  const reach = R * cf.minuteHandLengthRadiusFrac;
+
+  it("minute 0 → straight up (near inner face edge)", () => {
+    const t = clockFaceMinuteHandTip(layout, 0, cf);
+    expect(t.x).toBeCloseTo(100, 5);
+    expect(t.y).toBeCloseTo(50 - reach, 5);
+  });
+
+  it("minute hand reaches farther than hour hand at default tokens", () => {
+    const hReach = R * cf.handLengthRadiusFrac;
+    expect(cf.minuteHandLengthRadiusFrac).toBeGreaterThan(cf.handLengthRadiusFrac);
+    expect(reach).toBeGreaterThan(hReach);
   });
 });

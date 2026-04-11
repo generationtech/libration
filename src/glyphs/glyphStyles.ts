@@ -33,7 +33,9 @@ const TOP_BAND_DEFAULT_CLOCK: ClockFaceGlyphStyle = {
   handStroke: DEFAULT_ANALOG_HAND_COLOR,
   ringStrokeWidthPx: 1.25,
   handStrokeWidthPx: 2,
-  handLengthRadiusFrac: 0.55,
+  handLengthRadiusFrac: 0.52,
+  minuteHandLengthRadiusFrac: 0.88,
+  minuteHandStrokeWidthPx: 1.35,
   ringInsetFrac: 0,
   lineCap: "round",
 };

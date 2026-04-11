@@ -28,7 +28,7 @@ import type { RenderPlan, RenderTextAlign } from "../renderer/renderPlan/renderP
 import { circlePathDescriptor } from "../renderer/renderPlan/circlePath2D.ts";
 import { createDescriptorPathItem } from "../renderer/renderPlan/pathItemFactories.ts";
 import type { ClockFaceGlyphStyle } from "./glyphStyleTypes.ts";
-import { annularSectorPathDescriptor, hourToTheta, polarToCartesian } from "./glyphGeometry.ts";
+import { annularSectorPathDescriptor, hourToTheta, minuteToTheta, polarToCartesian } from "./glyphGeometry.ts";
 import { resolveHourMarkerGlyphStyle } from "./glyphStyles.ts";
 import type {
   ClockFaceGlyph,
@@ -113,6 +113,17 @@ export function clockFaceHourHandTip(
   return polarToCartesian(layout.cx, layout.cy, reach, hourToTheta(hour0To23));
 }
 
+/** Deterministic minute-hand tip for tests (same math as {@link emitClockFaceGlyph}). */
+export function clockFaceMinuteHandTip(
+  layout: GlyphLayoutBox,
+  minute0To60: number,
+  clockStyle: ClockFaceGlyphStyle,
+): { x: number; y: number } {
+  const R = layout.size * 0.5;
+  const reach = R * clockStyle.minuteHandLengthRadiusFrac;
+  return polarToCartesian(layout.cx, layout.cy, reach, minuteToTheta(minute0To60));
+}
+
 function emitClockFaceGlyph(
   glyph: ClockFaceGlyph,
   layout: GlyphLayoutBox,
@@ -148,6 +159,19 @@ function emitClockFaceGlyph(
     strokeWidthPx: cf.handStrokeWidthPx,
     lineCap: cf.lineCap,
   });
+  if (glyph.showMinuteHand === true && glyph.minute !== undefined) {
+    const mTip = clockFaceMinuteHandTip(layout, glyph.minute, cf);
+    out.push({
+      kind: "line",
+      x1: cx,
+      y1: cy,
+      x2: mTip.x,
+      y2: mTip.y,
+      stroke: handStroke,
+      strokeWidthPx: cf.minuteHandStrokeWidthPx,
+      lineCap: cf.lineCap,
+    });
+  }
 }
 
 function emitRadialLineGlyph(glyph: RadialLineGlyph, layout: GlyphLayoutBox, out: RenderPlanBuilder): void {
