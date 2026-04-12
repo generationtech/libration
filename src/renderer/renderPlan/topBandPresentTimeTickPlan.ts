@@ -69,7 +69,7 @@ function pushPresentTimeSpanLines(
 }
 
 /**
- * Vertical present-time indicator: one or more axis-aligned spans (tick rail, optional circle cap), each tiled at ±viewport width.
+ * Vertical present-time indicator: one or more axis-aligned spans (e.g. tick rail segment), each tiled at ±viewport width.
  */
 export function buildTopBandPresentTimeTickRenderPlan(options: {
   nowX: number;

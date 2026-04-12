@@ -1639,7 +1639,7 @@ export function buildDisplayChromeState(options: {
 
 /**
  * Tick-rail baseline Y and major-tick top Y (same geometry as {@link renderDisplayChrome} hour boundaries).
- * Used with {@link UtcTopScaleLayout.nowX} for the present-time “now” tick segment.
+ * Used with {@link UtcTopScaleLayout.nowX} for the present-time “now” tick segment on the tickmarks tape only.
  *
  * Vertical tick marks resolve their bottom Y via {@link topBandTickRailVerticalTickBottomY} so hour ticks and the
  * present-time stroke share the same endpoint as the horizontal baseline stroke.
@@ -1922,17 +1922,6 @@ export function renderDisplayChrome(
         referenceNowMs: scale.referenceNowMs,
         structuralZoneCenterXPx:
           scale.segments.length === 24 ? scale.segments.map((s) => s.centerX) : undefined,
-      }),
-    );
-  }
-
-  const capPx = Math.max(0, st.ticks.referenceMeridianCircleCapPx);
-  if (capPx > 0 && vw > 0 && circleH > 0) {
-    executeRenderPlanOnCanvas(
-      ctx,
-      buildTopBandPresentTimeTickRenderPlan({
-        ...presentTimeTickStroke,
-        verticalSpans: [{ yTop: yCircleBottom - capPx, yBottom: yCircleBottom }],
       }),
     );
   }

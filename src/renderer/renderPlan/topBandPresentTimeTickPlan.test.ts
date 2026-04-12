@@ -108,7 +108,7 @@ describe("buildTopBandPresentTimeTickRenderPlan", () => {
     }
   });
 
-  it("chains multiple vertical spans in order (tick rail then circle cap)", () => {
+  it("chains multiple vertical spans in order", () => {
     const plan = buildTopBandPresentTimeTickRenderPlan({
       nowX: 100,
       viewportWidthPx: 400,

@@ -31,7 +31,7 @@ import {
   computeBottomChromeOverlayBottomMarginPx,
   computeBottomHudMapFadeOverlayRect,
 } from "./bottomChromeLayout";
-import { TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "../config/topChromeStyle.ts";
+import { getTopChromeStyle, TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "../config/topChromeStyle.ts";
 import {
   buildBottomInformationBarState,
   buildDisplayChromeState,
@@ -183,6 +183,12 @@ describe("present-time tick (tick rail, structural column center)", () => {
     const { lineWidth, presentTimeTickWidthMulTapeTick } = TOP_CHROME_STYLE.ticks;
     expect(lineWidth).toBe(TOP_TAPE_TICK_LINE_WIDTH);
     expect(lineWidth * presentTimeTickWidthMulTapeTick).toBeCloseTo(TOP_TAPE_TICK_LINE_WIDTH * 2.5, 7);
+  });
+
+  it("does not expose a circle-band present-time cap token (present-time vertical stroke is tick-tape only)", () => {
+    for (const palette of ["neutral", "dark", "paper"] as const) {
+      expect(getTopChromeStyle(palette).ticks).not.toHaveProperty("referenceMeridianCircleCapPx");
+    }
   });
 });
 
