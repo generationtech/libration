@@ -45,6 +45,7 @@ Hour markers persist under:
 `chrome.layout.hourMarkers`
 
 Conceptually, the persisted model carries:
+- optional visibility (`visible`)
 - optional behavior override
 - realization choice
 - layout sizing
@@ -82,6 +83,7 @@ Current follow-on config/editor work should focus on:
 - adding new hour-marker controls only when a concrete feature requires them
 - preserving the structured-only `chrome.layout.hourMarkers` contract
 - treating the hour-marker editor pattern as the finished reference example rather than reopening migration work
+- preserving truthful area-level visibility on the chrome layout surface (for example `hourMarkers.visible` and `tickTapeVisible`)
 - reusing the pattern elsewhere only after feature pressure justifies it
 
 ---

@@ -41,12 +41,20 @@ Recent completed work:
 - removed the obsolete `customRepresentationEnabled` hour-marker flag
 - completed strict config ↔ glyph ↔ renderer layering cleanup and upstream type ownership cleanup
 - switched runtime resolution to structured hour-marker input
+- introduced Chrome major-area editing for:
+  - 24-hour indicator entries
+  - 24-hour tickmarks tape
+  - NATO timezone area
+- added real persisted visibility controls for top-band areas including hour indicators and tick tape
+- corrected top chrome so it reserves layout space above the scene instead of overlaying map content
+- removed the remaining bundled top-strip palette selector and collapsed top chrome to one built-in appearance
 - verified that fresh deploys default `AppConfig.data.mode` to `static`
 - completed public repo and AGPL licensing
 - published the initial public release (`v1.0.0`)
 
 Immediate next target:
 - continue incremental top-band feature and styling work using the completed structured model
+- continue refining the newer chrome-area editor structure across top-band surfaces without re-monolithizing ChromeTab
 - avoid reopening hour-marker migration work unless a concrete bug requires it
 - keep public-facing docs, defaults, and licensing posture coherent as the project evolves
 
@@ -140,8 +148,8 @@ Potential future work:
 These should be added only in response to concrete feature needs.
 
 ### 3. Pattern Reuse Elsewhere (Deferred)
-- apply the structured editor/persistence pattern to other chrome surfaces only after hour markers prove out as a reusable template
-- do not generalize the hour-marker architecture prematurely
+- apply the structured editor/persistence pattern to other chrome surfaces only after hour markers and the newer chrome-area editors prove out as reusable templates
+- do not generalize the hour-marker solution or chrome-area structure prematurely
 
 ### 4. Future Rendering Work (Deferred, Not Current)
 - renderer-owned glyph outline rendering
@@ -163,3 +171,5 @@ These should be added only in response to concrete feature needs.
 - Do not reintroduce top-band text-style preset concepts
 - Do not restore degraded runtime fallback behavior for hour markers
 - Do not resurrect legacy flat hour-marker persistence
+- Do not reintroduce bundled top-chrome palette/theme selectors as a product concept
+- Do not let fixed top chrome revert to overlaying and hiding map content

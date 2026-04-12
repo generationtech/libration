@@ -35,6 +35,8 @@ ChatGPT:
   - Layout
   - Appearance
   - derived semantic content where required at runtime
+- preserve the newer Chrome major-area editing model for indicator entries, tick tape, and NATO strip
+- preserve the rule that visible top chrome reserves layout space above the scene instead of overlaying map content
 - continue renderer-agnostic feature work without resurrecting migration scaffolding
 - preserve the intentional first-load default of `AppConfig.data.mode = "static"` unless explicitly changing product behavior
 - maintain public-repo coherence with AGPL-3.0 licensing and canonical-reference positioning
@@ -59,11 +61,13 @@ DO NOT:
 - put product semantics in backend
 - hardwire browser font behavior into architecture
 - reintroduce top-band text-style preset concepts
+- reintroduce bundled top-chrome palette/theme selectors as an active product concept
 - let decorative fonts leak into core instrument roles accidentally
 - keep doing speculative architecture cleanup without a concrete feature blocker
 - restore degraded runtime fallback behavior for hour markers
 - resurrect legacy flat hour-marker persistence
-- generalize the hour-marker solution to other surfaces without feature pressure
+- generalize the hour-marker solution or chrome-area editor structure to other surfaces without feature pressure
+- let fixed top chrome revert to overlaying and hiding map content
 - remove or duplicate license headers during routine edits
 
 ---
@@ -86,4 +90,4 @@ Top-band hour-marker runtime migration complete for the supported production pat
 Hour-marker editor and persistence migration complete  
 Typography and glyph support implemented  
 Canvas bundled-font realization working  
-Current task: continue top-band feature and styling work on top of the completed structured hour-marker model
+Current task: continue top-band feature and styling work on top of the completed structured hour-marker model and the newer Chrome major-area editor structure

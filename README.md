@@ -41,6 +41,16 @@ Top band consists of:
 
 The top instrument strip uses one built-in appearance for now; future tweaks will be direct config controls, not bundled palette presets.
 
+Top chrome is now treated as real application layout:
+- the top chrome stack reserves vertical space above the map
+- the scene viewport begins below the visible top chrome
+- hiding top-band areas reclaims that space instead of leaving map content hidden underneath chrome
+
+Chrome editing is now organized by major area rather than one long mixed panel. Current major areas include:
+- 24-hour indicator entries
+- 24-hour tickmarks tape
+- NATO timezone area
+
 Recent simplification:
 - top-band alignment and timing behavior are unchanged
 
@@ -84,6 +94,11 @@ That model is authoritative for:
 - normalization
 - runtime resolution
 - persistence
+
+Current top-band visibility is also structured and persisted directly in chrome layout state, including:
+- `chrome.layout.hourMarkers.visible` for the indicator entries area
+- `chrome.layout.tickTapeVisible` for the 24-hour tickmarks tape
+- `chrome.layout.timezoneLetterRowVisible` for the NATO strip
 
 ---
 
@@ -141,7 +156,9 @@ Top-band hour-marker runtime migration complete for the supported production pat
 Hour-marker editor and persistence migration complete.  
 Typography + glyph subsystem implemented.  
 Canvas bundled-font realization working.  
-Current engineering focus: feature-forward top-band chrome work on top of the completed structured hour-marker model.
+Top chrome major-area editing is in place for indicator entries, tick tape, and NATO strip.  
+Top chrome now reserves real layout space above the scene instead of overlaying map content.  
+Current engineering focus: feature-forward top-band chrome work on top of the completed structured hour-marker model and the newer chrome-area editor structure.
 
 ---
 

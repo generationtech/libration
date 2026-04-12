@@ -97,6 +97,7 @@ interface SceneRenderInput {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene: SceneVisualContext;
+  sceneInsetTopPx?: number;
 }
 ```
 
@@ -105,6 +106,8 @@ interface SceneRenderInput {
 `SceneRenderInput` feeds **plan builders**, not the backend directly.
 
 RenderableLayerState is NOT drawn directly by the backend.
+
+`sceneInsetTopPx` allows upstream layout to reserve visible top chrome space above the scene so the map is not rendered underneath fixed top chrome.
 
 ---
 
@@ -271,6 +274,7 @@ Responsibilities include:
 - bundled-font loading/registration for Canvas realization
 - current text realization bridge
 - current paint/path realization bridges
+- honoring `sceneInsetTopPx` by translating and reducing the effective scene viewport when top chrome reserves space
 - invoking executor
 
 All scene and chrome semantics are resolved upstream.

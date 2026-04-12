@@ -24,6 +24,7 @@ Owns:
 - preset selection
 - config lifecycle
 - render loop orchestration
+- scene/chrome layout orchestration
 
 Produces:
 - `SceneRenderInput`
@@ -87,6 +88,7 @@ Current top-band design:
 - Tickmark tape (hour / 15 / 5 hierarchy)
 - NATO timezone strip (rectangular, continuous band)
 - Single built-in top chrome appearance (no palette selector)
+- Area-level visibility controls for the indicator row, tick tape, NATO row, and bottom readout
 - Fully RenderPlan-driven
 
 Recent chrome simplification:
@@ -97,6 +99,8 @@ Recent chrome simplification:
 Chrome is:
 - visually integrated
 - architecturally separate from layers
+- rendered in screen space after the scene
+- allowed to reserve real layout space above the map instead of hiding map content underneath it
 - free to evolve representation styles without changing the time model
 
 ---
@@ -266,6 +270,12 @@ That means:
 - no flat compatibility regeneration remains
 - old saved configs that only used flat hour-marker fields are no longer compatible
 
+Related top-band chrome visibility is now also modeled truthfully in structured layout/config state rather than editor-only UI state. Examples include:
+- `chrome.layout.hourMarkers.visible`
+- `chrome.layout.tickTapeVisible`
+- `chrome.layout.timezoneLetterRowVisible`
+- `chrome.layout.bottomInformationBarVisible`
+
 ---
 
 ## Recommended Shared Abstractions
@@ -342,7 +352,9 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - structured `chrome.layout.hourMarkers` persistence
 - dedicated `HourMarkersEditor` with canonical section structure: Behavior / Realization / Appearance / Layout
 - structured-only hour-marker authoring, normalization, and runtime consumption
+- Chrome major-area editors for indicator entries, tick tape, and NATO strip
 - top-band and bottom-chrome policy integration
+- top chrome scene-inset layout so visible top chrome does not overlay and hide the map
 - backend-neutral text identity (`font.assetId`)
 - explicit Canvas bridge modules for text, paint, and paths
 - Canvas bundled-font loading/registration at runtime
@@ -352,7 +364,7 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - renderer-owned glyph outline rendering from preprocessed font data
 - atlas-based custom text rendering
 - RTX/native backend
-- generalized structured editor/config system across multiple UI surfaces
+- generalized structured editor/config system across multiple UI surfaces beyond the currently implemented chrome-area work
 - broader realization-specific appearance controls beyond the currently implemented hour-marker fields
 
 ### Near-Term Work

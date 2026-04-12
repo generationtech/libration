@@ -31,6 +31,36 @@ The motivating idea is:
 - presets should be combinable
 - narrow appearance-only bundles should become just one specialized use of the broader preset system
 
+## Built-In Baseline Defaults
+
+Presets do **not** remove the need for a hard-coded baseline product configuration.
+
+Libration still needs one canonical built-in default config in code that defines:
+- first-launch behavior
+- reset-to-default behavior
+- fallback behavior when persisted state is missing or invalid
+
+That baseline is not just another ordinary preset in the user-facing sense. It is part of the product definition itself.
+
+A useful conceptual stack is:
+- built-in baseline config
+- persisted running config
+- future ordered preset overlays
+- normalized effective config used by runtime
+
+The baseline may eventually reuse some of the same structured machinery as presets internally, but conceptually it remains special:
+- always present
+- authoritative for first launch
+- suitable for normalization fallbacks
+- not an optional user-combinable overlay
+
+During active product development, the baseline should be treated as the current best shipping intent for first launch, not as an immutable forever decision. Changing that baseline should affect:
+- first launch
+- reset to defaults
+- missing/corrupt state recovery
+
+It should **not** silently rewrite already-persisted user running config.
+
 ---
 
 ## Core Product Idea
@@ -393,7 +423,7 @@ The metadata should remain descriptive. It should not become the source of truth
 
 A clean conceptual pipeline would be:
 
-1. start from a base config or current config
+1. start from a known starting config
 2. apply preset patches in explicit user-defined order
 3. normalize the resulting config
 4. commit it as the new effective running config
@@ -407,15 +437,13 @@ effectiveConfig =
   );
 ```
 
-The exact choice of `startingConfig` is a future product decision.
-
-Possible strategies include:
+The preset layering contract does not require only one possible `startingConfig`, but the project should explicitly recognize the built-in baseline config as the authoritative first-launch default. Plausible workflows include:
 
 - apply presets onto the current running config
-- apply presets onto a known default baseline
+- apply presets onto the built-in baseline config
 - support both workflows explicitly
 
-That choice should be made deliberately later. The preset layering contract itself does not depend on choosing it now.
+Whatever workflow is chosen later, the existence of the built-in baseline config should not be left ambiguous.
 
 ---
 
@@ -567,10 +595,10 @@ The config model remains primary.
 
 These are intentionally deferred.
 
-### 1. What is the preset application baseline?
-Should presets apply onto:
+### 1. What is the preset application baseline for a given workflow?
+The built-in baseline config should exist regardless. The open question is which starting config a given preset workflow should target:
 - the current running config
-- a default baseline
+- the built-in baseline config
 - a user-selected baseline
 
 ### 2. How should active presets be represented in the UI?

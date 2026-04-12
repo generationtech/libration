@@ -12,7 +12,7 @@ Scene content rendered in projection space should be expressed as a layer wherev
 - weather overlays
 - future data-driven elements
 
-**Fixed display chrome** (appliance-style header/footer bands, tick rails, non-map HUD) is intentionally **outside** this model: it is screen-anchored, not projection-anchored, and is composed in a **separate render pass** after the scene (`buildDisplayChromeState` / `renderDisplayChrome` in `src/renderer/displayChrome.ts`).
+**Fixed display chrome** (appliance-style header/footer bands, tick rails, non-map HUD) is intentionally **outside** this model: it is screen-anchored, not projection-anchored, and is composed in a **separate render pass** after the scene (`buildDisplayChromeState` / `renderDisplayChrome` in `src/renderer/displayChrome.ts`). Visible top chrome may also reserve layout space above the scene so the map is not rendered underneath it.
 
 ---
 
