@@ -19,6 +19,20 @@ import { computeTextMode24hIndicatorVerticalSnapshot } from "./textMode24hIndica
 
 const VIEWPORT = { width: 1200, height: 800, devicePixelRatio: 1 } as const;
 
+/** Pre-polish text-led stack margins (same coefficients as legacy {@link buildTextLedCircleStackFromDiskBandH} baseline). */
+function legacyTextLedMarginsAboveBelowDisk(diskBandH: number): { above: number; below: number } {
+  const disk = Math.max(9, Math.round(Math.max(1, diskBandH)));
+  const padTopPx = Math.max(4, Math.round(disk * 0.048));
+  const gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
+  const gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
+  const annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
+  const padBottomPx = Math.max(3, Math.round(disk * 0.032));
+  return {
+    above: padTopPx + gapNumeralToDiskPx,
+    below: gapDiskToAnnotationPx + annotationH + padBottomPx,
+  };
+}
+
 function snapshotForSizeMultiplier(sm: number) {
   return computeTextMode24hIndicatorVerticalSnapshot({
     viewport: VIEWPORT,
@@ -58,10 +72,13 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     );
     expect(s.circleBandHeightVsStackSumDeltaPx).toBe(0);
     expect(Math.abs(s.marginAboveTextInDiskRowPx - s.marginBelowTextInDiskRowPx)).toBeLessThanOrEqual(1);
+    const leg = legacyTextLedMarginsAboveBelowDisk(s.diskBandHeightPx);
+    expect(s.marginAboveDiskRowInCircleBandPx).toBeGreaterThan(leg.above);
+    expect(s.belowDiskRowInsideCircleBandPx).toBeLessThan(leg.below);
   });
 
-  it("reports geometry for representative size multipliers (0.95, 1.45, 1.65)", () => {
-    const sizes = [0.95, 1.45, 1.65] as const;
+  it("reports geometry for representative size multipliers (0.95, 1.20, 1.45, 1.65)", () => {
+    const sizes = [0.95, 1.2, 1.45, 1.65] as const;
     const rows: Record<
       string,
       {
@@ -104,6 +121,8 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         majorTickTop: s.tickTapeMajorTickTopPx,
         yCircleBottom: s.yCircleBottomPx,
         estTextBottomToTape: s.estimatedTextBottomToMajorTickTopPx,
+        marginAboveDiskRow: s.marginAboveDiskRowInCircleBandPx,
+        marginBelowDiskBeforeTape: s.belowDiskRowInsideCircleBandPx,
       };
     }
     // eslint-disable-next-line no-console -- diagnostic table for investigation runs

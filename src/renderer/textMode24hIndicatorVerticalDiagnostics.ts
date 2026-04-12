@@ -106,6 +106,11 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   marginBelowTextInDiskRowPx: number;
   /** Gap + annotation + pad below disk row inside the circle band (down to {@link yCircleBottomPx}). */
   belowDiskRowInsideCircleBandPx: number;
+  /**
+   * Pixels from circle-band top to disk-row top ({@code padTop + upperNumeral + gapNumeral→disk}).
+   * Text-led polish (2026-04): typically ~+2 vs the pre-polish baseline (~7px for common disk heights) — more headroom above the row.
+   */
+  marginAboveDiskRowInCircleBandPx: number;
   yCircleBottomPx: number;
   tickBandHeightPx: number;
   tickTapeMajorTickTopPx: number;
@@ -232,6 +237,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const marginBelowTextInDiskRow = yDiskRow0 + diskBandH - textEstBottom;
   const belowDisk =
     circleStack.gapDiskToAnnotationPx + circleStack.annotationH + circleStack.padBottomPx;
+  const marginAboveDiskRow =
+    circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
 
   const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(hourMarkerSel);
   const gStyle = resolveHourMarkerGlyphStyle(spec.glyphStyleId ?? "topBandHourDefault");
@@ -276,6 +283,7 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     marginAboveTextInDiskRowPx: marginAboveTextInDiskRow,
     marginBelowTextInDiskRowPx: marginBelowTextInDiskRow,
     belowDiskRowInsideCircleBandPx: belowDisk,
+    marginAboveDiskRowInCircleBandPx: marginAboveDiskRow,
     yCircleBottomPx: yCircleBottom,
     tickBandHeightPx: tickH,
     tickTapeMajorTickTopPx: majorTickTopY,

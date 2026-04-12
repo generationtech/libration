@@ -1155,11 +1155,37 @@ export function sumTopBandCircleStackMetricsPx(m: TopBandCircleStackMetrics): nu
  */
 export function buildTextLedCircleStackFromDiskBandH(diskBandH: number): TopBandCircleStackMetrics {
   const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(Math.max(1, diskBandH)));
-  const padTopPx = Math.max(4, Math.round(disk * 0.048));
-  const padBottomPx = Math.max(3, Math.round(disk * 0.032));
-  const gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
-  const gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
-  const annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
+  /** Baseline partition (legacy text-led coefficients); sum is preserved while shifting non-disk space. */
+  let padTopPx = Math.max(4, Math.round(disk * 0.048));
+  let padBottomPx = Math.max(3, Math.round(disk * 0.032));
+  let gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
+  let gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
+  let annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
+
+  /**
+   * Text-mode polish: move the disk row **down** in the circle band — more margin above the row, less below before the
+   * noon/midnight strip + bottom pad (same total stack height; {@link diskBandH} unchanged). Pixels are taken from
+   * gap/annotation/bottom first, then added to {@code padTopPx} / {@code gapNumeralToDiskPx} (not from disk slack).
+   */
+  const wantShiftDownPx = Math.min(5, Math.max(2, Math.round(disk * 0.052)));
+  let take = wantShiftDownPx;
+  const g2take = Math.min(take, Math.max(0, gapDiskToAnnotationPx - 3));
+  gapDiskToAnnotationPx -= g2take;
+  take -= g2take;
+  const anntake = Math.min(take, Math.max(0, annotationH - 7));
+  annotationH -= anntake;
+  take -= anntake;
+  const pbtake = Math.min(take, Math.max(0, padBottomPx - 3));
+  padBottomPx -= pbtake;
+  take -= pbtake;
+
+  const shiftedPx = wantShiftDownPx - take;
+  if (shiftedPx > 0) {
+    const addTop = Math.round(shiftedPx * 0.45);
+    padTopPx += addTop;
+    gapNumeralToDiskPx += shiftedPx - addTop;
+  }
+
   return {
     padTopPx,
     upperNumeralH: 0,
