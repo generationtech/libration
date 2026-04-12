@@ -123,7 +123,7 @@ describe("ChromeTab top-band hour markers", () => {
           hourMarkers: {
             ...hm,
             realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...hm.layout, sizeMultiplier: 1 },
             ...overrides,
           },
         },
@@ -305,8 +305,9 @@ describe("ChromeTab top-band hour markers", () => {
         layout: {
           ...lay,
           hourMarkers: {
+            ...lay.hourMarkers,
             realization: { kind: "text", fontAssetId: "dotmatrix-regular", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...lay.hourMarkers.layout, sizeMultiplier: 1 },
           },
         },
       },

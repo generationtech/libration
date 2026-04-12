@@ -16,8 +16,6 @@ import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
   resolvedHourMarkerLayoutSizeMultiplier,
-  resolvedHourMarkerLayoutTextBottomMargin,
-  resolvedHourMarkerLayoutTextTopMargin,
   type DisplayChromeLayoutConfig,
   type DisplayTimeConfig,
   type EffectiveTopBandHourMarkerSelection,
@@ -1214,9 +1212,10 @@ function splitBottomTripleForTextLed(bottomTriplePx: number): {
 }
 
 /**
- * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics}; non-disk vertical
- * space is split so the **text core** is centered in the full circle band (equal margin above/below inside the
- * indicator area). Independent of tick-tape row visibility — only {@link TopBandCircleStackMetrics} + disk/vm matter.
+ * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics} (built-in layout
+ * only — user text-row insets do not participate). Non-disk vertical space is split so the **baseline text core** is
+ * centered in the full circle band. User insets shift the rendered text inside the fixed disk row at semantic placement
+ * time. Independent of tick-tape row visibility — only {@link TopBandCircleStackMetrics} + disk/vm matter.
  */
 export function buildTextLedCircleStackFromDiskBandH(
   diskBandH: number,
@@ -1276,7 +1275,8 @@ export function buildTextLedCircleStackFromDiskBandH(
 
 /**
  * Resolves the authoritative text-led stack and font/disk fixed point: disk row comes from
- * {@link computeTextModeDiskBandVerticalMetrics}, not from inverting the generic circle-band solver.
+ * {@link computeTextModeDiskBandVerticalMetrics} (built-in vertical model only). User text-row insets are excluded so
+ * they cannot feed the radius/font-size fixed point. Not from inverting the generic circle-band solver.
  */
 export function resolveTextIndicatorCircleStackMetrics(args: {
   viewportWidthPx: number;
@@ -1287,11 +1287,8 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
   const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
-  const textTopMarginPx = resolvedHourMarkerLayoutTextTopMargin(args.layout);
-  const textBottomMarginPx = resolvedHourMarkerLayoutTextBottomMargin(args.layout);
-  const vmCommon = { textTopMarginPx, textBottomMarginPx };
   if (!(vw > 0)) {
-    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm, ...vmCommon });
+    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
     return buildTextLedCircleStackFromDiskBandH(1, vm0);
   }
   const sw = vw / 24;
@@ -1301,7 +1298,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   for (let i = 0; i < 8; i += 1) {
     const r = computeUtcCircleMarkerRadius(diskGuess, sw);
     const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
-    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
+    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
     const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH, vm);
     if (last !== undefined && stack.diskBandH === last.diskBandH) {
       return stack;
@@ -1309,7 +1306,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
     last = stack;
     diskGuess = stack.diskBandH;
   }
-  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm, ...vmCommon });
+  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
   return last ?? buildTextLedCircleStackFromDiskBandH(1, vmFallback);
 }
 

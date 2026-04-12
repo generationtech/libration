@@ -36,7 +36,7 @@ describe("top-band hour marker contract", () => {
         hourMarkerNumericRepresentation: "segment",
         hourMarkers: {
           realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
-          layout: { sizeMultiplier: 1 },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
         },
       });
       expect(lay.hourMarkers.realization).toEqual({
@@ -59,7 +59,7 @@ describe("top-band hour marker contract", () => {
         effectiveTopBandHourMarkerSelection(
           normLay({
             realization: { kind: "text", fontAssetId: "dseg7modern-regular", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({ kind: "text", fontAssetId: "dseg7modern-regular", sizeMultiplier: 1 });
@@ -70,7 +70,7 @@ describe("top-band hour marker contract", () => {
         effectiveTopBandHourMarkerSelection(
           normLay({
             realization: { kind: "text", fontAssetId: "computer", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({ kind: "text", fontAssetId: "computer", sizeMultiplier: 1 });
@@ -81,7 +81,7 @@ describe("top-band hour marker contract", () => {
         effectiveTopBandHourMarkerSelection(
           normLay({
             realization: { kind: "radialLine", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({ kind: "glyph", glyphMode: "radialLine", sizeMultiplier: 1 });
@@ -96,7 +96,7 @@ describe("top-band hour marker contract", () => {
               fontAssetId: "computer",
               appearance: { color: "#aabbcc" },
             },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({
@@ -108,7 +108,7 @@ describe("top-band hour marker contract", () => {
         effectiveTopBandHourMarkerSelection(
           normLay({
             realization: { kind: "radialWedge", appearance: { fillColor: "rgb(1, 2, 3)" } },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({
@@ -123,7 +123,7 @@ describe("top-band hour marker contract", () => {
         effectiveTopBandHourMarkerSelection(
           normLay({
             realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
-            layout: { sizeMultiplier: 1 },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 1 },
           }),
         ),
       ).toEqual({ kind: "text", fontAssetId: undefined, sizeMultiplier: 1 });

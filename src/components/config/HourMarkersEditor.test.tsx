@@ -59,7 +59,7 @@ function baseCustomHourMarkers(
         hourMarkers: {
           ...hm,
           realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
-          layout: { sizeMultiplier: 1 },
+          layout: { ...hm.layout, sizeMultiplier: 1 },
           ...overrides,
         },
       },

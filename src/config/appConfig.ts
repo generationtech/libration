@@ -134,7 +134,10 @@ export function clampTopBandHourMarkerSizeMultiplier(n: number): number {
   );
 }
 
-/** Inclusive bounds for {@link HourMarkersConfig.layout.textTopMarginPx} / {@link HourMarkersConfig.layout.textBottomMarginPx}. */
+/**
+ * Inclusive bounds for {@link HourMarkersConfig.layout.textTopMarginPx} /
+ * {@link HourMarkersConfig.layout.textBottomMarginPx} (local text-row insets; they do not drive nominal marker sizing).
+ */
 export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN = 0;
 export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX = 24;
 

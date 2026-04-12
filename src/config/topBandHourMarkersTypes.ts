@@ -67,9 +67,15 @@ export interface HourMarkersConfig {
   behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {
     sizeMultiplier: number;
-    /** Extra vertical inset above the 24-hour text core inside the disk row (px), normalized 0–24. */
+    /**
+     * Local vertical inset above the 24-hour text core inside the disk row (px), normalized 0–24. Shifts rendered text
+     * only; does not change solved disk row height or marker radius.
+     */
     textTopMarginPx: number;
-    /** Extra vertical inset below the 24-hour text core inside the disk row (px), normalized 0–24. */
+    /**
+     * Local vertical inset below the 24-hour text core inside the disk row (px), normalized 0–24. Shifts rendered text
+     * only; does not change solved disk row height or marker radius.
+     */
     textBottomMarginPx: number;
   };
   /** Optional boxed numerals carried on the hourly tick tape (glyph realization contexts). */
@@ -119,9 +125,9 @@ export type EffectiveTopBandHourMarkerRealization =
 export type EffectiveTopBandHourMarkerLayout = {
   /** Finite check, default 1.0 when absent/invalid, then clamp to the v2 [0.5, 2] range. */
   sizeMultiplier: number;
-  /** Clamped pixel inset above the 24-hour text core inside the disk row. */
+  /** Clamped local inset above the text core (px); placement-only, not a size driver. */
   textTopMarginPx: number;
-  /** Clamped pixel inset below the 24-hour text core inside the disk row. */
+  /** Clamped local inset below the text core (px); placement-only, not a size driver. */
   textBottomMarginPx: number;
 };
 

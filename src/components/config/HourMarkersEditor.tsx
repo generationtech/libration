@@ -599,7 +599,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
       </ConfigControlRow>
       {rk === "text" ? (
         <>
-          <ConfigControlRow label="Top margin (text row)">
+          <ConfigControlRow label="Top inset (text row)">
             <input
               type="number"
               className="config-input"
@@ -607,7 +607,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
               step={1}
               disabled={!wired || !areaOn}
-              aria-label="Extra space above 24-hour numerals inside the indicator row"
+              aria-label="Extra inset above 24-hour numerals inside the indicator row (does not change marker size)"
               value={textTopMarginPx}
               onChange={
                 wired && updateConfig
@@ -628,7 +628,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               px above numerals
             </span>
           </ConfigControlRow>
-          <ConfigControlRow label="Bottom margin (text row)">
+          <ConfigControlRow label="Bottom inset (text row)">
             <input
               type="number"
               className="config-input"
@@ -636,7 +636,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
               step={1}
               disabled={!wired || !areaOn}
-              aria-label="Extra space below 24-hour numerals inside the indicator row"
+              aria-label="Extra inset below 24-hour numerals inside the indicator row (does not change marker size)"
               value={textBottomMarginPx}
               onChange={
                 wired && updateConfig

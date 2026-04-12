@@ -32,6 +32,7 @@ import {
   layoutSemanticTopBandHourMarkers,
   layoutSemanticTopBandRadialLineMarkers,
   layoutSemanticTopBandRadialWedgeMarkers,
+  textRowUserInsetTextCenterDeltaPx,
 } from "../config/topBandHourMarkersLayout.ts";
 
 const RESOLVED_UTC = resolveTopBandTimeFromConfig({
@@ -60,16 +61,11 @@ describe("computeTextIndicatorRowHeightPx", () => {
     expect(h15 - h09).toBeGreaterThanOrEqual(2);
   });
 
-  it("adds configured top/bottom text margins to disk row height and shifts the text anchor from the row top", () => {
+  it("keeps disk row height independent of user text insets; insets shift the text anchor only", () => {
     const base = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
-    const withMargins = computeTextModeDiskBandVerticalMetrics({
-      fontSizePx: 20,
-      sizeMultiplier: 1,
-      textTopMarginPx: 4,
-      textBottomMarginPx: 2,
-    });
-    expect(withMargins.diskBandH).toBe(base.diskBandH + 6);
-    expect(withMargins.textCenterYFromDiskRowTopPx - base.textCenterYFromDiskRowTopPx).toBe(4);
+    expect(base.diskBandH).toBeGreaterThan(0);
+    expect(textRowUserInsetTextCenterDeltaPx(4, 2)).toBe(2);
+    expect(textRowUserInsetTextCenterDeltaPx(5, 5)).toBe(0);
   });
 });
 
@@ -81,7 +77,7 @@ function hourMarkerLayout(
     hourMarkers: {
       ...DEFAULT_HOUR_MARKERS_CONFIG,
       realization,
-      layout: { sizeMultiplier: 1 },
+      layout: { ...DEFAULT_HOUR_MARKERS_CONFIG.layout, sizeMultiplier: 1 },
     },
   };
 }

@@ -36,30 +36,41 @@ export const TEXT_MODE_TEXT_CORE_HEIGHT_FRAC = 1.125 as const;
 export type TextModeDiskBandVerticalMetrics = {
   /** Rounded nominal em/core height used for layout (px). */
   textCoreHeightPx: number;
-  /** Padding inside the disk row above the core (px). */
+  /** Built-in automatic padding above the core inside the disk row (px); excludes user text-row insets. */
   topPadInsideDiskPx: number;
-  /** Padding inside the disk row below the core (px). */
+  /** Built-in automatic padding below the core inside the disk row (px); excludes user text-row insets. */
   bottomPadInsideDiskPx: number;
-  /** Disk-band height = core + top + bottom (px); equals {@link computeTextIndicatorRowHeightPx} for the same inputs. */
+  /**
+   * Disk-band height = core + built-in top + built-in bottom (px). Drives marker radius / nominal font solving; does not
+   * include user top/bottom insets (those shift the text anchor only — see {@link textRowUserInsetTextCenterDeltaPx}).
+   */
   diskBandH: number;
   /**
-   * Y offset from the disk-row top to the text anchor for vertical centering (`textBaseline: "middle"`):
-   * {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
+   * Y offset from the disk-row top to the baseline text anchor for vertical centering (`textBaseline: "middle"`),
+   * before user insets: {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
    */
   textCenterYFromDiskRowTopPx: number;
 };
 
 /**
+ * Converts persisted {@code textTopMarginPx} / {@code textBottomMarginPx} into a local vertical shift for the text
+ * anchor inside the already-solved disk row. Positive top inset moves the anchor down; positive bottom inset moves it
+ * up. Does not change {@link TextModeDiskBandVerticalMetrics.diskBandH} or marker radius.
+ */
+export function textRowUserInsetTextCenterDeltaPx(textTopMarginPx?: number, textBottomMarginPx?: number): number {
+  const userTop = Math.max(0, Math.round(textTopMarginPx ?? 0));
+  const userBottom = Math.max(0, Math.round(textBottomMarginPx ?? 0));
+  return userTop - userBottom;
+}
+
+/**
  * Single vertical truth for text-mode 24h indicators: one core height, symmetric in-disk padding, derived row height.
+ * User text-row insets are **not** part of this model — apply {@link textRowUserInsetTextCenterDeltaPx} at placement time.
  */
 export function computeTextModeDiskBandVerticalMetrics(args: {
   fontSizePx: number;
   sizeMultiplier: number;
   fontMetrics?: { heightPx: number };
-  /** Author-time inset above the text core inside the disk row (px). */
-  textTopMarginPx?: number;
-  /** Author-time inset below the text core inside the disk row (px). */
-  textBottomMarginPx?: number;
 }): TextModeDiskBandVerticalMetrics {
   const { fontSizePx, sizeMultiplier } = args;
   const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
@@ -69,10 +80,6 @@ export function computeTextModeDiskBandVerticalMetrics(args: {
   const totalPadPx = Math.round(textCoreHeightPx * padFracTotal);
   let topPadInsideDiskPx = Math.floor(totalPadPx / 2);
   let bottomPadInsideDiskPx = totalPadPx - topPadInsideDiskPx;
-  const userTop = Math.max(0, Math.round(args.textTopMarginPx ?? 0));
-  const userBottom = Math.max(0, Math.round(args.textBottomMarginPx ?? 0));
-  topPadInsideDiskPx += userTop;
-  bottomPadInsideDiskPx += userBottom;
   let diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
   const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
   if (diskBandH < safetyFloor) {
@@ -282,10 +289,12 @@ export function layoutSemanticTopBandHourMarkers(
       const vm = computeTextModeDiskBandVerticalMetrics({
         fontSizePx: labelSize,
         sizeMultiplier,
-        textTopMarginPx: effLayout.textTopMarginPx,
-        textBottomMarginPx: effLayout.textBottomMarginPx,
       });
-      numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
+      const insetDeltaY = textRowUserInsetTextCenterDeltaPx(
+        effLayout.textTopMarginPx,
+        effLayout.textBottomMarginPx,
+      );
+      numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx + insetDeltaY;
       halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);
     } else {
       const r = m.radiusPx;

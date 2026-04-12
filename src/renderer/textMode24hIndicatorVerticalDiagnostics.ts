@@ -31,8 +31,9 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
 import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import {
-  computeTextModeDiskBandVerticalMetrics,
   computeTextIndicatorRowHeightPx,
+  computeTextModeDiskBandVerticalMetrics,
+  textRowUserInsetTextCenterDeltaPx,
 } from "../config/topBandHourMarkersLayout.ts";
 import type { FrameContext, Viewport } from "./types.ts";
 import type { TimeContext } from "../layers/types.ts";
@@ -86,6 +87,15 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   yDiskRow0Px: number;
   diskBandHeightPx: number;
   diskRowMidYPx: number;
+  /** Text anchor Y from built-in vertical layout only (before user text-row insets). */
+  textAnchorBaselineYPx: number;
+  /** Resolved user inset above the text core (px); does not affect nominal font size or marker radius. */
+  userTextTopInsetPx: number;
+  /** Resolved user inset below the text core (px); does not affect nominal font size or marker radius. */
+  userTextBottomInsetPx: number;
+  /** {@link textRowUserInsetTextCenterDeltaPx} for this frame — additive shift applied to {@link textAnchorBaselineYPx}. */
+  textRowUserInsetTextCenterDeltaPx: number;
+  /** Final text anchor Y (baseline + user inset delta). */
   textAnchorYPx: number;
   /** Legacy one-sided optical bias (px); always 0 — centering is from {@link computeTextModeDiskBandVerticalMetrics}. */
   opticalOffsetPx: number;
@@ -93,7 +103,9 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   markerContentSizePx: number;
   /** Authoritative text core height for layout (px). */
   textCoreHeightPx: number;
+  /** Built-in padding above the core inside the disk row (px), excluding user insets. */
   topPadInsideDiskPx: number;
+  /** Built-in padding below the core inside the disk row (px), excluding user insets. */
   bottomPadInsideDiskPx: number;
   /** {@link computeTextIndicatorRowHeightPx} / disk row height (same as {@link diskBandHeightPx} when stack disk matches). */
   textIndicatorRowHeightPx: number;
@@ -180,9 +192,9 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     throw new Error("computeTextMode24hIndicatorVerticalSnapshot: hour markers must be text mode");
   }
   const sm = resolvedHourMarkerLayoutSizeMultiplier(layout);
-  const textTopMarginPx = resolvedHourMarkerLayoutTextTopMargin(layout);
-  const textBottomMarginPx = resolvedHourMarkerLayoutTextBottomMargin(layout);
-  const vmCommon = { textTopMarginPx, textBottomMarginPx };
+  const userTextTopInsetPx = resolvedHourMarkerLayoutTextTopMargin(layout);
+  const userTextBottomInsetPx = resolvedHourMarkerLayoutTextBottomMargin(layout);
+  const textRowInsetDeltaPx = textRowUserInsetTextCenterDeltaPx(userTextTopInsetPx, userTextBottomInsetPx);
   const st = TOP_CHROME_STYLE;
   const baseTop = chromeTopBandHeightFromViewportPx(h);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
@@ -252,13 +264,14 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const markerContentSizePx = diskLabelSizePx * sm;
 
   const fontSizePx = markerContentSizePx;
-  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
-  const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
+  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
+  const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
 
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
   const diskRowMidY = yDiskRow0 + diskBandH * 0.5;
-  const textAnchorY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
+  const textAnchorBaselineY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
+  const textAnchorY = textAnchorBaselineY + textRowInsetDeltaPx;
   const opticalOffsetPx = 0;
 
   const halfCore = vm.textCoreHeightPx * 0.5;
@@ -303,6 +316,10 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     yDiskRow0Px: yDiskRow0,
     diskBandHeightPx: diskBandH,
     diskRowMidYPx: diskRowMidY,
+    textAnchorBaselineYPx: textAnchorBaselineY,
+    userTextTopInsetPx,
+    userTextBottomInsetPx,
+    textRowUserInsetTextCenterDeltaPx: textRowInsetDeltaPx,
     textAnchorYPx: textAnchorY,
     opticalOffsetPx,
     diskLabelSizePx,

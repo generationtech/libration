@@ -41,7 +41,7 @@ describe("hour-marker circle-band expansion", () => {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
         ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-        layout: { sizeMultiplier: 2 },
+        layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 2 },
       },
     };
     const delta = computeTextIndicatorCircleBandExpansionPx({
@@ -171,7 +171,7 @@ describe("buildDisplayChromeState hour-marker row", () => {
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: 2 },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: 2 },
         },
       },
     });

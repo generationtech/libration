@@ -15,6 +15,8 @@ import { describe, expect, it } from "vitest";
 import { cloneHourMarkersConfig, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG } from "../config/appConfig.ts";
 import { createTimeContext } from "../core/time.ts";
 import { buildDisplayChromeState, sumTopBandCircleStackMetricsPx } from "./displayChrome.ts";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
+import { computeUtcCircleMarkerRadius } from "./displayChrome.ts";
 import {
   compareTextMode24hIndicatorVerticalTickTape,
   computeTextMode24hIndicatorVerticalSnapshot,
@@ -48,7 +50,7 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
         tickTapeVisible: false,
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -59,7 +61,7 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
         tickTapeVisible: false,
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -75,7 +77,7 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
       displayChromeLayout: {
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -101,7 +103,7 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
       displayChromeLayout: {
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -138,7 +140,7 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
       displayChromeLayout: {
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -180,7 +182,7 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
       displayChromeLayout: {
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-          layout: { sizeMultiplier: sm },
+          layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
         },
       },
     });
@@ -199,7 +201,7 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     ).toBeLessThanOrEqual(1);
   });
 
-  it("text row top/bottom margins increase disk row height (resolved layout)", () => {
+  it("user text insets do not change solved disk row, marker radius, or nominal font size; they shift the anchor only", () => {
     const base = computeTextMode24hIndicatorVerticalSnapshot({
       viewport: VIEWPORT,
       displayChromeLayout: {
@@ -218,7 +220,44 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         },
       },
     });
-    expect(inset.diskBandHeightPx - base.diskBandHeightPx).toBeGreaterThanOrEqual(8);
+    expect(inset.diskBandHeightPx).toBe(base.diskBandHeightPx);
+    expect(inset.circleStack).toEqual(base.circleStack);
+    expect(inset.markerContentSizePx).toBe(base.markerContentSizePx);
+    expect(inset.emitEffectiveFontSizePx).toBe(base.emitEffectiveFontSizePx);
+    const sw = VIEWPORT.width / 24;
+    expect(computeUtcCircleMarkerRadius(inset.diskBandHeightPx, sw)).toBe(
+      computeUtcCircleMarkerRadius(base.diskBandHeightPx, sw),
+    );
+    expect(
+      computeHourDiskLabelSizePx(
+        computeUtcCircleMarkerRadius(inset.diskBandHeightPx, sw),
+        VIEWPORT.width,
+        TOP_CHROME_STYLE.hourDiskLabel,
+      ),
+    ).toBe(
+      computeHourDiskLabelSizePx(
+        computeUtcCircleMarkerRadius(base.diskBandHeightPx, sw),
+        VIEWPORT.width,
+        TOP_CHROME_STYLE.hourDiskLabel,
+      ),
+    );
+    expect(inset.textAnchorYPx - base.textAnchorYPx).toBe(2);
+    expect(inset.textRowUserInsetTextCenterDeltaPx).toBe(2);
+    expect(inset.textAnchorBaselineYPx).toBe(base.textAnchorBaselineYPx);
+  });
+
+  it("zero user insets match baseline anchor (no delta vs baseline layout)", () => {
+    const s = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.35, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        },
+      },
+    });
+    expect(s.textRowUserInsetTextCenterDeltaPx).toBe(0);
+    expect(s.textAnchorYPx).toBe(s.textAnchorBaselineYPx);
   });
 
   it("text mode: indicator-area top/bottom margins around text match (≤1px) at 0.95–1.65×; unchanged when tape toggles", () => {
@@ -231,7 +270,7 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
           tickTapeVisible: true,
           hourMarkers: {
             ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-            layout: { sizeMultiplier: sm },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
           },
         },
       });
@@ -242,7 +281,7 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
           tickTapeVisible: false,
           hourMarkers: {
             ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-            layout: { sizeMultiplier: sm },
+            layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
           },
         },
       });
@@ -278,6 +317,8 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         majorTickTop: number;
         yCircleBottom: number;
         estTextBottomToTape: number;
+        marginAboveDiskRow: number;
+        marginBelowDiskBeforeTape: number;
       }
     > = {};
     for (const sm of sizes) {
