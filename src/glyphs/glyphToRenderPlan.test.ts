@@ -126,6 +126,22 @@ describe("emitGlyphToRenderPlan", () => {
     }
   });
 
+  it("omitStyleTextInset uses full layout size as font size despite terminal insetFrac", () => {
+    const glyph: GlyphRenderable = {
+      kind: "text",
+      text: "03",
+      role: "chromeDenseMono",
+      styleId: "topBandHourTerminal",
+      omitStyleTextInset: true,
+    };
+    const out: RenderPlan["items"] = [];
+    emitGlyphToRenderPlan(glyph, layout, ctx, out);
+    expect(out[0]?.kind).toBe("text");
+    if (out[0]?.kind === "text") {
+      expect(out[0].font.sizePx).toBeCloseTo(layout.size, 8);
+    }
+  });
+
   it("combines dotmatrix role letter spacing with glyph trackingPx in letterSpacingEm", () => {
     const glyph: GlyphRenderable = {
       kind: "text",

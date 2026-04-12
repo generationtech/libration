@@ -67,6 +67,9 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
         typographyOverrides,
         markerColor,
       );
+      if (glyph.kind === "text") {
+        glyph.omitStyleTextInset = true;
+      }
       emitGlyphToRenderPlan(glyph, { cx, cy: inst.centerY, size: inst.sizePx }, glyphRenderContext, out);
     }
   }

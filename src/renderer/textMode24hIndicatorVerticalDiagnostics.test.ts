@@ -251,7 +251,53 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     expect(s.topPadInsideDiskPx).toBe(0);
     expect(s.bottomPadInsideDiskPx).toBe(0);
     expect(s.textAnchorYPx).toBe(s.textAnchorBaselineYPx);
+    expect(s.textCenterYPx).toBe(s.textAnchorYPx);
     expect(s.marginAboveTextInDiskRowPx).toBe(0);
+    expect(s.marginBelowTextInDiskRowPx).toBe(0);
+    expect(s.structuralDiskRowSlackPx).toBe(0);
+    expect(s.textIndicatorRowHeightPx).toBe(s.textCoreHeightPx);
+    expect(s.rowHeightPx).toBe(s.textCoreHeightPx);
+    expect(s.diskBandHeightPx).toBe(s.textCoreHeightPx);
+    expect(s.effectiveFontSizePx).toBe(s.markerContentSizePx);
+    expect(s.emitEffectiveFontSizePx).toBe(s.markerContentSizePx);
+  });
+
+  it("row insets add space only on the corresponding side; font size and marker radius unchanged", () => {
+    const base = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.25, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        },
+      },
+    });
+    const topOnly = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.25, textTopMarginPx: 6, textBottomMarginPx: 0 },
+        },
+      },
+    });
+    const botOnly = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.25, textTopMarginPx: 0, textBottomMarginPx: 6 },
+        },
+      },
+    });
+    expect(topOnly.marginAboveTextInDiskRowPx).toBe(6);
+    expect(topOnly.marginBelowTextInDiskRowPx).toBe(0);
+    expect(botOnly.marginAboveTextInDiskRowPx).toBe(0);
+    expect(botOnly.marginBelowTextInDiskRowPx).toBe(6);
+    expect(topOnly.markerContentSizePx).toBe(base.markerContentSizePx);
+    expect(botOnly.markerContentSizePx).toBe(base.markerContentSizePx);
+    expect(topOnly.solvedMarkerRadiusPx).toBe(base.solvedMarkerRadiusPx);
+    expect(botOnly.solvedMarkerRadiusPx).toBe(base.solvedMarkerRadiusPx);
   });
 
   it("default hour marker layout exposes shipped baseline bottom padding (non-zero) on the text row", () => {

@@ -24,18 +24,6 @@ import {
 } from "./topBandDiskWrapGeometry.ts";
 
 /**
- * Single authoritative text-core height factor for **text-mode** 24h vertical layout (row height, margins, centering).
- * When {@link TextModeDiskBandVerticalMetrics} receives {@link fontMetrics}, that height replaces this factor.
- */
-export const TEXT_MODE_TEXT_CORE_HEIGHT_FRAC = 1.125 as const;
-
-/**
- * Minimum disk-row height in the text-led circle stack (see {@code TEXT_LED_DISK_ROW_FLOOR_PX} in displayChrome) — duplicated
- * here to keep config free of renderer imports.
- */
-export const TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX = 9 as const;
-
-/**
  * Resolved vertical model for the text-mode disk row (the band slice that holds hour numerals).
  */
 export type TextModeDiskBandVerticalMetrics = {
@@ -50,13 +38,10 @@ export type TextModeDiskBandVerticalMetrics = {
    * Total padding below the text core inside the disk row (px). Same semantics as {@link topPadInsideDiskPx}.
    */
   bottomPadInsideDiskPx: number;
-  /**
-   * Final disk-row height (px). May exceed core + top + bottom when raised to {@link TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX}
-   * (structural slack — not user padding).
-   */
+  /** Final disk-row height (px): {@code textCoreHeightPx + top + bottom} (no hidden floors). */
   diskBandH: number;
   /**
-   * When {@link diskBandH} is larger than core + top + bottom padding, extra px imposed by the row floor (non-user).
+   * Always {@code 0} for layout metrics; reserved for callers that may attach non-user slack elsewhere.
    */
   structuralDiskRowSlackPx: number;
   /**
@@ -72,7 +57,7 @@ function computeTextCoreHeightPx(args: {
   fontMetrics?: { heightPx: number };
 }): number {
   const { fontSizePx } = args;
-  const rawCore = args.fontMetrics?.heightPx ?? fontSizePx * TEXT_MODE_TEXT_CORE_HEIGHT_FRAC;
+  const rawCore = args.fontMetrics?.heightPx ?? fontSizePx;
   return Math.max(1, Math.round(rawCore));
 }
 
@@ -132,8 +117,8 @@ export function computeTextModeLayoutDiskBandVerticalMetrics(args: {
   const topPadInsideDiskPx = Math.max(0, Math.round(args.rowTopInsetPx));
   const bottomPadInsideDiskPx = Math.max(0, Math.round(args.rowBottomInsetPx));
   const naturalH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
-  const diskBandH = Math.max(TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX, naturalH);
-  const structuralDiskRowSlackPx = diskBandH - naturalH;
+  const diskBandH = naturalH;
+  const structuralDiskRowSlackPx = 0;
   const textCenterYFromDiskRowTopPx = topPadInsideDiskPx + textCoreHeightPx * 0.5;
   return {
     textCoreHeightPx,

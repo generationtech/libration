@@ -107,12 +107,18 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   opticalOffsetPx: number;
   diskLabelSizePx: number;
   markerContentSizePx: number;
-  /** Authoritative text core height for layout (px). */
+  /** Authoritative text core height for layout (px); matches nominal disk label size (or font metrics when provided). */
   textCoreHeightPx: number;
   /** Total top padding above the text core inside the disk row (px) — same as configured top inset. */
   topPadInsideDiskPx: number;
   /** Total bottom padding below the text core inside the disk row (px) — same as configured bottom inset. */
   bottomPadInsideDiskPx: number;
+  /** Same as {@link textAnchorYPx}: vertical center of the laid-out text (px). */
+  textCenterYPx: number;
+  /** Row height from the vertical model: {@code textCoreHeightPx + top + bottom} (px). */
+  rowHeightPx: number;
+  /** Emitted font size for disk numerals (px); equals {@link markerContentSizePx} (style inset not applied on emit). */
+  effectiveFontSizePx: number;
   /** Layout disk-row height (px); matches {@link diskBandHeightPx} / {@link circleStack.diskBandH}. */
   textIndicatorRowHeightPx: number;
   /** Estimated box half-height using {@link textCoreHeightPx}. */
@@ -165,7 +171,7 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   estimatedTextBottomToMajorTickTopPx: number;
   /** Emit path: {@link emitTextGlyph} uses {@code layout.cy + layout.size * baselineShiftFrac}. */
   emitTextBaselineShiftPx: number;
-  /** Emit path: {@code layout.size * (1 - 2 * insetFrac)} → resolved font size. */
+  /** Same as {@link effectiveFontSizePx} (disk row uses full {@link markerContentSizePx}). */
   emitEffectiveFontSizePx: number;
 };
 
@@ -305,10 +311,9 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
 
   const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(hourMarkerSel);
   const gStyle = resolveHourMarkerGlyphStyle(spec.glyphStyleId ?? "topBandHourDefault");
-  const insetFrac = Math.max(0, gStyle.text.insetFrac ?? 0);
   const baselineShiftFrac = gStyle.text.baselineShiftFrac ?? 0;
   const emitShift = markerContentSizePx * baselineShiftFrac;
-  const emitFont = markerContentSizePx * (1 - 2 * insetFrac);
+  const emitFont = markerContentSizePx;
 
   return {
     viewportWidthPx: w,
@@ -340,12 +345,15 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     intrinsicDiskBandForSizingPx,
     solvedMarkerRadiusPx: markerRadiusPx,
     textAnchorYPx: textAnchorY,
+    textCenterYPx: textAnchorY,
     opticalOffsetPx,
     diskLabelSizePx,
     markerContentSizePx,
     textCoreHeightPx: vmLayout.textCoreHeightPx,
     topPadInsideDiskPx: vmLayout.topPadInsideDiskPx,
     bottomPadInsideDiskPx: vmLayout.bottomPadInsideDiskPx,
+    rowHeightPx: textRowH,
+    effectiveFontSizePx: emitFont,
     textIndicatorRowHeightPx: textRowH,
     textEstimatedHalfHeightPx: halfCore,
     textEstimatedTopPx: textEstTop,

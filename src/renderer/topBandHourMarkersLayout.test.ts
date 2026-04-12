@@ -44,8 +44,9 @@ const RESOLVED_UTC = resolveTopBandTimeFromConfig({
 
 describe("computeTextIndicatorRowHeightPx", () => {
   it("shrinks with smaller sizeMultiplier and grows with larger font size (intrinsic sizing path)", () => {
-    const smallMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 0.5 });
-    const largeMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 2 });
+    const fs = 80;
+    const smallMul = computeTextIndicatorRowHeightPx({ fontSizePx: fs, sizeMultiplier: 0.5 });
+    const largeMul = computeTextIndicatorRowHeightPx({ fontSizePx: fs, sizeMultiplier: 2 });
     expect(smallMul).toBeLessThan(largeMul);
     const mid = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 1 });
     expect(computeTextIndicatorRowHeightPx({ fontSizePx: 22, sizeMultiplier: 1 })).toBeGreaterThan(mid);

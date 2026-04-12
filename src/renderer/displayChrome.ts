@@ -1007,7 +1007,8 @@ const TEXT_TIGHT_CIRCLE_STACK_OVERRIDES = {
 const TEXT_LED_CIRCLE_STACK_OVERRIDES = {
   ...TEXT_TIGHT_CIRCLE_STACK_OVERRIDES,
   diskRowMinPx: 11,
-  diskRowFloorPx: 9,
+  /** Disk row height follows layout numerals + insets; floor 1 matches {@link buildTextLedCircleStackFromDiskBandH}. */
+  diskRowFloorPx: 1,
   annotationRowMinPx: 10,
   annotationRowFloorPx: 8,
 } as const;
@@ -1149,9 +1150,6 @@ function resolveMinimumDiskBandHeightPx(args: {
   return diskH;
 }
 
-/** Matches {@link TEXT_LED_CIRCLE_STACK_OVERRIDES}.diskRowFloorPx — minimum text disk row in the text-led stack. */
-const TEXT_LED_DISK_ROW_FLOOR_PX = 9 as const;
-
 /**
  * Sums the vertical slices of a circle-band stack (equals {@link UtcTopScaleRowMetrics.circleBandH} when consistent).
  */
@@ -1234,7 +1232,7 @@ export function buildTextLedCircleStackFromDiskBandH(
   diskBandH: number,
   vm: TextModeDiskBandVerticalMetrics,
 ): TopBandCircleStackMetrics {
-  const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(Math.max(1, diskBandH)));
+  const disk = Math.round(Math.max(1, diskBandH));
   const tc = vm.textCenterYFromDiskRowTopPx;
   const minTopPair = TEXT_LED_SPLIT_MIN.padTopPx + TEXT_LED_SPLIT_MIN.gapNumeralToDiskPx;
   const minBottomTriple =
@@ -1319,7 +1317,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   }
   const sw = vw / 24;
   const seedH = Math.max(0, args.seedCircleBandHeightPx);
-  let diskGuess = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(seedH * 0.22));
+  let diskGuess = Math.max(1, Math.round(seedH * 0.22));
   let lastIntrinsic: TextModeDiskBandVerticalMetrics | undefined;
   let lastFontSize = 1;
   for (let i = 0; i < 8; i += 1) {

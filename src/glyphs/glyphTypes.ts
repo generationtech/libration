@@ -36,6 +36,11 @@ export type TextGlyph = {
   textAlign?: "left" | "center" | "right";
   /** When set, used as the final `letterSpacingEm` on the render primitive (skips hour-disk base + role mix). */
   letterSpacingEm?: number;
+  /**
+   * When true, disk-row layout {@link GlyphLayoutBox.size} is the emitted font size (hour-marker style
+   * {@code insetFrac} shrink is skipped). Used for 24h indicator numerals so row height matches paint.
+   */
+  omitStyleTextInset?: boolean;
   shadow?: RenderTextShadowStyle;
 };
 

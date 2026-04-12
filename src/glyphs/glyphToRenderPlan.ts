@@ -58,7 +58,7 @@ function emitTextGlyph(
 ): void {
   const hints =
     glyph.styleId !== undefined ? resolveHourMarkerGlyphStyle(glyph.styleId).text : {};
-  const insetFrac = Math.max(0, hints.insetFrac ?? 0);
+  const insetFrac = glyph.omitStyleTextInset ? 0 : Math.max(0, hints.insetFrac ?? 0);
   const effectiveSize = layout.size * (1 - 2 * insetFrac);
   const baselineShiftFrac = hints.baselineShiftFrac ?? 0;
   const baseline = glyph.textBaseline ?? "middle";
