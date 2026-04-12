@@ -28,6 +28,17 @@ describe("renderBridge", () => {
     });
     expect(input.scene).toEqual({});
     expect(input.layers).toEqual([]);
+    expect(input.sceneInsetTopPx).toBeUndefined();
+  });
+
+  it("buildSceneRenderInput forwards sceneInsetTopPx for top-chrome / scene viewport split", () => {
+    const input = buildSceneRenderInput({
+      frame: { frameNumber: 0, now: 0, deltaMs: 0 },
+      viewport: { width: 800, height: 600, devicePixelRatio: 1 },
+      layers: [],
+      sceneInsetTopPx: 88,
+    });
+    expect(input.sceneInsetTopPx).toBe(88);
   });
 
   it("createViewportFromCanvas uses element client dimensions (min 1×1)", () => {

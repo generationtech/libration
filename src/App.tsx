@@ -301,23 +301,24 @@ export default function App() {
         now: time.now,
         deltaMs: time.deltaMs,
       };
+      const chromeState = buildDisplayChromeState({
+        time,
+        viewport,
+        frame: frameCtx,
+        displayTime: derivedAppConfigRef.current.displayTime,
+        geography: derivedAppConfigRef.current.geography,
+        displayChromeLayout: derivedAppConfigRef.current.displayChromeLayout,
+      });
       const input = buildSceneRenderInput({
         frame: frameCtx,
         viewport,
         layers,
         scene: { backgroundColor: "#1a1a1a" },
+        sceneInsetTopPx: chromeState.topBand.height,
       });
       backend.render(input);
       const ctx2d = canvas.getContext("2d");
       if (ctx2d) {
-        const chromeState = buildDisplayChromeState({
-          time,
-          viewport,
-          frame: frameCtx,
-          displayTime: derivedAppConfigRef.current.displayTime,
-          geography: derivedAppConfigRef.current.geography,
-          displayChromeLayout: derivedAppConfigRef.current.displayChromeLayout,
-        });
         renderDisplayChrome(ctx2d, chromeState, viewport);
       }
     };

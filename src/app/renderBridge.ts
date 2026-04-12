@@ -56,11 +56,13 @@ export function buildSceneRenderInput(options: {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene?: SceneVisualContext;
+  sceneInsetTopPx?: number;
 }): SceneRenderInput {
   return {
     frame: options.frame,
     viewport: options.viewport,
     layers: options.layers,
     scene: options.scene ?? {},
+    sceneInsetTopPx: options.sceneInsetTopPx,
   };
 }

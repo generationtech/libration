@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { createTimeContext } from "../core/time";
 import {
+  cloneHourMarkersConfig,
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   DEFAULT_GEOGRAPHY_CONFIG,
@@ -842,6 +843,25 @@ describe("computeUtcTopScaleRowMetrics", () => {
   });
 });
 
+describe("computeTopBandCircleStackMetrics", () => {
+  it("uses tighter top/bottom padding for textTight than default at the same circle band height", () => {
+    const h = 48;
+    const def = computeTopBandCircleStackMetrics(h, "default");
+    const tight = computeTopBandCircleStackMetrics(h, "textTight");
+    expect(tight.padTopPx + tight.padBottomPx).toBeLessThan(def.padTopPx + def.padBottomPx);
+    const stackSum = (s: ReturnType<typeof computeTopBandCircleStackMetrics>): number =>
+      s.padTopPx +
+      s.upperNumeralH +
+      s.gapNumeralToDiskPx +
+      s.diskBandH +
+      s.gapDiskToAnnotationPx +
+      s.annotationH +
+      s.padBottomPx;
+    expect(stackSum(tight)).toBe(h);
+    expect(stackSum(def)).toBe(h);
+  });
+});
+
 describe("militaryTimeZoneLetterFromLongitudeDeg", () => {
   it("maps mean solar offsets to NATO letters (J omitted east of Zulu; Libration −12h uses M not Y)", () => {
     expect(militaryTimeZoneLetterFromLongitudeDeg(0)).toBe("Z");
@@ -1013,6 +1033,35 @@ describe("buildBottomInformationBarState", () => {
 });
 
 describe("buildDisplayChromeState", () => {
+  it("exposes top band height as the layout slice to exclude from the scene viewport (full viewport minus top chrome)", () => {
+    const time = createTimeContext(1_704_067_200_000, 0, false);
+    const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+    const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+    const chrome = buildDisplayChromeState({ time, viewport, frame });
+    expect(viewport.height - chrome.topBand.height).toBeGreaterThan(0);
+    expect(chrome.topBand.height + (viewport.height - chrome.topBand.height)).toBe(viewport.height);
+  });
+
+  it("shrinks reserved top layout when the 24-hour indicator band is hidden", () => {
+    const time = createTimeContext(1_704_067_200_000, 0, false);
+    const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+    const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+    const withIndicators = buildDisplayChromeState({ time, viewport, frame });
+    const hidden = buildDisplayChromeState({
+      time,
+      viewport,
+      frame,
+      displayChromeLayout: {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          visible: false,
+        },
+      },
+    });
+    expect(hidden.topBand.height).toBeLessThan(withIndicators.topBand.height);
+  });
+
   it("sizes bands from viewport height and anchors bottom chrome above the viewport bottom margin", () => {
     const time = createTimeContext(1_704_067_200_000, 0, false);
     const viewport = { width: 1920, height: 1080, devicePixelRatio: 1 };
@@ -1052,6 +1101,7 @@ describe("buildDisplayChromeState", () => {
         undefined,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        "textTight",
       ),
     ).toEqual(chrome.utcTopScale);
     expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
@@ -1117,6 +1167,7 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        "textTight",
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1155,6 +1206,7 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        "textTight",
       ),
     ).toEqual(chrome.utcTopScale);
   });

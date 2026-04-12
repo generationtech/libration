@@ -74,14 +74,24 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, viewport.width, viewport.height);
 
+    const insetTop = Math.max(0, input.sceneInsetTopPx ?? 0);
+    const sceneHeight = Math.max(0, viewport.height - insetTop);
+    const sceneViewport: Viewport = {
+      ...viewport,
+      height: sceneHeight,
+    };
+
+    ctx.save();
+    ctx.translate(0, insetTop);
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of layers) {
       if (!layer.visible) continue;
       ctx.save();
       ctx.globalAlpha = layer.opacity;
-      this.drawLayer(ctx, layer, viewport);
+      this.drawLayer(ctx, layer, sceneViewport);
       ctx.restore();
     }
+    ctx.restore();
   }
 
   dispose(): void {

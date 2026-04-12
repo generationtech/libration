@@ -47,4 +47,9 @@ export interface SceneRenderInput {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene: SceneVisualContext;
+  /**
+   * CSS px reserved at the top of {@link viewport} for top chrome. The scene is composed in the
+   * sub-rectangle below this inset (same width, height = viewport.height − inset).
+   */
+  sceneInsetTopPx?: number;
 }
