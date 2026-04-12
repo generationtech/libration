@@ -61,7 +61,8 @@ function emitTextGlyph(
   const insetFrac = glyph.omitStyleTextInset ? 0 : Math.max(0, hints.insetFrac ?? 0);
   const effectiveSize = layout.size * (1 - 2 * insetFrac);
   const baselineShiftFrac = hints.baselineShiftFrac ?? 0;
-  const baseline = glyph.textBaseline ?? "middle";
+  const use24hDiskNumeralGlyphCenter = glyph.omitStyleTextInset === true;
+  const baseline = use24hDiskNumeralGlyphCenter ? "alphabetic" : glyph.textBaseline ?? "middle";
   const y = layout.cy + layout.size * baselineShiftFrac;
   const x = layout.cx;
   const textAlign: RenderTextAlign = glyph.textAlign ?? "center";
@@ -94,6 +95,7 @@ function emitTextGlyph(
     },
     textAlign,
     textBaseline: baseline,
+    ...(use24hDiskNumeralGlyphCenter ? { textMode24hGlyphCenterFromLayoutY: true as const } : {}),
     letterSpacingEm,
     ...(glyph.shadow !== undefined ? { shadow: glyph.shadow } : {}),
     ...(glyph.verticalDiagnostics24h !== undefined

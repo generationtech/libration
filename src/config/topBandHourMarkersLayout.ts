@@ -45,8 +45,8 @@ export type TextModeDiskBandVerticalMetrics = {
    */
   structuralDiskRowSlackPx: number;
   /**
-   * Y offset from the disk-row top to the text anchor for vertical centering (`textBaseline: "middle"`):
-   * {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
+   * Y offset from the disk-row top to the layout vertical center for disk numerals
+   * ({@code topPadInsideDiskPx + textCoreHeightPx / 2}); Canvas uses alphabetic baseline + measured glyph centering.
    */
   textCenterYFromDiskRowTopPx: number;
 };

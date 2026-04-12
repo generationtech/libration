@@ -139,6 +139,8 @@ describe("emitGlyphToRenderPlan", () => {
     expect(out[0]?.kind).toBe("text");
     if (out[0]?.kind === "text") {
       expect(out[0].font.sizePx).toBeCloseTo(layout.size, 8);
+      expect(out[0].textBaseline).toBe("alphabetic");
+      expect(out[0].textMode24hGlyphCenterFromLayoutY).toBe(true);
     }
   });
 

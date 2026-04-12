@@ -23,8 +23,10 @@ import {
 import {
   buildTextMode24hIndicatorConsolidatedVerticalDiagnostics,
   compareTextMode24hIndicatorVerticalTickTape,
+  computeAlphabeticFillTextYForLayoutCenterYPx,
   computeTextMode24hIndicatorVerticalSnapshot,
   glyphVerticalBoundsFromCanvasMeasureText,
+  TEXT_MODE_24H_VERTICAL_GAP_EPS_PX,
 } from "./textMode24hIndicatorVerticalDiagnostics.ts";
 
 const VIEWPORT = { width: 1200, height: 800, devicePixelRatio: 1 } as const;
@@ -205,17 +207,69 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
       actualBoundingBoxAscent: 7,
       actualBoundingBoxDescent: 7,
     } as TextMetrics;
+    const fillY = computeAlphabeticFillTextYForLayoutCenterYPx(pre.fillTextAnchorYPx, m);
     const c = buildTextMode24hIndicatorConsolidatedVerticalDiagnostics({
       pre,
       fontSizePx: 14,
-      textBaseline: "middle",
-      fillTextAnchorYPx: 18,
+      textBaseline: "alphabetic",
+      fillTextAnchorYPx: fillY,
       metrics: m,
     });
     expect(c.visibleTopGapPx).toBe(1);
     expect(c.visibleBottomGapPx).toBe(1);
     expect(c.glyphHeightPx).toBe(14);
   });
+
+  it("computeAlphabeticFillTextYForLayoutCenterYPx centers measured ink on layout center", () => {
+    const layoutCenterYPx = 200;
+    const m = {
+      actualBoundingBoxAscent: 10,
+      actualBoundingBoxDescent: 4,
+    } as TextMetrics;
+    const fillY = computeAlphabeticFillTextYForLayoutCenterYPx(layoutCenterYPx, m);
+    expect(fillY).toBe(203);
+    const g = glyphVerticalBoundsFromCanvasMeasureText(fillY, m);
+    expect((g.glyphTopYPx + g.glyphBottomYPx) / 2).toBeCloseTo(layoutCenterYPx, 6);
+  });
+
+  it.each([
+    ["zeroes-one", 9.2, 3.1],
+    ["computer", 8.5, 3.8],
+    ["dseg7modern-regular", 10, 2.5],
+    ["dotmatrix-regular", 7, 4],
+  ] as const)(
+    "0/0 insets: glyph is vertically centered for font %s (asymmetric metrics)",
+    (_fontId, ascent, descent) => {
+      const diskRowTopYPx = 100;
+      const diskRowBottomYPx = 100 + ascent + descent;
+      const layoutCenterYPx = (diskRowTopYPx + diskRowBottomYPx) / 2;
+      const m = { actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent } as TextMetrics;
+      const fillY = computeAlphabeticFillTextYForLayoutCenterYPx(layoutCenterYPx, m);
+      const c = buildTextMode24hIndicatorConsolidatedVerticalDiagnostics({
+        pre: {
+          structuralHour0To23: 12,
+          diskRowTopYPx,
+          diskRowBottomYPx,
+          diskRowHeightPx: diskRowBottomYPx - diskRowTopYPx,
+          layoutSizePx: ascent + descent,
+          textCoreHeightPx: ascent + descent,
+          textCenterYPx: layoutCenterYPx,
+          baselineShiftPx: 0,
+          fillTextAnchorYPx: layoutCenterYPx,
+          topInsetPx: 0,
+          bottomInsetPx: 0,
+        },
+        fontSizePx: ascent + descent,
+        textBaseline: "alphabetic",
+        fillTextAnchorYPx: fillY,
+        metrics: m,
+      });
+      expect(Math.abs(c.visibleTopGapPx)).toBeLessThanOrEqual(TEXT_MODE_24H_VERTICAL_GAP_EPS_PX);
+      expect(Math.abs(c.visibleBottomGapPx)).toBeLessThanOrEqual(TEXT_MODE_24H_VERTICAL_GAP_EPS_PX);
+      expect(c.glyphTopYPx).toBeCloseTo(diskRowTopYPx, 5);
+      expect(c.glyphBottomYPx).toBeCloseTo(diskRowBottomYPx, 5);
+    },
+  );
 
   it("matches buildDisplayChromeState row heights and stack sum vs circle band", () => {
     const sm = 1.45;

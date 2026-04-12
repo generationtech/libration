@@ -509,8 +509,24 @@ export function compareTextMode24hIndicatorVerticalTickTape(
 export const TEXT_MODE_24H_VERTICAL_GAP_EPS_PX = 0.75;
 
 /**
+ * 24h disk numeral path: {@code layout.cy + baselineShift} is the intended vertical center; Canvas
+ * {@code textBaseline: "alphabetic"} anchor is the baseline. This maps center → {@code fillText} Y
+ * using measured {@link TextMetrics.actualBoundingBoxAscent} / {@link TextMetrics.actualBoundingBoxDescent}.
+ */
+export function computeAlphabeticFillTextYForLayoutCenterYPx(
+  layoutCenterYPx: number,
+  metrics: TextMetrics,
+): number {
+  const a = metrics.actualBoundingBoxAscent;
+  const d = metrics.actualBoundingBoxDescent;
+  const ascent = typeof a === "number" && Number.isFinite(a) ? a : 0;
+  const descent = typeof d === "number" && Number.isFinite(d) ? d : 0;
+  return layoutCenterYPx + (ascent - descent) / 2;
+}
+
+/**
  * Single structured snapshot for devtools: row bounds, layout, Canvas {@code measureText} glyph box, visible gaps.
- * Field {@link baselineYPx} is the {@code fillText} Y (after baseline shift), matching {@link emitTextGlyph}.
+ * Field {@link baselineYPx} is the actual Canvas {@code fillText} Y (alphabetic baseline after measured centering when used).
  */
 export type TextMode24hIndicatorConsolidatedVerticalDiagnostics = {
   diskRowTopYPx: number;

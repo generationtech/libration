@@ -95,6 +95,72 @@ describe("executeRenderPlanOnCanvas", () => {
     expect(ctx.restore).toHaveBeenCalled();
   });
 
+  it("24h disk numeral: fillText Y uses measured ascent/descent around layout center", () => {
+    const ctx = createMockCanvas2DContext();
+    const measureText = vi.fn(() => ({
+      width: 12,
+      actualBoundingBoxAscent: 9,
+      actualBoundingBoxDescent: 3,
+    }));
+    (ctx as unknown as { measureText: typeof measureText }).measureText = measureText;
+
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "text",
+          x: 100,
+          y: 50,
+          text: "12",
+          fill: "#000",
+          font: testCanvasFont({ sizePx: 14, weight: 400 }),
+          textAlign: "center",
+          textBaseline: "alphabetic",
+          textMode24hGlyphCenterFromLayoutY: true,
+        },
+      ],
+    };
+
+    executeRenderPlanOnCanvas(ctx, plan);
+
+    expect(measureText).toHaveBeenCalled();
+    expect(ctx.fillText).toHaveBeenCalledWith("12", 100, 53);
+  });
+
+  it("24h disk numeral: strokeText uses the same Y as fillText", () => {
+    const ctx = createMockCanvas2DContext();
+    (ctx as unknown as { measureText: () => TextMetrics }).measureText = () =>
+      ({
+        width: 8,
+        actualBoundingBoxAscent: 8,
+        actualBoundingBoxDescent: 2,
+      }) as TextMetrics;
+
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "text",
+          x: 0,
+          y: 40,
+          text: "8",
+          fill: "#fff",
+          font: testCanvasFont({ sizePx: 12, weight: 500 }),
+          textAlign: "center",
+          textBaseline: "alphabetic",
+          textMode24hGlyphCenterFromLayoutY: true,
+          stroke: {
+            color: "#000",
+            widthPx: 1,
+          },
+        },
+      ],
+    };
+
+    executeRenderPlanOnCanvas(ctx, plan);
+
+    expect(ctx.strokeText).toHaveBeenCalledWith("8", 0, 43);
+    expect(ctx.fillText).toHaveBeenCalledWith("8", 0, 43);
+  });
+
   it("draws stroked text outline before fill when stroke is set", () => {
     const ctx = createMockCanvas2DContext();
 

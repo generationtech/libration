@@ -114,7 +114,10 @@ export type TextMode24hIndicatorRenderDiagnosticsPayload = {
   textCenterYPx: number;
   /** Same as {@link emitTextGlyph}: {@code layout.size * baselineShiftFrac}. */
   baselineShiftPx: number;
-  /** Y passed to {@code fillText} (after shift); with {@code textBaseline: "middle"} this is the em-box vertical anchor. */
+  /**
+   * Layout vertical anchor Y (same as emitted {@link RenderTextItem.y}): disk center + baseline shift.
+   * Actual Canvas {@code fillText} Y uses measured ascent/descent when {@link RenderTextItem.textMode24hGlyphCenterFromLayoutY} is set.
+   */
   fillTextAnchorYPx: number;
   topInsetPx: number;
   bottomInsetPx: number;
@@ -129,6 +132,11 @@ export interface RenderTextItem {
   font: RenderFontStyle;
   textAlign: RenderTextAlign;
   textBaseline: RenderTextBaseline;
+  /**
+   * When true, {@link y} is the intended vertical center for 24h disk numerals; the executor uses
+   * {@code textBaseline: "alphabetic"} and {@code fillText} at {@code y + (ascent − descent) / 2} from {@code measureText}.
+   */
+  textMode24hGlyphCenterFromLayoutY?: boolean;
   /** When set, passed to canvas as `${value}em`. */
   letterSpacingEm?: number;
   shadow?: RenderTextShadowStyle;

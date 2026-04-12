@@ -23,6 +23,7 @@ import {
 import {
   analyzeTextMode24hVerticalGapInvariants,
   buildTextMode24hIndicatorConsolidatedVerticalDiagnostics,
+  computeAlphabeticFillTextYForLayoutCenterYPx,
   logTextMode24hIndicatorVerticalDiagnosticsSnapshot,
 } from "../textMode24hIndicatorVerticalDiagnostics.ts";
 import type {
@@ -63,7 +64,6 @@ function drawText(ctx: CanvasRenderingContext2D, item: RenderTextItem): void {
   ctx.save();
   ctx.globalAlpha = item.opacity ?? 1;
   ctx.textAlign = item.textAlign;
-  ctx.textBaseline = item.textBaseline;
   ctx.fillStyle = item.fill;
   ctx.font = canvasFontStringFromRenderTextFont(item.font);
   if (item.letterSpacingEm !== undefined) {
@@ -71,31 +71,46 @@ function drawText(ctx: CanvasRenderingContext2D, item: RenderTextItem): void {
   } else {
     ctx.letterSpacing = "0";
   }
+
+  const diag = item.textMode24hVerticalDiagnostics;
+  const allow24hTextDiag =
+    diag !== undefined && import.meta.env.DEV && import.meta.env.MODE !== "test";
+  const centerFromLayout = item.textMode24hGlyphCenterFromLayoutY === true;
+  const needMetrics = centerFromLayout || allow24hTextDiag;
+
+  ctx.textBaseline = centerFromLayout ? "alphabetic" : item.textBaseline;
+
+  let fillTextYPx = item.y;
+  let metrics: TextMetrics | undefined;
+  if (needMetrics) {
+    metrics = ctx.measureText(item.text);
+    if (centerFromLayout) {
+      fillTextYPx = computeAlphabeticFillTextYForLayoutCenterYPx(item.y, metrics);
+    }
+  }
+
   if (item.stroke) {
     clearTextShadow(ctx);
     ctx.lineJoin = item.stroke.lineJoin ?? "round";
     ctx.miterLimit = item.stroke.miterLimit ?? 2;
     ctx.lineWidth = item.stroke.widthPx;
     ctx.strokeStyle = item.stroke.color;
-    ctx.strokeText(item.text, item.x, item.y);
+    ctx.strokeText(item.text, item.x, fillTextYPx);
   }
   applyTextShadow(ctx, item.shadow);
-  const diag = item.textMode24hVerticalDiagnostics;
-  const allow24hTextDiag =
-    diag !== undefined && import.meta.env.DEV && import.meta.env.MODE !== "test";
-  if (allow24hTextDiag) {
-    const metrics = ctx.measureText(item.text);
+  if (allow24hTextDiag && diag !== undefined) {
+    const m = metrics ?? ctx.measureText(item.text);
     const consolidated = buildTextMode24hIndicatorConsolidatedVerticalDiagnostics({
       pre: diag,
       fontSizePx: item.font.sizePx,
-      textBaseline: item.textBaseline,
-      fillTextAnchorYPx: item.y,
-      metrics,
+      textBaseline: ctx.textBaseline,
+      fillTextAnchorYPx: fillTextYPx,
+      metrics: m,
     });
     const invariantReport = analyzeTextMode24hVerticalGapInvariants(consolidated);
     logTextMode24hIndicatorVerticalDiagnosticsSnapshot({ consolidated, invariantReport });
   }
-  ctx.fillText(item.text, item.x, item.y);
+  ctx.fillText(item.text, item.x, fillTextYPx);
   ctx.restore();
 }
 
