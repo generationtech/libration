@@ -69,7 +69,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         fontAssetId: "dseg7modern-regular",
         resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
       },
-      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -92,7 +92,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         fontAssetId: "computer",
         resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
       },
-      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -132,7 +132,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
           faceFill: DEFAULT_ANALOG_FACE_FILL,
         },
       },
-      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -154,7 +154,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         kind: "radialLine",
         resolvedAppearance: { lineColor: DEFAULT_RADIAL_LINE_COLOR },
       },
-      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -176,7 +176,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         kind: "radialWedge",
         resolvedAppearance: { fillColor: DEFAULT_RADIAL_WEDGE_FILL },
       },
-      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 

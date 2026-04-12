@@ -18,7 +18,7 @@ import {
   defaultLibrationConfigV2,
   v2ToAppConfig,
 } from "./v2/librationConfig";
-import { DEFAULT_APP_CONFIG, DEFAULT_DATA_CONFIG } from "./appConfig";
+import { DEFAULT_APP_CONFIG, DEFAULT_DATA_CONFIG, DEFAULT_HOUR_MARKERS_CONFIG } from "./appConfig";
 import { resolveStartupWorkingV2 } from "./v2/workingV2Persistence";
 
 describe("default data mode", () => {
@@ -36,5 +36,12 @@ describe("default data mode", () => {
     expect(v2.data.mode).toBe("static");
     expect(v2ToAppConfig(v2).data.mode).toBe("static");
     expect(defaultLibrationConfigV2().data.mode).toBe("static");
+  });
+});
+
+describe("default hour marker text row padding", () => {
+  it("surfaces shipped baseline as authoritative defaults (top may be 0; bottom matches legacy intrinsic lower pad)", () => {
+    expect(DEFAULT_HOUR_MARKERS_CONFIG.layout.textTopMarginPx).toBe(0);
+    expect(DEFAULT_HOUR_MARKERS_CONFIG.layout.textBottomMarginPx).toBe(1);
   });
 });

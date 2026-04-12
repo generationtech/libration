@@ -30,58 +30,70 @@ import {
 export const TEXT_MODE_TEXT_CORE_HEIGHT_FRAC = 1.125 as const;
 
 /**
+ * Minimum disk-row height in the text-led circle stack (see {@code TEXT_LED_DISK_ROW_FLOOR_PX} in displayChrome) — duplicated
+ * here to keep config free of renderer imports.
+ */
+export const TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX = 9 as const;
+
+/**
  * Resolved vertical model for the text-mode disk row (the band slice that holds hour numerals).
- * Top/bottom padding inside the disk row are symmetric (differ by at most 1 px after rounding).
  */
 export type TextModeDiskBandVerticalMetrics = {
   /** Rounded nominal em/core height used for layout (px). */
   textCoreHeightPx: number;
-  /** Built-in automatic padding above the core inside the disk row (px); excludes user text-row insets. */
+  /**
+   * Total padding above the text core inside the disk row (px). For layout rows, this is the configured top inset; for
+   * intrinsic sizing rows, automatic padding from the legacy pad-frac model.
+   */
   topPadInsideDiskPx: number;
-  /** Built-in automatic padding below the core inside the disk row (px); excludes user text-row insets. */
+  /**
+   * Total padding below the text core inside the disk row (px). Same semantics as {@link topPadInsideDiskPx}.
+   */
   bottomPadInsideDiskPx: number;
   /**
-   * Disk-band height = core + built-in top + built-in bottom (px). Drives marker radius / nominal font solving; does not
-   * include user top/bottom insets (those shift the text anchor only — see {@link textRowUserInsetTextCenterDeltaPx}).
+   * Final disk-row height (px). May exceed core + top + bottom when raised to {@link TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX}
+   * (structural slack — not user padding).
    */
   diskBandH: number;
   /**
-   * Y offset from the disk-row top to the baseline text anchor for vertical centering (`textBaseline: "middle"`),
-   * before user insets: {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
+   * When {@link diskBandH} is larger than core + top + bottom padding, extra px imposed by the row floor (non-user).
+   */
+  structuralDiskRowSlackPx: number;
+  /**
+   * Y offset from the disk-row top to the text anchor for vertical centering (`textBaseline: "middle"`):
+   * {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
    */
   textCenterYFromDiskRowTopPx: number;
 };
 
-/**
- * Converts persisted {@code textTopMarginPx} / {@code textBottomMarginPx} into a local vertical shift for the text
- * anchor inside the already-solved disk row. Positive top inset moves the anchor down; positive bottom inset moves it
- * up. Does not change {@link TextModeDiskBandVerticalMetrics.diskBandH} or marker radius.
- */
-export function textRowUserInsetTextCenterDeltaPx(textTopMarginPx?: number, textBottomMarginPx?: number): number {
-  const userTop = Math.max(0, Math.round(textTopMarginPx ?? 0));
-  const userBottom = Math.max(0, Math.round(textBottomMarginPx ?? 0));
-  return userTop - userBottom;
+function computeTextCoreHeightPx(args: {
+  fontSizePx: number;
+  sizeMultiplier: number;
+  fontMetrics?: { heightPx: number };
+}): number {
+  const { fontSizePx } = args;
+  const rawCore = args.fontMetrics?.heightPx ?? fontSizePx * TEXT_MODE_TEXT_CORE_HEIGHT_FRAC;
+  return Math.max(1, Math.round(rawCore));
 }
 
 /**
- * Single vertical truth for text-mode 24h indicators: one core height, symmetric in-disk padding, derived row height.
- * User text-row insets are **not** part of this model — apply {@link textRowUserInsetTextCenterDeltaPx} at placement time.
+ * **Intrinsic (sizing-only)** vertical model for text-mode 24h indicators: automatic in-disk padding from the legacy
+ * pad-frac + safety rules. Used for marker-radius / nominal font fixed-point solving only — it does **not** read
+ * configured text-row insets so changing those cannot feed back into sizing.
  */
-export function computeTextModeDiskBandVerticalMetrics(args: {
+export function computeTextModeIntrinsicDiskBandVerticalMetrics(args: {
   fontSizePx: number;
   sizeMultiplier: number;
   fontMetrics?: { heightPx: number };
 }): TextModeDiskBandVerticalMetrics {
-  const { fontSizePx, sizeMultiplier } = args;
-  const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
-  const rawCore = args.fontMetrics?.heightPx ?? fontSizePx * TEXT_MODE_TEXT_CORE_HEIGHT_FRAC;
-  const textCoreHeightPx = Math.max(1, Math.round(rawCore));
+  const textCoreHeightPx = computeTextCoreHeightPx(args);
+  const sm = Math.max(0.5, Math.min(3, args.sizeMultiplier));
   const padFracTotal = Math.min(0.12, Math.max(0.06, 0.06 + 0.04 * (sm - 1)));
   const totalPadPx = Math.round(textCoreHeightPx * padFracTotal);
   let topPadInsideDiskPx = Math.floor(totalPadPx / 2);
   let bottomPadInsideDiskPx = totalPadPx - topPadInsideDiskPx;
   let diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
-  const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
+  const safetyFloor = Math.max(7, Math.round(args.fontSizePx * 0.62));
   if (diskBandH < safetyFloor) {
     const extra = safetyFloor - diskBandH;
     const addTop = Math.floor(extra / 2);
@@ -91,25 +103,78 @@ export function computeTextModeDiskBandVerticalMetrics(args: {
     diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
   }
   const textCenterYFromDiskRowTopPx = topPadInsideDiskPx + textCoreHeightPx * 0.5;
+  const natural = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
   return {
     textCoreHeightPx,
     topPadInsideDiskPx,
     bottomPadInsideDiskPx,
     diskBandH,
+    structuralDiskRowSlackPx: diskBandH - natural,
     textCenterYFromDiskRowTopPx,
   };
 }
 
 /**
- * Text-led 24h indicator disk-row height (authoritative for text mode) — delegates to
- * {@link computeTextModeDiskBandVerticalMetrics}.
+ * **Layout** vertical model: disk row height = text core + **authoritative** configured top/bottom insets (px). This is
+ * the truthful row-internal padding surfaced in the config UI. Marker radius / nominal font size must still be solved
+ * from {@link computeTextModeIntrinsicDiskBandVerticalMetrics} only, not from this row height.
+ */
+export function computeTextModeLayoutDiskBandVerticalMetrics(args: {
+  fontSizePx: number;
+  sizeMultiplier: number;
+  fontMetrics?: { heightPx: number };
+  /** Total px padding above the text core inside the disk row (already clamped at the callsite). */
+  rowTopInsetPx: number;
+  /** Total px padding below the text core inside the disk row (already clamped at the callsite). */
+  rowBottomInsetPx: number;
+}): TextModeDiskBandVerticalMetrics {
+  const textCoreHeightPx = computeTextCoreHeightPx(args);
+  const topPadInsideDiskPx = Math.max(0, Math.round(args.rowTopInsetPx));
+  const bottomPadInsideDiskPx = Math.max(0, Math.round(args.rowBottomInsetPx));
+  const naturalH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
+  const diskBandH = Math.max(TEXT_MODE_DISK_ROW_HEIGHT_FLOOR_PX, naturalH);
+  const structuralDiskRowSlackPx = diskBandH - naturalH;
+  const textCenterYFromDiskRowTopPx = topPadInsideDiskPx + textCoreHeightPx * 0.5;
+  return {
+    textCoreHeightPx,
+    topPadInsideDiskPx,
+    bottomPadInsideDiskPx,
+    diskBandH,
+    structuralDiskRowSlackPx,
+    textCenterYFromDiskRowTopPx,
+  };
+}
+
+/** @deprecated Use {@link computeTextModeIntrinsicDiskBandVerticalMetrics} (sizing) or {@link computeTextModeLayoutDiskBandVerticalMetrics} (layout). */
+export function computeTextModeDiskBandVerticalMetrics(args: {
+  fontSizePx: number;
+  sizeMultiplier: number;
+  fontMetrics?: { heightPx: number };
+}): TextModeDiskBandVerticalMetrics {
+  return computeTextModeIntrinsicDiskBandVerticalMetrics(args);
+}
+
+/**
+ * Disk row height for text mode: {@link computeTextModeLayoutDiskBandVerticalMetrics} when insets are passed, otherwise
+ * intrinsic sizing height.
  */
 export function computeTextIndicatorRowHeightPx(args: {
   fontSizePx: number;
   sizeMultiplier: number;
   fontMetrics?: { heightPx: number };
+  textTopMarginPx?: number;
+  textBottomMarginPx?: number;
 }): number {
-  return computeTextModeDiskBandVerticalMetrics(args).diskBandH;
+  if (args.textTopMarginPx !== undefined || args.textBottomMarginPx !== undefined) {
+    return computeTextModeLayoutDiskBandVerticalMetrics({
+      fontSizePx: args.fontSizePx,
+      sizeMultiplier: args.sizeMultiplier,
+      fontMetrics: args.fontMetrics,
+      rowTopInsetPx: args.textTopMarginPx ?? 0,
+      rowBottomInsetPx: args.textBottomMarginPx ?? 0,
+    }).diskBandH;
+  }
+  return computeTextModeIntrinsicDiskBandVerticalMetrics(args).diskBandH;
 }
 
 /**
@@ -286,15 +351,13 @@ export function layoutSemanticTopBandHourMarkers(
       const diskLabel = ctx.diskLabelSizePx;
       const sizeMultiplier = diskLabel > 0 ? labelSize / diskLabel : 1;
       const effLayout = plan.source.layout;
-      const vm = computeTextModeDiskBandVerticalMetrics({
+      const vm = computeTextModeLayoutDiskBandVerticalMetrics({
         fontSizePx: labelSize,
         sizeMultiplier,
+        rowTopInsetPx: Math.max(0, Math.round(effLayout.textTopMarginPx ?? 0)),
+        rowBottomInsetPx: Math.max(0, Math.round(effLayout.textBottomMarginPx ?? 0)),
       });
-      const insetDeltaY = textRowUserInsetTextCenterDeltaPx(
-        effLayout.textTopMarginPx,
-        effLayout.textBottomMarginPx,
-      );
-      numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx + insetDeltaY;
+      numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
       halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);
     } else {
       const r = m.radiusPx;

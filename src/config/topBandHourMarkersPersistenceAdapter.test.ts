@@ -40,7 +40,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
-      layout: { sizeMultiplier: 1.5, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 1.5, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -53,7 +53,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
-      layout: { sizeMultiplier: 2, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 2, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 
@@ -82,7 +82,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "radialWedge", appearance: {} },
-      layout: { sizeMultiplier: 0.5, textTopMarginPx: 0, textBottomMarginPx: 0 },
+      layout: { sizeMultiplier: 0.5, textTopMarginPx: 0, textBottomMarginPx: 1 },
     });
   });
 

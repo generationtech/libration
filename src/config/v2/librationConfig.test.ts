@@ -123,7 +123,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       hourMarkers: {
         visible: true,
         realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#aabbcc" } },
-        layout: { sizeMultiplier: 2, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        layout: { sizeMultiplier: 2, textTopMarginPx: 0, textBottomMarginPx: 1 },
       },
     });
     expect(

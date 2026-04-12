@@ -32,8 +32,7 @@ import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
 import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import {
   computeTextIndicatorRowHeightPx,
-  computeTextModeDiskBandVerticalMetrics,
-  textRowUserInsetTextCenterDeltaPx,
+  computeTextModeLayoutDiskBandVerticalMetrics,
 } from "../config/topBandHourMarkersLayout.ts";
 import type { FrameContext, Viewport } from "./types.ts";
 import type { TimeContext } from "../layers/types.ts";
@@ -46,6 +45,7 @@ import {
   computeTopBandCircleStackMetrics,
   computeUtcCircleMarkerRadius,
   computeUtcTopScaleRowMetrics,
+  effectiveDiskBandHForMarkerRadiusPx,
   resolveTextIndicatorCircleStackMetrics,
   sumTopBandCircleStackMetricsPx,
   topBandTickRailMajorTickVerticalSpan,
@@ -87,27 +87,33 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   yDiskRow0Px: number;
   diskBandHeightPx: number;
   diskRowMidYPx: number;
-  /** Text anchor Y from built-in vertical layout only (before user text-row insets). */
+  /** Same as {@link textAnchorYPx} (single placement path from layout metrics). */
   textAnchorBaselineYPx: number;
-  /** Resolved user inset above the text core (px); does not affect nominal font size or marker radius. */
+  /** Configured total top padding inside the disk row above the text core (px). */
   userTextTopInsetPx: number;
-  /** Resolved user inset below the text core (px); does not affect nominal font size or marker radius. */
+  /** Configured total bottom padding inside the disk row below the text core (px). */
   userTextBottomInsetPx: number;
-  /** {@link textRowUserInsetTextCenterDeltaPx} for this frame — additive shift applied to {@link textAnchorBaselineYPx}. */
-  textRowUserInsetTextCenterDeltaPx: number;
-  /** Final text anchor Y (baseline + user inset delta). */
+  /**
+   * Extra disk-row height (px) from the text disk-row floor when core + insets are below the minimum — not user padding.
+   */
+  structuralDiskRowSlackPx: number;
+  /** Intrinsic disk-row height (px) used for marker-radius / nominal font solving — {@link circleStack.markerRadiusDiskBandHPx}. */
+  intrinsicDiskBandForSizingPx: number;
+  /** Solved marker radius (px) from {@link effectiveDiskBandHForMarkerRadiusPx} — independent of layout {@link diskBandHeightPx}. */
+  solvedMarkerRadiusPx: number;
+  /** Final text anchor Y from {@link computeTextModeLayoutDiskBandVerticalMetrics}. */
   textAnchorYPx: number;
-  /** Legacy one-sided optical bias (px); always 0 — centering is from {@link computeTextModeDiskBandVerticalMetrics}. */
+  /** Legacy one-sided optical bias (px); always 0. */
   opticalOffsetPx: number;
   diskLabelSizePx: number;
   markerContentSizePx: number;
   /** Authoritative text core height for layout (px). */
   textCoreHeightPx: number;
-  /** Built-in padding above the core inside the disk row (px), excluding user insets. */
+  /** Total top padding above the text core inside the disk row (px) — same as configured top inset. */
   topPadInsideDiskPx: number;
-  /** Built-in padding below the core inside the disk row (px), excluding user insets. */
+  /** Total bottom padding below the text core inside the disk row (px) — same as configured bottom inset. */
   bottomPadInsideDiskPx: number;
-  /** {@link computeTextIndicatorRowHeightPx} / disk row height (same as {@link diskBandHeightPx} when stack disk matches). */
+  /** Layout disk-row height (px); matches {@link diskBandHeightPx} / {@link circleStack.diskBandH}. */
   textIndicatorRowHeightPx: number;
   /** Estimated box half-height using {@link textCoreHeightPx}. */
   textEstimatedHalfHeightPx: number;
@@ -194,7 +200,6 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const sm = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const userTextTopInsetPx = resolvedHourMarkerLayoutTextTopMargin(layout);
   const userTextBottomInsetPx = resolvedHourMarkerLayoutTextBottomMargin(layout);
-  const textRowInsetDeltaPx = textRowUserInsetTextCenterDeltaPx(userTextTopInsetPx, userTextBottomInsetPx);
   const st = TOP_CHROME_STYLE;
   const baseTop = chromeTopBandHeightFromViewportPx(h);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
@@ -259,22 +264,33 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const yTickBottom = yCircleBottom + tickH;
 
   const sw = w / 24;
-  const markerRadiusPx = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
+  const intrinsicDiskBandForSizingPx = effectiveDiskBandHForMarkerRadiusPx(circleStack);
+  const markerRadiusPx = computeUtcCircleMarkerRadius(intrinsicDiskBandForSizingPx, sw);
   const diskLabelSizePx = computeHourDiskLabelSizePx(markerRadiusPx, w, st.hourDiskLabel);
   const markerContentSizePx = diskLabelSizePx * sm;
 
   const fontSizePx = markerContentSizePx;
-  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
-  const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
+  const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
+    fontSizePx,
+    sizeMultiplier: sm,
+    rowTopInsetPx: userTextTopInsetPx,
+    rowBottomInsetPx: userTextBottomInsetPx,
+  });
+  const textRowH = computeTextIndicatorRowHeightPx({
+    fontSizePx,
+    sizeMultiplier: sm,
+    textTopMarginPx: userTextTopInsetPx,
+    textBottomMarginPx: userTextBottomInsetPx,
+  });
 
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
   const diskRowMidY = yDiskRow0 + diskBandH * 0.5;
-  const textAnchorBaselineY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
-  const textAnchorY = textAnchorBaselineY + textRowInsetDeltaPx;
+  const textAnchorBaselineY = yDiskRow0 + vmLayout.textCenterYFromDiskRowTopPx;
+  const textAnchorY = textAnchorBaselineY;
   const opticalOffsetPx = 0;
 
-  const halfCore = vm.textCoreHeightPx * 0.5;
+  const halfCore = vmLayout.textCoreHeightPx * 0.5;
   const textEstTop = textAnchorY - halfCore;
   const textEstBottom = textAnchorY + halfCore;
   const marginAboveTextInDiskRow = textEstTop - yDiskRow0;
@@ -309,7 +325,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     renderFallbackStackDiffers:
       fallbackStack.diskBandH !== circleStack.diskBandH ||
       fallbackStack.padTopPx !== circleStack.padTopPx ||
-      fallbackStack.padBottomPx !== circleStack.padBottomPx,
+      fallbackStack.padBottomPx !== circleStack.padBottomPx ||
+      fallbackStack.markerRadiusDiskBandHPx !== circleStack.markerRadiusDiskBandHPx,
     indicatorAreaTopPx: y0,
     indicatorAreaBottomPx: yCircleBottom,
     indicatorAreaHeightPx: circleH,
@@ -319,14 +336,16 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     textAnchorBaselineYPx: textAnchorBaselineY,
     userTextTopInsetPx,
     userTextBottomInsetPx,
-    textRowUserInsetTextCenterDeltaPx: textRowInsetDeltaPx,
+    structuralDiskRowSlackPx: vmLayout.structuralDiskRowSlackPx,
+    intrinsicDiskBandForSizingPx,
+    solvedMarkerRadiusPx: markerRadiusPx,
     textAnchorYPx: textAnchorY,
     opticalOffsetPx,
     diskLabelSizePx,
     markerContentSizePx,
-    textCoreHeightPx: vm.textCoreHeightPx,
-    topPadInsideDiskPx: vm.topPadInsideDiskPx,
-    bottomPadInsideDiskPx: vm.bottomPadInsideDiskPx,
+    textCoreHeightPx: vmLayout.textCoreHeightPx,
+    topPadInsideDiskPx: vmLayout.topPadInsideDiskPx,
+    bottomPadInsideDiskPx: vmLayout.bottomPadInsideDiskPx,
     textIndicatorRowHeightPx: textRowH,
     textEstimatedHalfHeightPx: halfCore,
     textEstimatedTopPx: textEstTop,
@@ -415,7 +434,8 @@ export function compareTextMode24hIndicatorVerticalTickTape(
     csV.diskBandH === csH.diskBandH &&
     csV.gapDiskToAnnotationPx === csH.gapDiskToAnnotationPx &&
     csV.annotationH === csH.annotationH &&
-    csV.padBottomPx === csH.padBottomPx;
+    csV.padBottomPx === csH.padBottomPx &&
+    csV.markerRadiusDiskBandHPx === csH.markerRadiusDiskBandHPx;
   const textAndDiskVerticalMetricsIdentical =
     circleStackIdentical &&
     tapeVisible.textAnchorYPx === tapeHidden.textAnchorYPx &&

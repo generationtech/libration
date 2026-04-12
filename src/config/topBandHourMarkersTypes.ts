@@ -68,13 +68,13 @@ export interface HourMarkersConfig {
   layout: {
     sizeMultiplier: number;
     /**
-     * Local vertical inset above the 24-hour text core inside the disk row (px), normalized 0–24. Shifts rendered text
-     * only; does not change solved disk row height or marker radius.
+     * Total vertical padding above the 24-hour text core inside the disk row (px), normalized 0–24 — authoritative;
+     * 0 means no row-internal padding above the core. Does not affect solved marker radius or nominal font size.
      */
     textTopMarginPx: number;
     /**
-     * Local vertical inset below the 24-hour text core inside the disk row (px), normalized 0–24. Shifts rendered text
-     * only; does not change solved disk row height or marker radius.
+     * Total vertical padding below the 24-hour text core inside the disk row (px), normalized 0–24 — authoritative;
+     * 0 means no row-internal padding below the core. Does not affect solved marker radius or nominal font size.
      */
     textBottomMarginPx: number;
   };

@@ -14,7 +14,11 @@
 import { describe, expect, it } from "vitest";
 import { cloneHourMarkersConfig, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG } from "../config/appConfig.ts";
 import { createTimeContext } from "../core/time.ts";
-import { buildDisplayChromeState, sumTopBandCircleStackMetricsPx } from "./displayChrome.ts";
+import {
+  buildDisplayChromeState,
+  effectiveDiskBandHForMarkerRadiusPx,
+  sumTopBandCircleStackMetricsPx,
+} from "./displayChrome.ts";
 import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { computeUtcCircleMarkerRadius } from "./displayChrome.ts";
 import {
@@ -31,7 +35,7 @@ function snapshotForSizeMultiplier(sm: number) {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
         ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-        layout: { sizeMultiplier: sm, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        layout: { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout, sizeMultiplier: sm },
       },
     },
   });
@@ -201,7 +205,7 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     ).toBeLessThanOrEqual(1);
   });
 
-  it("user text insets do not change solved disk row, marker radius, or nominal font size; they shift the anchor only", () => {
+  it("changing row insets changes layout disk row height and anchor but not intrinsic sizing, marker radius, or nominal font", () => {
     const base = computeTextMode24hIndicatorVerticalSnapshot({
       viewport: VIEWPORT,
       displayChromeLayout: {
@@ -220,33 +224,19 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         },
       },
     });
-    expect(inset.diskBandHeightPx).toBe(base.diskBandHeightPx);
-    expect(inset.circleStack).toEqual(base.circleStack);
+    expect(inset.diskBandHeightPx).toBe(base.diskBandHeightPx + 8);
+    expect(inset.intrinsicDiskBandForSizingPx).toBe(base.intrinsicDiskBandForSizingPx);
+    expect(inset.solvedMarkerRadiusPx).toBe(base.solvedMarkerRadiusPx);
     expect(inset.markerContentSizePx).toBe(base.markerContentSizePx);
     expect(inset.emitEffectiveFontSizePx).toBe(base.emitEffectiveFontSizePx);
     const sw = VIEWPORT.width / 24;
-    expect(computeUtcCircleMarkerRadius(inset.diskBandHeightPx, sw)).toBe(
-      computeUtcCircleMarkerRadius(base.diskBandHeightPx, sw),
-    );
     expect(
-      computeHourDiskLabelSizePx(
-        computeUtcCircleMarkerRadius(inset.diskBandHeightPx, sw),
-        VIEWPORT.width,
-        TOP_CHROME_STYLE.hourDiskLabel,
-      ),
-    ).toBe(
-      computeHourDiskLabelSizePx(
-        computeUtcCircleMarkerRadius(base.diskBandHeightPx, sw),
-        VIEWPORT.width,
-        TOP_CHROME_STYLE.hourDiskLabel,
-      ),
-    );
-    expect(inset.textAnchorYPx - base.textAnchorYPx).toBe(2);
-    expect(inset.textRowUserInsetTextCenterDeltaPx).toBe(2);
-    expect(inset.textAnchorBaselineYPx).toBe(base.textAnchorBaselineYPx);
+      computeUtcCircleMarkerRadius(effectiveDiskBandHForMarkerRadiusPx(inset.circleStack), sw),
+    ).toBe(computeUtcCircleMarkerRadius(effectiveDiskBandHForMarkerRadiusPx(base.circleStack), sw));
+    expect(inset.circleStack.markerRadiusDiskBandHPx).toBe(base.circleStack.markerRadiusDiskBandHPx);
   });
 
-  it("zero user insets match baseline anchor (no delta vs baseline layout)", () => {
+  it("0 / 0 insets: no configured row-internal padding above or below the text core", () => {
     const s = computeTextMode24hIndicatorVerticalSnapshot({
       viewport: VIEWPORT,
       displayChromeLayout: {
@@ -256,8 +246,22 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         },
       },
     });
-    expect(s.textRowUserInsetTextCenterDeltaPx).toBe(0);
+    expect(s.userTextTopInsetPx).toBe(0);
+    expect(s.userTextBottomInsetPx).toBe(0);
+    expect(s.topPadInsideDiskPx).toBe(0);
+    expect(s.bottomPadInsideDiskPx).toBe(0);
     expect(s.textAnchorYPx).toBe(s.textAnchorBaselineYPx);
+    expect(s.marginAboveTextInDiskRowPx).toBe(0);
+  });
+
+  it("default hour marker layout exposes shipped baseline bottom padding (non-zero) on the text row", () => {
+    const s = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+    });
+    expect(s.userTextBottomInsetPx).toBeGreaterThan(0);
+    expect(s.bottomPadInsideDiskPx).toBe(s.userTextBottomInsetPx);
+    expect(s.topPadInsideDiskPx).toBe(s.userTextTopInsetPx);
   });
 
   it("text mode: indicator-area top/bottom margins around text match (≤1px) at 0.95–1.65×; unchanged when tape toggles", () => {

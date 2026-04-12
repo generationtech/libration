@@ -27,12 +27,12 @@ import { buildSemanticTopBandHourMarkers } from "../config/topBandHourMarkersSem
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
   computeTextIndicatorRowHeightPx,
-  computeTextModeDiskBandVerticalMetrics,
+  computeTextModeIntrinsicDiskBandVerticalMetrics,
+  computeTextModeLayoutDiskBandVerticalMetrics,
   layoutSemanticTopBandAnalogClockMarkers,
   layoutSemanticTopBandHourMarkers,
   layoutSemanticTopBandRadialLineMarkers,
   layoutSemanticTopBandRadialWedgeMarkers,
-  textRowUserInsetTextCenterDeltaPx,
 } from "../config/topBandHourMarkersLayout.ts";
 
 const RESOLVED_UTC = resolveTopBandTimeFromConfig({
@@ -43,7 +43,7 @@ const RESOLVED_UTC = resolveTopBandTimeFromConfig({
 });
 
 describe("computeTextIndicatorRowHeightPx", () => {
-  it("shrinks with smaller sizeMultiplier and grows with larger font size", () => {
+  it("shrinks with smaller sizeMultiplier and grows with larger font size (intrinsic sizing path)", () => {
     const smallMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 0.5 });
     const largeMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 2 });
     expect(smallMul).toBeLessThan(largeMul);
@@ -61,11 +61,32 @@ describe("computeTextIndicatorRowHeightPx", () => {
     expect(h15 - h09).toBeGreaterThanOrEqual(2);
   });
 
-  it("keeps disk row height independent of user text insets; insets shift the text anchor only", () => {
-    const base = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
+  it("layout path: row height is core + configured top + bottom (no hidden automatic padding layer)", () => {
+    const base = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
     expect(base.diskBandH).toBeGreaterThan(0);
-    expect(textRowUserInsetTextCenterDeltaPx(4, 2)).toBe(2);
-    expect(textRowUserInsetTextCenterDeltaPx(5, 5)).toBe(0);
+    const lay = computeTextModeLayoutDiskBandVerticalMetrics({
+      fontSizePx: 20,
+      sizeMultiplier: 1,
+      rowTopInsetPx: 4,
+      rowBottomInsetPx: 2,
+    });
+    expect(lay.topPadInsideDiskPx).toBe(4);
+    expect(lay.bottomPadInsideDiskPx).toBe(2);
+    expect(lay.diskBandH).toBe(lay.textCoreHeightPx + 4 + 2);
+    expect(
+      computeTextIndicatorRowHeightPx({
+        fontSizePx: 20,
+        sizeMultiplier: 1,
+        textTopMarginPx: 4,
+        textBottomMarginPx: 2,
+      }),
+    ).toBe(lay.diskBandH);
+  });
+
+  it("intrinsic sizing disk height is independent of configured row insets", () => {
+    const a = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
+    const b = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
+    expect(a.diskBandH).toBe(b.diskBandH);
   });
 });
 

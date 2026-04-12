@@ -607,7 +607,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
               step={1}
               disabled={!wired || !areaOn}
-              aria-label="Extra inset above 24-hour numerals inside the indicator row (does not change marker size)"
+              aria-label="Total padding above 24-hour numerals inside the indicator row in pixels (does not change marker radius or nominal font size)"
               value={textTopMarginPx}
               onChange={
                 wired && updateConfig
@@ -636,7 +636,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
               step={1}
               disabled={!wired || !areaOn}
-              aria-label="Extra inset below 24-hour numerals inside the indicator row (does not change marker size)"
+              aria-label="Total padding below 24-hour numerals inside the indicator row in pixels (does not change marker radius or nominal font size)"
               value={textBottomMarginPx}
               onChange={
                 wired && updateConfig
@@ -654,7 +654,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
               }
             />
             <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
-              px below numerals
+              px padding below text
             </span>
           </ConfigControlRow>
         </>

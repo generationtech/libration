@@ -136,7 +136,8 @@ export function clampTopBandHourMarkerSizeMultiplier(n: number): number {
 
 /**
  * Inclusive bounds for {@link HourMarkersConfig.layout.textTopMarginPx} /
- * {@link HourMarkersConfig.layout.textBottomMarginPx} (local text-row insets; they do not drive nominal marker sizing).
+ * {@link HourMarkersConfig.layout.textBottomMarginPx} (total row-internal padding above/below the text core; they do not
+ * drive nominal marker sizing or marker radius — those use the intrinsic sizing model).
  */
 export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN = 0;
 export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX = 24;
@@ -172,7 +173,7 @@ export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     appearance: {},
   },
-  layout: { sizeMultiplier: 1.0, textTopMarginPx: 0, textBottomMarginPx: 0 },
+  layout: { sizeMultiplier: 1.0, textTopMarginPx: 0, textBottomMarginPx: 1 },
 };
 
 /**
@@ -307,20 +308,20 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
   return clampTopBandHourMarkerSizeMultiplier(raw);
 }
 
-/** Runtime top inset for 24-hour text inside the disk row (px). */
+/** Runtime total top padding inside the 24-hour text disk row (px) — authoritative; 0 means none. */
 export function resolvedHourMarkerLayoutTextTopMargin(layout: DisplayChromeLayoutConfig): number {
   const raw = layout.hourMarkers.layout.textTopMarginPx;
   if (typeof raw !== "number" || !Number.isFinite(raw)) {
-    return TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN;
+    return DEFAULT_HOUR_MARKERS_CONFIG.layout.textTopMarginPx;
   }
   return clampTopBandHourMarkerTextMarginPx(raw);
 }
 
-/** Runtime bottom inset for 24-hour text inside the disk row (px). */
+/** Runtime total bottom padding inside the 24-hour text disk row (px) — authoritative; 0 means none. */
 export function resolvedHourMarkerLayoutTextBottomMargin(layout: DisplayChromeLayoutConfig): number {
   const raw = layout.hourMarkers.layout.textBottomMarginPx;
   if (typeof raw !== "number" || !Number.isFinite(raw)) {
-    return TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN;
+    return DEFAULT_HOUR_MARKERS_CONFIG.layout.textBottomMarginPx;
   }
   return clampTopBandHourMarkerTextMarginPx(raw);
 }
@@ -331,10 +332,10 @@ function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeL
   if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== 1) {
     return false;
   }
-  if (resolvedHourMarkerLayoutTextTopMargin(layout) !== 0) {
+  if (resolvedHourMarkerLayoutTextTopMargin(layout) !== DEFAULT_HOUR_MARKERS_CONFIG.layout.textTopMarginPx) {
     return false;
   }
-  if (resolvedHourMarkerLayoutTextBottomMargin(layout) !== 0) {
+  if (resolvedHourMarkerLayoutTextBottomMargin(layout) !== DEFAULT_HOUR_MARKERS_CONFIG.layout.textBottomMarginPx) {
     return false;
   }
   if (hm.realization.kind !== "text") {

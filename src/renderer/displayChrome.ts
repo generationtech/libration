@@ -16,6 +16,8 @@ import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
   resolvedHourMarkerLayoutSizeMultiplier,
+  resolvedHourMarkerLayoutTextBottomMargin,
+  resolvedHourMarkerLayoutTextTopMargin,
   type DisplayChromeLayoutConfig,
   type DisplayTimeConfig,
   type EffectiveTopBandHourMarkerSelection,
@@ -58,7 +60,8 @@ import {
   type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
 import {
-  computeTextModeDiskBandVerticalMetrics,
+  computeTextModeIntrinsicDiskBandVerticalMetrics,
+  computeTextModeLayoutDiskBandVerticalMetrics,
   hourCircleHeadMetrics,
   type TextModeDiskBandVerticalMetrics,
 } from "../config/topBandHourMarkersLayout.ts";
@@ -197,6 +200,17 @@ export interface TopBandCircleStackMetrics {
   gapDiskToAnnotationPx: number;
   annotationH: number;
   padBottomPx: number;
+  /**
+   * When set (text-led 24h numerals), marker radius and nominal font size are derived from this disk-row height
+   * (intrinsic sizing model) instead of {@link diskBandH}, so configured row padding can change layout slice heights
+   * without feeding back into radius or font solving.
+   */
+  markerRadiusDiskBandHPx?: number;
+}
+
+/** Disk-row height used with {@link computeUtcCircleMarkerRadius} when {@link TopBandCircleStackMetrics.markerRadiusDiskBandHPx} is set. */
+export function effectiveDiskBandHForMarkerRadiusPx(stack: TopBandCircleStackMetrics): number {
+  return stack.markerRadiusDiskBandHPx ?? stack.diskBandH;
 }
 
 /**
@@ -987,7 +1001,7 @@ const TEXT_TIGHT_CIRCLE_STACK_OVERRIDES = {
 } as const;
 
 /**
- * Text-led 24h numerals: lower disk-row floors so row height can follow {@link computeTextModeDiskBandVerticalMetrics} instead of
+ * Text-led 24h numerals: lower disk-row floors so row height can follow the text vertical model instead of
  * glyph disk minima (still uses the same stack solver as {@code "textTight"}).
  */
 const TEXT_LED_CIRCLE_STACK_OVERRIDES = {
@@ -1212,10 +1226,9 @@ function splitBottomTripleForTextLed(bottomTriplePx: number): {
 }
 
 /**
- * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics} (built-in layout
- * only — user text-row insets do not participate). Non-disk vertical space is split so the **baseline text core** is
- * centered in the full circle band. User insets shift the rendered text inside the fixed disk row at semantic placement
- * time. Independent of tick-tape row visibility — only {@link TopBandCircleStackMetrics} + disk/vm matter.
+ * Text-mode circle stack: disk row height comes from the passed {@link TextModeDiskBandVerticalMetrics} (layout or
+ * intrinsic). Non-disk vertical space is split so the **text core** is centered in the full circle band per that vm.
+ * Independent of tick-tape row visibility — only {@link TopBandCircleStackMetrics} + disk/vm matter.
  */
 export function buildTextLedCircleStackFromDiskBandH(
   diskBandH: number,
@@ -1274,9 +1287,11 @@ export function buildTextLedCircleStackFromDiskBandH(
 }
 
 /**
- * Resolves the authoritative text-led stack and font/disk fixed point: disk row comes from
- * {@link computeTextModeDiskBandVerticalMetrics} (built-in vertical model only). User text-row insets are excluded so
- * they cannot feed the radius/font-size fixed point. Not from inverting the generic circle-band solver.
+ * Resolves the authoritative text-led stack and font/disk fixed point. The iteration uses
+ * {@link computeTextModeIntrinsicDiskBandVerticalMetrics} only (configured text-row insets never participate), so
+ * changing top/bottom padding cannot feed the radius/font-size fixed point. The returned stack’s {@link diskBandH}
+ * reflects **layout** padding from config; {@link TopBandCircleStackMetrics.markerRadiusDiskBandHPx} carries the
+ * intrinsic disk height used for marker radius and nominal font size.
  */
 export function resolveTextIndicatorCircleStackMetrics(args: {
   viewportWidthPx: number;
@@ -1287,27 +1302,61 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
   const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
+  const userTop = resolvedHourMarkerLayoutTextTopMargin(args.layout);
+  const userBottom = resolvedHourMarkerLayoutTextBottomMargin(args.layout);
   if (!(vw > 0)) {
-    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
-    return buildTextLedCircleStackFromDiskBandH(1, vm0);
+    const vm0 = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+    const vmLay = computeTextModeLayoutDiskBandVerticalMetrics({
+      fontSizePx: 1,
+      sizeMultiplier: sm,
+      rowTopInsetPx: userTop,
+      rowBottomInsetPx: userBottom,
+    });
+    return {
+      ...buildTextLedCircleStackFromDiskBandH(vmLay.diskBandH, vmLay),
+      markerRadiusDiskBandHPx: vm0.diskBandH,
+    };
   }
   const sw = vw / 24;
   const seedH = Math.max(0, args.seedCircleBandHeightPx);
   let diskGuess = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(seedH * 0.22));
-  let last: TopBandCircleStackMetrics | undefined;
+  let lastIntrinsic: TextModeDiskBandVerticalMetrics | undefined;
+  let lastFontSize = 1;
   for (let i = 0; i < 8; i += 1) {
     const r = computeUtcCircleMarkerRadius(diskGuess, sw);
     const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
-    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
-    const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH, vm);
-    if (last !== undefined && stack.diskBandH === last.diskBandH) {
-      return stack;
+    const vmIntrinsic = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
+    const stackIntrinsic = buildTextLedCircleStackFromDiskBandH(vmIntrinsic.diskBandH, vmIntrinsic);
+    if (lastIntrinsic !== undefined && stackIntrinsic.diskBandH === lastIntrinsic.diskBandH) {
+      const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
+        fontSizePx,
+        sizeMultiplier: sm,
+        rowTopInsetPx: userTop,
+        rowBottomInsetPx: userBottom,
+      });
+      return {
+        ...buildTextLedCircleStackFromDiskBandH(vmLayout.diskBandH, vmLayout),
+        markerRadiusDiskBandHPx: vmIntrinsic.diskBandH,
+      };
     }
-    last = stack;
-    diskGuess = stack.diskBandH;
+    lastIntrinsic = vmIntrinsic;
+    lastFontSize = fontSizePx;
+    diskGuess = stackIntrinsic.diskBandH;
   }
-  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
-  return last ?? buildTextLedCircleStackFromDiskBandH(1, vmFallback);
+  const vmFallbackIntrinsic = computeTextModeIntrinsicDiskBandVerticalMetrics({
+    fontSizePx: lastFontSize,
+    sizeMultiplier: sm,
+  });
+  const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
+    fontSizePx: lastFontSize,
+    sizeMultiplier: sm,
+    rowTopInsetPx: userTop,
+    rowBottomInsetPx: userBottom,
+  });
+  return {
+    ...buildTextLedCircleStackFromDiskBandH(vmLayout.diskBandH, vmLayout),
+    markerRadiusDiskBandHPx: vmFallbackIntrinsic.diskBandH,
+  };
 }
 
 /**
@@ -1552,7 +1601,7 @@ export function buildUtcTopScaleLayout(
   const circleMarkers: UtcTopScaleCircleMarker[] =
     rows !== undefined && circleStack !== undefined
       ? (() => {
-          const cr = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
+          const cr = computeUtcCircleMarkerRadius(effectiveDiskBandHForMarkerRadiusPx(circleStack), sw);
           const out: UtcTopScaleCircleMarker[] = [];
           for (let h = 0; h < 24; h += 1) {
             const cur = topBandCircleLabel(h, rt.topBandMode);
@@ -1815,7 +1864,7 @@ export function renderDisplayChrome(
     );
   const vw = viewport.width;
   const sw = vw > 0 ? vw / 24 : 0;
-  const markerRadiusPx = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
+  const markerRadiusPx = computeUtcCircleMarkerRadius(effectiveDiskBandHForMarkerRadiusPx(circleStack), sw);
   const diskLabelSizePx = computeHourDiskLabelSizePx(markerRadiusPx, vw, st.hourDiskLabel);
   const hourMarkerSizeMult = resolvedHourMarkerLayoutSizeMultiplier(chrome.displayChromeLayout);
   const glyphDiskBoost = hourMarkerSel.kind === "glyph" ? TOP_BAND_GLYPH_DISK_CONTENT_SCALE : 1;
@@ -1938,7 +1987,7 @@ export function renderDisplayChrome(
             const ak = topBandMarkerAnnotationKind(h, scale.topBandMode);
             return {
               centerX: topBandHourMarkerCenterX(h, scale.referenceFractionalHour, vw, tapeAnchorFrac),
-              radiusPx: computeUtcCircleMarkerRadius(circleStack.diskBandH, sw),
+              radiusPx: computeUtcCircleMarkerRadius(effectiveDiskBandHForMarkerRadiusPx(circleStack), sw),
               utcHour: h,
               label: topBandCircleLabel(h, scale.topBandMode),
               currentHourLabel: topBandCircleLabel(h, scale.topBandMode),
