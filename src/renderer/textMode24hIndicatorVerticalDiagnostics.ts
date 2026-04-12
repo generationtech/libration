@@ -27,7 +27,7 @@ import {
 import { createTimeContext } from "../core/time.ts";
 import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
-import { computeHourDiskLabelSizePx, getTopChromeStyle } from "../config/topChromeStyle.ts";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import {
   computeTextModeDiskBandVerticalMetrics,
   computeTextIndicatorRowHeightPx,
@@ -178,7 +178,7 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     throw new Error("computeTextMode24hIndicatorVerticalSnapshot: hour markers must be text mode");
   }
   const sm = resolvedHourMarkerLayoutSizeMultiplier(layout);
-  const st = getTopChromeStyle(layout.topChromePalette);
+  const st = TOP_CHROME_STYLE;
   const baseTop = chromeTopBandHeightFromViewportPx(h);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   let rowsForExpansion =

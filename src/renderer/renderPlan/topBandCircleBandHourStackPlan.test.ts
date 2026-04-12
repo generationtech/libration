@@ -75,6 +75,9 @@ const RESOLVED_UTC = resolveTopBandTimeFromConfig({
   topBandAnchor: { mode: "auto" },
 });
 
+/** Fixed instant for deterministic UTC tape layout in tests (avoids Date.now() wrap-count drift). */
+const FIXED_UTC_TAPE_REF_MS = Date.UTC(2026, 3, 12, 12, 0, 0);
+
 function buildStackFromFixture(
   f: ReturnType<typeof buildFullUtcTopBandHourDiskFixture>,
   args: {
@@ -118,7 +121,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
     },
   });
   const structuralX = Array.from({ length: 24 }, (_, i) => i * 10);
-  const refMs = Date.now();
+  const refMs = FIXED_UTC_TAPE_REF_MS;
   const effRadialLine = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
@@ -458,7 +461,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
   it("full layout: 24 markers yields 4 bed items + text rows (no standalone hour-disk path2d circles)", () => {
     const w = 960;
     const top = 88;
-    const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+    const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
     const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
     const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
     const sw = w / 24;
@@ -543,7 +546,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     ) {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;
@@ -619,7 +622,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     it("matches expected total text count for the same UTC tape (wrap only; no crown annotations)", () => {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;
@@ -739,7 +742,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     it("routes radialLine through resolver → planner → layout → adapter on full tape", () => {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;
@@ -792,7 +795,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     it("applies selection color to radial strokes on the semantic path", () => {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;
@@ -853,7 +856,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     it("routes radialWedge through resolver → planner → layout → adapter on full tape", () => {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;
@@ -906,7 +909,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     it("applies selection color to wedge fills on the semantic path", () => {
       const w = 960;
       const top = 88;
-      const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+      const scale = buildUtcTopScaleLayout(FIXED_UTC_TAPE_REF_MS, w, top, RESOLVED_UTC);
       const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
       const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
       const sw = w / 24;

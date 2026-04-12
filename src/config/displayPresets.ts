@@ -75,7 +75,6 @@ function cloneConfig(config: AppConfig): AppConfig {
       bottomInformationBarVisible: dcl.bottomInformationBarVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,
       tickTapeVisible: dcl.tickTapeVisible,
-      topChromePalette: dcl.topChromePalette,
       hourMarkers: cloneHourMarkersConfig(dcl.hourMarkers),
     },
     geography: {

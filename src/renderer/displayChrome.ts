@@ -54,7 +54,7 @@ import { defaultFontAssetRegistry } from "../config/chromeTypography";
 import {
   computeHourDiskLabelSizePx,
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
-  getTopChromeStyle,
+  TOP_CHROME_STYLE,
   type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
 import {
@@ -1628,7 +1628,7 @@ export function buildDisplayChromeState(options: {
     layout.bottomInformationBarVisible === false
       ? 0
       : computeBottomChromeOverlayBottomMarginPx(h);
-  const stForRows = getTopChromeStyle(layout.topChromePalette);
+  const stForRows = TOP_CHROME_STYLE;
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const hourIndicatorAreaVisible = layout.hourMarkers.visible !== false;
   const tickTapeVisible = layout.tickTapeVisible !== false;
@@ -1796,7 +1796,7 @@ export function renderDisplayChrome(
   const tickRailVerticalBottomY = topBandTickRailVerticalTickBottomY(tickBaselineY);
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
-  const st = getTopChromeStyle(chrome.displayChromeLayout.topChromePalette);
+  const st = TOP_CHROME_STYLE;
   const tzTab = st.timezoneTab;
   const zonePadY = Math.max(
     0,

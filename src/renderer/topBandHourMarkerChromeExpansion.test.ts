@@ -30,7 +30,7 @@ import {
   sumTopBandCircleStackMetricsPx,
   TOP_BAND_GLYPH_DISK_CONTENT_SCALE,
 } from "./displayChrome.ts";
-import { getTopChromeStyle } from "../config/topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { createTimeContext } from "../core/time.ts";
 
 describe("hour-marker circle-band expansion", () => {
@@ -47,7 +47,7 @@ describe("hour-marker circle-band expansion", () => {
     const delta = computeTextIndicatorCircleBandExpansionPx({
       baseRows,
       viewportWidthPx: 960,
-      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
       layout: layoutLargeText,
     });
     expect(delta).toBeGreaterThan(0);
@@ -62,7 +62,7 @@ describe("hour-marker circle-band expansion", () => {
     const baseRows = computeUtcTopScaleRowMetrics(72, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     const stack = resolveTextIndicatorCircleStackMetrics({
       viewportWidthPx: 960,
-      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
       layout: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       seedCircleBandHeightPx: baseRows.circleBandH,
     });
@@ -70,7 +70,7 @@ describe("hour-marker circle-band expansion", () => {
     const delta = computeTextIndicatorCircleBandExpansionPx({
       baseRows,
       viewportWidthPx: 960,
-      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
       layout: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     });
     expect(delta).toBe(Math.max(0, Math.round(needCircleH - baseRows.circleBandH)));
@@ -92,7 +92,7 @@ describe("hour-marker circle-band expansion", () => {
     const delta = computeHourMarkerCircleBandExpansionPx({
       baseRows,
       viewportWidthPx: 960,
-      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
       layout: layoutGlyph,
       selection: effectiveTopBandHourMarkerSelection(layoutGlyph),
     });

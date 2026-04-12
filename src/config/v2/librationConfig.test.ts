@@ -88,16 +88,9 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         bottomInformationBarVisible: true,
         timezoneLetterRowVisible: true,
-        topChromePalette: "neon",
+        obsoleteUnknownChromeLayoutKey: "ignored",
       }),
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
-    expect(
-      normalizeDisplayChromeLayout({
-        bottomInformationBarVisible: true,
-        timezoneLetterRowVisible: true,
-        topChromePalette: "paper",
-      }).topChromePalette,
-    ).toBe("paper");
     expect(normalizeDisplayChromeLayout({ tickTapeVisible: false }).tickTapeVisible).toBe(false);
     expect(normalizeDisplayChromeLayout({}).tickTapeVisible).toBe(true);
   });

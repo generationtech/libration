@@ -11,12 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { TopChromePaletteId } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
-
-const TOP_CHROME_PALETTES: readonly TopChromePaletteId[] = ["neutral", "dark", "paper"];
 
 export type TickTapeEditorProps = {
   config: LibrationConfigV2;
@@ -59,32 +56,8 @@ export function TickTapeEditor({ config, updateConfig }: TickTapeEditorProps) {
       <p className="config-section__hint">
         Boxed numerals on the tape are toggled from the indicator editor when using glyph hour markers.
       </p>
-      <ConfigControlRow label="Top chrome palette">
-        <select
-          className="config-input"
-          value={lay.topChromePalette}
-          disabled={!wired || !tapeOn}
-          aria-label="Top instrument strip color palette"
-          onChange={
-            wired && updateConfig
-              ? (e) => {
-                  const palette = e.currentTarget.value as TopChromePaletteId;
-                  updateConfig((draft) => {
-                    draft.chrome.layout.topChromePalette = palette;
-                  });
-                }
-              : undefined
-          }
-        >
-          {TOP_CHROME_PALETTES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </ConfigControlRow>
       {!tapeOn ? (
-        <p className="config-section__hint">Turn the tape on to adjust tape-related strip colors.</p>
+        <p className="config-section__hint">Turn the tape on to show the tick rail and tape-carried elements.</p>
       ) : (
         <p className="config-section__hint">More tick-rail options will appear here as this area expands.</p>
       )}

@@ -30,7 +30,6 @@ import type {
   PinLabelMode,
   PinPresentationConfig,
   PinScale,
-  TopChromePaletteId,
 } from "../appConfig";
 import {
   cloneHourMarkersConfig,
@@ -157,11 +156,6 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof input.tickTapeVisible === "boolean"
       ? input.tickTapeVisible
       : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.tickTapeVisible;
-  const paletteRaw = input.topChromePalette;
-  const topChromePalette: TopChromePaletteId =
-    paletteRaw === "neutral" || paletteRaw === "dark" || paletteRaw === "paper"
-      ? paletteRaw
-      : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.topChromePalette;
 
   const hourMarkers = normalizeHourMarkersInput(input.hourMarkers);
 
@@ -169,7 +163,6 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     bottomInformationBarVisible: bottom,
     timezoneLetterRowVisible: tz,
     tickTapeVisible: tickTape,
-    topChromePalette,
     hourMarkers,
   };
 }
@@ -335,7 +328,6 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     bottomInformationBarVisible: l.bottomInformationBarVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
     tickTapeVisible: l.tickTapeVisible,
-    topChromePalette: l.topChromePalette,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
   };
 }
@@ -453,8 +445,7 @@ export function assertIsNormalizedLibrationConfig(
     lay === null ||
     typeof lay.bottomInformationBarVisible !== "boolean" ||
     typeof lay.timezoneLetterRowVisible !== "boolean" ||
-    typeof lay.tickTapeVisible !== "boolean" ||
-    (lay.topChromePalette !== "neutral" && lay.topChromePalette !== "dark" && lay.topChromePalette !== "paper")
+    typeof lay.tickTapeVisible !== "boolean"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout");
   }

@@ -73,7 +73,9 @@ describe("ChromeTab major areas", () => {
     expect(screen.getByTestId("chrome-editor-tick-tape")).toBeInTheDocument();
     expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
     expect(screen.queryByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeNull();
-    expect(screen.getByRole("combobox", { name: /Top instrument strip color palette/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: /Show 24-hour tickmarks tape in the top instrument strip/i }),
+    ).toBeInTheDocument();
   });
 
   it("selecting NATO timezone area shows the NATO editor", () => {

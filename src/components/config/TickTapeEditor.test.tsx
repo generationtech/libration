@@ -67,20 +67,4 @@ describe("TickTapeEditor", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Show 24-hour tickmarks tape in the top instrument strip/i }));
     expect(last!.chrome.layout.tickTapeVisible).toBe(true);
   });
-
-  it("disables the top chrome palette select while the tape is hidden", () => {
-    const base = defaultLibrationConfigV2();
-    const initial = normalizeLibrationConfig({
-      ...base,
-      chrome: {
-        ...base.chrome,
-        layout: {
-          ...base.chrome.layout,
-          tickTapeVisible: false,
-        },
-      },
-    });
-    render(<TickTapeEditor config={initial} updateConfig={() => {}} />);
-    expect(screen.getByRole("combobox", { name: /Top instrument strip color palette/i })).toBeDisabled();
-  });
 });

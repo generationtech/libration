@@ -39,10 +39,7 @@ Top band consists of:
 - Tickmark tape (hour / 15 / 5)
 - NATO timezone strip (continuous rectangular band)
 
-Top chrome palette (instrument strip colors):
-- neutral
-- dark
-- paper
+The top instrument strip uses one built-in appearance for now; future tweaks will be direct config controls, not bundled palette presets.
 
 Recent simplification:
 - top-band alignment and timing behavior are unchanged
