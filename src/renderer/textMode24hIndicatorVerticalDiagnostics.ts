@@ -38,6 +38,7 @@ import {
   alignTopBandRowsToExactCircleBandH,
   buildDisplayChromeState,
   collapseTopBandHourIndicatorAreaRows,
+  collapseTopBandTickTapeRows,
   computeTextIndicatorCircleBandExpansionPx,
   computeTopBandCircleStackMetrics,
   computeUtcCircleMarkerRadius,
@@ -106,6 +107,18 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   marginBelowTextInDiskRowPx: number;
   /** Gap + annotation + pad below disk row inside the circle band (down to {@link yCircleBottomPx}). */
   belowDiskRowInsideCircleBandPx: number;
+  /** Same as {@link belowDiskRowInsideCircleBandPx} — explicit “bottom-side non-row” label for reports. */
+  bottomSideNonRowSpaceInsideCircleBandPx: number;
+  /** Resolved lower-side stack slices (same as fields on {@link circleStack}). */
+  lowerSideStackSlicesPx: {
+    gapDiskToAnnotationPx: number;
+    annotationH: number;
+    padBottomPx: number;
+  };
+  /** Same as {@link marginAboveDiskRowInCircleBandPx} — pad + upper numeral row + gap above disk row. */
+  topSideNonRowSpaceInsideCircleBandPx: number;
+  /** Effective {@link DisplayChromeLayoutConfig.tickTapeVisible} after merge (mirrors chrome). */
+  tickTapeVisibleEffective: boolean;
   /**
    * Pixels from circle-band top to disk-row top ({@code padTop + upperNumeral + gapNumeral→disk}).
    * Text-led polish (2026-04): typically ~+2 vs the pre-polish baseline (~7px for common disk heights) — more headroom above the row.
@@ -158,8 +171,11 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const st = getTopChromeStyle(layout.topChromePalette);
   const baseTop = chromeTopBandHeightFromViewportPx(h);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
-  const rowsForExpansion =
+  let rowsForExpansion =
     layout.hourMarkers.visible !== false ? baseRows : collapseTopBandHourIndicatorAreaRows(baseRows);
+  if (layout.tickTapeVisible === false) {
+    rowsForExpansion = collapseTopBandTickTapeRows(rowsForExpansion);
+  }
   const textStack =
     layout.hourMarkers.visible !== false && w > 0
       ? resolveTextIndicatorCircleStackMetrics({
@@ -283,6 +299,14 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     marginAboveTextInDiskRowPx: marginAboveTextInDiskRow,
     marginBelowTextInDiskRowPx: marginBelowTextInDiskRow,
     belowDiskRowInsideCircleBandPx: belowDisk,
+    bottomSideNonRowSpaceInsideCircleBandPx: belowDisk,
+    lowerSideStackSlicesPx: {
+      gapDiskToAnnotationPx: circleStack.gapDiskToAnnotationPx,
+      annotationH: circleStack.annotationH,
+      padBottomPx: circleStack.padBottomPx,
+    },
+    topSideNonRowSpaceInsideCircleBandPx: marginAboveDiskRow,
+    tickTapeVisibleEffective: layout.tickTapeVisible !== false,
     marginAboveDiskRowInCircleBandPx: marginAboveDiskRow,
     yCircleBottomPx: yCircleBottom,
     tickBandHeightPx: tickH,
@@ -293,5 +317,110 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     estimatedTextBottomToMajorTickTopPx: majorTickTopY - textEstBottom,
     emitTextBaselineShiftPx: emitShift,
     emitEffectiveFontSizePx: emitFont,
+  };
+}
+
+/**
+ * Side-by-side text-mode vertical metrics for tape on vs off (same merged config except
+ * {@link DisplayChromeLayoutConfig.tickTapeVisible}).
+ */
+export type TextMode24hIndicatorTickTapeComparison = {
+  viewportWidthPx: number;
+  sizeMultiplier: number;
+  tapeVisible: TextMode24hIndicatorVerticalSnapshot;
+  tapeHidden: TextMode24hIndicatorVerticalSnapshot;
+  /** Numeric deltas (tape hidden − tape visible). */
+  delta: {
+    topBandHeightPx: number;
+    tickBandH: number;
+    timezoneBandH: number;
+    circleBandH: number;
+    indicatorAreaHeightPx: number;
+    circleStackSumPx: number;
+    diskBandHeightPx: number;
+    belowDiskRowInsideCircleBandPx: number;
+    marginAboveDiskRowInCircleBandPx: number;
+    gapDiskToAnnotationPx: number;
+    annotationH: number;
+    padBottomPx: number;
+    textAnchorYPx: number;
+    yDiskRow0Px: number;
+    estimatedTextBottomToCircleBandBottomPx: number;
+  };
+  /** Resolved {@link TopBandCircleStackMetrics} matches byte-for-byte. */
+  circleStackIdentical: boolean;
+  /** In-band text/disk vertical metrics match (positions and lower stack). */
+  textAndDiskVerticalMetricsIdentical: boolean;
+};
+
+export function compareTextMode24hIndicatorVerticalTickTape(
+  options: TextMode24hIndicatorVerticalDiagnosticsOptions,
+): TextMode24hIndicatorTickTapeComparison {
+  const layoutBase: DisplayChromeLayoutConfig = {
+    ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+    ...options.displayChromeLayout,
+  };
+  const tapeVisible = computeTextMode24hIndicatorVerticalSnapshot({
+    ...options,
+    displayChromeLayout: { ...layoutBase, tickTapeVisible: true },
+  });
+  const tapeHidden = computeTextMode24hIndicatorVerticalSnapshot({
+    ...options,
+    displayChromeLayout: { ...layoutBase, tickTapeVisible: false },
+  });
+  const d = (a: number, b: number) => a - b;
+  const csV = tapeVisible.circleStack;
+  const csH = tapeHidden.circleStack;
+  const circleStackIdentical =
+    csV.padTopPx === csH.padTopPx &&
+    csV.upperNumeralH === csH.upperNumeralH &&
+    csV.gapNumeralToDiskPx === csH.gapNumeralToDiskPx &&
+    csV.diskBandH === csH.diskBandH &&
+    csV.gapDiskToAnnotationPx === csH.gapDiskToAnnotationPx &&
+    csV.annotationH === csH.annotationH &&
+    csV.padBottomPx === csH.padBottomPx;
+  const textAndDiskVerticalMetricsIdentical =
+    circleStackIdentical &&
+    tapeVisible.textAnchorYPx === tapeHidden.textAnchorYPx &&
+    tapeVisible.yDiskRow0Px === tapeHidden.yDiskRow0Px &&
+    tapeVisible.marginAboveTextInDiskRowPx === tapeHidden.marginAboveTextInDiskRowPx &&
+    tapeVisible.marginBelowTextInDiskRowPx === tapeHidden.marginBelowTextInDiskRowPx &&
+    tapeVisible.belowDiskRowInsideCircleBandPx === tapeHidden.belowDiskRowInsideCircleBandPx;
+  return {
+    viewportWidthPx: tapeVisible.viewportWidthPx,
+    sizeMultiplier: tapeVisible.sizeMultiplier,
+    tapeVisible,
+    tapeHidden,
+    delta: {
+      topBandHeightPx: d(tapeHidden.topBandHeightPx, tapeVisible.topBandHeightPx),
+      tickBandH: d(tapeHidden.tickBandHeightPx, tapeVisible.tickBandHeightPx),
+      timezoneBandH: d(tapeHidden.rowMetrics.timezoneBandH, tapeVisible.rowMetrics.timezoneBandH),
+      circleBandH: d(tapeHidden.rowMetrics.circleBandH, tapeVisible.rowMetrics.circleBandH),
+      indicatorAreaHeightPx: d(tapeHidden.indicatorAreaHeightPx, tapeVisible.indicatorAreaHeightPx),
+      circleStackSumPx: d(tapeHidden.circleStackSumPx, tapeVisible.circleStackSumPx),
+      diskBandHeightPx: d(tapeHidden.diskBandHeightPx, tapeVisible.diskBandHeightPx),
+      belowDiskRowInsideCircleBandPx: d(
+        tapeHidden.belowDiskRowInsideCircleBandPx,
+        tapeVisible.belowDiskRowInsideCircleBandPx,
+      ),
+      marginAboveDiskRowInCircleBandPx: d(
+        tapeHidden.marginAboveDiskRowInCircleBandPx,
+        tapeVisible.marginAboveDiskRowInCircleBandPx,
+      ),
+      gapDiskToAnnotationPx: d(
+        tapeHidden.circleStack.gapDiskToAnnotationPx,
+        tapeVisible.circleStack.gapDiskToAnnotationPx,
+      ),
+      annotationH: d(tapeHidden.circleStack.annotationH, tapeVisible.circleStack.annotationH),
+      padBottomPx: d(tapeHidden.circleStack.padBottomPx, tapeVisible.circleStack.padBottomPx),
+      textAnchorYPx: d(tapeHidden.textAnchorYPx, tapeVisible.textAnchorYPx),
+      yDiskRow0Px: d(tapeHidden.yDiskRow0Px, tapeVisible.yDiskRow0Px),
+      estimatedTextBottomToCircleBandBottomPx: d(
+        tapeHidden.estimatedTextBottomToCircleBandBottomPx,
+        tapeVisible.estimatedTextBottomToCircleBandBottomPx,
+      ),
+    },
+    circleStackIdentical,
+    textAndDiskVerticalMetricsIdentical,
   };
 }

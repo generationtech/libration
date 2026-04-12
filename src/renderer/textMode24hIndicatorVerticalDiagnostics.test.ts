@@ -15,7 +15,10 @@ import { describe, expect, it } from "vitest";
 import { cloneHourMarkersConfig, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG } from "../config/appConfig.ts";
 import { createTimeContext } from "../core/time.ts";
 import { buildDisplayChromeState, sumTopBandCircleStackMetricsPx } from "./displayChrome.ts";
-import { computeTextMode24hIndicatorVerticalSnapshot } from "./textMode24hIndicatorVerticalDiagnostics.ts";
+import {
+  compareTextMode24hIndicatorVerticalTickTape,
+  computeTextMode24hIndicatorVerticalSnapshot,
+} from "./textMode24hIndicatorVerticalDiagnostics.ts";
 
 const VIEWPORT = { width: 1200, height: 800, devicePixelRatio: 1 } as const;
 
@@ -45,6 +48,139 @@ function snapshotForSizeMultiplier(sm: number) {
     },
   });
 }
+
+describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", () => {
+  it("matches buildDisplayChromeState rows when tick tape is hidden (collapsed tick row)", () => {
+    const sm = 1.2;
+    const time = createTimeContext(Date.UTC(2026, 0, 1, 12, 0, 0, 0), 0, false);
+    const chromeHidden = buildDisplayChromeState({
+      time,
+      viewport: VIEWPORT,
+      frame: { frameNumber: 0, now: time.now, deltaMs: 0 },
+      displayChromeLayout: {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        tickTapeVisible: false,
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: sm },
+        },
+      },
+    });
+    const snap = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      time,
+      displayChromeLayout: {
+        tickTapeVisible: false,
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: sm },
+        },
+      },
+    });
+    expect(snap.rowMetrics).toEqual(chromeHidden.utcTopScale.rows);
+    expect(snap.tickTapeVisibleEffective).toBe(false);
+    expect(snap.tickBandHeightPx).toBe(0);
+  });
+
+  it("compareTextMode24hIndicatorVerticalTickTape: circle stack and lower-side slices unchanged when tape hidden", () => {
+    const sm = 1.45;
+    const cmp = compareTextMode24hIndicatorVerticalTickTape({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: sm },
+        },
+      },
+    });
+    expect(cmp.circleStackIdentical).toBe(true);
+    expect(cmp.textAndDiskVerticalMetricsIdentical).toBe(true);
+    expect(cmp.delta.circleBandH).toBe(0);
+    expect(cmp.delta.belowDiskRowInsideCircleBandPx).toBe(0);
+    expect(cmp.delta.gapDiskToAnnotationPx).toBe(0);
+    expect(cmp.delta.annotationH).toBe(0);
+    expect(cmp.delta.padBottomPx).toBe(0);
+    expect(cmp.delta.tickBandH).toBe(-cmp.tapeVisible.tickBandHeightPx);
+    expect(cmp.delta.topBandHeightPx).toBe(cmp.delta.tickBandH);
+    expect(cmp.tapeHidden.bottomSideNonRowSpaceInsideCircleBandPx).toBe(
+      cmp.tapeVisible.bottomSideNonRowSpaceInsideCircleBandPx,
+    );
+    expect(cmp.tapeHidden.lowerSideStackSlicesPx).toEqual(cmp.tapeVisible.lowerSideStackSlicesPx);
+  });
+
+  it("compareTextMode24hIndicatorVerticalTickTape: 1.20x representative side-by-side numbers (tape on vs off)", () => {
+    const sm = 1.2;
+    const cmp = compareTextMode24hIndicatorVerticalTickTape({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: sm },
+        },
+      },
+    });
+    const v = cmp.tapeVisible;
+    const h = cmp.tapeHidden;
+    const table = {
+      on_topBand: v.topBandHeightPx,
+      off_topBand: h.topBandHeightPx,
+      on_circleH: v.rowMetrics.circleBandH,
+      off_circleH: h.rowMetrics.circleBandH,
+      on_tickH: v.tickBandHeightPx,
+      off_tickH: h.tickBandHeightPx,
+      on_diskRowH: v.diskBandHeightPx,
+      off_diskRowH: h.diskBandHeightPx,
+      on_bottomNonRow: v.belowDiskRowInsideCircleBandPx,
+      off_bottomNonRow: h.belowDiskRowInsideCircleBandPx,
+      on_gapAnn: v.lowerSideStackSlicesPx.gapDiskToAnnotationPx,
+      on_ann: v.lowerSideStackSlicesPx.annotationH,
+      on_padBot: v.lowerSideStackSlicesPx.padBottomPx,
+      textBot_to_bandBot_on: v.estimatedTextBottomToCircleBandBottomPx,
+      textBot_to_bandBot_off: h.estimatedTextBottomToCircleBandBottomPx,
+      textBot_to_tickTop_on: v.estimatedTextBottomToMajorTickTopPx,
+      textBot_to_tickTop_off: h.estimatedTextBottomToMajorTickTopPx,
+    };
+    // eslint-disable-next-line no-console -- diagnostic table for investigation runs
+    console.table(table);
+    expect(table.on_bottomNonRow).toBe(table.off_bottomNonRow);
+  });
+
+  it("compareTextMode24hIndicatorVerticalTickTape: 1.45x representative side-by-side numbers (tape on vs off)", () => {
+    const sm = 1.45;
+    const cmp = compareTextMode24hIndicatorVerticalTickTape({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: sm },
+        },
+      },
+    });
+    const v = cmp.tapeVisible;
+    const h = cmp.tapeHidden;
+    const table = {
+      on_topBand: v.topBandHeightPx,
+      off_topBand: h.topBandHeightPx,
+      on_circleH: v.rowMetrics.circleBandH,
+      off_circleH: h.rowMetrics.circleBandH,
+      on_tickH: v.tickBandHeightPx,
+      off_tickH: h.tickBandHeightPx,
+      on_diskRowH: v.diskBandHeightPx,
+      off_diskRowH: h.diskBandHeightPx,
+      on_bottomNonRow: v.belowDiskRowInsideCircleBandPx,
+      off_bottomNonRow: h.belowDiskRowInsideCircleBandPx,
+      on_gapAnn: v.lowerSideStackSlicesPx.gapDiskToAnnotationPx,
+      on_ann: v.lowerSideStackSlicesPx.annotationH,
+      on_padBot: v.lowerSideStackSlicesPx.padBottomPx,
+      textBot_to_bandBot_on: v.estimatedTextBottomToCircleBandBottomPx,
+      textBot_to_bandBot_off: h.estimatedTextBottomToCircleBandBottomPx,
+    };
+    // eslint-disable-next-line no-console -- diagnostic table for investigation runs
+    console.table(table);
+    expect(cmp.circleStackIdentical).toBe(true);
+    expect(table.on_bottomNonRow).toBe(table.off_bottomNonRow);
+  });
+});
 
 describe("textMode24hIndicatorVerticalDiagnostics", () => {
   it("matches buildDisplayChromeState row heights and stack sum vs circle band", () => {
