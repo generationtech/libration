@@ -22,6 +22,8 @@ import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
   resolvedHourMarkerLayoutSizeMultiplier,
+  resolvedHourMarkerLayoutTextBottomMargin,
+  resolvedHourMarkerLayoutTextTopMargin,
   type DisplayChromeLayoutConfig,
 } from "../config/appConfig.ts";
 import { createTimeContext } from "../core/time.ts";
@@ -178,6 +180,9 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     throw new Error("computeTextMode24hIndicatorVerticalSnapshot: hour markers must be text mode");
   }
   const sm = resolvedHourMarkerLayoutSizeMultiplier(layout);
+  const textTopMarginPx = resolvedHourMarkerLayoutTextTopMargin(layout);
+  const textBottomMarginPx = resolvedHourMarkerLayoutTextBottomMargin(layout);
+  const vmCommon = { textTopMarginPx, textBottomMarginPx };
   const st = TOP_CHROME_STYLE;
   const baseTop = chromeTopBandHeightFromViewportPx(h);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
@@ -247,8 +252,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const markerContentSizePx = diskLabelSizePx * sm;
 
   const fontSizePx = markerContentSizePx;
-  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
-  const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
+  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
+  const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
 
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;

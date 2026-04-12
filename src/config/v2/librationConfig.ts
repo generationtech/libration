@@ -45,6 +45,8 @@ import {
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
+  TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX,
+  TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN,
   type DemoTimeConfig,
 } from "../appConfig";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
@@ -459,6 +461,16 @@ export function assertIsNormalizedLibrationConfig(
     !Number.isFinite(hm.layout.sizeMultiplier) ||
     hm.layout.sizeMultiplier < TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN ||
     hm.layout.sizeMultiplier > TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX ||
+    typeof hm.layout.textTopMarginPx !== "number" ||
+    !Number.isFinite(hm.layout.textTopMarginPx) ||
+    !Number.isInteger(hm.layout.textTopMarginPx) ||
+    hm.layout.textTopMarginPx < TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN ||
+    hm.layout.textTopMarginPx > TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX ||
+    typeof hm.layout.textBottomMarginPx !== "number" ||
+    !Number.isFinite(hm.layout.textBottomMarginPx) ||
+    !Number.isInteger(hm.layout.textBottomMarginPx) ||
+    hm.layout.textBottomMarginPx < TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN ||
+    hm.layout.textBottomMarginPx > TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX ||
     typeof hm.realization !== "object" ||
     hm.realization === null ||
     typeof (hm.realization as { kind?: unknown }).kind !== "string"

@@ -15,6 +15,8 @@ import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   resolvedHourMarkerLayoutSizeMultiplier,
+  resolvedHourMarkerLayoutTextBottomMargin,
+  resolvedHourMarkerLayoutTextTopMargin,
 } from "./appConfig.ts";
 import {
   DEFAULT_ANALOG_FACE_FILL,
@@ -85,7 +87,11 @@ export function resolveEffectiveTopBandHourMarkers(
   const hm = layout.hourMarkers;
   const indicatorVisible = hm.visible !== false;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
-  const layoutOut = { sizeMultiplier };
+  const layoutOut = {
+    sizeMultiplier,
+    textTopMarginPx: resolvedHourMarkerLayoutTextTopMargin(layout),
+    textBottomMarginPx: resolvedHourMarkerLayoutTextBottomMargin(layout),
+  };
   const tapeHourNumberOverlay =
     hm.realization.kind !== "text" && hm.tapeHourNumberOverlay?.enabled === true
       ? ({ enabled: true } as const)

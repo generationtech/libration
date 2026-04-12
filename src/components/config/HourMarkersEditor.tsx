@@ -15,6 +15,7 @@ import {
   cloneHourMarkersConfig,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+  TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX,
 } from "../../config/appConfig";
 import type {
   HourMarkersAnalogClockAppearance,
@@ -560,6 +561,8 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
 
 function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
   const sm = hourMarkers.layout.sizeMultiplier;
+  const textTopMarginPx = hourMarkers.layout.textTopMarginPx;
+  const textBottomMarginPx = hourMarkers.layout.textBottomMarginPx;
   const rk = hourMarkers.realization.kind;
   const tapeOn = hourMarkers.tapeHourNumberOverlay?.enabled === true;
   const areaOn = hourMarkers.visible !== false;
@@ -584,7 +587,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
                   }
                   commitHourMarkers(updateConfig, (hm) => ({
                     ...hm,
-                    layout: { sizeMultiplier: n },
+                    layout: { ...hm.layout, sizeMultiplier: n },
                   }));
                 }
               : undefined
@@ -594,6 +597,68 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
           {sm.toFixed(2)}×
         </span>
       </ConfigControlRow>
+      {rk === "text" ? (
+        <>
+          <ConfigControlRow label="Top margin (text row)">
+            <input
+              type="number"
+              className="config-input"
+              min={0}
+              max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
+              step={1}
+              disabled={!wired || !areaOn}
+              aria-label="Extra space above 24-hour numerals inside the indicator row"
+              value={textTopMarginPx}
+              onChange={
+                wired && updateConfig
+                  ? (e) => {
+                      const n = Number(e.currentTarget.value);
+                      if (!Number.isFinite(n)) {
+                        return;
+                      }
+                      commitHourMarkers(updateConfig, (hm) => ({
+                        ...hm,
+                        layout: { ...hm.layout, textTopMarginPx: n },
+                      }));
+                    }
+                  : undefined
+              }
+            />
+            <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
+              px above numerals
+            </span>
+          </ConfigControlRow>
+          <ConfigControlRow label="Bottom margin (text row)">
+            <input
+              type="number"
+              className="config-input"
+              min={0}
+              max={TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX}
+              step={1}
+              disabled={!wired || !areaOn}
+              aria-label="Extra space below 24-hour numerals inside the indicator row"
+              value={textBottomMarginPx}
+              onChange={
+                wired && updateConfig
+                  ? (e) => {
+                      const n = Number(e.currentTarget.value);
+                      if (!Number.isFinite(n)) {
+                        return;
+                      }
+                      commitHourMarkers(updateConfig, (hm) => ({
+                        ...hm,
+                        layout: { ...hm.layout, textBottomMarginPx: n },
+                      }));
+                    }
+                  : undefined
+              }
+            />
+            <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
+              px below numerals
+            </span>
+          </ConfigControlRow>
+        </>
+      ) : null}
       {rk !== "text" ? (
         <ConfigControlRow label="Tape hour numbers">
           <label className="config-control-row__checkbox">

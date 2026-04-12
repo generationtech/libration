@@ -16,6 +16,8 @@ import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
   resolvedHourMarkerLayoutSizeMultiplier,
+  resolvedHourMarkerLayoutTextBottomMargin,
+  resolvedHourMarkerLayoutTextTopMargin,
   type DisplayChromeLayoutConfig,
   type DisplayTimeConfig,
   type EffectiveTopBandHourMarkerSelection,
@@ -1285,8 +1287,11 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
   const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
+  const textTopMarginPx = resolvedHourMarkerLayoutTextTopMargin(args.layout);
+  const textBottomMarginPx = resolvedHourMarkerLayoutTextBottomMargin(args.layout);
+  const vmCommon = { textTopMarginPx, textBottomMarginPx };
   if (!(vw > 0)) {
-    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm, ...vmCommon });
     return buildTextLedCircleStackFromDiskBandH(1, vm0);
   }
   const sw = vw / 24;
@@ -1296,7 +1301,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   for (let i = 0; i < 8; i += 1) {
     const r = computeUtcCircleMarkerRadius(diskGuess, sw);
     const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
-    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
+    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm, ...vmCommon });
     const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH, vm);
     if (last !== undefined && stack.diskBandH === last.diskBandH) {
       return stack;
@@ -1304,7 +1309,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
     last = stack;
     diskGuess = stack.diskBandH;
   }
-  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm, ...vmCommon });
   return last ?? buildTextLedCircleStackFromDiskBandH(1, vmFallback);
 }
 

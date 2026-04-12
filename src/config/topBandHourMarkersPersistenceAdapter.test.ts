@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "./appConfig.ts";
+import {
+  cloneHourMarkersConfig,
+  DEFAULT_HOUR_MARKERS_CONFIG,
+  TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX,
+} from "./appConfig.ts";
 import { normalizeHourMarkersInput } from "./topBandHourMarkersPersistenceAdapter.ts";
 
 describe("normalizeHourMarkersInput", () => {
@@ -36,7 +40,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
-      layout: { sizeMultiplier: 1.5 },
+      layout: { sizeMultiplier: 1.5, textTopMarginPx: 0, textBottomMarginPx: 0 },
     });
   });
 
@@ -49,7 +53,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
-      layout: { sizeMultiplier: 2 },
+      layout: { sizeMultiplier: 2, textTopMarginPx: 0, textBottomMarginPx: 0 },
     });
   });
 
@@ -78,7 +82,7 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual({
       visible: true,
       realization: { kind: "radialWedge", appearance: {} },
-      layout: { sizeMultiplier: 0.5 },
+      layout: { sizeMultiplier: 0.5, textTopMarginPx: 0, textBottomMarginPx: 0 },
     });
   });
 
@@ -140,6 +144,21 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 1 },
       }),
     ).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
+  });
+
+  it("structured layout: clamps text row margins to [0, max] and rounds", () => {
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, textTopMarginPx: 3.6, textBottomMarginPx: -2 },
+      }).layout,
+    ).toEqual({ sizeMultiplier: 1, textTopMarginPx: 4, textBottomMarginPx: 0 });
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, textTopMarginPx: 100 },
+      }).layout.textTopMarginPx,
+    ).toBe(TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX);
   });
 
   it("preserves valid behavior and drops invalid behavior", () => {

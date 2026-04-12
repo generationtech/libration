@@ -29,7 +29,7 @@ function snapshotForSizeMultiplier(sm: number) {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
         ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
-        layout: { sizeMultiplier: sm },
+        layout: { sizeMultiplier: sm, textTopMarginPx: 0, textBottomMarginPx: 0 },
       },
     },
   });
@@ -197,6 +197,28 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     expect(
       Math.abs(s.indicatorAreaMarginAboveTextPx - s.indicatorAreaMarginBelowTextPx),
     ).toBeLessThanOrEqual(1);
+  });
+
+  it("text row top/bottom margins increase disk row height (resolved layout)", () => {
+    const base = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.2, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        },
+      },
+    });
+    const inset = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.2, textTopMarginPx: 5, textBottomMarginPx: 3 },
+        },
+      },
+    });
+    expect(inset.diskBandHeightPx - base.diskBandHeightPx).toBeGreaterThanOrEqual(8);
   });
 
   it("text mode: indicator-area top/bottom margins around text match (≤1px) at 0.95–1.65×; unchanged when tape toggles", () => {

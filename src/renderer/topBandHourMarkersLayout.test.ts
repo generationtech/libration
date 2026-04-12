@@ -27,6 +27,7 @@ import { buildSemanticTopBandHourMarkers } from "../config/topBandHourMarkersSem
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
   computeTextIndicatorRowHeightPx,
+  computeTextModeDiskBandVerticalMetrics,
   layoutSemanticTopBandAnalogClockMarkers,
   layoutSemanticTopBandHourMarkers,
   layoutSemanticTopBandRadialLineMarkers,
@@ -57,6 +58,18 @@ describe("computeTextIndicatorRowHeightPx", () => {
     expect(h09).toBeLessThan(h12);
     expect(h12).toBeLessThan(h15);
     expect(h15 - h09).toBeGreaterThanOrEqual(2);
+  });
+
+  it("adds configured top/bottom text margins to disk row height and shifts the text anchor from the row top", () => {
+    const base = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 20, sizeMultiplier: 1 });
+    const withMargins = computeTextModeDiskBandVerticalMetrics({
+      fontSizePx: 20,
+      sizeMultiplier: 1,
+      textTopMarginPx: 4,
+      textBottomMarginPx: 2,
+    });
+    expect(withMargins.diskBandH).toBe(base.diskBandH + 6);
+    expect(withMargins.textCenterYFromDiskRowTopPx - base.textCenterYFromDiskRowTopPx).toBe(4);
   });
 });
 

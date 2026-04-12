@@ -134,6 +134,17 @@ export function clampTopBandHourMarkerSizeMultiplier(n: number): number {
   );
 }
 
+/** Inclusive bounds for {@link HourMarkersConfig.layout.textTopMarginPx} / {@link HourMarkersConfig.layout.textBottomMarginPx}. */
+export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN = 0;
+export const TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX = 24;
+
+export function clampTopBandHourMarkerTextMarginPx(n: number): number {
+  return Math.max(
+    TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN,
+    Math.min(TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MAX, Math.round(n)),
+  );
+}
+
 /**
  * Maps historical text-style preset labels to bundled font asset ids (tests/tooling; not persisted on `chrome.layout`).
  */
@@ -158,7 +169,7 @@ export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     appearance: {},
   },
-  layout: { sizeMultiplier: 1.0 },
+  layout: { sizeMultiplier: 1.0, textTopMarginPx: 0, textBottomMarginPx: 0 },
 };
 
 /**
@@ -193,7 +204,11 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
     visible: h.visible !== false,
     realization,
     ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
-    layout: { sizeMultiplier: h.layout.sizeMultiplier },
+    layout: {
+      sizeMultiplier: h.layout.sizeMultiplier,
+      textTopMarginPx: h.layout.textTopMarginPx,
+      textBottomMarginPx: h.layout.textBottomMarginPx,
+    },
     ...(h.tapeHourNumberOverlay !== undefined
       ? { tapeHourNumberOverlay: { ...h.tapeHourNumberOverlay } }
       : {}),
@@ -289,10 +304,34 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
   return clampTopBandHourMarkerSizeMultiplier(raw);
 }
 
+/** Runtime top inset for 24-hour text inside the disk row (px). */
+export function resolvedHourMarkerLayoutTextTopMargin(layout: DisplayChromeLayoutConfig): number {
+  const raw = layout.hourMarkers.layout.textTopMarginPx;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    return TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN;
+  }
+  return clampTopBandHourMarkerTextMarginPx(raw);
+}
+
+/** Runtime bottom inset for 24-hour text inside the disk row (px). */
+export function resolvedHourMarkerLayoutTextBottomMargin(layout: DisplayChromeLayoutConfig): number {
+  const raw = layout.hourMarkers.layout.textBottomMarginPx;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    return TOP_BAND_HOUR_MARKER_TEXT_MARGIN_MIN;
+  }
+  return clampTopBandHourMarkerTextMarginPx(raw);
+}
+
 /** Matches {@link DEFAULT_HOUR_MARKERS_CONFIG} for typography selection (undefined font → role-only path). */
 function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeLayoutConfig): boolean {
   const hm = layout.hourMarkers;
   if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== 1) {
+    return false;
+  }
+  if (resolvedHourMarkerLayoutTextTopMargin(layout) !== 0) {
+    return false;
+  }
+  if (resolvedHourMarkerLayoutTextBottomMargin(layout) !== 0) {
     return false;
   }
   if (hm.realization.kind !== "text") {

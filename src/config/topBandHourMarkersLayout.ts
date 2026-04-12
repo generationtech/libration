@@ -56,6 +56,10 @@ export function computeTextModeDiskBandVerticalMetrics(args: {
   fontSizePx: number;
   sizeMultiplier: number;
   fontMetrics?: { heightPx: number };
+  /** Author-time inset above the text core inside the disk row (px). */
+  textTopMarginPx?: number;
+  /** Author-time inset below the text core inside the disk row (px). */
+  textBottomMarginPx?: number;
 }): TextModeDiskBandVerticalMetrics {
   const { fontSizePx, sizeMultiplier } = args;
   const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
@@ -65,6 +69,10 @@ export function computeTextModeDiskBandVerticalMetrics(args: {
   const totalPadPx = Math.round(textCoreHeightPx * padFracTotal);
   let topPadInsideDiskPx = Math.floor(totalPadPx / 2);
   let bottomPadInsideDiskPx = totalPadPx - topPadInsideDiskPx;
+  const userTop = Math.max(0, Math.round(args.textTopMarginPx ?? 0));
+  const userBottom = Math.max(0, Math.round(args.textBottomMarginPx ?? 0));
+  topPadInsideDiskPx += userTop;
+  bottomPadInsideDiskPx += userBottom;
   let diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
   const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
   if (diskBandH < safetyFloor) {
@@ -270,9 +278,12 @@ export function layoutSemanticTopBandHourMarkers(
     if (isTextRealization) {
       const diskLabel = ctx.diskLabelSizePx;
       const sizeMultiplier = diskLabel > 0 ? labelSize / diskLabel : 1;
+      const effLayout = plan.source.layout;
       const vm = computeTextModeDiskBandVerticalMetrics({
         fontSizePx: labelSize,
         sizeMultiplier,
+        textTopMarginPx: effLayout.textTopMarginPx,
+        textBottomMarginPx: effLayout.textBottomMarginPx,
       });
       numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
       halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);

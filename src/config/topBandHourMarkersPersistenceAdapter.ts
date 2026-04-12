@@ -13,6 +13,7 @@
 
 import {
   clampTopBandHourMarkerSizeMultiplier,
+  clampTopBandHourMarkerTextMarginPx,
   cloneHourMarkersConfig,
   DEFAULT_HOUR_MARKERS_CONFIG,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -131,6 +132,40 @@ function normalizedHourMarkersVisible(raw: unknown): boolean {
   return true;
 }
 
+function normalizedHourMarkersLayout(
+  layoutRaw: unknown,
+):
+  | { sizeMultiplier: number; textTopMarginPx: number; textBottomMarginPx: number }
+  | null {
+  if (layoutRaw === undefined) {
+    const d = DEFAULT_HOUR_MARKERS_CONFIG.layout;
+    return {
+      sizeMultiplier: d.sizeMultiplier,
+      textTopMarginPx: d.textTopMarginPx,
+      textBottomMarginPx: d.textBottomMarginPx,
+    };
+  }
+  if (!isPlainObject(layoutRaw)) {
+    return null;
+  }
+  let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
+  const sm = layoutRaw.sizeMultiplier;
+  if (typeof sm === "number" && Number.isFinite(sm)) {
+    sizeMultiplier = clampTopBandHourMarkerSizeMultiplier(sm);
+  }
+  let textTopMarginPx = DEFAULT_HOUR_MARKERS_CONFIG.layout.textTopMarginPx;
+  const ttm = layoutRaw.textTopMarginPx;
+  if (typeof ttm === "number" && Number.isFinite(ttm)) {
+    textTopMarginPx = clampTopBandHourMarkerTextMarginPx(ttm);
+  }
+  let textBottomMarginPx = DEFAULT_HOUR_MARKERS_CONFIG.layout.textBottomMarginPx;
+  const tbm = layoutRaw.textBottomMarginPx;
+  if (typeof tbm === "number" && Number.isFinite(tbm)) {
+    textBottomMarginPx = clampTopBandHourMarkerTextMarginPx(tbm);
+  }
+  return { sizeMultiplier, textTopMarginPx, textBottomMarginPx };
+}
+
 export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   if (raw === undefined || raw === null) {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
@@ -142,17 +177,12 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   const visible = normalizedHourMarkersVisible(raw.visible);
   const behaviorOpt = normalizedHourMarkerBehavior(raw.behavior);
 
-  let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
-  const layoutRaw = raw.layout;
-  if (layoutRaw !== undefined) {
-    if (!isPlainObject(layoutRaw)) {
-      return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
-    }
-    const sm = layoutRaw.sizeMultiplier;
-    if (typeof sm === "number" && Number.isFinite(sm)) {
-      sizeMultiplier = clampTopBandHourMarkerSizeMultiplier(sm);
-    }
+  const layoutNorm = normalizedHourMarkersLayout(raw.layout);
+  if (layoutNorm === null) {
+    return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
+  const { sizeMultiplier, textTopMarginPx, textBottomMarginPx } = layoutNorm;
+  const layoutOut = { sizeMultiplier, textTopMarginPx, textBottomMarginPx };
 
   const realizationRaw = raw.realization;
   if (!isPlainObject(realizationRaw)) {
@@ -183,7 +213,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutOut,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -198,7 +228,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutOut,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -213,7 +243,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutOut,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -228,7 +258,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutOut,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
