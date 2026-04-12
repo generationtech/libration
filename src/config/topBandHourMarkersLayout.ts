@@ -24,32 +24,77 @@ import {
 } from "./topBandDiskWrapGeometry.ts";
 
 /**
- * Downward nudge (× text core height) so numerals read visually centered with `textBaseline: "middle"`.
- * Scales with font size; not a hardcoded pixel offset.
+ * Single authoritative text-core height factor for **text-mode** 24h vertical layout (row height, margins, centering).
+ * When {@link TextModeDiskBandVerticalMetrics} receives {@link fontMetrics}, that height replaces this factor.
  */
-export const TEXT_INDICATOR_OPTICAL_CENTER_BIAS = 0.058 as const;
+export const TEXT_MODE_TEXT_CORE_HEIGHT_FRAC = 1.125 as const;
 
 /**
- * Text-led 24h indicator row height: core em-height + compact padding (authoritative band height for text mode).
- * Total padding is ~6–12% of core height and scales with {@link sizeMultiplier}.
+ * Resolved vertical model for the text-mode disk row (the band slice that holds hour numerals).
+ * Top/bottom padding inside the disk row are symmetric (differ by at most 1 px after rounding).
+ */
+export type TextModeDiskBandVerticalMetrics = {
+  /** Rounded nominal em/core height used for layout (px). */
+  textCoreHeightPx: number;
+  /** Padding inside the disk row above the core (px). */
+  topPadInsideDiskPx: number;
+  /** Padding inside the disk row below the core (px). */
+  bottomPadInsideDiskPx: number;
+  /** Disk-band height = core + top + bottom (px); equals {@link computeTextIndicatorRowHeightPx} for the same inputs. */
+  diskBandH: number;
+  /**
+   * Y offset from the disk-row top to the text anchor for vertical centering (`textBaseline: "middle"`):
+   * {@code topPadInsideDiskPx + textCoreHeightPx / 2}.
+   */
+  textCenterYFromDiskRowTopPx: number;
+};
+
+/**
+ * Single vertical truth for text-mode 24h indicators: one core height, symmetric in-disk padding, derived row height.
+ */
+export function computeTextModeDiskBandVerticalMetrics(args: {
+  fontSizePx: number;
+  sizeMultiplier: number;
+  fontMetrics?: { heightPx: number };
+}): TextModeDiskBandVerticalMetrics {
+  const { fontSizePx, sizeMultiplier } = args;
+  const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
+  const rawCore = args.fontMetrics?.heightPx ?? fontSizePx * TEXT_MODE_TEXT_CORE_HEIGHT_FRAC;
+  const textCoreHeightPx = Math.max(1, Math.round(rawCore));
+  const padFracTotal = Math.min(0.12, Math.max(0.06, 0.06 + 0.04 * (sm - 1)));
+  const totalPadPx = Math.round(textCoreHeightPx * padFracTotal);
+  let topPadInsideDiskPx = Math.floor(totalPadPx / 2);
+  let bottomPadInsideDiskPx = totalPadPx - topPadInsideDiskPx;
+  let diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
+  const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
+  if (diskBandH < safetyFloor) {
+    const extra = safetyFloor - diskBandH;
+    const addTop = Math.floor(extra / 2);
+    const addBottom = extra - addTop;
+    topPadInsideDiskPx += addTop;
+    bottomPadInsideDiskPx += addBottom;
+    diskBandH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
+  }
+  const textCenterYFromDiskRowTopPx = topPadInsideDiskPx + textCoreHeightPx * 0.5;
+  return {
+    textCoreHeightPx,
+    topPadInsideDiskPx,
+    bottomPadInsideDiskPx,
+    diskBandH,
+    textCenterYFromDiskRowTopPx,
+  };
+}
+
+/**
+ * Text-led 24h indicator disk-row height (authoritative for text mode) — delegates to
+ * {@link computeTextModeDiskBandVerticalMetrics}.
  */
 export function computeTextIndicatorRowHeightPx(args: {
   fontSizePx: number;
   sizeMultiplier: number;
   fontMetrics?: { heightPx: number };
 }): number {
-  const { fontSizePx, sizeMultiplier } = args;
-  const core = args.fontMetrics?.heightPx ?? fontSizePx * 1.125;
-  const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
-  const padFracTotal = Math.min(0.12, Math.max(0.06, 0.06 + 0.04 * (sm - 1)));
-  const padded = core * (1 + padFracTotal);
-  const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
-  return Math.max(safetyFloor, Math.ceil(padded));
-}
-
-/** Nominal vertical extent for optical bias; scales with rendered CSS px size (not disk diameter). */
-export function estimateTextCoreHeightForOpticalLayoutPx(fontSizePx: number): number {
-  return fontSizePx * 1.08;
+  return computeTextModeDiskBandVerticalMetrics(args).diskBandH;
 }
 
 /**
@@ -223,10 +268,13 @@ export function layoutSemanticTopBandHourMarkers(
     let halfExt: number;
 
     if (isTextRealization) {
-      const textCoreH = estimateTextCoreHeightForOpticalLayoutPx(labelSize);
-      const opticalOffsetPx = textCoreH * TEXT_INDICATOR_OPTICAL_CENTER_BIAS;
-      const diskRowMidY = yDiskRow0 + diskBandH * 0.5;
-      numeralY = diskRowMidY + opticalOffsetPx;
+      const diskLabel = ctx.diskLabelSizePx;
+      const sizeMultiplier = diskLabel > 0 ? labelSize / diskLabel : 1;
+      const vm = computeTextModeDiskBandVerticalMetrics({
+        fontSizePx: labelSize,
+        sizeMultiplier,
+      });
+      numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
       halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);
     } else {
       const r = m.radiusPx;

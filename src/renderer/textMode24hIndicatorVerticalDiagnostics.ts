@@ -29,20 +29,19 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
 import { computeHourDiskLabelSizePx, getTopChromeStyle } from "../config/topChromeStyle.ts";
 import {
+  computeTextModeDiskBandVerticalMetrics,
   computeTextIndicatorRowHeightPx,
-  estimateTextCoreHeightForOpticalLayoutPx,
-  TEXT_INDICATOR_OPTICAL_CENTER_BIAS,
 } from "../config/topBandHourMarkersLayout.ts";
 import type { FrameContext, Viewport } from "./types.ts";
 import type { TimeContext } from "../layers/types.ts";
 import {
+  alignTopBandRowsToExactCircleBandH,
   buildDisplayChromeState,
   collapseTopBandHourIndicatorAreaRows,
   computeTextIndicatorCircleBandExpansionPx,
   computeTopBandCircleStackMetrics,
   computeUtcCircleMarkerRadius,
   computeUtcTopScaleRowMetrics,
-  expandTopBandCircleBandPreservingLowerBands,
   resolveTextIndicatorCircleStackMetrics,
   sumTopBandCircleStackMetricsPx,
   topBandTickRailMajorTickVerticalSpan,
@@ -62,17 +61,17 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   sizeMultiplier: number;
   /** Chrome top strip height (same as {@link DisplayChromeState.topBand.height}). */
   topBandHeightPx: number;
-  /** Row split after text-led circle-band expansion (same as {@link UtcTopScaleLayout.rows}). */
+  /** Row split after text-led circle-band alignment (same as {@link UtcTopScaleLayout.rows}). */
   rowMetrics: UtcTopScaleRowMetrics;
   /** {@link computeUtcTopScaleRowMetrics} before expansion. */
   baseRowMetrics: UtcTopScaleRowMetrics;
-  /** Pixels added to the circle band for text-led stack fit. */
+  /** Pixels {@link rowMetrics.circleBandH} − {@link baseRowMetrics.circleBandH} when positive (legacy “expansion” label). */
   circleBandExpansionPx: number;
   /** Authoritative stack from {@link buildDisplayChromeState} / {@link buildUtcTopScaleLayout}. */
   circleStack: TopBandCircleStackMetrics;
-  /** Sum of stack slices — should match {@link rowMetrics.circleBandH} when consistent. */
+  /** Sum of stack slices — must match {@link rowMetrics.circleBandH} for text mode. */
   circleStackSumPx: number;
-  /** {@link rowMetrics.circleBandH} − {@link circleStackSumPx} (non-zero ⇒ partition vs band height mismatch). */
+  /** {@link rowMetrics.circleBandH} − {@link circleStackSumPx} (must be 0 for text mode). */
   circleBandHeightVsStackSumDeltaPx: number;
   /** Fallback stack if {@link UtcTopScaleLayout.circleStack} were missing in {@link renderDisplayChrome}. */
   renderFallbackTextLedStack: TopBandCircleStackMetrics;
@@ -85,24 +84,25 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   diskBandHeightPx: number;
   diskRowMidYPx: number;
   textAnchorYPx: number;
+  /** Legacy one-sided optical bias (px); always 0 — centering is from {@link computeTextModeDiskBandVerticalMetrics}. */
   opticalOffsetPx: number;
   diskLabelSizePx: number;
   markerContentSizePx: number;
-  /** Core height used by {@link computeTextIndicatorRowHeightPx} (fontMetrics omitted → {@code fontSizePx * 1.125}). */
-  textRowCoreHeightForBandAllocationPx: number;
-  /** {@link computeTextIndicatorRowHeightPx} total (disk row budget). */
+  /** Authoritative text core height for layout (px). */
+  textCoreHeightPx: number;
+  topPadInsideDiskPx: number;
+  bottomPadInsideDiskPx: number;
+  /** {@link computeTextIndicatorRowHeightPx} / disk row height (same as {@link diskBandHeightPx} when stack disk matches). */
   textIndicatorRowHeightPx: number;
-  /** {@link estimateTextCoreHeightForOpticalLayoutPx} — used only for optical bias, not band height. */
-  textCoreHeightEstimatePx: number;
-  /** Estimated box half-height using {@link textCoreHeightEstimatePx}. */
+  /** Estimated box half-height using {@link textCoreHeightPx}. */
   textEstimatedHalfHeightPx: number;
-  /** Estimated glyph box top: {@link textAnchorYPx} − half of {@link textCoreHeightEstimatePx}. */
+  /** Estimated glyph box top: {@link textAnchorYPx} − half of {@link textCoreHeightPx}. */
   textEstimatedTopPx: number;
-  /** Estimated glyph box bottom: {@link textAnchorYPx} + half of {@link textCoreHeightEstimatePx}. */
+  /** Estimated glyph box bottom: {@link textAnchorYPx} + half of {@link textCoreHeightPx}. */
   textEstimatedBottomPx: number;
-  /** Space inside the disk row from disk-row top to estimated text top (positive ⇒ text starts below row top). */
+  /** Space inside the disk row from disk-row top to estimated text top (should match {@link topPadInsideDiskPx}). */
   marginAboveTextInDiskRowPx: number;
-  /** Space inside the disk row from estimated text bottom to disk-row bottom. */
+  /** Space inside the disk row from estimated text bottom to disk-row bottom (should match {@link bottomPadInsideDiskPx}). */
   marginBelowTextInDiskRowPx: number;
   /** Gap + annotation + pad below disk row inside the circle band (down to {@link yCircleBottomPx}). */
   belowDiskRowInsideCircleBandPx: number;
@@ -155,6 +155,19 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const rowsForExpansion =
     layout.hourMarkers.visible !== false ? baseRows : collapseTopBandHourIndicatorAreaRows(baseRows);
+  const textStack =
+    layout.hourMarkers.visible !== false && w > 0
+      ? resolveTextIndicatorCircleStackMetrics({
+          viewportWidthPx: w,
+          hourDiskLabelTokens: st.hourDiskLabel,
+          layout,
+          seedCircleBandHeightPx: rowsForExpansion.circleBandH,
+        })
+      : undefined;
+  const rowMetrics =
+    layout.hourMarkers.visible !== false && textStack !== undefined
+      ? alignTopBandRowsToExactCircleBandH(rowsForExpansion, sumTopBandCircleStackMetricsPx(textStack))
+      : rowsForExpansion;
   const circleExpansionPx =
     layout.hourMarkers.visible !== false
       ? computeTextIndicatorCircleBandExpansionPx({
@@ -164,10 +177,6 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
           layout,
         })
       : 0;
-  const rowMetrics =
-    circleExpansionPx > 0
-      ? expandTopBandCircleBandPreservingLowerBands(rowsForExpansion, circleExpansionPx)
-      : rowsForExpansion;
 
   const time =
     options.time ?? createTimeContext(Date.UTC(2026, 0, 1, 12, 0, 0, 0), 0, false);
@@ -182,12 +191,15 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
 
   const scale = chrome.utcTopScale;
   const rows = scale.rows ?? rowMetrics;
-  const circleStack = scale.circleStack ?? resolveTextIndicatorCircleStackMetrics({
-    viewportWidthPx: w,
-    hourDiskLabelTokens: st.hourDiskLabel,
-    layout,
-    seedCircleBandHeightPx: rows.circleBandH,
-  });
+  const circleStack =
+    scale.circleStack ??
+    textStack ??
+    resolveTextIndicatorCircleStackMetrics({
+      viewportWidthPx: Math.max(1, w),
+      hourDiskLabelTokens: st.hourDiskLabel,
+      layout,
+      seedCircleBandHeightPx: rows.circleBandH,
+    });
   const stackSum = sumTopBandCircleStackMetricsPx(circleStack);
   const fallbackStack = computeTopBandCircleStackMetrics(rows.circleBandH, "textLed");
 
@@ -204,19 +216,18 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const markerContentSizePx = diskLabelSizePx * sm;
 
   const fontSizePx = markerContentSizePx;
-  const textRowCore = fontSizePx * 1.125;
+  const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
   const textRowH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
-  const textCoreEst = estimateTextCoreHeightForOpticalLayoutPx(markerContentSizePx);
-  const opticalOffsetPx = textCoreEst * TEXT_INDICATOR_OPTICAL_CENTER_BIAS;
 
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
   const diskRowMidY = yDiskRow0 + diskBandH * 0.5;
-  const textAnchorY = diskRowMidY + opticalOffsetPx;
+  const textAnchorY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
+  const opticalOffsetPx = 0;
 
-  const halfEst = textCoreEst * 0.5;
-  const textEstTop = textAnchorY - halfEst;
-  const textEstBottom = textAnchorY + halfEst;
+  const halfCore = vm.textCoreHeightPx * 0.5;
+  const textEstTop = textAnchorY - halfCore;
+  const textEstBottom = textAnchorY + halfCore;
   const marginAboveTextInDiskRow = textEstTop - yDiskRow0;
   const marginBelowTextInDiskRow = yDiskRow0 + diskBandH - textEstBottom;
   const belowDisk =
@@ -255,10 +266,11 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     opticalOffsetPx,
     diskLabelSizePx,
     markerContentSizePx,
-    textRowCoreHeightForBandAllocationPx: textRowCore,
+    textCoreHeightPx: vm.textCoreHeightPx,
+    topPadInsideDiskPx: vm.topPadInsideDiskPx,
+    bottomPadInsideDiskPx: vm.bottomPadInsideDiskPx,
     textIndicatorRowHeightPx: textRowH,
-    textCoreHeightEstimatePx: textCoreEst,
-    textEstimatedHalfHeightPx: halfEst,
+    textEstimatedHalfHeightPx: halfCore,
     textEstimatedTopPx: textEstTop,
     textEstimatedBottomPx: textEstBottom,
     marginAboveTextInDiskRowPx: marginAboveTextInDiskRow,

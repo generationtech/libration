@@ -58,7 +58,7 @@ import {
   type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
 import {
-  computeTextIndicatorRowHeightPx,
+  computeTextModeDiskBandVerticalMetrics,
   hourCircleHeadMetrics,
 } from "../config/topBandHourMarkersLayout.ts";
 import type { TimeContext } from "../layers/types";
@@ -983,7 +983,7 @@ const TEXT_TIGHT_CIRCLE_STACK_OVERRIDES = {
 } as const;
 
 /**
- * Text-led 24h numerals: lower disk-row floors so row height can follow {@link computeTextIndicatorRowHeightPx} instead of
+ * Text-led 24h numerals: lower disk-row floors so row height can follow {@link computeTextModeDiskBandVerticalMetrics} instead of
  * glyph disk minima (still uses the same stack solver as {@code "textTight"}).
  */
 const TEXT_LED_CIRCLE_STACK_OVERRIDES = {
@@ -1028,6 +1028,23 @@ export function expandTopBandCircleBandPreservingLowerBands(
     circleBandH: rows.circleBandH + d,
     tickBandH: rows.tickBandH,
     timezoneBandH: rows.timezoneBandH,
+  };
+}
+
+/**
+ * Sets {@link UtcTopScaleRowMetrics.circleBandH} to an exact pixel height and adjusts {@link UtcTopScaleRowMetrics.topBandHeightPx}
+ * by the same delta so tick + NATO band heights stay fixed (text-mode stack sum snap).
+ */
+export function alignTopBandRowsToExactCircleBandH(
+  rows: UtcTopScaleRowMetrics,
+  exactCircleBandHeightPx: number,
+): UtcTopScaleRowMetrics {
+  const h = Math.max(0, Math.round(exactCircleBandHeightPx));
+  const delta = h - rows.circleBandH;
+  return {
+    ...rows,
+    circleBandH: h,
+    topBandHeightPx: rows.topBandHeightPx + delta,
   };
 }
 
@@ -1133,11 +1150,11 @@ export function sumTopBandCircleStackMetricsPx(m: TopBandCircleStackMetrics): nu
 }
 
 /**
- * Text-mode circle stack: disk row height is {@link computeTextIndicatorRowHeightPx} (rounded up); chrome above/below
- * scales with that row — not with {@link computeTopBandCircleStackMetrics} band fractions.
+ * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics}; chrome above/below
+ * scales with that disk row — not with {@link computeTopBandCircleStackMetrics} band fractions.
  */
-export function computeTextLedCircleStackFromTextRowHeightPx(textRowHeightPx: number): TopBandCircleStackMetrics {
-  const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.ceil(Math.max(1, textRowHeightPx)));
+export function buildTextLedCircleStackFromDiskBandH(diskBandH: number): TopBandCircleStackMetrics {
+  const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(Math.max(1, diskBandH)));
   const padTopPx = Math.max(4, Math.round(disk * 0.048));
   const padBottomPx = Math.max(3, Math.round(disk * 0.032));
   const gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
@@ -1156,7 +1173,7 @@ export function computeTextLedCircleStackFromTextRowHeightPx(textRowHeightPx: nu
 
 /**
  * Resolves the authoritative text-led stack and font/disk fixed point: disk row comes from
- * {@link computeTextIndicatorRowHeightPx}, not from inverting the generic circle-band solver.
+ * {@link computeTextModeDiskBandVerticalMetrics}, not from inverting the generic circle-band solver.
  */
 export function resolveTextIndicatorCircleStackMetrics(args: {
   viewportWidthPx: number;
@@ -1167,7 +1184,7 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
   if (!(vw > 0)) {
-    return computeTextLedCircleStackFromTextRowHeightPx(1);
+    return buildTextLedCircleStackFromDiskBandH(1);
   }
   const sw = vw / 24;
   const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
@@ -1177,21 +1194,21 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   for (let i = 0; i < 8; i += 1) {
     const r = computeUtcCircleMarkerRadius(diskGuess, sw);
     const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
-    const textRow = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
-    const stack = computeTextLedCircleStackFromTextRowHeightPx(textRow);
+    const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
+    const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH);
     if (last !== undefined && stack.diskBandH === last.diskBandH) {
       return stack;
     }
     last = stack;
     diskGuess = stack.diskBandH;
   }
-  return last ?? computeTextLedCircleStackFromTextRowHeightPx(1);
+  return last ?? buildTextLedCircleStackFromDiskBandH(1);
 }
 
 /**
- * Pixel amount to add to the circle band (and total top band) so the 24h **text** indicator row fits content-derived
- * height — uses {@link resolveTextIndicatorCircleStackMetrics} / {@link computeTextLedCircleStackFromTextRowHeightPx},
- * not {@link computeTopBandCircleStackMetrics} disk-band binary search.
+ * Positive pixel delta from {@link UtcTopScaleRowMetrics.circleBandH} to the sum of the resolved text-led stack
+ * (diagnostics / legacy callers). Chrome snaps the band to the stack sum via {@link alignTopBandRowsToExactCircleBandH},
+ * so this is only the expansion component when {@code need > base}.
  */
 export function computeTextIndicatorCircleBandExpansionPx(args: {
   baseRows: UtcTopScaleRowMetrics;
@@ -1502,36 +1519,42 @@ export function buildDisplayChromeState(options: {
   const rowsForExpansion = hourIndicatorAreaVisible
     ? baseRows
     : collapseTopBandHourIndicatorAreaRows(baseRows);
-  const circleExpansionPx = hourIndicatorAreaVisible
-    ? hourMarkerSel.kind === "text"
-      ? computeTextIndicatorCircleBandExpansionPx({
-          baseRows: rowsForExpansion,
-          viewportWidthPx: w,
-          hourDiskLabelTokens: stForRows.hourDiskLabel,
-          layout,
-        })
-      : computeHourMarkerCircleBandExpansionPx({
-          baseRows: rowsForExpansion,
-          viewportWidthPx: w,
-          hourDiskLabelTokens: stForRows.hourDiskLabel,
-          layout,
-          selection: hourMarkerSel,
-        })
-    : 0;
-  const rowMetrics =
-    circleExpansionPx > 0
-      ? expandTopBandCircleBandPreservingLowerBands(rowsForExpansion, circleExpansionPx)
-      : rowsForExpansion;
+
+  let rowMetrics: UtcTopScaleRowMetrics;
+  let textModeCircleStackOverride: TopBandCircleStackMetrics | undefined;
+
+  if (!hourIndicatorAreaVisible) {
+    rowMetrics = rowsForExpansion;
+    textModeCircleStackOverride = undefined;
+  } else if (hourMarkerSel.kind === "text" && w > 0) {
+    const textStack = resolveTextIndicatorCircleStackMetrics({
+      viewportWidthPx: w,
+      hourDiskLabelTokens: stForRows.hourDiskLabel,
+      layout,
+      seedCircleBandHeightPx: rowsForExpansion.circleBandH,
+    });
+    const needCircleBandH = sumTopBandCircleStackMetricsPx(textStack);
+    rowMetrics = alignTopBandRowsToExactCircleBandH(rowsForExpansion, needCircleBandH);
+    textModeCircleStackOverride = textStack;
+  } else {
+    const circleExpansionPx =
+      hourMarkerSel.kind === "text"
+        ? 0
+        : computeHourMarkerCircleBandExpansionPx({
+            baseRows: rowsForExpansion,
+            viewportWidthPx: w,
+            hourDiskLabelTokens: stForRows.hourDiskLabel,
+            layout,
+            selection: hourMarkerSel,
+          });
+    rowMetrics =
+      circleExpansionPx > 0
+        ? expandTopBandCircleBandPreservingLowerBands(rowsForExpansion, circleExpansionPx)
+        : rowsForExpansion;
+    textModeCircleStackOverride = undefined;
+  }
+
   const top = rowMetrics.topBandHeightPx;
-  const textModeCircleStackOverride =
-    hourIndicatorAreaVisible && hourMarkerSel.kind === "text" && w > 0
-      ? resolveTextIndicatorCircleStackMetrics({
-          viewportWidthPx: w,
-          hourDiskLabelTokens: stForRows.hourDiskLabel,
-          layout,
-          seedCircleBandHeightPx: rowMetrics.circleBandH,
-        })
-      : undefined;
   const utcTopScale = buildUtcTopScaleLayout(
     time.now,
     w,

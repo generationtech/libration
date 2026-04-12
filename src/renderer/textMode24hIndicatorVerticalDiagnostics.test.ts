@@ -56,6 +56,8 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     expect(s.circleBandHeightVsStackSumDeltaPx).toBe(
       chrome.utcTopScale.rows!.circleBandH - sumFromChrome,
     );
+    expect(s.circleBandHeightVsStackSumDeltaPx).toBe(0);
+    expect(Math.abs(s.marginAboveTextInDiskRowPx - s.marginBelowTextInDiskRowPx)).toBeLessThanOrEqual(1);
   });
 
   it("reports geometry for representative size multipliers (0.95, 1.45, 1.65)", () => {
@@ -73,8 +75,9 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         marginAboveTextInDiskRow: number;
         marginBelowTextInDiskRow: number;
         opticalOffset: number;
-        textCoreEst: number;
-        textRowCoreAlloc: number;
+        textCorePx: number;
+        topPadInsideDisk: number;
+        bottomPadInsideDisk: number;
         textRowHeight: number;
         majorTickTop: number;
         yCircleBottom: number;
@@ -94,8 +97,9 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
         marginAboveTextInDiskRow: s.marginAboveTextInDiskRowPx,
         marginBelowTextInDiskRow: s.marginBelowTextInDiskRowPx,
         opticalOffset: s.opticalOffsetPx,
-        textCoreEst: s.textCoreHeightEstimatePx,
-        textRowCoreAlloc: s.textRowCoreHeightForBandAllocationPx,
+        textCorePx: s.textCoreHeightPx,
+        topPadInsideDisk: s.topPadInsideDiskPx,
+        bottomPadInsideDisk: s.bottomPadInsideDiskPx,
         textRowHeight: s.textIndicatorRowHeightPx,
         majorTickTop: s.tickTapeMajorTickTopPx,
         yCircleBottom: s.yCircleBottomPx,

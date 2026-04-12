@@ -1088,7 +1088,7 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.effectiveTopBandHourMarkers).toEqual(
       resolveEffectiveTopBandHourMarkers(chrome.displayChromeLayout),
     );
-    expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 110 });
+    expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 86 });
     expect(chrome.bottomBand.x).toBe(0);
     expect(chrome.bottomBand.width).toBe(1920);
     expect(chrome.bottomBand.y + chrome.bottomBand.height).toBe(1080 - margin);
