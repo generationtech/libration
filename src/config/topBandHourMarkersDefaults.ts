@@ -16,8 +16,11 @@
  * Keeps config resolution independent of the renderer/glyph stack.
  */
 
-/** Default hour-disk / text hour marker fill (CSS color). */
-export const DEFAULT_TEXT_COLOR = "rgba(8, 28, 58, 0.94)";
+/**
+ * Default resolved fill for top-band hour-marker **text** on the circle-band (deep instrument bed). Light ink for
+ * contrast; user `appearance.color` overrides. (Glyph disks may use separate chrome tokens.)
+ */
+export const DEFAULT_TEXT_COLOR = "rgba(218, 235, 252, 0.94)";
 
 export const DEFAULT_ANALOG_HAND_COLOR = "rgba(8, 28, 58, 0.94)";
 export const DEFAULT_ANALOG_RING_COLOR = "rgba(70, 140, 210, 0.55)";

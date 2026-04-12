@@ -83,6 +83,7 @@ export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
+  const indicatorVisible = hm.visible !== false;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const layoutOut = { sizeMultiplier };
   const tapeHourNumberOverlay =
@@ -105,7 +106,7 @@ export function resolveEffectiveTopBandHourMarkers(
       },
     };
     return {
-      enabled: true,
+      enabled: indicatorVisible,
       behavior,
       content: { kind: "hour24" },
       realization,
@@ -117,7 +118,7 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "analogClock") {
     const r = hm.realization;
     return {
-      enabled: true,
+      enabled: indicatorVisible,
       behavior,
       content: { kind: "localWallClock" },
       realization: {
@@ -132,7 +133,7 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "radialLine") {
     const r = hm.realization;
     return {
-      enabled: true,
+      enabled: indicatorVisible,
       behavior,
       content: { kind: "hour24" },
       realization: {
@@ -146,7 +147,7 @@ export function resolveEffectiveTopBandHourMarkers(
 
   const r = hm.realization;
   return {
-    enabled: true,
+    enabled: indicatorVisible,
     behavior,
     content: { kind: "hour24" },
     realization: {

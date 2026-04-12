@@ -467,6 +467,9 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.hourMarkers");
   }
+  if (typeof (hm as { visible?: unknown }).visible !== "boolean") {
+    throw new Error("assertIsNormalizedLibrationConfig: hourMarkers.visible must be boolean");
+  }
   const rk = (hm.realization as { kind: string }).kind;
   if (Object.prototype.hasOwnProperty.call(hm.realization, "color")) {
     throw new Error("assertIsNormalizedLibrationConfig: hourMarkers realization must not use legacy color");

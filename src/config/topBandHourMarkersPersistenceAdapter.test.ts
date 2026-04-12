@@ -34,6 +34,7 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 1.5 },
       }),
     ).toEqual({
+      visible: true,
       realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
       layout: { sizeMultiplier: 1.5 },
     });
@@ -46,9 +47,26 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 3 },
       }),
     ).toEqual({
+      visible: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
       layout: { sizeMultiplier: 2 },
     });
+  });
+
+  it("normalizes visible: false; otherwise defaults to true", () => {
+    expect(
+      normalizeHourMarkersInput({
+        visible: false,
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      }).visible,
+    ).toBe(false);
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      }).visible,
+    ).toBe(true);
   });
 
   it("glyph realization: clamps size; ignores legacy top-level color", () => {
@@ -58,6 +76,7 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 0.25 },
       }),
     ).toEqual({
+      visible: true,
       realization: { kind: "radialWedge", appearance: {} },
       layout: { sizeMultiplier: 0.5 },
     });

@@ -26,6 +26,7 @@ import {
   effectiveTopBandHourMarkerSelection,
   type DisplayChromeLayoutConfig,
 } from "../../config/appConfig";
+import { DEFAULT_TEXT_COLOR } from "../../config/topBandHourMarkersDefaults.ts";
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
@@ -1053,7 +1054,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(plan.items.filter((i) => i.kind === "line").length).toBeGreaterThan(0);
     });
 
-    const DEFAULT_HOUR_DISK_TEXT_FILL = "rgba(8, 28, 58, 0.94)";
 
     it("text hour disk uses default fill when effective selection has no color", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
@@ -1077,7 +1077,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const t = hourDiskTextForStructuralHour(plan, label0);
       expect(t?.kind).toBe("text");
       if (t?.kind === "text") {
-        expect(t.fill).toBe(DEFAULT_HOUR_DISK_TEXT_FILL);
+        expect(t.fill).toBe(DEFAULT_TEXT_COLOR);
       }
     });
 

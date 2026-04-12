@@ -124,6 +124,13 @@ function normalizedTapeHourNumberOverlay(
  * Missing or invalid payloads yield {@link DEFAULT_HOUR_MARKERS_CONFIG} (cloned).
  * Obsolete boolean flags on legacy payloads are ignored; only structured realization, layout, and behavior are canonical.
  */
+function normalizedHourMarkersVisible(raw: unknown): boolean {
+  if (raw === false) {
+    return false;
+  }
+  return true;
+}
+
 export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   if (raw === undefined || raw === null) {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
@@ -132,6 +139,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
 
+  const visible = normalizedHourMarkersVisible(raw.visible);
   const behaviorOpt = normalizedHourMarkerBehavior(raw.behavior);
 
   let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
@@ -172,6 +180,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
@@ -186,6 +195,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
@@ -200,6 +210,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },
@@ -214,6 +225,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      visible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: { sizeMultiplier },

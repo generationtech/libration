@@ -57,6 +57,11 @@ export type HourMarkersTapeHourNumberOverlay = {
 };
 
 export interface HourMarkersConfig {
+  /**
+   * When false, the 24-hour indicator row (markers + circle-band bed) is omitted; tick tape and NATO strip keep their
+   * heights and the top band reflows. Default true when absent in input.
+   */
+  visible?: boolean;
   realization: HourMarkersRealizationConfig;
   /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
   behavior?: EffectiveTopBandHourMarkerBehavior;

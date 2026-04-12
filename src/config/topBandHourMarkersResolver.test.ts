@@ -12,7 +12,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX, TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN } from "./appConfig";
+import {
+  cloneHourMarkersConfig,
+  DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
+} from "./appConfig";
 import {
   DEFAULT_ANALOG_FACE_FILL,
   DEFAULT_ANALOG_HAND_COLOR,
@@ -34,6 +39,17 @@ describe("defaultBehaviorFor", () => {
 });
 
 describe("resolveEffectiveTopBandHourMarkers", () => {
+  it("maps hourMarkers.visible false to enabled false", () => {
+    const lay = {
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      hourMarkers: {
+        ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+        visible: false,
+      },
+    };
+    expect(resolveEffectiveTopBandHourMarkers(lay).enabled).toBe(false);
+  });
+
   it("structured text uses persisted font + tapeAdvected + hour24", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(

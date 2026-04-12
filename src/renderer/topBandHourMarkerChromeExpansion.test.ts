@@ -20,6 +20,7 @@ import {
 } from "../config/appConfig.ts";
 import {
   buildDisplayChromeState,
+  collapseTopBandHourIndicatorAreaRows,
   computeHourMarkerCircleBandExpansionPx,
   computeUtcTopScaleRowMetrics,
   expandTopBandCircleBandPreservingLowerBands,
@@ -56,6 +57,39 @@ describe("hour-marker circle-band expansion", () => {
 
   it("uses a larger nominal glyph disk factor than 1× text for default glyph selection", () => {
     expect(TOP_BAND_GLYPH_DISK_CONTENT_SCALE).toBeGreaterThan(1.15);
+  });
+});
+
+describe("hour marker indicator area visibility", () => {
+  it("collapsing the circle band preserves tick + NATO heights and shortens total top band", () => {
+    const rows = computeUtcTopScaleRowMetrics(72, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    const collapsed = collapseTopBandHourIndicatorAreaRows(rows);
+    expect(collapsed.circleBandH).toBe(0);
+    expect(collapsed.tickBandH).toBe(rows.tickBandH);
+    expect(collapsed.timezoneBandH).toBe(rows.timezoneBandH);
+    expect(collapsed.topBandHeightPx).toBe(rows.tickBandH + rows.timezoneBandH);
+  });
+
+  it("buildDisplayChromeState omits circle band when hourMarkers.visible is false", () => {
+    const now = Date.UTC(2024, 5, 1, 12, 0, 0);
+    const hidden = buildDisplayChromeState({
+      time: createTimeContext(now, 0, false),
+      viewport: { width: 960, height: 700, devicePixelRatio: 1 },
+      frame: { frameNumber: 1, now, deltaMs: 0 },
+      displayTime: DEFAULT_DISPLAY_TIME_CONFIG,
+      displayChromeLayout: {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          visible: false,
+        },
+      },
+    });
+    expect(hidden.utcTopScale.rows?.circleBandH).toBe(0);
+    expect(hidden.effectiveTopBandHourMarkers.enabled).toBe(false);
+    expect(hidden.topBand.height).toBe(
+      (hidden.utcTopScale.rows?.tickBandH ?? 0) + (hidden.utcTopScale.rows?.timezoneBandH ?? 0),
+    );
   });
 });
 

@@ -28,6 +28,8 @@ export type HourMarkerBehaviorEditorProps = {
   hourMarkers: HourMarkersConfig;
   wired: boolean;
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
+  /** When false, behavior control is inert while the indicator area is hidden. */
+  controlsDisabled?: boolean;
 };
 
 function commitHourMarkers(
@@ -44,17 +46,23 @@ function commitHourMarkers(
   });
 }
 
-export function HourMarkerBehaviorEditor({ hourMarkers, wired, updateConfig }: HourMarkerBehaviorEditorProps) {
+export function HourMarkerBehaviorEditor({
+  hourMarkers,
+  wired,
+  updateConfig,
+  controlsDisabled = false,
+}: HourMarkerBehaviorEditorProps) {
   const selectValue = hourMarkers.behavior ?? defaultBehaviorFor(hourMarkers.realization.kind);
+  const off = !wired || controlsDisabled;
   return (
     <ConfigControlRow label="Hour marker behavior">
       <select
         className="config-input"
         value={selectValue}
-        disabled={!wired}
+        disabled={off}
         aria-label="Top-band hour marker placement behavior"
         onChange={
-          wired && updateConfig
+          wired && updateConfig && !controlsDisabled
             ? (e) => {
                 const v = e.currentTarget.value as EffectiveTopBandHourMarkerBehavior;
                 commitHourMarkers(updateConfig, (hm) => ({

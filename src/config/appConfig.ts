@@ -155,6 +155,7 @@ export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zer
 
 /** Default structured hour markers for {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG}. */
 export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
+  visible: true,
   realization: {
     kind: "text",
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -192,6 +193,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
     };
   }
   return {
+    visible: h.visible !== false,
     realization,
     ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
     layout: { sizeMultiplier: h.layout.sizeMultiplier },

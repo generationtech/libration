@@ -173,6 +173,8 @@ export function layoutSemanticTopBandHourMarkers(
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
+  /** Text uses `textBaseline: "middle"`; place the anchor at the disk head’s geometric center (no legacy alphabetic nudge). */
+  const isTextRealization = plan.source.realization.kind === "text";
 
   const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
@@ -195,7 +197,9 @@ export function layoutSemanticTopBandHourMarkers(
       ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
       : yDiskRow0;
     const numeralY = ph
-      ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035)
+      ? yHeadTop +
+        headD * 0.5 -
+        (isTextRealization ? 0 : Math.min(0.55, headD * 0.035))
       : circleDiskCy;
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
 

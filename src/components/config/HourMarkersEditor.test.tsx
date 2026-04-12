@@ -165,6 +165,26 @@ describe("HourMarkersEditor structured authoring", () => {
     expect(last!.chrome.layout.hourMarkers.layout.sizeMultiplier).toBe(1.5);
   });
 
+  it("visibility toggle persists visible and disables subordinate controls when off", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Show 24-hour indicator entries/i }));
+    expect(last!.chrome.layout.hourMarkers.visible).toBe(false);
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Show 24-hour indicator entries/i }));
+    expect(last!.chrome.layout.hourMarkers.visible).toBe(true);
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).not.toBeDisabled();
+  });
+
   it("behavior select updates config.behavior", () => {
     let last: LibrationConfigV2 | null = null;
     render(
