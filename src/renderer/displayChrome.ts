@@ -60,6 +60,7 @@ import {
 import {
   computeTextModeDiskBandVerticalMetrics,
   hourCircleHeadMetrics,
+  type TextModeDiskBandVerticalMetrics,
 } from "../config/topBandHourMarkersLayout.ts";
 import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
@@ -1152,51 +1153,122 @@ export function sumTopBandCircleStackMetricsPx(m: TopBandCircleStackMetrics): nu
   );
 }
 
+/** Minima aligned with {@link TEXT_LED_CIRCLE_STACK_OVERRIDES} for splitting the non-disk slices. */
+const TEXT_LED_SPLIT_MIN = {
+  padTopPx: 4,
+  gapNumeralToDiskPx: 3,
+  gapDiskToAnnotationPx: 4,
+  annotationH: 8,
+  padBottomPx: 3,
+} as const;
+
+function splitTopPairForTextLed(topPairPx: number): { padTopPx: number; gapNumeralToDiskPx: number } {
+  const ratio = 0.048 / (0.048 + 0.038);
+  let padTopPx = Math.max(TEXT_LED_SPLIT_MIN.padTopPx, Math.round(topPairPx * ratio));
+  let gapNumeralToDiskPx = topPairPx - padTopPx;
+  if (gapNumeralToDiskPx < TEXT_LED_SPLIT_MIN.gapNumeralToDiskPx) {
+    gapNumeralToDiskPx = TEXT_LED_SPLIT_MIN.gapNumeralToDiskPx;
+    padTopPx = topPairPx - gapNumeralToDiskPx;
+  }
+  if (padTopPx < TEXT_LED_SPLIT_MIN.padTopPx) {
+    padTopPx = TEXT_LED_SPLIT_MIN.padTopPx;
+    gapNumeralToDiskPx = topPairPx - padTopPx;
+  }
+  return { padTopPx, gapNumeralToDiskPx };
+}
+
+function splitBottomTripleForTextLed(bottomTriplePx: number): {
+  gapDiskToAnnotationPx: number;
+  annotationH: number;
+  padBottomPx: number;
+} {
+  const wG = 0.044;
+  const wA = 0.17;
+  const wP = 0.032;
+  const wSum = wG + wA + wP;
+  let gapDiskToAnnotationPx = Math.max(
+    TEXT_LED_SPLIT_MIN.gapDiskToAnnotationPx,
+    Math.round((bottomTriplePx * wG) / wSum),
+  );
+  let annotationH = Math.max(
+    TEXT_LED_SPLIT_MIN.annotationH,
+    Math.min(12, Math.round((bottomTriplePx * wA) / wSum)),
+  );
+  let padBottomPx = bottomTriplePx - gapDiskToAnnotationPx - annotationH;
+  if (padBottomPx < TEXT_LED_SPLIT_MIN.padBottomPx) {
+    const need = TEXT_LED_SPLIT_MIN.padBottomPx - padBottomPx;
+    const fromAnn = Math.min(need, annotationH - TEXT_LED_SPLIT_MIN.annotationH);
+    annotationH -= fromAnn;
+    padBottomPx += fromAnn;
+    if (padBottomPx < TEXT_LED_SPLIT_MIN.padBottomPx) {
+      const need2 = TEXT_LED_SPLIT_MIN.padBottomPx - padBottomPx;
+      const fromG2 = Math.min(need2, gapDiskToAnnotationPx - TEXT_LED_SPLIT_MIN.gapDiskToAnnotationPx);
+      gapDiskToAnnotationPx -= fromG2;
+      padBottomPx += fromG2;
+    }
+  }
+  padBottomPx = bottomTriplePx - gapDiskToAnnotationPx - annotationH;
+  return { gapDiskToAnnotationPx, annotationH, padBottomPx };
+}
+
 /**
- * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics}; chrome above/below
- * scales with that disk row — not with {@link computeTopBandCircleStackMetrics} band fractions.
+ * Text-mode circle stack: disk row height comes from {@link computeTextModeDiskBandVerticalMetrics}; non-disk vertical
+ * space is split so the **text core** is centered in the full circle band (equal margin above/below inside the
+ * indicator area). Independent of tick-tape row visibility — only {@link TopBandCircleStackMetrics} + disk/vm matter.
  */
-export function buildTextLedCircleStackFromDiskBandH(diskBandH: number): TopBandCircleStackMetrics {
+export function buildTextLedCircleStackFromDiskBandH(
+  diskBandH: number,
+  vm: TextModeDiskBandVerticalMetrics,
+): TopBandCircleStackMetrics {
   const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(Math.max(1, diskBandH)));
-  /** Baseline partition (legacy text-led coefficients); sum is preserved while shifting non-disk space. */
-  let padTopPx = Math.max(4, Math.round(disk * 0.048));
-  let padBottomPx = Math.max(3, Math.round(disk * 0.032));
-  let gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
-  let gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
-  let annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
+  const tc = vm.textCenterYFromDiskRowTopPx;
+  const minTopPair = TEXT_LED_SPLIT_MIN.padTopPx + TEXT_LED_SPLIT_MIN.gapNumeralToDiskPx;
+  const minBottomTriple =
+    TEXT_LED_SPLIT_MIN.gapDiskToAnnotationPx +
+    TEXT_LED_SPLIT_MIN.annotationH +
+    TEXT_LED_SPLIT_MIN.padBottomPx;
 
-  /**
-   * Text-mode polish: move the disk row **down** in the circle band — more margin above the row, less below before the
-   * noon/midnight strip + bottom pad (same total stack height; {@link diskBandH} unchanged). Pixels are taken from
-   * gap/annotation/bottom first, then added to {@code padTopPx} / {@code gapNumeralToDiskPx} (not from disk slack).
-   */
-  const wantShiftDownPx = Math.min(5, Math.max(2, Math.round(disk * 0.052)));
-  let take = wantShiftDownPx;
-  const g2take = Math.min(take, Math.max(0, gapDiskToAnnotationPx - 3));
-  gapDiskToAnnotationPx -= g2take;
-  take -= g2take;
-  const anntake = Math.min(take, Math.max(0, annotationH - 7));
-  annotationH -= anntake;
-  take -= anntake;
-  const pbtake = Math.min(take, Math.max(0, padBottomPx - 3));
-  padBottomPx -= pbtake;
-  take -= pbtake;
-
-  const shiftedPx = wantShiftDownPx - take;
-  if (shiftedPx > 0) {
-    const addTop = Math.round(shiftedPx * 0.45);
-    padTopPx += addTop;
-    gapNumeralToDiskPx += shiftedPx - addTop;
+  let T = disk + minTopPair + minBottomTriple;
+  for (let iter = 0; iter < 600; iter += 1) {
+    const topPairPx = Math.round(T / 2 - tc);
+    const bottomTriplePx = T - disk - topPairPx;
+    if (topPairPx >= minTopPair && bottomTriplePx >= minBottomTriple) {
+      const top = splitTopPairForTextLed(topPairPx);
+      const bot = splitBottomTripleForTextLed(bottomTriplePx);
+      if (top.padTopPx + top.gapNumeralToDiskPx !== topPairPx) {
+        T += 1;
+        continue;
+      }
+      if (bot.gapDiskToAnnotationPx + bot.annotationH + bot.padBottomPx !== bottomTriplePx) {
+        T += 1;
+        continue;
+      }
+      const stack: TopBandCircleStackMetrics = {
+        padTopPx: top.padTopPx,
+        upperNumeralH: 0,
+        gapNumeralToDiskPx: top.gapNumeralToDiskPx,
+        diskBandH: disk,
+        gapDiskToAnnotationPx: bot.gapDiskToAnnotationPx,
+        annotationH: bot.annotationH,
+        padBottomPx: bot.padBottomPx,
+      };
+      if (sumTopBandCircleStackMetricsPx(stack) === T) {
+        return stack;
+      }
+    }
+    T += 1;
   }
 
+  const top = splitTopPairForTextLed(minTopPair);
+  const bot = splitBottomTripleForTextLed(minBottomTriple);
   return {
-    padTopPx,
+    padTopPx: top.padTopPx,
     upperNumeralH: 0,
-    gapNumeralToDiskPx,
+    gapNumeralToDiskPx: top.gapNumeralToDiskPx,
     diskBandH: disk,
-    gapDiskToAnnotationPx,
-    annotationH,
-    padBottomPx,
+    gapDiskToAnnotationPx: bot.gapDiskToAnnotationPx,
+    annotationH: bot.annotationH,
+    padBottomPx: bot.padBottomPx,
   };
 }
 
@@ -1212,11 +1284,12 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   seedCircleBandHeightPx: number;
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
+  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
   if (!(vw > 0)) {
-    return buildTextLedCircleStackFromDiskBandH(1);
+    const vm0 = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+    return buildTextLedCircleStackFromDiskBandH(1, vm0);
   }
   const sw = vw / 24;
-  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
   const seedH = Math.max(0, args.seedCircleBandHeightPx);
   let diskGuess = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(seedH * 0.22));
   let last: TopBandCircleStackMetrics | undefined;
@@ -1224,14 +1297,15 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
     const r = computeUtcCircleMarkerRadius(diskGuess, sw);
     const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
     const vm = computeTextModeDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
-    const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH);
+    const stack = buildTextLedCircleStackFromDiskBandH(vm.diskBandH, vm);
     if (last !== undefined && stack.diskBandH === last.diskBandH) {
       return stack;
     }
     last = stack;
     diskGuess = stack.diskBandH;
   }
-  return last ?? buildTextLedCircleStackFromDiskBandH(1);
+  const vmFallback = computeTextModeDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+  return last ?? buildTextLedCircleStackFromDiskBandH(1, vmFallback);
 }
 
 /**

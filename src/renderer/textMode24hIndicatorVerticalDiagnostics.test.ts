@@ -22,20 +22,6 @@ import {
 
 const VIEWPORT = { width: 1200, height: 800, devicePixelRatio: 1 } as const;
 
-/** Pre-polish text-led stack margins (same coefficients as legacy {@link buildTextLedCircleStackFromDiskBandH} baseline). */
-function legacyTextLedMarginsAboveBelowDisk(diskBandH: number): { above: number; below: number } {
-  const disk = Math.max(9, Math.round(Math.max(1, diskBandH)));
-  const padTopPx = Math.max(4, Math.round(disk * 0.048));
-  const gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
-  const gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
-  const annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
-  const padBottomPx = Math.max(3, Math.round(disk * 0.032));
-  return {
-    above: padTopPx + gapNumeralToDiskPx,
-    below: gapDiskToAnnotationPx + annotationH + padBottomPx,
-  };
-}
-
 function snapshotForSizeMultiplier(sm: number) {
   return computeTextMode24hIndicatorVerticalSnapshot({
     viewport: VIEWPORT,
@@ -208,9 +194,44 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     );
     expect(s.circleBandHeightVsStackSumDeltaPx).toBe(0);
     expect(Math.abs(s.marginAboveTextInDiskRowPx - s.marginBelowTextInDiskRowPx)).toBeLessThanOrEqual(1);
-    const leg = legacyTextLedMarginsAboveBelowDisk(s.diskBandHeightPx);
-    expect(s.marginAboveDiskRowInCircleBandPx).toBeGreaterThan(leg.above);
-    expect(s.belowDiskRowInsideCircleBandPx).toBeLessThan(leg.below);
+    expect(
+      Math.abs(s.indicatorAreaMarginAboveTextPx - s.indicatorAreaMarginBelowTextPx),
+    ).toBeLessThanOrEqual(1);
+  });
+
+  it("text mode: indicator-area top/bottom margins around text match (≤1px) at 0.95–1.65×; unchanged when tape toggles", () => {
+    const sizes = [0.95, 1.2, 1.45, 1.65] as const;
+    for (const sm of sizes) {
+      const on = computeTextMode24hIndicatorVerticalSnapshot({
+        viewport: VIEWPORT,
+        displayChromeLayout: {
+          ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+          tickTapeVisible: true,
+          hourMarkers: {
+            ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+            layout: { sizeMultiplier: sm },
+          },
+        },
+      });
+      const off = computeTextMode24hIndicatorVerticalSnapshot({
+        viewport: VIEWPORT,
+        displayChromeLayout: {
+          ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+          tickTapeVisible: false,
+          hourMarkers: {
+            ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+            layout: { sizeMultiplier: sm },
+          },
+        },
+      });
+      for (const s of [on, off]) {
+        expect(
+          Math.abs(s.indicatorAreaMarginAboveTextPx - s.indicatorAreaMarginBelowTextPx),
+        ).toBeLessThanOrEqual(1);
+      }
+      expect(on.indicatorAreaMarginAboveTextPx).toBe(off.indicatorAreaMarginAboveTextPx);
+      expect(on.indicatorAreaMarginBelowTextPx).toBe(off.indicatorAreaMarginBelowTextPx);
+    }
   });
 
   it("reports geometry for representative size multipliers (0.95, 1.20, 1.45, 1.65)", () => {

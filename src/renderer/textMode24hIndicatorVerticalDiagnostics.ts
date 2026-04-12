@@ -117,6 +117,16 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   };
   /** Same as {@link marginAboveDiskRowInCircleBandPx} — pad + upper numeral row + gap above disk row. */
   topSideNonRowSpaceInsideCircleBandPx: number;
+  /**
+   * Inside the 24h indicator entries area (circle band): px from band top to estimated text core top
+   * ({@link textEstimatedTopPx} − {@link indicatorAreaTopPx}).
+   */
+  indicatorAreaMarginAboveTextPx: number;
+  /**
+   * Inside the same area: px from estimated text core bottom to circle-band bottom
+   * ({@link indicatorAreaBottomPx} − {@link textEstimatedBottomPx}).
+   */
+  indicatorAreaMarginBelowTextPx: number;
   /** Effective {@link DisplayChromeLayoutConfig.tickTapeVisible} after merge (mirrors chrome). */
   tickTapeVisibleEffective: boolean;
   /**
@@ -256,6 +266,9 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const marginAboveDiskRow =
     circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
 
+  const indicatorAreaMarginAboveTextPx = textEstTop - y0;
+  const indicatorAreaMarginBelowTextPx = yCircleBottom - textEstBottom;
+
   const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(hourMarkerSel);
   const gStyle = resolveHourMarkerGlyphStyle(spec.glyphStyleId ?? "topBandHourDefault");
   const insetFrac = Math.max(0, gStyle.text.insetFrac ?? 0);
@@ -306,6 +319,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
       padBottomPx: circleStack.padBottomPx,
     },
     topSideNonRowSpaceInsideCircleBandPx: marginAboveDiskRow,
+    indicatorAreaMarginAboveTextPx,
+    indicatorAreaMarginBelowTextPx,
     tickTapeVisibleEffective: layout.tickTapeVisible !== false,
     marginAboveDiskRowInCircleBandPx: marginAboveDiskRow,
     yCircleBottomPx: yCircleBottom,
