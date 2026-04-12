@@ -153,17 +153,11 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof input.timezoneLetterRowVisible === "boolean"
       ? input.timezoneLetterRowVisible
       : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.timezoneLetterRowVisible;
-  const newKey = input.topChromePalette;
-  /** Legacy JSON key (pre-`topChromePalette`); still accepted when loading older saved config. */
-  const legacyKey = (input as Record<string, unknown>).topChromeTheme;
-  const fromNew =
-    newKey === "neutral" || newKey === "dark" || newKey === "paper" ? newKey : undefined;
-  const fromLegacy =
-    legacyKey === "neutral" || legacyKey === "dark" || legacyKey === "paper"
-      ? legacyKey
-      : undefined;
+  const paletteRaw = input.topChromePalette;
   const topChromePalette: TopChromePaletteId =
-    fromNew ?? fromLegacy ?? DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.topChromePalette;
+    paletteRaw === "neutral" || paletteRaw === "dark" || paletteRaw === "paper"
+      ? paletteRaw
+      : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.topChromePalette;
 
   const hourMarkers = normalizeHourMarkersInput(input.hourMarkers);
 
