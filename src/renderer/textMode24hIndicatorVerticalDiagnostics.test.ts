@@ -332,6 +332,23 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     expect(inset.circleStack.markerRadiusDiskBandHPx).toBe(base.circleStack.markerRadiusDiskBandHPx);
   });
 
+  it("Option A: stack carries glyph ink metrics; 0/0 layout slack vs insets is sub-pixel (≤1px)", () => {
+    const s = computeTextMode24hIndicatorVerticalSnapshot({
+      viewport: VIEWPORT,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+          layout: { sizeMultiplier: 1.2, textTopMarginPx: 0, textBottomMarginPx: 0 },
+        },
+      },
+    });
+    expect(s.circleStack.text24hLayoutGlyphInkMetrics).toBeDefined();
+    expect(s.glyphInkHeightPx).toBeGreaterThan(0);
+    expect(["measured", "fallback"]).toContain(s.glyphInkMetricsSource);
+    expect(Math.abs(s.visibleTopGapPx)).toBeLessThanOrEqual(1);
+    expect(Math.abs(s.visibleBottomGapPx)).toBeLessThanOrEqual(1);
+  });
+
   it("0 / 0 insets: no configured row-internal padding above or below the text core", () => {
     const s = computeTextMode24hIndicatorVerticalSnapshot({
       viewport: VIEWPORT,

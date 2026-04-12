@@ -16,6 +16,7 @@
  * No Canvas or RenderPlan types — pairs with {@link buildSemanticTopBandHourMarkers} and tape marker inputs.
  */
 
+import type { HourDiskTextGlyphInkMetrics } from "./hourDiskTextGlyphInkMetrics.ts";
 import type { SemanticTopBandHourMarkersPlan } from "./topBandHourMarkersSemanticTypes.ts";
 import type { EffectiveTopBandHourMarkerBehavior } from "./topBandHourMarkersTypes.ts";
 import {
@@ -27,7 +28,10 @@ import {
  * Resolved vertical model for the text-mode disk row (the band slice that holds hour numerals).
  */
 export type TextModeDiskBandVerticalMetrics = {
-  /** Rounded nominal em/core height used for layout (px). */
+  /**
+   * Layout text-core height (px): for 24h text Option A, measured glyph ink height
+   * ({@link HourDiskTextGlyphInkMetrics.glyphInkHeightPx}); otherwise rounded nominal em/core height.
+   */
   textCoreHeightPx: number;
   /**
    * Total padding above the text core inside the disk row (px). For layout rows, this is the configured top inset; for
@@ -112,8 +116,16 @@ export function computeTextModeLayoutDiskBandVerticalMetrics(args: {
   rowTopInsetPx: number;
   /** Total px padding below the text core inside the disk row (already clamped at the callsite). */
   rowBottomInsetPx: number;
+  /**
+   * When set (24h indicator entries, text realization), row core height follows measured glyph ink — not rounded
+   * nominal font size — so configured insets align with visible padding around numeral ink.
+   */
+  glyphInkMetrics?: HourDiskTextGlyphInkMetrics;
 }): TextModeDiskBandVerticalMetrics {
-  const textCoreHeightPx = computeTextCoreHeightPx(args);
+  const textCoreHeightPx =
+    args.glyphInkMetrics !== undefined
+      ? Math.max(1, args.glyphInkMetrics.glyphInkHeightPx)
+      : computeTextCoreHeightPx(args);
   const topPadInsideDiskPx = Math.max(0, Math.round(args.rowTopInsetPx));
   const bottomPadInsideDiskPx = Math.max(0, Math.round(args.rowBottomInsetPx));
   const naturalH = textCoreHeightPx + topPadInsideDiskPx + bottomPadInsideDiskPx;
@@ -149,6 +161,7 @@ export function computeTextIndicatorRowHeightPx(args: {
   fontMetrics?: { heightPx: number };
   textTopMarginPx?: number;
   textBottomMarginPx?: number;
+  glyphInkMetrics?: HourDiskTextGlyphInkMetrics;
 }): number {
   if (args.textTopMarginPx !== undefined || args.textBottomMarginPx !== undefined) {
     return computeTextModeLayoutDiskBandVerticalMetrics({
@@ -157,6 +170,7 @@ export function computeTextIndicatorRowHeightPx(args: {
       fontMetrics: args.fontMetrics,
       rowTopInsetPx: args.textTopMarginPx ?? 0,
       rowBottomInsetPx: args.textBottomMarginPx ?? 0,
+      glyphInkMetrics: args.glyphInkMetrics,
     }).diskBandH;
   }
   return computeTextModeIntrinsicDiskBandVerticalMetrics(args).diskBandH;
@@ -173,6 +187,11 @@ export type TopBandCircleStackLayoutInput = {
   gapDiskToAnnotationPx: number;
   annotationH: number;
   padBottomPx: number;
+  /**
+   * Text-mode 24h only: glyph ink used for Option A layout row core height; threaded from
+   * {@link resolveTextIndicatorCircleStackMetrics} so semantic layout matches the text-led stack.
+   */
+  text24hLayoutGlyphInkMetrics?: HourDiskTextGlyphInkMetrics;
 };
 
 /**
@@ -341,6 +360,7 @@ export function layoutSemanticTopBandHourMarkers(
         sizeMultiplier,
         rowTopInsetPx: Math.max(0, Math.round(effLayout.textTopMarginPx ?? 0)),
         rowBottomInsetPx: Math.max(0, Math.round(effLayout.textBottomMarginPx ?? 0)),
+        glyphInkMetrics: circleStack.text24hLayoutGlyphInkMetrics,
       });
       numeralY = yDiskRow0 + vm.textCenterYFromDiskRowTopPx;
       halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);

@@ -114,8 +114,12 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   opticalOffsetPx: number;
   diskLabelSizePx: number;
   markerContentSizePx: number;
-  /** Authoritative text core height for layout (px); matches nominal disk label size (or font metrics when provided). */
+  /** Layout text-core height (px): glyph ink height (Option A) when measured/fallback ink is available. */
   textCoreHeightPx: number;
+  /** {@link HourDiskTextGlyphInkMetrics.glyphInkHeightPx} from the text-led stack when present. */
+  glyphInkHeightPx: number;
+  /** Whether layout row core used measured Canvas metrics or explicit fallback (see {@link circleStack.text24hLayoutGlyphInkMetrics}). */
+  glyphInkMetricsSource: "measured" | "fallback";
   /** Total top padding above the text core inside the disk row (px) — same as configured top inset. */
   topPadInsideDiskPx: number;
   /** Total bottom padding below the text core inside the disk row (px) — same as configured bottom inset. */
@@ -138,6 +142,14 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   marginAboveTextInDiskRowPx: number;
   /** Space inside the disk row from estimated text bottom to disk-row bottom (should match {@link bottomPadInsideDiskPx}). */
   marginBelowTextInDiskRowPx: number;
+  /**
+   * Layout slack: {@link marginAboveTextInDiskRowPx} − {@link userTextTopInsetPx} — expect ~0 when Option A core matches ink.
+   */
+  visibleTopGapPx: number;
+  /**
+   * Layout slack: {@link marginBelowTextInDiskRowPx} − {@link userTextBottomInsetPx} — expect ~0 when Option A core matches ink.
+   */
+  visibleBottomGapPx: number;
   /** Gap + annotation + pad below disk row inside the circle band (down to {@link yCircleBottomPx}). */
   belowDiskRowInsideCircleBandPx: number;
   /** Same as {@link belowDiskRowInsideCircleBandPx} — explicit “bottom-side non-row” label for reports. */
@@ -285,17 +297,20 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const markerContentSizePx = diskLabelSizePx * sm;
 
   const fontSizePx = markerContentSizePx;
+  const ink = circleStack.text24hLayoutGlyphInkMetrics;
   const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
     fontSizePx,
     sizeMultiplier: sm,
     rowTopInsetPx: userTextTopInsetPx,
     rowBottomInsetPx: userTextBottomInsetPx,
+    glyphInkMetrics: ink,
   });
   const textRowH = computeTextIndicatorRowHeightPx({
     fontSizePx,
     sizeMultiplier: sm,
     textTopMarginPx: userTextTopInsetPx,
     textBottomMarginPx: userTextBottomInsetPx,
+    glyphInkMetrics: ink,
   });
 
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
@@ -310,6 +325,9 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
   const textEstBottom = textAnchorY + halfCore;
   const marginAboveTextInDiskRow = textEstTop - yDiskRow0;
   const marginBelowTextInDiskRow = yDiskRow0 + diskBandH - textEstBottom;
+  /** Layout-model visible slack vs configured insets (expect ~0 px when Option A row core matches glyph ink). */
+  const visibleTopGapPx = marginAboveTextInDiskRow - userTextTopInsetPx;
+  const visibleBottomGapPx = marginBelowTextInDiskRow - userTextBottomInsetPx;
   const belowDisk =
     circleStack.gapDiskToAnnotationPx + circleStack.annotationH + circleStack.padBottomPx;
   const marginAboveDiskRow =
@@ -362,6 +380,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     diskLabelSizePx,
     markerContentSizePx,
     textCoreHeightPx: vmLayout.textCoreHeightPx,
+    glyphInkHeightPx: ink?.glyphInkHeightPx ?? vmLayout.textCoreHeightPx,
+    glyphInkMetricsSource: ink?.source ?? "fallback",
     topPadInsideDiskPx: vmLayout.topPadInsideDiskPx,
     bottomPadInsideDiskPx: vmLayout.bottomPadInsideDiskPx,
     rowHeightPx: textRowH,
@@ -372,6 +392,8 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     textEstimatedBottomPx: textEstBottom,
     marginAboveTextInDiskRowPx: marginAboveTextInDiskRow,
     marginBelowTextInDiskRowPx: marginBelowTextInDiskRow,
+    visibleTopGapPx,
+    visibleBottomGapPx,
     belowDiskRowInsideCircleBandPx: belowDisk,
     bottomSideNonRowSpaceInsideCircleBandPx: belowDisk,
     lowerSideStackSlicesPx: {
@@ -664,9 +686,12 @@ export function analyzeTextMode24hVerticalGapInvariants(
 
   const layoutH = consolidated.layoutSizePx;
   const gh = consolidated.glyphHeightPx;
-  if (Math.abs(gh - layoutH) > epsPx) {
+  const coreH = consolidated.textCoreHeightPx;
+  if (Math.abs(gh - coreH) > epsPx && Math.abs(gh - layoutH) > epsPx) {
     likelySources.push("B_glyph_vs_layout_height");
-    notes.push(`glyphHeightPx=${gh} vs layoutSizePx=${layoutH} (layout uses nominal em/core height).`);
+    notes.push(
+      `glyphHeightPx=${gh} vs textCoreHeightPx=${coreH} / layoutSizePx=${layoutH} (Option A layout core should match measured ink height).`,
+    );
   }
 
   if (consolidated.textBaseline === "middle") {

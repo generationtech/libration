@@ -17,6 +17,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
+import type { HourDiskTextGlyphInkMetrics } from "../config/hourDiskTextGlyphInkMetrics.ts";
 import { computeTextModeLayoutDiskBandVerticalMetrics } from "../config/topBandHourMarkersLayout.ts";
 import {
   hourMarkerRepresentationSpecForTopBandEffectiveSelection,
@@ -38,6 +39,8 @@ export type SemanticTopBandHourTextDiskRowDiagnosticsContext = {
   diskLabelSizePx: number;
   markerContentSizePx: number;
   layout: EffectiveTopBandHourMarkers["layout"];
+  /** Option A: same glyph ink as {@link resolveTextIndicatorCircleStackMetrics} / semantic row layout. */
+  text24hLayoutGlyphInkMetrics?: HourDiskTextGlyphInkMetrics;
 };
 
 /**
@@ -76,6 +79,7 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
       sizeMultiplier: sm,
       rowTopInsetPx: Math.max(0, Math.round(d.layout.textTopMarginPx)),
       rowBottomInsetPx: Math.max(0, Math.round(d.layout.textBottomMarginPx)),
+      glyphInkMetrics: d.text24hLayoutGlyphInkMetrics,
     });
   }
 

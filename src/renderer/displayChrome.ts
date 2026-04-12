@@ -52,7 +52,11 @@ import {
   computeBottomChromeOverlayBottomMarginPx,
 } from "./bottomChromeLayout";
 import { resolveTopBandAnchorLongitudeDeg, type TopBandAnchorLongitudeSource } from "./topBandAnchorLongitude";
-import { defaultFontAssetRegistry } from "../config/chromeTypography";
+import {
+  defaultFontAssetRegistry,
+  type FontAssetRegistry,
+} from "../config/chromeTypography";
+import type { HourDiskTextGlyphInkMetrics } from "../config/hourDiskTextGlyphInkMetrics.ts";
 import {
   computeHourDiskLabelSizePx,
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
@@ -67,6 +71,7 @@ import {
 } from "../config/topBandHourMarkersLayout.ts";
 import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
+import { measureHourDiskTextGlyphInkMetricsForLayout } from "./hourDiskTextGlyphInkMeasure.ts";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
 import { buildTopBandPresentTimeTickRenderPlan } from "./renderPlan/topBandPresentTimeTickPlan";
 import {
@@ -206,6 +211,10 @@ export interface TopBandCircleStackMetrics {
    * without feeding back into radius or font solving.
    */
   markerRadiusDiskBandHPx?: number;
+  /**
+   * Text-mode 24h: glyph ink used for Option A layout row height (measured or explicit fallback); omitted for non-text stacks.
+   */
+  text24hLayoutGlyphInkMetrics?: HourDiskTextGlyphInkMetrics;
 }
 
 /** Disk-row height used with {@link computeUtcCircleMarkerRadius} when {@link TopBandCircleStackMetrics.markerRadiusDiskBandHPx} is set. */
@@ -1284,12 +1293,27 @@ export function buildTextLedCircleStackFromDiskBandH(
   };
 }
 
+function text24hGlyphInkForLayoutDiskNumerals(
+  fontRegistry: FontAssetRegistry | undefined,
+  layout: DisplayChromeLayoutConfig,
+  markerContentSizePx: number,
+): HourDiskTextGlyphInkMetrics {
+  const registry = fontRegistry ?? defaultFontAssetRegistry;
+  return measureHourDiskTextGlyphInkMetricsForLayout({
+    fontRegistry: registry,
+    markerContentSizePx,
+    selection: effectiveTopBandHourMarkerSelection(layout),
+  });
+}
+
 /**
  * Resolves the authoritative text-led stack and font/disk fixed point. The iteration uses
  * {@link computeTextModeIntrinsicDiskBandVerticalMetrics} only (configured text-row insets never participate), so
  * changing top/bottom padding cannot feed the radius/font-size fixed point. The returned stack’s {@link diskBandH}
  * reflects **layout** padding from config; {@link TopBandCircleStackMetrics.markerRadiusDiskBandHPx} carries the
  * intrinsic disk height used for marker radius and nominal font size.
+ *
+ * Layout row height uses measured glyph ink (Option A) via {@link text24hLayoutGlyphInkMetrics}; intrinsic sizing stays nominal.
  */
 export function resolveTextIndicatorCircleStackMetrics(args: {
   viewportWidthPx: number;
@@ -1297,6 +1321,8 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   layout: DisplayChromeLayoutConfig;
   /** Seeds disk-radius / font-size iteration (typically {@link UtcTopScaleRowMetrics.circleBandH}). */
   seedCircleBandHeightPx: number;
+  /** Optional registry for Canvas ink measurement; defaults to {@link defaultFontAssetRegistry}. */
+  fontRegistry?: FontAssetRegistry;
 }): TopBandCircleStackMetrics {
   const vw = args.viewportWidthPx;
   const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
@@ -1304,15 +1330,18 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
   const userBottom = resolvedHourMarkerLayoutTextBottomMargin(args.layout);
   if (!(vw > 0)) {
     const vm0 = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx: 1, sizeMultiplier: sm });
+    const ink = text24hGlyphInkForLayoutDiskNumerals(args.fontRegistry, args.layout, 1);
     const vmLay = computeTextModeLayoutDiskBandVerticalMetrics({
       fontSizePx: 1,
       sizeMultiplier: sm,
       rowTopInsetPx: userTop,
       rowBottomInsetPx: userBottom,
+      glyphInkMetrics: ink,
     });
     return {
       ...buildTextLedCircleStackFromDiskBandH(vmLay.diskBandH, vmLay),
       markerRadiusDiskBandHPx: vm0.diskBandH,
+      text24hLayoutGlyphInkMetrics: ink,
     };
   }
   const sw = vw / 24;
@@ -1326,15 +1355,18 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
     const vmIntrinsic = computeTextModeIntrinsicDiskBandVerticalMetrics({ fontSizePx, sizeMultiplier: sm });
     const stackIntrinsic = buildTextLedCircleStackFromDiskBandH(vmIntrinsic.diskBandH, vmIntrinsic);
     if (lastIntrinsic !== undefined && stackIntrinsic.diskBandH === lastIntrinsic.diskBandH) {
+      const ink = text24hGlyphInkForLayoutDiskNumerals(args.fontRegistry, args.layout, fontSizePx);
       const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
         fontSizePx,
         sizeMultiplier: sm,
         rowTopInsetPx: userTop,
         rowBottomInsetPx: userBottom,
+        glyphInkMetrics: ink,
       });
       return {
         ...buildTextLedCircleStackFromDiskBandH(vmLayout.diskBandH, vmLayout),
         markerRadiusDiskBandHPx: vmIntrinsic.diskBandH,
+        text24hLayoutGlyphInkMetrics: ink,
       };
     }
     lastIntrinsic = vmIntrinsic;
@@ -1345,15 +1377,18 @@ export function resolveTextIndicatorCircleStackMetrics(args: {
     fontSizePx: lastFontSize,
     sizeMultiplier: sm,
   });
+  const ink = text24hGlyphInkForLayoutDiskNumerals(args.fontRegistry, args.layout, lastFontSize);
   const vmLayout = computeTextModeLayoutDiskBandVerticalMetrics({
     fontSizePx: lastFontSize,
     sizeMultiplier: sm,
     rowTopInsetPx: userTop,
     rowBottomInsetPx: userBottom,
+    glyphInkMetrics: ink,
   });
   return {
     ...buildTextLedCircleStackFromDiskBandH(vmLayout.diskBandH, vmLayout),
     markerRadiusDiskBandHPx: vmFallbackIntrinsic.diskBandH,
+    text24hLayoutGlyphInkMetrics: ink,
   };
 }
 

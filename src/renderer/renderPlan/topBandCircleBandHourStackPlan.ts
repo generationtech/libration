@@ -23,6 +23,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../../config/appConfig.ts";
+import type { HourDiskTextGlyphInkMetrics } from "../../config/hourDiskTextGlyphInkMetrics.ts";
 import { buildSemanticTopBandHourMarkers } from "../../config/topBandHourMarkersSemanticPlan.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import {
@@ -152,6 +153,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     gapDiskToAnnotationPx: number;
     annotationH: number;
     padBottomPx: number;
+    text24hLayoutGlyphInkMetrics?: HourDiskTextGlyphInkMetrics;
   };
   markers: readonly {
     centerX: number;
@@ -306,6 +308,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
         diskLabelSizePx: labelSize,
         markerContentSizePx,
         layout: effectiveMarkers.layout,
+        text24hLayoutGlyphInkMetrics: circleStack.text24hLayoutGlyphInkMetrics,
       },
     );
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {

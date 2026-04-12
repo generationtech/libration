@@ -202,6 +202,7 @@ export function runTextMode24hInsetSweepInBrowser(options?: {
       sizeMultiplier: snap.sizeMultiplier,
       rowTopInsetPx: c.top,
       rowBottomInsetPx: c.bottom,
+      glyphInkMetrics: snap.circleStack.text24hLayoutGlyphInkMetrics,
     });
 
     const resolvedStyle = resolveTextStyle(fontRegistry, spec.textRole, {

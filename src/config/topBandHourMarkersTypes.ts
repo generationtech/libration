@@ -68,13 +68,14 @@ export interface HourMarkersConfig {
   layout: {
     sizeMultiplier: number;
     /**
-     * Total vertical padding above the 24-hour text core inside the disk row (px), normalized 0–24 — authoritative;
-     * 0 means no row-internal padding above the core. Does not affect solved marker radius or nominal font size.
+     * Total vertical padding above measured numeral ink inside the disk row (px), normalized 0–24 — authoritative;
+     * 0 means no row-internal padding above the ink (layout row height uses Canvas glyph ink, not nominal font size).
+     * Does not affect solved marker radius or nominal font size.
      */
     textTopMarginPx: number;
     /**
-     * Total vertical padding below the 24-hour text core inside the disk row (px), normalized 0–24 — authoritative;
-     * 0 means no row-internal padding below the core. Does not affect solved marker radius or nominal font size.
+     * Total vertical padding below measured numeral ink inside the disk row (px), normalized 0–24 — authoritative;
+     * 0 means no row-internal padding below the ink. Does not affect solved marker radius or nominal font size.
      */
     textBottomMarginPx: number;
   };
