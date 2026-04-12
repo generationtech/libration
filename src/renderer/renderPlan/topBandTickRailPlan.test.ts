@@ -21,7 +21,7 @@ import {
 } from "../displayChrome";
 import { topBandWrapOffsetsForCenteredExtent } from "../topBandWrapOffsets";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
-import { buildTopBandTickRailRenderPlan } from "./topBandTickRailPlan";
+import { buildTopBandTickRailRenderPlan, topBandTickRailVerticalTickBottomY } from "./topBandTickRailPlan";
 
 const RESOLVED_UTC_UTC24 = resolveTopBandTimeFromConfig({
   ...DEFAULT_DISPLAY_TIME_CONFIG,
@@ -100,7 +100,10 @@ describe("buildTopBandTickRailRenderPlan", () => {
     expect(base.y1).toBe(alignCrispLineY(200));
     expect(base.y2).toBe(alignCrispLineY(200));
     expect(base.strokeWidthPx).toBe(0.78);
-    expect(minor.y2).toBe(200);
+    const tickBottom = topBandTickRailVerticalTickBottomY(200);
+    expect(minor.y2).toBe(tickBottom);
+    expect(quarter.y2).toBe(tickBottom);
+    expect(major.y2).toBe(tickBottom);
     expect(minor.y1).toBe(180);
     expect(quarter.y1).toBe(120);
     expect(major.y1).toBe(40);
@@ -182,6 +185,11 @@ describe("buildTopBandTickRailRenderPlan", () => {
       expect(line.x1).toBe(xi);
       expect(line.x2).toBe(xi);
     }
+  });
+
+  it("resolves vertical tick bottom Y with topBandTickRailVerticalTickBottomY (same as horizontal baseline center)", () => {
+    const tickBaselineY = 88.37;
+    expect(topBandTickRailVerticalTickBottomY(tickBaselineY)).toBe(alignCrispLineY(tickBaselineY));
   });
 });
 

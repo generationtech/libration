@@ -65,7 +65,10 @@ import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
 import { buildTopBandPresentTimeTickRenderPlan } from "./renderPlan/topBandPresentTimeTickPlan";
-import { buildTopBandTickRailRenderPlan } from "./renderPlan/topBandTickRailPlan";
+import {
+  buildTopBandTickRailRenderPlan,
+  topBandTickRailVerticalTickBottomY,
+} from "./renderPlan/topBandTickRailPlan";
 import { buildTimezoneLetterRowRenderPlan } from "./renderPlan/timezoneLetterRowPlan";
 import { buildTopBandCircleBandHourStackRenderPlan } from "./renderPlan/topBandCircleBandHourStackPlan";
 import { buildTopBandTapeHourNumberOverlayRenderPlan } from "./renderPlan/topBandTapeHourNumberOverlayPlan.ts";
@@ -1620,6 +1623,9 @@ export function buildDisplayChromeState(options: {
 /**
  * Tick-rail baseline Y and major-tick top Y (same geometry as {@link renderDisplayChrome} hour boundaries).
  * Used with {@link UtcTopScaleLayout.nowX} for the present-time “now” tick segment.
+ *
+ * Vertical tick marks resolve their bottom Y via {@link topBandTickRailVerticalTickBottomY} so hour ticks and the
+ * present-time stroke share the same endpoint as the horizontal baseline stroke.
  */
 export function topBandTickRailMajorTickVerticalSpan(
   yCircleBottom: number,
@@ -1696,6 +1702,7 @@ export function renderDisplayChrome(
   const yTickBottom = yCircleBottom + tickH;
   const bandBottom = y0 + tb.height;
   const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, tickH);
+  const tickRailVerticalBottomY = topBandTickRailVerticalTickBottomY(tickBaselineY);
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
   const st = getTopChromeStyle(chrome.displayChromeLayout.topChromePalette);
@@ -1809,7 +1816,7 @@ export function renderDisplayChrome(
     ctx,
     buildTopBandPresentTimeTickRenderPlan({
       ...presentTimeTickStroke,
-      verticalSpans: [{ yTop: majorTickTopY, yBottom: tickBaselineY }],
+      verticalSpans: [{ yTop: majorTickTopY, yBottom: tickRailVerticalBottomY }],
     }),
   );
 

@@ -20,6 +20,15 @@ import { alignCrispLineX, alignCrispLineY } from "../crispLines";
 import { topBandWrapOffsetsForCenteredExtent } from "../topBandWrapOffsets";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 
+/**
+ * Bottom Y for tick-rail vertical marks: matches the horizontal baseline segment, which uses
+ * {@link alignCrispLineY} on {@link tickBaselineY}. Hour/quarter/minor ticks and the present-time stroke must use this
+ * so their vertical extent matches the resolved baseline (same as hour-boundary tick height).
+ */
+export function topBandTickRailVerticalTickBottomY(tickBaselineY: number): number {
+  return alignCrispLineY(tickBaselineY);
+}
+
 function pushWrappedVerticalTicks(
   items: RenderLineItem[],
   xs: readonly number[],
@@ -88,7 +97,7 @@ export function buildTopBandTickRailRenderPlan(options: {
 
   const tickStroke = options.tickStroke;
   const tickW = options.tickStrokeWidthPx;
-  const yBot = options.tickBaselineY;
+  const yBot = topBandTickRailVerticalTickBottomY(options.tickBaselineY);
 
   pushWrappedVerticalTicks(
     items,

@@ -12,6 +12,9 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { alignCrispLineX } from "./crispLines";
+import { buildTopBandPresentTimeTickRenderPlan } from "./renderPlan/topBandPresentTimeTickPlan";
+import { buildTopBandTickRailRenderPlan, topBandTickRailVerticalTickBottomY } from "./renderPlan/topBandTickRailPlan";
 import { createTimeContext } from "../core/time";
 import {
   cloneHourMarkersConfig,
@@ -122,6 +125,57 @@ describe("present-time tick (tick rail, structural column center)", () => {
     const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, rows.tickBandH);
     expect(majorTickTopY).toBeCloseTo(tickBaselineY - rows.tickBandH * 0.92, 7);
     expect(tickBaselineY - majorTickTopY).toBeCloseTo(rows.tickBandH * 0.92, 7);
+  });
+
+  it("present-time tick rail lines match major hour tick y1/y2 (shared crisp bottom Y)", () => {
+    const rows = computeUtcTopScaleRowMetrics(88);
+    const yCircleBottom = 120;
+    const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, rows.tickBandH);
+    const bottomY = topBandTickRailVerticalTickBottomY(tickBaselineY);
+    const w = 800;
+    const railPlan = buildTopBandTickRailRenderPlan({
+      viewportWidthPx: w,
+      baselineX0: 0,
+      baselineX1: w,
+      tickBaselineY,
+      minorTickTopY: tickBaselineY - rows.tickBandH * 0.28,
+      quarterMajorTickTopY: tickBaselineY - rows.tickBandH * 0.67,
+      majorTickTopY,
+      quarterMinorTickXs: [],
+      quarterMajorTickXs: [],
+      majorBoundaryXs: [100],
+      baselineStroke: "#b",
+      baselineStrokeWidthPx: 1,
+      tickStroke: "#t",
+      tickStrokeWidthPx: 1,
+    });
+    const majorLine = railPlan.items.find(
+      (i): i is Extract<(typeof railPlan.items)[number], { kind: "line" }> =>
+        i.kind === "line" && i.x1 === alignCrispLineX(100) && i.stroke === "#t",
+    );
+    expect(majorLine).toBeDefined();
+    expect(majorLine!.y1).toBe(majorTickTopY);
+    expect(majorLine!.y2).toBe(bottomY);
+
+    const presentPlan = buildTopBandPresentTimeTickRenderPlan({
+      nowX: 100,
+      viewportWidthPx: w,
+      wrapHalfExtentPx: 4,
+      verticalSpans: [{ yTop: majorTickTopY, yBottom: bottomY }],
+      coreLineWidthPx: 2,
+      haloLineWidthPx: 5,
+      coreStroke: "#c",
+      haloStroke: "#h",
+    });
+    const [halo, core] = presentPlan.items;
+    expect(halo?.kind).toBe("line");
+    if (halo?.kind !== "line" || core?.kind !== "line") {
+      return;
+    }
+    expect(halo.y1).toBe(majorTickTopY);
+    expect(halo.y2).toBe(bottomY);
+    expect(core.y1).toBe(majorTickTopY);
+    expect(core.y2).toBe(bottomY);
   });
 
   it("uses tick-rail style tokens for present-time line width (tape tick width × multiplier)", () => {
