@@ -24,6 +24,11 @@ async function bootstrap(): Promise<void> {
     }
   });
 
+  if (import.meta.env.DEV) {
+    const { attachTextMode24hInsetSweepToWindow } = await import("./dev/textMode24hInsetSweep.ts");
+    attachTextMode24hInsetSweepToWindow(window);
+  }
+
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <App />
