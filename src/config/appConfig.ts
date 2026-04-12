@@ -259,6 +259,11 @@ export interface DisplayChromeLayoutConfig {
   bottomInformationBarVisible: boolean;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
+  /**
+   * When false, the 24-hour tickmarks tape row (baseline, ticks, tape present-time marker, tape-carried numerals) is
+   * omitted and the top band height shrinks accordingly; indicator entries and NATO row follow their own visibility.
+   */
+  tickTapeVisible: boolean;
   /** Top-strip canvas colors (neutral default). */
   topChromePalette: TopChromePaletteId;
   /**
@@ -271,6 +276,7 @@ export interface DisplayChromeLayoutConfig {
 export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
   timezoneLetterRowVisible: true,
+  tickTapeVisible: true,
   topChromePalette: "neutral",
   hourMarkers: cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG),
 };

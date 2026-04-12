@@ -71,6 +71,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         bottomInformationBarVisible: "no",
         timezoneLetterRowVisible: 1,
+        tickTapeVisible: "yes",
       }),
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     expect(
@@ -97,6 +98,8 @@ describe("librationConfig v2 (Phase 1)", () => {
         topChromePalette: "paper",
       }).topChromePalette,
     ).toBe("paper");
+    expect(normalizeDisplayChromeLayout({ tickTapeVisible: false }).tickTapeVisible).toBe(false);
+    expect(normalizeDisplayChromeLayout({}).tickTapeVisible).toBe(true);
   });
 
   it("normalizeDisplayChromeLayout ignores unknown obsolete flat hour-marker property names", () => {

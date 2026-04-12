@@ -75,6 +75,7 @@ import {
   topBandAnnotationWrapHalfExtentPx,
   topBandDiskWrapHalfExtentPx,
   topBandUpperNumeralWrapHalfExtentPx,
+  collapseTopBandTickTapeRows,
   type ResolvedTopBandTime,
 } from "./displayChrome";
 
@@ -1315,6 +1316,36 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.utcTopScale.rows?.timezoneBandH).toBe(0);
     expect(chrome.utcTopScale.rows?.circleBandH).toBeGreaterThan(0);
     expect(chrome.utcTopScale.rows?.tickBandH).toBeGreaterThan(0);
+  });
+
+  it("collapses the tick tape row when tickTapeVisible is false and shrinks the top band", () => {
+    const time = createTimeContext(1_704_067_200_000, 0, false);
+    const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+    const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+    const base = buildDisplayChromeState({ time, viewport, frame });
+    const hidden = buildDisplayChromeState({
+      time,
+      viewport,
+      frame,
+      displayChromeLayout: {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        tickTapeVisible: false,
+      },
+    });
+    expect(hidden.utcTopScale.rows?.tickBandH).toBe(0);
+    expect(hidden.utcTopScale.rows?.timezoneBandH).toBe(base.utcTopScale.rows?.timezoneBandH);
+    expect(hidden.utcTopScale.rows?.circleBandH).toBe(base.utcTopScale.rows?.circleBandH);
+    expect(hidden.topBand.height).toBe(base.topBand.height - (base.utcTopScale.rows?.tickBandH ?? 0));
+    expect(hidden.displayChromeLayout.tickTapeVisible).toBe(false);
+  });
+
+  it("collapseTopBandTickTapeRows drops tick height from the total while preserving circle and NATO bands", () => {
+    const rows = computeUtcTopScaleRowMetrics(72, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    const collapsed = collapseTopBandTickTapeRows(rows);
+    expect(collapsed.tickBandH).toBe(0);
+    expect(collapsed.circleBandH).toBe(rows.circleBandH);
+    expect(collapsed.timezoneBandH).toBe(rows.timezoneBandH);
+    expect(collapsed.topBandHeightPx).toBe(rows.circleBandH + rows.timezoneBandH);
   });
 });
 

@@ -1305,6 +1305,19 @@ export function collapseTopBandHourIndicatorAreaRows(rows: UtcTopScaleRowMetrics
   };
 }
 
+/**
+ * When the 24-hour tickmarks tape is hidden, drop the tick rail row while keeping circle + NATO row heights so the strip
+ * reflows upward without a gap.
+ */
+export function collapseTopBandTickTapeRows(rows: UtcTopScaleRowMetrics): UtcTopScaleRowMetrics {
+  return {
+    topBandHeightPx: rows.circleBandH + rows.timezoneBandH,
+    circleBandH: rows.circleBandH,
+    tickBandH: 0,
+    timezoneBandH: rows.timezoneBandH,
+  };
+}
+
 function buildTopBandLayoutFromRows(widthPx: number, rows: UtcTopScaleRowMetrics): TopBandLayout {
   const h = rows.topBandHeightPx;
   const c = rows.circleBandH;
@@ -1544,10 +1557,14 @@ export function buildDisplayChromeState(options: {
   const stForRows = getTopChromeStyle(layout.topChromePalette);
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const hourIndicatorAreaVisible = layout.hourMarkers.visible !== false;
+  const tickTapeVisible = layout.tickTapeVisible !== false;
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
-  const rowsForExpansion = hourIndicatorAreaVisible
+  let rowsForExpansion = hourIndicatorAreaVisible
     ? baseRows
     : collapseTopBandHourIndicatorAreaRows(baseRows);
+  if (!tickTapeVisible) {
+    rowsForExpansion = collapseTopBandTickTapeRows(rowsForExpansion);
+  }
 
   let rowMetrics: UtcTopScaleRowMetrics;
   let textModeCircleStackOverride: TopBandCircleStackMetrics | undefined;
@@ -1790,35 +1807,37 @@ export function renderDisplayChrome(
   const minorTickTopY = tickBaselineY - tickH * 0.28;
   const quarterTickTopY = tickBaselineY - tickH * 0.67;
 
-  executeRenderPlanOnCanvas(
-    ctx,
-    buildTopBandTickRailRenderPlan({
-      viewportWidthPx: vw,
-      baselineX0: 0,
-      baselineX1: viewport.width,
-      tickBaselineY,
-      minorTickTopY,
-      quarterMajorTickTopY: quarterTickTopY,
-      majorTickTopY,
-      quarterMinorTickXs: scale.quarterMinorTickXs,
-      quarterMajorTickXs: scale.quarterMajorTickXs,
-      majorBoundaryXs: scale.majorBoundaryXs,
-      baselineStroke: st.ticks.baseline,
-      baselineStrokeWidthPx: st.ticks.baselineLineWidth,
-      tickStroke: st.ticks.stroke,
-      tickStrokeWidthPx: st.ticks.lineWidth,
-    }),
-  );
+  if (tickH > 0) {
+    executeRenderPlanOnCanvas(
+      ctx,
+      buildTopBandTickRailRenderPlan({
+        viewportWidthPx: vw,
+        baselineX0: 0,
+        baselineX1: viewport.width,
+        tickBaselineY,
+        minorTickTopY,
+        quarterMajorTickTopY: quarterTickTopY,
+        majorTickTopY,
+        quarterMinorTickXs: scale.quarterMinorTickXs,
+        quarterMajorTickXs: scale.quarterMajorTickXs,
+        majorBoundaryXs: scale.majorBoundaryXs,
+        baselineStroke: st.ticks.baseline,
+        baselineStrokeWidthPx: st.ticks.baselineLineWidth,
+        tickStroke: st.ticks.stroke,
+        tickStrokeWidthPx: st.ticks.lineWidth,
+      }),
+    );
 
-  // Present-time “now” tick: structural column center for the resolved anchor meridian (presentTimeIndicatorXFromReferenceLongitudeDeg), tick rail only;
-  // Halo + core; seam tiling uses {@link refMeridianWrapHalf} so thick strokes stay continuous at x≈0 / x≈width.
-  executeRenderPlanOnCanvas(
-    ctx,
-    buildTopBandPresentTimeTickRenderPlan({
-      ...presentTimeTickStroke,
-      verticalSpans: [{ yTop: majorTickTopY, yBottom: tickRailVerticalBottomY }],
-    }),
-  );
+    // Present-time “now” tick: structural column center for the resolved anchor meridian (presentTimeIndicatorXFromReferenceLongitudeDeg), tick rail only;
+    // Halo + core; seam tiling uses {@link refMeridianWrapHalf} so thick strokes stay continuous at x≈0 / x≈width.
+    executeRenderPlanOnCanvas(
+      ctx,
+      buildTopBandPresentTimeTickRenderPlan({
+        ...presentTimeTickStroke,
+        verticalSpans: [{ yTop: majorTickTopY, yBottom: tickRailVerticalBottomY }],
+      }),
+    );
+  }
 
   executeRenderPlanOnCanvas(
     ctx,
@@ -1827,7 +1846,7 @@ export function renderDisplayChrome(
       topBandOriginXPx: tb.x,
       circleBandBottomYPx: yCircleBottom,
       tickZoneBoundaryYPx: yTickBottom,
-      drawTickToZoneSeam: zoneH > 0,
+      drawTickToZoneSeam: zoneH > 0 && tickH > 0,
       circleToTickStroke: st.bandSeams.circleToTick,
       tickToZoneStroke: st.bandSeams.tickToZone,
       seamLineWidthPx: 1,
@@ -1854,7 +1873,7 @@ export function renderDisplayChrome(
           })
         : [];
 
-  if (chrome.effectiveTopBandHourMarkers.tapeHourNumberOverlay?.enabled === true) {
+  if (tickH > 0 && chrome.effectiveTopBandHourMarkers.tapeHourNumberOverlay?.enabled === true) {
     executeRenderPlanOnCanvas(
       ctx,
       buildTopBandTapeHourNumberOverlayRenderPlan({

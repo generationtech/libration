@@ -111,6 +111,24 @@ describe("hour marker indicator area visibility", () => {
     expect(collapsed.topBandHeightPx).toBe(rows.tickBandH + rows.timezoneBandH);
   });
 
+  it("buildDisplayChromeState omits tick tape geometry when tickTapeVisible is false", () => {
+    const now = Date.UTC(2024, 5, 1, 12, 0, 0);
+    const hidden = buildDisplayChromeState({
+      time: createTimeContext(now, 0, false),
+      viewport: { width: 960, height: 700, devicePixelRatio: 1 },
+      frame: { frameNumber: 1, now, deltaMs: 0 },
+      displayTime: DEFAULT_DISPLAY_TIME_CONFIG,
+      displayChromeLayout: {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        tickTapeVisible: false,
+      },
+    });
+    expect(hidden.utcTopScale.rows?.tickBandH).toBe(0);
+    expect(hidden.topBand.height).toBe(
+      (hidden.utcTopScale.rows?.circleBandH ?? 0) + (hidden.utcTopScale.rows?.timezoneBandH ?? 0),
+    );
+  });
+
   it("buildDisplayChromeState omits circle band when hourMarkers.visible is false", () => {
     const now = Date.UTC(2024, 5, 1, 12, 0, 0);
     const hidden = buildDisplayChromeState({
