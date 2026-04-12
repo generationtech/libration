@@ -87,15 +87,22 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         bottomInformationBarVisible: true,
         timezoneLetterRowVisible: true,
-        topChromeTheme: "neon",
+        topChromePalette: "neon",
       }),
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     expect(
       normalizeDisplayChromeLayout({
         bottomInformationBarVisible: true,
         timezoneLetterRowVisible: true,
+        topChromePalette: "paper",
+      }).topChromePalette,
+    ).toBe("paper");
+    expect(
+      normalizeDisplayChromeLayout({
+        bottomInformationBarVisible: true,
+        timezoneLetterRowVisible: true,
         topChromeTheme: "paper",
-      }).topChromeTheme,
+      }).topChromePalette,
     ).toBe("paper");
   });
 

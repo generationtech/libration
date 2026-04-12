@@ -19,9 +19,7 @@
  * {@link computeUtcCircleMarkerRadius}; this module is color, weight, and layout tokens for the circle stack.
  */
 
-import type { TopChromeThemeId } from "../config/appConfig";
-
-export type { TopChromeThemeId };
+import type { TopChromePaletteId } from "./appConfig";
 
 /** rgba(...) strings — stable for canvas and future GPU uniform packing. */
 export interface TopChromeRgbaTokens {
@@ -179,7 +177,7 @@ export interface TopChromeMarkerAnnotationTokens {
 }
 
 export interface TopChromeZoneTextTokens {
-  /** NATO zone letter — matches {@link TopChromeHourPaddleTokens.headFill} (bright solid, per theme). */
+  /** NATO zone letter — matches {@link TopChromeHourPaddleTokens.headFill} (bright solid, per palette). */
   letter: string;
   /** Small geography caption under the active column’s letter (reference label). */
   geographyCaption: string;
@@ -561,11 +559,11 @@ const TOP_CHROME_STYLE_PAPER = {
   },
 } satisfies TopChromeStyle;
 
-/** Default export used by renderers today — identical to {@link getTopChromeStyle} with theme `"neutral"`. */
+/** Default export used by renderers today — identical to {@link getTopChromeStyle} with palette `"neutral"`. */
 export const TOP_CHROME_STYLE = TOP_CHROME_STYLE_NEUTRAL;
 
-export function getTopChromeStyle(theme: TopChromeThemeId): TopChromeStyle {
-  switch (theme) {
+export function getTopChromeStyle(palette: TopChromePaletteId): TopChromeStyle {
+  switch (palette) {
     case "neutral":
       return TOP_CHROME_STYLE_NEUTRAL;
     case "dark":
@@ -573,7 +571,7 @@ export function getTopChromeStyle(theme: TopChromeThemeId): TopChromeStyle {
     case "paper":
       return TOP_CHROME_STYLE_PAPER;
     default: {
-      const _exhaustive: never = theme;
+      const _exhaustive: never = palette;
       return _exhaustive;
     }
   }

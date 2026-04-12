@@ -55,7 +55,7 @@ describe("topBandVisualPolicy", () => {
     expect(cap.textBaseline).toBe("top");
   });
 
-  it("theme-aware chrome style keeps letter/caption fills distinct", () => {
+  it("palette-specific chrome style keeps letter/caption fills distinct", () => {
     const dark = getTopChromeStyle("dark");
     expect(resolveTimezoneStripLetterPolicy(dark).fill).toBe(dark.zoneText.letter);
     expect(resolveTimezoneStripCaptionPolicy(dark).fill).toBe(dark.zoneText.geographyCaption);

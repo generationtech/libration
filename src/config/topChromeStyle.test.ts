@@ -12,7 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { getTopChromeStyle, TOP_CHROME_STYLE, type TopChromeThemeId } from "./topChromeStyle";
+import type { TopChromePaletteId } from "./appConfig";
+import { getTopChromeStyle, TOP_CHROME_STYLE } from "./topChromeStyle";
 
 describe("getTopChromeStyle", () => {
   it('returns the same object as TOP_CHROME_STYLE for "neutral"', () => {
@@ -23,9 +24,9 @@ describe("getTopChromeStyle", () => {
     expect(TOP_CHROME_STYLE.zoneText.geographyCaption).toBe("rgba(255, 255, 255, 0.82)");
   });
 
-  it("returns a full style for each theme id", () => {
-    const themes: TopChromeThemeId[] = ["neutral", "dark", "paper"];
-    for (const t of themes) {
+  it("returns a full style for each palette id", () => {
+    const palettes: TopChromePaletteId[] = ["neutral", "dark", "paper"];
+    for (const t of palettes) {
       const st = getTopChromeStyle(t);
       expect(st.zoneText.letter.length).toBeGreaterThan(5);
       expect(st.zoneText.geographyCaption.length).toBeGreaterThan(5);

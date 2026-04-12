@@ -86,7 +86,7 @@ Current top-band design:
 - Hour markers
 - Tickmark tape (hour / 15 / 5 hierarchy)
 - NATO timezone strip (rectangular, continuous band)
-- Theme-driven chrome colors (neutral / dark / paper)
+- Config-selected top chrome palette (neutral / dark / paper)
 - Fully RenderPlan-driven
 
 Recent chrome simplification:

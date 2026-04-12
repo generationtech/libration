@@ -22,7 +22,7 @@ There is no remaining flat compatibility layer for hour markers in normalization
 
 ## Current Direction
 
-The chrome config has evolved beyond theme-only control.
+The chrome config has evolved beyond single-axis appearance control.
 
 For hour markers, persistence, normalization, editor authoring, and runtime resolution are now aligned on one structured model.
 

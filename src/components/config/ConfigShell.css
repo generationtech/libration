@@ -1,4 +1,4 @@
-/* Configuration shell — layout tokens shared with future theme work */
+/* Configuration shell — layout tokens for the config panel chrome */
 .config-shell {
   --config-panel-width: min(22rem, 40vw);
   --config-shell-border: 1px solid var(--config-shell-border-color, rgba(128, 128, 128, 0.35));

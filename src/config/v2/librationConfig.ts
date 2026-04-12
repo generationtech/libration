@@ -30,7 +30,7 @@ import type {
   PinLabelMode,
   PinPresentationConfig,
   PinScale,
-  TopChromeThemeId,
+  TopChromePaletteId,
 } from "../appConfig";
 import {
   cloneHourMarkersConfig,
@@ -153,18 +153,24 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof input.timezoneLetterRowVisible === "boolean"
       ? input.timezoneLetterRowVisible
       : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.timezoneLetterRowVisible;
-  const th = input.topChromeTheme;
-  const topChromeTheme: TopChromeThemeId =
-    th === "neutral" || th === "dark" || th === "paper"
-      ? th
-      : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.topChromeTheme;
+  const newKey = input.topChromePalette;
+  /** Legacy JSON key (pre-`topChromePalette`); still accepted when loading older saved config. */
+  const legacyKey = (input as Record<string, unknown>).topChromeTheme;
+  const fromNew =
+    newKey === "neutral" || newKey === "dark" || newKey === "paper" ? newKey : undefined;
+  const fromLegacy =
+    legacyKey === "neutral" || legacyKey === "dark" || legacyKey === "paper"
+      ? legacyKey
+      : undefined;
+  const topChromePalette: TopChromePaletteId =
+    fromNew ?? fromLegacy ?? DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.topChromePalette;
 
   const hourMarkers = normalizeHourMarkersInput(input.hourMarkers);
 
   return {
     bottomInformationBarVisible: bottom,
     timezoneLetterRowVisible: tz,
-    topChromeTheme,
+    topChromePalette,
     hourMarkers,
   };
 }
@@ -329,7 +335,7 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
   return {
     bottomInformationBarVisible: l.bottomInformationBarVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
-    topChromeTheme: l.topChromeTheme,
+    topChromePalette: l.topChromePalette,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
   };
 }
@@ -447,7 +453,7 @@ export function assertIsNormalizedLibrationConfig(
     lay === null ||
     typeof lay.bottomInformationBarVisible !== "boolean" ||
     typeof lay.timezoneLetterRowVisible !== "boolean" ||
-    (lay.topChromeTheme !== "neutral" && lay.topChromeTheme !== "dark" && lay.topChromeTheme !== "paper")
+    (lay.topChromePalette !== "neutral" && lay.topChromePalette !== "dark" && lay.topChromePalette !== "paper")
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout");
   }

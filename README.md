@@ -39,7 +39,7 @@ Top band consists of:
 - Tickmark tape (hour / 15 / 5)
 - NATO timezone strip (continuous rectangular band)
 
-Themes:
+Top chrome palette (instrument strip colors):
 - neutral
 - dark
 - paper

@@ -11,12 +11,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { TopChromeThemeId } from "../../config/appConfig";
+import type { TopChromePaletteId } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
 
-const TOP_CHROME_THEMES: readonly TopChromeThemeId[] = ["neutral", "dark", "paper"];
+const TOP_CHROME_PALETTES: readonly TopChromePaletteId[] = ["neutral", "dark", "paper"];
 
 export type TickTapeEditorProps = {
   config: LibrationConfigV2;
@@ -34,24 +34,24 @@ export function TickTapeEditor({ config, updateConfig }: TickTapeEditorProps) {
       <p className="config-section__hint">
         Boxed numerals on the tape are toggled from the indicator editor when using glyph hour markers.
       </p>
-      <ConfigControlRow label="Top chrome theme">
+      <ConfigControlRow label="Top chrome palette">
         <select
           className="config-input"
-          value={lay.topChromeTheme}
+          value={lay.topChromePalette}
           disabled={!wired}
-          aria-label="Top instrument strip color theme"
+          aria-label="Top instrument strip color palette"
           onChange={
             wired && updateConfig
               ? (e) => {
-                  const theme = e.currentTarget.value as TopChromeThemeId;
+                  const palette = e.currentTarget.value as TopChromePaletteId;
                   updateConfig((draft) => {
-                    draft.chrome.layout.topChromeTheme = theme;
+                    draft.chrome.layout.topChromePalette = palette;
                   });
                 }
               : undefined
           }
         >
-          {TOP_CHROME_THEMES.map((t) => (
+          {TOP_CHROME_PALETTES.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>

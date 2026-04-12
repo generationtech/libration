@@ -4,9 +4,9 @@
 
 Capture the current design direction for a future preset system in Libration so it can be revisited later without losing the architectural intent behind the idea.
 
-This document describes a preset system that is broader and more powerful than traditional “themes”.
+This document describes a preset system that is broader and more powerful than a single-purpose appearance bundle.
 
-Instead of treating themes, styles, and saved configurations as separate concepts, the system is intended to support **named, composable, partial configuration presets** that can be applied to the running configuration in explicit sequence.
+Instead of treating narrow appearance packages, ad hoc style toggles, and saved configurations as separate concepts, the system is intended to support **named, composable, partial configuration presets** that can be applied to the running configuration in explicit sequence.
 
 This note is intentionally forward-looking. It is not a commitment to immediate implementation.
 
@@ -29,7 +29,7 @@ The motivating idea is:
 - some presets should affect many settings
 - some presets should affect only a narrow slice of the config
 - presets should be combinable
-- traditional “themes” should become just one specialized use of the broader preset system
+- narrow appearance-only bundles should become just one specialized use of the broader preset system
 
 ---
 
@@ -63,9 +63,9 @@ The important part is not the exact final type name. The important part is the m
 
 ---
 
-## Presets Are Not Just Themes
+## Presets Are Not Just Appearance Bundles
 
-Traditional “themes” usually mean a narrow appearance package.
+A fixed “look package” usually means a narrow, precomposed appearance slice.
 
 This design is intentionally more general.
 
@@ -77,11 +77,11 @@ Under this model:
 - a mixed preset combining multiple areas can be a preset
 - a future scene/layer/data-mode package can be a preset
 
-So a “theme” becomes only one kind of preset:
+So a narrow appearance-only preset is only one kind of preset:
 
-- a preset with a narrow appearance-oriented scope
+- a preset with a small, appearance-oriented scope
 
-This removes the need for a separate conceptual system for themes if presets are expressive enough.
+This removes the need for a parallel, special-case appearance subsystem if presets are expressive enough.
 
 ---
 
@@ -168,8 +168,8 @@ This is the conflict-resolution rule.
 
 Example:
 
-- Preset A sets `chrome.layout.topChromeTheme = "paper"`
-- Preset B sets `chrome.layout.topChromeTheme = "dark"`
+- Preset A sets `chrome.layout.topChromePalette = "paper"`
+- Preset B sets `chrome.layout.topChromePalette = "dark"`
 
 If B is applied after A, the effective result is `"dark"`.
 
@@ -450,7 +450,7 @@ Examples:
 - pin visibility package
 - scene annotation package
 
-This is why presets should be more general than “themes”.
+This is why presets should be more general than a single-purpose appearance bundle.
 
 ---
 
@@ -462,7 +462,7 @@ Preset 1:
 - hour indicators use analog clocks
 
 Preset 2:
-- top chrome theme uses paper colors
+- top chrome palette uses paper colors
 
 Preset 3:
 - NATO row hidden
@@ -472,10 +472,10 @@ Applied in that order, all three contribute to the final state.
 ### Example B — conflict example
 
 Preset 1:
-- top chrome theme = neutral
+- top chrome palette = neutral
 
 Preset 2:
-- top chrome theme = dark
+- top chrome palette = dark
 
 Result:
 - dark wins if Preset 2 is later in the ordered stack
@@ -497,7 +497,7 @@ If multiple presets can be combined, the system must not pretend order is irrele
 ### 3. Arbitrary flat leaf-bag storage
 That would drift away from the current strong config architecture.
 
-### 4. Theme-only thinking
+### 4. Appearance-only thinking
 That would underuse the strength of the preset concept.
 
 ### 5. Premature over-engineering
@@ -624,7 +624,7 @@ The intended future direction is:
 - define combination by **explicit order**
 - resolve overlap with **last write wins**
 - run the result through the existing normalization pipeline
-- treat traditional appearance themes as only one subset of the broader preset concept
+- treat narrow appearance bundles as only one subset of the broader preset concept
 - keep preset storage aligned to meaningful structured config ownership
 - let future UI expose preset authoring through domain-aware grouping rather than arbitrary flat field selection
 
@@ -632,7 +632,7 @@ This direction is promising because it builds on Libration’s strongest existin
 
 - a structured, normalizable, architecture-aware configuration system
 
-Rather than adding a separate theming mechanism, it expands the configuration system into a more powerful, reusable composition model.
+Rather than adding a parallel customization mechanism, it expands the configuration system into a more powerful, reusable composition model.
 
 ---
 

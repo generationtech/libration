@@ -1293,7 +1293,7 @@ export function buildDisplayChromeState(options: {
   displayTime?: DisplayTimeConfig;
   /** Product geography reference; affects auto-mode top-band meridian when {@code referenceMode === "fixedCoordinate"}. */
   geography?: GeographyConfig;
-  /** Merged with {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG} (theme and visibility fields optional). */
+  /** Merged with {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG} (palette and visibility fields optional). */
   displayChromeLayout?: Partial<DisplayChromeLayoutConfig>;
 }): DisplayChromeState {
   const { time, viewport, frame } = options;
@@ -1309,7 +1309,7 @@ export function buildDisplayChromeState(options: {
     layout.bottomInformationBarVisible === false
       ? 0
       : computeBottomChromeOverlayBottomMarginPx(h);
-  const stForRows = getTopChromeStyle(layout.topChromeTheme);
+  const stForRows = getTopChromeStyle(layout.topChromePalette);
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const circleExpansionPx = computeHourMarkerCircleBandExpansionPx({
@@ -1438,7 +1438,7 @@ export function renderDisplayChrome(
   const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, tickH);
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
-  const st = getTopChromeStyle(chrome.displayChromeLayout.topChromeTheme);
+  const st = getTopChromeStyle(chrome.displayChromeLayout.topChromePalette);
   const tzTab = st.timezoneTab;
   const zonePadY = Math.max(
     0,
