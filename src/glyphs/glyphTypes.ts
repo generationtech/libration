@@ -11,7 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { RenderTextShadowStyle } from "../renderer/renderPlan/renderPlanTypes.ts";
+import type {
+  RenderTextShadowStyle,
+  TextMode24hIndicatorRenderDiagnosticsPayload,
+} from "../renderer/renderPlan/renderPlanTypes.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
 import type { HourMarkerGlyphStyleId } from "../config/types/hourMarkerGlyphStyleIds.ts";
 
@@ -42,6 +45,10 @@ export type TextGlyph = {
    */
   omitStyleTextInset?: boolean;
   shadow?: RenderTextShadowStyle;
+  /**
+   * Copied to {@link RenderTextItem.textMode24hVerticalDiagnostics} for dev-only vertical geometry logging.
+   */
+  verticalDiagnostics24h?: TextMode24hIndicatorRenderDiagnosticsPayload;
 };
 
 export type ClockFaceGlyph = {

@@ -18,12 +18,13 @@ import {
   buildDisplayChromeState,
   effectiveDiskBandHForMarkerRadiusPx,
   sumTopBandCircleStackMetricsPx,
+  computeUtcCircleMarkerRadius,
 } from "./displayChrome.ts";
-import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
-import { computeUtcCircleMarkerRadius } from "./displayChrome.ts";
 import {
+  buildTextMode24hIndicatorConsolidatedVerticalDiagnostics,
   compareTextMode24hIndicatorVerticalTickTape,
   computeTextMode24hIndicatorVerticalSnapshot,
+  glyphVerticalBoundsFromCanvasMeasureText,
 } from "./textMode24hIndicatorVerticalDiagnostics.ts";
 
 const VIEWPORT = { width: 1200, height: 800, devicePixelRatio: 1 } as const;
@@ -175,6 +176,47 @@ describe("textMode24hIndicatorVerticalDiagnostics tickTapeVisible vs chrome", ()
 });
 
 describe("textMode24hIndicatorVerticalDiagnostics", () => {
+  it("glyphVerticalBoundsFromCanvasMeasureText uses TextMetrics ascent/descent from fillText Y", () => {
+    const m = {
+      actualBoundingBoxAscent: 8,
+      actualBoundingBoxDescent: 4,
+    } as TextMetrics;
+    const g = glyphVerticalBoundsFromCanvasMeasureText(100, m);
+    expect(g.glyphTopYPx).toBe(92);
+    expect(g.glyphBottomYPx).toBe(104);
+    expect(g.glyphHeightPx).toBe(12);
+  });
+
+  it("buildTextMode24hIndicatorConsolidatedVerticalDiagnostics derives visible gaps vs disk row", () => {
+    const pre = {
+      structuralHour0To23: 12,
+      diskRowTopYPx: 10,
+      diskRowBottomYPx: 26,
+      diskRowHeightPx: 16,
+      layoutSizePx: 14,
+      textCoreHeightPx: 14,
+      textCenterYPx: 18,
+      baselineShiftPx: 0,
+      fillTextAnchorYPx: 18,
+      topInsetPx: 0,
+      bottomInsetPx: 0,
+    };
+    const m = {
+      actualBoundingBoxAscent: 7,
+      actualBoundingBoxDescent: 7,
+    } as TextMetrics;
+    const c = buildTextMode24hIndicatorConsolidatedVerticalDiagnostics({
+      pre,
+      fontSizePx: 14,
+      textBaseline: "middle",
+      fillTextAnchorYPx: 18,
+      metrics: m,
+    });
+    expect(c.visibleTopGapPx).toBe(1);
+    expect(c.visibleBottomGapPx).toBe(1);
+    expect(c.glyphHeightPx).toBe(14);
+  });
+
   it("matches buildDisplayChromeState row heights and stack sum vs circle band", () => {
     const sm = 1.45;
     const s = snapshotForSizeMultiplier(sm);
@@ -248,6 +290,10 @@ describe("textMode24hIndicatorVerticalDiagnostics", () => {
     });
     expect(s.userTextTopInsetPx).toBe(0);
     expect(s.userTextBottomInsetPx).toBe(0);
+    expect(s.diskRowTopYPx).toBe(s.yDiskRow0Px);
+    expect(s.diskRowBottomYPx).toBe(s.yDiskRow0Px + s.diskBandHeightPx);
+    expect(s.diskRowHeightPx).toBe(s.diskBandHeightPx);
+    expect(s.emitFillTextAnchorYPx).toBe(s.textAnchorYPx + s.emitTextBaselineShiftPx);
     expect(s.topPadInsideDiskPx).toBe(0);
     expect(s.bottomPadInsideDiskPx).toBe(0);
     expect(s.textAnchorYPx).toBe(s.textAnchorBaselineYPx);

@@ -98,6 +98,28 @@ export interface RenderTextStrokeStyle {
   miterLimit?: number;
 }
 
+/**
+ * Pre-layout + row bounds for dev-only 24h text hour-disk diagnostics ({@link executeRenderPlanOnCanvas}).
+ * Does not affect paint when omitted.
+ */
+export type TextMode24hIndicatorRenderDiagnosticsPayload = {
+  structuralHour0To23: number;
+  diskRowTopYPx: number;
+  diskRowBottomYPx: number;
+  diskRowHeightPx: number;
+  /** {@link GlyphLayoutBox.size} for the disk numeral (px). */
+  layoutSizePx: number;
+  textCoreHeightPx: number;
+  /** Vertical center from layout ({@link GlyphLayoutBox.cy}) before emit baseline shift. */
+  textCenterYPx: number;
+  /** Same as {@link emitTextGlyph}: {@code layout.size * baselineShiftFrac}. */
+  baselineShiftPx: number;
+  /** Y passed to {@code fillText} (after shift); with {@code textBaseline: "middle"} this is the em-box vertical anchor. */
+  fillTextAnchorYPx: number;
+  topInsetPx: number;
+  bottomInsetPx: number;
+};
+
 export interface RenderTextItem {
   kind: "text";
   x: number;
@@ -114,6 +136,11 @@ export interface RenderTextItem {
   stroke?: RenderTextStrokeStyle;
   /** Multiplies globalAlpha for this draw (default 1). */
   opacity?: number;
+  /**
+   * Dev instrumentation: one representative disk marker logs Canvas {@code measureText} bounds vs disk row.
+   * See {@link TextMode24hIndicatorRenderDiagnosticsPayload}.
+   */
+  textMode24hVerticalDiagnostics?: TextMode24hIndicatorRenderDiagnosticsPayload;
 }
 
 /**

@@ -96,6 +96,9 @@ function emitTextGlyph(
     textBaseline: baseline,
     letterSpacingEm,
     ...(glyph.shadow !== undefined ? { shadow: glyph.shadow } : {}),
+    ...(glyph.verticalDiagnostics24h !== undefined
+      ? { textMode24hVerticalDiagnostics: glyph.verticalDiagnostics24h }
+      : {}),
   });
 }
 

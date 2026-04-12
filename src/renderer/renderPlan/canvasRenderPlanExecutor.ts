@@ -20,6 +20,11 @@ import { drawRenderPath2DItemOnCanvas } from "../canvas/canvasPathBridge.ts";
 import {
   canvasFontStringFromRenderTextFont,
 } from "../canvas/canvasTextFontBridge.ts";
+import {
+  analyzeTextMode24hVerticalGapInvariants,
+  buildTextMode24hIndicatorConsolidatedVerticalDiagnostics,
+  logTextMode24hIndicatorVerticalDiagnosticsSnapshot,
+} from "../textMode24hIndicatorVerticalDiagnostics.ts";
 import type {
   RenderCurvedTextItem,
   RenderImageBlitItem,
@@ -75,6 +80,21 @@ function drawText(ctx: CanvasRenderingContext2D, item: RenderTextItem): void {
     ctx.strokeText(item.text, item.x, item.y);
   }
   applyTextShadow(ctx, item.shadow);
+  const diag = item.textMode24hVerticalDiagnostics;
+  const allow24hTextDiag =
+    diag !== undefined && import.meta.env.DEV && import.meta.env.MODE !== "test";
+  if (allow24hTextDiag) {
+    const metrics = ctx.measureText(item.text);
+    const consolidated = buildTextMode24hIndicatorConsolidatedVerticalDiagnostics({
+      pre: diag,
+      fontSizePx: item.font.sizePx,
+      textBaseline: item.textBaseline,
+      fillTextAnchorYPx: item.y,
+      metrics,
+    });
+    const invariantReport = analyzeTextMode24hVerticalGapInvariants(consolidated);
+    logTextMode24hIndicatorVerticalDiagnosticsSnapshot({ consolidated, invariantReport });
+  }
   ctx.fillText(item.text, item.x, item.y);
   ctx.restore();
 }

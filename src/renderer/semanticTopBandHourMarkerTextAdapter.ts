@@ -17,6 +17,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
+import { computeTextModeLayoutDiskBandVerticalMetrics } from "../config/topBandHourMarkersLayout.ts";
 import {
   hourMarkerRepresentationSpecForTopBandEffectiveSelection,
   resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection,
@@ -25,9 +26,19 @@ import type { LaidOutSemanticTopBandHourTextMarker } from "../config/topBandHour
 import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
+import { resolveHourMarkerGlyphStyle } from "../glyphs/glyphStyles.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
+
+/** Disk-row Y bounds + layout insets for dev-only 24h vertical diagnostics (representative structural hour 12). */
+export type SemanticTopBandHourTextDiskRowDiagnosticsContext = {
+  yDiskRow0Px: number;
+  diskBandHPx: number;
+  diskLabelSizePx: number;
+  markerContentSizePx: number;
+  layout: EffectiveTopBandHourMarkers["layout"];
+};
 
 /**
  * Emits hour-disk text glyphs for each laid-out instance, including phased wrap duplicates at the viewport seam.
@@ -39,6 +50,7 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers,
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
+  diskRowDiagnostics?: SemanticTopBandHourTextDiskRowDiagnosticsContext,
 ): void {
   const realization = effectiveTopBandHourMarkers.realization;
   if (realization.kind !== "text") {
@@ -49,6 +61,23 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
+
+  const baselineShiftFrac =
+    resolveHourMarkerGlyphStyle(hourSpec.glyphStyleId ?? "topBandHourDefault").text.baselineShiftFrac ?? 0;
+
+  let diskRowVm:
+    | ReturnType<typeof computeTextModeLayoutDiskBandVerticalMetrics>
+    | undefined;
+  if (diskRowDiagnostics !== undefined) {
+    const d = diskRowDiagnostics;
+    const sm = d.diskLabelSizePx > 0 ? d.markerContentSizePx / d.diskLabelSizePx : 1;
+    diskRowVm = computeTextModeLayoutDiskBandVerticalMetrics({
+      fontSizePx: d.markerContentSizePx,
+      sizeMultiplier: sm,
+      rowTopInsetPx: Math.max(0, Math.round(d.layout.textTopMarginPx)),
+      rowBottomInsetPx: Math.max(0, Math.round(d.layout.textBottomMarginPx)),
+    });
+  }
 
   for (const inst of laidOut) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(
@@ -69,6 +98,28 @@ export function emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
       );
       if (glyph.kind === "text") {
         glyph.omitStyleTextInset = true;
+        if (
+          diskRowDiagnostics !== undefined &&
+          diskRowVm !== undefined &&
+          inst.structuralHour0To23 === 12 &&
+          wrapK === 0
+        ) {
+          const d = diskRowDiagnostics;
+          const baselineShiftPx = inst.sizePx * baselineShiftFrac;
+          glyph.verticalDiagnostics24h = {
+            structuralHour0To23: 12,
+            diskRowTopYPx: d.yDiskRow0Px,
+            diskRowBottomYPx: d.yDiskRow0Px + d.diskBandHPx,
+            diskRowHeightPx: d.diskBandHPx,
+            layoutSizePx: inst.sizePx,
+            textCoreHeightPx: diskRowVm.textCoreHeightPx,
+            textCenterYPx: inst.centerY,
+            baselineShiftPx,
+            fillTextAnchorYPx: inst.centerY + baselineShiftPx,
+            topInsetPx: diskRowVm.topPadInsideDiskPx,
+            bottomInsetPx: diskRowVm.bottomPadInsideDiskPx,
+          };
+        }
       }
       emitGlyphToRenderPlan(glyph, { cx, cy: inst.centerY, size: inst.sizePx }, glyphRenderContext, out);
     }

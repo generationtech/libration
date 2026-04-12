@@ -52,6 +52,7 @@ import {
   type TopBandCircleStackMetrics,
   type UtcTopScaleRowMetrics,
 } from "./displayChrome.ts";
+import type { TextMode24hIndicatorRenderDiagnosticsPayload } from "./renderPlan/renderPlanTypes.ts";
 
 /** Matches private {@code computeBandHeights} top term in {@link buildDisplayChromeState} — keep in sync. */
 function chromeTopBandHeightFromViewportPx(viewportHeightPx: number): number {
@@ -85,7 +86,13 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   indicatorAreaBottomPx: number;
   indicatorAreaHeightPx: number;
   yDiskRow0Px: number;
+  /** Same as {@link yDiskRow0Px} — disk-row top Y in viewport space. */
+  diskRowTopYPx: number;
+  /** Disk-row bottom Y ({@link yDiskRow0Px} + {@link diskBandHeightPx}). */
+  diskRowBottomYPx: number;
   diskBandHeightPx: number;
+  /** Same as {@link diskBandHeightPx} — disk-row height. */
+  diskRowHeightPx: number;
   diskRowMidYPx: number;
   /** Same as {@link textAnchorYPx} (single placement path from layout metrics). */
   textAnchorBaselineYPx: number;
@@ -173,6 +180,8 @@ export type TextMode24hIndicatorVerticalSnapshot = {
   emitTextBaselineShiftPx: number;
   /** Same as {@link effectiveFontSizePx} (disk row uses full {@link markerContentSizePx}). */
   emitEffectiveFontSizePx: number;
+  /** Y passed to Canvas {@code fillText} for centered disk text (after baseline shift). */
+  emitFillTextAnchorYPx: number;
 };
 
 export type TextMode24hIndicatorVerticalDiagnosticsOptions = {
@@ -336,7 +345,10 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     indicatorAreaBottomPx: yCircleBottom,
     indicatorAreaHeightPx: circleH,
     yDiskRow0Px: yDiskRow0,
+    diskRowTopYPx: yDiskRow0,
+    diskRowBottomYPx: yDiskRow0 + diskBandH,
     diskBandHeightPx: diskBandH,
+    diskRowHeightPx: diskBandH,
     diskRowMidYPx: diskRowMidY,
     textAnchorBaselineYPx: textAnchorBaselineY,
     userTextTopInsetPx,
@@ -381,6 +393,7 @@ export function computeTextMode24hIndicatorVerticalSnapshot(
     estimatedTextBottomToMajorTickTopPx: majorTickTopY - textEstBottom,
     emitTextBaselineShiftPx: emitShift,
     emitEffectiveFontSizePx: emitFont,
+    emitFillTextAnchorYPx: textAnchorY + emitShift,
   };
 }
 
@@ -488,4 +501,217 @@ export function compareTextMode24hIndicatorVerticalTickTape(
     circleStackIdentical,
     textAndDiskVerticalMetricsIdentical,
   };
+}
+
+// --- Runtime Canvas diagnostics (representative hour marker, dev console) ---
+
+/** Sub-pixel tolerance when treating visible gaps as zero (device pixels + float math). */
+export const TEXT_MODE_24H_VERTICAL_GAP_EPS_PX = 0.75;
+
+/**
+ * Single structured snapshot for devtools: row bounds, layout, Canvas {@code measureText} glyph box, visible gaps.
+ * Field {@link baselineYPx} is the {@code fillText} Y (after baseline shift), matching {@link emitTextGlyph}.
+ */
+export type TextMode24hIndicatorConsolidatedVerticalDiagnostics = {
+  diskRowTopYPx: number;
+  diskRowBottomYPx: number;
+  diskRowHeightPx: number;
+  textCenterYPx: number;
+  /** {@code fillText} anchor Y after emit baseline shift (see {@link emitTextGlyph}). */
+  baselineYPx: number;
+  layoutSizePx: number;
+  fontSizePx: number;
+  textBaseline: string;
+  glyphTopYPx: number;
+  glyphBottomYPx: number;
+  glyphHeightPx: number;
+  visibleTopGapPx: number;
+  visibleBottomGapPx: number;
+  configuredTopInsetPx: number;
+  configuredBottomInsetPx: number;
+  textCoreHeightPx: number;
+  baselineShiftPx: number;
+  actualBoundingBoxAscent: number;
+  actualBoundingBoxDescent: number;
+};
+
+export type TextMode24hIndicatorVerticalGapInvariantReport = {
+  config00: boolean;
+  topGapApproximatelyZero: boolean;
+  bottomGapApproximatelyZero: boolean;
+  failures: string[];
+  /** Short labels for which mechanism likely explains non-zero gaps (see task §4). */
+  likelySources: ("A_baseline_math" | "B_glyph_vs_layout_height" | "C_canvas_textBaseline" | "D_font_metrics_asymmetry" | "E_rounding_or_snapping")[];
+  notes: string[];
+};
+
+/**
+ * HTML Canvas: distances from the anchor {@code y} to the glyph bounding box (see {@code TextMetrics}).
+ */
+export function glyphVerticalBoundsFromCanvasMeasureText(
+  fillTextAnchorYPx: number,
+  metrics: TextMetrics,
+): {
+  glyphTopYPx: number;
+  glyphBottomYPx: number;
+  glyphHeightPx: number;
+  actualBoundingBoxAscent: number;
+  actualBoundingBoxDescent: number;
+} {
+  const ascent = metrics.actualBoundingBoxAscent;
+  const descent = metrics.actualBoundingBoxDescent;
+  const hasAsc = typeof ascent === "number" && Number.isFinite(ascent);
+  const hasDesc = typeof descent === "number" && Number.isFinite(descent);
+  const actualBoundingBoxAscent = hasAsc ? ascent : 0;
+  const actualBoundingBoxDescent = hasDesc ? descent : 0;
+  const glyphTopYPx = fillTextAnchorYPx - actualBoundingBoxAscent;
+  const glyphBottomYPx = fillTextAnchorYPx + actualBoundingBoxDescent;
+  const glyphHeightPx = Math.max(0, glyphBottomYPx - glyphTopYPx);
+  return {
+    glyphTopYPx,
+    glyphBottomYPx,
+    glyphHeightPx,
+    actualBoundingBoxAscent,
+    actualBoundingBoxDescent,
+  };
+}
+
+/**
+ * Merges pre-layout row payload with measured Canvas metrics and derived visible gaps.
+ */
+export function buildTextMode24hIndicatorConsolidatedVerticalDiagnostics(args: {
+  pre: TextMode24hIndicatorRenderDiagnosticsPayload;
+  fontSizePx: number;
+  textBaseline: string;
+  fillTextAnchorYPx: number;
+  metrics: TextMetrics;
+}): TextMode24hIndicatorConsolidatedVerticalDiagnostics {
+  const { pre, fontSizePx, textBaseline, fillTextAnchorYPx, metrics } = args;
+  const g = glyphVerticalBoundsFromCanvasMeasureText(fillTextAnchorYPx, metrics);
+  const visibleTopGapPx = g.glyphTopYPx - pre.diskRowTopYPx;
+  const visibleBottomGapPx = pre.diskRowBottomYPx - g.glyphBottomYPx;
+  return {
+    diskRowTopYPx: pre.diskRowTopYPx,
+    diskRowBottomYPx: pre.diskRowBottomYPx,
+    diskRowHeightPx: pre.diskRowHeightPx,
+    textCenterYPx: pre.textCenterYPx,
+    baselineYPx: fillTextAnchorYPx,
+    layoutSizePx: pre.layoutSizePx,
+    fontSizePx,
+    textBaseline,
+    glyphTopYPx: g.glyphTopYPx,
+    glyphBottomYPx: g.glyphBottomYPx,
+    glyphHeightPx: g.glyphHeightPx,
+    visibleTopGapPx,
+    visibleBottomGapPx,
+    configuredTopInsetPx: pre.topInsetPx,
+    configuredBottomInsetPx: pre.bottomInsetPx,
+    textCoreHeightPx: pre.textCoreHeightPx,
+    baselineShiftPx: pre.baselineShiftPx,
+    actualBoundingBoxAscent: g.actualBoundingBoxAscent,
+    actualBoundingBoxDescent: g.actualBoundingBoxDescent,
+  };
+}
+
+/**
+ * When both text insets are 0, visible gaps should be ~0; lists which checklist items apply if not.
+ */
+export function analyzeTextMode24hVerticalGapInvariants(
+  consolidated: TextMode24hIndicatorConsolidatedVerticalDiagnostics,
+  epsPx: number = TEXT_MODE_24H_VERTICAL_GAP_EPS_PX,
+): TextMode24hIndicatorVerticalGapInvariantReport {
+  const failures: string[] = [];
+  const notes: string[] = [];
+  const likelySources: TextMode24hIndicatorVerticalGapInvariantReport["likelySources"] = [];
+
+  const config00 =
+    consolidated.configuredTopInsetPx === 0 && consolidated.configuredBottomInsetPx === 0;
+  const topGapApproximatelyZero = Math.abs(consolidated.visibleTopGapPx) <= epsPx;
+  const bottomGapApproximatelyZero = Math.abs(consolidated.visibleBottomGapPx) <= epsPx;
+
+  if (config00 && !topGapApproximatelyZero) {
+    failures.push(
+      `visibleTopGapPx=${consolidated.visibleTopGapPx} (expected ~0 when insets are 0/0)`,
+    );
+  }
+  if (config00 && !bottomGapApproximatelyZero) {
+    failures.push(
+      `visibleBottomGapPx=${consolidated.visibleBottomGapPx} (expected ~0 when insets are 0/0)`,
+    );
+  }
+
+  const shift = consolidated.baselineShiftPx;
+  if (Math.abs(shift) > epsPx) {
+    likelySources.push("A_baseline_math");
+    notes.push(`Non-zero emit baselineShiftPx=${shift} moves fillText Y away from layout textCenterYPx.`);
+  }
+
+  const layoutH = consolidated.layoutSizePx;
+  const gh = consolidated.glyphHeightPx;
+  if (Math.abs(gh - layoutH) > epsPx) {
+    likelySources.push("B_glyph_vs_layout_height");
+    notes.push(`glyphHeightPx=${gh} vs layoutSizePx=${layoutH} (layout uses nominal em/core height).`);
+  }
+
+  if (consolidated.textBaseline === "middle") {
+    likelySources.push("C_canvas_textBaseline");
+    notes.push(
+      'Canvas "middle" anchors to the em-box vertical midpoint; TextMetrics bounding box may extend asymmetrically around that anchor.',
+    );
+  }
+
+  const asc = consolidated.actualBoundingBoxAscent;
+  const desc = consolidated.actualBoundingBoxDescent;
+  if (Math.abs(asc - desc) > epsPx * 2) {
+    likelySources.push("D_font_metrics_asymmetry");
+    notes.push(`actualBoundingBoxAscent=${asc} vs descent=${desc} (font-specific vertical ink).`);
+  }
+
+  const halfLayout = consolidated.textCoreHeightPx * 0.5;
+  const estTop = consolidated.textCenterYPx - halfLayout;
+  const estBot = consolidated.textCenterYPx + halfLayout;
+  const topSnap = Math.abs(consolidated.glyphTopYPx - estTop) > epsPx;
+  const botSnap = Math.abs(consolidated.glyphBottomYPx - estBot) > epsPx;
+  if (topSnap || botSnap) {
+    likelySources.push("E_rounding_or_snapping");
+    notes.push(
+      `Layout estimated box [${estTop}, ${estBot}] vs measured glyph [${consolidated.glyphTopYPx}, ${consolidated.glyphBottomYPx}].`,
+    );
+  }
+
+  return {
+    config00,
+    topGapApproximatelyZero,
+    bottomGapApproximatelyZero,
+    failures,
+    likelySources: [...new Set(likelySources)],
+    notes,
+  };
+}
+
+const textMode24hDiagLoggedKeys = new Set<string>();
+
+/**
+ * Logs one consolidated object per session key (default one log per page load for the representative marker).
+ */
+export function logTextMode24hIndicatorVerticalDiagnosticsSnapshot(args: {
+  consolidated: TextMode24hIndicatorConsolidatedVerticalDiagnostics;
+  invariantReport: TextMode24hIndicatorVerticalGapInvariantReport;
+  /** Dedupe when the same plan runs every frame; default "default". */
+  sessionKey?: string;
+}): void {
+  if (!import.meta.env.DEV || import.meta.env.MODE === "test") {
+    return;
+  }
+  const sessionKey = args.sessionKey ?? "default";
+  if (textMode24hDiagLoggedKeys.has(sessionKey)) {
+    return;
+  }
+  textMode24hDiagLoggedKeys.add(sessionKey);
+
+  const { consolidated, invariantReport } = args;
+  // eslint-disable-next-line no-console -- intentional dev-only instrumentation
+  console.log("[Libration] textMode24hIndicatorVerticalDiagnostics", consolidated);
+  // eslint-disable-next-line no-console -- intentional dev-only instrumentation
+  console.log("[Libration] textMode24hIndicatorVerticalDiagnostics invariants", invariantReport);
 }

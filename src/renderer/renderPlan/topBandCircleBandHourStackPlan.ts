@@ -291,7 +291,23 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       diskLabelSizePx: labelSize,
       markerContentSizePx,
     });
-    emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, effectiveMarkers, gctx, items);
+    const yDiskRow0 =
+      y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
+    emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(
+      laidOut,
+      vw,
+      topBandSel,
+      effectiveMarkers,
+      gctx,
+      items,
+      {
+        yDiskRow0Px: yDiskRow0,
+        diskBandHPx: circleStack.diskBandH,
+        diskLabelSizePx: labelSize,
+        markerContentSizePx,
+        layout: effectiveMarkers.layout,
+      },
+    );
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
