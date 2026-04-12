@@ -27,11 +27,11 @@ import {
  * Downward nudge (× text core height) so numerals read visually centered with `textBaseline: "middle"`.
  * Scales with font size; not a hardcoded pixel offset.
  */
-export const TEXT_INDICATOR_OPTICAL_CENTER_BIAS = 0.085 as const;
+export const TEXT_INDICATOR_OPTICAL_CENTER_BIAS = 0.058 as const;
 
 /**
- * Text-led 24h indicator row height: core em-height + optical padding (no disk-head / circle-band expansion).
- * Padding is ~10–20% of core height and scales with {@link sizeMultiplier}.
+ * Text-led 24h indicator row height: core em-height + compact padding (authoritative band height for text mode).
+ * Total padding is ~6–12% of core height and scales with {@link sizeMultiplier}.
  */
 export function computeTextIndicatorRowHeightPx(args: {
   fontSizePx: number;
@@ -41,9 +41,9 @@ export function computeTextIndicatorRowHeightPx(args: {
   const { fontSizePx, sizeMultiplier } = args;
   const core = args.fontMetrics?.heightPx ?? fontSizePx * 1.125;
   const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
-  const padFracTotal = Math.min(0.2, Math.max(0.1, 0.1 + 0.05 * (sm - 1)));
+  const padFracTotal = Math.min(0.12, Math.max(0.06, 0.06 + 0.04 * (sm - 1)));
   const padded = core * (1 + padFracTotal);
-  const safetyFloor = Math.max(11, Math.round(fontSizePx * 0.92));
+  const safetyFloor = Math.max(7, Math.round(fontSizePx * 0.62));
   return Math.max(safetyFloor, Math.ceil(padded));
 }
 

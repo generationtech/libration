@@ -1114,36 +1114,84 @@ function resolveMinimumDiskBandHeightPx(args: {
   return diskH;
 }
 
+/** Matches {@link TEXT_LED_CIRCLE_STACK_OVERRIDES}.diskRowFloorPx — minimum text disk row in the text-led stack. */
+const TEXT_LED_DISK_ROW_FLOOR_PX = 9 as const;
+
 /**
- * Minimum circle-band height such that {@link computeTopBandCircleStackMetrics} allocates at least
- * {@link textDiskHeightPx} to the disk row (text-led profile; no disk-head binary search).
+ * Sums the vertical slices of a circle-band stack (equals {@link UtcTopScaleRowMetrics.circleBandH} when consistent).
  */
-export function minimumCircleBandHeightForTextDiskPx(textDiskHeightPx: number): number {
-  const target = Math.max(1, Math.ceil(textDiskHeightPx));
-  let lo = Math.max(target + 6, 20);
-  let hi = Math.max(lo + 1, target + 64);
-  const profile: TopBandCircleStackLayoutProfile = "textLed";
-  while (computeTopBandCircleStackMetrics(hi, profile).diskBandH < target && hi < 2400) {
-    hi += 48;
+export function sumTopBandCircleStackMetricsPx(m: TopBandCircleStackMetrics): number {
+  return (
+    m.padTopPx +
+    m.upperNumeralH +
+    m.gapNumeralToDiskPx +
+    m.diskBandH +
+    m.gapDiskToAnnotationPx +
+    m.annotationH +
+    m.padBottomPx
+  );
+}
+
+/**
+ * Text-mode circle stack: disk row height is {@link computeTextIndicatorRowHeightPx} (rounded up); chrome above/below
+ * scales with that row — not with {@link computeTopBandCircleStackMetrics} band fractions.
+ */
+export function computeTextLedCircleStackFromTextRowHeightPx(textRowHeightPx: number): TopBandCircleStackMetrics {
+  const disk = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.ceil(Math.max(1, textRowHeightPx)));
+  const padTopPx = Math.max(4, Math.round(disk * 0.048));
+  const padBottomPx = Math.max(3, Math.round(disk * 0.032));
+  const gapNumeralToDiskPx = Math.max(3, Math.round(disk * 0.038));
+  const gapDiskToAnnotationPx = Math.max(4, Math.round(disk * 0.044));
+  const annotationH = Math.max(8, Math.min(12, Math.round(disk * 0.17)));
+  return {
+    padTopPx,
+    upperNumeralH: 0,
+    gapNumeralToDiskPx,
+    diskBandH: disk,
+    gapDiskToAnnotationPx,
+    annotationH,
+    padBottomPx,
+  };
+}
+
+/**
+ * Resolves the authoritative text-led stack and font/disk fixed point: disk row comes from
+ * {@link computeTextIndicatorRowHeightPx}, not from inverting the generic circle-band solver.
+ */
+export function resolveTextIndicatorCircleStackMetrics(args: {
+  viewportWidthPx: number;
+  hourDiskLabelTokens: TopChromeHourDiskLabelTokens;
+  layout: DisplayChromeLayoutConfig;
+  /** Seeds disk-radius / font-size iteration (typically {@link UtcTopScaleRowMetrics.circleBandH}). */
+  seedCircleBandHeightPx: number;
+}): TopBandCircleStackMetrics {
+  const vw = args.viewportWidthPx;
+  if (!(vw > 0)) {
+    return computeTextLedCircleStackFromTextRowHeightPx(1);
   }
-  if (computeTopBandCircleStackMetrics(hi, profile).diskBandH < target) {
-    return hi;
-  }
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi) / 2);
-    const disk = computeTopBandCircleStackMetrics(mid, profile).diskBandH;
-    if (disk >= target) {
-      hi = mid;
-    } else {
-      lo = mid + 1;
+  const sw = vw / 24;
+  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
+  const seedH = Math.max(0, args.seedCircleBandHeightPx);
+  let diskGuess = Math.max(TEXT_LED_DISK_ROW_FLOOR_PX, Math.round(seedH * 0.22));
+  let last: TopBandCircleStackMetrics | undefined;
+  for (let i = 0; i < 8; i += 1) {
+    const r = computeUtcCircleMarkerRadius(diskGuess, sw);
+    const fontSizePx = computeHourDiskLabelSizePx(r, vw, args.hourDiskLabelTokens) * sm;
+    const textRow = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
+    const stack = computeTextLedCircleStackFromTextRowHeightPx(textRow);
+    if (last !== undefined && stack.diskBandH === last.diskBandH) {
+      return stack;
     }
+    last = stack;
+    diskGuess = stack.diskBandH;
   }
-  return lo;
+  return last ?? computeTextLedCircleStackFromTextRowHeightPx(1);
 }
 
 /**
  * Pixel amount to add to the circle band (and total top band) so the 24h **text** indicator row fits content-derived
- * height — does not use {@link computeHourMarkerCircleBandExpansionPx} / disk-head metrics.
+ * height — uses {@link resolveTextIndicatorCircleStackMetrics} / {@link computeTextLedCircleStackFromTextRowHeightPx},
+ * not {@link computeTopBandCircleStackMetrics} disk-band binary search.
  */
 export function computeTextIndicatorCircleBandExpansionPx(args: {
   baseRows: UtcTopScaleRowMetrics;
@@ -1159,14 +1207,14 @@ export function computeTextIndicatorCircleBandExpansionPx(args: {
   if (base.circleBandH <= 0) {
     return 0;
   }
-  const sw = vw / 24;
-  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
-  const stack0 = computeTopBandCircleStackMetrics(base.circleBandH, "textLed");
-  const r0 = computeUtcCircleMarkerRadius(stack0.diskBandH, sw);
-  const fontSizePx = computeHourDiskLabelSizePx(r0, vw, args.hourDiskLabelTokens) * sm;
-  const textDiskH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
-  const minCircleH = minimumCircleBandHeightForTextDiskPx(textDiskH);
-  return Math.max(0, Math.round(minCircleH - base.circleBandH));
+  const stack = resolveTextIndicatorCircleStackMetrics({
+    viewportWidthPx: vw,
+    hourDiskLabelTokens: args.hourDiskLabelTokens,
+    layout: args.layout,
+    seedCircleBandHeightPx: base.circleBandH,
+  });
+  const need = sumTopBandCircleStackMetricsPx(stack);
+  return Math.max(0, Math.round(need - base.circleBandH));
 }
 
 /**
@@ -1234,6 +1282,8 @@ function buildTopBandLayoutFromRows(widthPx: number, rows: UtcTopScaleRowMetrics
  * Pass {@link topBandHeightPx} to attach {@link UtcTopScaleRowMetrics} for multi-row chrome.
  * When {@link rowMetricsOverride} is set (e.g. after hour-marker disk-row expansion), it replaces
  * {@link computeUtcTopScaleRowMetrics} so tick + NATO band heights stay fixed while the circle band grows.
+ * For {@code textLed}, pass {@link textModeCircleStackOverride} from {@link resolveTextIndicatorCircleStackMetrics} so
+ * {@link UtcTopScaleLayout.circleStack} matches the text-row-led band height (see {@link buildDisplayChromeState}).
  */
 export function buildUtcTopScaleLayout(
   nowMs: number,
@@ -1244,6 +1294,8 @@ export function buildUtcTopScaleLayout(
   chromeRowLayout?: Pick<DisplayChromeLayoutConfig, "timezoneLetterRowVisible">,
   rowMetricsOverride?: UtcTopScaleRowMetrics,
   circleStackProfile: TopBandCircleStackLayoutProfile = "default",
+  /** When {@link circleStackProfile} is {@code "textLed"}, replaces {@link computeTopBandCircleStackMetrics} (text row height is authoritative). */
+  textModeCircleStackOverride?: TopBandCircleStackMetrics,
 ): UtcTopScaleLayout {
   const w = Math.max(0, widthPx);
   const rt = resolved ?? resolveTopBandTimeFromConfig(DEFAULT_DISPLAY_TIME_CONFIG);
@@ -1357,7 +1409,9 @@ export function buildUtcTopScaleLayout(
   const topBandLayout = rows !== undefined ? buildTopBandLayoutFromRows(w, rows) : undefined;
   const circleStack =
     rows !== undefined
-      ? computeTopBandCircleStackMetrics(rows.circleBandH, circleStackProfile)
+      ? circleStackProfile === "textLed" && textModeCircleStackOverride !== undefined
+        ? textModeCircleStackOverride
+        : computeTopBandCircleStackMetrics(rows.circleBandH, circleStackProfile)
       : undefined;
 
   const circleMarkers: UtcTopScaleCircleMarker[] =
@@ -1469,6 +1523,15 @@ export function buildDisplayChromeState(options: {
       ? expandTopBandCircleBandPreservingLowerBands(rowsForExpansion, circleExpansionPx)
       : rowsForExpansion;
   const top = rowMetrics.topBandHeightPx;
+  const textModeCircleStackOverride =
+    hourIndicatorAreaVisible && hourMarkerSel.kind === "text" && w > 0
+      ? resolveTextIndicatorCircleStackMetrics({
+          viewportWidthPx: w,
+          hourDiskLabelTokens: stForRows.hourDiskLabel,
+          layout,
+          seedCircleBandHeightPx: rowMetrics.circleBandH,
+        })
+      : undefined;
   const utcTopScale = buildUtcTopScaleLayout(
     time.now,
     w,
@@ -1478,6 +1541,7 @@ export function buildDisplayChromeState(options: {
     layout,
     rowMetrics,
     hourMarkerSel.kind === "text" ? "textLed" : "default",
+    textModeCircleStackOverride,
   );
   const bottomBand: DisplayChromeBandRect = {
     x: 0,

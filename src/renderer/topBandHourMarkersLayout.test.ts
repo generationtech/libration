@@ -48,6 +48,16 @@ describe("computeTextIndicatorRowHeightPx", () => {
     const mid = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 1 });
     expect(computeTextIndicatorRowHeightPx({ fontSizePx: 22, sizeMultiplier: 1 })).toBeGreaterThan(mid);
   });
+
+  it("at the same font size, 0.90× / 1.20× / 1.50× produce strictly increasing row heights (ceil can tie at small sizes)", () => {
+    const fs = 100;
+    const h09 = computeTextIndicatorRowHeightPx({ fontSizePx: fs, sizeMultiplier: 0.9 });
+    const h12 = computeTextIndicatorRowHeightPx({ fontSizePx: fs, sizeMultiplier: 1.2 });
+    const h15 = computeTextIndicatorRowHeightPx({ fontSizePx: fs, sizeMultiplier: 1.5 });
+    expect(h09).toBeLessThan(h12);
+    expect(h12).toBeLessThan(h15);
+    expect(h15 - h09).toBeGreaterThanOrEqual(2);
+  });
 });
 
 function hourMarkerLayout(

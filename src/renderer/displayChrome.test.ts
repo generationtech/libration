@@ -861,7 +861,7 @@ describe("computeTopBandCircleStackMetrics", () => {
     expect(stackSum(def)).toBe(h);
   });
 
-  it("textLed stack still partitions the full circle band (text-led row height binary search target)", () => {
+  it("textLed stack still partitions the full circle band (generic solver; text mode may override with a direct stack)", () => {
     const h = 48;
     const led = computeTopBandCircleStackMetrics(h, "textLed");
     const stackSum = (s: ReturnType<typeof computeTopBandCircleStackMetrics>): number =>
@@ -1116,6 +1116,7 @@ describe("buildDisplayChromeState", () => {
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
         "textLed",
+        chrome.utcTopScale.circleStack,
       ),
     ).toEqual(chrome.utcTopScale);
     expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
@@ -1182,6 +1183,7 @@ describe("buildDisplayChromeState", () => {
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
         "textLed",
+        chrome.utcTopScale.circleStack,
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1221,6 +1223,7 @@ describe("buildDisplayChromeState", () => {
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
         "textLed",
+        chrome.utcTopScale.circleStack,
       ),
     ).toEqual(chrome.utcTopScale);
   });

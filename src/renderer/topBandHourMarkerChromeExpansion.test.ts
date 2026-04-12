@@ -26,6 +26,8 @@ import {
   computeTextIndicatorCircleBandExpansionPx,
   computeUtcTopScaleRowMetrics,
   expandTopBandCircleBandPreservingLowerBands,
+  resolveTextIndicatorCircleStackMetrics,
+  sumTopBandCircleStackMetricsPx,
   TOP_BAND_GLYPH_DISK_CONTENT_SCALE,
 } from "./displayChrome.ts";
 import { getTopChromeStyle } from "../config/topChromeStyle.ts";
@@ -54,6 +56,24 @@ describe("hour-marker circle-band expansion", () => {
     expect(expanded.circleBandH).toBe(baseRows.circleBandH + delta);
     expect(expanded.tickBandH).toBe(baseRows.tickBandH);
     expect(expanded.timezoneBandH).toBe(baseRows.timezoneBandH);
+  });
+
+  it("derives text circle-band need from sum(direct text-led stack), not stack-solver disk-band binary search", () => {
+    const baseRows = computeUtcTopScaleRowMetrics(72, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    const stack = resolveTextIndicatorCircleStackMetrics({
+      viewportWidthPx: 960,
+      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      layout: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      seedCircleBandHeightPx: baseRows.circleBandH,
+    });
+    const needCircleH = sumTopBandCircleStackMetricsPx(stack);
+    const delta = computeTextIndicatorCircleBandExpansionPx({
+      baseRows,
+      viewportWidthPx: 960,
+      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      layout: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+    });
+    expect(delta).toBe(Math.max(0, Math.round(needCircleH - baseRows.circleBandH)));
   });
 
   it("uses a larger nominal glyph disk factor than 1× text for default glyph selection", () => {
