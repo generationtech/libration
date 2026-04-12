@@ -18,10 +18,12 @@ import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
 } from "../config/appConfig.ts";
+import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
   buildDisplayChromeState,
   collapseTopBandHourIndicatorAreaRows,
   computeHourMarkerCircleBandExpansionPx,
+  computeTextIndicatorCircleBandExpansionPx,
   computeUtcTopScaleRowMetrics,
   expandTopBandCircleBandPreservingLowerBands,
   TOP_BAND_GLYPH_DISK_CONTENT_SCALE,
@@ -40,12 +42,11 @@ describe("hour-marker circle-band expansion", () => {
         layout: { sizeMultiplier: 2 },
       },
     };
-    const delta = computeHourMarkerCircleBandExpansionPx({
+    const delta = computeTextIndicatorCircleBandExpansionPx({
       baseRows,
       viewportWidthPx: 960,
       hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
       layout: layoutLargeText,
-      selection: effectiveTopBandHourMarkerSelection(layoutLargeText),
     });
     expect(delta).toBeGreaterThan(0);
     const expanded = expandTopBandCircleBandPreservingLowerBands(baseRows, delta);
@@ -57,6 +58,26 @@ describe("hour-marker circle-band expansion", () => {
 
   it("uses a larger nominal glyph disk factor than 1× text for default glyph selection", () => {
     expect(TOP_BAND_GLYPH_DISK_CONTENT_SCALE).toBeGreaterThan(1.15);
+  });
+
+  it("glyph hour markers still use disk-head expansion, not the text-led path", () => {
+    const baseRows = computeUtcTopScaleRowMetrics(80, DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    const layoutGlyph = {
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      hourMarkers: {
+        ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+        realization: { kind: "radialLine" as const, appearance: {} },
+      },
+    };
+    const delta = computeHourMarkerCircleBandExpansionPx({
+      baseRows,
+      viewportWidthPx: 960,
+      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      layout: layoutGlyph,
+      selection: effectiveTopBandHourMarkerSelection(layoutGlyph),
+    });
+    expect(resolveEffectiveTopBandHourMarkers(layoutGlyph).realization.kind).toBe("radialLine");
+    expect(delta).toBeGreaterThanOrEqual(0);
   });
 });
 

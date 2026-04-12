@@ -24,6 +24,35 @@ import {
 } from "./topBandDiskWrapGeometry.ts";
 
 /**
+ * Downward nudge (× text core height) so numerals read visually centered with `textBaseline: "middle"`.
+ * Scales with font size; not a hardcoded pixel offset.
+ */
+export const TEXT_INDICATOR_OPTICAL_CENTER_BIAS = 0.085 as const;
+
+/**
+ * Text-led 24h indicator row height: core em-height + optical padding (no disk-head / circle-band expansion).
+ * Padding is ~10–20% of core height and scales with {@link sizeMultiplier}.
+ */
+export function computeTextIndicatorRowHeightPx(args: {
+  fontSizePx: number;
+  sizeMultiplier: number;
+  fontMetrics?: { heightPx: number };
+}): number {
+  const { fontSizePx, sizeMultiplier } = args;
+  const core = args.fontMetrics?.heightPx ?? fontSizePx * 1.125;
+  const sm = Math.max(0.5, Math.min(3, sizeMultiplier));
+  const padFracTotal = Math.min(0.2, Math.max(0.1, 0.1 + 0.05 * (sm - 1)));
+  const padded = core * (1 + padFracTotal);
+  const safetyFloor = Math.max(11, Math.round(fontSizePx * 0.92));
+  return Math.max(safetyFloor, Math.ceil(padded));
+}
+
+/** Nominal vertical extent for optical bias; scales with rendered CSS px size (not disk diameter). */
+export function estimateTextCoreHeightForOpticalLayoutPx(fontSizePx: number): number {
+  return fontSizePx * 1.08;
+}
+
+/**
  * Vertical slice of the circle band stack (same fields as {@link buildTopBandCircleBandHourStackRenderPlan} options).
  */
 export type TopBandCircleStackLayoutInput = {
@@ -173,7 +202,6 @@ export function layoutSemanticTopBandHourMarkers(
   const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
-  /** Text uses `textBaseline: "middle"`; place the anchor at the disk head’s geometric center (no legacy alphabetic nudge). */
   const isTextRealization = plan.source.realization.kind === "text";
 
   const yCircleBottom = y0 + circleH;
@@ -181,6 +209,7 @@ export function layoutSemanticTopBandHourMarkers(
   const diskBandH = circleStack.diskBandH;
   const gDiskToAnn = circleStack.gapDiskToAnnotationPx;
   const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
+  const sw = vw / 24;
 
   const out: LaidOutSemanticTopBandHourTextMarker[] = [];
 
@@ -190,18 +219,25 @@ export function layoutSemanticTopBandHourMarkers(
     if (m === undefined) {
       continue;
     }
-    const r = m.radiusPx;
-    const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
-    const headD = ph?.headD ?? 0;
-    const yHeadTop = ph
-      ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
-      : yDiskRow0;
-    const numeralY = ph
-      ? yHeadTop +
-        headD * 0.5 -
-        (isTextRealization ? 0 : Math.min(0.55, headD * 0.035))
-      : circleDiskCy;
-    const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
+    let numeralY: number;
+    let halfExt: number;
+
+    if (isTextRealization) {
+      const textCoreH = estimateTextCoreHeightForOpticalLayoutPx(labelSize);
+      const opticalOffsetPx = textCoreH * TEXT_INDICATOR_OPTICAL_CENTER_BIAS;
+      const diskRowMidY = yDiskRow0 + diskBandH * 0.5;
+      numeralY = diskRowMidY + opticalOffsetPx;
+      halfExt = Math.max(labelSize * 0.62 + TOP_BAND_DISK_WRAP_HALO_PAD_PX, sw * 0.42);
+    } else {
+      const r = m.radiusPx;
+      const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
+      const headD = ph?.headD ?? 0;
+      const yHeadTop = ph
+        ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
+        : yDiskRow0;
+      numeralY = ph ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035) : circleDiskCy;
+      halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
+    }
 
     out.push({
       structuralHour0To23: h,

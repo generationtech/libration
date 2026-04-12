@@ -26,6 +26,7 @@ import {
 import { buildSemanticTopBandHourMarkers } from "../config/topBandHourMarkersSemanticPlan.ts";
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
+  computeTextIndicatorRowHeightPx,
   layoutSemanticTopBandAnalogClockMarkers,
   layoutSemanticTopBandHourMarkers,
   layoutSemanticTopBandRadialLineMarkers,
@@ -37,6 +38,16 @@ const RESOLVED_UTC = resolveTopBandTimeFromConfig({
   referenceTimeZone: { source: "fixed", timeZone: "UTC" },
   topBandMode: "utc24",
   topBandAnchor: { mode: "auto" },
+});
+
+describe("computeTextIndicatorRowHeightPx", () => {
+  it("shrinks with smaller sizeMultiplier and grows with larger font size", () => {
+    const smallMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 0.5 });
+    const largeMul = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 2 });
+    expect(smallMul).toBeLessThan(largeMul);
+    const mid = computeTextIndicatorRowHeightPx({ fontSizePx: 14, sizeMultiplier: 1 });
+    expect(computeTextIndicatorRowHeightPx({ fontSizePx: 22, sizeMultiplier: 1 })).toBeGreaterThan(mid);
+  });
 });
 
 function hourMarkerLayout(

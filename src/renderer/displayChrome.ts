@@ -57,7 +57,10 @@ import {
   getTopChromeStyle,
   type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
-import { hourCircleHeadMetrics } from "../config/topBandHourMarkersLayout.ts";
+import {
+  computeTextIndicatorRowHeightPx,
+  hourCircleHeadMetrics,
+} from "../config/topBandHourMarkersLayout.ts";
 import type { TimeContext } from "../layers/types";
 import type { FrameContext, Viewport } from "./types";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
@@ -958,11 +961,9 @@ export function computeTopBandCircleStackMetrics(
 export const TOP_BAND_GLYPH_DISK_CONTENT_SCALE = 1.32 as const;
 
 const HOUR_MARKER_DISK_PAD_FRAC = 0.38 as const;
-/** Tighter than {@link HOUR_MARKER_DISK_PAD_FRAC}: text uses middle baseline on the circle bed without a filled disk. */
-const TEXT_HOUR_MARKER_DISK_PAD_FRAC = 0.15 as const;
 
-/** Profile for {@link computeTopBandCircleStackMetrics}: text hour markers use tighter pads/gaps vs glyph disks. */
-export type TopBandCircleStackLayoutProfile = "default" | "textTight";
+/** Profile for {@link computeTopBandCircleStackMetrics}: text vs glyph vertical models. */
+export type TopBandCircleStackLayoutProfile = "default" | "textTight" | "textLed";
 
 /**
  * Overrides merged with {@link TOP_CHROME_CIRCLE_STACK_LAYOUT} when {@link TopBandCircleStackLayoutProfile} is
@@ -981,6 +982,18 @@ const TEXT_TIGHT_CIRCLE_STACK_OVERRIDES = {
   diskRowFloorPx: 19,
 } as const;
 
+/**
+ * Text-led 24h numerals: lower disk-row floors so row height can follow {@link computeTextIndicatorRowHeightPx} instead of
+ * glyph disk minima (still uses the same stack solver as {@code "textTight"}).
+ */
+const TEXT_LED_CIRCLE_STACK_OVERRIDES = {
+  ...TEXT_TIGHT_CIRCLE_STACK_OVERRIDES,
+  diskRowMinPx: 11,
+  diskRowFloorPx: 9,
+  annotationRowMinPx: 10,
+  annotationRowFloorPx: 8,
+} as const;
+
 function circleStackLayoutForProfile(
   profile: TopBandCircleStackLayoutProfile,
 ): typeof TOP_CHROME_CIRCLE_STACK_LAYOUT {
@@ -988,6 +1001,12 @@ function circleStackLayoutForProfile(
     return {
       ...TOP_CHROME_CIRCLE_STACK_LAYOUT,
       ...TEXT_TIGHT_CIRCLE_STACK_OVERRIDES,
+    } as unknown as typeof TOP_CHROME_CIRCLE_STACK_LAYOUT;
+  }
+  if (profile === "textLed") {
+    return {
+      ...TOP_CHROME_CIRCLE_STACK_LAYOUT,
+      ...TEXT_LED_CIRCLE_STACK_OVERRIDES,
     } as unknown as typeof TOP_CHROME_CIRCLE_STACK_LAYOUT;
   }
   return TOP_CHROME_CIRCLE_STACK_LAYOUT;
@@ -1096,7 +1115,63 @@ function resolveMinimumDiskBandHeightPx(args: {
 }
 
 /**
- * Pixel amount to add to the circle band (and total top band) so the disk row fits hour-marker content.
+ * Minimum circle-band height such that {@link computeTopBandCircleStackMetrics} allocates at least
+ * {@link textDiskHeightPx} to the disk row (text-led profile; no disk-head binary search).
+ */
+export function minimumCircleBandHeightForTextDiskPx(textDiskHeightPx: number): number {
+  const target = Math.max(1, Math.ceil(textDiskHeightPx));
+  let lo = Math.max(target + 6, 20);
+  let hi = Math.max(lo + 1, target + 64);
+  const profile: TopBandCircleStackLayoutProfile = "textLed";
+  while (computeTopBandCircleStackMetrics(hi, profile).diskBandH < target && hi < 2400) {
+    hi += 48;
+  }
+  if (computeTopBandCircleStackMetrics(hi, profile).diskBandH < target) {
+    return hi;
+  }
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const disk = computeTopBandCircleStackMetrics(mid, profile).diskBandH;
+    if (disk >= target) {
+      hi = mid;
+    } else {
+      lo = mid + 1;
+    }
+  }
+  return lo;
+}
+
+/**
+ * Pixel amount to add to the circle band (and total top band) so the 24h **text** indicator row fits content-derived
+ * height — does not use {@link computeHourMarkerCircleBandExpansionPx} / disk-head metrics.
+ */
+export function computeTextIndicatorCircleBandExpansionPx(args: {
+  baseRows: UtcTopScaleRowMetrics;
+  viewportWidthPx: number;
+  hourDiskLabelTokens: TopChromeHourDiskLabelTokens;
+  layout: DisplayChromeLayoutConfig;
+}): number {
+  const vw = args.viewportWidthPx;
+  if (!(vw > 0)) {
+    return 0;
+  }
+  const base = args.baseRows;
+  if (base.circleBandH <= 0) {
+    return 0;
+  }
+  const sw = vw / 24;
+  const sm = resolvedHourMarkerLayoutSizeMultiplier(args.layout);
+  const stack0 = computeTopBandCircleStackMetrics(base.circleBandH, "textLed");
+  const r0 = computeUtcCircleMarkerRadius(stack0.diskBandH, sw);
+  const fontSizePx = computeHourDiskLabelSizePx(r0, vw, args.hourDiskLabelTokens) * sm;
+  const textDiskH = computeTextIndicatorRowHeightPx({ fontSizePx, sizeMultiplier: sm });
+  const minCircleH = minimumCircleBandHeightForTextDiskPx(textDiskH);
+  return Math.max(0, Math.round(minCircleH - base.circleBandH));
+}
+
+/**
+ * Pixel amount to add to the circle band (and total top band) so the disk row fits **glyph** hour-marker content
+ * (analogClock, radialLine, radialWedge). Text mode uses {@link computeTextIndicatorCircleBandExpansionPx} instead.
  */
 export function computeHourMarkerCircleBandExpansionPx(args: {
   baseRows: UtcTopScaleRowMetrics;
@@ -1109,13 +1184,8 @@ export function computeHourMarkerCircleBandExpansionPx(args: {
   if (!(vw > 0)) {
     return 0;
   }
-  const stack = computeTopBandCircleStackMetrics(
-    args.baseRows.circleBandH,
-    args.selection.kind === "text" ? "textTight" : "default",
-  );
+  const stack = computeTopBandCircleStackMetrics(args.baseRows.circleBandH, "default");
   const sw = vw / 24;
-  const diskPadFrac =
-    args.selection.kind === "text" ? TEXT_HOUR_MARKER_DISK_PAD_FRAC : HOUR_MARKER_DISK_PAD_FRAC;
   const needDiskH = resolveMinimumDiskBandHeightPx({
     initialDiskBandH: stack.diskBandH,
     segmentWidthPx: sw,
@@ -1123,7 +1193,7 @@ export function computeHourMarkerCircleBandExpansionPx(args: {
     hourDiskLabelTokens: args.hourDiskLabelTokens,
     layout: args.layout,
     selection: args.selection,
-    diskPadFrac,
+    diskPadFrac: HOUR_MARKER_DISK_PAD_FRAC,
   });
   return Math.max(0, Math.round(needDiskH - stack.diskBandH));
 }
@@ -1379,13 +1449,20 @@ export function buildDisplayChromeState(options: {
     ? baseRows
     : collapseTopBandHourIndicatorAreaRows(baseRows);
   const circleExpansionPx = hourIndicatorAreaVisible
-    ? computeHourMarkerCircleBandExpansionPx({
-        baseRows: rowsForExpansion,
-        viewportWidthPx: w,
-        hourDiskLabelTokens: stForRows.hourDiskLabel,
-        layout,
-        selection: hourMarkerSel,
-      })
+    ? hourMarkerSel.kind === "text"
+      ? computeTextIndicatorCircleBandExpansionPx({
+          baseRows: rowsForExpansion,
+          viewportWidthPx: w,
+          hourDiskLabelTokens: stForRows.hourDiskLabel,
+          layout,
+        })
+      : computeHourMarkerCircleBandExpansionPx({
+          baseRows: rowsForExpansion,
+          viewportWidthPx: w,
+          hourDiskLabelTokens: stForRows.hourDiskLabel,
+          layout,
+          selection: hourMarkerSel,
+        })
     : 0;
   const rowMetrics =
     circleExpansionPx > 0
@@ -1400,7 +1477,7 @@ export function buildDisplayChromeState(options: {
     options.geography,
     layout,
     rowMetrics,
-    hourMarkerSel.kind === "text" ? "textTight" : "default",
+    hourMarkerSel.kind === "text" ? "textLed" : "default",
   );
   const bottomBand: DisplayChromeBandRect = {
     x: 0,
@@ -1521,7 +1598,7 @@ export function renderDisplayChrome(
     scale.circleStack ??
     computeTopBandCircleStackMetrics(
       rows.circleBandH,
-      hourMarkerSel.kind === "text" ? "textTight" : "default",
+      hourMarkerSel.kind === "text" ? "textLed" : "default",
     );
   const vw = viewport.width;
   const sw = vw > 0 ? vw / 24 : 0;

@@ -860,6 +860,20 @@ describe("computeTopBandCircleStackMetrics", () => {
     expect(stackSum(tight)).toBe(h);
     expect(stackSum(def)).toBe(h);
   });
+
+  it("textLed stack still partitions the full circle band (text-led row height binary search target)", () => {
+    const h = 48;
+    const led = computeTopBandCircleStackMetrics(h, "textLed");
+    const stackSum = (s: ReturnType<typeof computeTopBandCircleStackMetrics>): number =>
+      s.padTopPx +
+      s.upperNumeralH +
+      s.gapNumeralToDiskPx +
+      s.diskBandH +
+      s.gapDiskToAnnotationPx +
+      s.annotationH +
+      s.padBottomPx;
+    expect(stackSum(led)).toBe(h);
+  });
 });
 
 describe("militaryTimeZoneLetterFromLongitudeDeg", () => {
@@ -1101,7 +1115,7 @@ describe("buildDisplayChromeState", () => {
         undefined,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
-        "textTight",
+        "textLed",
       ),
     ).toEqual(chrome.utcTopScale);
     expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
@@ -1167,7 +1181,7 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
-        "textTight",
+        "textLed",
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1206,7 +1220,7 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
-        "textTight",
+        "textLed",
       ),
     ).toEqual(chrome.utcTopScale);
   });
