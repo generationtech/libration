@@ -51,7 +51,7 @@ export function buildSemanticTopBandHourMarkers(
   effective: EffectiveTopBandHourMarkers,
   options?: BuildSemanticTopBandHourMarkersOptions,
 ): SemanticTopBandHourMarkersPlan {
-  if (!effective.enabled) {
+  if (!effective.areaVisible) {
     return { source: effective, instances: [] };
   }
   const referenceNowMs = options?.referenceNowMs;

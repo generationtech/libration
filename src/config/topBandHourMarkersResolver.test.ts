@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX, TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN } from "./appConfig";
+import {
+  DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
+} from "./appConfig";
 import {
   DEFAULT_ANALOG_FACE_FILL,
   DEFAULT_ANALOG_HAND_COLOR,
@@ -46,7 +50,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         }),
       ),
     ).toEqual({
-      enabled: true,
+      areaVisible: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
       realization: {
@@ -69,7 +73,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         }),
       ),
     ).toEqual({
-      enabled: true,
+      areaVisible: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
       realization: {
@@ -106,7 +110,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         }),
       ),
     ).toEqual({
-      enabled: true,
+      areaVisible: true,
       behavior: "staticZoneAnchored",
       content: { kind: "localWallClock" },
       realization: {
@@ -132,7 +136,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         }),
       ),
     ).toEqual({
-      enabled: true,
+      areaVisible: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
       realization: {
@@ -154,7 +158,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         }),
       ),
     ).toEqual({
-      enabled: true,
+      areaVisible: true,
       behavior: "tapeAdvected",
       content: { kind: "hour24" },
       realization: {
@@ -330,7 +334,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
-  it("indicatorEntriesAreaVisible false sets effective.enabled false", () => {
+  it("indicatorEntriesAreaVisible false sets effective.areaVisible false", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -340,8 +344,15 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         },
       }),
     );
-    expect(eff.enabled).toBe(false);
+    expect(eff.areaVisible).toBe(false);
     expect(eff.realization.kind).toBe("text");
+  });
+
+  it("areaVisible defaults true when indicatorEntriesAreaVisible is omitted", () => {
+    const hourMarkers = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers };
+    delete (hourMarkers as { indicatorEntriesAreaVisible?: boolean }).indicatorEntriesAreaVisible;
+    const layout = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, hourMarkers };
+    expect(resolveEffectiveTopBandHourMarkers(layout).areaVisible).toBe(true);
   });
 
   it("paper palette uses dark default text ink on light circle bed", () => {

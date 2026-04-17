@@ -35,7 +35,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     expect(plan.instances).toHaveLength(24);
   });
 
-  it("omits instances when effective hour-marker entries are disabled", () => {
+  it("omits instances when indicator entries area is not visible", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -46,7 +46,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
       }),
     );
     const plan = buildSemanticTopBandHourMarkers(eff);
-    expect(eff.enabled).toBe(false);
+    expect(eff.areaVisible).toBe(false);
     expect(plan.instances).toHaveLength(0);
     expect(plan.source).toBe(eff);
   });
@@ -88,7 +88,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     }
   });
 
-  it("custom off yields enabled default text instances (hour24Label + default font realization)", () => {
+  it("custom off yields default text instances when indicator entries area is visible", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -97,7 +97,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
         },
       }),
     );
-    expect(eff.enabled).toBe(true);
+    expect(eff.areaVisible).toBe(true);
     expect(eff.realization).toEqual({
       kind: "text",
       fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -105,7 +105,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     });
 
     const plan = buildSemanticTopBandHourMarkers(eff);
-    expect(plan.source.enabled).toBe(true);
+    expect(plan.source.areaVisible).toBe(true);
     for (const inst of plan.instances) {
       expect(inst.realization).toEqual(eff.realization);
       expect(inst.content.kind).toBe("hour24Label");

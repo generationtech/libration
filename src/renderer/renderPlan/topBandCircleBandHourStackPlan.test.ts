@@ -102,7 +102,7 @@ function buildStackFromFixture(
 }
 
 describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
-  it("returns hourMarkerEntriesAbsent when effective markers are disabled (before tape column checks)", () => {
+  it("returns hourMarkerEntriesAbsent when indicator entries area is not visible (before tape column checks)", () => {
     const layout: DisplayChromeLayoutConfig = {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
@@ -113,7 +113,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
       },
     };
     const eff = resolveEffectiveTopBandHourMarkers(layout);
-    expect(eff.enabled).toBe(false);
+    expect(eff.areaVisible).toBe(false);
     expect(
       resolveTopBandInDiskHourMarkerSemanticPath({
         effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(layout),
@@ -277,6 +277,26 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       effectiveTopBandHourMarkerSelection: SEL_TEXT_DEFAULT,
       effectiveTopBandHourMarkers: EFF_TEXT_DEFAULT,
       glyphRenderContext: GLYPH_CTX,
+    });
+    expect(plan.items).toHaveLength(0);
+  });
+
+  it("returns no render-plan items when indicator entries area is not visible", () => {
+    const layoutHidden: DisplayChromeLayoutConfig = {
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      hourMarkers: {
+        ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+        indicatorEntriesAreaVisible: false,
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    };
+    const effHidden = resolveEffectiveTopBandHourMarkers(layoutHidden);
+    expect(effHidden.areaVisible).toBe(false);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
+    const plan = buildStackFromFixture(f, {
+      sel: effectiveTopBandHourMarkerSelection(layoutHidden),
+      eff: effHidden,
     });
     expect(plan.items).toHaveLength(0);
   });

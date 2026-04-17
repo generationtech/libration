@@ -78,12 +78,15 @@ export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): 
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
  * Content follows realization kind; behavior uses persisted `hourMarkers.behavior` when set, else
  * {@link defaultBehaviorFor} for the realization kind.
+ *
+ * `areaVisible` on the effective model mirrors `hourMarkers.indicatorEntriesAreaVisible` (default true):
+ * it controls structural presence of the indicator entries band, not behavior or realization.
  */
 export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
-  const entriesEnabled = hm.indicatorEntriesAreaVisible !== false;
+  const areaVisible = hm.indicatorEntriesAreaVisible !== false;
   const ink = getTopChromeStyle(layout.topChromePalette).hourIndicatorEntries;
   const defaultTextOrLineInk = ink.defaultForeground;
   const defaultWedgeFill = ink.defaultRadialWedgeFill;
@@ -117,7 +120,7 @@ export function resolveEffectiveTopBandHourMarkers(
       },
     };
     return {
-      enabled: entriesEnabled,
+      areaVisible,
       behavior,
       content: { kind: "hour24" },
       realization,
@@ -129,7 +132,7 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "analogClock") {
     const r = hm.realization;
     return {
-      enabled: entriesEnabled,
+      areaVisible,
       behavior,
       content: { kind: "localWallClock" },
       realization: {
@@ -144,7 +147,7 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "radialLine") {
     const r = hm.realization;
     return {
-      enabled: entriesEnabled,
+      areaVisible,
       behavior,
       content: { kind: "hour24" },
       realization: {
@@ -158,7 +161,7 @@ export function resolveEffectiveTopBandHourMarkers(
 
   const r = hm.realization;
   return {
-    enabled: entriesEnabled,
+    areaVisible,
     behavior,
     content: { kind: "hour24" },
     realization: {

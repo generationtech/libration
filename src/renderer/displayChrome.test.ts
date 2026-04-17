@@ -1058,7 +1058,7 @@ describe("buildDisplayChromeState", () => {
         },
       },
     });
-    expect(hidden.effectiveTopBandHourMarkers.enabled).toBe(false);
+    expect(hidden.effectiveTopBandHourMarkers.areaVisible).toBe(false);
     expect(hidden.utcTopScale.rows?.circleBandH).toBe(0);
     expect(baseline.utcTopScale.rows?.circleBandH).toBeGreaterThan(0);
     expect(hidden.utcTopScale.rows?.tickBandH).toBe(baseline.utcTopScale.rows?.tickBandH);

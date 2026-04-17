@@ -138,7 +138,11 @@ export type EffectiveTopBandHourMarkerLayout = {
  * alongside {@link DisplayChromeLayoutConfig.hourMarkers}.
  */
 export type EffectiveTopBandHourMarkers = {
-  enabled: boolean;
+  /**
+   * Structural presence of the indicator entries band in layout and render composition (from
+   * {@link HourMarkersConfig.indicatorEntriesAreaVisible}). Not feature “activation” or realization behavior.
+   */
+  areaVisible: boolean;
   behavior: EffectiveTopBandHourMarkerBehavior;
   content: EffectiveTopBandHourMarkerContent;
   realization: EffectiveTopBandHourMarkerRealization;

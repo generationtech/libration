@@ -79,7 +79,7 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
     throw new Error(`${IN_DISK_HOUR_ERR} effectiveTopBandHourMarkers is required`);
   }
   const eff = args.effectiveTopBandHourMarkers;
-  if (!eff.enabled) {
+  if (!eff.areaVisible) {
     return { kind: "hourMarkerEntriesAbsent" };
   }
   if (args.markerCount !== 24) {
@@ -212,7 +212,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   const effectiveMarkers = options.effectiveTopBandHourMarkers;
   const markers = options.markers;
 
-  if (!effectiveMarkers.enabled) {
+  if (!effectiveMarkers.areaVisible) {
     return { items };
   }
 
