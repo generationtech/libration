@@ -18,6 +18,7 @@ import { buildDisplayChromeState } from "./displayChrome";
 import {
   clampedTopChromeReservedHeightPx,
   sceneLayerViewport,
+  sceneLayerViewportRectPx,
 } from "./sceneViewportLayout";
 
 describe("sceneViewportLayout", () => {
@@ -36,6 +37,25 @@ describe("sceneViewportLayout", () => {
       devicePixelRatio: 2,
     });
     expect(88 + scene.height).toBe(full.height);
+  });
+
+  it("sceneLayerViewportRectPx matches sceneLayerViewport dimensions and origin y", () => {
+    const full = { width: 640, height: 480, devicePixelRatio: 2 };
+    const rect = sceneLayerViewportRectPx(full, 88);
+    const scene = sceneLayerViewport(full, 88);
+    expect(rect).toEqual({ x: 0, y: 88, width: 640, height: 392 });
+    expect(scene.width).toBe(rect.width);
+    expect(scene.height).toBe(rect.height);
+  });
+
+  it("sceneLayerViewportRectPx clamps oversized reserved height", () => {
+    const full = { width: 100, height: 40, devicePixelRatio: 1 };
+    expect(sceneLayerViewportRectPx(full, 999)).toEqual({
+      x: 0,
+      y: 40,
+      width: 100,
+      height: 0,
+    });
   });
 });
 
@@ -66,6 +86,13 @@ describe("scene viewport vs display chrome top band", () => {
 
     const sceneFull = sceneLayerViewport(viewport, reservedFull);
     const sceneHidden = sceneLayerViewport(viewport, reservedHidden);
+    const rectFull = sceneLayerViewportRectPx(viewport, reservedFull);
+    const rectHidden = sceneLayerViewportRectPx(viewport, reservedHidden);
+
+    expect(rectFull.y).toBe(reservedFull);
+    expect(rectHidden.y).toBe(reservedHidden);
+    expect(rectFull.height).toBe(sceneFull.height);
+    expect(rectHidden.height).toBe(sceneHidden.height);
 
     expect(sceneFull.height + reservedFull).toBe(viewport.height);
     expect(sceneHidden.height + reservedHidden).toBe(viewport.height);

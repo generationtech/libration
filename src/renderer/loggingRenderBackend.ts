@@ -40,6 +40,7 @@ export class LoggingRenderBackend implements RenderBackend {
       layerCount: input.layers.length,
       layerIds: input.layers.map((l) => l.id),
       viewport: input.viewport,
+      sceneLayerViewportPx: input.sceneLayerViewportPx,
     });
   }
 

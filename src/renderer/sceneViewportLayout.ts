@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { Viewport } from "./types";
+import type { SceneLayerViewportPx, Viewport } from "./types";
 
 /**
  * Clamps reserved top chrome height to the viewport so scene layout stays well-defined.
@@ -27,18 +27,35 @@ export function clampedTopChromeReservedHeightPx(
 }
 
 /**
- * Viewport for scene/map layer plans: full width, height excludes the reserved top chrome strip (CSS px).
- * Caller applies a matching screen-space origin offset (see {@link CanvasRenderBackend.render}).
+ * Scene/map strip as a CSS pixel rectangle: full width, height excludes reserved top chrome.
+ * {@link DisplayChromeState.topBand.height} should be passed as {@code topChromeReservedHeightPx}.
+ */
+export function sceneLayerViewportRectPx(
+  fullViewport: Viewport,
+  topChromeReservedHeightPx: number,
+): SceneLayerViewportPx {
+  const top = clampedTopChromeReservedHeightPx(fullViewport.height, topChromeReservedHeightPx);
+  return {
+    x: 0,
+    y: top,
+    width: Math.max(0, fullViewport.width),
+    height: Math.max(0, fullViewport.height - top),
+  };
+}
+
+/**
+ * Viewport for scene/map layer plans (width/height match {@link sceneLayerViewportRectPx}; includes DPR).
+ * Used by plan builders that take a {@link Viewport}; compositing still uses the rect + origin from the caller.
  */
 export function sceneLayerViewport(
   fullViewport: Viewport,
   topChromeReservedHeightPx: number,
 ): Viewport {
-  const top = clampedTopChromeReservedHeightPx(fullViewport.height, topChromeReservedHeightPx);
+  const rect = sceneLayerViewportRectPx(fullViewport, topChromeReservedHeightPx);
   const dpr = fullViewport.devicePixelRatio > 0 ? fullViewport.devicePixelRatio : 1;
   return {
-    width: Math.max(0, fullViewport.width),
-    height: Math.max(0, fullViewport.height - top),
+    width: rect.width,
+    height: rect.height,
     devicePixelRatio: dpr,
   };
 }

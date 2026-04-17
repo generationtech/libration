@@ -18,6 +18,7 @@ import {
   createViewportFromCanvas,
 } from "./renderBridge";
 import { createTimeContext } from "../core/time";
+import { sceneLayerViewportRectPx } from "../renderer/sceneViewportLayout";
 
 describe("renderBridge", () => {
   it("buildSceneRenderInput keeps scene defaults compatible with the canvas backend", () => {
@@ -28,17 +29,29 @@ describe("renderBridge", () => {
     });
     expect(input.scene).toEqual({});
     expect(input.layers).toEqual([]);
-    expect(input.topChromeReservedHeightPx).toBeUndefined();
+    expect(input.sceneLayerViewportPx).toEqual({
+      x: 0,
+      y: 0,
+      width: 640,
+      height: 480,
+    });
   });
 
-  it("buildSceneRenderInput forwards topChromeReservedHeightPx for scene compositing", () => {
+  it("buildSceneRenderInput resolves sceneLayerViewportPx from top band height (not forwarded raw)", () => {
+    const viewport = { width: 640, height: 480, devicePixelRatio: 1 };
     const input = buildSceneRenderInput({
       frame: { frameNumber: 0, now: 0, deltaMs: 0 },
-      viewport: { width: 640, height: 480, devicePixelRatio: 1 },
+      viewport,
       layers: [],
       topChromeReservedHeightPx: 72,
     });
-    expect(input.topChromeReservedHeightPx).toBe(72);
+    expect(input.sceneLayerViewportPx).toEqual(
+      sceneLayerViewportRectPx(viewport, 72),
+    );
+    expect(
+      "topChromeReservedHeightPx" in input &&
+        (input as { topChromeReservedHeightPx?: number }).topChromeReservedHeightPx !== undefined,
+    ).toBe(false);
   });
 
   it("createViewportFromCanvas uses element client dimensions (min 1×1)", () => {

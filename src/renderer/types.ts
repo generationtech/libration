@@ -42,11 +42,22 @@ export interface SceneVisualContext {
   showDebugOverlay?: boolean;
 }
 
+/**
+ * Scene/map strip in CSS pixels within the canvas layout box (origin top-left).
+ * Resolved upstream from the full viewport and display chrome (e.g. top band height).
+ */
+export interface SceneLayerViewportPx {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface SceneRenderInput {
   frame: FrameContext;
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene: SceneVisualContext;
-  /** CSS px reserved for top display chrome (`DisplayChromeState.topBand.height`). Scene layers use the band below. */
-  topChromeReservedHeightPx?: number;
+  /** Resolved scene strip for map layers; clip origin and dimensions for compositing. */
+  sceneLayerViewportPx: SceneLayerViewportPx;
 }

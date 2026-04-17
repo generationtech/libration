@@ -29,7 +29,6 @@ import {
 import { buildCityPinsRenderPlan } from "./renderPlan/sceneCityPinsPlan";
 import { buildSceneTextOverlayRenderPlan } from "./renderPlan/sceneTextOverlayPlan";
 import type { RenderBackend } from "./RenderBackend";
-import { clampedTopChromeReservedHeightPx, sceneLayerViewport } from "./sceneViewportLayout";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
 
 /**
@@ -75,18 +74,25 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, viewport.width, viewport.height);
 
-    const topChromePx = clampedTopChromeReservedHeightPx(
-      viewport.height,
-      input.topChromeReservedHeightPx ?? 0,
-    );
-    const sceneViewport = sceneLayerViewport(viewport, topChromePx);
-    const useSceneInset = topChromePx > 0 && sceneViewport.height > 0;
+    const r = input.sceneLayerViewportPx;
+    const sceneViewport: Viewport = {
+      width: r.width,
+      height: r.height,
+      devicePixelRatio: dpr,
+    };
+    const useSceneInset =
+      r.width > 0 &&
+      r.height > 0 &&
+      (r.x !== 0 ||
+        r.y !== 0 ||
+        r.width !== viewport.width ||
+        r.height !== viewport.height);
     if (useSceneInset) {
       ctx.save();
       ctx.beginPath();
-      ctx.rect(0, topChromePx, viewport.width, sceneViewport.height);
+      ctx.rect(r.x, r.y, r.width, r.height);
       ctx.clip();
-      ctx.translate(0, topChromePx);
+      ctx.translate(r.x, r.y);
     }
 
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);

@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { sceneLayerViewportRectPx } from "../renderer/sceneViewportLayout";
 import type {
   FrameContext,
   RenderableLayerState,
@@ -56,16 +57,18 @@ export function buildSceneRenderInput(options: {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene?: SceneVisualContext;
-  /** Must match {@link DisplayChromeState.topBand.height} from the same-frame chrome build. */
+  /**
+   * Must match {@link DisplayChromeState.topBand.height} from the same-frame chrome build.
+   * Used only to derive {@link SceneRenderInput.sceneLayerViewportPx}; not forwarded on the input.
+   */
   topChromeReservedHeightPx?: number;
 }): SceneRenderInput {
+  const topChromePx = options.topChromeReservedHeightPx ?? 0;
   return {
     frame: options.frame,
     viewport: options.viewport,
     layers: options.layers,
     scene: options.scene ?? {},
-    ...(options.topChromeReservedHeightPx !== undefined
-      ? { topChromeReservedHeightPx: options.topChromeReservedHeightPx }
-      : {}),
+    sceneLayerViewportPx: sceneLayerViewportRectPx(options.viewport, topChromePx),
   };
 }
