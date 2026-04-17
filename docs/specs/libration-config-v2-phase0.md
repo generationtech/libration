@@ -48,9 +48,15 @@ Conceptually, the persisted model carries:
 - optional behavior override
 - realization choice
 - layout sizing
+- content-row padding overrides
 - realization-scoped appearance overrides
 
 Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
+
+Top-band visibility that sits alongside this model is also structured in chrome layout state, including:
+- `chrome.layout.hourMarkers.visible`
+- `chrome.layout.tickTapeVisible`
+- `chrome.layout.timezoneLetterRowVisible`
 
 ---
 
@@ -58,11 +64,11 @@ Runtime content remains derived from that structured intent rather than persiste
 
 Top-band hour-marker text currently resolves through:
 
-`structured chrome layout -> resolveEffectiveTopBandHourMarkers -> semantic text realization -> TypographyRole / resolveTextStyle -> RenderPlan text -> Canvas text bridge`
+`structured chrome layout -> resolveEffectiveTopBandHourMarkers -> semantic text realization -> typography/intrinsic resolver -> layout -> realization adapter -> RenderPlan text -> Canvas text bridge`
 
 Procedural glyphs resolve through:
 
-`structured chrome layout -> resolveEffectiveTopBandHourMarkers -> semantic glyph realization -> glyph policy/spec -> procedural glyph -> RenderPlan primitives`
+`structured chrome layout -> resolveEffectiveTopBandHourMarkers -> semantic glyph realization -> glyph policy/spec -> layout -> procedural glyph -> RenderPlan primitives`
 
 The current config does **not** point directly at raw TTF files or renderer-owned glyph geometry.
 
@@ -77,6 +83,13 @@ The truthful top-band hour-marker runtime contract is in place.
 The truthful top-band hour-marker editor contract is in place.
 
 The truthful top-band hour-marker persistence contract is in place.
+
+The truthful indicator-band vertical model is in place:
+- intrinsic content height is solved independently
+- padding affects spacing only
+- visible indicator-band height follows intrinsic content height plus resolved top/bottom padding
+- Auto padding is intrinsic-based, not slack-based
+- padding never affects marker scale
 
 Current follow-on config/editor work should focus on:
 - adding new hour-marker controls only when a concrete feature requires them

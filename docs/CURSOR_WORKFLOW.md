@@ -35,6 +35,8 @@ ChatGPT:
   - Layout
   - Appearance
   - derived semantic content where required at runtime
+- preserve the invariant that indicator-band padding affects spacing only and never marker scale
+- preserve the independent top-band visibility controls for indicator entries, tick tape, and NATO row
 - continue renderer-agnostic feature work without resurrecting migration scaffolding
 - preserve the intentional first-load default of `AppConfig.data.mode = "static"` unless explicitly changing product behavior
 - maintain public-repo coherence with AGPL-3.0 licensing and canonical-reference positioning
@@ -65,6 +67,7 @@ DO NOT:
 - resurrect legacy flat hour-marker persistence
 - generalize the hour-marker solution to other surfaces without feature pressure
 - remove or duplicate license headers during routine edits
+- let row/band height or padding influence marker scale
 
 ---
 

@@ -89,6 +89,11 @@ Current top-band design:
 - Fixed built-in top chrome styling (single token set in config; not user-selectable)
 - Fully RenderPlan-driven
 
+Top-band major areas now expose independent visibility controls for:
+- 24-hour indicator entries
+- center tickmark tape
+- NATO timezone row
+
 Recent chrome simplification:
 - hour-marker circle backgrounds have been removed from the top-band render plan
 - `NOON` / `MIDNIGHT` tape annotations are no longer emitted in the top-band render plan
@@ -228,19 +233,42 @@ This means the current app runtime has one authoritative implementation rather t
 
 ### Hour-marker disk row: vertical content model (FINAL)
 
-The **content row** is the vertical slice inside the circle-band disk strip (`diskBandH`). One canonical pipeline applies to text and procedural glyph realizations:
+The **content row** is the vertical slice allocated to hour-disk interiors inside the top-band indicator strip. One canonical pipeline applies to text and procedural glyph realizations.
 
-1. **Intrinsic content height** (`intrinsicContentHeightPx`) — how tall the marker content is *before* row padding:
-   - **Text** — prefer Canvas `measureText` ink height when a 2D context exists; otherwise deterministic typography (`lineHeightPx` or font-size × em). See `topBandHourMarkerTextIntrinsicHeight.ts` and `renderer/topBandHourMarkerTextInkMeasure.ts`.
-   - **Glyphs** (analog, radial line/wedge, etc.) — geometry: fitted head-disk diameter from `hourCircleHeadMetrics` via `resolveHourMarkerDiskRowIntrinsicContentHeightPx`.
+**Scale vs spacing (authoritative split)**
 
-2. **Content-row padding** — persisted as `contentPaddingTopPx` / `contentPaddingBottomPx` on the effective layout. Semantics are defined only in `topBandHourMarkerContentRowVerticalMetrics.ts` (`resolveHourMarkerContentRowPaddingPx`, `computeHourMarkerContentRowVerticalMetrics`).
+- **Scale** — hour-marker `sizeMultiplier`, normal width/fit rules, and realization-specific intrinsic sizing determine marker scale. Padding must never influence intrinsic content height, radius, label size, or glyph size.
+- **Spacing** — `contentPaddingTopPx` / `contentPaddingBottomPx` change only the visible indicator-band height and vertical placement inside that band.
 
-3. **Default padding** — when both sides are omitted, slack (`diskBandH − intrinsic`) is split **equally** between top and bottom (centered slack).
+**Intrinsic content height**
 
-4. **Allocated row height** — `paddingTop + intrinsic + paddingBottom` (equals `diskBandH` when padding is autocomputed from omitted sides). **Content center Y** is intrinsic midline plus optional small glyph numeral tweak — not a second parallel vertical model.
+- **Text** — resolved once on the product path by the top-band text intrinsic resolver: prefer Canvas `measureText` ink height when a 2D context exists; otherwise use deterministic typography (`lineHeightPx` or font-size × em).
+- **Glyphs** — derived from fitted head-disk geometry via `hourCircleHeadMetrics` / `resolveHourMarkerDiskRowIntrinsicContentHeightPx`.
 
-**Separation of concerns:** intrinsic acquisition (text vs glyph) happens upstream; padding resolution and row math live in `topBandHourMarkerContentRowVerticalMetrics.ts`; semantic layout (`topBandHourMarkersLayout.ts`) composes disk-row placement with the shared stack; render plans consume the same inputs. Do not reintroduce implicit padding derived from legacy head-disk Y hacks — that path is closed.
+**Padding and row math**
+
+- `resolveHourMarkerContentRowPaddingPx` and `computeHourMarkerContentRowVerticalMetrics` define Auto padding and allocated row height.
+- **Auto** is intrinsic-proportional per side when omitted; it is not derived from leftover strip slack.
+- Allocated row height is:
+  - `paddingTop + intrinsic + paddingBottom`
+
+**Visible indicator band height**
+
+The product chrome path solves the visible 24-hour indicator band directly from:
+- intrinsic content height
+- resolved top padding
+- resolved bottom padding
+
+There is no separate slack-split or “padded row converges to a fixed disk strip” stage in the final model.
+
+**Separation of concerns**
+
+- intrinsic acquisition happens upstream of semantic layout
+- padding resolution and row math live in the vertical-metrics module
+- `topBandHourMarkersLayout.ts` places disk-row centers using shared row metrics
+- render plans consume the same resolved inputs
+
+Do not reintroduce implicit padding derived from legacy head-disk Y hacks or any path where padding changes scale.
 
 ---
 
@@ -251,15 +279,13 @@ For top-band hour markers, the runtime and editor now distinguish explicit persi
 Persisted/editor-facing axes:
 - **Behavior** — e.g. `tapeAdvected`, `staticZoneAnchored`
 - **Realization** — text, analogClock, radialLine, radialWedge
-- **Layout** — size and placement semantics
+- **Layout** — size and placement semantics, including content-row padding
 - **Appearance** — realization-specific appearance controls
 
 Derived runtime concern:
 - **Content** — e.g. `hour24`, `localWallClock`
 
 This means `content` remains part of semantic runtime modeling, but it is no longer treated as a persisted/editor-owned axis for hour markers.
-
-This model is authoritative for runtime, editor, and persistence evolution.
 
 ---
 
@@ -357,6 +383,8 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - semantic-only runtime path for in-disk hour markers
 - structured `chrome.layout.hourMarkers` persistence
 - dedicated `HourMarkersEditor` with canonical section structure: Behavior / Realization / Appearance / Layout
+- content-row top/bottom padding controls for the indicator band
+- independent `tickTapeVisible` / `timezoneLetterRowVisible` top-band visibility controls
 - structured-only hour-marker authoring, normalization, and runtime consumption
 - top-band and bottom-chrome policy integration
 - backend-neutral text identity (`font.assetId`)

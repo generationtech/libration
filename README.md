@@ -39,7 +39,22 @@ Top band consists of:
 - Tickmark tape (hour / 15 / 5)
 - NATO timezone strip (continuous rectangular band)
 
-The top instrument strip uses one fixed built-in appearance (colors and weights in `src/config/topChromeStyle.ts`).
+The top instrument strip uses one built-in appearance for now; future tweaks will be direct config controls, not bundled palette presets.
+
+Top chrome is now treated as real application layout:
+- the top chrome stack reserves vertical space above the map
+- the scene viewport begins below the visible top chrome
+- hiding top-band areas reclaims that space instead of leaving map content hidden underneath chrome
+
+Chrome editing is now organized by major area rather than one long mixed panel. Current major areas include:
+- 24-hour indicator entries
+- 24-hour tickmarks tape
+- NATO timezone area
+
+Each top-band area now has independent persisted visibility where applicable, including:
+- `chrome.layout.hourMarkers.visible`
+- `chrome.layout.tickTapeVisible`
+- `chrome.layout.timezoneLetterRowVisible`
 
 Recent simplification:
 - top-band alignment and timing behavior are unchanged
@@ -84,6 +99,25 @@ That model is authoritative for:
 - normalization
 - runtime resolution
 - persistence
+
+### Indicator-band vertical model
+
+The top-most 24-hour indicator band now follows a strict final rule:
+
+`visible band height = intrinsic content height + resolved top padding + resolved bottom padding`
+
+Where:
+- intrinsic content height comes from text intrinsic sizing in text mode
+- intrinsic content height comes from fitted geometry in glyph modes
+- `contentPaddingTopPx` / `contentPaddingBottomPx` affect spacing only
+- padding must never affect text size, glyph size, radius, or emitted marker scale
+- Auto padding is intrinsic-based, not fixed-band/slack-based
+
+The config popup exposes:
+- **Content row padding (top)**
+- **Content row padding (bottom)**
+
+Empty values use Auto; numeric values are exact px overrides.
 
 ---
 

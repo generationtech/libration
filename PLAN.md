@@ -27,7 +27,7 @@ Focus:
 Current truthful top-band model:
 - **Behavior** → `tapeAdvected`, `staticZoneAnchored`
 - **Realization** → `text`, `analogClock`, `radialLine`, `radialWedge`
-- **Layout** → size / placement semantics
+- **Layout** → size / placement semantics, including content-row padding
 - **Appearance** → realization-scoped styling controls
 - **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis
 
@@ -41,12 +41,22 @@ Recent completed work:
 - removed the obsolete `customRepresentationEnabled` hour-marker flag
 - completed strict config ↔ glyph ↔ renderer layering cleanup and upstream type ownership cleanup
 - switched runtime resolution to structured hour-marker input
+- introduced Chrome major-area editing for:
+  - 24-hour indicator entries
+  - 24-hour tickmarks tape
+  - NATO timezone area
+- added real persisted visibility controls for top-band areas including hour indicators, tick tape, and NATO row
+- added persisted content-row top/bottom padding controls for the 24-hour indicator band
+- finalized the indicator-band vertical model so visible band height follows intrinsic content height plus resolved padding
+- corrected top chrome so it reserves layout space above the scene instead of overlaying map content
+- removed the remaining bundled top-strip palette selector and collapsed top chrome to one built-in appearance
 - verified that fresh deploys default `AppConfig.data.mode` to `static`
 - completed public repo and AGPL licensing
 - published the initial public release (`v1.0.0`)
 
 Immediate next target:
 - continue incremental top-band feature and styling work using the completed structured model
+- continue refining the newer chrome-area editor structure across top-band surfaces without re-monolithizing ChromeTab
 - avoid reopening hour-marker migration work unless a concrete bug requires it
 - keep public-facing docs, defaults, and licensing posture coherent as the project evolves
 
@@ -85,12 +95,16 @@ Implemented production path:
   - radialLine
   - radialWedge
 - strict semantic-only runtime contract for in-disk hour markers
+- intrinsic-only text/glyph scale path
+- intrinsic-based Auto content-row padding
+- independent tick tape / NATO row visibility controls
 
 Important consequences:
 - no fallback runtime path remains for top-band hour markers
 - production uses the semantic path only
 - editor, normalization, and runtime now share one authoritative config model
 - tests rely on semantic fixtures and structured config, not degraded fallback behavior or flat compatibility fields
+- padding no longer influences marker scale
 
 ---
 
@@ -114,6 +128,8 @@ Important consequences:
 - canonicalized hour-marker styling onto `appearance` (removed legacy top-level realization color)
 - removed the obsolete `customRepresentationEnabled` hour-marker flag
 - aligned the editor so every persisted hour-marker field is directly visible and editable
+- added content-row top/bottom padding controls to the Layout section
+- added independent tick-tape visibility control beside the existing NATO-row visibility
 
 ### 4. Persistence and Runtime Cutover
 - introduced structured `chrome.layout.hourMarkers`
@@ -121,6 +137,7 @@ Important consequences:
 - migrated editor authoring to structured-only hour markers
 - migrated runtime/resolver consumption to structured-only hour markers
 - removed legacy flat hour-marker persistence fields and compatibility output
+- finalized the indicator-band vertical model around intrinsic content height plus resolved content-row padding
 
 ---
 
@@ -146,7 +163,7 @@ These should be added only in response to concrete feature needs.
 ### 4. Future Rendering Work (Deferred, Not Current)
 - renderer-owned glyph outline rendering
 - atlas/SDF-based text rendering
-- RTX/native backend realization
+- RTX/native backend
 
 ---
 
