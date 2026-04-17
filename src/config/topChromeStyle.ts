@@ -354,6 +354,14 @@ const TOP_CHROME_STYLE_NEUTRAL = {
     sizeFracOfDiskLabel: 0.635,
     fontWeight: 750,
   },
+  /**
+   * Default ink for 24-hour indicator entries (text / radial line) on the circle-band instrument bed
+   * ({@link instrument.circleBandBed*}). Distinct from {@link hourDisk.label}, which targets white disk fills.
+   */
+  hourIndicatorEntries: {
+    defaultForeground: "rgba(225, 238, 252, 0.94)",
+    defaultRadialWedgeFill: "rgba(210, 232, 255, 0.42)",
+  },
   zoneText: {
     letter: "rgba(235, 246, 255, 0.98)",
     geographyCaption: "rgba(255, 255, 255, 0.82)",
@@ -451,6 +459,10 @@ const TOP_CHROME_STYLE_DARK = {
     sizeFracOfDiskLabel: TOP_CHROME_STYLE_NEUTRAL.markerAnnotation.sizeFracOfDiskLabel,
     fontWeight: TOP_CHROME_STYLE_NEUTRAL.markerAnnotation.fontWeight,
   },
+  hourIndicatorEntries: {
+    defaultForeground: "rgba(218, 234, 252, 0.93)",
+    defaultRadialWedgeFill: "rgba(200, 226, 255, 0.4)",
+  },
   zoneText: {
     letter: "rgba(225, 238, 252, 0.97)",
     geographyCaption: "rgba(230, 240, 255, 0.78)",
@@ -545,6 +557,10 @@ const TOP_CHROME_STYLE_PAPER = {
     color: "rgba(52, 38, 24, 0.86)",
     sizeFracOfDiskLabel: TOP_CHROME_STYLE_NEUTRAL.markerAnnotation.sizeFracOfDiskLabel,
     fontWeight: TOP_CHROME_STYLE_NEUTRAL.markerAnnotation.fontWeight,
+  },
+  hourIndicatorEntries: {
+    defaultForeground: "rgba(42, 30, 18, 0.92)",
+    defaultRadialWedgeFill: "rgba(42, 30, 18, 0.38)",
   },
   zoneText: {
     letter: "rgba(255, 252, 245, 0.98)",

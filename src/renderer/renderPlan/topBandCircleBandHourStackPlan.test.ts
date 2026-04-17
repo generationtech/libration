@@ -21,6 +21,7 @@ import {
   topBandWrapOffsetsForCenteredExtent,
 } from "../displayChrome";
 import {
+  cloneHourMarkersConfig,
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
@@ -29,14 +30,13 @@ import {
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
+import { computeHourDiskLabelSizePx, getTopChromeStyle, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
 import { topBandDiskWrapHalfExtentPx } from "../topBandHourDiskWrapExtents";
 import {
   buildTopBandCircleBandHourStackRenderPlan,
   resolveTopBandInDiskHourMarkerSemanticPath,
   type TopBandInDiskHourMarkerSemanticRenderPath,
 } from "./topBandCircleBandHourStackPlan";
-import { resolveHourMarkerGlyphStyle } from "../../glyphs/glyphStyles.ts";
 import {
   buildFullUtcTopBandHourDiskFixture,
   effectiveTopBandHourMarkersForLayout,
@@ -102,6 +102,29 @@ function buildStackFromFixture(
 }
 
 describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
+  it("returns hourMarkerEntriesAbsent when effective markers are disabled (before tape column checks)", () => {
+    const layout: DisplayChromeLayoutConfig = {
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      hourMarkers: {
+        ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
+        indicatorEntriesAreaVisible: false,
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    };
+    const eff = resolveEffectiveTopBandHourMarkers(layout);
+    expect(eff.enabled).toBe(false);
+    expect(
+      resolveTopBandInDiskHourMarkerSemanticPath({
+        effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(layout),
+        effectiveTopBandHourMarkers: eff,
+        markerCount: 0,
+        structuralZoneCenterXPx: undefined,
+        referenceNowMs: undefined,
+      }),
+    ).toEqual({ kind: "hourMarkerEntriesAbsent" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);
+  });
+
   const effText = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
@@ -847,7 +870,11 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       },
     };
 
-    const defaultWedgeFill = resolveHourMarkerGlyphStyle("topBandHourDefault").radialWedge.fill;
+    const effResolvedWedge = resolveEffectiveTopBandHourMarkers(LAYOUT_RADIAL_WEDGE);
+    const defaultWedgeFill =
+      effResolvedWedge.realization.kind === "radialWedge"
+        ? effResolvedWedge.realization.resolvedAppearance.fillColor
+        : "";
 
     it("routes radialWedge through resolver → planner → layout → adapter on full tape", () => {
       const w = 960;
@@ -1053,7 +1080,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(plan.items.filter((i) => i.kind === "line").length).toBeGreaterThan(0);
     });
 
-    const DEFAULT_HOUR_DISK_TEXT_FILL = "rgba(8, 28, 58, 0.94)";
+    const DEFAULT_HOUR_DISK_TEXT_FILL = getTopChromeStyle("neutral").hourIndicatorEntries.defaultForeground;
 
     it("text hour disk uses default fill when effective selection has no color", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });

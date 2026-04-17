@@ -59,7 +59,9 @@ export type TopBandInDiskHourMarkerSemanticRenderPath =
   | { kind: "semanticTextHourDisks" }
   | { kind: "semanticAnalogClockHourDisks" }
   | { kind: "semanticRadialLineHourDisks" }
-  | { kind: "semanticRadialWedgeHourDisks" };
+  | { kind: "semanticRadialWedgeHourDisks" }
+  /** Hour-marker entries area is absent from chrome (no semantic in-disk emission). */
+  | { kind: "hourMarkerEntriesAbsent" };
 
 /**
  * Resolves the in-disk semantic render path or throws with a developer-facing message.
@@ -76,12 +78,15 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
   if (args.effectiveTopBandHourMarkers === undefined) {
     throw new Error(`${IN_DISK_HOUR_ERR} effectiveTopBandHourMarkers is required`);
   }
+  const eff = args.effectiveTopBandHourMarkers;
+  if (!eff.enabled) {
+    return { kind: "hourMarkerEntriesAbsent" };
+  }
   if (args.markerCount !== 24) {
     throw new Error(`${IN_DISK_HOUR_ERR} expected 24 tape columns, got ${args.markerCount}`);
   }
 
   const sel = args.effectiveTopBandHourMarkerSelection;
-  const eff = args.effectiveTopBandHourMarkers;
 
   if (sel.kind === "text") {
     if (eff.realization.kind !== "text") {
@@ -206,6 +211,10 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   const gctx = options.glyphRenderContext;
   const effectiveMarkers = options.effectiveTopBandHourMarkers;
   const markers = options.markers;
+
+  if (!effectiveMarkers.enabled) {
+    return { items };
+  }
 
   const inDiskPath = resolveTopBandInDiskHourMarkerSemanticPath({
     effectiveTopBandHourMarkerSelection: topBandSel,

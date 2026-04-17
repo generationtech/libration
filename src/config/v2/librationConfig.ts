@@ -462,6 +462,7 @@ export function assertIsNormalizedLibrationConfig(
   if (
     typeof hm !== "object" ||
     hm === null ||
+    typeof (hm as { indicatorEntriesAreaVisible?: unknown }).indicatorEntriesAreaVisible !== "boolean" ||
     typeof hm.layout !== "object" ||
     hm.layout === null ||
     typeof hm.layout.sizeMultiplier !== "number" ||

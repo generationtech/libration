@@ -212,4 +212,33 @@ describe("HourMarkersEditor structured authoring", () => {
     );
     expect(last!.chrome.layout.hourMarkers.layout.contentPaddingTopPx).toBeUndefined();
   });
+
+  it("indicator entries area visibility toggles config and disables subordinate controls when hidden", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    const areaCb = screen.getByRole("checkbox", {
+      name: /Show 24-hour indicator entries area above the tick tape/i,
+    });
+    expect(areaCb).toBeChecked();
+    expect(
+      screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }),
+    ).not.toBeDisabled();
+
+    fireEvent.click(areaCb);
+    expect(last!.chrome.layout.hourMarkers.indicatorEntriesAreaVisible).toBe(false);
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeDisabled();
+
+    fireEvent.click(areaCb);
+    expect(last!.chrome.layout.hourMarkers.indicatorEntriesAreaVisible).not.toBe(false);
+    expect(
+      screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }),
+    ).not.toBeDisabled();
+  });
 });

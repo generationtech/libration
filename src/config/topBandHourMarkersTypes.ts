@@ -58,6 +58,12 @@ export type HourMarkersTapeHourNumberOverlay = {
 
 export interface HourMarkersConfig {
   realization: HourMarkersRealizationConfig;
+  /**
+   * When false, the 24-hour indicator entries row (hour-disk strip above the tick tape) is omitted from planning,
+   * layout height, and render-plan emission. Tick tape and NATO row are unchanged.
+   * @default true
+   */
+  indicatorEntriesAreaVisible?: boolean;
   /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
   behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {

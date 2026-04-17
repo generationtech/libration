@@ -27,6 +27,8 @@ const HOUR_MARKER_BEHAVIOR_OPTIONS: readonly EffectiveTopBandHourMarkerBehavior[
 export type HourMarkerBehaviorEditorProps = {
   hourMarkers: HourMarkersConfig;
   wired: boolean;
+  /** Disables authoring controls while keeping the editor mounted (e.g. entries area hidden). */
+  authoringDisabled?: boolean;
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
 };
 
@@ -44,17 +46,23 @@ function commitHourMarkers(
   });
 }
 
-export function HourMarkerBehaviorEditor({ hourMarkers, wired, updateConfig }: HourMarkerBehaviorEditorProps) {
+export function HourMarkerBehaviorEditor({
+  hourMarkers,
+  wired,
+  authoringDisabled = false,
+  updateConfig,
+}: HourMarkerBehaviorEditorProps) {
   const selectValue = hourMarkers.behavior ?? defaultBehaviorFor(hourMarkers.realization.kind);
+  const disabled = !wired || authoringDisabled;
   return (
     <ConfigControlRow label="Hour marker behavior">
       <select
         className="config-input"
         value={selectValue}
-        disabled={!wired}
+        disabled={disabled}
         aria-label="Top-band hour marker placement behavior"
         onChange={
-          wired && updateConfig
+          wired && !authoringDisabled && updateConfig
             ? (e) => {
                 const v = e.currentTarget.value as EffectiveTopBandHourMarkerBehavior;
                 commitHourMarkers(updateConfig, (hm) => ({

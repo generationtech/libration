@@ -125,6 +125,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
+        indicatorEntriesAreaVisible: true,
         realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#aabbcc" } },
         layout: { sizeMultiplier: 2 },
       },

@@ -184,6 +184,8 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
 
+  const indicatorEntriesAreaVisible = raw.indicatorEntriesAreaVisible !== false;
+
   const realizationRaw = raw.realization;
   if (!isPlainObject(realizationRaw)) {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
@@ -210,6 +212,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      indicatorEntriesAreaVisible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
@@ -224,6 +227,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      indicatorEntriesAreaVisible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
@@ -238,6 +242,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      indicatorEntriesAreaVisible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
@@ -252,6 +257,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       appearance,
     };
     return {
+      indicatorEntriesAreaVisible,
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,

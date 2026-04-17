@@ -45,6 +45,8 @@ const TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER = "#335577";
 type HourMarkerEditorBaseProps = {
   hourMarkers: HourMarkersConfig;
   wired: boolean;
+  /** When false, subordinate realization/appearance/layout controls are disabled. */
+  entriesAreaEnabled: boolean;
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
 };
 
@@ -135,21 +137,29 @@ function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarke
   return out;
 }
 
-function BehaviorSection(props: HourMarkerEditorBaseProps) {
-  return <HourMarkerBehaviorEditor {...props} />;
+function BehaviorSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
+  return (
+    <HourMarkerBehaviorEditor
+      hourMarkers={hourMarkers}
+      wired={wired}
+      updateConfig={updateConfig}
+      authoringDisabled={!wired || !entriesAreaEnabled}
+    />
+  );
 }
 
-function RealizationSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
+function RealizationSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
   const kind = hourMarkers.realization.kind;
+  const authoringOff = !wired || !entriesAreaEnabled;
   return (
     <ConfigControlRow label="Realization kind">
       <select
         className="config-input"
         value={kind}
-        disabled={!wired}
+        disabled={authoringOff}
         aria-label="Top-band hour marker realization kind"
         onChange={
-          wired && updateConfig
+          wired && entriesAreaEnabled && updateConfig
             ? (e) => {
                 const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
                 commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
@@ -171,8 +181,15 @@ type AppearanceSectionProps = HourMarkerEditorBaseProps & {
   hourMarkerFontOptions: readonly { id: FontAssetId; label: string }[];
 };
 
-function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOptions }: AppearanceSectionProps) {
+function AppearanceSection({
+  hourMarkers,
+  wired,
+  updateConfig,
+  entriesAreaEnabled,
+  hourMarkerFontOptions,
+}: AppearanceSectionProps) {
   const rk = hourMarkers.realization.kind;
+  const authoringOff = !wired || !entriesAreaEnabled;
 
   if (rk === "text") {
     const r = hourMarkers.realization;
@@ -184,10 +201,10 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
           <select
             className="config-input"
             value={fontId}
-            disabled={!wired}
+            disabled={authoringOff}
             aria-label="Font for top-band hour disk numerals"
             onChange={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value;
                     commitHourMarkers(updateConfig, (hm) => {
@@ -229,9 +246,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
                 : "Custom color for top-band hour markers"
             }
             value={textColor ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-            disabled={!wired}
+            disabled={authoringOff}
             onChange={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value;
                     commitHourMarkers(updateConfig, (hm) => {
@@ -255,9 +272,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
             type="button"
             className="config-input"
             aria-label="Clear hour marker color override"
-            disabled={!wired || textColor === undefined}
+            disabled={authoringOff || textColor === undefined}
             onClick={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? () => {
                     commitHourMarkers(updateConfig, (hm) => {
                       if (hm.realization.kind !== "text") {
@@ -298,9 +315,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
             aria-label="Top-band analog hour marker hand color"
             title={hand === undefined ? "No hand color override" : "Hand stroke color"}
             value={hand ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-            disabled={!wired}
+            disabled={authoringOff}
             onChange={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value;
                     commitHourMarkers(updateConfig, (hm) => {
@@ -325,9 +342,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
             type="button"
             className="config-input"
             aria-label="Clear analog hand color override"
-            disabled={!wired || hand === undefined}
+            disabled={authoringOff || hand === undefined}
             onClick={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? () => {
                     commitHourMarkers(updateConfig, (hm) => {
                       if (hm.realization.kind !== "analogClock") {
@@ -357,9 +374,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
             aria-label="Top-band analog hour marker face color"
             title={face === undefined ? "No face color override" : "Clock face fill color"}
             value={face ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-            disabled={!wired}
+            disabled={authoringOff}
             onChange={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value;
                     commitHourMarkers(updateConfig, (hm) => {
@@ -384,9 +401,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
             type="button"
             className="config-input"
             aria-label="Clear analog face color override"
-            disabled={!wired || face === undefined}
+            disabled={authoringOff || face === undefined}
             onClick={
-              wired && updateConfig
+              wired && entriesAreaEnabled && updateConfig
                 ? () => {
                     commitHourMarkers(updateConfig, (hm) => {
                       if (hm.realization.kind !== "analogClock") {
@@ -424,9 +441,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
           aria-label="Top-band radial line hour marker color"
           title={line === undefined ? "No line color override" : "Radial line stroke color"}
           value={line ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={!wired}
+          disabled={authoringOff}
           onChange={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const v = e.currentTarget.value;
                   commitHourMarkers(updateConfig, (hm) => {
@@ -447,9 +464,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
           type="button"
           className="config-input"
           aria-label="Clear radial line color override"
-          disabled={!wired || line === undefined}
+          disabled={authoringOff || line === undefined}
           onClick={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? () => {
                   commitHourMarkers(updateConfig, (hm) => {
                     if (hm.realization.kind !== "radialLine") {
@@ -482,9 +499,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
           aria-label="Top-band radial wedge hour marker fill color"
           title={fill === undefined ? "No fill color override" : "Wedge fill color"}
           value={fill ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={!wired}
+          disabled={authoringOff}
           onChange={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const v = e.currentTarget.value;
                   commitHourMarkers(updateConfig, (hm) => {
@@ -505,9 +522,9 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
           type="button"
           className="config-input"
           aria-label="Clear radial wedge fill color override"
-          disabled={!wired || fill === undefined}
+          disabled={authoringOff || fill === undefined}
           onClick={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? () => {
                   commitHourMarkers(updateConfig, (hm) => {
                     if (hm.realization.kind !== "radialWedge") {
@@ -546,12 +563,13 @@ function hourMarkersLayoutOmitPadding(
   return out;
 }
 
-function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
+function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
   const sm = hourMarkers.layout.sizeMultiplier;
   const padTop = hourMarkers.layout.contentPaddingTopPx;
   const padBottom = hourMarkers.layout.contentPaddingBottomPx;
   const rk = hourMarkers.realization.kind;
   const tapeOn = hourMarkers.tapeHourNumberOverlay?.enabled === true;
+  const authoringOff = !wired || !entriesAreaEnabled;
   return (
     <>
       <ConfigControlRow label="Hour marker size">
@@ -561,11 +579,11 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
           min={0.5}
           max={2}
           step={0.05}
-          disabled={!wired}
+          disabled={authoringOff}
           aria-label="Hour marker size multiplier"
           value={sm}
           onChange={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const n = Number(e.currentTarget.value);
                   if (!Number.isFinite(n)) {
@@ -590,12 +608,12 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
           min={HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX}
           max={HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX}
           step={0.5}
-          disabled={!wired}
+          disabled={authoringOff}
           aria-label="Top padding of the hour-marker content row inside the disk strip, in pixels; leave empty for automatic"
           placeholder="Auto"
           value={padTop ?? ""}
           onChange={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const raw = e.currentTarget.value.trim();
                   if (raw === "") {
@@ -631,12 +649,12 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
           min={HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX}
           max={HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX}
           step={0.5}
-          disabled={!wired}
+          disabled={authoringOff}
           aria-label="Bottom padding of the hour-marker content row inside the disk strip, in pixels; leave empty for automatic"
           placeholder="Auto"
           value={padBottom ?? ""}
           onChange={
-            wired && updateConfig
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const raw = e.currentTarget.value.trim();
                   if (raw === "") {
@@ -670,11 +688,11 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
           <label className="config-control-row__checkbox">
             <input
               type="checkbox"
-              disabled={!wired}
+              disabled={authoringOff}
               aria-label="Show boxed hour numerals on the tick tape (glyph mode)"
               checked={tapeOn}
               onChange={
-                wired && updateConfig
+                wired && entriesAreaEnabled && updateConfig
                   ? (e) => {
                       const on = e.currentTarget.checked;
                       commitHourMarkers(updateConfig, (hm) => ({
@@ -703,15 +721,41 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
   const lay = config.chrome.layout;
   const hourMarkers = lay.hourMarkers;
   const wired = Boolean(updateConfig);
+  const entriesAreaEnabled = hourMarkers.indicatorEntriesAreaVisible !== false;
   const hourMarkerFontOptions = TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
     const rec = defaultFontAssetRegistry.getById(id);
     return rec ? { id: rec.id as FontAssetId, label: rec.displayName } : null;
   }).filter((x): x is { id: FontAssetId; label: string } => x !== null);
 
-  const baseProps: HourMarkerEditorBaseProps = { hourMarkers, wired, updateConfig };
+  const baseProps: HourMarkerEditorBaseProps = { hourMarkers, wired, entriesAreaEnabled, updateConfig };
 
   return (
     <>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Area visibility</legend>
+        <ConfigControlRow label="24-hour indicator entries">
+          <label className="config-control-row__checkbox">
+            <input
+              type="checkbox"
+              checked={entriesAreaEnabled}
+              disabled={!wired}
+              aria-label="Show 24-hour indicator entries area above the tick tape"
+              onChange={
+                wired && updateConfig
+                  ? (e) => {
+                      const on = e.currentTarget.checked;
+                      commitHourMarkers(updateConfig, (hm) => ({
+                        ...hm,
+                        indicatorEntriesAreaVisible: on,
+                      }));
+                    }
+                  : undefined
+              }
+            />
+            <span>Show hour-indicator entries strip (layout + rendering)</span>
+          </label>
+        </ConfigControlRow>
+      </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Behavior</legend>
         <BehaviorSection {...baseProps} />

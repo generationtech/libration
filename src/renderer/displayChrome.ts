@@ -1445,10 +1445,11 @@ export function buildDisplayChromeState(options: {
   const stForRows = getTopChromeStyle(layout.topChromePalette);
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout);
+  const indicatorEntriesAreaVisible = layout.hourMarkers.indicatorEntriesAreaVisible !== false;
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const baseCircleStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
   const canonicalSolve =
-    w > 0
+    w > 0 && indicatorEntriesAreaVisible
       ? solveCanonicalHourMarkerDiskBandHeightPx({
           viewportWidthPx: w,
           hourDiskLabelTokens: stForRows.hourDiskLabel,

@@ -16,9 +16,11 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
 } from "./appConfig.ts";
-import { DEFAULT_TEXT_COLOR } from "./topBandHourMarkersDefaults.ts";
 import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
+import { getTopChromeStyle } from "./topChromeStyle.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
+
+const inkNeutral = getTopChromeStyle("neutral").hourIndicatorEntries;
 import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
 import {
   structuralColumnCenterLongitudeDeg,
@@ -31,6 +33,22 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     const plan = buildSemanticTopBandHourMarkers(eff);
     expect(plan.instances).toHaveLength(24);
+  });
+
+  it("omits instances when effective hour-marker entries are disabled", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaVisible: false,
+          realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const plan = buildSemanticTopBandHourMarkers(eff);
+    expect(eff.enabled).toBe(false);
+    expect(plan.instances).toHaveLength(0);
+    expect(plan.source).toBe(eff);
   });
 
   it("structural anchors match stable longitude centers and NATO letters", () => {
@@ -83,7 +101,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     expect(eff.realization).toEqual({
       kind: "text",
       fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-      resolvedAppearance: { color: DEFAULT_TEXT_COLOR },
+      resolvedAppearance: { color: inkNeutral.defaultForeground },
     });
 
     const plan = buildSemanticTopBandHourMarkers(eff);

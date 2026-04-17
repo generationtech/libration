@@ -34,6 +34,7 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 1.5 },
       }),
     ).toEqual({
+      indicatorEntriesAreaVisible: true,
       realization: { kind: "text", fontAssetId: "flip-clock", appearance: {} },
       layout: { sizeMultiplier: 1.5 },
     });
@@ -46,6 +47,7 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 3 },
       }),
     ).toEqual({
+      indicatorEntriesAreaVisible: true,
       realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#abc" } },
       layout: { sizeMultiplier: 2 },
     });
@@ -58,6 +60,7 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 0.25 },
       }),
     ).toEqual({
+      indicatorEntriesAreaVisible: true,
       realization: { kind: "radialWedge", appearance: {} },
       layout: { sizeMultiplier: 0.5 },
     });
@@ -170,5 +173,21 @@ describe("normalizeHourMarkersInput", () => {
       contentPaddingTopPx: 4,
       contentPaddingBottomPx: -5,
     });
+  });
+
+  it("normalizes indicatorEntriesAreaVisible (default true, false when explicitly false)", () => {
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      }).indicatorEntriesAreaVisible,
+    ).toBe(true);
+    expect(
+      normalizeHourMarkersInput({
+        indicatorEntriesAreaVisible: false,
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      }).indicatorEntriesAreaVisible,
+    ).toBe(false);
   });
 });

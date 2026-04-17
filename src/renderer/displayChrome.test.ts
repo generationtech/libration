@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { createTimeContext } from "../core/time";
 import {
+  cloneHourMarkersConfig,
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   DEFAULT_GEOGRAPHY_CONFIG,
@@ -1039,6 +1040,29 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.bottomBand.y + chrome.bottomBand.height).toBe(1080 - margin);
     expect(margin).toBeGreaterThanOrEqual(36);
     expect(chrome.bottomBand.height).toBe(78);
+  });
+
+  it("omits circle-band height for hour-marker entries when the indicator entries area is disabled", () => {
+    const time = createTimeContext(1_704_067_200_000, 0, false);
+    const viewport = { width: 1920, height: 1080, devicePixelRatio: 1 };
+    const frame = { frameNumber: 42, now: time.now, deltaMs: time.deltaMs };
+    const baseline = buildDisplayChromeState({ time, viewport, frame });
+    const hidden = buildDisplayChromeState({
+      time,
+      viewport,
+      frame,
+      displayChromeLayout: {
+        hourMarkers: {
+          ...cloneHourMarkersConfig(baseline.displayChromeLayout.hourMarkers),
+          indicatorEntriesAreaVisible: false,
+        },
+      },
+    });
+    expect(hidden.effectiveTopBandHourMarkers.enabled).toBe(false);
+    expect(hidden.utcTopScale.rows?.circleBandH).toBe(0);
+    expect(baseline.utcTopScale.rows?.circleBandH).toBeGreaterThan(0);
+    expect(hidden.utcTopScale.rows?.tickBandH).toBe(baseline.utcTopScale.rows?.tickBandH);
+    expect(hidden.utcTopScale.rows?.timezoneBandH).toBe(baseline.utcTopScale.rows?.timezoneBandH);
   });
 
   it("embeds a top scale matching the top band width and time context", () => {

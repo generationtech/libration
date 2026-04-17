@@ -20,10 +20,8 @@ import {
   DEFAULT_ANALOG_FACE_FILL,
   DEFAULT_ANALOG_HAND_COLOR,
   DEFAULT_ANALOG_RING_COLOR,
-  DEFAULT_RADIAL_LINE_COLOR,
-  DEFAULT_RADIAL_WEDGE_FILL,
-  DEFAULT_TEXT_COLOR,
 } from "./topBandHourMarkersDefaults.ts";
+import { getTopChromeStyle } from "./topChromeStyle.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveTopBandHourMarkerBehavior,
@@ -57,16 +55,18 @@ function resolveAnalogClockResolvedAppearance(
 
 function resolveRadialLineResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialLine" }>,
+  defaultLine: string,
 ): EffectiveRadialLineResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.lineColor);
-  return { lineColor: fromAppearance !== undefined ? fromAppearance : DEFAULT_RADIAL_LINE_COLOR };
+  return { lineColor: fromAppearance !== undefined ? fromAppearance : defaultLine };
 }
 
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
+  defaultFill: string,
 ): EffectiveRadialWedgeResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
-  return { fillColor: fromAppearance !== undefined ? fromAppearance : DEFAULT_RADIAL_WEDGE_FILL };
+  return { fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill };
 }
 
 /** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
@@ -83,6 +83,11 @@ export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
+  const entriesEnabled = hm.indicatorEntriesAreaVisible !== false;
+  const ink = getTopChromeStyle(layout.topChromePalette).hourIndicatorEntries;
+  const defaultTextOrLineInk = ink.defaultForeground;
+  const defaultWedgeFill = ink.defaultRadialWedgeFill;
+
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const ly = hm.layout;
   const layoutOut: EffectiveTopBandHourMarkers["layout"] = { sizeMultiplier };
@@ -108,11 +113,11 @@ export function resolveEffectiveTopBandHourMarkers(
       kind: "text",
       fontAssetId,
       resolvedAppearance: {
-        color: textColor !== undefined ? textColor : DEFAULT_TEXT_COLOR,
+        color: textColor !== undefined ? textColor : defaultTextOrLineInk,
       },
     };
     return {
-      enabled: true,
+      enabled: entriesEnabled,
       behavior,
       content: { kind: "hour24" },
       realization,
@@ -124,7 +129,7 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "analogClock") {
     const r = hm.realization;
     return {
-      enabled: true,
+      enabled: entriesEnabled,
       behavior,
       content: { kind: "localWallClock" },
       realization: {
@@ -139,12 +144,12 @@ export function resolveEffectiveTopBandHourMarkers(
   if (rk === "radialLine") {
     const r = hm.realization;
     return {
-      enabled: true,
+      enabled: entriesEnabled,
       behavior,
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: resolveRadialLineResolvedAppearance(r),
+        resolvedAppearance: resolveRadialLineResolvedAppearance(r, defaultTextOrLineInk),
       },
       layout: layoutOut,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
@@ -153,12 +158,12 @@ export function resolveEffectiveTopBandHourMarkers(
 
   const r = hm.realization;
   return {
-    enabled: true,
+    enabled: entriesEnabled,
     behavior,
     content: { kind: "hour24" },
     realization: {
       kind: "radialWedge",
-      resolvedAppearance: resolveRadialWedgeResolvedAppearance(r),
+      resolvedAppearance: resolveRadialWedgeResolvedAppearance(r, defaultWedgeFill),
     },
     layout: layoutOut,
     ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
