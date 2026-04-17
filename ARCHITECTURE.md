@@ -226,6 +226,22 @@ For in-disk top-band hour markers, the supported contract is:
 
 This means the current app runtime has one authoritative implementation rather than parallel semantic and fallback paths.
 
+### Hour-marker disk row: vertical content model (FINAL)
+
+The **content row** is the vertical slice inside the circle-band disk strip (`diskBandH`). One canonical pipeline applies to text and procedural glyph realizations:
+
+1. **Intrinsic content height** (`intrinsicContentHeightPx`) — how tall the marker content is *before* row padding:
+   - **Text** — prefer Canvas `measureText` ink height when a 2D context exists; otherwise deterministic typography (`lineHeightPx` or font-size × em). See `topBandHourMarkerTextIntrinsicHeight.ts` and `renderer/topBandHourMarkerTextInkMeasure.ts`.
+   - **Glyphs** (analog, radial line/wedge, etc.) — geometry: fitted head-disk diameter from `hourCircleHeadMetrics` via `resolveHourMarkerDiskRowIntrinsicContentHeightPx`.
+
+2. **Content-row padding** — persisted as `contentPaddingTopPx` / `contentPaddingBottomPx` on the effective layout. Semantics are defined only in `topBandHourMarkerContentRowVerticalMetrics.ts` (`resolveHourMarkerContentRowPaddingPx`, `computeHourMarkerContentRowVerticalMetrics`).
+
+3. **Default padding** — when both sides are omitted, slack (`diskBandH − intrinsic`) is split **equally** between top and bottom (centered slack).
+
+4. **Allocated row height** — `paddingTop + intrinsic + paddingBottom` (equals `diskBandH` when padding is autocomputed from omitted sides). **Content center Y** is intrinsic midline plus optional small glyph numeral tweak — not a second parallel vertical model.
+
+**Separation of concerns:** intrinsic acquisition (text vs glyph) happens upstream; padding resolution and row math live in `topBandHourMarkerContentRowVerticalMetrics.ts`; semantic layout (`topBandHourMarkersLayout.ts`) composes disk-row placement with the shared stack; render plans consume the same inputs. Do not reintroduce implicit padding derived from legacy head-disk Y hacks — that path is closed.
+
 ---
 
 ## Behavioral / Representation Model

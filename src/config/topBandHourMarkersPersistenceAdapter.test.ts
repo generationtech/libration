@@ -140,4 +140,35 @@ describe("normalizeHourMarkersInput", () => {
       }).behavior,
     ).toBeUndefined();
   });
+
+  it("normalizes and clamps hour-marker content-row padding fields", () => {
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, contentPaddingTopPx: 3.5, contentPaddingBottomPx: -2 },
+      }).layout,
+    ).toEqual({
+      sizeMultiplier: 1,
+      contentPaddingTopPx: 3.5,
+      contentPaddingBottomPx: -2,
+    });
+
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, contentPaddingTopPx: 999 },
+      }).layout.contentPaddingTopPx,
+    ).toBe(48);
+
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, textTopMarginPx: 4, textBottomMarginPx: -5 },
+      }).layout,
+    ).toEqual({
+      sizeMultiplier: 1,
+      contentPaddingTopPx: 4,
+      contentPaddingBottomPx: -5,
+    });
+  });
 });

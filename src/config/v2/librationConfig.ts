@@ -153,6 +153,10 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof input.timezoneLetterRowVisible === "boolean"
       ? input.timezoneLetterRowVisible
       : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.timezoneLetterRowVisible;
+  const tickTape =
+    typeof input.tickTapeVisible === "boolean"
+      ? input.tickTapeVisible
+      : DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.tickTapeVisible;
   const paletteRaw = input.topChromePalette;
   const topChromePalette: TopChromePaletteId =
     paletteRaw === "neutral" || paletteRaw === "dark" || paletteRaw === "paper"
@@ -163,6 +167,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
 
   return {
     bottomInformationBarVisible: bottom,
+    tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
     topChromePalette,
     hourMarkers,
@@ -328,6 +333,7 @@ function cloneDisplayTime(dt: DisplayTimeConfig): DisplayTimeConfig {
 function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLayoutConfig {
   return {
     bottomInformationBarVisible: l.bottomInformationBarVisible,
+    tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
     topChromePalette: l.topChromePalette,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
@@ -446,6 +452,7 @@ export function assertIsNormalizedLibrationConfig(
     typeof lay !== "object" ||
     lay === null ||
     typeof lay.bottomInformationBarVisible !== "boolean" ||
+    typeof lay.tickTapeVisible !== "boolean" ||
     typeof lay.timezoneLetterRowVisible !== "boolean" ||
     (lay.topChromePalette !== "neutral" && lay.topChromePalette !== "dark" && lay.topChromePalette !== "paper")
   ) {
@@ -466,6 +473,22 @@ export function assertIsNormalizedLibrationConfig(
     typeof (hm.realization as { kind?: unknown }).kind !== "string"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.hourMarkers");
+  }
+  const hmLayout = hm.layout as {
+    contentPaddingTopPx?: unknown;
+    contentPaddingBottomPx?: unknown;
+  };
+  if (
+    hmLayout.contentPaddingTopPx !== undefined &&
+    (typeof hmLayout.contentPaddingTopPx !== "number" || !Number.isFinite(hmLayout.contentPaddingTopPx))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers layout.contentPaddingTopPx");
+  }
+  if (
+    hmLayout.contentPaddingBottomPx !== undefined &&
+    (typeof hmLayout.contentPaddingBottomPx !== "number" || !Number.isFinite(hmLayout.contentPaddingBottomPx))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers layout.contentPaddingBottomPx");
   }
   const rk = (hm.realization as { kind: string }).kind;
   if (Object.prototype.hasOwnProperty.call(hm.realization, "color")) {

@@ -47,6 +47,7 @@ import { emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan } from "../sema
 import { emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan } from "../semanticTopBandHourMarkerRadialWedgeAdapter.ts";
 import { emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan } from "../semanticTopBandHourMarkerTextAdapter.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "../topBandWrapOffsets";
+import { resolveTopBandTextDiskRowIntrinsicContentHeightPxForProductPath } from "../topBandTextDiskRowIntrinsicProductPath.ts";
 import type { RenderPlan } from "./renderPlanTypes";
 
 const IN_DISK_HOUR_ERR = "top-band in-disk hour markers:";
@@ -143,7 +144,10 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   topBandOriginXPx: number;
   topBandYPx: number;
   circleBandHeightPx: number;
-  /** Vertical model from {@link computeTopBandCircleStackMetrics} (circle band padding + rows). */
+  /**
+   * Vertical model from {@link computeTopBandCircleStackMetrics} (circle band padding + rows).
+   * `diskBandH` is the allocated hour-marker content-row height (see {@link ../../config/topBandHourMarkerContentRowVerticalMetrics.ts!HourMarkerContentRowVerticalMetrics}).
+   */
   circleStack: {
     padTopPx: number;
     upperNumeralH: number;
@@ -282,6 +286,14 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
 
   if (inDiskPath.kind === "semanticTextHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers);
+    const labelSizeForText = markerContentSizePx ?? labelSize;
+    const labelsForMeasure = markers.map((m) => m.currentHourLabel);
+    const textDiskRowIntrinsicContentHeightPx = resolveTopBandTextDiskRowIntrinsicContentHeightPxForProductPath({
+      fontRegistry: gctx.fontRegistry,
+      selection: topBandSel,
+      markerLayoutBoxSizePx: labelSizeForText,
+      hourDiskLabelsWestToEast: labelsForMeasure,
+    });
     const laidOut = layoutSemanticTopBandHourMarkers(semanticPlan, {
       viewportWidthPx: vw,
       topBandYPx: y0,
@@ -290,6 +302,8 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       markers,
       diskLabelSizePx: labelSize,
       markerContentSizePx,
+      hourMarkerLayout: effectiveMarkers.layout,
+      textDiskRowIntrinsicContentHeightPx,
     });
     emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, effectiveMarkers, gctx, items);
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
@@ -304,6 +318,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       markers,
       diskLabelSizePx: labelSize,
       markerContentSizePx,
+      hourMarkerLayout: effectiveMarkers.layout,
       structuralZoneCenterXPx: options.structuralZoneCenterXPx,
     });
     emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
@@ -324,6 +339,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       markers,
       diskLabelSizePx: labelSize,
       markerContentSizePx,
+      hourMarkerLayout: effectiveMarkers.layout,
     });
     emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
       laidOutRadial,
@@ -343,6 +359,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       markers,
       diskLabelSizePx: labelSize,
       markerContentSizePx,
+      hourMarkerLayout: effectiveMarkers.layout,
     });
     emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
       laidOutWedge,

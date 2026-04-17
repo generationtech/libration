@@ -14,17 +14,34 @@
 /**
  * Renderer-agnostic geometry for semantic top-band hour markers (disk-row placement, wrap half-extent).
  * No Canvas or RenderPlan types — pairs with {@link buildSemanticTopBandHourMarkers} and tape marker inputs.
+ * Vertical placement for the disk row uses {@link HourMarkerContentRowVerticalMetrics} via
+ * {@link computeHourMarkerContentRowVerticalMetrics} (shared by text and glyph realizations). Text intrinsic height
+ * comes from {@link ../topBandHourMarkerTextIntrinsicHeight.ts} / optional precomputed override; glyphs use head-disk
+ * diameter from {@link hourCircleHeadMetrics}.
  */
 
+import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
 import type { SemanticTopBandHourMarkersPlan } from "./topBandHourMarkersSemanticTypes.ts";
-import type { EffectiveTopBandHourMarkerBehavior } from "./topBandHourMarkersTypes.ts";
+import type {
+  EffectiveTopBandHourMarkerBehavior,
+  EffectiveTopBandHourMarkerLayout,
+} from "./topBandHourMarkersTypes.ts";
 import {
-  TOP_BAND_DISK_WRAP_HALO_PAD_PX,
-  topBandDiskWrapHalfExtentPx,
-} from "./topBandDiskWrapGeometry.ts";
+  computeHourMarkerContentRowVerticalMetrics,
+  HOUR_MARKER_DISK_ROW_NUMERAL_Y_TWEAK_CAP_PX,
+  HOUR_MARKER_DISK_ROW_NUMERAL_Y_TWEAK_FRAC_OF_HEAD_D,
+  resolveHourMarkerContentRowPaddingPx,
+  resolveHourMarkerDiskRowIntrinsicContentHeightPx,
+  type HourMarkerContentRowVerticalMetrics,
+} from "./topBandHourMarkerContentRowVerticalMetrics.ts";
+import type { FontAssetRegistry } from "../typography/fontAssetRegistry.ts";
+import { resolveTopBandHourMarkerTextIntrinsicContentHeightPxFromTypography } from "../topBandHourMarkerTextIntrinsicHeight.ts";
+import { topBandDiskWrapHalfExtentPx } from "./topBandDiskWrapGeometry.ts";
 
 /**
  * Vertical slice of the circle band stack (same fields as {@link buildTopBandCircleBandHourStackRenderPlan} options).
+ * The `diskBandH` field is the allocated height of the hour-disk row (matches
+ * {@link HourMarkerContentRowVerticalMetrics.allocatedContentRowHeightPx} in the canonical vertical model).
  */
 export type TopBandCircleStackLayoutInput = {
   padTopPx: number;
@@ -57,6 +74,21 @@ export type SemanticTopBandHourMarkerLayoutContext = {
   diskLabelSizePx: number;
   /** Scaled disk-interior content size (text/glyph); defaults to {@link diskLabelSizePx}. */
   markerContentSizePx?: number;
+  /** Size multiplier + optional content-row padding overrides from {@link resolveEffectiveTopBandHourMarkers}. */
+  hourMarkerLayout: EffectiveTopBandHourMarkerLayout;
+  /**
+   * Text hour-disk intrinsic content height (px) for the canonical row model — measured ink and/or typography
+   * (see {@link ../topBandHourMarkerTextIntrinsicHeight.ts}, {@link ../renderer/topBandHourMarkerTextInkMeasure.ts}).
+   * When set (> 0), wins over {@link fontRegistry} / {@link effectiveTopBandHourMarkerSelection}.
+   */
+  textDiskRowIntrinsicContentHeightPx?: number;
+  /**
+   * With {@link effectiveTopBandHourMarkerSelection}, resolves typography intrinsic when
+   * {@link textDiskRowIntrinsicContentHeightPx} is omitted.
+   */
+  fontRegistry?: FontAssetRegistry;
+  /** Text selection for typography-derived intrinsic height when {@link textDiskRowIntrinsicContentHeightPx} is omitted. */
+  effectiveTopBandHourMarkerSelection?: EffectiveTopBandHourMarkerSelection;
   /**
    * Structural (NATO) column center x from {@link UtcTopScaleHourSegment.centerX}, length 24.
    * Used when {@link EffectiveTopBandHourMarkers.behavior} is `staticZoneAnchored` for analog clocks.
@@ -109,45 +141,104 @@ export type LaidOutSemanticTopBandRadialWedgeMarker = {
 };
 
 /**
- * Disk diameter vs layout radius and band height — matches legacy {@link hourCircleHeadMetrics} in the stack planner.
+ * Disk diameter vs layout radius and vertical cap for the head-disk fit.
+ * Pass **intrinsic content height** (not padding-inclusive row height) for `verticalCapPx` when sizing so row padding
+ * does not enlarge procedural glyph heads.
  */
 export function hourCircleHeadMetrics(
   radiusPx: number,
-  diskBandH: number,
+  verticalCapPx: number,
   viewportWidthPx: number,
 ): { headD: number } {
   const r = radiusPx;
   const vw = viewportWidthPx;
+  const cap = Math.max(0, verticalCapPx);
   const headWMax = Math.min(r * 2.12, vw * 0.059);
-  const headHMax = Math.min(diskBandH * 0.96, r * 1.92);
+  const headHMax = Math.min(cap * 0.96, r * 1.92);
   const headD = Math.min(headWMax, headHMax);
   return { headD };
 }
 
+type DiskRowVerticalIntrinsicMode =
+  /** Procedural glyphs: intrinsic height = fitted head-disk diameter. */
+  | { kind: "glyphHeadDisk" }
+  /** Text hour markers: ink- or typography-derived intrinsic height (px). */
+  | { kind: "text"; intrinsicContentHeightPx: number };
+
 /**
- * Disk row vertical anchor — matches legacy {@link hourCircleYHeadTop} in the stack planner.
+ * Disk-row vertical placement: intrinsic height comes from the white-disk head diameter (glyphs) or from
+ * text-specific height (labels); padding uses {@link resolveHourMarkerContentRowPaddingPx} then
+ * {@link computeHourMarkerContentRowVerticalMetrics}.
  */
-export function hourCircleYHeadTop(
+function layoutDiskRowHourMarkerVertical(
   yDiskRow0: number,
   diskBandH: number,
-  headD: number,
-  gapDiskToAnnotationPx: number,
-  yCircleBandBottomPx: number,
+  radiusPx: number,
+  viewportWidthPx: number,
+  hourMarkerLayout: EffectiveTopBandHourMarkerLayout,
+  mode: DiskRowVerticalIntrinsicMode,
+): {
+  centerY: number;
+  contentRowVerticalMetrics: HourMarkerContentRowVerticalMetrics | undefined;
+} {
+  const vw = viewportWidthPx;
+  const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
+  let intrinsic: number;
+  if (mode.kind === "glyphHeadDisk") {
+    const ph0 = radiusPx > 0 ? hourCircleHeadMetrics(radiusPx, diskBandH, vw) : null;
+    let headD = ph0?.headD ?? 0;
+    if (!ph0 || !(headD > 0)) {
+      return { centerY: circleDiskCy, contentRowVerticalMetrics: undefined };
+    }
+    intrinsic = resolveHourMarkerDiskRowIntrinsicContentHeightPx({ headDiameterPx: headD });
+    const ph1 = hourCircleHeadMetrics(radiusPx, intrinsic, vw);
+    headD = ph1.headD;
+    intrinsic = resolveHourMarkerDiskRowIntrinsicContentHeightPx({ headDiameterPx: headD });
+  } else {
+    intrinsic = mode.intrinsicContentHeightPx;
+    if (!(intrinsic > 0)) {
+      return { centerY: circleDiskCy, contentRowVerticalMetrics: undefined };
+    }
+  }
+  const tweak = Math.min(
+    HOUR_MARKER_DISK_ROW_NUMERAL_Y_TWEAK_CAP_PX,
+    intrinsic * HOUR_MARKER_DISK_ROW_NUMERAL_Y_TWEAK_FRAC_OF_HEAD_D,
+  );
+  const { contentPaddingTopPx: padTop, contentPaddingBottomPx: padBottom } =
+    resolveHourMarkerContentRowPaddingPx({
+      layout: hourMarkerLayout,
+      intrinsicContentHeightPx: intrinsic,
+    });
+  const contentRowVerticalMetrics = computeHourMarkerContentRowVerticalMetrics({
+    intrinsicContentHeightPx: intrinsic,
+    contentPaddingTopPx: padTop,
+    contentPaddingBottomPx: padBottom,
+    contentCenterYOffsetFromIntrinsicMidPx: -tweak,
+  });
+  return {
+    centerY: yDiskRow0 + contentRowVerticalMetrics.contentCenterYFromRowTopPx,
+    contentRowVerticalMetrics,
+  };
+}
+
+function resolveTextDiskRowIntrinsicContentHeightPxForLayout(
+  ctx: SemanticTopBandHourMarkerLayoutContext,
+  markerLayoutBoxSizePx: number,
 ): number {
-  const slack = Math.max(0, diskBandH - headD);
-  const padFromDiskRowBottomPx = Math.min(0.28, Math.max(0.04, slack * 0.012));
-  const glowPastFillBottomPx = 2.05;
-  const safeBorrowPx = Math.max(0, gapDiskToAnnotationPx - glowPastFillBottomPx);
-  const diskDownshiftPx = Math.min(10, safeBorrowPx * 0.98);
-  const diskRowBottomBiasedY = yDiskRow0 + slack - padFromDiskRowBottomPx + diskDownshiftPx;
-
-  const gapAboveBandBottomPx = 1.5;
-  const inflate = TOP_BAND_DISK_WRAP_HALO_PAD_PX - 1;
-  const glowBelowFillPx = Math.max(1.75, inflate + 0.45);
-  const tapeCoupledY =
-    yCircleBandBottomPx - gapAboveBandBottomPx - headD - glowBelowFillPx;
-
-  return Math.max(diskRowBottomBiasedY, tapeCoupledY);
+  const o = ctx.textDiskRowIntrinsicContentHeightPx;
+  if (o !== undefined && o > 0) {
+    return o;
+  }
+  if (ctx.fontRegistry !== undefined && ctx.effectiveTopBandHourMarkerSelection !== undefined) {
+    return resolveTopBandHourMarkerTextIntrinsicContentHeightPxFromTypography({
+      fontRegistry: ctx.fontRegistry,
+      selection: ctx.effectiveTopBandHourMarkerSelection,
+      markerLayoutBoxSizePx,
+    });
+  }
+  throw new Error(
+    "layoutSemanticTopBandHourMarkers: set textDiskRowIntrinsicContentHeightPx (> 0), or fontRegistry + effectiveTopBandHourMarkerSelection for typography intrinsic height",
+  );
 }
 
 function markerColumnForStructuralHour(
@@ -170,15 +261,12 @@ export function layoutSemanticTopBandHourMarkers(
 ): readonly LaidOutSemanticTopBandHourTextMarker[] {
   const vw = ctx.viewportWidthPx;
   const y0 = ctx.topBandYPx;
-  const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
-  const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
-  const gDiskToAnn = circleStack.gapDiskToAnnotationPx;
-  const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
+  const textIntrinsicPx = resolveTextDiskRowIntrinsicContentHeightPxForLayout(ctx, labelSize);
 
   const out: LaidOutSemanticTopBandHourTextMarker[] = [];
 
@@ -189,14 +277,14 @@ export function layoutSemanticTopBandHourMarkers(
       continue;
     }
     const r = m.radiusPx;
-    const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
-    const headD = ph?.headD ?? 0;
-    const yHeadTop = ph
-      ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
-      : yDiskRow0;
-    const numeralY = ph
-      ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035)
-      : circleDiskCy;
+    const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
+      yDiskRow0,
+      diskBandH,
+      r,
+      vw,
+      ctx.hourMarkerLayout,
+      { kind: "text", intrinsicContentHeightPx: textIntrinsicPx },
+    );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
 
     out.push({
@@ -221,15 +309,11 @@ export function layoutSemanticTopBandRadialLineMarkers(
 ): readonly LaidOutSemanticTopBandRadialLineMarker[] {
   const vw = ctx.viewportWidthPx;
   const y0 = ctx.topBandYPx;
-  const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
-  const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
-  const gDiskToAnn = circleStack.gapDiskToAnnotationPx;
-  const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
 
   const out: LaidOutSemanticTopBandRadialLineMarker[] = [];
 
@@ -243,14 +327,14 @@ export function layoutSemanticTopBandRadialLineMarkers(
       continue;
     }
     const r = m.radiusPx;
-    const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
-    const headD = ph?.headD ?? 0;
-    const yHeadTop = ph
-      ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
-      : yDiskRow0;
-    const numeralY = ph
-      ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035)
-      : circleDiskCy;
+    const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
+      yDiskRow0,
+      diskBandH,
+      r,
+      vw,
+      ctx.hourMarkerLayout,
+      { kind: "glyphHeadDisk" },
+    );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
 
     out.push({
@@ -275,15 +359,11 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
 ): readonly LaidOutSemanticTopBandRadialWedgeMarker[] {
   const vw = ctx.viewportWidthPx;
   const y0 = ctx.topBandYPx;
-  const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
 
-  const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
-  const gDiskToAnn = circleStack.gapDiskToAnnotationPx;
-  const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
 
   const out: LaidOutSemanticTopBandRadialWedgeMarker[] = [];
 
@@ -297,14 +377,14 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
       continue;
     }
     const r = m.radiusPx;
-    const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
-    const headD = ph?.headD ?? 0;
-    const yHeadTop = ph
-      ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
-      : yDiskRow0;
-    const numeralY = ph
-      ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035)
-      : circleDiskCy;
+    const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
+      yDiskRow0,
+      diskBandH,
+      r,
+      vw,
+      ctx.hourMarkerLayout,
+      { kind: "glyphHeadDisk" },
+    );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
 
     out.push({
@@ -341,16 +421,12 @@ export function layoutSemanticTopBandAnalogClockMarkers(
 ): readonly LaidOutSemanticTopBandAnalogClockMarker[] {
   const vw = ctx.viewportWidthPx;
   const y0 = ctx.topBandYPx;
-  const circleH = ctx.circleBandHeightPx;
   const circleStack = ctx.circleStack;
   const labelSize = ctx.markerContentSizePx ?? ctx.diskLabelSizePx;
   const zoneX = ctx.structuralZoneCenterXPx;
 
-  const yCircleBottom = y0 + circleH;
   const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
   const diskBandH = circleStack.diskBandH;
-  const gDiskToAnn = circleStack.gapDiskToAnnotationPx;
-  const circleDiskCy = yDiskRow0 + diskBandH * 0.5;
 
   const out: LaidOutSemanticTopBandAnalogClockMarker[] = [];
 
@@ -365,14 +441,14 @@ export function layoutSemanticTopBandAnalogClockMarkers(
     }
     const centerX = structuralXForHour(inst.behavior, h, m, zoneX);
     const r = m.radiusPx;
-    const ph = r > 0 ? hourCircleHeadMetrics(r, diskBandH, vw) : null;
-    const headD = ph?.headD ?? 0;
-    const yHeadTop = ph
-      ? hourCircleYHeadTop(yDiskRow0, diskBandH, headD, gDiskToAnn, yCircleBottom)
-      : yDiskRow0;
-    const numeralY = ph
-      ? yHeadTop + headD * 0.5 - Math.min(0.55, headD * 0.035)
-      : circleDiskCy;
+    const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
+      yDiskRow0,
+      diskBandH,
+      r,
+      vw,
+      ctx.hourMarkerLayout,
+      { kind: "glyphHeadDisk" },
+    );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
 
     out.push({

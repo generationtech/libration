@@ -84,7 +84,14 @@ export function resolveEffectiveTopBandHourMarkers(
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
-  const layoutOut = { sizeMultiplier };
+  const ly = hm.layout;
+  const layoutOut: EffectiveTopBandHourMarkers["layout"] = { sizeMultiplier };
+  if (ly.contentPaddingTopPx !== undefined) {
+    layoutOut.contentPaddingTopPx = ly.contentPaddingTopPx;
+  }
+  if (ly.contentPaddingBottomPx !== undefined) {
+    layoutOut.contentPaddingBottomPx = ly.contentPaddingBottomPx;
+  }
   const tapeHourNumberOverlay =
     hm.realization.kind !== "text" && hm.tapeHourNumberOverlay?.enabled === true
       ? ({ enabled: true } as const)

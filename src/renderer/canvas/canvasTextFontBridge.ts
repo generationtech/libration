@@ -19,6 +19,7 @@
  * (manifest `sourceNames.familyName`, not marketing `displayName`).
  */
 
+import type { ResolvedTextStyle } from "../../typography/typographyTypes.ts";
 import type { RenderFontStyle, RenderTextItem } from "../renderPlan/renderPlanTypes.ts";
 import { canvasCssFontFamilyStackForBundledAssetId } from "./bundledFontCanvasFamily.ts";
 
@@ -61,4 +62,22 @@ export function canvasFontStringFromRenderTextFont(font: RenderFontStyle): strin
 /** Convenience: font string for a plan text item. */
 export function canvasFontStringFromRenderTextItem(item: RenderTextItem): string {
   return canvasFontStringFromRenderTextFont(item.font);
+}
+
+/** Maps {@link ResolvedTextStyle} to the same {@link RenderFontStyle} shape used at emission time. */
+export function renderFontStyleFromResolvedTextStyle(resolved: ResolvedTextStyle): RenderFontStyle {
+  const w = resolved.fontWeight ?? 400;
+  return {
+    assetId: resolved.fontAssetId,
+    displayName: resolved.displayName,
+    sizePx: resolved.fontSizePx,
+    weight: typeof w === "number" ? w : w,
+    style: resolved.fontStyle,
+    ...(resolved.lineHeightPx !== undefined ? { lineHeightPx: resolved.lineHeightPx } : {}),
+  };
+}
+
+/** Canvas `font` string for measuring text with the same weight/size/family as a resolved semantic style. */
+export function canvasFontStringFromResolvedTextStyle(resolved: ResolvedTextStyle): string {
+  return canvasFontStringFromRenderTextFont(renderFontStyleFromResolvedTextStyle(resolved));
 }

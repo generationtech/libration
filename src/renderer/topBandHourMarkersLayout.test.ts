@@ -22,7 +22,9 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   DEFAULT_HOUR_MARKERS_CONFIG,
+  effectiveTopBandHourMarkerSelection,
 } from "../config/appConfig";
+import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import { buildSemanticTopBandHourMarkers } from "../config/topBandHourMarkersSemanticPlan.ts";
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import {
@@ -52,6 +54,12 @@ function hourMarkerLayout(
   };
 }
 
+function resolvedHourMarkerLayoutFrom(
+  layout: typeof DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+): ReturnType<typeof resolveEffectiveTopBandHourMarkers>["layout"] {
+  return resolveEffectiveTopBandHourMarkers(layout).layout;
+}
+
 describe("layoutSemanticTopBandHourMarkers", () => {
   it("produces 24 laid-out text instances aligned to the semantic plan", () => {
     const w = 960;
@@ -73,6 +81,11 @@ describe("layoutSemanticTopBandHourMarkers", () => {
         currentHourLabel: m.currentHourLabel,
       })),
       diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG),
+      fontRegistry: defaultFontAssetRegistry,
+      effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(
+        DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      ),
     });
     expect(plan.instances).toHaveLength(24);
     expect(laidOut).toHaveLength(24);
@@ -109,6 +122,9 @@ describe("layoutSemanticTopBandHourMarkers", () => {
       circleStack,
       markers: tapeMarkers,
       diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom(
+        hourMarkerLayout({ kind: "analogClock", appearance: {} }),
+      ),
       structuralZoneCenterXPx: structuralX,
     });
     expect(laidOut).toHaveLength(24);
@@ -146,6 +162,9 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
       circleStack,
       markers: tapeMarkers,
       diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom(
+        hourMarkerLayout({ kind: "radialLine", appearance: {} }),
+      ),
     });
     const laidOutText = layoutSemanticTopBandHourMarkers(plan, {
       viewportWidthPx: w,
@@ -154,6 +173,13 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
       circleStack,
       markers: tapeMarkers,
       diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom(
+        hourMarkerLayout({ kind: "radialLine", appearance: {} }),
+      ),
+      fontRegistry: defaultFontAssetRegistry,
+      effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(
+        DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      ),
     });
     expect(laidOutRadial).toHaveLength(24);
     expect(laidOutText).toHaveLength(24);
@@ -188,6 +214,9 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
       circleStack,
       markers: tapeMarkers,
       diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom(
+        hourMarkerLayout({ kind: "radialWedge", appearance: {} }),
+      ),
     });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(
       buildSemanticTopBandHourMarkers(
@@ -200,6 +229,9 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
         circleStack,
         markers: tapeMarkers,
         diskLabelSizePx: 14,
+        hourMarkerLayout: resolvedHourMarkerLayoutFrom(
+          hourMarkerLayout({ kind: "radialLine", appearance: {} }),
+        ),
       },
     );
     expect(laidOutWedge).toHaveLength(24);

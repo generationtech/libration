@@ -191,10 +191,17 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
       appearance: { ...r.appearance },
     };
   }
+  const layout: HourMarkersConfig["layout"] = { sizeMultiplier: h.layout.sizeMultiplier };
+  if (h.layout.contentPaddingTopPx !== undefined) {
+    layout.contentPaddingTopPx = h.layout.contentPaddingTopPx;
+  }
+  if (h.layout.contentPaddingBottomPx !== undefined) {
+    layout.contentPaddingBottomPx = h.layout.contentPaddingBottomPx;
+  }
   return {
     realization,
     ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
-    layout: { sizeMultiplier: h.layout.sizeMultiplier },
+    layout,
     ...(h.tapeHourNumberOverlay !== undefined
       ? { tapeHourNumberOverlay: { ...h.tapeHourNumberOverlay } }
       : {}),
@@ -255,6 +262,8 @@ export function effectiveTopBandHourMarkerSelection(
 export interface DisplayChromeLayoutConfig {
   /** Lower floating civil-time + date readouts. */
   bottomInformationBarVisible: boolean;
+  /** Center tickmark tape (baseline + ticks) between the circle band and NATO row. */
+  tickTapeVisible: boolean;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /** Top-strip canvas colors (neutral default). */
@@ -268,6 +277,7 @@ export interface DisplayChromeLayoutConfig {
 
 export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
+  tickTapeVisible: true,
   timezoneLetterRowVisible: true,
   topChromePalette: "neutral",
   hourMarkers: cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG),

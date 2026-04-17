@@ -73,6 +73,7 @@ function cloneConfig(config: AppConfig): AppConfig {
     },
     displayChromeLayout: {
       bottomInformationBarVisible: dcl.bottomInformationBarVisible,
+      tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,
       topChromePalette: dcl.topChromePalette,
       hourMarkers: cloneHourMarkersConfig(dcl.hourMarkers),

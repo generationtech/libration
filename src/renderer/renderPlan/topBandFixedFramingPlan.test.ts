@@ -145,6 +145,27 @@ describe("buildTopBandInterBandSeamLinesRenderPlan", () => {
     expect(plan.items).toHaveLength(1);
   });
 
+  it("omits circle↔tick seam when drawCircleToTickSeam is false (tick band height zero)", () => {
+    const yBoundary = 52;
+    const plan = buildTopBandInterBandSeamLinesRenderPlan({
+      viewportWidthPx: 400,
+      topBandOriginXPx: 0,
+      circleBandBottomYPx: yBoundary,
+      tickZoneBoundaryYPx: yBoundary,
+      drawCircleToTickSeam: false,
+      drawTickToZoneSeam: true,
+      circleToTickStroke: "#aaa",
+      tickToZoneStroke: "#bbb",
+      seamLineWidthPx: 1,
+    });
+    expect(plan.items).toHaveLength(1);
+    expect(plan.items[0]).toMatchObject({
+      kind: "line",
+      y1: alignCrispLineY(yBoundary),
+      stroke: "#bbb",
+    });
+  });
+
   it("returns empty plan when viewport width is zero", () => {
     expect(
       buildTopBandInterBandSeamLinesRenderPlan({

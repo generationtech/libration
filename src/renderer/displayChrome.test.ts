@@ -840,6 +840,14 @@ describe("computeUtcTopScaleRowMetrics", () => {
     expect(r.tickBandH).toBeGreaterThanOrEqual(13);
     expect(r.circleBandH + r.tickBandH).toBe(104);
   });
+
+  it("allocates no height to the tick band when tickTapeVisible is false and NATO row is visible", () => {
+    const r = computeUtcTopScaleRowMetrics(104, { tickTapeVisible: false, timezoneLetterRowVisible: true });
+    expect(r.tickBandH).toBe(0);
+    expect(r.circleBandH + r.timezoneBandH).toBe(104);
+    expect(r.circleBandH).toBeGreaterThanOrEqual(36);
+    expect(r.timezoneBandH).toBeGreaterThanOrEqual(15);
+  });
 });
 
 describe("militaryTimeZoneLetterFromLongitudeDeg", () => {
@@ -1025,7 +1033,7 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.effectiveTopBandHourMarkers).toEqual(
       resolveEffectiveTopBandHourMarkers(chrome.displayChromeLayout),
     );
-    expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 110 });
+    expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 64 });
     expect(chrome.bottomBand.x).toBe(0);
     expect(chrome.bottomBand.width).toBe(1920);
     expect(chrome.bottomBand.y + chrome.bottomBand.height).toBe(1080 - margin);
@@ -1052,6 +1060,8 @@ describe("buildDisplayChromeState", () => {
         undefined,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        chrome.utcTopScale.circleStack,
+        chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
     expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
@@ -1117,6 +1127,8 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        chrome.utcTopScale.circleStack,
+        chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1155,6 +1167,8 @@ describe("buildDisplayChromeState", () => {
         geo,
         chrome.displayChromeLayout,
         chrome.utcTopScale.rows,
+        chrome.utcTopScale.circleStack,
+        chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
   });
@@ -1192,6 +1206,25 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.utcTopScale.rows?.timezoneBandH).toBe(0);
     expect(chrome.utcTopScale.rows?.circleBandH).toBeGreaterThan(0);
     expect(chrome.utcTopScale.rows?.tickBandH).toBeGreaterThan(0);
+  });
+
+  it("collapses the center tick band when tickTapeVisible is false", () => {
+    const time = createTimeContext(1_704_067_200_000, 0, false);
+    const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+    const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+    const chrome = buildDisplayChromeState({
+      time,
+      viewport,
+      frame,
+      displayChromeLayout: {
+        bottomInformationBarVisible: true,
+        tickTapeVisible: false,
+        timezoneLetterRowVisible: true,
+      },
+    });
+    expect(chrome.utcTopScale.rows?.tickBandH).toBe(0);
+    expect(chrome.utcTopScale.rows?.timezoneBandH).toBeGreaterThan(0);
+    expect(chrome.utcTopScale.rows?.circleBandH).toBeGreaterThan(0);
   });
 });
 

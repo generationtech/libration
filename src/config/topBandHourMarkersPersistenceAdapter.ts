@@ -18,6 +18,7 @@ import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "./appConfig.ts";
+import { clampHourMarkerContentRowPaddingPx } from "./topBandHourMarkerContentRowVerticalMetrics.ts";
 import type {
   EffectiveTopBandHourMarkerBehavior,
   HourMarkersAnalogClockAppearance,
@@ -103,6 +104,50 @@ function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWed
   return fillColor !== undefined ? { fillColor } : {};
 }
 
+/**
+ * Normalizes `hourMarkers.layout` including optional content-row padding overrides.
+ * Returns `null` when `layout` is present but not a plain object (invalid payload).
+ */
+function normalizeHourMarkersLayoutFromRaw(layoutRaw: unknown): HourMarkersConfig["layout"] | null {
+  if (layoutRaw === undefined) {
+    return { sizeMultiplier: DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier };
+  }
+  if (!isPlainObject(layoutRaw)) {
+    return null;
+  }
+  let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
+  const sm = layoutRaw.sizeMultiplier;
+  if (typeof sm === "number" && Number.isFinite(sm)) {
+    sizeMultiplier = clampTopBandHourMarkerSizeMultiplier(sm);
+  }
+  const out: HourMarkersConfig["layout"] = { sizeMultiplier };
+
+  let top: number | undefined;
+  let bottom: number | undefined;
+  const ct = layoutRaw.contentPaddingTopPx;
+  const cb = layoutRaw.contentPaddingBottomPx;
+  if (typeof ct === "number" && Number.isFinite(ct)) {
+    top = clampHourMarkerContentRowPaddingPx(ct);
+  } else if (typeof layoutRaw.textTopMarginPx === "number" && Number.isFinite(layoutRaw.textTopMarginPx)) {
+    top = clampHourMarkerContentRowPaddingPx(layoutRaw.textTopMarginPx);
+  }
+  if (typeof cb === "number" && Number.isFinite(cb)) {
+    bottom = clampHourMarkerContentRowPaddingPx(cb);
+  } else if (
+    typeof layoutRaw.textBottomMarginPx === "number" &&
+    Number.isFinite(layoutRaw.textBottomMarginPx)
+  ) {
+    bottom = clampHourMarkerContentRowPaddingPx(layoutRaw.textBottomMarginPx);
+  }
+  if (top !== undefined) {
+    out.contentPaddingTopPx = top;
+  }
+  if (bottom !== undefined) {
+    out.contentPaddingBottomPx = bottom;
+  }
+  return out;
+}
+
 function normalizedTapeHourNumberOverlay(
   raw: unknown,
   realizationKind: string,
@@ -134,16 +179,9 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
 
   const behaviorOpt = normalizedHourMarkerBehavior(raw.behavior);
 
-  let sizeMultiplier = DEFAULT_HOUR_MARKERS_CONFIG.layout.sizeMultiplier;
-  const layoutRaw = raw.layout;
-  if (layoutRaw !== undefined) {
-    if (!isPlainObject(layoutRaw)) {
-      return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
-    }
-    const sm = layoutRaw.sizeMultiplier;
-    if (typeof sm === "number" && Number.isFinite(sm)) {
-      sizeMultiplier = clampTopBandHourMarkerSizeMultiplier(sm);
-    }
+  const layoutNorm = normalizeHourMarkersLayoutFromRaw(raw.layout);
+  if (layoutNorm === null) {
+    return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
 
   const realizationRaw = raw.realization;
@@ -174,7 +212,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -188,7 +226,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -202,7 +240,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }
@@ -216,7 +254,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return {
       realization,
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
-      layout: { sizeMultiplier },
+      layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
     };
   }

@@ -261,6 +261,20 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(resolveEffectiveTopBandHourMarkers(structuredOnly).layout.sizeMultiplier).toBe(1.25);
   });
 
+  it("passes through optional content-row padding on the effective layout", () => {
+    const lay = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1, contentPaddingTopPx: 2, contentPaddingBottomPx: -3 },
+      },
+    });
+    expect(resolveEffectiveTopBandHourMarkers(lay).layout).toEqual({
+      sizeMultiplier: 1,
+      contentPaddingTopPx: 2,
+      contentPaddingBottomPx: -3,
+    });
+  });
+
   it("appearance fields override defaults for glyph realizations", () => {
     const lay = normalizeDisplayChromeLayout({
       hourMarkers: {

@@ -182,4 +182,34 @@ describe("HourMarkersEditor structured authoring", () => {
 
     expect(last!.chrome.layout.hourMarkers.behavior).toBe("staticZoneAnchored");
   });
+
+  it("content row padding inputs update canonical layout.padding fields", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /Top padding of the hour-marker content row/i }),
+      { target: { value: "4" } },
+    );
+    expect(last!.chrome.layout.hourMarkers.layout.contentPaddingTopPx).toBe(4);
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /Bottom padding of the hour-marker content row/i }),
+      { target: { value: "-2" } },
+    );
+    expect(last!.chrome.layout.hourMarkers.layout.contentPaddingBottomPx).toBe(-2);
+
+    fireEvent.change(
+      screen.getByRole("spinbutton", { name: /Top padding of the hour-marker content row/i }),
+      { target: { value: "" } },
+    );
+    expect(last!.chrome.layout.hourMarkers.layout.contentPaddingTopPx).toBeUndefined();
+  });
 });

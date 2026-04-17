@@ -62,6 +62,18 @@ export interface HourMarkersConfig {
   behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {
     sizeMultiplier: number;
+    /**
+     * Top padding of the hour-marker **content row** inside the disk strip (`diskBandH`), in px.
+     * Shared by text and procedural realizations; when omitted, defaults come from
+     * {@link ./topBandHourMarkerContentRowVerticalMetrics.ts!resolveHourMarkerContentRowPaddingPx} (Phase 3).
+     */
+    contentPaddingTopPx?: number;
+    /**
+     * Bottom padding of that same content row, in px.
+     * When omitted, defaults come from {@link ./topBandHourMarkerContentRowVerticalMetrics.ts!resolveHourMarkerContentRowPaddingPx}
+     * (intrinsic-proportional for Auto). May be negative when set explicitly.
+     */
+    contentPaddingBottomPx?: number;
   };
   /** Optional boxed numerals carried on the hourly tick tape (glyph realization contexts). */
   tapeHourNumberOverlay?: HourMarkersTapeHourNumberOverlay;
@@ -110,6 +122,9 @@ export type EffectiveTopBandHourMarkerRealization =
 export type EffectiveTopBandHourMarkerLayout = {
   /** Finite check, default 1.0 when absent/invalid, then clamp to the v2 [0.5, 2] range. */
   sizeMultiplier: number;
+  /** Optional overrides; same semantics as {@link HourMarkersConfig.layout} padding fields. */
+  contentPaddingTopPx?: number;
+  contentPaddingBottomPx?: number;
 };
 
 /**

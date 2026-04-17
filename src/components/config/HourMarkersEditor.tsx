@@ -24,6 +24,11 @@ import type {
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
+import {
+  clampHourMarkerContentRowPaddingPx,
+  HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX,
+  HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX,
+} from "../../config/topBandHourMarkerContentRowVerticalMetrics";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { HourMarkerBehaviorEditor } from "./HourMarkerBehaviorEditor";
 
@@ -527,8 +532,24 @@ function AppearanceSection({ hourMarkers, wired, updateConfig, hourMarkerFontOpt
   throw new Error(`Unhandled hour marker realization kind: ${String(rk)}`);
 }
 
+function hourMarkersLayoutOmitPadding(
+  layout: HourMarkersConfig["layout"],
+  omit: "top" | "bottom",
+): HourMarkersConfig["layout"] {
+  const out: HourMarkersConfig["layout"] = { sizeMultiplier: layout.sizeMultiplier };
+  if (omit !== "top" && layout.contentPaddingTopPx !== undefined) {
+    out.contentPaddingTopPx = layout.contentPaddingTopPx;
+  }
+  if (omit !== "bottom" && layout.contentPaddingBottomPx !== undefined) {
+    out.contentPaddingBottomPx = layout.contentPaddingBottomPx;
+  }
+  return out;
+}
+
 function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBaseProps) {
   const sm = hourMarkers.layout.sizeMultiplier;
+  const padTop = hourMarkers.layout.contentPaddingTopPx;
+  const padBottom = hourMarkers.layout.contentPaddingBottomPx;
   const rk = hourMarkers.realization.kind;
   const tapeOn = hourMarkers.tapeHourNumberOverlay?.enabled === true;
   return (
@@ -560,6 +581,88 @@ function LayoutSection({ hourMarkers, wired, updateConfig }: HourMarkerEditorBas
         />
         <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
           {sm.toFixed(2)}×
+        </span>
+      </ConfigControlRow>
+      <ConfigControlRow label="Content row padding (top)">
+        <input
+          type="number"
+          className="config-input"
+          min={HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX}
+          max={HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX}
+          step={0.5}
+          disabled={!wired}
+          aria-label="Top padding of the hour-marker content row inside the disk strip, in pixels; leave empty for automatic"
+          placeholder="Auto"
+          value={padTop ?? ""}
+          onChange={
+            wired && updateConfig
+              ? (e) => {
+                  const raw = e.currentTarget.value.trim();
+                  if (raw === "") {
+                    commitHourMarkers(updateConfig, (hm) => ({
+                      ...hm,
+                      layout: hourMarkersLayoutOmitPadding(hm.layout, "top"),
+                    }));
+                    return;
+                  }
+                  const n = Number(raw);
+                  if (!Number.isFinite(n)) {
+                    return;
+                  }
+                  commitHourMarkers(updateConfig, (hm) => ({
+                    ...hm,
+                    layout: {
+                      ...hm.layout,
+                      contentPaddingTopPx: clampHourMarkerContentRowPaddingPx(n),
+                    },
+                  }));
+                }
+              : undefined
+          }
+        />
+        <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
+          px (empty = auto)
+        </span>
+      </ConfigControlRow>
+      <ConfigControlRow label="Content row padding (bottom)">
+        <input
+          type="number"
+          className="config-input"
+          min={HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX}
+          max={HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX}
+          step={0.5}
+          disabled={!wired}
+          aria-label="Bottom padding of the hour-marker content row inside the disk strip, in pixels; leave empty for automatic"
+          placeholder="Auto"
+          value={padBottom ?? ""}
+          onChange={
+            wired && updateConfig
+              ? (e) => {
+                  const raw = e.currentTarget.value.trim();
+                  if (raw === "") {
+                    commitHourMarkers(updateConfig, (hm) => ({
+                      ...hm,
+                      layout: hourMarkersLayoutOmitPadding(hm.layout, "bottom"),
+                    }));
+                    return;
+                  }
+                  const n = Number(raw);
+                  if (!Number.isFinite(n)) {
+                    return;
+                  }
+                  commitHourMarkers(updateConfig, (hm) => ({
+                    ...hm,
+                    layout: {
+                      ...hm.layout,
+                      contentPaddingBottomPx: clampHourMarkerContentRowPaddingPx(n),
+                    },
+                  }));
+                }
+              : undefined
+          }
+        />
+        <span className="config-section__hint" style={{ marginLeft: "0.5rem" }}>
+          px (empty = auto)
         </span>
       </ConfigControlRow>
       {rk !== "text" ? (

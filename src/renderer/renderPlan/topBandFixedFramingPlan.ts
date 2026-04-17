@@ -68,6 +68,8 @@ export function buildTopBandInterBandSeamLinesRenderPlan(options: {
   topBandOriginXPx: number;
   circleBandBottomYPx: number;
   tickZoneBoundaryYPx: number;
+  /** When false (tick band height 0), only the lower seam is drawn — circle↔tick and tick↔zone coincide. */
+  drawCircleToTickSeam?: boolean;
   drawTickToZoneSeam: boolean;
   circleToTickStroke: string;
   tickToZoneStroke: string;
@@ -80,8 +82,9 @@ export function buildTopBandInterBandSeamLinesRenderPlan(options: {
   const x0 = options.topBandOriginXPx;
   const x1 = options.topBandOriginXPx + vw;
   const yCircle = alignCrispLineY(options.circleBandBottomYPx);
-  const items: RenderLineItem[] = [
-    {
+  const items: RenderLineItem[] = [];
+  if (options.drawCircleToTickSeam !== false) {
+    items.push({
       kind: "line",
       x1: x0,
       y1: yCircle,
@@ -90,8 +93,8 @@ export function buildTopBandInterBandSeamLinesRenderPlan(options: {
       stroke: options.circleToTickStroke,
       strokeWidthPx: options.seamLineWidthPx,
       lineCap: "butt",
-    },
-  ];
+    });
+  }
   if (options.drawTickToZoneSeam) {
     const yTick = alignCrispLineY(options.tickZoneBoundaryYPx);
     items.push({
