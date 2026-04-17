@@ -125,7 +125,7 @@ Users should be able to build more complex outcomes by combining smaller reusabl
 Example:
 
 - one preset controls hour indicator style
-- one preset controls top chrome colors
+- one preset toggles tick tape or NATO row visibility
 - one preset controls some future map/layer behavior
 
 Applied together, they produce the effective running configuration.
@@ -168,10 +168,10 @@ This is the conflict-resolution rule.
 
 Example:
 
-- Preset A sets `chrome.layout.topChromePalette = "paper"`
-- Preset B sets `chrome.layout.topChromePalette = "dark"`
+- Preset A sets `chrome.layout.tickTapeVisible = false`
+- Preset B sets `chrome.layout.tickTapeVisible = true`
 
-If B is applied after A, the effective result is `"dark"`.
+If B is applied after A, the effective result is `true` (tick tape on).
 
 This must be visible and unsurprising.
 
@@ -425,10 +425,9 @@ These are examples, not commitments.
 
 ### Appearance-oriented presets
 Examples:
-- dark top chrome
-- paper instrument look
 - high-contrast labels
 - dense digital styling
+- hour-marker glyph packages (analog / radial)
 
 ### Surface-specific presets
 Examples:
@@ -462,7 +461,7 @@ Preset 1:
 - hour indicators use analog clocks
 
 Preset 2:
-- top chrome palette uses paper colors
+- tick tape hidden
 
 Preset 3:
 - NATO row hidden
@@ -472,13 +471,13 @@ Applied in that order, all three contribute to the final state.
 ### Example B — conflict example
 
 Preset 1:
-- top chrome palette = neutral
+- `chrome.layout.timezoneLetterRowVisible = true`
 
 Preset 2:
-- top chrome palette = dark
+- `chrome.layout.timezoneLetterRowVisible = false`
 
 Result:
-- dark wins if Preset 2 is later in the ordered stack
+- the NATO row is hidden if Preset 2 is later in the ordered stack
 
 This must not be hidden from the user.
 

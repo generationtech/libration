@@ -30,7 +30,7 @@ import {
   sumTopBandCircleStackHeightPx,
   TOP_BAND_GLYPH_DISK_CONTENT_SCALE,
 } from "./displayChrome.ts";
-import { computeHourDiskLabelSizePx, getTopChromeStyle } from "../config/topChromeStyle.ts";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { defaultFontAssetRegistry } from "../config/chromeTypography.ts";
 import { createTimeContext } from "../core/time.ts";
 
@@ -50,7 +50,7 @@ describe("hour-marker canonical indicator disk band", () => {
     const baseStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
     const { diskBandHeightPx: diskH, intrinsicContentHeightPx } = solveCanonicalHourMarkerDiskBandHeightPx({
       viewportWidthPx: 960,
-      hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+      hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
       layout: layoutLargeText,
       selection: sel,
       hourMarkerLayout: eff.layout,
@@ -83,7 +83,7 @@ describe("hour-marker canonical indicator disk band", () => {
     const baseStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
     const vw = 960;
     const sw = vw / 24;
-    const tokens = getTopChromeStyle("neutral").hourDiskLabel;
+    const tokens = TOP_CHROME_STYLE.hourDiskLabel;
     const solve = (topPad: number) => {
       const layout = {
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
@@ -143,7 +143,7 @@ describe("hour-marker canonical indicator disk band", () => {
     const ihHi = chromeHi.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx;
     expect(ihLo).toBeDefined();
     expect(ihHi).toBe(ihLo);
-    const st = getTopChromeStyle(chromeLo.displayChromeLayout.topChromePalette);
+    const st = TOP_CHROME_STYLE;
     const rLo = computeUtcCircleMarkerRadius(ihLo!, sw);
     const rHi = computeUtcCircleMarkerRadius(ihHi!, sw);
     expect(rLo).toBe(rHi);
@@ -159,7 +159,7 @@ describe("hour-marker canonical indicator disk band", () => {
     const baseStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
     const vw = 960;
     const sw = vw / 24;
-    const tokens = getTopChromeStyle("neutral").hourDiskLabel;
+    const tokens = TOP_CHROME_STYLE.hourDiskLabel;
     const solve = (pad: number) => {
       const layout = {
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
@@ -212,7 +212,7 @@ describe("hour-marker canonical indicator disk band", () => {
     const solve = (layout: typeof baseLayout) =>
       solveCanonicalHourMarkerDiskBandHeightPx({
         viewportWidthPx: 960,
-        hourDiskLabelTokens: getTopChromeStyle("neutral").hourDiskLabel,
+        hourDiskLabelTokens: TOP_CHROME_STYLE.hourDiskLabel,
         layout,
         selection: effectiveTopBandHourMarkerSelection(layout),
         hourMarkerLayout: resolveEffectiveTopBandHourMarkers(layout).layout,

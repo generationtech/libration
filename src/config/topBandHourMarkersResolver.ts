@@ -21,7 +21,7 @@ import {
   DEFAULT_ANALOG_HAND_COLOR,
   DEFAULT_ANALOG_RING_COLOR,
 } from "./topBandHourMarkersDefaults.ts";
-import { getTopChromeStyle } from "./topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveTopBandHourMarkerBehavior,
@@ -87,7 +87,7 @@ export function resolveEffectiveTopBandHourMarkers(
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
-  const ink = getTopChromeStyle(layout.topChromePalette).hourIndicatorEntries;
+  const ink = TOP_CHROME_STYLE.hourIndicatorEntries;
   const defaultTextOrLineInk = ink.defaultForeground;
   const defaultWedgeFill = ink.defaultRadialWedgeFill;
 

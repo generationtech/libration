@@ -23,11 +23,10 @@ import {
   DEFAULT_ANALOG_RING_COLOR,
 } from "./topBandHourMarkersDefaults.ts";
 import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
-import { getTopChromeStyle } from "./topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
 
-const inkNeutral = getTopChromeStyle("neutral").hourIndicatorEntries;
-const inkPaper = getTopChromeStyle("paper").hourIndicatorEntries;
+const builtInInk = TOP_CHROME_STYLE.hourIndicatorEntries;
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
@@ -56,7 +55,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "text",
         fontAssetId: "dseg7modern-regular",
-        resolvedAppearance: { color: inkNeutral.defaultForeground },
+        resolvedAppearance: { color: builtInInk.defaultForeground },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -79,7 +78,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "text",
         fontAssetId: "computer",
-        resolvedAppearance: { color: inkNeutral.defaultForeground },
+        resolvedAppearance: { color: builtInInk.defaultForeground },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -141,7 +140,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: { lineColor: inkNeutral.defaultForeground },
+        resolvedAppearance: { lineColor: builtInInk.defaultForeground },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -163,7 +162,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialWedge",
-        resolvedAppearance: { fillColor: inkNeutral.defaultRadialWedgeFill },
+        resolvedAppearance: { fillColor: builtInInk.defaultRadialWedgeFill },
       },
       layout: { sizeMultiplier: 1 },
     });
@@ -217,7 +216,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       kind: "text",
       fontAssetId: "computer",
-      resolvedAppearance: { color: inkNeutral.defaultForeground },
+      resolvedAppearance: { color: builtInInk.defaultForeground },
     });
 
     expect(
@@ -232,7 +231,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       kind: "text",
       fontAssetId: "computer",
-      resolvedAppearance: { color: inkNeutral.defaultForeground },
+      resolvedAppearance: { color: builtInInk.defaultForeground },
     });
 
     expect(
@@ -355,10 +354,9 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(resolveEffectiveTopBandHourMarkers(layout).areaVisible).toBe(true);
   });
 
-  it("paper palette uses dark default text ink on light circle bed", () => {
+  it("text markers without author color use built-in indicator-entry ink", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
-        topChromePalette: "paper",
         hourMarkers: {
           realization: { kind: "text", fontAssetId: "computer", appearance: {} },
           layout: { sizeMultiplier: 1 },
@@ -366,7 +364,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       }),
     );
     expect((eff.realization as { resolvedAppearance: { color: string } }).resolvedAppearance.color).toBe(
-      inkPaper.defaultForeground,
+      builtInInk.defaultForeground,
     );
   });
 });

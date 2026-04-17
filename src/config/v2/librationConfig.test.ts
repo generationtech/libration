@@ -94,9 +94,13 @@ describe("librationConfig v2 (Phase 1)", () => {
       normalizeDisplayChromeLayout({
         bottomInformationBarVisible: true,
         timezoneLetterRowVisible: true,
+        tickTapeVisible: false,
         topChromePalette: "paper",
-      }).topChromePalette,
-    ).toBe("paper");
+      }),
+    ).toEqual({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      tickTapeVisible: false,
+    });
   });
 
   it("normalizeDisplayChromeLayout ignores unknown obsolete flat hour-marker property names", () => {

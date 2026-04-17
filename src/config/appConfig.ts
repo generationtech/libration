@@ -80,9 +80,6 @@ export interface DisplayTimeConfig {
   topBandAnchor: TopBandAnchorConfig;
 }
 
-/** Color palette for the fixed top instrument strip (hour tape, tick rail, NATO row). Geometry is independent of palette. */
-export type TopChromePaletteId = "neutral" | "dark" | "paper";
-
 /**
  * How each phased hour disk encodes civil time: typographic numerals (several text-backed families), procedural
  * analog / radial glyphs, etc. Default `geometric` preserves legacy hour-numeral rendering.
@@ -268,8 +265,6 @@ export interface DisplayChromeLayoutConfig {
   tickTapeVisible: boolean;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
-  /** Top-strip canvas colors (neutral default). */
-  topChromePalette: TopChromePaletteId;
   /**
    * Sole persistence model for top-band hour markers (realization, optional behavior, layout).
    * Legacy flat `chrome.layout` hour-marker keys have been removed; normalization reads only this object.
@@ -281,7 +276,6 @@ export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
   tickTapeVisible: true,
   timezoneLetterRowVisible: true,
-  topChromePalette: "neutral",
   hourMarkers: cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG),
 };
 

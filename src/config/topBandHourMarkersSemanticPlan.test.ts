@@ -17,16 +17,16 @@ import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
 } from "./appConfig.ts";
 import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
-import { getTopChromeStyle } from "./topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
-
-const inkNeutral = getTopChromeStyle("neutral").hourIndicatorEntries;
 import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
 import {
   structuralColumnCenterLongitudeDeg,
   STRUCTURAL_LONGITUDE_DEG_PER_HOUR,
 } from "./topBandHourMarkersSemanticTypes.ts";
 import { CANONICAL_MILITARY_ZONE_LETTERS_WEST_TO_EAST } from "./structuralZoneLetters.ts";
+
+const inkNeutral = TOP_CHROME_STYLE.hourIndicatorEntries;
 
 describe("buildSemanticTopBandHourMarkers", () => {
   it("produces exactly 24 instances", () => {

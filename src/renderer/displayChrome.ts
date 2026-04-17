@@ -64,7 +64,7 @@ import {
 import {
   computeHourDiskLabelSizePx,
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
-  getTopChromeStyle,
+  TOP_CHROME_STYLE,
   type TopChromeHourDiskLabelTokens,
 } from "../config/topChromeStyle";
 import { hourCircleHeadMetrics } from "../config/topBandHourMarkersLayout.ts";
@@ -1426,7 +1426,7 @@ export function buildDisplayChromeState(options: {
   displayTime?: DisplayTimeConfig;
   /** Product geography reference; affects auto-mode top-band meridian when {@code referenceMode === "fixedCoordinate"}. */
   geography?: GeographyConfig;
-  /** Merged with {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG} (palette and visibility fields optional). */
+  /** Merged with {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG} (visibility fields optional). */
   displayChromeLayout?: Partial<DisplayChromeLayoutConfig>;
 }): DisplayChromeState {
   const { time, viewport, frame } = options;
@@ -1442,7 +1442,7 @@ export function buildDisplayChromeState(options: {
     layout.bottomInformationBarVisible === false
       ? 0
       : computeBottomChromeOverlayBottomMarginPx(h);
-  const stForRows = getTopChromeStyle(layout.topChromePalette);
+  const stForRows = TOP_CHROME_STYLE;
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
@@ -1587,7 +1587,7 @@ export function renderDisplayChrome(
   const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, tickH);
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
-  const st = getTopChromeStyle(chrome.displayChromeLayout.topChromePalette);
+  const st = TOP_CHROME_STYLE;
   const tzTab = st.timezoneTab;
   const zonePadY = Math.max(
     0,

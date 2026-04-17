@@ -12,25 +12,16 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { TopChromePaletteId } from "./appConfig";
-import { getTopChromeStyle, TOP_CHROME_STYLE } from "./topChromeStyle";
+import { TOP_CHROME_STYLE } from "./topChromeStyle";
 
-describe("getTopChromeStyle", () => {
-  it('returns the same object as TOP_CHROME_STYLE for "neutral"', () => {
-    expect(getTopChromeStyle("neutral")).toBe(TOP_CHROME_STYLE);
-  });
-
-  it("exposes geography caption token matching prior hardcoded caption color", () => {
+describe("TOP_CHROME_STYLE", () => {
+  it("exposes stable instrument field colors for the fixed top strip", () => {
+    expect(TOP_CHROME_STYLE.instrument.stripBackground.length).toBeGreaterThan(10);
     expect(TOP_CHROME_STYLE.zoneText.geographyCaption).toBe("rgba(255, 255, 255, 0.82)");
   });
 
-  it("returns a full style for each palette id", () => {
-    const palettes: TopChromePaletteId[] = ["neutral", "dark", "paper"];
-    for (const t of palettes) {
-      const st = getTopChromeStyle(t);
-      expect(st.zoneText.letter.length).toBeGreaterThan(5);
-      expect(st.zoneText.geographyCaption.length).toBeGreaterThan(5);
-      expect(st.instrument.stripBackground.startsWith("rgba(")).toBe(true);
-    }
+  it("uses unified tick stroke width token", () => {
+    expect(TOP_CHROME_STYLE.ticks.lineWidth).toBeGreaterThan(0);
+    expect(TOP_CHROME_STYLE.ticks.presentTimeTickWidthMulTapeTick).toBeGreaterThan(1);
   });
 });

@@ -30,7 +30,7 @@ import {
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import { computeHourDiskLabelSizePx, getTopChromeStyle, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
+import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
 import { topBandDiskWrapHalfExtentPx } from "../topBandHourDiskWrapExtents";
 import {
   buildTopBandCircleBandHourStackRenderPlan,
@@ -1100,7 +1100,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(plan.items.filter((i) => i.kind === "line").length).toBeGreaterThan(0);
     });
 
-    const DEFAULT_HOUR_DISK_TEXT_FILL = getTopChromeStyle("neutral").hourIndicatorEntries.defaultForeground;
+    const DEFAULT_HOUR_DISK_TEXT_FILL = TOP_CHROME_STYLE.hourIndicatorEntries.defaultForeground;
 
     it("text hour disk uses default fill when effective selection has no color", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });

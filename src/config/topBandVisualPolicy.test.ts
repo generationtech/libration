@@ -22,7 +22,7 @@ import {
   resolveTimezoneStripLetterPolicy,
   shouldRenderTopBandUpperNumerals,
 } from "./topBandVisualPolicy.ts";
-import { TOP_CHROME_STYLE, getTopChromeStyle } from "./topChromeStyle.ts";
+import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 
 describe("topBandVisualPolicy", () => {
   it("resolveTopBandUpperNumeralPolicy matches representation defaults + chrome fill", () => {
@@ -55,10 +55,11 @@ describe("topBandVisualPolicy", () => {
     expect(cap.textBaseline).toBe("top");
   });
 
-  it("palette-specific chrome style keeps letter/caption fills distinct", () => {
-    const dark = getTopChromeStyle("dark");
-    expect(resolveTimezoneStripLetterPolicy(dark).fill).toBe(dark.zoneText.letter);
-    expect(resolveTimezoneStripCaptionPolicy(dark).fill).toBe(dark.zoneText.geographyCaption);
+  it("timezone letter and caption policies read distinct zone text fills from chrome tokens", () => {
+    expect(resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE).fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
+    expect(resolveTimezoneStripCaptionPolicy(TOP_CHROME_STYLE).fill).toBe(
+      TOP_CHROME_STYLE.zoneText.geographyCaption,
+    );
   });
 
   it("shouldRenderTopBandUpperNumerals matches current gate (positive height, meets floor)", () => {
