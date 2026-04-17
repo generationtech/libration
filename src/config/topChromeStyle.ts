@@ -108,15 +108,13 @@ export interface TopChromeTickTokens {
    */
   presentTimeTickWidthMulTapeTick: number;
   /**
-   * Core stroke for the active structural meridian (tick rail, optional circle cap, distinct from generic hour ticks).
+   * Core stroke for the active structural meridian present-time tick in the tick rail (distinct from generic hour ticks).
    */
   presentTimeStroke: string;
   /** Drawn beneath {@link presentTimeStroke} at {@link presentTimeHaloWidthMul} × core width for contrast on mixed backgrounds. */
   presentTimeHaloStroke: string;
   /** Halo width multiplier vs the present-time core line width (not vs generic tape ticks). */
   presentTimeHaloWidthMul: number;
-  /** Pixels upward from the circle/tick seam into the circle band for an instrument-style “entry” cap (painted after disks). */
-  referenceMeridianCircleCapPx: number;
   /**
    * Core width = {@link lineWidth} × this; paired with {@link referenceMeridianMapHaloWidthMul}, included in the
    * present-time tick’s wrap half-extent so seam tiling stays consistent (no reference line on the map strip).
@@ -312,7 +310,6 @@ const TOP_CHROME_STYLE_NEUTRAL = {
     presentTimeStroke: "rgba(248, 252, 255, 0.97)",
     presentTimeHaloStroke: "rgba(4, 18, 48, 0.62)",
     presentTimeHaloWidthMul: 2.35,
-    referenceMeridianCircleCapPx: 7,
     referenceMeridianMapLineWidthMulTapeTick: 1.05,
     referenceMeridianMapHaloWidthMul: 2.6,
     referenceMeridianMapCoreStroke: "rgba(198, 228, 255, 0.28)",
@@ -423,7 +420,6 @@ const TOP_CHROME_STYLE_DARK = {
     presentTimeStroke: "rgba(240, 248, 255, 0.96)",
     presentTimeHaloStroke: "rgba(2, 12, 36, 0.65)",
     presentTimeHaloWidthMul: TOP_CHROME_STYLE_NEUTRAL.ticks.presentTimeHaloWidthMul,
-    referenceMeridianCircleCapPx: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianCircleCapPx,
     referenceMeridianMapLineWidthMulTapeTick: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianMapLineWidthMulTapeTick,
     referenceMeridianMapHaloWidthMul: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianMapHaloWidthMul,
     referenceMeridianMapCoreStroke: "rgba(175, 210, 245, 0.26)",
@@ -522,7 +518,6 @@ const TOP_CHROME_STYLE_PAPER = {
     presentTimeStroke: "rgba(35, 24, 14, 0.92)",
     presentTimeHaloStroke: "rgba(245, 238, 220, 0.55)",
     presentTimeHaloWidthMul: TOP_CHROME_STYLE_NEUTRAL.ticks.presentTimeHaloWidthMul,
-    referenceMeridianCircleCapPx: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianCircleCapPx,
     referenceMeridianMapLineWidthMulTapeTick: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianMapLineWidthMulTapeTick,
     referenceMeridianMapHaloWidthMul: TOP_CHROME_STYLE_NEUTRAL.ticks.referenceMeridianMapHaloWidthMul,
     referenceMeridianMapCoreStroke: "rgba(90, 65, 45, 0.35)",

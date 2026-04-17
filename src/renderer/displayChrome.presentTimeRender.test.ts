@@ -12,9 +12,11 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { createTimeContext } from "../core/time";
+import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "../config/appConfig.ts";
 import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
+import { createTimeContext } from "../core/time";
 import * as canvasExecutor from "./renderPlan/canvasRenderPlanExecutor";
+import * as presentTimeTickPlan from "./renderPlan/topBandPresentTimeTickPlan";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes";
 import { buildDisplayChromeState, renderDisplayChrome } from "./displayChrome";
 
@@ -131,6 +133,96 @@ describe("renderDisplayChrome — present-time tick instrumentation vs tick tape
       expect(presentTimeCoreLines).toBeGreaterThan(0);
     } finally {
       vi.restoreAllMocks();
+    }
+  });
+
+  it("builds the present-time tick plan once, only for the tick rail vertical span", () => {
+    const spy = vi.spyOn(presentTimeTickPlan, "buildTopBandPresentTimeTickRenderPlan");
+    try {
+      const time = createTimeContext(1_704_067_200_000, 0, false);
+      const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+      const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+      const chrome = buildDisplayChromeState({
+        time,
+        viewport,
+        frame,
+        displayChromeLayout: {
+          tickTapeVisible: true,
+          timezoneLetterRowVisible: false,
+        },
+      });
+      renderDisplayChrome(createChromeTestCanvas2DContext(), chrome, viewport);
+      expect(spy).toHaveBeenCalledTimes(1);
+      const arg = spy.mock.calls[0]![0]!;
+      expect(arg.verticalSpans).toHaveLength(1);
+      const span = arg.verticalSpans[0]!;
+      expect(span.yBottom).toBeGreaterThan(span.yTop);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("does not change present-time tick plan when 24-hour indicator entries area is hidden vs shown", () => {
+    const spy = vi.spyOn(presentTimeTickPlan, "buildTopBandPresentTimeTickRenderPlan");
+    try {
+      const time = createTimeContext(1_704_067_200_000, 0, false);
+      const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+      const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+      const base = {
+        time,
+        viewport,
+        frame,
+        displayChromeLayout: {
+          tickTapeVisible: true,
+          timezoneLetterRowVisible: false,
+        },
+      };
+      spy.mockClear();
+      renderDisplayChrome(
+        createChromeTestCanvas2DContext(),
+        buildDisplayChromeState({
+          ...base,
+          displayChromeLayout: {
+            ...base.displayChromeLayout,
+            hourMarkers: cloneHourMarkersConfig({
+              ...DEFAULT_HOUR_MARKERS_CONFIG,
+              indicatorEntriesAreaVisible: false,
+            }),
+          },
+        }),
+        viewport,
+      );
+      const hiddenCalls = spy.mock.calls.map((c) => c[0]);
+      spy.mockClear();
+      renderDisplayChrome(
+        createChromeTestCanvas2DContext(),
+        buildDisplayChromeState({
+          ...base,
+          displayChromeLayout: {
+            ...base.displayChromeLayout,
+            hourMarkers: cloneHourMarkersConfig({
+              ...DEFAULT_HOUR_MARKERS_CONFIG,
+              indicatorEntriesAreaVisible: true,
+            }),
+          },
+        }),
+        viewport,
+      );
+      const shownCalls = spy.mock.calls.map((c) => c[0]);
+      expect(hiddenCalls.length).toBe(1);
+      expect(shownCalls.length).toBe(1);
+      const a = hiddenCalls[0]!;
+      const b = shownCalls[0]!;
+      expect(a.nowX).toBeCloseTo(b.nowX, 7);
+      expect(a.viewportWidthPx).toBe(b.viewportWidthPx);
+      expect(a.wrapHalfExtentPx).toBeCloseTo(b.wrapHalfExtentPx, 7);
+      expect(a.verticalSpans).toHaveLength(1);
+      expect(b.verticalSpans).toHaveLength(1);
+      const ah = a.verticalSpans[0]!.yBottom - a.verticalSpans[0]!.yTop;
+      const bh = b.verticalSpans[0]!.yBottom - b.verticalSpans[0]!.yTop;
+      expect(ah).toBeCloseTo(bh, 7);
+    } finally {
+      spy.mockRestore();
     }
   });
 });

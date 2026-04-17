@@ -1796,18 +1796,6 @@ export function renderDisplayChrome(
     }),
   );
 
-  // Reference-meridian cap at the circle→tick boundary: same instrumentation as the tick-rail “now” mark; omit when the tape is hidden.
-  const capPx = Math.max(0, st.ticks.referenceMeridianCircleCapPx);
-  if (showTickTape && tickH > 0 && capPx > 0 && vw > 0) {
-    executeRenderPlanOnCanvas(
-      ctx,
-      buildTopBandPresentTimeTickRenderPlan({
-        ...presentTimeTickStroke,
-        verticalSpans: [{ yTop: yCircleBottom - capPx, yBottom: yCircleBottom }],
-      }),
-    );
-  }
-
   executeRenderPlanOnCanvas(
     ctx,
     buildTopBandVerticalEdgeBezelRenderPlan({
