@@ -47,4 +47,6 @@ export interface SceneRenderInput {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene: SceneVisualContext;
+  /** CSS px reserved for top display chrome (`DisplayChromeState.topBand.height`). Scene layers use the band below. */
+  topChromeReservedHeightPx?: number;
 }

@@ -56,11 +56,16 @@ export function buildSceneRenderInput(options: {
   viewport: Viewport;
   layers: RenderableLayerState[];
   scene?: SceneVisualContext;
+  /** Must match {@link DisplayChromeState.topBand.height} from the same-frame chrome build. */
+  topChromeReservedHeightPx?: number;
 }): SceneRenderInput {
   return {
     frame: options.frame,
     viewport: options.viewport,
     layers: options.layers,
     scene: options.scene ?? {},
+    ...(options.topChromeReservedHeightPx !== undefined
+      ? { topChromeReservedHeightPx: options.topChromeReservedHeightPx }
+      : {}),
   };
 }

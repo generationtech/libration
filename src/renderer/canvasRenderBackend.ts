@@ -29,6 +29,7 @@ import {
 import { buildCityPinsRenderPlan } from "./renderPlan/sceneCityPinsPlan";
 import { buildSceneTextOverlayRenderPlan } from "./renderPlan/sceneTextOverlayPlan";
 import type { RenderBackend } from "./RenderBackend";
+import { clampedTopChromeReservedHeightPx, sceneLayerViewport } from "./sceneViewportLayout";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
 
 /**
@@ -74,12 +75,30 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, viewport.width, viewport.height);
 
+    const topChromePx = clampedTopChromeReservedHeightPx(
+      viewport.height,
+      input.topChromeReservedHeightPx ?? 0,
+    );
+    const sceneViewport = sceneLayerViewport(viewport, topChromePx);
+    const useSceneInset = topChromePx > 0 && sceneViewport.height > 0;
+    if (useSceneInset) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, topChromePx, viewport.width, sceneViewport.height);
+      ctx.clip();
+      ctx.translate(0, topChromePx);
+    }
+
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of layers) {
       if (!layer.visible) continue;
       ctx.save();
       ctx.globalAlpha = layer.opacity;
-      this.drawLayer(ctx, layer, viewport);
+      this.drawLayer(ctx, layer, sceneViewport);
+      ctx.restore();
+    }
+
+    if (useSceneInset) {
       ctx.restore();
     }
   }

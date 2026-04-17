@@ -28,6 +28,17 @@ describe("renderBridge", () => {
     });
     expect(input.scene).toEqual({});
     expect(input.layers).toEqual([]);
+    expect(input.topChromeReservedHeightPx).toBeUndefined();
+  });
+
+  it("buildSceneRenderInput forwards topChromeReservedHeightPx for scene compositing", () => {
+    const input = buildSceneRenderInput({
+      frame: { frameNumber: 0, now: 0, deltaMs: 0 },
+      viewport: { width: 640, height: 480, devicePixelRatio: 1 },
+      layers: [],
+      topChromeReservedHeightPx: 72,
+    });
+    expect(input.topChromeReservedHeightPx).toBe(72);
   });
 
   it("createViewportFromCanvas uses element client dimensions (min 1×1)", () => {
