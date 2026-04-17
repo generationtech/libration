@@ -4,7 +4,7 @@
 
 Libration is a canonical reference implementation of a longitude-first world time visualization system.
 
-It is a high-fidelity world time instrument built on a **render-plan architecture** and currently delivered as a local-first desktop application.
+![Libration application screenshot](docs/images/libration-hero.png)
 
 It uses:
 - a longitude-first time model
@@ -12,6 +12,25 @@ It uses:
 - UTC as canonical time
 - display-time derived via reference-time logic
 - a renderer-agnostic rendering pipeline
+
+It is a high-fidelity world time instrument built on a **render-plan architecture** and currently delivered as a local-first desktop application.
+```mermaid
+flowchart LR
+    R[Resolver] --> S[Semantic Planning]
+    S --> L[Layout]
+    L --> RP[RenderPlan]
+    RP --> E[Executor]
+    E --> B[Backend]
+
+    %% Styling
+    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef downstream fill:#1f2933,stroke:#4b5563,color:#cbd5e1;
+
+    class R,S,L upstream;
+    class RP boundary;
+    class E,B downstream;
+```
 
 ---
 
