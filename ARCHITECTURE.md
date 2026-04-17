@@ -88,10 +88,11 @@ Current top-band design:
 - NATO timezone strip (rectangular, continuous band)
 - Fixed built-in top chrome styling (single token set in config; not user-selectable)
 - Fully RenderPlan-driven
+- The scene viewport is derived upstream and begins below the reserved top chrome; the backend consumes that resolved viewport rather than deriving chrome offsets
 
 Top-band major areas now expose independent visibility controls for:
 - 24-hour indicator entries
-- center tickmark tape
+- 24-hour tickmark tape
 - NATO timezone row
 
 Recent chrome simplification:
@@ -387,6 +388,7 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - independent `tickTapeVisible` / `timezoneLetterRowVisible` top-band visibility controls
 - structured-only hour-marker authoring, normalization, and runtime consumption
 - top-band and bottom-chrome policy integration
+- renderer-agnostic scene viewport derivation (`sceneLayerViewportPx`) passed to backends as resolved layout data
 - backend-neutral text identity (`font.assetId`)
 - explicit Canvas bridge modules for text, paint, and paths
 - Canvas bundled-font loading/registration at runtime

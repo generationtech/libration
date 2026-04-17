@@ -54,7 +54,7 @@ Conceptually, the persisted model carries:
 Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
 
 Top-band visibility that sits alongside this model is also structured in chrome layout state, including:
-- `chrome.layout.hourMarkers.visible`
+- `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
 
@@ -73,6 +73,8 @@ Procedural glyphs resolve through:
 The current config does **not** point directly at raw TTF files or renderer-owned glyph geometry.
 
 Canvas remains responsible for final text realization in the current backend, and bundled font realization is now working for that path.
+
+Scene/chrome composition now also preserves a renderer-agnostic boundary: the visible map strip viewport is derived upstream and passed to the backend as resolved layout data rather than having the backend derive top-chrome reservation math on its own.
 
 ---
 

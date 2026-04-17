@@ -52,12 +52,13 @@ Chrome editing is now organized by major area rather than one long mixed panel. 
 - NATO timezone area
 
 Each top-band area now has independent persisted visibility where applicable, including:
-- `chrome.layout.hourMarkers.visible`
+- `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
 
 Recent simplification:
 - top-band alignment and timing behavior are unchanged
+- the present-time tick mark lives in the 24-hour tickmark tape only; it is no longer double-drawn into the upper indicator entries area
 
 ---
 
@@ -158,6 +159,8 @@ The project does **not yet** use a custom glyph-outline or atlas-based text rend
 `Resolver / Planner / Layout / Adapter → RenderPlan → Executor`
 
 All rendering intent is resolved before backend execution.
+
+The scene viewport for visible map content is also resolved upstream and passed to the backend as concrete layout data (`sceneLayerViewportPx`), so backends do not derive top-chrome reservation rules themselves.
 
 Current backend:
 - Canvas
