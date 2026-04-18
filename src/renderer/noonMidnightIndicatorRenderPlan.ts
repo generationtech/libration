@@ -28,8 +28,8 @@
  * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
  * **boxedNumber**: Filled highlight rectangles behind the tape numeral use
- * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (wide/tall highlighter wash vs the numeral, not a
- * strip-scale plaque). Color is the resolver’s derived treatment color. Analog clock uses the same model.
+ * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (broad, low-profile horizontal swash vs the numeral,
+ * not a tight backing plate or strip-scale plaque). Color is the resolver’s derived treatment color. Analog clock uses the same model.
  *
  * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
  */
@@ -103,11 +103,12 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
   return b.build();
 }
 
-/** Highlight bar half-height vs marker content box — highlighter wash, not a full strip-scale plaque. */
-const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.52;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.4;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.12;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.16;
+/** Highlight bar half-height vs marker content box — flat text-highlighter swash, not a tall plaque behind the glyph. */
+const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.3;
+/** Minimum half-width: materially wider than typical two-digit numerals so the swash extends past the text. */
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.62;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.2;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.2;
 /** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
 const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.72;
 /** Slightly larger tape numeral over the highlight (layout.size drives glyph metrics). */
@@ -144,7 +145,8 @@ export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
  * Half extents for the boxed-number **highlight** rectangle (text-highlighter bar behind the tape numeral): derived
  * from the semantic layout’s marker content box size ({@link GlyphLayoutBox.size}) and the tape label span.
  * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
- * solved disk box side from layout. Sized as a visible wash behind the numeral, not a strip-scale plaque or badge frame.
+ * solved disk box side from layout. Sized as a broad horizontal highlight span behind the numeral, not a tight
+ * numeral-sized plate or strip-scale badge frame.
  */
 export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
@@ -295,14 +297,22 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   const numeralSpec = textNumeralSpecFor(args);
 
   if (mode === "textWords") {
-    if (args.realizationKind === "text") {
-      return false;
-    }
     const wordContent: HourMarkerContent = {
       structuralHour0To23: args.structuralHour0To23,
       displayLabel: textWordsIndicatorStripDisplayLabel(args.structuralHour0To23),
     };
     const ty = typographyOverridesFor(args);
+    if (args.realizationKind === "text") {
+      pushGlyphContent(
+        args,
+        wordContent,
+        args.hourSpec,
+        gctx,
+        out,
+        textWordsNoonMidnightWordLayout(args.layout),
+      );
+      return true;
+    }
     if (args.realizationKind === "radialLine" || args.realizationKind === "radialWedge") {
       const baseGlyph = createHourMarkerGlyph(
         {
