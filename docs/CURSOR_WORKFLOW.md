@@ -4,21 +4,38 @@
 
 All rendering logic must be expressed via semantic resolvers, layout stages, realization adapters, and `RenderPlan` builders upstream of execution.
 
+```mermaid
+flowchart LR
+    RES[Resolver] --> SEM[Semantic Planning]
+    SEM --> LAY[Layout]
+    LAY --> ADA[Adapter]
+    ADA --> RP[RenderPlan]
+    RP --> EX[Executor]
+
+    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+
+    class RES,SEM,LAY,ADA upstream;
+    class RP boundary;
+```
+
+Rendering intent is fully resolved before execution. Backends execute only.
+
 ---
 
 ## Responsibilities
 
-Cursor:
+### Cursor
 - implement semantic planners and layout stages
 - implement UI/editor restructuring work when a surface needs it
-- activate the existing font / typography / glyph system in live renderer paths
+- activate the existing font, typography, and glyph system in live renderer paths
 - remove obsolete compatibility code when a migration slice is complete
 - implement feature-forward work on top of already-cleaned runtime contracts
 - preserve repo-wide AGPL license headers in source files where applicable
 
-ChatGPT:
+### ChatGPT
 - architecture and design direction
-- representation/editor system design
+- representation and editor system design
 - integration guidance when a feature reveals a real architectural gap
 
 ---
@@ -29,6 +46,27 @@ ChatGPT:
 - runtime migration is complete for the supported production path
 - editor migration is complete for hour markers
 - persistence migration is complete for hour markers
+
+```mermaid
+flowchart TB
+    HM[Hour Marker Model]
+    B[Behavior]
+    R[Realization]
+    L[Layout]
+    A[Appearance]
+
+    B --- HM
+    R --- HM
+    L --- HM
+    A --- HM
+
+    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+
+    class HM center;
+    class B,R,L,A axis;
+```
+
 - preserve the truthful top-band hour-marker model:
   - Behavior
   - Realization
@@ -45,19 +83,19 @@ ChatGPT:
 
 ## Rules
 
-DO:
+### DO
 - keep rendering declarative
 - keep representation and behavior choices upstream of execution
 - use semantic roles instead of raw font references in unrelated component logic
 - treat non-font glyphs as first-class renderables where appropriate
 - prefer dedicated editors when a chrome surface outgrows monolithic UI ownership
-- keep config/policy/type ownership flowing downstream (`config` → `glyphs` → `renderer`), never the reverse
+- keep config, policy, and type ownership flowing downstream (config → glyphs → renderer), never the reverse
 - keep style layered over representation and asset choice
 - delete obsolete migration code once a slice is complete
 - preserve existing AGPL headers when editing covered source files
 - add appropriate AGPL headers to new covered source files when consistent with repo practice
 
-DO NOT:
+### DO NOT
 - put product semantics in backend
 - hardwire browser font behavior into architecture
 - reintroduce top-band text-style preset concepts
@@ -67,13 +105,13 @@ DO NOT:
 - resurrect legacy flat hour-marker persistence
 - generalize the hour-marker solution to other surfaces without feature pressure
 - remove or duplicate license headers during routine edits
-- let row/band height or padding influence marker scale
+- let row or band height or padding influence marker scale
 
 ---
 
 ## Rendering Rule
 
-`Resolver / Planner / Layout / Adapter → RenderPlan → Executor`
+`Resolver → Semantic Planning → Layout → Adapter → RenderPlan → Executor`
 
 Backends realize resolved intent only.
 
@@ -83,10 +121,12 @@ Current Canvas text realization is backend-specific and still uses native Canvas
 
 ## Current State
 
-Initial public release (`v1.0.0`) complete  
+Initial public release (v1.0.0) complete  
 Architecture complete enough for feature-forward work  
 Top-band hour-marker runtime migration complete for the supported production path  
 Hour-marker editor and persistence migration complete  
 Typography and glyph support implemented  
 Canvas bundled-font realization working  
-Current task: continue top-band feature and styling work on top of the completed structured hour-marker model
+
+Current task:
+- continue top-band feature and styling work on top of the completed structured hour-marker model

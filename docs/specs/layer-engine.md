@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define a uniform model for map and globe **scene** content in libration.
+Define a uniform model for map and globe **scene** content in Libration.
 
 Scene content rendered in projection space should be expressed as a layer wherever practical, including:
 - base map
@@ -23,6 +23,25 @@ The layer system does **not render directly**.
 It participates in a larger rendering pipeline:
 
 Layer → LayerState → RenderPlan Builder → RenderPlan → Executor → Backend
+
+```mermaid
+flowchart LR
+    L[Layer] --> LS[LayerState]
+    LS --> PB[RenderPlan Builder]
+    PB --> RP[RenderPlan]
+    RP --> EX[Executor]
+    EX --> BE[Backend]
+
+    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef downstream fill:#1f2933,stroke:#4b5563,color:#cbd5e1;
+
+    class L,LS,PB upstream;
+    class RP boundary;
+    class EX,BE downstream;
+```
+
+Layers feed render intent into the system; execution happens only after all semantics are resolved.
 
 ### Responsibilities
 
@@ -106,7 +125,7 @@ type LayerType =
   | "illumination";
 ```
 
-- **`illumination`** — shading driven by solar geometry (not a texture)
+- **illumination** — shading driven by solar geometry (not a texture)
 
 ---
 
@@ -154,11 +173,22 @@ type UpdatePolicy =
 
 ## Layer Lifecycle
 
-1. Created
-2. Registered
-3. Enabled / disabled
-4. Updated
-5. Queried for state
+```mermaid
+flowchart LR
+    C[Created] --> R[Registered]
+    R --> E[Enabled Or Disabled]
+    E --> U[Updated]
+    U --> Q[Queried For State]
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    class C,R,E,U,Q node;
+```
+
+1. Created  
+2. Registered  
+3. Enabled / disabled  
+4. Updated  
+5. Queried for state  
 
 ---
 
@@ -212,6 +242,18 @@ Instead:
 
 LayerState → RenderPlan Builder → RenderPlan primitives
 
+```mermaid
+flowchart LR
+    LS[LayerState] --> PB[RenderPlan Builder]
+    PB --> RP[RenderPlan Primitives]
+
+    classDef upstream fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+
+    class LS,PB upstream;
+    class RP boundary;
+```
+
 ### RenderPlan Primitive Types (reference)
 
 - rect
@@ -247,11 +289,11 @@ LayerState → RenderPlan Builder → RenderPlan primitives
 
 ## Implemented Layer Set
 
-- **Raster** — base map
-- **Illumination** — solar shading
-- **Vector** — lat/lon grid
-- **Points** — city pins, solar/lunar markers
-- **Text** — optional overlays
+- Raster — base map
+- Illumination — solar shading
+- Vector — lat/lon grid
+- Points — city pins, solar/lunar markers
+- Text — optional overlays
 
 ---
 

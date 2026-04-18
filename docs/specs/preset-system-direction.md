@@ -35,6 +35,18 @@ The motivating idea is:
 
 ## Core Product Idea
 
+```mermaid
+flowchart LR
+    BASE[Base Or Current Config] --> A[Apply Preset A]
+    A --> B[Apply Preset B]
+    B --> C[Apply Preset C]
+    C --> N[Normalize Config]
+    N --> E[Effective Config]
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    class BASE,A,B,C,N,E node;
+```
+
 A preset is a **named partial structured configuration patch**.
 
 That means:
@@ -161,6 +173,23 @@ effective =
 ---
 
 ### 4. Last write wins
+
+```mermaid
+flowchart LR
+    A[Preset A] --> B[Preset B]
+    B --> C[Preset C]
+    C --> R[Final Value]
+
+    NOTE[Last write wins]
+
+    R -.-> NOTE
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+
+    class A,B,C,R node;
+    class NOTE note;
+```
 
 If two presets affect the same config path, the later preset overrides the earlier one.
 
@@ -390,6 +419,16 @@ The metadata should remain descriptive. It should not become the source of truth
 ---
 
 ## Applying Presets: Conceptual Pipeline
+
+```mermaid
+flowchart LR
+    S[Starting Config] --> P[Apply Ordered Presets]
+    P --> N[Normalize]
+    N --> F[Effective Config]
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    class S,P,N,F node;
+```
 
 A clean conceptual pipeline would be:
 

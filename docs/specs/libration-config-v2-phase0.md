@@ -16,6 +16,21 @@ Top-band hour-marker rendering now flows through a resolved semantic model:
 - realization adapter
 - `RenderPlan`
 
+```mermaid
+flowchart LR
+    CFG[Structured Config] --> RES[Resolver]
+    RES --> SEM[Semantic Planner]
+    SEM --> LAY[Layout]
+    LAY --> ADA[Adapter]
+    ADA --> RP[RenderPlan]
+
+    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+
+    class CFG,RES,SEM,LAY,ADA upstream;
+    class RP boundary;
+```
+
 There is no remaining flat compatibility layer for hour markers in normalization, persistence, or runtime resolution.
 
 ---
@@ -53,6 +68,26 @@ Conceptually, the persisted model carries:
 
 Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
 
+```mermaid
+flowchart TB
+    HM[Hour Marker Model]
+    B[Behavior]
+    R[Realization]
+    L[Layout]
+    A[Appearance]
+
+    B --- HM
+    R --- HM
+    L --- HM
+    A --- HM
+
+    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+
+    class HM center;
+    class B,R,L,A axis;
+```
+
 Top-band visibility that sits alongside this model is also structured in chrome layout state, including:
 - `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
 - `chrome.layout.tickTapeVisible`
@@ -69,6 +104,26 @@ Top-band hour-marker text currently resolves through:
 Procedural glyphs resolve through:
 
 `structured chrome layout -> resolveEffectiveTopBandHourMarkers -> semantic glyph realization -> glyph policy/spec -> layout -> procedural glyph -> RenderPlan primitives`
+
+```mermaid
+flowchart TB
+    CFG[Structured Layout] --> RES[Resolver]
+    RES --> TXT[Text Or Glyph Decision]
+    TXT --> LAY[Layout]
+    LAY --> RP[RenderPlan]
+
+    TXT --> TXT_PATH[Text Path]
+    TXT --> GLY_PATH[Glyph Path]
+
+    TXT_PATH --> CAN[Canvas Text Bridge]
+    GLY_PATH --> PRIM[Procedural Primitives]
+
+    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+
+    class CFG,RES,TXT,LAY pipeline;
+    class RP boundary;
+```
 
 The current config does **not** point directly at raw TTF files or renderer-owned glyph geometry.
 

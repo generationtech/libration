@@ -2,9 +2,9 @@
 
 ## Overview
 
-Libration is a canonical reference implementation of a longitude-first world time visualization system.
-
 ![Libration application screenshot](docs/images/libration-hero.png)
+
+Libration is a canonical reference implementation of a longitude-first world time visualization system.
 
 It uses:
 - a longitude-first time model
@@ -385,16 +385,6 @@ Hour-marker editor and persistence migration complete.
 Typography + glyph subsystem implemented.  
 Canvas bundled-font realization working.  
 Current engineering focus: feature-forward top-band chrome work on top of the completed structured hour-marker model.
-
----
-
-## Saved Configuration — Hour Markers (Breaking Change)
-
-Hour-marker persistence now requires:
-
-`chrome.layout.hourMarkers`
-
-Older saved configs that only used legacy flat hour-marker fields are no longer compatible. This was an intentional full cutover.
 
 ---
 

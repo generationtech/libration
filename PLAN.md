@@ -2,7 +2,7 @@
 
 ## Current State
 
-Initial public release: COMPLETE (`v1.0.0`)  
+Initial public release: COMPLETE (v1.0.0)  
 Architecture: COMPLETE enough for feature-forward work  
 Top-band hour-marker runtime migration: COMPLETE for the supported production path  
 Hour-marker editor architecture migration: COMPLETE  
@@ -17,6 +17,16 @@ RenderPlan backend-boundary cleanup: COMPLETE enough for the current Canvas path
 
 ### Phase: Post-Release Feature Work on Top-Band Chrome
 
+```mermaid
+flowchart LR
+    S[Stable Hour Marker Model] --> F[Feature Work Top Band]
+    F --> E[Editor Refinement]
+    E --> D[Docs Alignment]
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    class S,F,E,D node;
+```
+
 Focus:
 - treat the cleaned hour-marker runtime/editor/persistence model as stable
 - use `chrome.layout.hourMarkers` as the single authoritative model
@@ -30,6 +40,26 @@ Current truthful top-band model:
 - **Layout** → size / placement semantics, including content-row padding
 - **Appearance** → realization-scoped styling controls
 - **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis
+
+```mermaid
+flowchart TB
+    HM[Hour Marker Model]
+    B[Behavior]
+    R[Realization]
+    L[Layout]
+    A[Appearance]
+
+    B --- HM
+    R --- HM
+    L --- HM
+    A --- HM
+
+    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+
+    class HM center;
+    class B,R,L,A axis;
+```
 
 Recent completed work:
 - extracted `HourMarkersEditor` from `ChromeTab`
@@ -81,6 +111,21 @@ Immediate next target:
 ---
 
 ## Runtime Status (Hour Markers)
+
+```mermaid
+flowchart LR
+    C[Config] --> R[Resolver]
+    R --> S[Semantic Planning]
+    S --> L[Layout]
+    L --> A[Adapters]
+    A --> RP[RenderPlan]
+
+    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+
+    class C,R,S,L,A pipeline;
+    class RP boundary;
+```
 
 The hour-marker runtime proving ground is complete enough to stop modifying for architectural reasons.
 
@@ -142,6 +187,21 @@ Important consequences:
 ---
 
 ## Next Direction
+
+```mermaid
+flowchart TB
+    F1[Top Band Styling Evolution]
+    F2[Appearance Expansion When Needed]
+    F3[Pattern Reuse Deferred]
+    F4[Future Rendering Deferred]
+
+    F1 --> F2
+    F2 --> F3
+    F3 --> F4
+
+    classDef node fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    class F1,F2,F3,F4 node;
+```
 
 ### 1. Feature-Forward Styling / Chrome Evolution
 - add new top-band visual changes on top of the stable hour-marker architecture
