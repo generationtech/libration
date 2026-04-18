@@ -11,17 +11,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+  rgbaForegroundWithAlpha,
+} from "../color/contrastForegroundOnCssBackground.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+  resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
-import {
-  DEFAULT_ANALOG_FACE_FILL,
-  DEFAULT_ANALOG_HAND_COLOR,
-  DEFAULT_ANALOG_RING_COLOR,
-} from "./topBandHourMarkersDefaults.ts";
-import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
+import { DEFAULT_ANALOG_FACE_FILL } from "./topBandHourMarkersDefaults.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveTopBandHourMarkerBehavior,
@@ -43,12 +43,13 @@ function normalizeMarkerColor(raw: unknown): string | undefined {
 
 function resolveAnalogClockResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "analogClock" }>,
+  derivedForeground: "#000000" | "#ffffff",
 ): EffectiveAnalogClockResolvedAppearance {
   const a = r.appearance;
   const handTint = normalizeMarkerColor(a.handColor);
   const faceFromAppearance = normalizeMarkerColor(a.faceColor);
-  const ringStroke = handTint !== undefined ? handTint : DEFAULT_ANALOG_RING_COLOR;
-  const handStroke = handTint !== undefined ? handTint : DEFAULT_ANALOG_HAND_COLOR;
+  const ringStroke = handTint !== undefined ? handTint : derivedForeground;
+  const handStroke = handTint !== undefined ? handTint : derivedForeground;
   const faceFill = faceFromAppearance !== undefined ? faceFromAppearance : DEFAULT_ANALOG_FACE_FILL;
   return { ringStroke, handStroke, faceFill };
 }
@@ -69,6 +70,15 @@ function resolveRadialWedgeResolvedAppearance(
   return { fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill };
 }
 
+function resolveIndicatorEntriesAreaEffective(layout: DisplayChromeLayoutConfig): {
+  effectiveBackgroundColor: string;
+  effectiveForegroundColor: "#000000" | "#ffffff";
+} {
+  const effectiveBackgroundColor = resolvedAuthoredIndicatorEntriesAreaBackgroundColor(layout.hourMarkers);
+  const effectiveForegroundColor = blackOrWhiteForegroundForBackgroundCss(effectiveBackgroundColor);
+  return { effectiveBackgroundColor, effectiveForegroundColor };
+}
+
 /** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
 export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): EffectiveTopBandHourMarkerBehavior {
   return kind === "analogClock" ? "staticZoneAnchored" : "tapeAdvected";
@@ -87,9 +97,9 @@ export function resolveEffectiveTopBandHourMarkers(
 ): EffectiveTopBandHourMarkers {
   const hm = layout.hourMarkers;
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
-  const ink = TOP_CHROME_STYLE.hourIndicatorEntries;
-  const defaultTextOrLineInk = ink.defaultForeground;
-  const defaultWedgeFill = ink.defaultRadialWedgeFill;
+  const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
+  const derivedFg = indicatorEntriesArea.effectiveForegroundColor;
+  const defaultWedgeFill = rgbaForegroundWithAlpha(derivedFg, 0.32);
 
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const ly = hm.layout;
@@ -116,11 +126,12 @@ export function resolveEffectiveTopBandHourMarkers(
       kind: "text",
       fontAssetId,
       resolvedAppearance: {
-        color: textColor !== undefined ? textColor : defaultTextOrLineInk,
+        color: textColor !== undefined ? textColor : derivedFg,
       },
     };
     return {
       areaVisible,
+      indicatorEntriesArea,
       behavior,
       content: { kind: "hour24" },
       realization,
@@ -133,11 +144,12 @@ export function resolveEffectiveTopBandHourMarkers(
     const r = hm.realization;
     return {
       areaVisible,
+      indicatorEntriesArea,
       behavior,
       content: { kind: "localWallClock" },
       realization: {
         kind: "analogClock",
-        resolvedAppearance: resolveAnalogClockResolvedAppearance(r),
+        resolvedAppearance: resolveAnalogClockResolvedAppearance(r, derivedFg),
       },
       layout: layoutOut,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
@@ -148,11 +160,12 @@ export function resolveEffectiveTopBandHourMarkers(
     const r = hm.realization;
     return {
       areaVisible,
+      indicatorEntriesArea,
       behavior,
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: resolveRadialLineResolvedAppearance(r, defaultTextOrLineInk),
+        resolvedAppearance: resolveRadialLineResolvedAppearance(r, derivedFg),
       },
       layout: layoutOut,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
@@ -162,6 +175,7 @@ export function resolveEffectiveTopBandHourMarkers(
   const r = hm.realization;
   return {
     areaVisible,
+    indicatorEntriesArea,
     behavior,
     content: { kind: "hour24" },
     realization: {

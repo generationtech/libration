@@ -45,7 +45,7 @@ import {
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
 
 /** Default top-band hour markers: strip look, role default font (no explicit font in selection). */
-const SEL_TEXT_DEFAULT = { kind: "text" as const, fontAssetId: undefined, sizeMultiplier: 1 };
+const SEL_TEXT_DEFAULT = { kind: "text" as const, fontAssetId: undefined, sizeMultiplier: 1.25 };
 
 const EFF_TEXT_DEFAULT = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
 
@@ -311,8 +311,9 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     });
     expect(plan.items[0]?.kind).toBe("rect");
     expect(plan.items[1]?.kind).toBe("rect");
-    expect(plan.items[2]?.kind).toBe("line");
+    expect(plan.items[2]?.kind).toBe("rect");
     expect(plan.items[3]?.kind).toBe("line");
+    expect(plan.items[4]?.kind).toBe("line");
     expect(plan.items.some((i) => i.kind === "path2d")).toBe(false);
     expect(plan.items.some((i) => i.kind === "text" && i.text === m0.currentHourLabel)).toBe(true);
     expect(plan.items.some((i) => i.kind === "text" && (i.text === "NOON" || i.text === "MIDNIGHT"))).toBe(
@@ -1100,8 +1101,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(plan.items.filter((i) => i.kind === "line").length).toBeGreaterThan(0);
     });
 
-    const DEFAULT_HOUR_DISK_TEXT_FILL = TOP_CHROME_STYLE.hourIndicatorEntries.defaultForeground;
-
     it("text hour disk uses default fill when effective selection has no color", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
       const label0 = f.markers[0]!.currentHourLabel;
@@ -1124,7 +1123,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const t = hourDiskTextForStructuralHour(plan, label0);
       expect(t?.kind).toBe("text");
       if (t?.kind === "text") {
-        expect(t.fill).toBe(DEFAULT_HOUR_DISK_TEXT_FILL);
+        expect(t.fill).toBe(eff.indicatorEntriesArea.effectiveForegroundColor);
       }
     });
 

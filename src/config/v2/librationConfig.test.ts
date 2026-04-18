@@ -148,7 +148,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(effectiveTopBandHourMarkerSelection(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG)).toEqual({
       kind: "text",
       fontAssetId: undefined,
-      sizeMultiplier: 1,
+      sizeMultiplier: 1.25,
     });
     expect(
       effectiveTopBandHourMarkerSelection(

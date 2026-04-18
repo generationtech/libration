@@ -64,6 +64,11 @@ export interface HourMarkersConfig {
    * @default true
    */
   indicatorEntriesAreaVisible?: boolean;
+  /**
+   * Authored CSS background for the 24-hour indicator entries row (disk-band strip) only.
+   * When omitted, the default from app config (`DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR`) is used at resolve time.
+   */
+  indicatorEntriesAreaBackgroundColor?: string;
   /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
   behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {
@@ -143,6 +148,14 @@ export type EffectiveTopBandHourMarkers = {
    * {@link HourMarkersConfig.indicatorEntriesAreaVisible}). Not feature “activation” or realization behavior.
    */
   areaVisible: boolean;
+  /**
+   * Resolved background for the indicator entries row plus {@link effectiveForegroundColor} derived for contrast
+   * (black/white) when authored realization appearance does not override ink.
+   */
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  };
   behavior: EffectiveTopBandHourMarkerBehavior;
   content: EffectiveTopBandHourMarkerContent;
   realization: EffectiveTopBandHourMarkerRealization;

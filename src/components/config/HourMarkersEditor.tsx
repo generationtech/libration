@@ -13,6 +13,7 @@
 
 import {
   cloneHourMarkersConfig,
+  DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "../../config/appConfig";
@@ -591,7 +592,7 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
                   }
                   commitHourMarkers(updateConfig, (hm) => ({
                     ...hm,
-                    layout: { sizeMultiplier: n },
+                    layout: { ...hm.layout, sizeMultiplier: n },
                   }));
                 }
               : undefined
@@ -754,6 +755,58 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
             />
             <span>Show hour-indicator entries strip (layout + rendering)</span>
           </label>
+        </ConfigControlRow>
+      </fieldset>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Indicator entries area</legend>
+        <ConfigControlRow label="Background color">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="24-hour indicator entries area background color"
+            title={
+              hourMarkers.indicatorEntriesAreaBackgroundColor === undefined
+                ? "Default instrument bed color — pick to override"
+                : "Background for the indicator entries row only"
+            }
+            value={
+              hourMarkers.indicatorEntriesAreaBackgroundColor ??
+              DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR
+            }
+            disabled={!wired || !entriesAreaEnabled}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    commitHourMarkers(updateConfig, (hm) => ({
+                      ...hm,
+                      indicatorEntriesAreaBackgroundColor: e.currentTarget.value,
+                    }));
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Reset indicator entries area background to default"
+            disabled={
+              !wired || !entriesAreaEnabled || hourMarkers.indicatorEntriesAreaBackgroundColor === undefined
+            }
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      const next = cloneHourMarkersConfig(hm);
+                      delete (next as { indicatorEntriesAreaBackgroundColor?: string })
+                        .indicatorEntriesAreaBackgroundColor;
+                      return next;
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
         </ConfigControlRow>
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">

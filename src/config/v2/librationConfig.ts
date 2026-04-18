@@ -466,6 +466,12 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.hourMarkers");
   }
+  const hmBg = (hm as { indicatorEntriesAreaBackgroundColor?: unknown }).indicatorEntriesAreaBackgroundColor;
+  if (hmBg !== undefined && typeof hmBg !== "string") {
+    throw new Error(
+      "assertIsNormalizedLibrationConfig: invalid chrome.layout.hourMarkers.indicatorEntriesAreaBackgroundColor",
+    );
+  }
   const hmLayout = hm.layout as {
     contentPaddingTopPx?: unknown;
     contentPaddingBottomPx?: unknown;

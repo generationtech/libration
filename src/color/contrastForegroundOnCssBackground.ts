@@ -1,0 +1,113 @@
+/*
+ * Libration
+ * Copyright (C) 2026 Ken McDonald
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+/**
+ * Deterministic black/white foreground selection for CSS background strings (renderer-agnostic).
+ */
+
+/**
+ * Picks `#000000` or `#ffffff` for maximum contrast against a CSS color string.
+ * Uses sRGB relative luminance (WCAG); invalid input falls back to `#ffffff`.
+ */
+export function blackOrWhiteForegroundForBackgroundCss(cssColor: string): "#000000" | "#ffffff" {
+  const l = parseCssColorToLinearLuminance01(cssColor.trim());
+  if (l === undefined) {
+    return "#ffffff";
+  }
+  return l > 0.179 ? "#000000" : "#ffffff";
+}
+
+/**
+ * `rgba(r,g,b,a)` with the given foreground and alpha (0–1). Foreground must be `#000000` or `#ffffff`.
+ */
+export function rgbaForegroundWithAlpha(
+  foreground: "#000000" | "#ffffff",
+  alpha: number,
+): string {
+  const a = Math.max(0, Math.min(1, alpha));
+  const v = foreground === "#000000" ? 0 : 255;
+  return `rgba(${v}, ${v}, ${v}, ${a})`;
+}
+
+function clamp01(x: number): number {
+  return Math.max(0, Math.min(1, x));
+}
+
+function linearizeSrgbChannel(c01: number): number {
+  const c = clamp01(c01);
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+/** WCAG relative luminance for opaque sRGB. */
+export function relativeLuminanceFromSrgb01(rgb: { r: number; g: number; b: number }): number {
+  const r = linearizeSrgbChannel(rgb.r);
+  const g = linearizeSrgbChannel(rgb.g);
+  const b = linearizeSrgbChannel(rgb.b);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function parseCssColorToLinearLuminance01(css: string): number | undefined {
+  const s = css.trim();
+  const hex = parseHexToSrgb01(s);
+  if (hex) {
+    return relativeLuminanceFromSrgb01(hex);
+  }
+  const rgba = parseRgbFunctionToSrgb01(s);
+  if (rgba) {
+    return relativeLuminanceFromSrgb01(rgba);
+  }
+  return undefined;
+}
+
+function parseHexToSrgb01(s: string): { r: number; g: number; b: number } | undefined {
+  if (!s.startsWith("#")) {
+    return undefined;
+  }
+  const raw = s.slice(1);
+  let r: number;
+  let g: number;
+  let b: number;
+  if (raw.length === 3) {
+    r = parseInt(raw[0]! + raw[0]!, 16);
+    g = parseInt(raw[1]! + raw[1]!, 16);
+    b = parseInt(raw[2]! + raw[2]!, 16);
+  } else if (raw.length === 6) {
+    r = parseInt(raw.slice(0, 2), 16);
+    g = parseInt(raw.slice(2, 4), 16);
+    b = parseInt(raw.slice(4, 6), 16);
+  } else {
+    return undefined;
+  }
+  if (![r, g, b].every((n) => Number.isFinite(n))) {
+    return undefined;
+  }
+  return { r: r / 255, g: g / 255, b: b / 255 };
+}
+
+function parseRgbFunctionToSrgb01(s: string): { r: number; g: number; b: number } | undefined {
+  const m = s.match(/^rgba?\(\s*([^)]+)\s*\)$/i);
+  if (!m) {
+    return undefined;
+  }
+  const parts = m[1]!.split(",").map((p) => p.trim());
+  if (parts.length < 3) {
+    return undefined;
+  }
+  const r = parseFloat(parts[0]!);
+  const g = parseFloat(parts[1]!);
+  const b = parseFloat(parts[2]!);
+  if (![r, g, b].every((n) => Number.isFinite(n))) {
+    return undefined;
+  }
+  return { r: r / 255, g: g / 255, b: b / 255 };
+}

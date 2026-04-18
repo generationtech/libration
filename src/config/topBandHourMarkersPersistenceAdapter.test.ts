@@ -12,10 +12,25 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "./appConfig.ts";
+import {
+  cloneHourMarkersConfig,
+  DEFAULT_HOUR_MARKERS_CONFIG,
+  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+} from "./appConfig.ts";
 import { normalizeHourMarkersInput } from "./topBandHourMarkersPersistenceAdapter.ts";
 
 describe("normalizeHourMarkersInput", () => {
+  it("structured defaults: size, padding, bundled font, indicator entries background", () => {
+    const d = cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
+    expect(d.layout.sizeMultiplier).toBe(1.25);
+    expect(d.layout.contentPaddingTopPx).toBe(5);
+    expect(d.layout.contentPaddingBottomPx).toBe(5);
+    expect(d.realization.kind === "text" ? d.realization.fontAssetId : null).toBe(
+      DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    );
+    expect(d.indicatorEntriesAreaBackgroundColor).toBeDefined();
+  });
+
   it("returns default for undefined, null, or non-object", () => {
     expect(normalizeHourMarkersInput(undefined)).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
     expect(normalizeHourMarkersInput(null)).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
@@ -114,7 +129,7 @@ describe("normalizeHourMarkersInput", () => {
         realization: { kind: "text", fontAssetId: "not-a-font" },
         layout: { sizeMultiplier: 1 },
       }).realization,
-    ).toEqual({ kind: "text", fontAssetId: "zeroes-one", appearance: {} });
+    ).toEqual({ kind: "text", fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID, appearance: {} });
   });
 
   it("invalid custom realization kind returns default hour markers", () => {
@@ -189,5 +204,15 @@ describe("normalizeHourMarkersInput", () => {
         layout: { sizeMultiplier: 1 },
       }).indicatorEntriesAreaVisible,
     ).toBe(false);
+  });
+
+  it("preserves trimmed indicatorEntriesAreaBackgroundColor when set", () => {
+    expect(
+      normalizeHourMarkersInput({
+        indicatorEntriesAreaBackgroundColor: "  #aabbcc  ",
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      }).indicatorEntriesAreaBackgroundColor,
+    ).toBe("#aabbcc");
   });
 });

@@ -244,6 +244,18 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     height: Math.max(0, circleBedY1 - circleBedY0),
     fill: inst.circleBandBedMid,
   });
+
+  const yDiskRow0 = y0 + circleStack.padTopPx + circleStack.upperNumeralH + circleStack.gapNumeralToDiskPx;
+  const diskBandH = circleStack.diskBandH;
+  items.push({
+    kind: "rect",
+    x: tbX,
+    y: yDiskRow0,
+    width: vw,
+    height: Math.max(0, diskBandH),
+    fill: effectiveMarkers.indicatorEntriesArea.effectiveBackgroundColor,
+  });
+
   items.push({
     kind: "line",
     x1: 0,

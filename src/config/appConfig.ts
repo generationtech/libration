@@ -14,6 +14,7 @@
 import { REFERENCE_CITIES, type ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
+import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 
 /**
  * Font assets exposed in UI for top-band hour disk numerals (must stay aligned with bundled manifest ids).
@@ -148,18 +149,40 @@ export const LEGACY_TOP_BAND_TEXT_MODE_TO_FONT_ASSET_ID: Record<
 };
 
 /** Canonical bundled font for top-band text hour markers when none is stored (truthful default). */
-export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zeroes-one";
+export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zeroes-two";
+
+/** Default authored CSS background for the 24-hour indicator entries row (`hourMarkers.indicatorEntriesAreaBackgroundColor`). */
+export const DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR: string =
+  TOP_CHROME_STYLE.instrument.circleBandBedDeep;
 
 /** Default structured hour markers for {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG}. */
 export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
   indicatorEntriesAreaVisible: true,
+  indicatorEntriesAreaBackgroundColor: DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
   realization: {
     kind: "text",
     fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     appearance: {},
   },
-  layout: { sizeMultiplier: 1.0 },
+  layout: {
+    sizeMultiplier: 1.25,
+    contentPaddingTopPx: 5,
+    contentPaddingBottomPx: 5,
+  },
 };
+
+/**
+ * Effective authored background for the indicator entries row: trimmed string or
+ * {@link DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR} when absent/blank.
+ */
+export function resolvedAuthoredIndicatorEntriesAreaBackgroundColor(hm: HourMarkersConfig): string {
+  const raw = hm.indicatorEntriesAreaBackgroundColor;
+  if (typeof raw !== "string") {
+    return DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR;
+  }
+  const t = raw.trim();
+  return t === "" ? DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR : t;
+}
 
 /**
  * Deep-clone {@link HourMarkersConfig} for snapshots and layout cloning.
@@ -198,6 +221,9 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
   }
   return {
     indicatorEntriesAreaVisible: h.indicatorEntriesAreaVisible !== false,
+    ...(h.indicatorEntriesAreaBackgroundColor !== undefined
+      ? { indicatorEntriesAreaBackgroundColor: h.indicatorEntriesAreaBackgroundColor }
+      : {}),
     realization,
     ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
     layout,
@@ -281,7 +307,7 @@ export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
 
 /**
  * Runtime size for top-band hour markers from {@link DisplayChromeLayoutConfig.hourMarkers.layout.sizeMultiplier}
- * (finite check, default 1.0, then {@link clampTopBandHourMarkerSizeMultiplier}).
+ * (finite check, default from {@link DEFAULT_HOUR_MARKERS_CONFIG}, then {@link clampTopBandHourMarkerSizeMultiplier}).
  */
 export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayoutConfig): number {
   const raw = layout.hourMarkers.layout.sizeMultiplier;
@@ -295,8 +321,9 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
 
 /** Matches {@link DEFAULT_HOUR_MARKERS_CONFIG} for typography selection (undefined font → role-only path). */
 function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeLayoutConfig): boolean {
+  const dm = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers;
   const hm = layout.hourMarkers;
-  if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== 1) {
+  if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== dm.layout.sizeMultiplier) {
     return false;
   }
   if (hm.realization.kind !== "text") {
@@ -311,7 +338,16 @@ function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeL
   if (font !== DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
     return false;
   }
-  return Object.keys(r.appearance).length === 0;
+  if (Object.keys(r.appearance).length !== 0) {
+    return false;
+  }
+  if (
+    resolvedAuthoredIndicatorEntriesAreaBackgroundColor(hm) !==
+    resolvedAuthoredIndicatorEntriesAreaBackgroundColor(dm)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 /**

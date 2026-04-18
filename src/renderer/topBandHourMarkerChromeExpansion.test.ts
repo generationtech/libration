@@ -276,7 +276,7 @@ describe("buildDisplayChromeState hour-marker row", () => {
         hourMarkers: {
           ...cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers),
           layout: {
-            sizeMultiplier: 1,
+            sizeMultiplier: DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout.sizeMultiplier,
             contentPaddingTopPx: 14,
             contentPaddingBottomPx: 14,
           },

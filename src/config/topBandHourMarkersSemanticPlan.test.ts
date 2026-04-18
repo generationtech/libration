@@ -16,8 +16,11 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
 } from "./appConfig.ts";
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+} from "../color/contrastForegroundOnCssBackground.ts";
+import { DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR } from "./appConfig.ts";
 import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
-import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
 import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
 import {
@@ -25,8 +28,6 @@ import {
   STRUCTURAL_LONGITUDE_DEG_PER_HOUR,
 } from "./topBandHourMarkersSemanticTypes.ts";
 import { CANONICAL_MILITARY_ZONE_LETTERS_WEST_TO_EAST } from "./structuralZoneLetters.ts";
-
-const inkNeutral = TOP_CHROME_STYLE.hourIndicatorEntries;
 
 describe("buildSemanticTopBandHourMarkers", () => {
   it("produces exactly 24 instances", () => {
@@ -92,7 +93,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+          realization: { kind: "text", fontAssetId: "zeroes-two", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
       }),
@@ -101,7 +102,9 @@ describe("buildSemanticTopBandHourMarkers", () => {
     expect(eff.realization).toEqual({
       kind: "text",
       fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-      resolvedAppearance: { color: inkNeutral.defaultForeground },
+      resolvedAppearance: {
+        color: blackOrWhiteForegroundForBackgroundCss(DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR),
+      },
     });
 
     const plan = buildSemanticTopBandHourMarkers(eff);
