@@ -23,7 +23,7 @@
  * is the single planner — adapters must not reorder.
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
- * Noon = filled + stroked; midnight = stroke only (no fill). Dominant diamond + tape numeral below the glyph.
+ * Noon = filled + stroked; midnight = stroke only (no fill). Tape numeral is inscribed and centered inside the diamond.
  *
  * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
@@ -121,15 +121,24 @@ const MOON_PICTO_LAYOUT_SCALE = 1.08;
 const MOON_FILL_ALPHA_SUFFIX = "38";
 const MOON_STROKE_WEIGHT = 1.14;
 
-const SEMANTIC_DIAMOND_HALF_FRAC = 0.58;
+/** Material strip-scale diamond; bounded by indicator-entry content model (same {@link GlyphLayoutBox.size} basis). */
+const SEMANTIC_DIAMOND_HALF_FRAC = 0.74;
 /** Midnight diamond is slightly larger + heavier stroke so hollow form does not read weaker than noon fill. */
-const SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC = 0.595;
+const SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC = 0.755;
 const SEMANTIC_NOON_STROKE_FRAC = 0.078;
 const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.132;
 
-/** Tape numeral paired with semantic diamond; larger than legacy secondary for strip readability. */
-const SEMANTIC_NUMERAL_SIZE_FRAC = 0.52;
-const SEMANTIC_NUMERAL_GAP_BELOW_DIAMOND_FRAC = 0.06;
+/**
+ * Inscribed numeral: {@link GlyphLayoutBox.size} is chosen so the hour string fits inside the diamond with margin.
+ * Not a detached label below the glyph — geometric center matches the diamond center ({@link GlyphLayoutBox.cx/cy}).
+ */
+const SEMANTIC_NUMERAL_IN_DIAMOND_FRAC = 0.52;
+
+/**
+ * Bounded reduction for NOON / MIDNIGHT word labels in `textWords` mode only (long words vs compact hour numerals).
+ * Same layout inputs as ordinary indicator labels; not a generic per-label scaler.
+ */
+export const TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC = 0.76;
 
 /**
  * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
@@ -224,12 +233,19 @@ function boxedNumberTapeNumeralLayout(base: GlyphLayoutBox): GlyphLayoutBox {
   };
 }
 
-/** Tape numeral below the diamond; tracks diamond extent so scaling stays composed. */
-function semanticGlyphTapeNumeralLayout(base: GlyphLayoutBox, diamondHalfPx: number): GlyphLayoutBox {
+function semanticGlyphInteriorNumeralLayout(base: GlyphLayoutBox, diamondHalfPx: number): GlyphLayoutBox {
+  const numeralBoxSide = 2 * diamondHalfPx * SEMANTIC_NUMERAL_IN_DIAMOND_FRAC;
   return {
     cx: base.cx,
-    cy: base.cy + diamondHalfPx + base.size * SEMANTIC_NUMERAL_GAP_BELOW_DIAMOND_FRAC,
-    size: base.size * SEMANTIC_NUMERAL_SIZE_FRAC,
+    cy: base.cy,
+    size: numeralBoxSide,
+  };
+}
+
+function textWordsNoonMidnightWordLayout(base: GlyphLayoutBox): GlyphLayoutBox {
+  return {
+    ...base,
+    size: base.size * TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC,
   };
 }
 
@@ -279,7 +295,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         args.markerColor,
       );
       emitGlyphToRenderPlan(baseGlyph, args.layout, gctx, out);
-      pushGlyphContent(args, wordContent, numeralSpec, gctx, out);
+      pushGlyphContent(args, wordContent, numeralSpec, gctx, out, textWordsNoonMidnightWordLayout(args.layout));
       return true;
     }
     if (args.realizationKind === "analogClock") {
@@ -304,7 +320,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         gctx,
         out,
       );
-      pushGlyphContent(args, wordContent, numeralSpec, gctx, out);
+      pushGlyphContent(args, wordContent, numeralSpec, gctx, out, textWordsNoonMidnightWordLayout(args.layout));
       return true;
     }
     return false;
@@ -476,7 +492,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
       );
     }
     const half = size * (role === "noon" ? SEMANTIC_DIAMOND_HALF_FRAC : SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC);
-    const numeralLayout = semanticGlyphTapeNumeralLayout(args.layout, half);
+    const numeralLayout = semanticGlyphInteriorNumeralLayout(args.layout, half);
     const d = diamondDescriptor(cx, cy, half);
     if (role === "noon") {
       out.push(

@@ -21,6 +21,7 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import {
   boxedNumberStrokeHalfExtentsFromMarkerContentBox,
+  TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC,
   tryEmitNoonMidnightIndicatorDiskContent,
 } from "./noonMidnightIndicatorRenderPlan.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
@@ -113,6 +114,50 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     );
     expect(midWedgeIdx).toBeGreaterThanOrEqual(0);
     expect(midTextIdx).toBeGreaterThan(midWedgeIdx);
+  });
+
+  it("textWords NOON/MIDNIGHT word overlay uses smaller layout than full marker box (reduces crowding)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialLine", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialLine", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const markerSize = 62;
+    const items: PlanItem[] = [];
+    tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "radialLine",
+        customization: eff.noonMidnightCustomization,
+        structuralHour0To23: 12,
+        tapeHourLabel: "12",
+        displayLabel: "NOON",
+        layout: { cx: 100, cy: 50, size: markerSize },
+        markerColor: "#223344",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    const noonWord = items.find((i) => i.kind === "text" && "text" in i && i.text === "NOON");
+    expect(noonWord?.kind === "text").toBe(true);
+    if (noonWord?.kind === "text") {
+      expect(noonWord.font.sizePx).toBeLessThan(markerSize * 0.9);
+      expect(noonWord.font.sizePx).toBeCloseTo(markerSize * TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC, 5);
+    }
   });
 
   it("textWords + radialLine keeps radial stroke then NOON/MIDNIGHT text overlay (realization-local)", () => {
@@ -350,7 +395,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       expect(cmds.map((c) => c.kind)).toEqual(["moveTo", "lineTo", "lineTo", "lineTo", "closePath"]);
       expect(noonPath.fill).toBeDefined();
       expect(noonPath.stroke).toBeDefined();
-      const halfExpect = 40 * 0.58;
+      const halfExpect = 40 * 0.74;
       const move = cmds[0];
       expect(move?.kind === "moveTo" && move.y).toBeCloseTo(50 - halfExpect, 5);
     }
@@ -383,16 +428,18 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const glyphPathIdx = noonItems.findIndex((i) => i.kind === "path2d");
     expect(glyphTextIdx).toBeGreaterThan(glyphPathIdx);
     const size = 40;
-    const half = size * 0.58;
+    const half = size * 0.74;
+    const numeralBoxSide = 2 * half * 0.52;
     const t = noonItems[glyphTextIdx];
     expect(t?.kind === "text").toBe(true);
     if (t?.kind === "text") {
-      expect(t.font.sizePx).toBeCloseTo(size * 0.52, 5);
-      expect(t.y).toBeCloseTo(50 + half + size * 0.06, 5);
+      expect(t.font.sizePx).toBeCloseTo(numeralBoxSide, 5);
+      expect(t.x).toBeCloseTo(100, 5);
+      expect(t.y).toBeCloseTo(50, 5);
     }
   });
 
-  it("semanticGlyph + analogClock emits clock then diamond then tape numeral (z-order)", () => {
+  it("semanticGlyph + analogClock emits clock then diamond then inscribed numeral (z-order)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
