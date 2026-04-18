@@ -13,7 +13,7 @@
 
 /**
  * Deterministic sRGB channel midpoint between two parseable CSS color strings.
- * Used for noon/midnight boxed-number strokes (indicator row background vs contrast foreground).
+ * Used for noon/midnight boxed-number highlight treatment color (indicator row background vs contrast foreground).
  * Unparseable inputs fall back to `#808080` for the whole result.
  */
 

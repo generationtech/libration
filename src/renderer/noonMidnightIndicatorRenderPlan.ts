@@ -18,18 +18,19 @@
  * Non-`textWords` modes are **label-level** presentations for the upper indicator-entries strip: geometry is
  * sized from {@link GlyphLayoutBox.size} (the laid-out marker content box), not as tiny marker decorations.
  *
- * **Paint order (invariant)**: Procedural backdrops (clock face, radial/wedge base, boxed stroke, sun/moon,
- * diamond) are pushed before tape numerals / words so overlays read above structure. {@link tryEmitNoonMidnightIndicatorDiskContent}
- * is the single planner — adapters must not reorder.
+ * **Paint order (invariant)**: Procedural backdrops (clock face, radial/wedge base, boxed-number highlight fill,
+ * sun/moon, diamond) are pushed before tape numerals / words so overlays read above structure.
+ * {@link tryEmitNoonMidnightIndicatorDiskContent} is the single planner — adapters must not reorder.
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
  * Noon = filled + stroked; midnight = stroke only (no fill). Tape numeral is inscribed and centered inside the diamond.
  *
  * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
- * **boxedNumber**: Stroke rectangles use {@link boxedNumberStrokeHalfExtentsFromMarkerContentBox} for every
- * realization that draws a box (including analog after the clock face); plaque geometry is keyed to the laid-out
- * indicator-entry content box (strip-scale breathing room), not the numeral glyph footprint.
+ * **boxedNumber**: Filled highlight rectangles behind the tape numeral use
+ * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (tight to the label, not strip-scale plaque framing).
+ * Color is the resolver’s derived treatment color (same source as the former stroke). Analog clock still gets a
+ * center highlight aligned to the same model.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -101,15 +102,14 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
   return b.build();
 }
 
-/** Fractions of marker content box side — tied to {@link GlyphLayoutBox.size} from semantic layout only. */
-const BOXED_NUMBER_HALF_H_FRAC = 0.62;
-/** Strong floor: plaque half-width stays strip-scale, not numeral-footprint-driven. */
-const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.72;
-const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.2;
-const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.24;
-const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.17;
-const BOXED_NUMBER_STROKE_WIDTH_MIN_PX = 3;
-/** Slightly larger tape numeral inside the plaque (layout.size drives glyph metrics). */
+/** Highlight bar half-height vs marker content box — one-line cap height, not a full strip-scale plaque. */
+const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.38;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.28;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.06;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.11;
+/** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
+const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.5;
+/** Slightly larger tape numeral over the highlight (layout.size drives glyph metrics). */
 const BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE = 1.12;
 
 const SOLAR_DISK_R_FRAC = 0.46;
@@ -132,33 +132,70 @@ const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.132;
  * Inscribed numeral: {@link GlyphLayoutBox.size} is chosen so the hour string fits inside the diamond with margin.
  * Not a detached label below the glyph — geometric center matches the diamond center ({@link GlyphLayoutBox.cx/cy}).
  */
-const SEMANTIC_NUMERAL_IN_DIAMOND_FRAC = 0.52;
+const SEMANTIC_NUMERAL_IN_DIAMOND_FRAC = 0.4;
 
 /**
  * Bounded reduction for NOON / MIDNIGHT word labels in `textWords` mode only (long words vs compact hour numerals).
- * Same layout inputs as ordinary indicator labels; not a generic per-label scaler.
+ * MIDNIGHT uses a smaller fraction than NOON — more characters at the same font pressure — to relieve adjacent entries.
  */
-export const TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC = 0.76;
+export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
+export const TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC = 0.54;
 
 /**
- * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
- * size ({@link GlyphLayoutBox.size}) and the tape/numeral label span. Applies to text, radialLine, radialWedge,
- * and analogClock noon/midnight boxed-number strokes — in each case {@link GlyphLayoutBox.size} is the solved
- * disk box side from layout. Scales with solved dimensions (font/size changes flow through layout), without
- * Canvas measurement in the planner.
+ * Half extents for the boxed-number **highlight** rectangle (text-highlighter bar behind the tape numeral): derived
+ * from the semantic layout’s marker content box size ({@link GlyphLayoutBox.size}) and the tape label span.
+ * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
+ * solved disk box side from layout. Tighter than the old plaque frame so the strip reads as highlighted text, not a badge.
  */
-export function boxedNumberStrokeHalfExtentsFromMarkerContentBox(
+export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
   label: string,
 ): { halfW: number; halfH: number } {
   const s = Math.max(0, markerContentBoxSizePx);
-  const halfH = s * BOXED_NUMBER_HALF_H_FRAC;
+  const halfH = s * BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC;
   const n = Math.max(1, label.length);
   const halfW = Math.max(
-    s * BOXED_NUMBER_HALF_W_MIN_FRAC,
-    n * s * BOXED_NUMBER_HALF_W_PER_CHAR_FRAC + s * BOXED_NUMBER_HALF_W_PAD_FRAC,
+    s * BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC,
+    n * s * BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC + s * BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC,
   );
   return { halfW, halfH };
+}
+
+function cssColorToRgbaFill(cssColor: string, alpha: number): string {
+  const a = Math.max(0, Math.min(1, alpha));
+  const s = cssColor.trim();
+  const rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(s);
+  if (rgb) {
+    return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${a})`;
+  }
+  const hex6 = /^#([0-9a-f]{6})$/i.exec(s);
+  if (hex6) {
+    const v = hex6[1]!;
+    const r = parseInt(v.slice(0, 2), 16);
+    const g = parseInt(v.slice(2, 4), 16);
+    const b = parseInt(v.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  return s;
+}
+
+function pushHighlightBehindTapeNumeral(
+  cx: number,
+  cy: number,
+  text: string,
+  markerContentBoxSizePx: number,
+  treatmentColor: string,
+  out: RenderPlanBuilder,
+): void {
+  const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
+  out.push({
+    kind: "rect",
+    x: cx - halfW,
+    y: cy - halfH,
+    width: halfW * 2,
+    height: halfH * 2,
+    fill: cssColorToRgbaFill(treatmentColor, BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA),
+  });
 }
 
 export type NoonMidnightEmitArgs = {
@@ -202,30 +239,6 @@ function pushGlyphContent(
   emitGlyphToRenderPlan(glyph, layoutOverride ?? args.layout, gctx, out);
 }
 
-function pushStrokeBoxAroundText(
-  cx: number,
-  cy: number,
-  text: string,
-  markerContentBoxSizePx: number,
-  stroke: string,
-  out: RenderPlanBuilder,
-): void {
-  const { halfW, halfH } = boxedNumberStrokeHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
-  const sw = Math.max(
-    BOXED_NUMBER_STROKE_WIDTH_MIN_PX,
-    markerContentBoxSizePx * BOXED_NUMBER_STROKE_WIDTH_FRAC,
-  );
-  out.push({
-    kind: "rect",
-    x: cx - halfW,
-    y: cy - halfH,
-    width: halfW * 2,
-    height: halfH * 2,
-    stroke,
-    strokeWidthPx: sw,
-  });
-}
-
 function boxedNumberTapeNumeralLayout(base: GlyphLayoutBox): GlyphLayoutBox {
   return {
     ...base,
@@ -242,10 +255,12 @@ function semanticGlyphInteriorNumeralLayout(base: GlyphLayoutBox, diamondHalfPx:
   };
 }
 
-function textWordsNoonMidnightWordLayout(base: GlyphLayoutBox): GlyphLayoutBox {
+function textWordsNoonMidnightWordLayout(base: GlyphLayoutBox, structuralHour0To23: number): GlyphLayoutBox {
+  const frac =
+    structuralHour0To23 === 0 ? TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC : TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC;
   return {
     ...base,
-    size: base.size * TEXT_WORDS_NOON_MIDNIGHT_LAYOUT_SIZE_FRAC,
+    size: base.size * frac,
   };
 }
 
@@ -266,7 +281,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   const role = intent.role;
   const tape = args.tapeHourLabel;
   const disp = args.displayLabel;
-  const strokeForBox =
+  const boxedNumberTreatmentColor =
     args.customization.enabled &&
     args.customization.expressionMode === "boxedNumber" &&
     "boxedNumberBoxColor" in args.customization &&
@@ -295,7 +310,14 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         args.markerColor,
       );
       emitGlyphToRenderPlan(baseGlyph, args.layout, gctx, out);
-      pushGlyphContent(args, wordContent, numeralSpec, gctx, out, textWordsNoonMidnightWordLayout(args.layout));
+      pushGlyphContent(
+        args,
+        wordContent,
+        numeralSpec,
+        gctx,
+        out,
+        textWordsNoonMidnightWordLayout(args.layout, args.structuralHour0To23),
+      );
       return true;
     }
     if (args.realizationKind === "analogClock") {
@@ -320,16 +342,23 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         gctx,
         out,
       );
-      pushGlyphContent(args, wordContent, numeralSpec, gctx, out, textWordsNoonMidnightWordLayout(args.layout));
+      pushGlyphContent(
+        args,
+        wordContent,
+        numeralSpec,
+        gctx,
+        out,
+        textWordsNoonMidnightWordLayout(args.layout, args.structuralHour0To23),
+      );
       return true;
     }
     return false;
   }
 
   if (mode === "boxedNumber") {
-    const stroke = strokeForBox;
+    const highlightColor = boxedNumberTreatmentColor;
     if (args.realizationKind === "text") {
-      pushStrokeBoxAroundText(cx, cy, tape, size, stroke, out);
+      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
       pushGlyphContent(
         args,
         { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
@@ -348,7 +377,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         gctx,
         out,
       );
-      pushStrokeBoxAroundText(cx, cy, tape, size, stroke, out);
+      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
       pushGlyphContent(
         args,
         { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
@@ -367,7 +396,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         gctx,
         out,
       );
-      pushStrokeBoxAroundText(cx, cy, tape, size, stroke, out);
+      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
       pushGlyphContent(
         args,
         { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
@@ -399,11 +428,12 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
       gctx,
       out,
     );
-    // Box stroke uses the same marker-content-box + label geometry as text/radial (layout.size is the disk box side).
-    pushStrokeBoxAroundText(cx, cy, tape, size, stroke, out);
+    // Highlight uses the same marker-content-box + label geometry as text/radial (layout.size is the disk box side).
+    pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
     return true;
   }
 
+  // solarLunarPictogram: geometry reviewed; no change this pass (sun/moon balance already acceptable).
   if (mode === "solarLunarPictogram") {
     if (args.realizationKind === "analogClock") {
       const ra = args.analogResolvedAppearance;
