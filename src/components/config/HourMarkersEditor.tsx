@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { useRef } from "react";
 import {
   cloneHourMarkersConfig,
   DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
@@ -740,7 +741,16 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
 function NoonMidnightSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
   const nm = hourMarkers.noonMidnightCustomization;
   const enabled = nm?.enabled === true;
-  const mode: HourMarkersNoonMidnightExpressionMode = nm?.expressionMode ?? "textWords";
+  /** Preserves the last selected expression mode while customization is disabled (not persisted). */
+  const lastExpressionModeRef = useRef<HourMarkersNoonMidnightExpressionMode>(
+    nm?.expressionMode ?? "textWords",
+  );
+  if (enabled && nm?.expressionMode !== undefined) {
+    lastExpressionModeRef.current = nm.expressionMode;
+  }
+  const mode: HourMarkersNoonMidnightExpressionMode = enabled
+    ? (nm!.expressionMode ?? "textWords")
+    : lastExpressionModeRef.current;
   const authoringOff = !wired || !entriesAreaEnabled;
 
   return (
@@ -766,7 +776,7 @@ function NoonMidnightSection({ hourMarkers, wired, updateConfig, entriesAreaEnab
                         ...hm,
                         noonMidnightCustomization: {
                           enabled: true,
-                          expressionMode: hm.noonMidnightCustomization?.expressionMode ?? "textWords",
+                          expressionMode: lastExpressionModeRef.current,
                         },
                       };
                     });

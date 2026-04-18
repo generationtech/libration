@@ -15,8 +15,13 @@
  * Noon/midnight indicator-entry customization: emits specialized {@link RenderPlan} draws for structural hours
  * 0 and 12 when enabled. Returns whether the caller should skip its default emission for that instance.
  *
- * **semanticGlyph**: noon = solid diamond (filled); midnight = hollow diamond (stroked). Numbers stay inside
- * the diamond footprint via the shared text glyph pass.
+ * **Paint order (invariant)**: For modes that combine a procedural decoration (boxed stroke, sun/moon paths,
+ * diamond path) with a numeral or word overlay, decoration is always pushed first and the glyph/text overlay
+ * second so numerals paint above decoration across all realizations. {@link tryEmitNoonMidnightIndicatorDiskContent}
+ * is the single planner for these combinations — adapters must not reorder.
+ *
+ * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
+ * Noon = filled + stroked; midnight = stroke only (no fill). Numerals use the shared text glyph pass on top.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -32,8 +37,8 @@ import type {
 } from "../config/topBandHourMarkersTypes.ts";
 import { resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
-import { emitGlyphToRenderPlan, type GlyphRenderContext, type RenderPlanBuilder } from "../glyphs/glyphToRenderPlan.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
+import { emitGlyphToRenderPlan, type GlyphRenderContext, type RenderPlanBuilder } from "../glyphs/glyphToRenderPlan.ts";
 import type { GlyphLayoutBox } from "../glyphs/glyphLayout.ts";
 import { circlePathDescriptor } from "./renderPlan/circlePath2D.ts";
 import { createDescriptorPathItem } from "./renderPlan/pathItemFactories.ts";
@@ -88,9 +93,19 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
   return b.build();
 }
 
-function estimatedTextBoxHalfExtents(text: string, sizePx: number): { halfW: number; halfH: number } {
-  const halfH = sizePx * 0.42;
-  const halfW = Math.max(sizePx * 0.32 * Math.max(1, text.length), sizePx * 0.38);
+/**
+ * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
+ * size ({@link GlyphLayoutBox.size}) and the label string span. Scales with solved disk/interior dimensions
+ * (font/size changes flow through layout), without Canvas measurement in the planner.
+ */
+export function boxedNumberStrokeHalfExtentsFromMarkerContentBox(
+  markerContentBoxSizePx: number,
+  label: string,
+): { halfW: number; halfH: number } {
+  const s = Math.max(0, markerContentBoxSizePx);
+  const halfH = s * 0.48;
+  const n = Math.max(1, label.length);
+  const halfW = Math.max(s * 0.42, n * s * 0.2);
   return { halfW, halfH };
 }
 
@@ -138,12 +153,12 @@ function pushStrokeBoxAroundText(
   cx: number,
   cy: number,
   text: string,
-  sizePx: number,
+  markerContentBoxSizePx: number,
   stroke: string,
   out: RenderPlanBuilder,
 ): void {
-  const { halfW, halfH } = estimatedTextBoxHalfExtents(text, sizePx);
-  const sw = Math.max(1, sizePx * 0.065);
+  const { halfW, halfH } = boxedNumberStrokeHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
+  const sw = Math.max(1, markerContentBoxSizePx * 0.065);
   out.push({
     kind: "rect",
     x: cx - halfW,
@@ -185,14 +200,51 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
     if (args.realizationKind === "text") {
       return false;
     }
-    pushGlyphContent(
-      args,
-      { structuralHour0To23: args.structuralHour0To23, displayLabel: disp },
-      numeralSpec,
-      gctx,
-      out,
-    );
-    return true;
+    const wordContent: HourMarkerContent = {
+      structuralHour0To23: args.structuralHour0To23,
+      displayLabel: disp,
+    };
+    const ty = typographyOverridesFor(args);
+    if (args.realizationKind === "radialLine" || args.realizationKind === "radialWedge") {
+      const baseGlyph = createHourMarkerGlyph(
+        {
+          structuralHour0To23: args.structuralHour0To23,
+          displayLabel: args.displayLabel,
+        },
+        args.hourSpec,
+        ty,
+        args.markerColor,
+      );
+      emitGlyphToRenderPlan(baseGlyph, args.layout, gctx, out);
+      pushGlyphContent(args, wordContent, numeralSpec, gctx, out);
+      return true;
+    }
+    if (args.realizationKind === "analogClock") {
+      const ra = args.analogResolvedAppearance;
+      const ch = args.continuousHour0To24;
+      const cm = args.continuousMinute0To60;
+      if (ra === undefined || ch === undefined || cm === undefined) {
+        return false;
+      }
+      emitGlyphToRenderPlan(
+        {
+          kind: "clockFace",
+          hour: ch,
+          minute: cm,
+          styleId: args.hourSpec.glyphStyleId,
+          showMinuteHand: true,
+          ringStrokeOverride: ra.ringStroke,
+          handStrokeOverride: ra.handStroke,
+          faceFillOverride: ra.faceFill,
+        },
+        args.layout,
+        gctx,
+        out,
+      );
+      pushGlyphContent(args, wordContent, numeralSpec, gctx, out);
+      return true;
+    }
+    return false;
   }
 
   if (mode === "boxedNumber") {

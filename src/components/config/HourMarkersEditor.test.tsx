@@ -271,4 +271,34 @@ describe("HourMarkersEditor structured authoring", () => {
     fireEvent.click(customize);
     expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
   });
+
+  it("noon/midnight expression mode is preserved in the editor when customization is toggled off then on", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    const customize = screen.getByRole("checkbox", {
+      name: /Customize noon and midnight indicator entries/i,
+    });
+    fireEvent.click(customize);
+    fireEvent.change(screen.getByRole("combobox", { name: /Noon and midnight expression mode/i }), {
+      target: { value: "semanticGlyph" },
+    });
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "semanticGlyph",
+    });
+    fireEvent.click(customize);
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
+    fireEvent.click(customize);
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "semanticGlyph",
+    });
+  });
 });
