@@ -21,6 +21,7 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import {
   boxedNumberHighlightHalfExtentsFromMarkerContentBox,
+  noonHighlighted12SwashGeometryFromMarkerContentBox,
   noonHighlighted12SwashHalfExtentsFromMarkerContentBox,
   SEMANTIC_NUMERAL_IN_DIAMOND_FRAC,
   TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC,
@@ -52,34 +53,49 @@ describe("boxedNumberHighlightHalfExtentsFromMarkerContentBox", () => {
   });
 });
 
-describe("noonHighlighted12SwashHalfExtentsFromMarkerContentBox", () => {
-  it("uses entry-slot fractions only (no label-length term)", () => {
+describe("noonHighlighted12SwashGeometryFromMarkerContentBox", () => {
+  it("uses entry-slot scale only (no label-length term) with asymmetric vertical extents and upward center bias", () => {
     const s = 40;
-    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
-    expect(halfW).toBeCloseTo(s * 0.92, 8);
-    expect(halfH).toBeCloseTo(s * 0.44, 8);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
+    expect(g.halfW).toBeCloseTo(s * 1.06, 8);
+    expect(g.halfHAbove).toBeCloseTo(s * 0.62, 8);
+    expect(g.halfHBelow).toBeCloseTo(s * 0.58, 8);
+    expect(g.cyOffset).toBeCloseTo(s * -0.038, 8);
+    expect(g.halfHAbove).toBeGreaterThan(g.halfHBelow);
   });
 
-  it("exceeds boxed-number midnight highlight span at the same box size", () => {
+  it("exceeds prior dedicated noon half-extents (0.92 / 0.44) and boxed-number midnight at the same box size", () => {
     const s = 40;
-    const noon = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
+    const prevHalfW = s * 0.92;
+    const prevHalfH = s * 0.44;
+    expect(g.halfW).toBeGreaterThan(prevHalfW);
+    expect(g.halfHAbove + g.halfHBelow).toBeGreaterThan(2 * prevHalfH);
     const midnight = boxedNumberHighlightHalfExtentsFromMarkerContentBox(s, "00");
-    expect(noon.halfW).toBeGreaterThan(midnight.halfW);
-    expect(noon.halfH).toBeGreaterThan(midnight.halfH);
+    expect(g.halfW).toBeGreaterThan(midnight.halfW);
+    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(midnight.halfH);
+  });
+
+  it("halfExtents helper reports mean vertical half-height for comparisons", () => {
+    const s = 48;
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
+    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    expect(halfW).toBeCloseTo(g.halfW, 8);
+    expect(halfH).toBeCloseTo((g.halfHAbove + g.halfHBelow) / 2, 8);
   });
 
   it("is materially wider and taller than the legacy text-fit noon model for the same box", () => {
     const s = 48;
-    const sw = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
     const n = 2;
     const legacyHalfH = s * 0.42;
     const legacyHalfW = Math.max(
       s * 0.88,
       n * s * 0.26 + s * 0.34,
     );
-    expect(sw.halfW).toBeGreaterThan(legacyHalfW);
-    expect(sw.halfH).toBeGreaterThan(legacyHalfH);
-    expect(sw.halfW / sw.halfH).toBeGreaterThan(1.95);
+    expect(g.halfW).toBeGreaterThan(legacyHalfW);
+    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(legacyHalfH);
+    expect(g.halfW / ((g.halfHAbove + g.halfHBelow) / 2)).toBeGreaterThan(1.75);
   });
 });
 
@@ -713,11 +729,11 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     );
     const highlight = items.find((i) => i.kind === "rect");
     expect(highlight?.kind === "rect" && highlight.stroke).toBeUndefined();
-    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
-    expect(halfH / size).toBeLessThan(0.52);
-    expect(halfH).toBeCloseTo(size * 0.44, 8);
-    expect(halfW).toBeGreaterThan(size * 0.88);
-    expect(halfW / halfH).toBeGreaterThan(1.35);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
+    const meanHalfH = (g.halfHAbove + g.halfHBelow) / 2;
+    expect(meanHalfH / size).toBeGreaterThan(0.55);
+    expect(g.halfW).toBeGreaterThan(size * 0.92);
+    expect(g.halfW / meanHalfH).toBeGreaterThan(1.35);
     const textItem = items.find((i) => i.kind === "text");
     expect(textItem?.kind === "text").toBe(true);
     if (textItem?.kind === "text") {
@@ -924,14 +940,15 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       { fontRegistry: defaultFontAssetRegistry },
       items,
     );
-    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
+    const cySwash = cy + g.cyOffset;
     const rects = items.filter((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
     expect(rects.length).toBe(1);
     const main = rects[0]!;
-    expect(main.width).toBeCloseTo(halfW * 2, 8);
-    expect(main.height).toBeCloseTo(halfH * 2, 8);
-    expect(main.x).toBeCloseTo(cx - halfW, 8);
-    expect(main.y).toBeCloseTo(cy - halfH, 8);
+    expect(main.width).toBeCloseTo(g.halfW * 2, 8);
+    expect(main.height).toBeCloseTo(g.halfHAbove + g.halfHBelow, 8);
+    expect(main.x).toBeCloseTo(cx - g.halfW, 8);
+    expect(main.y).toBeCloseTo(cySwash - g.halfHAbove, 8);
     expect(main.stroke).toBeUndefined();
     if (main.fill) {
       expect(main.fill).toMatch(/^rgba\(/);
@@ -1046,6 +1063,55 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(textIndices.every((ti) => ti > lastRectIdx)).toBe(true);
   });
 
+  it("boxedNumber midnight 00 highlight rect stays centered on layout cy (not noon-12 asymmetric swash)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const cx = 50;
+    const cy = 30;
+    const size = 36;
+    const items: PlanItem[] = [];
+    tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "text",
+        customization: eff.noonMidnightCustomization,
+        structuralHour0To23: 0,
+        tapeHourLabel: "00",
+        displayLabel: "00",
+        layout: { cx, cy, size },
+        markerColor: "#000",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    const r = items.find((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
+    expect(r?.kind === "rect").toBe(true);
+    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, "00");
+    if (r?.kind === "rect") {
+      expect(r.x).toBeCloseTo(cx - halfW, 8);
+      expect(r.y).toBeCloseTo(cy - halfH, 8);
+      expect(r.width).toBeCloseTo(halfW * 2, 8);
+      expect(r.height).toBeCloseTo(halfH * 2, 8);
+    }
+  });
+
   it("noon boxedNumber 12 highlight extends materially beyond the scaled tape numeral on all sides (render plan)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
@@ -1088,14 +1154,14 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const rects = items.filter((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
     expect(rects.length).toBe(1);
     expect(textItem?.kind === "text").toBe(true);
-    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
     const main = rects[0]!;
-    expect(main.width).toBeCloseTo(halfW * 2, 5);
-    expect(main.height).toBeCloseTo(halfH * 2, 5);
+    expect(main.width).toBeCloseTo(g.halfW * 2, 5);
+    expect(main.height).toBeCloseTo(g.halfHAbove + g.halfHBelow, 5);
     // Swash is driven by marker content box `size`; numeral layout is scaled up — highlight should still span well past the glyph.
     const scaledNumeralLayoutSide = size * 1.12;
-    expect(halfW).toBeGreaterThan(scaledNumeralLayoutSide * 0.72);
-    expect(halfH).toBeGreaterThan(scaledNumeralLayoutSide * 0.36);
+    expect(g.halfW).toBeGreaterThan(scaledNumeralLayoutSide * 0.72);
+    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(scaledNumeralLayoutSide * 0.36);
     if (textItem?.kind === "text") {
       expect(Math.abs(cx - textItem.x)).toBeLessThan(1e-6);
       expect(Math.abs(cy - textItem.y)).toBeLessThan(1e-6);

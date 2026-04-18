@@ -29,9 +29,9 @@
  *
  * **boxedNumber**: Filled highlight rectangle behind the tape numeral uses
  * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} for most labels (broad horizontal swash vs the numeral).
- * Noon tape `"12"` uses {@link noonHighlighted12SwashHalfExtentsFromMarkerContentBox}: a single strip-scale band from the
- * indicator-entry content box (`layout.size`), not label-length–driven extents. Color is the resolver’s derived treatment
- * color. Analog clock uses the same model.
+ * Noon tape `"12"` uses {@link noonHighlighted12SwashGeometryFromMarkerContentBox}: one oversized rect from the entry
+ * content box (`layout.size`), asymmetric vertical extents, optional vertical center offset — not label-length–driven.
+ * Color is the resolver’s derived treatment color. Analog clock uses the same model.
  *
  * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
  */
@@ -113,11 +113,19 @@ const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.2;
 const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.2;
 
 /**
- * Noon boxed tape `"12"` only: horizontal highlight band across the entry slot ({@link GlyphLayoutBox.size}).
- * Fractions are applied to the marker content box side only — no per-character width (avoids text-fit “card” sizing).
+ * Noon boxed tape `"12"` only: broad strip-scale highlighter from {@link GlyphLayoutBox.size} (no text-fit width).
+ * Asymmetric vertical extents + slight upward center shift vs layout center so top/bottom/left/right overhang read clearly.
  */
-const NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC = 0.92;
-const NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_H_FRAC = 0.44;
+const NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC = 1.06;
+/** Extent above the swash vertical center (stronger top field vs numeral ink). */
+const NOON_HIGHLIGHTED_12_SWASH_HALF_H_ABOVE_FRAC = 0.62;
+/** Extent below the swash vertical center. */
+const NOON_HIGHLIGHTED_12_SWASH_HALF_H_BELOW_FRAC = 0.58;
+/**
+ * Swash centerline vs marker layout center: negative shifts the band upward (more highlight above the tape numeral).
+ * Scaled by {@link GlyphLayoutBox.size}.
+ */
+const NOON_HIGHLIGHTED_12_SWASH_CY_OFFSET_FRAC = -0.038;
 
 /** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
 const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.72;
@@ -157,7 +165,7 @@ export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
  * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
  * solved disk box side from layout. Sized as a broad horizontal highlight span behind the numeral, not a tight
  * numeral-sized plate or strip-scale badge frame. Noon tape `"12"` uses
- * {@link noonHighlighted12SwashHalfExtentsFromMarkerContentBox} instead of this helper.
+ * {@link noonHighlighted12SwashGeometryFromMarkerContentBox} instead of this helper.
  */
 export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
@@ -173,19 +181,40 @@ export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   return { halfW, halfH };
 }
 
+export type NoonHighlighted12SwashGeometry = {
+  halfW: number;
+  halfHAbove: number;
+  halfHBelow: number;
+  /** Offset from layout `cy` to swash vertical center (down-positive canvas coords). */
+  cyOffset: number;
+};
+
 /**
- * Noon boxed-number tape `"12"` only: highlight band geometry from the indicator-entry content box scale
- * ({@link GlyphLayoutBox.size}), not from label-length or numeral-fit bounds. Centered on the entry center with the
- * numeral; broad horizontal span with a tall field height.
+ * Noon boxed-number tape `"12"` only: single highlight rect geometry from {@link GlyphLayoutBox.size} — broad horizontal
+ * span, asymmetric top/bottom half-extents, and a slight upward shift of the swash center for perceived coverage.
+ */
+export function noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx: number): NoonHighlighted12SwashGeometry {
+  const s = Math.max(0, markerContentBoxSizePx);
+  return {
+    halfW: s * NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC,
+    halfHAbove: s * NOON_HIGHLIGHTED_12_SWASH_HALF_H_ABOVE_FRAC,
+    halfHBelow: s * NOON_HIGHLIGHTED_12_SWASH_HALF_H_BELOW_FRAC,
+    cyOffset: s * NOON_HIGHLIGHTED_12_SWASH_CY_OFFSET_FRAC,
+  };
+}
+
+/**
+ * Symmetric half-height summary `(above+below)/2` for comparisons; placement uses
+ * {@link noonHighlighted12SwashGeometryFromMarkerContentBox}.
  */
 export function noonHighlighted12SwashHalfExtentsFromMarkerContentBox(markerContentBoxSizePx: number): {
   halfW: number;
   halfH: number;
 } {
-  const s = Math.max(0, markerContentBoxSizePx);
+  const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
   return {
-    halfW: s * NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC,
-    halfH: s * NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_H_FRAC,
+    halfW: g.halfW,
+    halfH: (g.halfHAbove + g.halfHBelow) / 2,
   };
 }
 
@@ -215,10 +244,20 @@ function pushHighlightBehindTapeNumeral(
   treatmentColor: string,
   out: RenderPlanBuilder,
 ): void {
-  const { halfW, halfH } =
-    text === "12"
-      ? noonHighlighted12SwashHalfExtentsFromMarkerContentBox(markerContentBoxSizePx)
-      : boxedNumberHighlightHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
+  if (text === "12") {
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
+    const cySwash = cy + g.cyOffset;
+    out.push({
+      kind: "rect",
+      x: cx - g.halfW,
+      y: cySwash - g.halfHAbove,
+      width: g.halfW * 2,
+      height: g.halfHAbove + g.halfHBelow,
+      fill: cssColorToRgbaFill(treatmentColor, BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA),
+    });
+    return;
+  }
+  const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
   out.push({
     kind: "rect",
     x: cx - halfW,
