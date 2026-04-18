@@ -21,7 +21,7 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import {
   boxedNumberHighlightHalfExtentsFromMarkerContentBox,
-  HIGHLIGHTED_12_SOFT_UNDERLAY_HALF_EXTENT_SCALE,
+  noonHighlighted12SwashHalfExtentsFromMarkerContentBox,
   SEMANTIC_NUMERAL_IN_DIAMOND_FRAC,
   TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC,
   tryEmitNoonMidnightIndicatorDiskContent,
@@ -32,8 +32,8 @@ type PlanItem = RenderPlan["items"][number];
 
 describe("boxedNumberHighlightHalfExtentsFromMarkerContentBox", () => {
   it("scales half extents with marker content box size (layout.size), not hardcoded px", () => {
-    const a = boxedNumberHighlightHalfExtentsFromMarkerContentBox(24, "12");
-    const b = boxedNumberHighlightHalfExtentsFromMarkerContentBox(48, "12");
+    const a = boxedNumberHighlightHalfExtentsFromMarkerContentBox(24, "6");
+    const b = boxedNumberHighlightHalfExtentsFromMarkerContentBox(48, "6");
     expect(b.halfW).toBeCloseTo(a.halfW * 2, 8);
     expect(b.halfH).toBeCloseTo(a.halfH * 2, 8);
   });
@@ -45,17 +45,41 @@ describe("boxedNumberHighlightHalfExtentsFromMarkerContentBox", () => {
   });
 
   it("reserves a broad, low-profile highlighter span behind typical two-digit tape numerals", () => {
-    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "12");
-    expect(halfH).toBeCloseTo(40 * 0.42, 8);
-    expect(halfW).toBeGreaterThan(40 * 0.82);
+    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "10");
+    expect(halfH).toBeCloseTo(40 * 0.3, 8);
+    expect(halfW).toBeGreaterThanOrEqual(40 * 0.62);
     expect(halfW / halfH).toBeGreaterThan(1.4);
   });
+});
 
-  it("uses tighter default highlight extents for non-12 tape labels vs noon 12 at the same box size", () => {
-    const noon = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "12");
-    const midnight = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "00");
+describe("noonHighlighted12SwashHalfExtentsFromMarkerContentBox", () => {
+  it("uses entry-slot fractions only (no label-length term)", () => {
+    const s = 40;
+    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    expect(halfW).toBeCloseTo(s * 0.92, 8);
+    expect(halfH).toBeCloseTo(s * 0.44, 8);
+  });
+
+  it("exceeds boxed-number midnight highlight span at the same box size", () => {
+    const s = 40;
+    const noon = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    const midnight = boxedNumberHighlightHalfExtentsFromMarkerContentBox(s, "00");
     expect(noon.halfW).toBeGreaterThan(midnight.halfW);
     expect(noon.halfH).toBeGreaterThan(midnight.halfH);
+  });
+
+  it("is materially wider and taller than the legacy text-fit noon model for the same box", () => {
+    const s = 48;
+    const sw = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
+    const n = 2;
+    const legacyHalfH = s * 0.42;
+    const legacyHalfW = Math.max(
+      s * 0.88,
+      n * s * 0.26 + s * 0.34,
+    );
+    expect(sw.halfW).toBeGreaterThan(legacyHalfW);
+    expect(sw.halfH).toBeGreaterThan(legacyHalfH);
+    expect(sw.halfW / sw.halfH).toBeGreaterThan(1.95);
   });
 });
 
@@ -689,11 +713,10 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     );
     const highlight = items.find((i) => i.kind === "rect");
     expect(highlight?.kind === "rect" && highlight.stroke).toBeUndefined();
-    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, tape);
+    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
     expect(halfH / size).toBeLessThan(0.52);
-    expect(halfH).toBeCloseTo(size * 0.42, 8);
-    expect(halfW).toBeGreaterThan(size * 0.82);
-    expect(halfW).toBeLessThan(size * 0.98);
+    expect(halfH).toBeCloseTo(size * 0.44, 8);
+    expect(halfW).toBeGreaterThan(size * 0.88);
     expect(halfW / halfH).toBeGreaterThan(1.35);
     const textItem = items.find((i) => i.kind === "text");
     expect(textItem?.kind === "text").toBe(true);
@@ -901,29 +924,23 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       { fontRegistry: defaultFontAssetRegistry },
       items,
     );
-    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, tape);
+    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
     const rects = items.filter((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
-    expect(rects.length).toBe(2);
-    const underlay = rects[0]!;
-    const main = rects[1]!;
-    const u = HIGHLIGHTED_12_SOFT_UNDERLAY_HALF_EXTENT_SCALE;
-    expect(underlay.width).toBeCloseTo(halfW * 2 * u, 8);
-    expect(underlay.height).toBeCloseTo(halfH * 2 * u, 8);
+    expect(rects.length).toBe(1);
+    const main = rects[0]!;
     expect(main.width).toBeCloseTo(halfW * 2, 8);
     expect(main.height).toBeCloseTo(halfH * 2, 8);
     expect(main.x).toBeCloseTo(cx - halfW, 8);
     expect(main.y).toBeCloseTo(cy - halfH, 8);
     expect(main.stroke).toBeUndefined();
-    expect(underlay.stroke).toBeUndefined();
     if (main.fill) {
       expect(main.fill).toMatch(/^rgba\(/);
     }
     if (eff.noonMidnightCustomization.enabled && eff.noonMidnightCustomization.expressionMode === "boxedNumber") {
       const c = eff.noonMidnightCustomization.boxedNumberBoxColor;
       const m = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(c);
-      if (m && main.fill && underlay.fill) {
+      if (m && main.fill) {
         expect(main.fill).toContain(m[1]!);
-        expect(underlay.fill).toContain(m[1]!);
       }
     }
     const rectIdx = items.findIndex((i) => i.kind === "rect");
@@ -969,7 +986,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const kinds = items.map((i) => i.kind);
     const lineIdx = kinds.indexOf("line");
     const rectIndices = kinds.map((k, i) => (k === "rect" ? i : -1)).filter((i) => i >= 0);
-    expect(rectIndices.length).toBe(2);
+    expect(rectIndices.length).toBe(1);
     const lastRectIdx = Math.max(...rectIndices);
     const textIndices = kinds
       .map((k, i) => (k === "text" ? i : -1))
@@ -1019,7 +1036,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const kinds = items.map((i) => i.kind);
     const wedgeIdx = kinds.indexOf("path2d");
     const rectIndices = kinds.map((k, i) => (k === "rect" ? i : -1)).filter((i) => i >= 0);
-    expect(rectIndices.length).toBe(2);
+    expect(rectIndices.length).toBe(1);
     const lastRectIdx = Math.max(...rectIndices);
     const textIndices = kinds.map((k, i) => (k === "text" ? i : -1)).filter((i) => i >= 0);
     expect(wedgeIdx).toBeGreaterThanOrEqual(0);
@@ -1069,10 +1086,10 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     );
     const textItem = items.find((i) => i.kind === "text");
     const rects = items.filter((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
-    expect(rects.length).toBe(2);
+    expect(rects.length).toBe(1);
     expect(textItem?.kind === "text").toBe(true);
-    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, "12");
-    const main = rects[1]!;
+    const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(size);
+    const main = rects[0]!;
     expect(main.width).toBeCloseTo(halfW * 2, 5);
     expect(main.height).toBeCloseTo(halfH * 2, 5);
     // Swash is driven by marker content box `size`; numeral layout is scaled up — highlight should still span well past the glyph.
@@ -1085,7 +1102,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     }
   });
 
-  it("noon boxedNumber 12 pushes soft underlay rect then main highlight then text (paint order)", () => {
+  it("noon boxedNumber 12 pushes single strip swash rect then text (paint order)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -1121,18 +1138,13 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       items,
     );
     const kinds = items.map((i) => i.kind);
+    expect(kinds.filter((k) => k === "rect").length).toBe(1);
     expect(kinds[0]).toBe("rect");
-    expect(kinds[1]).toBe("rect");
-    expect(kinds[2]).toBe("text");
-    const underlay = items[0];
-    const main = items[1];
-    expect(underlay?.kind === "rect" && main?.kind === "rect").toBe(true);
-    if (underlay?.kind === "rect" && main?.kind === "rect") {
-      expect(underlay.width).toBeGreaterThan(main.width);
-      expect(underlay.height).toBeGreaterThan(main.height);
-      const au = Number(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/.exec(underlay.fill ?? "")?.[1]);
+    expect(kinds[1]).toBe("text");
+    const main = items[0];
+    expect(main?.kind === "rect").toBe(true);
+    if (main?.kind === "rect") {
       const am = Number(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/.exec(main.fill ?? "")?.[1]);
-      expect(au).toBeCloseTo(0.32, 5);
       expect(am).toBeCloseTo(0.72, 5);
     }
   });
