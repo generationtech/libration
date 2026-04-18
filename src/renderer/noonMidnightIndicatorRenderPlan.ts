@@ -30,7 +30,9 @@
  * **boxedNumber**: Filled highlight rectangle behind the tape numeral uses
  * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} for most labels (broad horizontal swash vs the numeral).
  * Noon tape `"12"` uses {@link noonHighlighted12SwashGeometryFromMarkerContentBox}: one oversized rect from the entry
- * content box (`layout.size`), asymmetric vertical extents, optional vertical center offset — not label-length–driven.
+ * content box (`layout.size`), with vertical edges anchored to the tape numeral center — notional ink bounds from the
+ * scaled numeral layout ({@link BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE} × `size`) plus explicit clearance — not
+ * label-length–driven and not a second shared center inflated around `(cx, cy)`.
  * Color is the resolver’s derived treatment color. Analog clock uses the same model.
  *
  * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
@@ -114,18 +116,22 @@ const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.2;
 
 /**
  * Noon boxed tape `"12"` only: broad strip-scale highlighter from {@link GlyphLayoutBox.size} (no text-fit width).
- * Asymmetric vertical extents + slight upward center shift vs layout center so top/bottom/left/right overhang read clearly.
+ * Horizontal span is a dedicated minimum; vertical placement uses the numeral anchor `(cx, cy)` with explicit extents
+ * derived from the scaled tape numeral box ({@link BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE} × `size`), not a swash
+ * center offset from `cy`.
  */
-const NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC = 1.06;
-/** Extent above the swash vertical center (stronger top field vs numeral ink). */
-const NOON_HIGHLIGHTED_12_SWASH_HALF_H_ABOVE_FRAC = 0.62;
-/** Extent below the swash vertical center. */
-const NOON_HIGHLIGHTED_12_SWASH_HALF_H_BELOW_FRAC = 0.58;
+const NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC = 1.28;
 /**
- * Swash centerline vs marker layout center: negative shifts the band upward (more highlight above the tape numeral).
- * Scaled by {@link GlyphLayoutBox.size}.
+ * Notional distance from numeral anchor to top / bottom of `"12"` ink, as fractions of the scaled numeral layout side
+ * (`{@link BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE}` × marker content box). Used only to place the swash relative to the
+ * numeral presentation, not for text measurement.
  */
-const NOON_HIGHLIGHTED_12_SWASH_CY_OFFSET_FRAC = -0.038;
+const NOON_12_INK_TOP_FRAC_OF_SCALED_NUMERAL = 0.43;
+const NOON_12_INK_BOTTOM_FRAC_OF_SCALED_NUMERAL = 0.41;
+/** Extra highlight above the notional top of the ink (fraction of marker content box `s`). Creates visible field above "12". */
+const NOON_12_SWASH_CLEAR_ABOVE_INK_FRAC = 0.26;
+/** Extra pad below the notional ink bottom (fraction of `s`). */
+const NOON_12_SWASH_PAD_BELOW_INK_FRAC = 0.12;
 
 /** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
 const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.72;
@@ -183,29 +189,37 @@ export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
 
 export type NoonHighlighted12SwashGeometry = {
   halfW: number;
-  halfHAbove: number;
-  halfHBelow: number;
-  /** Offset from layout `cy` to swash vertical center (down-positive canvas coords). */
-  cyOffset: number;
+  /**
+   * Vertical distance from the numeral anchor `cy` (same as {@link GlyphLayoutBox.cy} for the tape label) **upward** to
+   * the swash top edge: `rect.y = cy - extentAboveNumeralAnchor`.
+   */
+  extentAboveNumeralAnchor: number;
+  /**
+   * Vertical distance from the numeral anchor **downward** to the swash bottom: `rect.height = extentAbove + extentBelow`.
+   */
+  extentBelowNumeralAnchor: number;
 };
 
 /**
  * Noon boxed-number tape `"12"` only: single highlight rect geometry from {@link GlyphLayoutBox.size} — broad horizontal
- * span, asymmetric top/bottom half-extents, and a slight upward shift of the swash center for perceived coverage.
+ * span; vertical edges from explicit distances to the numeral anchor, using the scaled numeral layout side for
+ * notional ink top/bottom plus dedicated clearance above the ink.
  */
 export function noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx: number): NoonHighlighted12SwashGeometry {
   const s = Math.max(0, markerContentBoxSizePx);
+  const scaledNumeralSide = s * BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE;
   return {
     halfW: s * NOON_HIGHLIGHTED_12_ENTRY_SWASH_HALF_W_FRAC,
-    halfHAbove: s * NOON_HIGHLIGHTED_12_SWASH_HALF_H_ABOVE_FRAC,
-    halfHBelow: s * NOON_HIGHLIGHTED_12_SWASH_HALF_H_BELOW_FRAC,
-    cyOffset: s * NOON_HIGHLIGHTED_12_SWASH_CY_OFFSET_FRAC,
+    extentAboveNumeralAnchor:
+      scaledNumeralSide * NOON_12_INK_TOP_FRAC_OF_SCALED_NUMERAL + s * NOON_12_SWASH_CLEAR_ABOVE_INK_FRAC,
+    extentBelowNumeralAnchor:
+      scaledNumeralSide * NOON_12_INK_BOTTOM_FRAC_OF_SCALED_NUMERAL + s * NOON_12_SWASH_PAD_BELOW_INK_FRAC,
   };
 }
 
 /**
- * Symmetric half-height summary `(above+below)/2` for comparisons; placement uses
- * {@link noonHighlighted12SwashGeometryFromMarkerContentBox}.
+ * Mean vertical half-extent `(above+below)/2` for comparisons; placement uses
+ * {@link noonHighlighted12SwashGeometryFromMarkerContentBox} (edges are not symmetric about a separate swash center).
  */
 export function noonHighlighted12SwashHalfExtentsFromMarkerContentBox(markerContentBoxSizePx: number): {
   halfW: number;
@@ -214,7 +228,7 @@ export function noonHighlighted12SwashHalfExtentsFromMarkerContentBox(markerCont
   const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
   return {
     halfW: g.halfW,
-    halfH: (g.halfHAbove + g.halfHBelow) / 2,
+    halfH: (g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2,
   };
 }
 
@@ -246,13 +260,12 @@ function pushHighlightBehindTapeNumeral(
 ): void {
   if (text === "12") {
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
-    const cySwash = cy + g.cyOffset;
     out.push({
       kind: "rect",
       x: cx - g.halfW,
-      y: cySwash - g.halfHAbove,
+      y: cy - g.extentAboveNumeralAnchor,
       width: g.halfW * 2,
-      height: g.halfHAbove + g.halfHBelow,
+      height: g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor,
       fill: cssColorToRgbaFill(treatmentColor, BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA),
     });
     return;

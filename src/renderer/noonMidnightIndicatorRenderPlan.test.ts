@@ -54,14 +54,26 @@ describe("boxedNumberHighlightHalfExtentsFromMarkerContentBox", () => {
 });
 
 describe("noonHighlighted12SwashGeometryFromMarkerContentBox", () => {
-  it("uses entry-slot scale only (no label-length term) with asymmetric vertical extents and upward center bias", () => {
+  const numeralLayoutScale = 1.12;
+
+  it("uses entry-slot scale only (no label-length term), wider than 1.06×size, and anchors vertical edges to numeral center", () => {
     const s = 40;
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
-    expect(g.halfW).toBeCloseTo(s * 1.06, 8);
-    expect(g.halfHAbove).toBeCloseTo(s * 0.62, 8);
-    expect(g.halfHBelow).toBeCloseTo(s * 0.58, 8);
-    expect(g.cyOffset).toBeCloseTo(s * -0.038, 8);
-    expect(g.halfHAbove).toBeGreaterThan(g.halfHBelow);
+    expect(g.halfW).toBeCloseTo(s * 1.28, 8);
+    expect(g.halfW).toBeGreaterThan(s * 1.06);
+    const scaledNumeralSide = s * numeralLayoutScale;
+    expect(g.extentAboveNumeralAnchor).toBeCloseTo(
+      scaledNumeralSide * 0.43 + s * 0.26,
+      8,
+    );
+    expect(g.extentBelowNumeralAnchor).toBeCloseTo(
+      scaledNumeralSide * 0.41 + s * 0.12,
+      8,
+    );
+    expect(g.extentAboveNumeralAnchor).toBeGreaterThan(g.extentBelowNumeralAnchor);
+    const clearanceAboveNotionalInkTop =
+      g.extentAboveNumeralAnchor - scaledNumeralSide * 0.43;
+    expect(clearanceAboveNotionalInkTop).toBeCloseTo(s * 0.26, 8);
   });
 
   it("exceeds prior dedicated noon half-extents (0.92 / 0.44) and boxed-number midnight at the same box size", () => {
@@ -70,10 +82,10 @@ describe("noonHighlighted12SwashGeometryFromMarkerContentBox", () => {
     const prevHalfW = s * 0.92;
     const prevHalfH = s * 0.44;
     expect(g.halfW).toBeGreaterThan(prevHalfW);
-    expect(g.halfHAbove + g.halfHBelow).toBeGreaterThan(2 * prevHalfH);
+    expect(g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor).toBeGreaterThan(2 * prevHalfH);
     const midnight = boxedNumberHighlightHalfExtentsFromMarkerContentBox(s, "00");
     expect(g.halfW).toBeGreaterThan(midnight.halfW);
-    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(midnight.halfH);
+    expect((g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2).toBeGreaterThan(midnight.halfH);
   });
 
   it("halfExtents helper reports mean vertical half-height for comparisons", () => {
@@ -81,7 +93,7 @@ describe("noonHighlighted12SwashGeometryFromMarkerContentBox", () => {
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
     const { halfW, halfH } = noonHighlighted12SwashHalfExtentsFromMarkerContentBox(s);
     expect(halfW).toBeCloseTo(g.halfW, 8);
-    expect(halfH).toBeCloseTo((g.halfHAbove + g.halfHBelow) / 2, 8);
+    expect(halfH).toBeCloseTo((g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2, 8);
   });
 
   it("is materially wider and taller than the legacy text-fit noon model for the same box", () => {
@@ -94,8 +106,20 @@ describe("noonHighlighted12SwashGeometryFromMarkerContentBox", () => {
       n * s * 0.26 + s * 0.34,
     );
     expect(g.halfW).toBeGreaterThan(legacyHalfW);
-    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(legacyHalfH);
-    expect(g.halfW / ((g.halfHAbove + g.halfHBelow) / 2)).toBeGreaterThan(1.75);
+    expect((g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2).toBeGreaterThan(legacyHalfH);
+    expect(g.halfW / ((g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2)).toBeGreaterThan(1.75);
+  });
+
+  it("upper coverage is from explicit clearance above notional ink top, not a shared-center cy offset", () => {
+    const s = 50;
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(s);
+    const scaledNumeralSide = s * numeralLayoutScale;
+    const legacySharedCenterOffsetFrac = -0.038;
+    const legacyHalfHAboveFrac = 0.62;
+    const legacyExtentAboveCy =
+      s * legacyHalfHAboveFrac - s * legacySharedCenterOffsetFrac;
+    expect(g.extentAboveNumeralAnchor).toBeGreaterThan(legacyExtentAboveCy);
+    expect(g.extentAboveNumeralAnchor - scaledNumeralSide * 0.43).toBeCloseTo(s * 0.26, 8);
   });
 });
 
@@ -730,7 +754,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const highlight = items.find((i) => i.kind === "rect");
     expect(highlight?.kind === "rect" && highlight.stroke).toBeUndefined();
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
-    const meanHalfH = (g.halfHAbove + g.halfHBelow) / 2;
+    const meanHalfH = (g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2;
     expect(meanHalfH / size).toBeGreaterThan(0.55);
     expect(g.halfW).toBeGreaterThan(size * 0.92);
     expect(g.halfW / meanHalfH).toBeGreaterThan(1.35);
@@ -941,14 +965,13 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       items,
     );
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
-    const cySwash = cy + g.cyOffset;
     const rects = items.filter((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
     expect(rects.length).toBe(1);
     const main = rects[0]!;
     expect(main.width).toBeCloseTo(g.halfW * 2, 8);
-    expect(main.height).toBeCloseTo(g.halfHAbove + g.halfHBelow, 8);
+    expect(main.height).toBeCloseTo(g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor, 8);
     expect(main.x).toBeCloseTo(cx - g.halfW, 8);
-    expect(main.y).toBeCloseTo(cySwash - g.halfHAbove, 8);
+    expect(main.y).toBeCloseTo(cy - g.extentAboveNumeralAnchor, 8);
     expect(main.stroke).toBeUndefined();
     if (main.fill) {
       expect(main.fill).toMatch(/^rgba\(/);
@@ -1157,11 +1180,12 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
     const main = rects[0]!;
     expect(main.width).toBeCloseTo(g.halfW * 2, 5);
-    expect(main.height).toBeCloseTo(g.halfHAbove + g.halfHBelow, 5);
+    expect(main.height).toBeCloseTo(g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor, 5);
     // Swash is driven by marker content box `size`; numeral layout is scaled up — highlight should still span well past the glyph.
     const scaledNumeralLayoutSide = size * 1.12;
     expect(g.halfW).toBeGreaterThan(scaledNumeralLayoutSide * 0.72);
-    expect((g.halfHAbove + g.halfHBelow) / 2).toBeGreaterThan(scaledNumeralLayoutSide * 0.36);
+    expect((g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor) / 2).toBeGreaterThan(scaledNumeralLayoutSide * 0.36);
+    expect(main.y).toBeCloseTo(cy - g.extentAboveNumeralAnchor, 5);
     if (textItem?.kind === "text") {
       expect(Math.abs(cx - textItem.x)).toBeLessThan(1e-6);
       expect(Math.abs(cy - textItem.y)).toBeLessThan(1e-6);
