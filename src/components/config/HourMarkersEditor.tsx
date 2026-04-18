@@ -739,6 +739,9 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
 }
 
 function NoonMidnightSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
+  if (hourMarkers.realization.kind !== "text" || !entriesAreaEnabled) {
+    return null;
+  }
   const nm = hourMarkers.noonMidnightCustomization;
   const enabled = nm?.enabled === true;
   /** Preserves the last selected expression mode while customization is disabled (not persisted). */
@@ -917,7 +920,6 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
             Default
           </button>
         </ConfigControlRow>
-        <NoonMidnightSection {...baseProps} />
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Behavior</legend>
@@ -926,6 +928,7 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Realization</legend>
         <RealizationSection {...baseProps} />
+        <NoonMidnightSection {...baseProps} />
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Appearance</legend>

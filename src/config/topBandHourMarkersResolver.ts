@@ -124,6 +124,10 @@ function resolveEffectiveNoonMidnightCustomization(
     effectiveForegroundColor: "#000000" | "#ffffff";
   },
 ): EffectiveNoonMidnightCustomization {
+  /** Authored noon/midnight intent applies only to text hour-marker realization (indicator-entry disk labels). */
+  if (hm.realization.kind !== "text") {
+    return { enabled: false };
+  }
   const raw = hm.noonMidnightCustomization;
   if (raw?.enabled !== true) {
     return { enabled: false };

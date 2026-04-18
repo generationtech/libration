@@ -162,6 +162,19 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
+  it("non-text realization ignores authored noonMidnightCustomization in the effective model", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+          noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
+        },
+      }),
+    );
+    expect(eff.noonMidnightCustomization).toEqual({ enabled: false });
+  });
+
   it("noon/midnight boxedNumber resolves halfway box color from indicator row bg/fg", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({

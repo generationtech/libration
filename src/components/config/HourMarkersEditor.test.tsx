@@ -272,6 +272,59 @@ describe("HourMarkersEditor structured authoring", () => {
     expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
   });
 
+  it("noon/midnight controls are absent when realization is not text", () => {
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "analogClock", appearance: {} },
+        })}
+      />,
+    );
+    expect(screen.queryByRole("checkbox", { name: /Customize noon and midnight indicator entries/i })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /Noon and midnight expression mode/i })).toBeNull();
+  });
+
+  it("noon/midnight controls render below the realization kind selector when text", () => {
+    const { container } = render(<HourMarkersHarness initial={baseCustomHourMarkers()} />);
+    const legend = Array.from(container.querySelectorAll("legend")).find((el) => el.textContent === "Realization");
+    const fieldset = legend?.closest("fieldset");
+    expect(fieldset).toBeTruthy();
+    const rows = fieldset!.querySelectorAll(".config-control-row");
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows[0]?.textContent).toContain("Realization kind");
+    expect(rows[1]?.textContent).toContain("Customize noon / midnight");
+  });
+
+  it("switching realization away from text and back preserves authored noon/midnight customization", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
+        })}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "radialLine" },
+    });
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "semanticGlyph",
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "text" },
+    });
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "semanticGlyph",
+    });
+  });
+
   it("noon/midnight expression mode is preserved in the editor when customization is toggled off then on", () => {
     let last: LibrationConfigV2 | null = null;
     render(

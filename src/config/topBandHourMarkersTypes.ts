@@ -69,6 +69,8 @@ export type HourMarkersNoonMidnightExpressionMode =
 /**
  * Optional customization for the two structural columns that read as noon and midnight in the band’s civil frame
  * (hour 12 → noon, hour 0 → midnight). Persisted under `chrome.layout.hourMarkers.noonMidnightCustomization`.
+ * Effective runtime behavior applies only when {@link HourMarkersRealizationConfig} is `text`; other realizations
+ * ignore this block at resolve time while still persisting authored values.
  */
 export type HourMarkersNoonMidnightCustomization = {
   /** When false or omitted, noon/midnight render like any other hour entry. @default false */

@@ -12,15 +12,15 @@
  */
 
 /**
- * Noon/midnight indicator-entry customization: emits specialized {@link RenderPlan} draws for structural hours
- * 0 and 12 when enabled. Returns whether the caller should skip its default emission for that instance.
+ * Noon/midnight indicator-entry customization for **text** hour-marker realization only: emits specialized
+ * {@link RenderPlan} draws for structural hours 0 and 12 when enabled. Returns whether the caller should skip its
+ * default emission for that instance.
  *
  * Non-`textWords` modes are **label-level** presentations for the upper indicator-entries strip: geometry is
  * sized from {@link GlyphLayoutBox.size} (the laid-out marker content box), not as tiny marker decorations.
  *
- * **Paint order (invariant)**: Procedural backdrops (clock face, radial/wedge base, boxed-number highlight fill,
- * sun/moon, diamond) are pushed before tape numerals / words so overlays read above structure.
- * {@link tryEmitNoonMidnightIndicatorDiskContent} is the single planner — adapters must not reorder.
+ * **Paint order (invariant)**: Procedural backdrops (boxed-number highlight fill, sun/moon, diamond) are pushed before
+ * tape numerals / words so overlays read above structure.
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
  * Noon = filled + stroked; midnight = stroke only (no fill). Tape numeral is inscribed and centered inside the diamond.
@@ -33,22 +33,15 @@
  * content box (`layout.size`), with vertical edges anchored to the tape numeral center — notional ink bounds from the
  * scaled numeral layout ({@link BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE} × `size`) plus explicit clearance — not
  * label-length–driven and not a second shared center inflated around `(cx, cy)`.
- * Color is the resolver’s derived treatment color. Analog clock uses the same model.
+ * Color is the resolver’s derived treatment color.
  *
  * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
 import { noonMidnightActiveIntent } from "../config/noonMidnightIndicatorSemantics.ts";
-import {
-  resolveDefaultHourMarkerRepresentationSpec,
-  type HourMarkerRepresentationSpec,
-} from "../config/types/hourMarkerRepresentationSpec.ts";
-import type {
-  EffectiveAnalogClockResolvedAppearance,
-  EffectiveNoonMidnightCustomization,
-  EffectiveTopBandHourMarkers,
-} from "../config/topBandHourMarkersTypes.ts";
+import type { HourMarkerRepresentationSpec } from "../config/types/hourMarkerRepresentationSpec.ts";
+import type { EffectiveNoonMidnightCustomization, EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
@@ -168,10 +161,9 @@ export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
 /**
  * Half extents for the boxed-number **highlight** rectangle (text-highlighter bar behind the tape numeral): derived
  * from the semantic layout’s marker content box size ({@link GlyphLayoutBox.size}) and the tape label span.
- * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
- * solved disk box side from layout. Sized as a broad horizontal highlight span behind the numeral, not a tight
- * numeral-sized plate or strip-scale badge frame. Noon tape `"12"` uses
- * {@link noonHighlighted12SwashGeometryFromMarkerContentBox} instead of this helper.
+ * Applies to text realization — {@link GlyphLayoutBox.size} is the solved disk box side from layout. Sized as a broad
+ * horizontal highlight span behind the numeral, not a tight numeral-sized plate or strip-scale badge frame. Noon tape
+ * `"12"` uses {@link noonHighlighted12SwashGeometryFromMarkerContentBox} instead of this helper.
  */
 export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
@@ -292,22 +284,12 @@ export type NoonMidnightEmitArgs = {
   hourSpec: HourMarkerRepresentationSpec;
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection;
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers;
-  continuousHour0To24?: number;
-  continuousMinute0To60?: number;
-  analogResolvedAppearance?: EffectiveAnalogClockResolvedAppearance;
 };
 
 function typographyOverridesFor(args: NoonMidnightEmitArgs) {
   return resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(
     args.effectiveTopBandHourMarkerSelection,
   );
-}
-
-/** Text numerals on procedural disks use the geometric text policy so typography stays font-backed and measurable. */
-function textNumeralSpecFor(args: NoonMidnightEmitArgs): HourMarkerRepresentationSpec {
-  return args.realizationKind === "text"
-    ? args.hourSpec
-    : resolveDefaultHourMarkerRepresentationSpec("geometric");
 }
 
 function pushGlyphContent(
@@ -365,6 +347,9 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   if (!intent.active) {
     return false;
   }
+  if (args.realizationKind !== "text") {
+    return false;
+  }
   const mode = intent.expressionMode;
   const { cx, cy, size } = args.layout;
   const role = intent.role;
@@ -376,184 +361,39 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
     args.customization.boxedNumberBoxColor !== undefined
       ? args.customization.boxedNumberBoxColor
       : args.markerColor;
-  const numeralSpec = textNumeralSpecFor(args);
 
   if (mode === "textWords") {
     const wordContent: HourMarkerContent = {
       structuralHour0To23: args.structuralHour0To23,
       displayLabel: textWordsIndicatorStripDisplayLabel(args.structuralHour0To23),
     };
-    const ty = typographyOverridesFor(args);
-    if (args.realizationKind === "text") {
-      pushGlyphContent(
-        args,
-        wordContent,
-        args.hourSpec,
-        gctx,
-        out,
-        textWordsNoonMidnightWordLayout(args.layout),
-      );
-      return true;
-    }
-    if (args.realizationKind === "radialLine" || args.realizationKind === "radialWedge") {
-      const baseGlyph = createHourMarkerGlyph(
-        {
-          structuralHour0To23: args.structuralHour0To23,
-          displayLabel: args.displayLabel,
-        },
-        args.hourSpec,
-        ty,
-        args.markerColor,
-      );
-      emitGlyphToRenderPlan(baseGlyph, args.layout, gctx, out);
-      pushGlyphContent(
-        args,
-        wordContent,
-        numeralSpec,
-        gctx,
-        out,
-        textWordsNoonMidnightWordLayout(args.layout),
-      );
-      return true;
-    }
-    if (args.realizationKind === "analogClock") {
-      const ra = args.analogResolvedAppearance;
-      const ch = args.continuousHour0To24;
-      const cm = args.continuousMinute0To60;
-      if (ra === undefined || ch === undefined || cm === undefined) {
-        return false;
-      }
-      emitGlyphToRenderPlan(
-        {
-          kind: "clockFace",
-          hour: ch,
-          minute: cm,
-          styleId: args.hourSpec.glyphStyleId,
-          showMinuteHand: true,
-          ringStrokeOverride: ra.ringStroke,
-          handStrokeOverride: ra.handStroke,
-          faceFillOverride: ra.faceFill,
-        },
-        args.layout,
-        gctx,
-        out,
-      );
-      pushGlyphContent(
-        args,
-        wordContent,
-        numeralSpec,
-        gctx,
-        out,
-        textWordsNoonMidnightWordLayout(args.layout),
-      );
-      return true;
-    }
-    return false;
+    pushGlyphContent(
+      args,
+      wordContent,
+      args.hourSpec,
+      gctx,
+      out,
+      textWordsNoonMidnightWordLayout(args.layout),
+    );
+    return true;
   }
 
   if (mode === "boxedNumber") {
     const highlightColor = boxedNumberTreatmentColor;
-    if (args.realizationKind === "text") {
-      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
-      pushGlyphContent(
-        args,
-        { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-        args.hourSpec,
-        gctx,
-        out,
-        boxedNumberTapeNumeralLayout(args.layout),
-      );
-      return true;
-    }
-    if (args.realizationKind === "radialLine") {
-      pushGlyphContent(
-        args,
-        { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-        args.hourSpec,
-        gctx,
-        out,
-      );
-      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
-      pushGlyphContent(
-        args,
-        { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-        numeralSpec,
-        gctx,
-        out,
-        boxedNumberTapeNumeralLayout(args.layout),
-      );
-      return true;
-    }
-    if (args.realizationKind === "radialWedge") {
-      pushGlyphContent(
-        args,
-        { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-        args.hourSpec,
-        gctx,
-        out,
-      );
-      pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
-      pushGlyphContent(
-        args,
-        { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-        numeralSpec,
-        gctx,
-        out,
-        boxedNumberTapeNumeralLayout(args.layout),
-      );
-      return true;
-    }
-    const ra = args.analogResolvedAppearance;
-    const ch = args.continuousHour0To24;
-    const cm = args.continuousMinute0To60;
-    if (ra === undefined || ch === undefined || cm === undefined) {
-      return false;
-    }
-    emitGlyphToRenderPlan(
-      {
-        kind: "clockFace",
-        hour: ch,
-        minute: cm,
-        styleId: args.hourSpec.glyphStyleId,
-        showMinuteHand: true,
-        ringStrokeOverride: ra.ringStroke,
-        handStrokeOverride: ra.handStroke,
-        faceFillOverride: ra.faceFill,
-      },
-      args.layout,
+    pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
+    pushGlyphContent(
+      args,
+      { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
+      args.hourSpec,
       gctx,
       out,
+      boxedNumberTapeNumeralLayout(args.layout),
     );
-    // Highlight uses the same marker-content-box + label geometry as text/radial (layout.size is the disk box side).
-    pushHighlightBehindTapeNumeral(cx, cy, tape, size, highlightColor, out);
     return true;
   }
 
   // solarLunarPictogram: geometry reviewed; no change this pass (sun/moon balance already acceptable).
   if (mode === "solarLunarPictogram") {
-    if (args.realizationKind === "analogClock") {
-      const ra = args.analogResolvedAppearance;
-      const ch = args.continuousHour0To24;
-      const cm = args.continuousMinute0To60;
-      if (ra === undefined || ch === undefined || cm === undefined) {
-        return false;
-      }
-      emitGlyphToRenderPlan(
-        {
-          kind: "clockFace",
-          hour: ch,
-          minute: cm,
-          styleId: args.hourSpec.glyphStyleId,
-          showMinuteHand: true,
-          ringStrokeOverride: ra.ringStroke,
-          handStrokeOverride: ra.handStroke,
-          faceFillOverride: ra.faceFill,
-        },
-        args.layout,
-        gctx,
-        out,
-      );
-    }
     const R = size * SOLAR_DISK_R_FRAC;
     const ray = size * SOLAR_RAY_FRAC;
     const pictoStroke = Math.max(1, size * SOLAR_CIRCLE_STROKE_FRAC);
@@ -594,29 +434,6 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   }
 
   if (mode === "semanticGlyph") {
-    if (args.realizationKind === "analogClock") {
-      const ra = args.analogResolvedAppearance;
-      const ch = args.continuousHour0To24;
-      const cm = args.continuousMinute0To60;
-      if (ra === undefined || ch === undefined || cm === undefined) {
-        return false;
-      }
-      emitGlyphToRenderPlan(
-        {
-          kind: "clockFace",
-          hour: ch,
-          minute: cm,
-          styleId: args.hourSpec.glyphStyleId,
-          showMinuteHand: true,
-          ringStrokeOverride: ra.ringStroke,
-          handStrokeOverride: ra.handStroke,
-          faceFillOverride: ra.faceFill,
-        },
-        args.layout,
-        gctx,
-        out,
-      );
-    }
     const half = size * (role === "noon" ? SEMANTIC_DIAMOND_HALF_FRAC : SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC);
     const numeralLayout = semanticGlyphInteriorNumeralLayout(args.layout, half);
     const d = diamondDescriptor(cx, cy, half);
@@ -641,7 +458,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-      numeralSpec,
+      args.hourSpec,
       gctx,
       out,
       numeralLayout,
