@@ -923,12 +923,9 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
         </ConfigControlRow>
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">
-        <legend className="config-fieldset__legend">Behavior</legend>
-        <BehaviorSection {...baseProps} />
-      </fieldset>
-      <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Realization</legend>
         <RealizationSection {...baseProps} />
+        {hourMarkers.realization.kind === "text" ? <BehaviorSection {...baseProps} /> : null}
         <NoonMidnightSection {...baseProps} />
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">

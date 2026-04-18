@@ -232,7 +232,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     expect(eastAnalog.continuousHour0To24).toBeCloseTo(expectedEast.continuousHour0To24, 7);
   });
 
-  it("tapeAdvected procedural glyphs at the present-tick column use phased tape longitude (analog + radial)", () => {
+  it("procedural glyphs at the present-tick column use staticZoneAnchored wall-clock longitudes (analog + radial)", () => {
     const { w, scale, rows, circleStack } = fixtureScale();
     const lon = scale.topBandAnchor.referenceLongitudeDeg;
     const hTick = structuralHourIndexFromReferenceLongitudeDeg(lon);
@@ -242,16 +242,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
       structuralHour0To23: m.utcHour,
       currentHourLabel: m.currentHourLabel,
     }));
-    const wallLonTape = wallClockLongitudeDegForStructuralHourMarkers(
-      "tapeAdvected",
-      tapeMarkers,
-      w,
-    );
-    const cxTick = tapeMarkers[hTick]!.centerX;
-    const lonTape = longitudeDegFromMapX(cxTick, w);
-    expect(wallLonTape[hTick]).toBeCloseTo(lonTape, 7);
-    const expected = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, lonTape);
-
     const effAnalog = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
@@ -260,9 +250,20 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
         layout: { sizeMultiplier: 1 },
       }),
     );
+    expect(effAnalog.behavior).toBe("staticZoneAnchored");
+    const wallLon = wallClockLongitudeDegForStructuralHourMarkers(
+      effAnalog.behavior,
+      tapeMarkers,
+      w,
+    );
+    const cxTick = tapeMarkers[hTick]!.centerX;
+    const lonTape = longitudeDegFromMapX(cxTick, w);
+    expect(wallLon[hTick]).not.toBeCloseTo(lonTape, 3);
+    const expected = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, wallLon[hTick]!);
+
     const planAnalog = buildSemanticTopBandHourMarkers(effAnalog, {
       referenceNowMs: REF_MS_NY_702,
-      wallClockLongitudeDegByStructuralHour: wallLonTape,
+      wallClockLongitudeDegByStructuralHour: wallLon,
     });
     const laidAnalog = layoutSemanticTopBandAnalogClockMarkers(planAnalog, {
       viewportWidthPx: w,
@@ -285,9 +286,10 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
         layout: { sizeMultiplier: 1 },
       }),
     );
+    expect(effRadial.behavior).toBe("staticZoneAnchored");
     const planRadial = buildSemanticTopBandHourMarkers(effRadial, {
       referenceNowMs: REF_MS_NY_702,
-      wallClockLongitudeDegByStructuralHour: wallLonTape,
+      wallClockLongitudeDegByStructuralHour: wallLon,
     });
     const laidRadial = layoutSemanticTopBandRadialLineMarkers(planRadial, {
       viewportWidthPx: w,

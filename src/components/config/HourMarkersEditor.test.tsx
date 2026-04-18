@@ -298,15 +298,61 @@ describe("HourMarkersEditor structured authoring", () => {
     expect(screen.queryByRole("combobox", { name: /Noon and midnight expression mode/i })).toBeNull();
   });
 
-  it("noon/midnight controls render below the realization kind selector when text", () => {
+  it("Realization fieldset order: kind, then hour marker behavior when text, then noon/midnight", () => {
     const { container } = render(<HourMarkersHarness initial={baseCustomHourMarkers()} />);
     const legend = Array.from(container.querySelectorAll("legend")).find((el) => el.textContent === "Realization");
     const fieldset = legend?.closest("fieldset");
     expect(fieldset).toBeTruthy();
     const rows = fieldset!.querySelectorAll(".config-control-row");
-    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows.length).toBeGreaterThanOrEqual(3);
     expect(rows[0]?.textContent).toContain("Realization kind");
-    expect(rows[1]?.textContent).toContain("Customize noon / midnight");
+    expect(rows[1]?.textContent).toContain("Hour marker behavior");
+    expect(rows[2]?.textContent).toContain("Customize noon / midnight");
+  });
+
+  it("does not show hour marker behavior control when realization is not text", () => {
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "analogClock", appearance: {} },
+        })}
+      />,
+    );
+    expect(
+      screen.queryByRole("combobox", { name: /Top-band hour marker placement behavior/i }),
+    ).toBeNull();
+  });
+
+  it("switching realization away from text and back preserves authored hour marker behavior for text", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          behavior: "staticZoneAnchored",
+        })}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker placement behavior/i })).toHaveValue(
+      "staticZoneAnchored",
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "radialLine" },
+    });
+    expect(
+      screen.queryByRole("combobox", { name: /Top-band hour marker placement behavior/i }),
+    ).toBeNull();
+    expect(last!.chrome.layout.hourMarkers.behavior).toBe("staticZoneAnchored");
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "text" },
+    });
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker placement behavior/i })).toHaveValue(
+      "staticZoneAnchored",
+    );
   });
 
   it("switching realization away from text and back preserves authored noon/midnight customization", () => {

@@ -34,7 +34,9 @@ import {
  * - {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}: inverse map of each structural zone center `centerX`
  *   when paired with layout (legacy mean-solar path only if anchored segment options are omitted).
  * - {@link EffectiveTopBandHourMarkerBehavior.tapeAdvected}: inverse equirectangular map of each column’s phased
- *   tape `centerX` so hands match the geographic meridian at the disk’s visual position.
+ *   tape `centerX` so hands match the geographic meridian at the disk’s visual position (text realization only in
+ *   product chrome; procedural effective models always resolve to `staticZoneAnchored` — see
+ *   {@link resolveEffectiveHourMarkerBehavior}).
  */
 export function wallClockLongitudeDegForStructuralHourMarkers(
   behavior: EffectiveTopBandHourMarkerBehavior,

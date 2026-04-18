@@ -165,6 +165,18 @@ export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): 
   return "staticZoneAnchored";
 }
 
+/**
+ * Runtime hour-marker placement behavior. Only {@link HourMarkersRealizationConfig} `text` honors authored
+ * `hourMarkers.behavior`; clock/procedural realizations are fixed to
+ * {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored} regardless of persisted config.
+ */
+export function resolveEffectiveHourMarkerBehavior(hm: HourMarkersConfig): EffectiveTopBandHourMarkerBehavior {
+  if (hm.realization.kind === "text") {
+    return hm.behavior ?? defaultBehaviorFor("text");
+  }
+  return "staticZoneAnchored";
+}
+
 const NOON_MIDNIGHT_EXPRESSION_MODES = new Set<HourMarkersNoonMidnightExpressionMode>([
   "textWords",
   "boxedNumber",
@@ -214,8 +226,9 @@ function resolveEffectiveNoonMidnightCustomization(
 
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
- * Content follows realization kind; behavior uses persisted `hourMarkers.behavior` when set, else
- * {@link defaultBehaviorFor} for the realization kind.
+ * Content follows realization kind; behavior follows {@link resolveEffectiveHourMarkerBehavior} (text honors
+ * authored `hourMarkers.behavior` or {@link defaultBehaviorFor}; procedural/clock modes are fixed to
+ * `staticZoneAnchored`).
  *
  * `areaVisible` on the effective model mirrors `hourMarkers.indicatorEntriesAreaVisible` (default true):
  * it controls structural presence of the indicator entries band, not behavior or realization.
@@ -244,7 +257,7 @@ export function resolveEffectiveTopBandHourMarkers(
       : undefined;
 
   const rk = hm.realization.kind;
-  const behavior = hm.behavior ?? defaultBehaviorFor(rk);
+  const behavior = resolveEffectiveHourMarkerBehavior(hm);
 
   if (rk === "text") {
     const textColor = normalizeMarkerColor(hm.realization.appearance.color);

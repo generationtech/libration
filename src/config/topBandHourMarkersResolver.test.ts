@@ -26,7 +26,11 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
 } from "./appConfig";
-import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
+import {
+  defaultBehaviorFor,
+  resolveEffectiveHourMarkerBehavior,
+  resolveEffectiveTopBandHourMarkers,
+} from "./topBandHourMarkersResolver";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
 
 const INDICATOR_ENTRIES_AREA_DEFAULT = {
@@ -66,6 +70,52 @@ describe("defaultBehaviorFor", () => {
     expect(defaultBehaviorFor("radialLine")).toBe("staticZoneAnchored");
     expect(defaultBehaviorFor("radialWedge")).toBe("staticZoneAnchored");
     expect(defaultBehaviorFor("analogClock")).toBe("staticZoneAnchored");
+  });
+});
+
+describe("resolveEffectiveHourMarkerBehavior", () => {
+  it("honors authored behavior for text realization", () => {
+    expect(
+      resolveEffectiveHourMarkerBehavior(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            behavior: "staticZoneAnchored",
+            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+            layout: { sizeMultiplier: 1 },
+          },
+        }).hourMarkers,
+      ),
+    ).toBe("staticZoneAnchored");
+    expect(
+      resolveEffectiveHourMarkerBehavior(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+            layout: { sizeMultiplier: 1 },
+          },
+        }).hourMarkers,
+      ),
+    ).toBe("tapeAdvected");
+  });
+
+  it("forces staticZoneAnchored for non-text realizations even when authored tapeAdvected", () => {
+    for (const realization of [
+      { kind: "analogClock" as const, appearance: {} },
+      { kind: "radialLine" as const, appearance: {} },
+      { kind: "radialWedge" as const, appearance: {} },
+    ]) {
+      expect(
+        resolveEffectiveHourMarkerBehavior(
+          normalizeDisplayChromeLayout({
+            hourMarkers: {
+              behavior: "tapeAdvected",
+              realization,
+              layout: { sizeMultiplier: 1 },
+            },
+          }).hourMarkers,
+        ),
+      ).toBe("staticZoneAnchored");
+    }
   });
 });
 
@@ -127,6 +177,20 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
           hourMarkers: {
             behavior: "staticZoneAnchored",
             realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+            layout: { sizeMultiplier: 1 },
+          },
+        }),
+      ).behavior,
+    ).toBe("staticZoneAnchored");
+  });
+
+  it("ignores authored tapeAdvected for procedural realizations in the effective model", () => {
+    expect(
+      resolveEffectiveTopBandHourMarkers(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            behavior: "tapeAdvected",
+            realization: { kind: "radialLine", appearance: {} },
             layout: { sizeMultiplier: 1 },
           },
         }),

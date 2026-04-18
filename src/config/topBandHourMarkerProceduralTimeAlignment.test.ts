@@ -29,7 +29,7 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "./topB
 const REF_MS = Date.UTC(2026, 3, 18, 15, 37, 22);
 
 describe("top-band hour marker procedural time vs semantic wall clock", () => {
-  it("radialLine and radialWedge glyph hour matches continuous solar hour for each structural column (tapeAdvected)", () => {
+  it("radialLine and radialWedge glyph hour matches continuous solar hour for each structural column (effective staticZoneAnchored)", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -39,7 +39,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    expect(eff.behavior).toBe("tapeAdvected");
+    expect(eff.behavior).toBe("staticZoneAnchored");
     const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: REF_MS });
     const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection({
       kind: "glyph",
@@ -75,12 +75,12 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     const effWedge = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          behavior: "tapeAdvected",
           realization: { kind: "radialWedge", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
       }),
     );
+    expect(effWedge.behavior).toBe("staticZoneAnchored");
     const planW = buildSemanticTopBandHourMarkers(effWedge, { referenceNowMs: REF_MS });
     const specW = hourMarkerRepresentationSpecForTopBandEffectiveSelection({
       kind: "glyph",
@@ -163,7 +163,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("staticZoneAnchored radial uses the same semantic wall-clock state as tapeAdvected (time semantics only)", () => {
+  it("authored tapeAdvected and explicit staticZoneAnchored agree on procedural semantic wall-clock state (both resolve to static)", () => {
     const effTape = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -196,7 +196,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("tapeAdvected procedural wall clock uses phased disk center x via equirect inverse (semantic options)", () => {
+  it("procedural radialLine uses structural-column longitudes when product supplies wall-clock overrides (authored tapeAdvected ignored at effective layer)", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -206,14 +206,16 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
+    expect(eff.behavior).toBe("staticZoneAnchored");
     const w = 2400;
     const cx = 317.5;
     const markers = Array.from({ length: 24 }, (_, h) => ({
       centerX: h === 7 ? cx : h * 10,
       structuralHour0To23: h,
     }));
-    const wallLon = wallClockLongitudeDegForStructuralHourMarkers("tapeAdvected", markers, w);
-    expect(wallLon[7]).toBeCloseTo(longitudeDegFromMapX(cx, w), 10);
+    const wallLon = wallClockLongitudeDegForStructuralHourMarkers(eff.behavior, markers, w);
+    expect(wallLon[7]).toBeCloseTo(structuralColumnCenterLongitudeDeg(7), 10);
+    expect(wallLon[7]).not.toBeCloseTo(longitudeDegFromMapX(cx, w), 3);
     const plan = buildSemanticTopBandHourMarkers(eff, {
       referenceNowMs: REF_MS,
       wallClockLongitudeDegByStructuralHour: wallLon,
@@ -246,7 +248,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("explicit tapeAdvected is preserved for radialLine when authored", () => {
+  it("authored tapeAdvected on radialLine does not change effective behavior", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -256,6 +258,6 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    expect(eff.behavior).toBe("tapeAdvected");
+    expect(eff.behavior).toBe("staticZoneAnchored");
   });
 });
