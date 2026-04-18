@@ -289,7 +289,7 @@ export function resolveEffectiveTopBandHourMarkers(
       areaVisible,
       indicatorEntriesArea,
       behavior,
-      content: { kind: "hour24" },
+      content: { kind: "localWallClock" },
       realization: {
         kind: "radialLine",
         resolvedAppearance: resolveRadialLineResolvedAppearance(r, indicatorEntriesArea),
@@ -305,7 +305,7 @@ export function resolveEffectiveTopBandHourMarkers(
     areaVisible,
     indicatorEntriesArea,
     behavior,
-    content: { kind: "hour24" },
+    content: { kind: "localWallClock" },
     realization: {
       kind: "radialWedge",
       resolvedAppearance: resolveRadialWedgeResolvedAppearance(r, indicatorEntriesArea),

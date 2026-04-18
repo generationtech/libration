@@ -70,23 +70,29 @@ export function createHourMarkerGlyph(
         ...textExtras,
         ...textFill,
       };
-    case "radialLine":
+    case "radialLine": {
+      const radialHour =
+        content.continuousHour0To24 !== undefined ? content.continuousHour0To24 : structural;
       return {
         kind: "radialLine",
-        hour: structural,
+        hour: radialHour,
         styleId: spec.glyphStyleId,
         ...proceduralColor,
         ...(markerFaceFill !== undefined ? { faceFillOverride: markerFaceFill } : {}),
       };
-    case "radialWedge":
+    }
+    case "radialWedge": {
+      const wedgeHour =
+        content.continuousHour0To24 !== undefined ? content.continuousHour0To24 : structural;
       return {
         kind: "radialWedge",
-        hour: structural,
+        hour: wedgeHour,
         styleId: spec.glyphStyleId,
         ...proceduralColor,
         ...(radialWedgeStrokeColor !== undefined ? { strokeColorOverride: radialWedgeStrokeColor } : {}),
         ...(markerFaceFill !== undefined ? { faceFillOverride: markerFaceFill } : {}),
       };
+    }
     case "segment":
     case "dotmatrix":
     case "terminal":

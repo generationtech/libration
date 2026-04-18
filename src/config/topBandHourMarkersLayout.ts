@@ -92,7 +92,7 @@ export type SemanticTopBandHourMarkerLayoutContext = {
   effectiveTopBandHourMarkerSelection?: EffectiveTopBandHourMarkerSelection;
   /**
    * Structural (NATO) column center x from {@link UtcTopScaleHourSegment.centerX}, length 24.
-   * Used when {@link EffectiveTopBandHourMarkers.behavior} is `staticZoneAnchored` for analog clocks.
+   * Used when {@link EffectiveTopBandHourMarkers.behavior} is `staticZoneAnchored` for analog clocks and radial glyphs.
    */
   structuralZoneCenterXPx?: readonly number[];
 };
@@ -131,6 +131,8 @@ export type LaidOutSemanticTopBandRadialLineMarker = {
   centerY: number;
   sizePx: number;
   wrapHalfExtentPx: number;
+  /** Mean-solar hour-of-day for spoke angle; matches semantic {@link SemanticLocalWallClockState.continuousHour0To24}. */
+  continuousHour0To24: number;
   /** Civil-time label from the tape column (legacy glyph path passes it; unused for radial stroke). */
   displayLabel: string;
   tapeHourLabel: string;
@@ -143,6 +145,7 @@ export type LaidOutSemanticTopBandRadialWedgeMarker = {
   centerY: number;
   sizePx: number;
   wrapHalfExtentPx: number;
+  continuousHour0To24: number;
   displayLabel: string;
   tapeHourLabel: string;
 };
@@ -311,7 +314,8 @@ export function layoutSemanticTopBandHourMarkers(
 }
 
 /**
- * Disk-row layout for radialLine + tape-advected hour24: x from tape columns, y/size/wrap match legacy hour-disk stack.
+ * Disk-row layout for radialLine: x from phased tape or structural zone centers (see {@link structuralXForHour}),
+ * y/size/wrap match legacy hour-disk stack; spoke angle comes from semantic local wall-clock state.
  */
 export function layoutSemanticTopBandRadialLineMarkers(
   plan: SemanticTopBandHourMarkersPlan,
@@ -327,8 +331,10 @@ export function layoutSemanticTopBandRadialLineMarkers(
 
   const out: LaidOutSemanticTopBandRadialLineMarker[] = [];
 
+  const zoneX = ctx.structuralZoneCenterXPx;
+
   for (const inst of plan.instances) {
-    if (inst.realization.kind !== "radialLine" || inst.content.kind !== "hour24Label") {
+    if (inst.realization.kind !== "radialLine" || inst.content.kind !== "localWallClock") {
       continue;
     }
     const h = inst.structuralHour0To23;
@@ -336,6 +342,7 @@ export function layoutSemanticTopBandRadialLineMarkers(
     if (m === undefined) {
       continue;
     }
+    const centerX = structuralXForHour(inst.behavior, h, m, zoneX);
     const r = m.radiusPx;
     const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
       yDiskRow0,
@@ -351,10 +358,11 @@ export function layoutSemanticTopBandRadialLineMarkers(
 
     out.push({
       structuralHour0To23: h,
-      centerX: m.centerX,
+      centerX,
       centerY: numeralY,
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
+      continuousHour0To24: inst.content.wallClock.continuousHour0To24,
       displayLabel: display,
       tapeHourLabel: tape,
     });
@@ -364,7 +372,7 @@ export function layoutSemanticTopBandRadialLineMarkers(
 }
 
 /**
- * Disk-row layout for radialWedge + tape-advected hour24: same x/y/size/wrap as radialLine and legacy hour-disk stack.
+ * Disk-row layout for radialWedge: same x/y/size/wrap policy as {@link layoutSemanticTopBandRadialLineMarkers}.
  */
 export function layoutSemanticTopBandRadialWedgeMarkers(
   plan: SemanticTopBandHourMarkersPlan,
@@ -380,8 +388,10 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
 
   const out: LaidOutSemanticTopBandRadialWedgeMarker[] = [];
 
+  const zoneX = ctx.structuralZoneCenterXPx;
+
   for (const inst of plan.instances) {
-    if (inst.realization.kind !== "radialWedge" || inst.content.kind !== "hour24Label") {
+    if (inst.realization.kind !== "radialWedge" || inst.content.kind !== "localWallClock") {
       continue;
     }
     const h = inst.structuralHour0To23;
@@ -389,6 +399,7 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
     if (m === undefined) {
       continue;
     }
+    const centerX = structuralXForHour(inst.behavior, h, m, zoneX);
     const r = m.radiusPx;
     const { centerY: numeralY } = layoutDiskRowHourMarkerVertical(
       yDiskRow0,
@@ -404,10 +415,11 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
 
     out.push({
       structuralHour0To23: h,
-      centerX: m.centerX,
+      centerX,
       centerY: numeralY,
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
+      continuousHour0To24: inst.content.wallClock.continuousHour0To24,
       displayLabel: display,
       tapeHourLabel: tape,
     });

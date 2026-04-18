@@ -66,7 +66,7 @@ export type TopBandInDiskHourMarkerSemanticRenderPath =
 /**
  * Resolves the in-disk semantic render path or throws with a developer-facing message.
  * Requires {@link EffectiveTopBandHourMarkers}, 24 tape columns, selection ↔ effective realization consistency, and for
- * analogClock {@link referenceNowMs} plus {@link structuralZoneCenterXPx} length 24.
+ * analogClock and radial glyphs {@link referenceNowMs}; for static-zone behavior, {@link structuralZoneCenterXPx} length 24.
  */
 export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection;
@@ -125,12 +125,28 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
           `${IN_DISK_HOUR_ERR} radialLine selection requires effective realization kind "radialLine", got "${eff.realization.kind}"`,
         );
       }
+      if (args.referenceNowMs === undefined) {
+        throw new Error(`${IN_DISK_HOUR_ERR} radialLine requires referenceNowMs`);
+      }
+      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+        throw new Error(
+          `${IN_DISK_HOUR_ERR} radialLine with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
+        );
+      }
       return { kind: "semanticRadialLineHourDisks" };
     }
     if (sel.glyphMode === "radialWedge") {
       if (eff.realization.kind !== "radialWedge") {
         throw new Error(
           `${IN_DISK_HOUR_ERR} radialWedge selection requires effective realization kind "radialWedge", got "${eff.realization.kind}"`,
+        );
+      }
+      if (args.referenceNowMs === undefined) {
+        throw new Error(`${IN_DISK_HOUR_ERR} radialWedge requires referenceNowMs`);
+      }
+      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+        throw new Error(
+          `${IN_DISK_HOUR_ERR} radialWedge with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
         );
       }
       return { kind: "semanticRadialWedgeHourDisks" };
@@ -190,9 +206,9 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   tickBandHeightPx?: number;
   /** Defaults to {@link TOP_CHROME_STYLE} for tests and legacy callers. */
   chromeStyle?: TopChromeStyle;
-  /** Solar-local wall clock for semantic analog pipeline; pair with {@link structuralZoneCenterXPx}. */
+  /** Mean-solar reference instant for semantic analog and radial wall-clock pipelines; pair with {@link structuralZoneCenterXPx} when behavior is static-zone anchored. */
   referenceNowMs?: number;
-  /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); semantic analog static-zone anchoring. */
+  /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); static-zone anchoring for analog and radial layouts. */
   structuralZoneCenterXPx?: readonly number[];
 }): RenderPlan {
   const vw = options.viewportWidthPx;
@@ -351,7 +367,9 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       items,
     );
   } else if (inDiskPath.kind === "semanticRadialLineHourDisks") {
-    const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers);
+    const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
+      referenceNowMs: options.referenceNowMs,
+    });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(semanticPlan, {
       viewportWidthPx: vw,
       topBandYPx: y0,
@@ -361,6 +379,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       diskLabelSizePx: labelSize,
       markerContentSizePx,
       hourMarkerLayout: effectiveMarkers.layout,
+      structuralZoneCenterXPx: options.structuralZoneCenterXPx,
     });
     emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
       laidOutRadial,
@@ -371,7 +390,9 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       items,
     );
   } else if (inDiskPath.kind === "semanticRadialWedgeHourDisks") {
-    const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers);
+    const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
+      referenceNowMs: options.referenceNowMs,
+    });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(semanticPlan, {
       viewportWidthPx: vw,
       topBandYPx: y0,
@@ -381,6 +402,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       diskLabelSizePx: labelSize,
       markerContentSizePx,
       hourMarkerLayout: effectiveMarkers.layout,
+      structuralZoneCenterXPx: options.structuralZoneCenterXPx,
     });
     emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
       laidOutWedge,

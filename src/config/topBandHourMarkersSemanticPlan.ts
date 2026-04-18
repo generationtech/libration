@@ -40,7 +40,10 @@ function semanticContentForInstance(
 }
 
 export type BuildSemanticTopBandHourMarkersOptions = {
-  /** Required for analogClock local wall-clock content; drives per-zone hand angles. */
+  /**
+   * Required for effective {@link EffectiveTopBandHourMarkerContent} `localWallClock` (analogClock, radialLine,
+   * radialWedge): mean-solar wall-clock state per structural column.
+   */
   referenceNowMs?: number;
 };
 

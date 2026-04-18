@@ -114,7 +114,7 @@ describe("createHourMarkerGlyph", () => {
     }
   });
 
-  it("maps radialLine to RadialLineGlyph with structural hour", () => {
+  it("maps radialLine to RadialLineGlyph with structural hour when continuous wall-clock hour is omitted", () => {
     const g = createHourMarkerGlyph(
       { structuralHour0To23: 17, displayLabel: "5" },
       { mode: "radialLine", textRole: "chromeHourPrimary", glyphStyleId: "topBandHourDefault" },
@@ -123,6 +123,21 @@ describe("createHourMarkerGlyph", () => {
     if (g.kind === "radialLine") {
       expect(g.hour).toBe(17);
       expect(g.styleId).toBe("topBandHourDefault");
+    }
+  });
+
+  it("maps radialLine to RadialLineGlyph using continuousHour0To24 when provided", () => {
+    const g = createHourMarkerGlyph(
+      {
+        structuralHour0To23: 5,
+        displayLabel: "06",
+        continuousHour0To24: 6.42,
+      },
+      { mode: "radialLine", textRole: "chromeHourPrimary", glyphStyleId: "topBandHourDefault" },
+    );
+    expect(g.kind).toBe("radialLine");
+    if (g.kind === "radialLine") {
+      expect(g.hour).toBeCloseTo(6.42, 5);
     }
   });
 

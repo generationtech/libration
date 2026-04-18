@@ -154,7 +154,7 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       hourMarkerLayout({ kind: "radialLine", appearance: {} }),
     );
-    const plan = buildSemanticTopBandHourMarkers(eff);
+    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(plan, {
       viewportWidthPx: w,
       topBandYPx: 0,
@@ -188,6 +188,58 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
       expect(laidOutRadial[h]!.centerX).toBeCloseTo(scale.circleMarkers[h]!.centerX, 5);
     }
   });
+
+  it("static-zone radial layout uses structural segment centerX, not phased tape centerX", () => {
+    const w = 960;
+    const top = 88;
+    const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
+    const rows = scale.rows ?? computeUtcTopScaleRowMetrics(top);
+    const circleStack = scale.circleStack ?? computeTopBandCircleStackMetrics(rows.circleBandH);
+    const structuralX = scale.segments.map((s) => s.centerX);
+    const tapeMarkers = scale.circleMarkers.map((m) => ({
+      centerX: m.centerX,
+      radiusPx: m.radiusPx,
+      structuralHour0To23: m.utcHour,
+      currentHourLabel: m.currentHourLabel,
+    }));
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      hourMarkers: {
+        ...DEFAULT_HOUR_MARKERS_CONFIG,
+        behavior: "staticZoneAnchored",
+        realization: { kind: "radialLine", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    expect(eff.behavior).toBe("staticZoneAnchored");
+    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 6, 0, 0) });
+    const laidOut = layoutSemanticTopBandRadialLineMarkers(plan, {
+      viewportWidthPx: w,
+      topBandYPx: 0,
+      circleBandHeightPx: rows.circleBandH,
+      circleStack,
+      markers: tapeMarkers,
+      diskLabelSizePx: 14,
+      hourMarkerLayout: resolvedHourMarkerLayoutFrom({
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        hourMarkers: {
+          ...DEFAULT_HOUR_MARKERS_CONFIG,
+          behavior: "staticZoneAnchored",
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+      structuralZoneCenterXPx: structuralX,
+    });
+    expect(laidOut).toHaveLength(24);
+    let maxDeltaFromTape = 0;
+    for (const row of laidOut) {
+      const h = row.structuralHour0To23;
+      expect(row.centerX).toBeCloseTo(structuralX[h]!, 5);
+      maxDeltaFromTape = Math.max(maxDeltaFromTape, Math.abs(row.centerX - tapeMarkers[h]!.centerX));
+    }
+    expect(maxDeltaFromTape).toBeGreaterThan(1);
+  });
 });
 
 describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
@@ -206,7 +258,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       hourMarkerLayout({ kind: "radialWedge", appearance: {} }),
     );
-    const plan = buildSemanticTopBandHourMarkers(eff);
+    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(plan, {
       viewportWidthPx: w,
       topBandYPx: 0,
@@ -221,6 +273,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(
       buildSemanticTopBandHourMarkers(
         resolveEffectiveTopBandHourMarkers(hourMarkerLayout({ kind: "radialLine", appearance: {} })),
+        { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) },
       ),
       {
         viewportWidthPx: w,

@@ -176,7 +176,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
       behavior: "tapeAdvected",
-      content: { kind: "hour24" },
+      content: { kind: "localWallClock" },
       realization: {
         kind: "radialLine",
         resolvedAppearance: {
@@ -248,7 +248,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
       behavior: "tapeAdvected",
-      content: { kind: "hour24" },
+      content: { kind: "localWallClock" },
       realization: {
         kind: "radialWedge",
         resolvedAppearance: {

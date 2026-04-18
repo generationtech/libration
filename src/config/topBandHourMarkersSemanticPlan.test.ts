@@ -175,7 +175,8 @@ describe("buildSemanticTopBandHourMarkers", () => {
     }
   });
 
-  it("radialLine and radialWedge map to matching realization kinds and hour24Label content", () => {
+  it("radialLine and radialWedge map to matching realization kinds and localWallClock semantic content", () => {
+    const ref = Date.UTC(2024, 5, 15, 18, 42, 30);
     const line = buildSemanticTopBandHourMarkers(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
@@ -185,11 +186,17 @@ describe("buildSemanticTopBandHourMarkers", () => {
           },
         }),
       ),
+      { referenceNowMs: ref },
     );
     expect(line.source.realization.kind).toBe("radialLine");
+    expect(line.source.content.kind).toBe("localWallClock");
     for (const inst of line.instances) {
       expect(inst.realization.kind).toBe("radialLine");
-      expect(inst.content.kind).toBe("hour24Label");
+      expect(inst.content.kind).toBe("localWallClock");
+      if (inst.content.kind === "localWallClock") {
+        expect(inst.content.wallClock.continuousMinute0To60).toBeGreaterThanOrEqual(0);
+        expect(inst.content.wallClock.continuousMinute0To60).toBeLessThan(60);
+      }
     }
 
     const wedge = buildSemanticTopBandHourMarkers(
@@ -201,11 +208,13 @@ describe("buildSemanticTopBandHourMarkers", () => {
           },
         }),
       ),
+      { referenceNowMs: ref },
     );
     expect(wedge.source.realization.kind).toBe("radialWedge");
+    expect(wedge.source.content.kind).toBe("localWallClock");
     for (const inst of wedge.instances) {
       expect(inst.realization.kind).toBe("radialWedge");
-      expect(inst.content.kind).toBe("hour24Label");
+      expect(inst.content.kind).toBe("localWallClock");
     }
   });
 });

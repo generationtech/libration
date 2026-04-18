@@ -62,6 +62,7 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
       const hourContent: HourMarkerContent = {
         structuralHour0To23: inst.structuralHour0To23,
         displayLabel: inst.displayLabel,
+        continuousHour0To24: inst.continuousHour0To24,
       };
       const glyph = createHourMarkerGlyph(
         hourContent,

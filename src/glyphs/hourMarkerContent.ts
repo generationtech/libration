@@ -15,8 +15,13 @@
  * Semantic input for hour-marker glyph construction. Callers compute once per marker.
  */
 export type HourMarkerContent = {
-  /** Canonical structural hour 0–23 for representation logic (e.g. analog clock hand). */
+  /** Canonical structural hour 0–23 for representation logic (e.g. fallback radial angle). */
   structuralHour0To23: number;
   /** Label string for text-backed representations (local12/24/UTC as resolved by the planner). */
   displayLabel: string;
+  /**
+   * Mean-solar continuous hour-of-day [0,24) for radial line/wedge spoke angle; matches semantic wall-clock hour hand.
+   * When omitted, procedural radial modes use {@link structuralHour0To23} only (integer structural slot).
+   */
+  continuousHour0To24?: number;
 };

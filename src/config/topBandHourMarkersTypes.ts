@@ -116,7 +116,8 @@ export interface HourMarkersConfig {
 }
 
 /**
- * What civil-time content the marker encodes: 24h tape hour vs local wall-clock for the analog face.
+ * What civil-time content the marker encodes: 24h tape labels (text) vs mean-solar local wall-clock per structural
+ * column (analogClock, radialLine, radialWedge procedural angles).
  */
 export type EffectiveTopBandHourMarkerContent =
   | { kind: "hour24" }
