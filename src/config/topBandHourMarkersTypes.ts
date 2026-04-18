@@ -135,6 +135,11 @@ export type EffectiveAnalogClockResolvedAppearance = {
 
 export type EffectiveRadialLineResolvedAppearance = {
   lineColor: string;
+  /**
+   * Filled disk behind the radial stroke (visible “hour disk” surface). Default: same policy as analog
+   * {@link EffectiveAnalogClockResolvedAppearance.faceFill} — blend from indicator entries background toward resolved line ink.
+   */
+  faceFill: string;
 };
 
 export type EffectiveRadialWedgeResolvedAppearance = {
@@ -148,6 +153,11 @@ export type EffectiveRadialWedgeResolvedAppearance = {
    * alpha so the edge stays visibly tied to the high-contrast foreground on the indicator row.
    */
   strokeColor: string;
+  /**
+   * Full disk behind the wedge annulus (covers the inner hole and matches analog-style face treatment).
+   * Default: blend from indicator entries background toward contrast foreground at t = 0.25 (same as analog face).
+   */
+  faceFill: string;
 };
 
 export type EffectiveTextResolvedAppearance = {

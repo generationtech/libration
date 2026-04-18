@@ -46,6 +46,7 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
   }
   const fillColor = realization.resolvedAppearance.fillColor;
   const strokeColor = realization.resolvedAppearance.strokeColor;
+  const faceFill = realization.resolvedAppearance.faceFill;
 
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
@@ -69,6 +70,7 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
         typographyOverrides,
         fillColor,
         strokeColor,
+        faceFill,
       );
       emitGlyphToRenderPlan(glyph, layout, glyphRenderContext, out);
     }

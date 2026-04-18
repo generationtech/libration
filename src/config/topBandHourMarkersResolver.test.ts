@@ -179,7 +179,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: { lineColor: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor },
+        resolvedAppearance: {
+          lineColor: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+          faceFill: defaultAnalogFaceFillFromIndicatorRow(),
+        },
       },
       layout: { sizeMultiplier: 1 },
       ...NOON_MIDNIGHT_DISABLED,
@@ -251,6 +254,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: {
           fillColor: defaultRadialWedgeFillFromIndicatorRow(),
           strokeColor: defaultRadialWedgeStrokeFromIndicatorRow(),
+          faceFill: defaultAnalogFaceFillFromIndicatorRow(),
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -382,7 +386,14 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(lay);
     expect(eff.realization).toEqual({
       kind: "radialLine",
-      resolvedAppearance: { lineColor: "#00ff00" },
+      resolvedAppearance: {
+        lineColor: "#00ff00",
+        faceFill: interpolateRgbStringBetweenCssColors(
+          INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+          "#00ff00",
+          0.25,
+        ),
+      },
     });
   });
 
@@ -594,6 +605,13 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(eff.realization.resolvedAppearance.strokeColor).toBe(
       rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.72),
     );
+    expect(eff.realization.resolvedAppearance.faceFill).toBe(
+      interpolateRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.indicatorEntriesArea.effectiveForegroundColor,
+        0.25,
+      ),
+    );
   });
 
   it("radialWedge appearance.fillColor overrides derived default fill", () => {
@@ -612,6 +630,13 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(eff.realization.resolvedAppearance.fillColor).toBe("#c0ffee");
     expect(eff.realization.resolvedAppearance.strokeColor).toBe(
       rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.72),
+    );
+    expect(eff.realization.resolvedAppearance.faceFill).toBe(
+      interpolateRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.indicatorEntriesArea.effectiveForegroundColor,
+        0.25,
+      ),
     );
   });
 
@@ -641,6 +666,28 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     }
     expect(light.realization.resolvedAppearance.lineColor).toBe("#000000");
     expect(dark.realization.resolvedAppearance.lineColor).toBe("#ffffff");
+  });
+
+  it("radialLine resolved faceFill blends from row background toward resolved line ink (analog face policy)", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialLine");
+    if (eff.realization.kind !== "radialLine") {
+      throw new Error("expected radialLine");
+    }
+    expect(eff.realization.resolvedAppearance.faceFill).toBe(
+      interpolateRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.realization.resolvedAppearance.lineColor,
+        0.25,
+      ),
+    );
   });
 
   it("radialWedge default stroke tracks contrast foreground on light and dark indicator entries backgrounds", () => {

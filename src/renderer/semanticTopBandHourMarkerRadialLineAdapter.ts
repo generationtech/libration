@@ -45,6 +45,7 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
     return;
   }
   const markerColor = realization.resolvedAppearance.lineColor;
+  const faceFill = realization.resolvedAppearance.faceFill;
 
   const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   const typographyOverrides =
@@ -67,6 +68,8 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
         hourSpec,
         typographyOverrides,
         markerColor,
+        undefined,
+        faceFill,
       );
       emitGlyphToRenderPlan(glyph, layout, glyphRenderContext, out);
     }

@@ -828,6 +828,18 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       const expectedLineStroke =
         eff.realization.kind === "radialLine" ? eff.realization.resolvedAppearance.lineColor : "";
       expect(expectedLineStroke.length).toBeGreaterThan(0);
+      const expectedFaceFill =
+        eff.realization.kind === "radialLine" ? eff.realization.resolvedAppearance.faceFill : "";
+      expect(expectedFaceFill.length).toBeGreaterThan(0);
+
+      const markerFacePaths = plan.items.filter(
+        (i): i is Extract<(typeof plan.items)[number], { kind: "path2d" }> =>
+          i.kind === "path2d" &&
+          i.pathKind === "descriptor" &&
+          i.fill === expectedFaceFill &&
+          i.stroke === undefined,
+      );
+      expect(markerFacePaths.length).toBeGreaterThanOrEqual(24);
 
       const radialLines = plan.items.filter(
         (i): i is Extract<(typeof plan.items)[number], { kind: "line" }> =>
@@ -905,6 +917,10 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       effResolvedWedge.realization.kind === "radialWedge"
         ? effResolvedWedge.realization.resolvedAppearance.strokeColor
         : "";
+    const defaultMarkerFaceFill =
+      effResolvedWedge.realization.kind === "radialWedge"
+        ? effResolvedWedge.realization.resolvedAppearance.faceFill
+        : "";
 
     it("routes radialWedge through resolver → planner → layout → adapter on full tape", () => {
       const w = 960;
@@ -951,6 +967,15 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         referenceNowMs: scale.referenceNowMs,
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
+
+      const markerFacePaths = plan.items.filter(
+        (i): i is Extract<(typeof plan.items)[number], { kind: "path2d" }> =>
+          i.kind === "path2d" &&
+          i.pathKind === "descriptor" &&
+          i.fill === defaultMarkerFaceFill &&
+          i.stroke === undefined,
+      );
+      expect(markerFacePaths.length).toBeGreaterThanOrEqual(24);
 
       const wedgeFills = plan.items.filter(
         (i): i is Extract<(typeof plan.items)[number], { kind: "path2d" }> =>
@@ -1092,7 +1117,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(plan.items.some((i) => i.kind === "line")).toBe(true);
     });
 
-    it("glyph radialLine uses procedural path (line), not hour text", () => {
+    it("glyph radialLine uses procedural path (marker-disk face + line), not hour text", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
       const label0 = f.markers[0]!.currentHourLabel;
       const eff = effectiveTopBandHourMarkersForLayout({
@@ -1112,6 +1137,14 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         topBandYPx: 10,
       });
       expect(plan.items.some((i) => i.kind === "text" && i.text === label0)).toBe(false);
+      expect(eff.realization.kind).toBe("radialLine");
+      const faceFill =
+        eff.realization.kind === "radialLine" ? eff.realization.resolvedAppearance.faceFill : "";
+      expect(
+        plan.items.some(
+          (i) => i.kind === "path2d" && i.pathKind === "descriptor" && i.fill === faceFill && i.stroke === undefined,
+        ),
+      ).toBe(true);
       expect(plan.items.filter((i) => i.kind === "line").length).toBeGreaterThan(0);
     });
 

@@ -64,6 +64,8 @@ export type RadialLineGlyph = {
   styleId?: HourMarkerGlyphStyleId;
   /** Top-band layout override for line stroke. */
   colorOverride?: string;
+  /** Filled disk behind the stroke (resolver: indicator-row–aware face; overrides catalog when set). */
+  faceFillOverride?: string;
 };
 
 export type RadialWedgeGlyph = {
@@ -75,4 +77,6 @@ export type RadialWedgeGlyph = {
   colorOverride?: string;
   /** When set, overrides catalog wedge stroke color (resolver supplies default for indicator-row contrast). */
   strokeColorOverride?: string;
+  /** Full disk behind the wedge annulus (resolver-derived face; overrides catalog when set). */
+  faceFillOverride?: string;
 };

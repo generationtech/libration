@@ -47,14 +47,16 @@ describe("RadialLineGlyph emit", () => {
     const glyph: GlyphRenderable = { kind: "radialLine", hour: 0, styleId: "topBandHourDefault" };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    expect(out).toHaveLength(1);
-    expect(out[0]?.kind).toBe("line");
+    expect(out).toHaveLength(2);
+    expect(out[0]?.kind).toBe("path2d");
+    expect(out[1]?.kind).toBe("line");
     const tip = polarToCartesian(layout.cx, layout.cy, length, hourToTheta(0));
-    if (out[0]?.kind === "line") {
-      expect(out[0].x1).toBe(layout.cx);
-      expect(out[0].y1).toBe(layout.cy);
-      expect(out[0].x2).toBeCloseTo(tip.x, 8);
-      expect(out[0].y2).toBeCloseTo(tip.y, 8);
+    const line = out[1];
+    if (line?.kind === "line") {
+      expect(line.x1).toBe(layout.cx);
+      expect(line.y1).toBe(layout.cy);
+      expect(line.x2).toBeCloseTo(tip.x, 8);
+      expect(line.y2).toBeCloseTo(tip.y, 8);
     }
   });
 
@@ -62,7 +64,7 @@ describe("RadialLineGlyph emit", () => {
     const glyph: GlyphRenderable = { kind: "radialLine", hour: 6, styleId: "topBandHourDefault" };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    const line = out[0];
+    const line = out[1];
     expect(line).toMatchObject({
       kind: "line",
       strokeWidthPx: style.lineWidthPx,
@@ -80,11 +82,26 @@ describe("RadialLineGlyph emit", () => {
     };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    const line = out[0];
+    const line = out[1];
     expect(line?.kind).toBe("line");
     if (line?.kind === "line") {
       expect(line.stroke).toBe("#ffffff");
       expect(line.stroke).not.toBe(style.stroke);
+    }
+  });
+
+  it("paints marker-disk face path2d before the radial line", () => {
+    const glyph: GlyphRenderable = {
+      kind: "radialLine",
+      hour: 1,
+      styleId: "topBandHourDefault",
+      faceFillOverride: "#ddeeff",
+    };
+    const out: RenderPlan["items"] = [];
+    emitGlyphToRenderPlan(glyph, layout, ctx, out);
+    expect(out[0]?.kind).toBe("path2d");
+    if (out[0]?.kind === "path2d") {
+      expect(out[0].fill).toBe("#ddeeff");
     }
   });
 });

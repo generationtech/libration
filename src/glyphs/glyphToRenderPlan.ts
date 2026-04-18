@@ -38,7 +38,7 @@ import type {
   TextGlyph,
 } from "./glyphTypes.ts";
 import type { GlyphLayoutBox } from "./glyphLayout.ts";
-import { DEFAULT_TEXT_COLOR } from "../config/topBandHourMarkersDefaults.ts";
+import { DEFAULT_ANALOG_FACE_FILL, DEFAULT_TEXT_COLOR } from "../config/topBandHourMarkersDefaults.ts";
 
 export type GlyphRenderContext = {
   fontRegistry: FontAssetRegistry;
@@ -178,13 +178,22 @@ function emitRadialLineGlyph(glyph: RadialLineGlyph, layout: GlyphLayoutBox, out
   const styleSpec = resolveHourMarkerGlyphStyle(glyph.styleId ?? "topBandHourDefault");
   const rl = styleSpec.radialLine;
   const R = layout.size * 0.5;
+  const cx = layout.cx;
+  const cy = layout.cy;
+  const faceFill = glyph.faceFillOverride ?? DEFAULT_ANALOG_FACE_FILL;
+  out.push(
+    createDescriptorPathItem({
+      pathDescriptor: circlePathDescriptor(cx, cy, R),
+      fill: faceFill,
+    }),
+  );
   const theta = hourToTheta(glyph.hour);
   const length = R * rl.lengthRadiusFrac;
-  const tip = polarToCartesian(layout.cx, layout.cy, length, theta);
+  const tip = polarToCartesian(cx, cy, length, theta);
   out.push({
     kind: "line",
-    x1: layout.cx,
-    y1: layout.cy,
+    x1: cx,
+    y1: cy,
     x2: tip.x,
     y2: tip.y,
     stroke: glyph.colorOverride ?? rl.stroke,
@@ -197,13 +206,22 @@ function emitRadialWedgeGlyph(glyph: RadialWedgeGlyph, layout: GlyphLayoutBox, o
   const styleSpec = resolveHourMarkerGlyphStyle(glyph.styleId ?? "topBandHourDefault");
   const rw = styleSpec.radialWedge;
   const R = layout.size * 0.5;
+  const cx = layout.cx;
+  const cy = layout.cy;
+  const faceFill = glyph.faceFillOverride ?? DEFAULT_ANALOG_FACE_FILL;
+  out.push(
+    createDescriptorPathItem({
+      pathDescriptor: circlePathDescriptor(cx, cy, R),
+      fill: faceFill,
+    }),
+  );
   const theta = hourToTheta(glyph.hour);
   const halfSweep = (rw.sweepAngleDeg * Math.PI) / 180 / 2;
   const t0 = theta - halfSweep;
   const t1 = theta + halfSweep;
   const rOuter = R * rw.outerRadiusFrac;
   const rInner = R * rw.innerRadiusFrac;
-  const pathDescriptor = annularSectorPathDescriptor(layout.cx, layout.cy, rInner, rOuter, t0, t1);
+  const pathDescriptor = annularSectorPathDescriptor(cx, cy, rInner, rOuter, t0, t1);
   const strokeW = rw.strokeWidthPx;
   const useStroke =
     rw.stroke !== undefined && strokeW !== undefined && strokeW > 0;

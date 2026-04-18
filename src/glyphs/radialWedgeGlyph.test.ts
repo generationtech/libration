@@ -38,13 +38,13 @@ describe("RadialWedgeGlyph emit", () => {
   const ctx = { fontRegistry: loadBundledFontAssetRegistry() };
   const layout = { cx: 120, cy: 44, size: 18 };
 
-  it("emits a single path2d with fill and optional stroke from style", () => {
+  it("emits full-disk face path2d then wedge path2d with fill and optional stroke from style", () => {
     const glyph: GlyphRenderable = { kind: "radialWedge", hour: 4, styleId: "topBandHourDefault" };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    expect(out).toHaveLength(1);
+    expect(out).toHaveLength(2);
     const spec = resolveHourMarkerGlyphStyle("topBandHourDefault").radialWedge;
-    expect(out[0]).toMatchObject({
+    expect(out[1]).toMatchObject({
       kind: "path2d",
       pathKind: "descriptor",
       fill: spec.fill,
@@ -62,10 +62,25 @@ describe("RadialWedgeGlyph emit", () => {
     };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    expect(out).toHaveLength(1);
-    expect(out[0]).toMatchObject({
+    expect(out).toHaveLength(2);
+    expect(out[1]).toMatchObject({
       kind: "path2d",
       stroke: "rgba(255, 255, 255, 0.45)",
     });
+  });
+
+  it("applies faceFillOverride to the underlaid full disk", () => {
+    const glyph: GlyphRenderable = {
+      kind: "radialWedge",
+      hour: 4,
+      styleId: "topBandHourDefault",
+      faceFillOverride: "#ccddee",
+    };
+    const out: RenderPlan["items"] = [];
+    emitGlyphToRenderPlan(glyph, layout, ctx, out);
+    expect(out[0]?.kind).toBe("path2d");
+    if (out[0]?.kind === "path2d") {
+      expect(out[0].fill).toBe("#ccddee");
+    }
   });
 });

@@ -158,25 +158,27 @@ describe("emitGlyphToRenderPlan", () => {
     }
   });
 
-  it("emits line for RadialLineGlyph with style-driven stroke", () => {
+  it("emits marker-disk face path2d then line for RadialLineGlyph with style-driven stroke", () => {
     const glyph: GlyphRenderable = { kind: "radialLine", hour: 9, styleId: "topBandHourDefault" };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    expect(out).toHaveLength(1);
-    expect(out[0]?.kind).toBe("line");
-    if (out[0]?.kind === "line") {
-      expect(out[0].strokeWidthPx).toBeGreaterThan(0);
-      expect(out[0].lineCap).toBe("round");
+    expect(out).toHaveLength(2);
+    expect(out[0]?.kind).toBe("path2d");
+    expect(out[1]?.kind).toBe("line");
+    if (out[1]?.kind === "line") {
+      expect(out[1].strokeWidthPx).toBeGreaterThan(0);
+      expect(out[1].lineCap).toBe("round");
     }
   });
 
-  it("emits path2d for RadialWedgeGlyph", () => {
+  it("emits full-disk face path2d then wedge path2d for RadialWedgeGlyph", () => {
     const glyph: GlyphRenderable = { kind: "radialWedge", hour: 11 };
     const out: RenderPlan["items"] = [];
     emitGlyphToRenderPlan(glyph, layout, ctx, out);
-    expect(out).toHaveLength(1);
+    expect(out).toHaveLength(2);
     expect(out[0]?.kind).toBe("path2d");
-    const wedge = out[0];
+    expect(out[1]?.kind).toBe("path2d");
+    const wedge = out[1];
     if (wedge?.kind === "path2d" && wedge.pathKind === "descriptor") {
       expect(wedge.fill).toBeDefined();
       expect(wedge.pathDescriptor.commands.length).toBeGreaterThan(0);

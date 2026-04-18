@@ -165,11 +165,26 @@ describe("createHourMarkerGlyph", () => {
       undefined,
       "#facade",
       "rgba(0, 0, 0, 0.45)",
+      "#face123",
     );
     expect(wedge.kind).toBe("radialWedge");
     if (wedge.kind === "radialWedge") {
       expect(wedge.colorOverride).toBe("#facade");
       expect(wedge.strokeColorOverride).toBe("rgba(0, 0, 0, 0.45)");
+      expect(wedge.faceFillOverride).toBe("#face123");
+    }
+
+    const lineWithFace = createHourMarkerGlyph(
+      { structuralHour0To23: 4, displayLabel: "4" },
+      { mode: "radialLine", textRole: "chromeHourPrimary", glyphStyleId: "topBandHourDefault" },
+      undefined,
+      "#ba5e",
+      undefined,
+      "#diskface",
+    );
+    expect(lineWithFace.kind).toBe("radialLine");
+    if (lineWithFace.kind === "radialLine") {
+      expect(lineWithFace.faceFillOverride).toBe("#diskface");
     }
   });
 });

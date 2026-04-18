@@ -89,7 +89,13 @@ function resolveRadialLineResolvedAppearance(
 ): EffectiveRadialLineResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.lineColor);
   const defaultLine = indicatorEntriesArea.effectiveForegroundColor;
-  return { lineColor: fromAppearance !== undefined ? fromAppearance : defaultLine };
+  const lineColor = fromAppearance !== undefined ? fromAppearance : defaultLine;
+  const faceFill = interpolateRgbStringBetweenCssColors(
+    indicatorEntriesArea.effectiveBackgroundColor,
+    lineColor,
+    0.25,
+  );
+  return { lineColor, faceFill };
 }
 
 /**
@@ -125,9 +131,15 @@ function resolveRadialWedgeResolvedAppearance(
     RADIAL_WEDGE_DEFAULT_FILL_BLEND_T,
   );
   const strokeColor = rgbaForegroundWithAlpha(fg, RADIAL_WEDGE_DEFAULT_STROKE_ALPHA);
+  const faceFill = interpolateRgbStringBetweenCssColors(
+    indicatorEntriesArea.effectiveBackgroundColor,
+    fg,
+    0.25,
+  );
   return {
     fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill,
     strokeColor,
+    faceFill,
   };
 }
 
