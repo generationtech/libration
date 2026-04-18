@@ -77,6 +77,13 @@ Recent completed work:
   - NATO timezone area
 - added real persisted visibility controls for top-band areas including hour indicators, tick tape, and NATO row
 - added persisted content-row top/bottom padding controls for the 24-hour indicator band
+- changed upper indicator-entry defaults to a 1.25 size multiplier with 5px top/bottom content-row padding and the Zeroes Two bundled text font
+- added authored indicator-entries-area background color with resolver-derived contrast foreground selection
+- added structured noon/midnight customization for the upper indicator entries strip with bounded expression modes:
+  - `NOON` / `MID`
+  - highlighted `12`
+  - sun / moon pictograms
+  - semantic diamond glyphs
 - finalized the indicator-band vertical model so visible band height follows intrinsic content height plus resolved padding
 - corrected top chrome so it reserves layout space above the scene instead of overlaying map content
 - removed the remaining bundled top-strip palette selector and collapsed top chrome to one built-in appearance

@@ -199,9 +199,19 @@ Top-band major areas now expose independent visibility controls for:
 - 24-hour tickmark tape
 - NATO timezone row
 
+The 24-hour indicator entries area now has its own structured strip-scoped presentation controls:
+- authored strip background color intent in config
+- resolver-derived contrast foreground selection for strip text/ink
+- optional noon/midnight customization for indicator-entry presentation only
+- strip-only noon/midnight realization variants:
+  - `NOON` / `MID`
+  - highlighted `12`
+  - sun / moon pictograms
+  - semantic diamond glyphs
+
 Recent chrome simplification:
 - hour-marker circle backgrounds have been removed from the top-band render plan
-- `NOON` / `MIDNIGHT` tape annotations are no longer emitted in the top-band render plan
+- broad tape-level `NOON` / `MIDNIGHT` annotations are no longer emitted as a separate legacy pass
 - marker placement, timing, and tape alignment remain unchanged
 
 Chrome is:
@@ -360,6 +370,8 @@ Implemented semantic realizations:
 - radialLine
 - radialWedge
 
+Strip-scoped noon/midnight customization is modeled as an additional semantic presentation overlay on top of these realizations rather than as a backend concern.
+
 ### Important status
 
 - The semantic pipeline is now the **only supported runtime path** for in-disk top-band hour markers.
@@ -453,6 +465,7 @@ Persisted/editor-facing axes:
 - **Realization** — text, analogClock, radialLine, radialWedge
 - **Layout** — size and placement semantics, including content-row padding
 - **Appearance** — realization-specific appearance controls
+- **Indicator-entry strip controls** — strip background intent plus optional noon/midnight customization for the upper 24-hour entries area
 
 Derived runtime concern:
 - **Content** — e.g. `hour24`, `localWallClock`
@@ -492,6 +505,11 @@ This structured model is authoritative for:
 - normalization
 - runtime resolution
 - persistence
+
+It now also carries strip-scoped indicator-entry concerns such as:
+- indicator entries area background color intent
+- resolver-derived effective foreground usage downstream of that background
+- optional `noonMidnightCustomization` with bounded expression modes
 
 Legacy flat hour-marker persistence fields have been removed.
 

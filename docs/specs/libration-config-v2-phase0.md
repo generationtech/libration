@@ -64,6 +64,8 @@ Conceptually, the persisted model carries:
 - realization choice
 - layout sizing
 - content-row padding overrides
+- indicator entries area background color intent
+- optional noon/midnight customization intent for the upper indicator entries strip
 - realization-scoped appearance overrides
 
 Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
@@ -92,6 +94,11 @@ Top-band visibility that sits alongside this model is also structured in chrome 
 - `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
+
+Additional strip-scoped structure now lives under `chrome.layout.hourMarkers` as part of the same authoritative model, including:
+- indicator entries area background color intent
+- resolver-derived effective foreground usage downstream of that background
+- optional `noonMidnightCustomization` with bounded expression modes for the upper strip only
 
 ---
 
@@ -151,6 +158,7 @@ The truthful indicator-band vertical model is in place:
 Current follow-on config/editor work should focus on:
 - adding new hour-marker controls only when a concrete feature requires them
 - preserving the structured-only `chrome.layout.hourMarkers` contract
+- treating strip-scoped indicator-entry controls as part of that same structured contract rather than as ad hoc render-time flags
 - treating the hour-marker editor pattern as the finished reference example rather than reopening migration work
 - reusing the pattern elsewhere only after feature pressure justifies it
 

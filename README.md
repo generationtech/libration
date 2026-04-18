@@ -109,6 +109,16 @@ Each top-band area now has independent persisted visibility where applicable, in
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
 
+The 24-hour indicator entries area now also supports its own focused feature set:
+- authored background color for the indicator entries strip
+- resolver-derived contrast foreground selection for strip text/ink
+- optional noon/midnight customization scoped to that strip only
+- strip-specific noon/midnight expressions:
+  - `NOON` / `MID`
+  - highlighted `12`
+  - sun / moon pictograms
+  - semantic diamond glyphs
+
 Recent simplification:
 - top-band alignment and timing behavior are unchanged
 - the present-time tick mark lives in the 24-hour tickmark tape only; it is no longer double-drawn into the upper indicator entries area
@@ -167,6 +177,8 @@ Bundled font inventory currently includes:
 - Flip Clock
 - Kremlin
 
+Current top-band text defaults now favor the **Zeroes Two** bundled font for the indicator entries area.
+
 Hour markers now persist through a single structured config surface:
 
 `chrome.layout.hourMarkers`
@@ -215,8 +227,16 @@ Where:
 The config popup exposes:
 - **Content row padding (top)**
 - **Content row padding (bottom)**
+- indicator entries background color
+- optional noon / midnight customization and expression selection
 
-Empty values use Auto; numeric values are exact px overrides.
+Current defaults for the upper indicator entries strip include:
+- hour-marker size multiplier `1.25`
+- content-row padding top `5px`
+- content-row padding bottom `5px`
+- bundled text font defaulting to **Zeroes Two**
+
+Empty values use Auto where supported; numeric values are exact px overrides.
 
 ---
 
