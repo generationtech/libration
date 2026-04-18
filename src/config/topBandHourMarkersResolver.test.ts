@@ -12,10 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  blackOrWhiteForegroundForBackgroundCss,
-  rgbaForegroundWithAlpha,
-} from "../color/contrastForegroundOnCssBackground.ts";
+import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
 import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
@@ -23,7 +20,6 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
 } from "./appConfig";
-import { DEFAULT_ANALOG_FACE_FILL } from "./topBandHourMarkersDefaults.ts";
 import { defaultBehaviorFor, resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig";
 
@@ -35,6 +31,14 @@ const INDICATOR_ENTRIES_AREA_DEFAULT = {
 } as const;
 
 const NOON_MIDNIGHT_DISABLED = { noonMidnightCustomization: { enabled: false as const } };
+
+/** Default non-text inner fill / wedge fill: midpoint between indicator row background and contrast foreground. */
+function defaultNonTextMidpointFill(): string {
+  return halfwayRgbStringBetweenCssColors(
+    INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+    INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+  );
+}
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
@@ -130,7 +134,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: {
           ringStroke: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
           handStroke: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
-          faceFill: DEFAULT_ANALOG_FACE_FILL,
+          faceFill: defaultNonTextMidpointFill(),
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -225,7 +229,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "radialWedge",
         resolvedAppearance: {
-          fillColor: rgbaForegroundWithAlpha(INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor, 0.32),
+          fillColor: defaultNonTextMidpointFill(),
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -373,7 +377,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       resolvedAppearance: {
         ringStroke: "#abc",
         handStroke: "#abc",
-        faceFill: DEFAULT_ANALOG_FACE_FILL,
+        faceFill: halfwayRgbStringBetweenCssColors(
+          INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+          "#abc",
+        ),
       },
     });
   });
@@ -477,6 +484,118 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect((eff.realization as { resolvedAppearance: { color: string } }).resolvedAppearance.color).toBe("#fedcba");
   });
 
+  it("analogClock default face fill is halfway between indicator row background and resolved stroke color", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "analogClock", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("analogClock");
+    if (eff.realization.kind !== "analogClock") {
+      throw new Error("expected analogClock");
+    }
+    const { effectiveBackgroundColor, effectiveForegroundColor } = eff.indicatorEntriesArea;
+    expect(eff.realization.resolvedAppearance.faceFill).toBe(
+      halfwayRgbStringBetweenCssColors(effectiveBackgroundColor, effectiveForegroundColor),
+    );
+  });
+
+  it("analogClock default face fill matches noon/midnight boxedNumber midpoint for the same row bg/fg", () => {
+    const analog = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "analogClock", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const textBoxed = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+          noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+        },
+      }),
+    );
+    expect(analog.realization.kind).toBe("analogClock");
+    expect(textBoxed.noonMidnightCustomization.enabled).toBe(true);
+    if (analog.realization.kind !== "analogClock" || !textBoxed.noonMidnightCustomization.enabled) {
+      throw new Error("unexpected effective models");
+    }
+    expect(analog.realization.resolvedAppearance.faceFill).toBe(
+      textBoxed.noonMidnightCustomization.boxedNumberBoxColor,
+    );
+  });
+
+  it("radialWedge default fill is halfway between indicator row background and contrast foreground", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialWedge", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialWedge");
+    if (eff.realization.kind !== "radialWedge") {
+      throw new Error("expected radialWedge");
+    }
+    expect(eff.realization.resolvedAppearance.fillColor).toBe(
+      halfwayRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.indicatorEntriesArea.effectiveForegroundColor,
+      ),
+    );
+  });
+
+  it("radialWedge appearance.fillColor overrides derived default fill", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialWedge", appearance: { fillColor: "#c0ffee" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialWedge");
+    if (eff.realization.kind !== "radialWedge") {
+      throw new Error("expected radialWedge");
+    }
+    expect(eff.realization.resolvedAppearance.fillColor).toBe("#c0ffee");
+  });
+
+  it("radialLine uses contrast foreground on light and dark indicator entries backgrounds", () => {
+    const light = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#ffffff",
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const dark = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#000000",
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(light.realization.kind).toBe("radialLine");
+    expect(dark.realization.kind).toBe("radialLine");
+    if (light.realization.kind !== "radialLine" || dark.realization.kind !== "radialLine") {
+      throw new Error("expected radialLine");
+    }
+    expect(light.realization.resolvedAppearance.lineColor).toBe("#000000");
+    expect(dark.realization.resolvedAppearance.lineColor).toBe("#ffffff");
+  });
+
   it("analogClock without handColor uses contrast strokes on light and dark indicator entries backgrounds", () => {
     const lightBg = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
@@ -505,5 +624,11 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(rLight.resolvedAppearance.ringStroke).toBe("#000000");
     expect(rDark.resolvedAppearance.handStroke).toBe("#ffffff");
     expect(rDark.resolvedAppearance.ringStroke).toBe("#ffffff");
+    expect(rLight.resolvedAppearance.faceFill).toBe(
+      halfwayRgbStringBetweenCssColors("#ffffff", "#000000"),
+    );
+    expect(rDark.resolvedAppearance.faceFill).toBe(
+      halfwayRgbStringBetweenCssColors("#000000", "#ffffff"),
+    );
   });
 });

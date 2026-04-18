@@ -11,10 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {
-  blackOrWhiteForegroundForBackgroundCss,
-  rgbaForegroundWithAlpha,
-} from "../color/contrastForegroundOnCssBackground.ts";
+import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
 import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
@@ -22,7 +19,6 @@ import {
   resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
-import { DEFAULT_ANALOG_FACE_FILL } from "./topBandHourMarkersDefaults.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveNoonMidnightCustomization,
@@ -46,21 +42,27 @@ function normalizeMarkerColor(raw: unknown): string | undefined {
 }
 
 /**
- * Analog clock ink: ring and hand default to {@link derivedForeground}, i.e. black/white contrast against the
- * **indicator entries area background** only. Optional `appearance.handColor` overrides
- * both strokes (author intent). Face fill defaults to {@link DEFAULT_ANALOG_FACE_FILL} and is not auto-contrasted
- * against the indicator row — that keeps clock-face styling separate from row background ownership.
+ * Analog clock: ring and hand default to contrast foreground against the indicator entries area background;
+ * optional `appearance.handColor` overrides both strokes. When `appearance.faceColor` is absent, face fill is the
+ * midpoint between that background and the resolved stroke color (same channel math as noon/midnight boxedNumber).
  */
 function resolveAnalogClockResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "analogClock" }>,
-  derivedForeground: "#000000" | "#ffffff",
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  },
 ): EffectiveAnalogClockResolvedAppearance {
   const a = r.appearance;
   const handTint = normalizeMarkerColor(a.handColor);
   const faceFromAppearance = normalizeMarkerColor(a.faceColor);
+  const derivedForeground = indicatorEntriesArea.effectiveForegroundColor;
   const ringStroke = handTint !== undefined ? handTint : derivedForeground;
   const handStroke = handTint !== undefined ? handTint : derivedForeground;
-  const faceFill = faceFromAppearance !== undefined ? faceFromAppearance : DEFAULT_ANALOG_FACE_FILL;
+  const faceFill =
+    faceFromAppearance !== undefined
+      ? faceFromAppearance
+      : halfwayRgbStringBetweenCssColors(indicatorEntriesArea.effectiveBackgroundColor, ringStroke);
   return { ringStroke, handStroke, faceFill };
 }
 
@@ -74,9 +76,16 @@ function resolveRadialLineResolvedAppearance(
 
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
-  defaultFill: string,
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  },
 ): EffectiveRadialWedgeResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
+  const defaultFill = halfwayRgbStringBetweenCssColors(
+    indicatorEntriesArea.effectiveBackgroundColor,
+    indicatorEntriesArea.effectiveForegroundColor,
+  );
   return { fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill };
 }
 
@@ -162,7 +171,6 @@ export function resolveEffectiveTopBandHourMarkers(
   const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
   const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(hm, indicatorEntriesArea);
   const derivedFg = indicatorEntriesArea.effectiveForegroundColor;
-  const defaultWedgeFill = rgbaForegroundWithAlpha(derivedFg, 0.32);
 
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);
   const ly = hm.layout;
@@ -213,7 +221,7 @@ export function resolveEffectiveTopBandHourMarkers(
       content: { kind: "localWallClock" },
       realization: {
         kind: "analogClock",
-        resolvedAppearance: resolveAnalogClockResolvedAppearance(r, derivedFg),
+        resolvedAppearance: resolveAnalogClockResolvedAppearance(r, indicatorEntriesArea),
       },
       layout: layoutOut,
       noonMidnightCustomization,
@@ -246,7 +254,7 @@ export function resolveEffectiveTopBandHourMarkers(
     content: { kind: "hour24" },
     realization: {
       kind: "radialWedge",
-      resolvedAppearance: resolveRadialWedgeResolvedAppearance(r, defaultWedgeFill),
+      resolvedAppearance: resolveRadialWedgeResolvedAppearance(r, indicatorEntriesArea),
     },
     layout: layoutOut,
     noonMidnightCustomization,
