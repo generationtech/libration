@@ -21,7 +21,7 @@ import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../con
 import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import {
   boxedNumberHighlightHalfExtentsFromMarkerContentBox,
-  TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC,
+  SEMANTIC_NUMERAL_IN_DIAMOND_FRAC,
   TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC,
   tryEmitNoonMidnightIndicatorDiskContent,
 } from "./noonMidnightIndicatorRenderPlan.ts";
@@ -42,10 +42,55 @@ describe("boxedNumberHighlightHalfExtentsFromMarkerContentBox", () => {
     const long = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "0000");
     expect(long.halfW).toBeGreaterThan(short.halfW);
   });
+
+  it("reserves a materially tall/wide highlighter bar behind typical two-digit tape numerals", () => {
+    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(40, "12");
+    expect(halfH).toBeCloseTo(40 * 0.52, 8);
+    expect(halfW).toBeGreaterThan(40 * 0.35);
+  });
 });
 
 describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
-  it("textWords + radialWedge keeps wedge path then NOON/MIDNIGHT text overlay (realization-local)", () => {
+  it("textWords midnight strip overlay is MID even when resolver displayLabel is MIDNIGHT", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialLine", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialLine", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const items: PlanItem[] = [];
+    tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "radialLine",
+        customization: eff.noonMidnightCustomization,
+        structuralHour0To23: 0,
+        tapeHourLabel: "00",
+        displayLabel: "MIDNIGHT",
+        layout: { cx: 0, cy: 0, size: 24 },
+        markerColor: "#223344",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    expect(items.some((i) => i.kind === "text" && "text" in i && i.text === "MID")).toBe(true);
+    expect(items.some((i) => i.kind === "text" && "text" in i && i.text === "MIDNIGHT")).toBe(false);
+  });
+
+  it("textWords + radialWedge keeps wedge path then NOON/MID text overlay (realization-local)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -110,14 +155,12 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       ),
     ).toBe(true);
     const midWedgeIdx = midItems.map((i) => i.kind).indexOf("path2d");
-    const midTextIdx = midItems.findIndex(
-      (i) => i.kind === "text" && "text" in i && i.text === "MIDNIGHT",
-    );
+    const midTextIdx = midItems.findIndex((i) => i.kind === "text" && "text" in i && i.text === "MID");
     expect(midWedgeIdx).toBeGreaterThanOrEqual(0);
     expect(midTextIdx).toBeGreaterThan(midWedgeIdx);
   });
 
-  it("textWords NOON word overlay uses smaller layout than full marker box; MIDNIGHT uses a smaller fraction than NOON", () => {
+  it("textWords NOON and MID word overlays use bounded layout fraction vs marker box", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -177,18 +220,17 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       { fontRegistry: defaultFontAssetRegistry },
       midItems,
     );
-    const midWord = midItems.find((i) => i.kind === "text" && "text" in i && i.text === "MIDNIGHT");
+    const midWord = midItems.find((i) => i.kind === "text" && "text" in i && i.text === "MID");
     expect(midWord?.kind === "text").toBe(true);
     if (midWord?.kind === "text") {
-      expect(midWord.font.sizePx).toBeLessThan(markerSize * 0.62);
-      expect(midWord.font.sizePx).toBeCloseTo(markerSize * TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC, 5);
+      expect(midWord.font.sizePx).toBeCloseTo(markerSize * TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC, 5);
       if (noonWord?.kind === "text") {
-        expect(midWord.font.sizePx).toBeLessThan(noonWord.font.sizePx);
+        expect(midWord.font.sizePx).toBeCloseTo(noonWord.font.sizePx, 5);
       }
     }
   });
 
-  it("textWords + radialLine keeps radial stroke then NOON/MIDNIGHT text overlay (realization-local)", () => {
+  it("textWords + radialLine keeps radial stroke then NOON/MID text overlay (realization-local)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -327,6 +369,8 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       expect(highlight.stroke).toBeUndefined();
       expect(highlight.strokeWidthPx).toBeUndefined();
       expect(highlight.fill).toMatch(/^rgba\(/);
+      const alpha = Number(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/.exec(highlight.fill ?? "")?.[1]);
+      expect(alpha).toBeCloseTo(0.72, 5);
     }
     if (
       highlight &&
@@ -474,7 +518,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(glyphTextIdx).toBeGreaterThan(glyphPathIdx);
     const size = 40;
     const half = size * 0.74;
-    const numeralBoxSide = 2 * half * 0.4;
+    const numeralBoxSide = 2 * half * SEMANTIC_NUMERAL_IN_DIAMOND_FRAC;
     const t = noonItems[glyphTextIdx];
     expect(t?.kind === "text").toBe(true);
     if (t?.kind === "text") {
@@ -535,7 +579,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(textIdx).toBeGreaterThan(3);
   });
 
-  it("boxedNumber highlight is tighter than the old strip-scale plaque (numeral-scale bar, not a badge frame)", () => {
+  it("boxedNumber highlight is a behind-numeral highlighter wash (not strip-scale plaque or badge frame)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -575,9 +619,10 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const highlight = items.find((i) => i.kind === "rect");
     expect(highlight?.kind === "rect" && highlight.stroke).toBeUndefined();
     const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, tape);
-    expect(halfH / size).toBeLessThan(0.45);
-    expect(halfH).toBeCloseTo(size * 0.38, 8);
-    expect(halfW).toBeLessThan(size * 0.72);
+    expect(halfH / size).toBeLessThan(0.62);
+    expect(halfH).toBeCloseTo(size * 0.52, 8);
+    expect(halfW).toBeGreaterThan(size * 0.35);
+    expect(halfW).toBeLessThan(size * 0.85);
     const textItem = items.find((i) => i.kind === "text");
     expect(textItem?.kind === "text").toBe(true);
     if (textItem?.kind === "text") {

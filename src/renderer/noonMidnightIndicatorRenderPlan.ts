@@ -28,9 +28,10 @@
  * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
  * **boxedNumber**: Filled highlight rectangles behind the tape numeral use
- * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (tight to the label, not strip-scale plaque framing).
- * Color is the resolver’s derived treatment color (same source as the former stroke). Analog clock still gets a
- * center highlight aligned to the same model.
+ * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (wide/tall highlighter wash vs the numeral, not a
+ * strip-scale plaque). Color is the resolver’s derived treatment color. Analog clock uses the same model.
+ *
+ * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -102,13 +103,13 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
   return b.build();
 }
 
-/** Highlight bar half-height vs marker content box — one-line cap height, not a full strip-scale plaque. */
-const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.38;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.28;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.06;
-const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.11;
+/** Highlight bar half-height vs marker content box — highlighter wash, not a full strip-scale plaque. */
+const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.52;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.4;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.12;
+const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.16;
 /** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
-const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.5;
+const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.72;
 /** Slightly larger tape numeral over the highlight (layout.size drives glyph metrics). */
 const BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE = 1.12;
 
@@ -129,23 +130,21 @@ const SEMANTIC_NOON_STROKE_FRAC = 0.078;
 const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.132;
 
 /**
- * Inscribed numeral: {@link GlyphLayoutBox.size} is chosen so the hour string fits inside the diamond with margin.
- * Not a detached label below the glyph — geometric center matches the diamond center ({@link GlyphLayoutBox.cx/cy}).
+ * Inscribed numeral: {@link GlyphLayoutBox.size} is the square box for the tape label, centered on the diamond
+ * center ({@link GlyphLayoutBox.cx/cy}) so the numeral reads as interior content of the glyph.
  */
-const SEMANTIC_NUMERAL_IN_DIAMOND_FRAC = 0.4;
+export const SEMANTIC_NUMERAL_IN_DIAMOND_FRAC = 0.3;
 
 /**
- * Bounded reduction for NOON / MIDNIGHT word labels in `textWords` mode only (long words vs compact hour numerals).
- * MIDNIGHT uses a smaller fraction than NOON — more characters at the same font pressure — to relieve adjacent entries.
+ * Layout scale for NOON / MID word overlays in `textWords` mode (bounded strip labels vs marker content box).
  */
 export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
-export const TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC = 0.54;
 
 /**
  * Half extents for the boxed-number **highlight** rectangle (text-highlighter bar behind the tape numeral): derived
  * from the semantic layout’s marker content box size ({@link GlyphLayoutBox.size}) and the tape label span.
  * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
- * solved disk box side from layout. Tighter than the old plaque frame so the strip reads as highlighted text, not a badge.
+ * solved disk box side from layout. Sized as a visible wash behind the numeral, not a strip-scale plaque or badge frame.
  */
 export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
@@ -255,13 +254,19 @@ function semanticGlyphInteriorNumeralLayout(base: GlyphLayoutBox, diamondHalfPx:
   };
 }
 
-function textWordsNoonMidnightWordLayout(base: GlyphLayoutBox, structuralHour0To23: number): GlyphLayoutBox {
-  const frac =
-    structuralHour0To23 === 0 ? TEXT_WORDS_MIDNIGHT_LAYOUT_SIZE_FRAC : TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC;
+function textWordsNoonMidnightWordLayout(base: GlyphLayoutBox): GlyphLayoutBox {
   return {
     ...base,
-    size: base.size * frac,
+    size: base.size * TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC,
   };
+}
+
+/**
+ * Upper-indicator `textWords` strip label: full semantic roles stay noon/midnight; only this presentation string
+ * is shortened for midnight so the word overlay does not crowd adjacent hour labels.
+ */
+function textWordsIndicatorStripDisplayLabel(structuralHour0To23: number): "NOON" | "MID" {
+  return structuralHour0To23 === 0 ? "MID" : "NOON";
 }
 
 /**
@@ -280,7 +285,6 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   const { cx, cy, size } = args.layout;
   const role = intent.role;
   const tape = args.tapeHourLabel;
-  const disp = args.displayLabel;
   const boxedNumberTreatmentColor =
     args.customization.enabled &&
     args.customization.expressionMode === "boxedNumber" &&
@@ -296,7 +300,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
     }
     const wordContent: HourMarkerContent = {
       structuralHour0To23: args.structuralHour0To23,
-      displayLabel: disp,
+      displayLabel: textWordsIndicatorStripDisplayLabel(args.structuralHour0To23),
     };
     const ty = typographyOverridesFor(args);
     if (args.realizationKind === "radialLine" || args.realizationKind === "radialWedge") {
@@ -316,7 +320,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         numeralSpec,
         gctx,
         out,
-        textWordsNoonMidnightWordLayout(args.layout, args.structuralHour0To23),
+        textWordsNoonMidnightWordLayout(args.layout),
       );
       return true;
     }
@@ -348,7 +352,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         numeralSpec,
         gctx,
         out,
-        textWordsNoonMidnightWordLayout(args.layout, args.structuralHour0To23),
+        textWordsNoonMidnightWordLayout(args.layout),
       );
       return true;
     }
