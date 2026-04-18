@@ -22,6 +22,9 @@
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
  * Noon = filled + stroked; midnight = stroke only (no fill). Numerals use the shared text glyph pass on top.
+ *
+ * **boxedNumber**: Stroke rectangles use {@link boxedNumberStrokeHalfExtentsFromMarkerContentBox} for every
+ * realization that draws a box (including analog after the clock face); there is no separate analog-only frame scale.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -95,8 +98,10 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
 
 /**
  * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
- * size ({@link GlyphLayoutBox.size}) and the label string span. Scales with solved disk/interior dimensions
- * (font/size changes flow through layout), without Canvas measurement in the planner.
+ * size ({@link GlyphLayoutBox.size}) and the tape/numeral label span. Applies to text, radialLine, radialWedge,
+ * and analogClock noon/midnight boxed-number strokes — in each case {@link GlyphLayoutBox.size} is the solved
+ * disk box side from layout. Scales with solved dimensions (font/size changes flow through layout), without
+ * Canvas measurement in the planner.
  */
 export function boxedNumberStrokeHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
@@ -317,16 +322,8 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
       gctx,
       out,
     );
-    const R = size * 0.52;
-    out.push({
-      kind: "rect",
-      x: cx - R,
-      y: cy - R,
-      width: R * 2,
-      height: R * 2,
-      stroke,
-      strokeWidthPx: Math.max(1, size * 0.06),
-    });
+    // Box stroke uses the same marker-content-box + label geometry as text/radial (layout.size is the disk box side).
+    pushStrokeBoxAroundText(cx, cy, tape, size, stroke, out);
     return true;
   }
 

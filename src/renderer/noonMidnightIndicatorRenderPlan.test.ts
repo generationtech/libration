@@ -43,6 +43,78 @@ describe("boxedNumberStrokeHalfExtentsFromMarkerContentBox", () => {
 });
 
 describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
+  it("textWords + radialWedge keeps wedge path then NOON/MIDNIGHT text overlay (realization-local)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialWedge", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialWedge", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "textWords" },
+      },
+    });
+    const noonItems: PlanItem[] = [];
+    expect(
+      tryEmitNoonMidnightIndicatorDiskContent(
+        {
+          realizationKind: "radialWedge",
+          customization: eff.noonMidnightCustomization,
+          structuralHour0To23: 12,
+          tapeHourLabel: "12",
+          displayLabel: "NOON",
+          layout: { cx: 100, cy: 50, size: 24 },
+          markerColor: "#223344",
+          hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+          effectiveTopBandHourMarkerSelection: sel,
+          effectiveTopBandHourMarkers: eff,
+        },
+        { fontRegistry: defaultFontAssetRegistry },
+        noonItems,
+      ),
+    ).toBe(true);
+    const noonKinds = noonItems.map((i) => i.kind);
+    const wedgeIdx = noonKinds.findIndex((k) => k === "path2d");
+    const noonTextIdx = noonItems.findIndex(
+      (i) => i.kind === "text" && "text" in i && i.text === "NOON",
+    );
+    expect(wedgeIdx).toBeGreaterThanOrEqual(0);
+    expect(noonTextIdx).toBeGreaterThan(wedgeIdx);
+
+    const midItems: PlanItem[] = [];
+    expect(
+      tryEmitNoonMidnightIndicatorDiskContent(
+        {
+          realizationKind: "radialWedge",
+          customization: eff.noonMidnightCustomization,
+          structuralHour0To23: 0,
+          tapeHourLabel: "00",
+          displayLabel: "MIDNIGHT",
+          layout: { cx: 100, cy: 50, size: 24 },
+          markerColor: "#223344",
+          hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+          effectiveTopBandHourMarkerSelection: sel,
+          effectiveTopBandHourMarkers: eff,
+        },
+        { fontRegistry: defaultFontAssetRegistry },
+        midItems,
+      ),
+    ).toBe(true);
+    const midWedgeIdx = midItems.map((i) => i.kind).indexOf("path2d");
+    const midTextIdx = midItems.findIndex(
+      (i) => i.kind === "text" && "text" in i && i.text === "MIDNIGHT",
+    );
+    expect(midWedgeIdx).toBeGreaterThanOrEqual(0);
+    expect(midTextIdx).toBeGreaterThan(midWedgeIdx);
+  });
+
   it("textWords + radialLine keeps radial stroke then NOON/MIDNIGHT text overlay (realization-local)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
@@ -299,6 +371,67 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(textIdx).toBeGreaterThan(firstDecor);
   });
 
+  it("boxedNumber + analogClock uses marker-content-box stroke extents (same model as text/radial)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "analogClock", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "analogClock", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const cx = 100;
+    const cy = 50;
+    const size = 24;
+    const tape = "12";
+    const items: PlanItem[] = [];
+    tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "analogClock",
+        customization: eff.noonMidnightCustomization,
+        structuralHour0To23: 12,
+        tapeHourLabel: tape,
+        displayLabel: "12",
+        layout: { cx, cy, size },
+        markerColor: "#223344",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+        continuousHour0To24: 12,
+        continuousMinute0To60: 0,
+        analogResolvedAppearance: {
+          ringStroke: "#111",
+          handStroke: "#222",
+          faceFill: "#333",
+        },
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    const { halfW, halfH } = boxedNumberStrokeHalfExtentsFromMarkerContentBox(size, tape);
+    const box = items.find((i) => i.kind === "rect");
+    expect(box && "width" in box ? box.width : undefined).toBeCloseTo(halfW * 2, 8);
+    expect(box && "height" in box ? box.height : undefined).toBeCloseTo(halfH * 2, 8);
+    expect(box && "x" in box ? box.x : undefined).toBeCloseTo(cx - halfW, 8);
+    expect(box && "y" in box ? box.y : undefined).toBeCloseTo(cy - halfH, 8);
+    expect(box && "strokeWidthPx" in box ? box.strokeWidthPx : undefined).toBe(Math.max(1, size * 0.065));
+    if (eff.noonMidnightCustomization.enabled && eff.noonMidnightCustomization.expressionMode === "boxedNumber") {
+      expect(box && "stroke" in box ? box.stroke : undefined).toBe(eff.noonMidnightCustomization.boxedNumberBoxColor);
+    }
+    const rectIdx = items.findIndex((i) => i.kind === "rect");
+    const lastClockIdx = items.findLastIndex((i) => i.kind === "path2d" || i.kind === "line");
+    expect(rectIdx).toBeGreaterThan(lastClockIdx);
+  });
+
   it("boxedNumber + radialLine emits radial then box then numeral (z-order)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
@@ -342,6 +475,51 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       .filter((i) => i >= 0);
     expect(lineIdx).toBeGreaterThanOrEqual(0);
     expect(rectIdx).toBeGreaterThan(lineIdx);
+    expect(textIndices.length).toBeGreaterThan(0);
+    expect(textIndices.every((ti) => ti > rectIdx)).toBe(true);
+  });
+
+  it("boxedNumber + radialWedge emits wedge path then box then numeral (z-order)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialWedge", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const sel = effectiveTopBandHourMarkerSelection({
+      ...layout,
+      hourMarkers: {
+        ...layout.hourMarkers,
+        realization: { kind: "radialWedge", appearance: {} },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    const items: PlanItem[] = [];
+    tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "radialWedge",
+        customization: eff.noonMidnightCustomization,
+        structuralHour0To23: 12,
+        tapeHourLabel: "12",
+        displayLabel: "12",
+        layout: { cx: 100, cy: 50, size: 24 },
+        markerColor: "#223344",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    const kinds = items.map((i) => i.kind);
+    const wedgeIdx = kinds.indexOf("path2d");
+    const rectIdx = kinds.indexOf("rect");
+    const textIndices = kinds.map((k, i) => (k === "text" ? i : -1)).filter((i) => i >= 0);
+    expect(wedgeIdx).toBeGreaterThanOrEqual(0);
+    expect(rectIdx).toBeGreaterThan(wedgeIdx);
     expect(textIndices.length).toBeGreaterThan(0);
     expect(textIndices.every((ti) => ti > rectIdx)).toBe(true);
   });
