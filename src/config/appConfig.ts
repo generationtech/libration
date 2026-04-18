@@ -173,6 +173,7 @@ export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
     contentPaddingTopPx: 5,
     contentPaddingBottomPx: 5,
   },
+  noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
 };
 
 /**

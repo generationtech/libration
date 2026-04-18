@@ -195,6 +195,18 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
+  it("canonical default hour markers yield effective noon/midnight customization for text realization", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    expect(eff.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "boxedNumber",
+      boxedNumberBoxColor: halfwayRgbStringBetweenCssColors(
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+      ),
+    });
+  });
+
   it("radial wedge mapping", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(

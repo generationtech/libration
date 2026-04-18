@@ -255,11 +255,17 @@ describe("HourMarkersEditor structured authoring", () => {
     const customize = screen.getByRole("checkbox", {
       name: /Customize noon and midnight indicator entries/i,
     });
-    expect(customize).not.toBeChecked();
+    expect(customize).toBeChecked();
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "boxedNumber",
+    });
+    fireEvent.click(customize);
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
     fireEvent.click(customize);
     expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
       enabled: true,
-      expressionMode: "textWords",
+      expressionMode: "boxedNumber",
     });
     fireEvent.change(screen.getByRole("combobox", { name: /Noon and midnight expression mode/i }), {
       target: { value: "semanticGlyph" },
@@ -270,6 +276,14 @@ describe("HourMarkersEditor structured authoring", () => {
     });
     fireEvent.click(customize);
     expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
+  });
+
+  it("defaults noon/midnight to enabled and Boxed number when realization is text", () => {
+    render(<HourMarkersHarness initial={baseCustomHourMarkers()} />);
+    expect(
+      screen.getByRole("checkbox", { name: /Customize noon and midnight indicator entries/i }),
+    ).toBeChecked();
+    expect(screen.getByRole("combobox", { name: /Noon and midnight expression mode/i })).toHaveValue("boxedNumber");
   });
 
   it("noon/midnight controls are absent when realization is not text", () => {
@@ -338,7 +352,6 @@ describe("HourMarkersEditor structured authoring", () => {
     const customize = screen.getByRole("checkbox", {
       name: /Customize noon and midnight indicator entries/i,
     });
-    fireEvent.click(customize);
     fireEvent.change(screen.getByRole("combobox", { name: /Noon and midnight expression mode/i }), {
       target: { value: "semanticGlyph" },
     });

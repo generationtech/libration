@@ -746,13 +746,13 @@ function NoonMidnightSection({ hourMarkers, wired, updateConfig, entriesAreaEnab
   const enabled = nm?.enabled === true;
   /** Preserves the last selected expression mode while customization is disabled (not persisted). */
   const lastExpressionModeRef = useRef<HourMarkersNoonMidnightExpressionMode>(
-    nm?.expressionMode ?? "textWords",
+    nm?.expressionMode ?? "boxedNumber",
   );
   if (enabled && nm?.expressionMode !== undefined) {
     lastExpressionModeRef.current = nm.expressionMode;
   }
   const mode: HourMarkersNoonMidnightExpressionMode = enabled
-    ? (nm!.expressionMode ?? "textWords")
+    ? (nm!.expressionMode ?? "boxedNumber")
     : lastExpressionModeRef.current;
   const authoringOff = !wired || !entriesAreaEnabled;
 

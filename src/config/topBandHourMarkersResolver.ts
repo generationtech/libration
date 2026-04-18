@@ -132,7 +132,7 @@ function resolveEffectiveNoonMidnightCustomization(
   if (raw?.enabled !== true) {
     return { enabled: false };
   }
-  const expressionMode = normalizeNoonMidnightExpressionMode(raw.expressionMode) ?? "textWords";
+  const expressionMode = normalizeNoonMidnightExpressionMode(raw.expressionMode) ?? "boxedNumber";
   if (expressionMode === "boxedNumber") {
     return {
       enabled: true,

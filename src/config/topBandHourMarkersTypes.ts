@@ -73,9 +73,9 @@ export type HourMarkersNoonMidnightExpressionMode =
  * ignore this block at resolve time while still persisting authored values.
  */
 export type HourMarkersNoonMidnightCustomization = {
-  /** When false or omitted, noon/midnight render like any other hour entry. @default false */
+  /** When false or omitted, noon/midnight render like any other hour entry. @default true */
   enabled?: boolean;
-  /** Ignored when {@link enabled} is false. @default textWords */
+  /** Ignored when {@link enabled} is false. @default boxedNumber */
   expressionMode?: HourMarkersNoonMidnightExpressionMode;
 };
 

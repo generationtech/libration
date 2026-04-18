@@ -169,7 +169,7 @@ function normalizedNoonMidnightCustomization(
   if (raw.enabled !== true) {
     return undefined;
   }
-  let expressionMode: HourMarkersNoonMidnightExpressionMode = "textWords";
+  let expressionMode: HourMarkersNoonMidnightExpressionMode = "boxedNumber";
   const em = raw.expressionMode;
   if (typeof em === "string" && NOON_MIDNIGHT_EXPRESSION_MODES.has(em as HourMarkersNoonMidnightExpressionMode)) {
     expressionMode = em as HourMarkersNoonMidnightExpressionMode;

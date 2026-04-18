@@ -29,6 +29,7 @@ describe("normalizeHourMarkersInput", () => {
       DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     );
     expect(d.indicatorEntriesAreaBackgroundColor).toBeDefined();
+    expect(d.noonMidnightCustomization).toEqual({ enabled: true, expressionMode: "boxedNumber" });
   });
 
   it("returns default for undefined, null, or non-object", () => {
