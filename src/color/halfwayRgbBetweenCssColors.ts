@@ -12,8 +12,8 @@
  */
 
 /**
- * Deterministic sRGB channel midpoint between two parseable CSS color strings.
- * Used for noon/midnight boxed-number highlight treatment color (indicator row background vs contrast foreground).
+ * Deterministic sRGB channel interpolation between two parseable CSS color strings.
+ * `t = 0` → `a`; `t = 1` → `b`; channel values are rounded and clamped to [0, 255].
  * Unparseable inputs fall back to `#808080` for the whole result.
  */
 
@@ -73,17 +73,34 @@ function parseCssColorToRgb255(css: string): { r: number; g: number; b: number }
   return parseRgbFunctionToRgb255(t);
 }
 
+function clampUnitT(t: number): number {
+  if (!Number.isFinite(t)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(1, t));
+}
+
 /**
- * Returns `rgb(r,g,b)` with each channel the arithmetic mean of the two inputs (same parse rules as contrast helpers).
+ * Returns `rgb(r,g,b)` with each channel linearly interpolated from `a` toward `b` by `t` (same parse rules as
+ * {@link halfwayRgbStringBetweenCssColors}).
  */
-export function halfwayRgbStringBetweenCssColors(a: string, b: string): string {
+export function interpolateRgbStringBetweenCssColors(a: string, b: string, t: number): string {
   const ca = parseCssColorToRgb255(a);
   const cb = parseCssColorToRgb255(b);
   if (ca === undefined || cb === undefined) {
     return "rgb(128, 128, 128)";
   }
-  const r = clampByte((ca.r + cb.r) / 2);
-  const g = clampByte((ca.g + cb.g) / 2);
-  const bCh = clampByte((ca.b + cb.b) / 2);
+  const u = clampUnitT(t);
+  const r = clampByte(ca.r + (cb.r - ca.r) * u);
+  const g = clampByte(ca.g + (cb.g - ca.g) * u);
+  const bCh = clampByte(ca.b + (cb.b - ca.b) * u);
   return `rgb(${r}, ${g}, ${bCh})`;
+}
+
+/**
+ * Returns `rgb(r,g,b)` with each channel the arithmetic mean of the two inputs (same parse rules as contrast helpers).
+ * Used for noon/midnight boxed-number highlight treatment color (indicator row background vs contrast foreground).
+ */
+export function halfwayRgbStringBetweenCssColors(a: string, b: string): string {
+  return interpolateRgbStringBetweenCssColors(a, b, 0.5);
 }

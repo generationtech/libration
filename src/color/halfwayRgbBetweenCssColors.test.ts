@@ -12,7 +12,22 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { halfwayRgbStringBetweenCssColors } from "./halfwayRgbBetweenCssColors.ts";
+import {
+  halfwayRgbStringBetweenCssColors,
+  interpolateRgbStringBetweenCssColors,
+} from "./halfwayRgbBetweenCssColors.ts";
+
+describe("interpolateRgbStringBetweenCssColors", () => {
+  it("is deterministic at t=0.25 between #000000 and #ffffff", () => {
+    expect(interpolateRgbStringBetweenCssColors("#000000", "#ffffff", 0.25)).toBe("rgb(64, 64, 64)");
+  });
+
+  it("matches halfway at t=0.5", () => {
+    expect(interpolateRgbStringBetweenCssColors("#000000", "#ffffff", 0.5)).toBe(
+      halfwayRgbStringBetweenCssColors("#000000", "#ffffff"),
+    );
+  });
+});
 
 describe("halfwayRgbStringBetweenCssColors", () => {
   it("is deterministic and halfway between #000000 and #ffffff", () => {

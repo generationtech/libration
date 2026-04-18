@@ -129,7 +129,7 @@ export type EffectiveTopBandHourMarkerContent =
 export type EffectiveAnalogClockResolvedAppearance = {
   ringStroke: string;
   handStroke: string;
-  /** Default: midpoint between indicator entries row background and resolved ring/hand stroke color. */
+  /** Default: one quarter of the way from indicator entries row background toward resolved ring/hand stroke color. */
   faceFill: string;
 };
 
@@ -138,7 +138,7 @@ export type EffectiveRadialLineResolvedAppearance = {
 };
 
 export type EffectiveRadialWedgeResolvedAppearance = {
-  /** Default: midpoint between indicator entries row background and contrast foreground (same helper as analog face default). */
+  /** Default: midpoint between indicator entries row background and contrast foreground. */
   fillColor: string;
 };
 

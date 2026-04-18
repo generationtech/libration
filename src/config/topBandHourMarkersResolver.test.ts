@@ -13,7 +13,10 @@
 
 import { describe, expect, it } from "vitest";
 import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
-import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
+import {
+  halfwayRgbStringBetweenCssColors,
+  interpolateRgbStringBetweenCssColors,
+} from "../color/halfwayRgbBetweenCssColors.ts";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
@@ -32,11 +35,20 @@ const INDICATOR_ENTRIES_AREA_DEFAULT = {
 
 const NOON_MIDNIGHT_DISABLED = { noonMidnightCustomization: { enabled: false as const } };
 
-/** Default non-text inner fill / wedge fill: midpoint between indicator row background and contrast foreground. */
+/** Default radial wedge fill: midpoint between indicator row background and contrast foreground. */
 function defaultNonTextMidpointFill(): string {
   return halfwayRgbStringBetweenCssColors(
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+  );
+}
+
+/** Default analog clock face fill when no faceColor override: 1/4 from row background toward resolved stroke color. */
+function defaultAnalogFaceFillFromIndicatorRow(): string {
+  return interpolateRgbStringBetweenCssColors(
+    INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+    INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+    0.25,
   );
 }
 
@@ -134,7 +146,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: {
           ringStroke: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
           handStroke: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
-          faceFill: defaultNonTextMidpointFill(),
+          faceFill: defaultAnalogFaceFillFromIndicatorRow(),
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -377,9 +389,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       resolvedAppearance: {
         ringStroke: "#abc",
         handStroke: "#abc",
-        faceFill: halfwayRgbStringBetweenCssColors(
+        faceFill: interpolateRgbStringBetweenCssColors(
           INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
           "#abc",
+          0.25,
         ),
       },
     });
@@ -484,7 +497,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect((eff.realization as { resolvedAppearance: { color: string } }).resolvedAppearance.color).toBe("#fedcba");
   });
 
-  it("analogClock default face fill is halfway between indicator row background and resolved stroke color", () => {
+  it("analogClock default face fill is one quarter of the way from indicator row background toward resolved stroke color", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -499,11 +512,11 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     }
     const { effectiveBackgroundColor, effectiveForegroundColor } = eff.indicatorEntriesArea;
     expect(eff.realization.resolvedAppearance.faceFill).toBe(
-      halfwayRgbStringBetweenCssColors(effectiveBackgroundColor, effectiveForegroundColor),
+      interpolateRgbStringBetweenCssColors(effectiveBackgroundColor, effectiveForegroundColor, 0.25),
     );
   });
 
-  it("analogClock default face fill matches noon/midnight boxedNumber midpoint for the same row bg/fg", () => {
+  it("analogClock default face fill differs from noon/midnight boxedNumber midpoint for the same row bg/fg", () => {
     const analog = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -526,8 +539,20 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     if (analog.realization.kind !== "analogClock" || !textBoxed.noonMidnightCustomization.enabled) {
       throw new Error("unexpected effective models");
     }
+    const boxedMid = textBoxed.noonMidnightCustomization.boxedNumberBoxColor;
+    expect(boxedMid).toBe(
+      halfwayRgbStringBetweenCssColors(
+        analog.indicatorEntriesArea.effectiveBackgroundColor,
+        analog.indicatorEntriesArea.effectiveForegroundColor,
+      ),
+    );
+    expect(analog.realization.resolvedAppearance.faceFill).not.toBe(boxedMid);
     expect(analog.realization.resolvedAppearance.faceFill).toBe(
-      textBoxed.noonMidnightCustomization.boxedNumberBoxColor,
+      interpolateRgbStringBetweenCssColors(
+        analog.indicatorEntriesArea.effectiveBackgroundColor,
+        analog.indicatorEntriesArea.effectiveForegroundColor,
+        0.25,
+      ),
     );
   });
 
@@ -625,10 +650,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(rDark.resolvedAppearance.handStroke).toBe("#ffffff");
     expect(rDark.resolvedAppearance.ringStroke).toBe("#ffffff");
     expect(rLight.resolvedAppearance.faceFill).toBe(
-      halfwayRgbStringBetweenCssColors("#ffffff", "#000000"),
+      interpolateRgbStringBetweenCssColors("#ffffff", "#000000", 0.25),
     );
     expect(rDark.resolvedAppearance.faceFill).toBe(
-      halfwayRgbStringBetweenCssColors("#000000", "#ffffff"),
+      interpolateRgbStringBetweenCssColors("#000000", "#ffffff", 0.25),
     );
   });
 });

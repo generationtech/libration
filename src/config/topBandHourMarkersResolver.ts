@@ -12,7 +12,10 @@
  */
 
 import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
-import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
+import {
+  halfwayRgbStringBetweenCssColors,
+  interpolateRgbStringBetweenCssColors,
+} from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -43,8 +46,8 @@ function normalizeMarkerColor(raw: unknown): string | undefined {
 
 /**
  * Analog clock: ring and hand default to contrast foreground against the indicator entries area background;
- * optional `appearance.handColor` overrides both strokes. When `appearance.faceColor` is absent, face fill is the
- * midpoint between that background and the resolved stroke color (same channel math as noon/midnight boxedNumber).
+ * optional `appearance.handColor` overrides both strokes. When `appearance.faceColor` is absent, face fill is one
+ * quarter of the way from that background toward the resolved stroke color (linear sRGB channel interpolation).
  */
 function resolveAnalogClockResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "analogClock" }>,
@@ -62,7 +65,11 @@ function resolveAnalogClockResolvedAppearance(
   const faceFill =
     faceFromAppearance !== undefined
       ? faceFromAppearance
-      : halfwayRgbStringBetweenCssColors(indicatorEntriesArea.effectiveBackgroundColor, ringStroke);
+      : interpolateRgbStringBetweenCssColors(
+          indicatorEntriesArea.effectiveBackgroundColor,
+          ringStroke,
+          0.25,
+        );
   return { ringStroke, handStroke, faceFill };
 }
 
