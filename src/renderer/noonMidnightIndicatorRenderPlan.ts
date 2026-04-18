@@ -23,9 +23,9 @@
  * is the single planner — adapters must not reorder.
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
- * Noon = filled + stroked; midnight = stroke only (no fill). Dominant diamond + small secondary tape numeral.
+ * Noon = filled + stroked; midnight = stroke only (no fill). Dominant diamond + tape numeral below the glyph.
  *
- * **solarLunarPictogram**: Dominant sun/moon + small secondary tape numeral (instrument-like).
+ * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
  * **boxedNumber**: Stroke rectangles use {@link boxedNumberStrokeHalfExtentsFromMarkerContentBox} for every
  * realization that draws a box (including analog after the clock face); plaque geometry is keyed to the laid-out
@@ -102,13 +102,15 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
 }
 
 /** Fractions of marker content box side — tied to {@link GlyphLayoutBox.size} from semantic layout only. */
-const BOXED_NUMBER_HALF_H_FRAC = 0.58;
-const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.54;
-/** Extra horizontal margin so short labels still read as a strip-level plaque, not a numeral outline. */
-const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.14;
-const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.3;
-const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.15;
+const BOXED_NUMBER_HALF_H_FRAC = 0.62;
+/** Strong floor: plaque half-width stays strip-scale, not numeral-footprint-driven. */
+const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.72;
+const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.2;
+const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.24;
+const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.17;
 const BOXED_NUMBER_STROKE_WIDTH_MIN_PX = 3;
+/** Slightly larger tape numeral inside the plaque (layout.size drives glyph metrics). */
+const BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE = 1.12;
 
 const SOLAR_DISK_R_FRAC = 0.46;
 const SOLAR_RAY_FRAC = 0.12;
@@ -119,16 +121,15 @@ const MOON_PICTO_LAYOUT_SCALE = 1.08;
 const MOON_FILL_ALPHA_SUFFIX = "38";
 const MOON_STROKE_WEIGHT = 1.14;
 
-const SEMANTIC_DIAMOND_HALF_FRAC = 0.51;
+const SEMANTIC_DIAMOND_HALF_FRAC = 0.58;
 /** Midnight diamond is slightly larger + heavier stroke so hollow form does not read weaker than noon fill. */
-const SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC = 0.535;
+const SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC = 0.595;
 const SEMANTIC_NOON_STROKE_FRAC = 0.078;
 const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.132;
 
-/** Small tape numeral under dominant pictogram/glyph; scales with marker content box. */
-const SECONDARY_NUMERAL_SIZE_FRAC = 0.38;
-const SECONDARY_NUMERAL_DOWN_PICTO_FRAC = 0.2;
-const SECONDARY_NUMERAL_DOWN_SEMANTIC_FRAC = 0.175;
+/** Tape numeral paired with semantic diamond; larger than legacy secondary for strip readability. */
+const SEMANTIC_NUMERAL_SIZE_FRAC = 0.52;
+const SEMANTIC_NUMERAL_GAP_BELOW_DIAMOND_FRAC = 0.06;
 
 /**
  * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
@@ -216,23 +217,19 @@ function pushStrokeBoxAroundText(
   });
 }
 
-/** Tape numeral under dominant pictogram — slightly below center; tuned for sun/moon + secondary pairing. */
-function secondaryTapeNumeralLayoutForPictogram(base: GlyphLayoutBox): GlyphLayoutBox {
-  const s = base.size;
+function boxedNumberTapeNumeralLayout(base: GlyphLayoutBox): GlyphLayoutBox {
   return {
-    cx: base.cx,
-    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_PICTO_FRAC,
-    size: s * SECONDARY_NUMERAL_SIZE_FRAC,
+    ...base,
+    size: base.size * BOXED_NUMBER_NUMERAL_LAYOUT_SIZE_SCALE,
   };
 }
 
-/** Tape numeral under semantic diamond — tighter vertical coupling with the glyph. */
-function secondaryTapeNumeralLayoutForSemanticGlyph(base: GlyphLayoutBox): GlyphLayoutBox {
-  const s = base.size;
+/** Tape numeral below the diamond; tracks diamond extent so scaling stays composed. */
+function semanticGlyphTapeNumeralLayout(base: GlyphLayoutBox, diamondHalfPx: number): GlyphLayoutBox {
   return {
     cx: base.cx,
-    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_SEMANTIC_FRAC,
-    size: s * SECONDARY_NUMERAL_SIZE_FRAC,
+    cy: base.cy + diamondHalfPx + base.size * SEMANTIC_NUMERAL_GAP_BELOW_DIAMOND_FRAC,
+    size: base.size * SEMANTIC_NUMERAL_SIZE_FRAC,
   };
 }
 
@@ -323,6 +320,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         args.hourSpec,
         gctx,
         out,
+        boxedNumberTapeNumeralLayout(args.layout),
       );
       return true;
     }
@@ -341,6 +339,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         numeralSpec,
         gctx,
         out,
+        boxedNumberTapeNumeralLayout(args.layout),
       );
       return true;
     }
@@ -359,6 +358,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         numeralSpec,
         gctx,
         out,
+        boxedNumberTapeNumeralLayout(args.layout),
       );
       return true;
     }
@@ -448,15 +448,6 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         }),
       );
     }
-    const numeralLayout = secondaryTapeNumeralLayoutForPictogram(args.layout);
-    pushGlyphContent(
-      args,
-      { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
-      numeralSpec,
-      gctx,
-      out,
-      numeralLayout,
-    );
     return true;
   }
 
@@ -485,6 +476,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
       );
     }
     const half = size * (role === "noon" ? SEMANTIC_DIAMOND_HALF_FRAC : SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC);
+    const numeralLayout = semanticGlyphTapeNumeralLayout(args.layout, half);
     const d = diamondDescriptor(cx, cy, half);
     if (role === "noon") {
       out.push(
@@ -504,7 +496,6 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         }),
       );
     }
-    const numeralLayout = secondaryTapeNumeralLayoutForSemanticGlyph(args.layout);
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },

@@ -350,6 +350,9 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       expect(cmds.map((c) => c.kind)).toEqual(["moveTo", "lineTo", "lineTo", "lineTo", "closePath"]);
       expect(noonPath.fill).toBeDefined();
       expect(noonPath.stroke).toBeDefined();
+      const halfExpect = 40 * 0.58;
+      const move = cmds[0];
+      expect(move?.kind === "moveTo" && move.y).toBeCloseTo(50 - halfExpect, 5);
     }
 
     const midItems: PlanItem[] = [];
@@ -379,15 +382,17 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     const glyphTextIdx = noonItems.findIndex((i) => i.kind === "text");
     const glyphPathIdx = noonItems.findIndex((i) => i.kind === "path2d");
     expect(glyphTextIdx).toBeGreaterThan(glyphPathIdx);
+    const size = 40;
+    const half = size * 0.58;
     const t = noonItems[glyphTextIdx];
     expect(t?.kind === "text").toBe(true);
     if (t?.kind === "text") {
-      expect(t.font.sizePx).toBeLessThan(40 * 0.95);
-      expect(t.y).toBeGreaterThan(50);
+      expect(t.font.sizePx).toBeCloseTo(size * 0.52, 5);
+      expect(t.y).toBeCloseTo(50 + half + size * 0.06, 5);
     }
   });
 
-  it("semanticGlyph + analogClock emits clock then dominant diamond then secondary numeral", () => {
+  it("semanticGlyph + analogClock emits clock then diamond then tape numeral (z-order)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -476,11 +481,18 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       items,
     );
     const box = items.find((i) => i.kind === "rect");
-    expect(box && "strokeWidthPx" in box ? box.strokeWidthPx : undefined).toBe(Math.max(3, size * 0.15));
+    expect(box && "strokeWidthPx" in box ? box.strokeWidthPx : undefined).toBe(Math.max(3, size * 0.17));
     const { halfW, halfH } = boxedNumberStrokeHalfExtentsFromMarkerContentBox(size, tape);
-    expect(halfH / size).toBeGreaterThanOrEqual(0.55);
-    expect(halfH).toBeCloseTo(size * 0.58, 8);
-    expect(halfW).toBeGreaterThanOrEqual(size * 0.54);
+    expect(halfH / size).toBeGreaterThanOrEqual(0.6);
+    expect(halfH).toBeCloseTo(size * 0.62, 8);
+    expect(halfW).toBeGreaterThanOrEqual(size * 0.72);
+    const textItem = items.find((i) => i.kind === "text");
+    expect(textItem?.kind === "text").toBe(true);
+    if (textItem?.kind === "text") {
+      expect(textItem.text).toBe("12");
+      // Scaled {@link boxedNumberTapeNumeralLayout} increases layout.size; resolved sizePx also applies inset + role typography.
+      expect(textItem.font.sizePx).toBeGreaterThan(size);
+    }
   });
 
   it("solarLunarPictogram midnight moon is weighted to balance sun (fill, scale, stroke)", () => {
@@ -545,82 +557,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     }
   });
 
-  it("semanticGlyph secondary numeral is vertically tighter to the diamond than pictogram secondary is to sun/moon", () => {
-    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
-    const eff = resolveEffectiveTopBandHourMarkers({
-      ...layout,
-      hourMarkers: {
-        ...layout.hourMarkers,
-        realization: { kind: "radialLine", appearance: {} },
-        noonMidnightCustomization: { enabled: true, expressionMode: "solarLunarPictogram" },
-      },
-    });
-    const effSem = resolveEffectiveTopBandHourMarkers({
-      ...layout,
-      hourMarkers: {
-        ...layout.hourMarkers,
-        realization: { kind: "radialLine", appearance: {} },
-        noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
-      },
-    });
-    const selP = effectiveTopBandHourMarkerSelection({
-      ...layout,
-      hourMarkers: {
-        ...layout.hourMarkers,
-        realization: { kind: "radialLine", appearance: {} },
-        noonMidnightCustomization: { enabled: true, expressionMode: "solarLunarPictogram" },
-      },
-    });
-    const selS = effectiveTopBandHourMarkerSelection({
-      ...layout,
-      hourMarkers: {
-        ...layout.hourMarkers,
-        realization: { kind: "radialLine", appearance: {} },
-        noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
-      },
-    });
-    const baseArgs = {
-      realizationKind: "radialLine" as const,
-      structuralHour0To23: 12,
-      tapeHourLabel: "12",
-      displayLabel: "12",
-      layout: { cx: 100, cy: 50, size: 40 },
-      markerColor: "#223344",
-    };
-    const pItems: PlanItem[] = [];
-    tryEmitNoonMidnightIndicatorDiskContent(
-      {
-        ...baseArgs,
-        customization: eff.noonMidnightCustomization,
-        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(selP),
-        effectiveTopBandHourMarkerSelection: selP,
-        effectiveTopBandHourMarkers: eff,
-      },
-      { fontRegistry: defaultFontAssetRegistry },
-      pItems,
-    );
-    const sItems: PlanItem[] = [];
-    tryEmitNoonMidnightIndicatorDiskContent(
-      {
-        ...baseArgs,
-        customization: effSem.noonMidnightCustomization,
-        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(selS),
-        effectiveTopBandHourMarkerSelection: selS,
-        effectiveTopBandHourMarkers: effSem,
-      },
-      { fontRegistry: defaultFontAssetRegistry },
-      sItems,
-    );
-    const yP = pItems.find((i) => i.kind === "text" && "text" in i && i.text === "12");
-    const yS = sItems.find((i) => i.kind === "text" && "text" in i && i.text === "12");
-    expect(yP?.kind === "text").toBe(true);
-    expect(yS?.kind === "text").toBe(true);
-    if (yP?.kind === "text" && yS?.kind === "text") {
-      expect(yS.y).toBeLessThan(yP.y);
-    }
-  });
-
-  it("solarLunarPictogram emits decoration before numeral text (z-order)", () => {
+  it("solarLunarPictogram emits pictogram paths only (no embedded hour numeral text)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -655,20 +592,11 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       { fontRegistry: defaultFontAssetRegistry },
       items,
     );
-    const textIdx = items.findIndex((i) => i.kind === "text");
-    const firstDecor = items.findIndex((i) => i.kind === "path2d" || i.kind === "line");
-    expect(firstDecor).toBeGreaterThanOrEqual(0);
-    expect(textIdx).toBeGreaterThan(firstDecor);
-    const textItem = items[textIdx];
-    expect(textItem?.kind === "text").toBe(true);
-    if (textItem?.kind === "text") {
-      // Secondary tape numeral: smaller than full marker-content-box typography, displaced downward.
-      expect(textItem.font.sizePx).toBeLessThan(24 * 0.95);
-      expect(textItem.y).toBeGreaterThan(50);
-    }
+    expect(items.some((i) => i.kind === "text")).toBe(false);
+    expect(items.some((i) => i.kind === "path2d" || i.kind === "line")).toBe(true);
   });
 
-  it("solarLunarPictogram + analogClock emits clock then dominant pictogram then secondary numeral", () => {
+  it("solarLunarPictogram + analogClock emits clock then pictogram only (no hour numeral)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -711,13 +639,11 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       items,
     );
     expect(handled).toBe(true);
-    // Clock face: ring path2d + two hands, then dominant sun geometry, then secondary tape numeral.
     expect(items[0]?.kind).toBe("path2d");
     expect(items[1]?.kind).toBe("line");
     expect(items[2]?.kind).toBe("line");
     expect(items[3]?.kind).toBe("path2d");
-    const textIdx = items.findIndex((i) => i.kind === "text" && "text" in i && i.text === "12");
-    expect(textIdx).toBeGreaterThan(3);
+    expect(items.some((i) => i.kind === "text")).toBe(false);
   });
 
   it("boxedNumber + analogClock uses marker-content-box stroke extents (same model as text/radial)", () => {
@@ -772,7 +698,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(box && "height" in box ? box.height : undefined).toBeCloseTo(halfH * 2, 8);
     expect(box && "x" in box ? box.x : undefined).toBeCloseTo(cx - halfW, 8);
     expect(box && "y" in box ? box.y : undefined).toBeCloseTo(cy - halfH, 8);
-    expect(box && "strokeWidthPx" in box ? box.strokeWidthPx : undefined).toBe(Math.max(3, size * 0.15));
+    expect(box && "strokeWidthPx" in box ? box.strokeWidthPx : undefined).toBe(Math.max(3, size * 0.17));
     if (eff.noonMidnightCustomization.enabled && eff.noonMidnightCustomization.expressionMode === "boxedNumber") {
       expect(box && "stroke" in box ? box.stroke : undefined).toBe(eff.noonMidnightCustomization.boxedNumberBoxColor);
     }
