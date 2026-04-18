@@ -138,8 +138,17 @@ export type EffectiveRadialLineResolvedAppearance = {
 };
 
 export type EffectiveRadialWedgeResolvedAppearance = {
-  /** Default: midpoint between indicator entries row background and contrast foreground. */
+  /**
+   * Default: midpoint between indicator entries row background and contrast foreground (t = 0.5).
+   * Analog clock face fill uses t = 0.25 toward the resolved stroke — an intentional semantic difference
+   * (surface fill vs wedge interior).
+   */
   fillColor: string;
+  /**
+   * Edge stroke when the glyph style enables a non-zero wedge outline. Default: contrast foreground at the same alpha
+   * as the legacy catalog stroke (~0.45), so the edge reads on the indicator row without a fixed hue.
+   */
+  strokeColor: string;
 };
 
 export type EffectiveTextResolvedAppearance = {

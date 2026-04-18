@@ -11,7 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+  rgbaForegroundWithAlpha,
+} from "../color/contrastForegroundOnCssBackground.ts";
 import {
   halfwayRgbStringBetweenCssColors,
   interpolateRgbStringBetweenCssColors,
@@ -73,14 +76,30 @@ function resolveAnalogClockResolvedAppearance(
   return { ringStroke, handStroke, faceFill };
 }
 
+/**
+ * Radial line: default line color is the indicator row’s contrast foreground (`blackOrWhiteForegroundForBackgroundCss`
+ * on the resolved row background). Optional `appearance.lineColor` overrides.
+ */
 function resolveRadialLineResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialLine" }>,
-  defaultLine: string,
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  },
 ): EffectiveRadialLineResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.lineColor);
+  const defaultLine = indicatorEntriesArea.effectiveForegroundColor;
   return { lineColor: fromAppearance !== undefined ? fromAppearance : defaultLine };
 }
 
+/** Matches legacy top-band radial wedge catalog stroke alpha so outline weight stays familiar while hue tracks contrast fg. */
+const RADIAL_WEDGE_DEFAULT_STROKE_ALPHA = 0.45;
+
+/**
+ * Radial wedge: default fill is halfway between row background and contrast foreground (same t as noon/midnight boxed
+ * highlight). Default wedge edge stroke uses that contrast foreground at {@link RADIAL_WEDGE_DEFAULT_STROKE_ALPHA}.
+ * Analog face fill uses quarter-step interpolation instead — intentional (see {@link EffectiveRadialWedgeResolvedAppearance}).
+ */
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
   indicatorEntriesArea: {
@@ -89,11 +108,16 @@ function resolveRadialWedgeResolvedAppearance(
   },
 ): EffectiveRadialWedgeResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
+  const fg = indicatorEntriesArea.effectiveForegroundColor;
   const defaultFill = halfwayRgbStringBetweenCssColors(
     indicatorEntriesArea.effectiveBackgroundColor,
-    indicatorEntriesArea.effectiveForegroundColor,
+    fg,
   );
-  return { fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill };
+  const strokeColor = rgbaForegroundWithAlpha(fg, RADIAL_WEDGE_DEFAULT_STROKE_ALPHA);
+  return {
+    fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill,
+    strokeColor,
+  };
 }
 
 /**
@@ -245,7 +269,7 @@ export function resolveEffectiveTopBandHourMarkers(
       content: { kind: "hour24" },
       realization: {
         kind: "radialLine",
-        resolvedAppearance: resolveRadialLineResolvedAppearance(r, derivedFg),
+        resolvedAppearance: resolveRadialLineResolvedAppearance(r, indicatorEntriesArea),
       },
       layout: layoutOut,
       noonMidnightCustomization,

@@ -52,4 +52,20 @@ describe("RadialWedgeGlyph emit", () => {
       strokeWidthPx: spec.strokeWidthPx,
     });
   });
+
+  it("uses strokeColorOverride for stroke when present", () => {
+    const glyph: GlyphRenderable = {
+      kind: "radialWedge",
+      hour: 4,
+      styleId: "topBandHourDefault",
+      strokeColorOverride: "rgba(255, 255, 255, 0.45)",
+    };
+    const out: RenderPlan["items"] = [];
+    emitGlyphToRenderPlan(glyph, layout, ctx, out);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({
+      kind: "path2d",
+      stroke: "rgba(255, 255, 255, 0.45)",
+    });
+  });
 });

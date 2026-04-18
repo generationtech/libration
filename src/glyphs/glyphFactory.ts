@@ -37,6 +37,8 @@ export function createHourMarkerGlyph(
   spec: HourMarkerRepresentationSpec,
   textTypographyOverrides?: ResolveTextStyleOverrides,
   optionalMarkerColor?: string,
+  /** Semantic radial-wedge path: resolved edge stroke from effective hour markers (catalog stroke when omitted). */
+  radialWedgeStrokeColor?: string,
 ): GlyphRenderable {
   const structural = normalizeHour0To23(content.structuralHour0To23);
   const textExtras =
@@ -79,6 +81,7 @@ export function createHourMarkerGlyph(
         hour: structural,
         styleId: spec.glyphStyleId,
         ...proceduralColor,
+        ...(radialWedgeStrokeColor !== undefined ? { strokeColorOverride: radialWedgeStrokeColor } : {}),
       };
     case "segment":
     case "dotmatrix":

@@ -71,6 +71,8 @@ export type RadialWedgeGlyph = {
   /** Civil / structural hour 0–23 */
   hour: number;
   styleId?: HourMarkerGlyphStyleId;
-  /** Top-band layout override for wedge fill; stroke follows the resolved style when present. */
+  /** Top-band layout override for wedge fill. */
   colorOverride?: string;
+  /** When set, overrides catalog wedge stroke color (resolver supplies default for indicator-row contrast). */
+  strokeColorOverride?: string;
 };

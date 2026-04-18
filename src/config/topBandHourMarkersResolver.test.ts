@@ -12,7 +12,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { blackOrWhiteForegroundForBackgroundCss } from "../color/contrastForegroundOnCssBackground.ts";
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+  rgbaForegroundWithAlpha,
+} from "../color/contrastForegroundOnCssBackground.ts";
 import {
   halfwayRgbStringBetweenCssColors,
   interpolateRgbStringBetweenCssColors,
@@ -41,6 +44,10 @@ function defaultNonTextMidpointFill(): string {
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
   );
+}
+
+function defaultRadialWedgeStrokeFromIndicatorRow(): string {
+  return rgbaForegroundWithAlpha(INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor, 0.45);
 }
 
 /** Default analog clock face fill when no faceColor override: 1/4 from row background toward resolved stroke color. */
@@ -242,6 +249,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         kind: "radialWedge",
         resolvedAppearance: {
           fillColor: defaultNonTextMidpointFill(),
+          strokeColor: defaultRadialWedgeStrokeFromIndicatorRow(),
         },
       },
       layout: { sizeMultiplier: 1 },
@@ -575,6 +583,9 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         eff.indicatorEntriesArea.effectiveForegroundColor,
       ),
     );
+    expect(eff.realization.resolvedAppearance.strokeColor).toBe(
+      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.45),
+    );
   });
 
   it("radialWedge appearance.fillColor overrides derived default fill", () => {
@@ -591,6 +602,9 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       throw new Error("expected radialWedge");
     }
     expect(eff.realization.resolvedAppearance.fillColor).toBe("#c0ffee");
+    expect(eff.realization.resolvedAppearance.strokeColor).toBe(
+      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.45),
+    );
   });
 
   it("radialLine uses contrast foreground on light and dark indicator entries backgrounds", () => {
@@ -619,6 +633,34 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     }
     expect(light.realization.resolvedAppearance.lineColor).toBe("#000000");
     expect(dark.realization.resolvedAppearance.lineColor).toBe("#ffffff");
+  });
+
+  it("radialWedge default stroke tracks contrast foreground on light and dark indicator entries backgrounds", () => {
+    const light = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#ffffff",
+          realization: { kind: "radialWedge", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const dark = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#000000",
+          realization: { kind: "radialWedge", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(light.realization.kind).toBe("radialWedge");
+    expect(dark.realization.kind).toBe("radialWedge");
+    if (light.realization.kind !== "radialWedge" || dark.realization.kind !== "radialWedge") {
+      throw new Error("expected radialWedge");
+    }
+    expect(light.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#000000", 0.45));
+    expect(dark.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#ffffff", 0.45));
   });
 
   it("analogClock without handColor uses contrast strokes on light and dark indicator entries backgrounds", () => {

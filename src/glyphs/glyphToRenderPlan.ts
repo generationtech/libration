@@ -208,11 +208,12 @@ function emitRadialWedgeGlyph(glyph: RadialWedgeGlyph, layout: GlyphLayoutBox, o
   const useStroke =
     rw.stroke !== undefined && strokeW !== undefined && strokeW > 0;
   const fill = glyph.colorOverride ?? rw.fill;
+  const stroke = glyph.strokeColorOverride ?? rw.stroke;
   out.push(
     createDescriptorPathItem({
       pathDescriptor,
       fill,
-      ...(useStroke ? { stroke: rw.stroke, strokeWidthPx: strokeW } : {}),
+      ...(useStroke ? { stroke, strokeWidthPx: strokeW } : {}),
     }),
   );
 }

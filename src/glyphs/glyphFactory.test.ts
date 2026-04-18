@@ -159,6 +159,18 @@ describe("createHourMarkerGlyph", () => {
     if (line.kind === "radialLine") {
       expect(line.colorOverride).toBe("#ba5e");
     }
+    const wedge = createHourMarkerGlyph(
+      { structuralHour0To23: 5, displayLabel: "5" },
+      { mode: "radialWedge", textRole: "chromeHourPrimary", glyphStyleId: "topBandHourDefault" },
+      undefined,
+      "#facade",
+      "rgba(0, 0, 0, 0.45)",
+    );
+    expect(wedge.kind).toBe("radialWedge");
+    if (wedge.kind === "radialWedge") {
+      expect(wedge.colorOverride).toBe("#facade");
+      expect(wedge.strokeColorOverride).toBe("rgba(0, 0, 0, 0.45)");
+    }
   });
 });
 
