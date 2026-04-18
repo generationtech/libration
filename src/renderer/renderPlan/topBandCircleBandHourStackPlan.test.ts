@@ -825,11 +825,16 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
+      const expectedLineStroke =
+        eff.realization.kind === "radialLine" ? eff.realization.resolvedAppearance.lineColor : "";
+      expect(expectedLineStroke.length).toBeGreaterThan(0);
+
       const radialLines = plan.items.filter(
         (i): i is Extract<(typeof plan.items)[number], { kind: "line" }> =>
-          i.kind === "line" && i.strokeWidthPx === 2 && i.lineCap === "round",
+          i.kind === "line" && i.strokeWidthPx === 3 && i.lineCap === "round",
       );
       expect(radialLines.length).toBeGreaterThanOrEqual(24);
+      expect(radialLines.every((ln) => ln.stroke === expectedLineStroke)).toBe(true);
     });
 
     it("applies selection color to radial strokes on the semantic path", () => {
@@ -896,6 +901,10 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       effResolvedWedge.realization.kind === "radialWedge"
         ? effResolvedWedge.realization.resolvedAppearance.fillColor
         : "";
+    const defaultWedgeStroke =
+      effResolvedWedge.realization.kind === "radialWedge"
+        ? effResolvedWedge.realization.resolvedAppearance.strokeColor
+        : "";
 
     it("routes radialWedge through resolver → planner → layout → adapter on full tape", () => {
       const w = 960;
@@ -948,6 +957,11 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           i.kind === "path2d" && i.fill === defaultWedgeFill,
       );
       expect(wedgeFills.length).toBeGreaterThanOrEqual(24);
+      expect(
+        wedgeFills.every(
+          (p) => p.stroke === defaultWedgeStroke && p.stroke !== undefined && p.strokeWidthPx !== undefined,
+        ),
+      ).toBe(true);
     });
 
     it("applies selection color to wedge fills on the semantic path", () => {

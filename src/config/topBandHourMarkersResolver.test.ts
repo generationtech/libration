@@ -38,16 +38,17 @@ const INDICATOR_ENTRIES_AREA_DEFAULT = {
 
 const NOON_MIDNIGHT_DISABLED = { noonMidnightCustomization: { enabled: false as const } };
 
-/** Default radial wedge fill: midpoint between indicator row background and contrast foreground. */
-function defaultNonTextMidpointFill(): string {
-  return halfwayRgbStringBetweenCssColors(
+/** Default radial wedge fill: foreground-heavy blend (resolver t = 0.62), not noon/midnight midpoint. */
+function defaultRadialWedgeFillFromIndicatorRow(): string {
+  return interpolateRgbStringBetweenCssColors(
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
     INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+    0.62,
   );
 }
 
 function defaultRadialWedgeStrokeFromIndicatorRow(): string {
-  return rgbaForegroundWithAlpha(INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor, 0.45);
+  return rgbaForegroundWithAlpha(INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor, 0.72);
 }
 
 /** Default analog clock face fill when no faceColor override: 1/4 from row background toward resolved stroke color. */
@@ -248,7 +249,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       realization: {
         kind: "radialWedge",
         resolvedAppearance: {
-          fillColor: defaultNonTextMidpointFill(),
+          fillColor: defaultRadialWedgeFillFromIndicatorRow(),
           strokeColor: defaultRadialWedgeStrokeFromIndicatorRow(),
         },
       },
@@ -564,7 +565,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     );
   });
 
-  it("radialWedge default fill is halfway between indicator row background and contrast foreground", () => {
+  it("radialWedge default fill blends from row background toward contrast foreground (foreground-heavy, not midpoint)", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -578,13 +579,20 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       throw new Error("expected radialWedge");
     }
     expect(eff.realization.resolvedAppearance.fillColor).toBe(
+      interpolateRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.indicatorEntriesArea.effectiveForegroundColor,
+        0.62,
+      ),
+    );
+    expect(eff.realization.resolvedAppearance.fillColor).not.toBe(
       halfwayRgbStringBetweenCssColors(
         eff.indicatorEntriesArea.effectiveBackgroundColor,
         eff.indicatorEntriesArea.effectiveForegroundColor,
       ),
     );
     expect(eff.realization.resolvedAppearance.strokeColor).toBe(
-      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.45),
+      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.72),
     );
   });
 
@@ -603,7 +611,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     }
     expect(eff.realization.resolvedAppearance.fillColor).toBe("#c0ffee");
     expect(eff.realization.resolvedAppearance.strokeColor).toBe(
-      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.45),
+      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.72),
     );
   });
 
@@ -659,8 +667,8 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     if (light.realization.kind !== "radialWedge" || dark.realization.kind !== "radialWedge") {
       throw new Error("expected radialWedge");
     }
-    expect(light.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#000000", 0.45));
-    expect(dark.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#ffffff", 0.45));
+    expect(light.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#000000", 0.72));
+    expect(dark.realization.resolvedAppearance.strokeColor).toBe(rgbaForegroundWithAlpha("#ffffff", 0.72));
   });
 
   it("analogClock without handColor uses contrast strokes on light and dark indicator entries backgrounds", () => {

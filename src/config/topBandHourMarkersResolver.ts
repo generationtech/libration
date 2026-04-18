@@ -92,13 +92,23 @@ function resolveRadialLineResolvedAppearance(
   return { lineColor: fromAppearance !== undefined ? fromAppearance : defaultLine };
 }
 
-/** Matches legacy top-band radial wedge catalog stroke alpha so outline weight stays familiar while hue tracks contrast fg. */
-const RADIAL_WEDGE_DEFAULT_STROKE_ALPHA = 0.45;
+/**
+ * Wedge outline: contrast foreground at this alpha tracks the resolved fg hue while reading clearly on the strip
+ * (stronger than legacy ~0.45 so the edge stays visible against both default fill and row bed).
+ */
+const RADIAL_WEDGE_DEFAULT_STROKE_ALPHA = 0.72;
 
 /**
- * Radial wedge: default fill is halfway between row background and contrast foreground (same t as noon/midnight boxed
- * highlight). Default wedge edge stroke uses that contrast foreground at {@link RADIAL_WEDGE_DEFAULT_STROKE_ALPHA}.
- * Analog face fill uses quarter-step interpolation instead — intentional (see {@link EffectiveRadialWedgeResolvedAppearance}).
+ * Default wedge interior: blend from row background toward contrast foreground (same helper as analog face fill).
+ * Uses t &gt; 0.5 (not midpoint) so the fill separates from the instrument strip more than a 50/50 mix, which looked
+ * too close to the bed; t = 0.25 (analog face) would hug the background and reads weaker here.
+ */
+const RADIAL_WEDGE_DEFAULT_FILL_BLEND_T = 0.62;
+
+/**
+ * Radial wedge: default fill is interpolated between row background and contrast foreground at
+ * {@link RADIAL_WEDGE_DEFAULT_FILL_BLEND_T}. Default wedge edge stroke uses contrast foreground at
+ * {@link RADIAL_WEDGE_DEFAULT_STROKE_ALPHA}.
  */
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
@@ -109,9 +119,10 @@ function resolveRadialWedgeResolvedAppearance(
 ): EffectiveRadialWedgeResolvedAppearance {
   const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
   const fg = indicatorEntriesArea.effectiveForegroundColor;
-  const defaultFill = halfwayRgbStringBetweenCssColors(
+  const defaultFill = interpolateRgbStringBetweenCssColors(
     indicatorEntriesArea.effectiveBackgroundColor,
     fg,
+    RADIAL_WEDGE_DEFAULT_FILL_BLEND_T,
   );
   const strokeColor = rgbaForegroundWithAlpha(fg, RADIAL_WEDGE_DEFAULT_STROKE_ALPHA);
   return {

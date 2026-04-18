@@ -33,7 +33,7 @@ describe("resolveHourMarkerGlyphStyle", () => {
     const spec = resolveHourMarkerGlyphStyle("topBandHourDefault");
     expect(spec.radialLine.lengthRadiusFrac).toBe(0.85);
     expect(spec.radialLine.lineCap).toBe("round");
-    expect(spec.radialLine.lineWidthPx).toBe(spec.clockFace.handStrokeWidthPx);
+    expect(spec.radialLine.lineWidthPx).toBe(3);
     expect(spec.radialWedge.outerRadiusFrac).toBe(0.95);
     expect(spec.radialWedge.innerRadiusFrac).toBe(0.55);
     expect(spec.radialWedge.sweepAngleDeg).toBe(20);

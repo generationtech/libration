@@ -41,7 +41,8 @@ const TOP_BAND_DEFAULT_CLOCK: ClockFaceGlyphStyle = {
 };
 
 const TOP_BAND_RADIAL_LINE: RadialLineGlyphStyle = {
-  lineWidthPx: TOP_BAND_DEFAULT_CLOCK.handStrokeWidthPx,
+  /** Slightly heavier than the analog hour hand so default resolver-driven strokes read clearly on the strip. */
+  lineWidthPx: 3,
   lengthRadiusFrac: 0.85,
   lineCap: "round",
   stroke: DEFAULT_RADIAL_LINE_COLOR,

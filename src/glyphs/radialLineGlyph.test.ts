@@ -70,4 +70,21 @@ describe("RadialLineGlyph emit", () => {
       stroke: style.stroke,
     });
   });
+
+  it("uses colorOverride for stroke when set (semantic path; catalog stroke is not used)", () => {
+    const glyph: GlyphRenderable = {
+      kind: "radialLine",
+      hour: 3,
+      styleId: "topBandHourDefault",
+      colorOverride: "#ffffff",
+    };
+    const out: RenderPlan["items"] = [];
+    emitGlyphToRenderPlan(glyph, layout, ctx, out);
+    const line = out[0];
+    expect(line?.kind).toBe("line");
+    if (line?.kind === "line") {
+      expect(line.stroke).toBe("#ffffff");
+      expect(line.stroke).not.toBe(style.stroke);
+    }
+  });
 });
