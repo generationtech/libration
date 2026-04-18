@@ -159,7 +159,10 @@ function resolveIndicatorEntriesAreaEffective(layout: DisplayChromeLayoutConfig)
 
 /** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
 export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): EffectiveTopBandHourMarkerBehavior {
-  return kind === "analogClock" ? "staticZoneAnchored" : "tapeAdvected";
+  if (kind === "text") {
+    return "tapeAdvected";
+  }
+  return "staticZoneAnchored";
 }
 
 const NOON_MIDNIGHT_EXPRESSION_MODES = new Set<HourMarkersNoonMidnightExpressionMode>([

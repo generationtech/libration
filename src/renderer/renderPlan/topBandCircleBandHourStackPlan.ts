@@ -23,7 +23,10 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../../config/appConfig.ts";
-import { buildSemanticTopBandHourMarkers } from "../../config/topBandHourMarkersSemanticPlan.ts";
+import {
+  buildSemanticTopBandHourMarkers,
+  wallClockLongitudeDegForStructuralHourMarkers,
+} from "../../config/topBandHourMarkersSemanticPlan.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import {
   layoutSemanticTopBandAnalogClockMarkers,
@@ -240,6 +243,12 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     referenceNowMs: options.referenceNowMs,
   });
 
+  const wallClockLongitudeDegByStructuralHour = wallClockLongitudeDegForStructuralHourMarkers(
+    effectiveMarkers.behavior,
+    markers,
+    vw,
+  );
+
   const yCircleBottom = y0 + circleH;
   const circleBedY0 = y0 + circleH * 0.065;
   const circleBedY1 = yCircleBottom - 0.5;
@@ -346,6 +355,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
+      wallClockLongitudeDegByStructuralHour,
     });
     const laidOutAnalog = layoutSemanticTopBandAnalogClockMarkers(semanticPlan, {
       viewportWidthPx: vw,
@@ -369,6 +379,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   } else if (inDiskPath.kind === "semanticRadialLineHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
+      wallClockLongitudeDegByStructuralHour,
     });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(semanticPlan, {
       viewportWidthPx: vw,
@@ -392,6 +403,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   } else if (inDiskPath.kind === "semanticRadialWedgeHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
+      wallClockLongitudeDegByStructuralHour,
     });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(semanticPlan, {
       viewportWidthPx: vw,

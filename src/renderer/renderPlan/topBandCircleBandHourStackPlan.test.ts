@@ -841,7 +841,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           effectiveTopBandHourMarkerSelection: sel,
           effectiveTopBandHourMarkers: eff,
           markerCount: 24,
-          structuralZoneCenterXPx: undefined,
+          structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
           referenceNowMs: scale.referenceNowMs,
         }),
       ).toEqual({ kind: "semanticRadialLineHourDisks" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);
@@ -984,7 +984,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           effectiveTopBandHourMarkerSelection: sel,
           effectiveTopBandHourMarkers: eff,
           markerCount: 24,
-          structuralZoneCenterXPx: undefined,
+          structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
           referenceNowMs: scale.referenceNowMs,
         }),
       ).toEqual({ kind: "semanticRadialWedgeHourDisks" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);

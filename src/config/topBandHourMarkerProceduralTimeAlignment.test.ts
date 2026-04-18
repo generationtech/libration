@@ -12,12 +12,16 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { longitudeDegFromMapX } from "../core/equirectangularProjection.ts";
 import { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import { hourToTheta } from "../glyphs/glyphGeometry.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
 import { resolveEffectiveTopBandHourMarkers } from "./topBandHourMarkersResolver.ts";
-import { buildSemanticTopBandHourMarkers } from "./topBandHourMarkersSemanticPlan.ts";
+import {
+  buildSemanticTopBandHourMarkers,
+  wallClockLongitudeDegForStructuralHourMarkers,
+} from "./topBandHourMarkersSemanticPlan.ts";
 import { structuralColumnCenterLongitudeDeg } from "./topBandHourMarkersSemanticTypes.ts";
 import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "./topBandVisualPolicy.ts";
 
@@ -29,6 +33,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
+          behavior: "tapeAdvected",
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -70,6 +75,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     const effWedge = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
+          behavior: "tapeAdvected",
           realization: { kind: "radialWedge", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -161,6 +167,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     const effTape = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
+          behavior: "tapeAdvected",
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -187,5 +194,68 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
       }
       expect(t.wallClock.continuousHour0To24).toBeCloseTo(s.wallClock.continuousHour0To24, 10);
     }
+  });
+
+  it("tapeAdvected procedural wall clock uses phased disk center x via equirect inverse (semantic options)", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          behavior: "tapeAdvected",
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const w = 2400;
+    const cx = 317.5;
+    const markers = Array.from({ length: 24 }, (_, h) => ({
+      centerX: h === 7 ? cx : h * 10,
+      structuralHour0To23: h,
+    }));
+    const wallLon = wallClockLongitudeDegForStructuralHourMarkers("tapeAdvected", markers, w);
+    expect(wallLon[7]).toBeCloseTo(longitudeDegFromMapX(cx, w), 10);
+    const plan = buildSemanticTopBandHourMarkers(eff, {
+      referenceNowMs: REF_MS,
+      wallClockLongitudeDegByStructuralHour: wallLon,
+    });
+    const expected = solarLocalWallClockStateFromUtcMs(REF_MS, wallLon[7]!);
+    const inst = plan.instances[7]!;
+    expect(inst.content.kind).toBe("localWallClock");
+    if (inst.content.kind === "localWallClock") {
+      expect(inst.content.wallClock.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 10);
+      expect(inst.content.wallClock.continuousMinute0To60).toBeCloseTo(expected.continuousMinute0To60, 10);
+    }
+  });
+
+  it("unset behavior defaults to staticZoneAnchored for analogClock, radialLine, and radialWedge", () => {
+    const kinds = [
+      { kind: "analogClock" as const, realization: { kind: "analogClock" as const, appearance: {} } },
+      { kind: "radialLine" as const, realization: { kind: "radialLine" as const, appearance: {} } },
+      { kind: "radialWedge" as const, realization: { kind: "radialWedge" as const, appearance: {} } },
+    ];
+    for (const { realization } of kinds) {
+      const eff = resolveEffectiveTopBandHourMarkers(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            realization,
+            layout: { sizeMultiplier: 1 },
+          },
+        }),
+      );
+      expect(eff.behavior).toBe("staticZoneAnchored");
+    }
+  });
+
+  it("explicit tapeAdvected is preserved for radialLine when authored", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          behavior: "tapeAdvected",
+          realization: { kind: "radialLine", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.behavior).toBe("tapeAdvected");
   });
 });

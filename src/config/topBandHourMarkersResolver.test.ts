@@ -63,8 +63,8 @@ function defaultAnalogFaceFillFromIndicatorRow(): string {
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
     expect(defaultBehaviorFor("text")).toBe("tapeAdvected");
-    expect(defaultBehaviorFor("radialLine")).toBe("tapeAdvected");
-    expect(defaultBehaviorFor("radialWedge")).toBe("tapeAdvected");
+    expect(defaultBehaviorFor("radialLine")).toBe("staticZoneAnchored");
+    expect(defaultBehaviorFor("radialWedge")).toBe("staticZoneAnchored");
     expect(defaultBehaviorFor("analogClock")).toBe("staticZoneAnchored");
   });
 });
@@ -175,7 +175,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "tapeAdvected",
+      behavior: "staticZoneAnchored",
       content: { kind: "localWallClock" },
       realization: {
         kind: "radialLine",
@@ -247,7 +247,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "tapeAdvected",
+      behavior: "staticZoneAnchored",
       content: { kind: "localWallClock" },
       realization: {
         kind: "radialWedge",
