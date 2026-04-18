@@ -12,6 +12,7 @@
  */
 
 import { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
+import { indicatorEntryNoonMidnightRole } from "./noonMidnightIndicatorSemantics.ts";
 import type { EffectiveTopBandHourMarkers } from "./topBandHourMarkersTypes.ts";
 import {
   buildStructuralAnchor,
@@ -60,6 +61,7 @@ export function buildSemanticTopBandHourMarkers(
     instances.push({
       structuralHour0To23: h,
       structuralAnchor: buildStructuralAnchor(h),
+      indicatorEntryNoonMidnightRole: indicatorEntryNoonMidnightRole(h),
       behavior: effective.behavior,
       content: semanticContentForInstance(effective, h, referenceNowMs),
       realization: effective.realization,

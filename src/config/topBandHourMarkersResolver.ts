@@ -15,6 +15,7 @@ import {
   blackOrWhiteForegroundForBackgroundCss,
   rgbaForegroundWithAlpha,
 } from "../color/contrastForegroundOnCssBackground.ts";
+import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
   DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
@@ -24,11 +25,14 @@ import {
 import { DEFAULT_ANALOG_FACE_FILL } from "./topBandHourMarkersDefaults.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
+  EffectiveNoonMidnightCustomization,
   EffectiveTopBandHourMarkerBehavior,
   EffectiveTopBandHourMarkers,
   EffectiveTopBandHourMarkerRealization,
   EffectiveRadialLineResolvedAppearance,
   EffectiveRadialWedgeResolvedAppearance,
+  HourMarkersConfig,
+  HourMarkersNoonMidnightExpressionMode,
   HourMarkersRealizationConfig,
 } from "./topBandHourMarkersTypes.ts";
 
@@ -95,6 +99,49 @@ export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): 
   return kind === "analogClock" ? "staticZoneAnchored" : "tapeAdvected";
 }
 
+const NOON_MIDNIGHT_EXPRESSION_MODES = new Set<HourMarkersNoonMidnightExpressionMode>([
+  "textWords",
+  "boxedNumber",
+  "solarLunarPictogram",
+  "semanticGlyph",
+]);
+
+function normalizeNoonMidnightExpressionMode(
+  raw: unknown,
+): HourMarkersNoonMidnightExpressionMode | undefined {
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+  return NOON_MIDNIGHT_EXPRESSION_MODES.has(raw as HourMarkersNoonMidnightExpressionMode)
+    ? (raw as HourMarkersNoonMidnightExpressionMode)
+    : undefined;
+}
+
+function resolveEffectiveNoonMidnightCustomization(
+  hm: HourMarkersConfig,
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  },
+): EffectiveNoonMidnightCustomization {
+  const raw = hm.noonMidnightCustomization;
+  if (raw?.enabled !== true) {
+    return { enabled: false };
+  }
+  const expressionMode = normalizeNoonMidnightExpressionMode(raw.expressionMode) ?? "textWords";
+  if (expressionMode === "boxedNumber") {
+    return {
+      enabled: true,
+      expressionMode,
+      boxedNumberBoxColor: halfwayRgbStringBetweenCssColors(
+        indicatorEntriesArea.effectiveBackgroundColor,
+        indicatorEntriesArea.effectiveForegroundColor,
+      ),
+    };
+  }
+  return { enabled: true, expressionMode };
+}
+
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
  * Content follows realization kind; behavior uses persisted `hourMarkers.behavior` when set, else
@@ -109,6 +156,7 @@ export function resolveEffectiveTopBandHourMarkers(
   const hm = layout.hourMarkers;
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
   const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
+  const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(hm, indicatorEntriesArea);
   const derivedFg = indicatorEntriesArea.effectiveForegroundColor;
   const defaultWedgeFill = rgbaForegroundWithAlpha(derivedFg, 0.32);
 
@@ -147,6 +195,7 @@ export function resolveEffectiveTopBandHourMarkers(
       content: { kind: "hour24" },
       realization,
       layout: layoutOut,
+      noonMidnightCustomization,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
@@ -163,6 +212,7 @@ export function resolveEffectiveTopBandHourMarkers(
         resolvedAppearance: resolveAnalogClockResolvedAppearance(r, derivedFg),
       },
       layout: layoutOut,
+      noonMidnightCustomization,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
@@ -179,6 +229,7 @@ export function resolveEffectiveTopBandHourMarkers(
         resolvedAppearance: resolveRadialLineResolvedAppearance(r, derivedFg),
       },
       layout: layoutOut,
+      noonMidnightCustomization,
       ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
@@ -194,6 +245,7 @@ export function resolveEffectiveTopBandHourMarkers(
       resolvedAppearance: resolveRadialWedgeResolvedAppearance(r, defaultWedgeFill),
     },
     layout: layoutOut,
+    noonMidnightCustomization,
     ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
   };
 }

@@ -34,6 +34,9 @@ describe("buildSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     const plan = buildSemanticTopBandHourMarkers(eff);
     expect(plan.instances).toHaveLength(24);
+    expect(plan.instances[0]!.indicatorEntryNoonMidnightRole).toBe("midnight");
+    expect(plan.instances[12]!.indicatorEntryNoonMidnightRole).toBe("noon");
+    expect(plan.instances[7]!.indicatorEntryNoonMidnightRole).toBe("none");
   });
 
   it("omits instances when indicator entries area is not visible", () => {

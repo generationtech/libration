@@ -16,6 +16,7 @@ import {
   blackOrWhiteForegroundForBackgroundCss,
   rgbaForegroundWithAlpha,
 } from "../color/contrastForegroundOnCssBackground.ts";
+import { halfwayRgbStringBetweenCssColors } from "../color/halfwayRgbBetweenCssColors.ts";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
@@ -32,6 +33,8 @@ const INDICATOR_ENTRIES_AREA_DEFAULT = {
     DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
   ),
 } as const;
+
+const NOON_MIDNIGHT_DISABLED = { noonMidnightCustomization: { enabled: false as const } };
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
@@ -64,6 +67,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: { color: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor },
       },
       layout: { sizeMultiplier: 1 },
+      ...NOON_MIDNIGHT_DISABLED,
     });
   });
 
@@ -88,6 +92,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: { color: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor },
       },
       layout: { sizeMultiplier: 1 },
+      ...NOON_MIDNIGHT_DISABLED,
     });
   });
 
@@ -129,6 +134,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         },
       },
       layout: { sizeMultiplier: 1 },
+      ...NOON_MIDNIGHT_DISABLED,
     });
   });
 
@@ -152,6 +158,27 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         resolvedAppearance: { lineColor: INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor },
       },
       layout: { sizeMultiplier: 1 },
+      ...NOON_MIDNIGHT_DISABLED,
+    });
+  });
+
+  it("noon/midnight boxedNumber resolves halfway box color from indicator row bg/fg", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+          noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+        },
+      }),
+    );
+    expect(eff.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "boxedNumber",
+      boxedNumberBoxColor: halfwayRgbStringBetweenCssColors(
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+      ),
     });
   });
 
@@ -177,6 +204,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         },
       },
       layout: { sizeMultiplier: 1 },
+      ...NOON_MIDNIGHT_DISABLED,
     });
   });
 

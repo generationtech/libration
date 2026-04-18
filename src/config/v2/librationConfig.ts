@@ -547,6 +547,25 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers behavior");
   }
+  const nm = (hm as { noonMidnightCustomization?: unknown }).noonMidnightCustomization;
+  if (nm !== undefined) {
+    if (typeof nm !== "object" || nm === null || Array.isArray(nm)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers.noonMidnightCustomization");
+    }
+    const nmo = nm as { enabled?: unknown; expressionMode?: unknown };
+    if (nmo.enabled !== true) {
+      throw new Error("assertIsNormalizedLibrationConfig: hourMarkers.noonMidnightCustomization must be enabled when present");
+    }
+    const em = nmo.expressionMode;
+    if (
+      em !== "textWords" &&
+      em !== "boxedNumber" &&
+      em !== "solarLunarPictogram" &&
+      em !== "semanticGlyph"
+    ) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers.noonMidnightCustomization.expressionMode");
+    }
+  }
   const tapeOv = (hm as { tapeHourNumberOverlay?: unknown }).tapeHourNumberOverlay;
   if (tapeOv !== undefined) {
     if (rk === "text") {

@@ -234,6 +234,18 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
     ...(h.tapeHourNumberOverlay !== undefined
       ? { tapeHourNumberOverlay: { ...h.tapeHourNumberOverlay } }
       : {}),
+    ...(h.noonMidnightCustomization !== undefined
+      ? {
+          noonMidnightCustomization: {
+            ...(h.noonMidnightCustomization.enabled !== undefined
+              ? { enabled: h.noonMidnightCustomization.enabled }
+              : {}),
+            ...(h.noonMidnightCustomization.expressionMode !== undefined
+              ? { expressionMode: h.noonMidnightCustomization.expressionMode }
+              : {}),
+          },
+        }
+      : {}),
   };
 }
 

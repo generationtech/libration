@@ -56,6 +56,27 @@ export type HourMarkersTapeHourNumberOverlay = {
   enabled: boolean;
 };
 
+/**
+ * How noon (structural hour 12) and midnight (structural hour 0) are expressed on the 24-hour indicator entries row.
+ * Only applies when {@link HourMarkersNoonMidnightCustomization.enabled} is true.
+ */
+export type HourMarkersNoonMidnightExpressionMode =
+  | "textWords"
+  | "boxedNumber"
+  | "solarLunarPictogram"
+  | "semanticGlyph";
+
+/**
+ * Optional customization for the two structural columns that read as noon and midnight in the band’s civil frame
+ * (hour 12 → noon, hour 0 → midnight). Persisted under `chrome.layout.hourMarkers.noonMidnightCustomization`.
+ */
+export type HourMarkersNoonMidnightCustomization = {
+  /** When false or omitted, noon/midnight render like any other hour entry. @default false */
+  enabled?: boolean;
+  /** Ignored when {@link enabled} is false. @default textWords */
+  expressionMode?: HourMarkersNoonMidnightExpressionMode;
+};
+
 export interface HourMarkersConfig {
   realization: HourMarkersRealizationConfig;
   /**
@@ -88,6 +109,8 @@ export interface HourMarkersConfig {
   };
   /** Optional boxed numerals carried on the hourly tick tape (glyph realization contexts). */
   tapeHourNumberOverlay?: HourMarkersTapeHourNumberOverlay;
+  /** Optional noon/midnight treatment for indicator entries (hour columns 0 and 12). */
+  noonMidnightCustomization?: HourMarkersNoonMidnightCustomization;
 }
 
 /**
@@ -139,6 +162,19 @@ export type EffectiveTopBandHourMarkerLayout = {
 };
 
 /**
+ * Resolved noon/midnight customization for the indicator entries row. Box color is precomputed in resolver space
+ * for {@link HourMarkersNoonMidnightExpressionMode boxedNumber} only.
+ */
+export type EffectiveNoonMidnightCustomization =
+  | { enabled: false }
+  | {
+      enabled: true;
+      expressionMode: HourMarkersNoonMidnightExpressionMode;
+      /** Present when {@link expressionMode} is `boxedNumber`: halfway between row background and contrast foreground. */
+      boxedNumberBoxColor?: string;
+    };
+
+/**
  * Authoritative resolved model for top-band hour markers: semantic planning and UI consume this shape
  * alongside {@link DisplayChromeLayoutConfig.hourMarkers}.
  */
@@ -162,4 +198,6 @@ export type EffectiveTopBandHourMarkers = {
   layout: EffectiveTopBandHourMarkerLayout;
   /** Resolved optional tape overlay (companion presentation, not a realization kind). */
   tapeHourNumberOverlay?: { enabled: boolean };
+  /** Noon/midnight indicator-entry customization (semantic + layout consume; renderer adapts per realization). */
+  noonMidnightCustomization: EffectiveNoonMidnightCustomization;
 };

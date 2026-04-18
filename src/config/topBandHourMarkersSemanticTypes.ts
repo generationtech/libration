@@ -17,6 +17,7 @@ import type {
   EffectiveTopBandHourMarkerRealization,
   EffectiveTopBandHourMarkers,
 } from "./topBandHourMarkersTypes.ts";
+import type { IndicatorEntryNoonMidnightRole } from "./noonMidnightIndicatorSemantics.ts";
 import { structuralZoneLetterFromIndex } from "./structuralZoneLetters.ts";
 
 /** Degrees of longitude per structural UTC hour column on the top band (−180°…+180° in 24 sectors). */
@@ -72,6 +73,8 @@ export type SemanticHourMarkerContent =
 export type SemanticHourMarkerInstance = {
   structuralHour0To23: number;
   structuralAnchor: SemanticHourMarkerStructuralAnchor;
+  /** Noon/midnight structural roles (hours 12 / 0); independent of customization being enabled. */
+  indicatorEntryNoonMidnightRole: IndicatorEntryNoonMidnightRole;
   behavior: EffectiveTopBandHourMarkerBehavior;
   content: SemanticHourMarkerContent;
   realization: EffectiveTopBandHourMarkerRealization;

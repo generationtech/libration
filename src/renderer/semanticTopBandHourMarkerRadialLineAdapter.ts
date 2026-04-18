@@ -26,6 +26,7 @@ import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTy
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
+import { tryEmitNoonMidnightIndicatorDiskContent } from "./noonMidnightIndicatorRenderPlan.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
 
@@ -57,6 +58,26 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
       viewportWidthPx,
     )) {
       const cx = inst.centerX + wrapK * viewportWidthPx;
+      const layout = { cx, cy: inst.centerY, size: inst.sizePx };
+      const handled = tryEmitNoonMidnightIndicatorDiskContent(
+        {
+          realizationKind: "radialLine",
+          customization: effectiveTopBandHourMarkers.noonMidnightCustomization,
+          structuralHour0To23: inst.structuralHour0To23,
+          tapeHourLabel: inst.tapeHourLabel,
+          displayLabel: inst.displayLabel,
+          layout,
+          markerColor,
+          hourSpec,
+          effectiveTopBandHourMarkerSelection,
+          effectiveTopBandHourMarkers,
+        },
+        glyphRenderContext,
+        out,
+      );
+      if (handled) {
+        continue;
+      }
       const hourContent: HourMarkerContent = {
         structuralHour0To23: inst.structuralHour0To23,
         displayLabel: inst.displayLabel,
@@ -67,7 +88,7 @@ export function emitLaidOutSemanticTopBandRadialLineMarkersToRenderPlan(
         typographyOverrides,
         markerColor,
       );
-      emitGlyphToRenderPlan(glyph, { cx, cy: inst.centerY, size: inst.sizePx }, glyphRenderContext, out);
+      emitGlyphToRenderPlan(glyph, layout, glyphRenderContext, out);
     }
   }
 }

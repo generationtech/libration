@@ -17,10 +17,12 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
+import { resolveIndicatorEntryDiskDisplayLabel } from "../config/noonMidnightIndicatorSemantics.ts";
 import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import type { LaidOutSemanticTopBandAnalogClockMarker } from "../config/topBandHourMarkersLayout.ts";
 import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
+import { tryEmitNoonMidnightIndicatorDiskContent } from "./noonMidnightIndicatorRenderPlan.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
 
@@ -52,6 +54,34 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
       viewportWidthPx,
     )) {
       const cx = inst.centerX + wrapK * viewportWidthPx;
+      const layout = { cx, cy: inst.centerY, size: inst.sizePx };
+      const diskLabel = resolveIndicatorEntryDiskDisplayLabel(
+        inst.tapeHourLabel,
+        inst.structuralHour0To23,
+        effectiveTopBandHourMarkers.noonMidnightCustomization,
+      );
+      const handled = tryEmitNoonMidnightIndicatorDiskContent(
+        {
+          realizationKind: "analogClock",
+          customization: effectiveTopBandHourMarkers.noonMidnightCustomization,
+          structuralHour0To23: inst.structuralHour0To23,
+          tapeHourLabel: inst.tapeHourLabel,
+          displayLabel: diskLabel,
+          layout,
+          markerColor: ra.handStroke,
+          hourSpec: spec,
+          effectiveTopBandHourMarkerSelection,
+          effectiveTopBandHourMarkers,
+          continuousHour0To24: inst.continuousHour0To24,
+          continuousMinute0To60: inst.continuousMinute0To60,
+          analogResolvedAppearance: ra,
+        },
+        glyphRenderContext,
+        out,
+      );
+      if (handled) {
+        continue;
+      }
       emitGlyphToRenderPlan(
         {
           kind: "clockFace",
@@ -63,7 +93,7 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
           handStrokeOverride: ra.handStroke,
           faceFillOverride: ra.faceFill,
         },
-        { cx, cy: inst.centerY, size: inst.sizePx },
+        layout,
         glyphRenderContext,
         out,
       );

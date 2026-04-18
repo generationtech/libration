@@ -20,6 +20,7 @@ import {
 import type {
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
+  HourMarkersNoonMidnightExpressionMode,
   HourMarkersRealizationConfig,
 } from "../../config/topBandHourMarkersTypes";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
@@ -39,6 +40,30 @@ const HOUR_MARKER_REALIZATION_KINDS = [
   "radialLine",
   "radialWedge",
 ] as const satisfies readonly HourMarkersRealizationConfig["kind"][];
+
+const NOON_MIDNIGHT_EXPRESSION_MODES = [
+  "textWords",
+  "boxedNumber",
+  "solarLunarPictogram",
+  "semanticGlyph",
+] as const satisfies readonly HourMarkersNoonMidnightExpressionMode[];
+
+function labelForNoonMidnightExpressionMode(mode: HourMarkersNoonMidnightExpressionMode): string {
+  switch (mode) {
+    case "textWords":
+      return "Words (NOON / MIDNIGHT)";
+    case "boxedNumber":
+      return "Boxed number";
+    case "solarLunarPictogram":
+      return "Sun / moon pictogram";
+    case "semanticGlyph":
+      return "Semantic diamond glyph";
+    default: {
+      const _exhaustive: never = mode;
+      return _exhaustive;
+    }
+  }
+}
 
 /** Placeholder for the native color input when no override is stored (not persisted). */
 const TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER = "#335577";
@@ -712,6 +737,80 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
   );
 }
 
+function NoonMidnightSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
+  const nm = hourMarkers.noonMidnightCustomization;
+  const enabled = nm?.enabled === true;
+  const mode: HourMarkersNoonMidnightExpressionMode = nm?.expressionMode ?? "textWords";
+  const authoringOff = !wired || !entriesAreaEnabled;
+
+  return (
+    <>
+      <ConfigControlRow label="Customize noon / midnight">
+        <label className="config-control-row__checkbox">
+          <input
+            type="checkbox"
+            disabled={authoringOff}
+            aria-label="Customize noon and midnight indicator entries"
+            checked={enabled}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const on = e.currentTarget.checked;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (!on) {
+                        const next = cloneHourMarkersConfig(hm);
+                        delete (next as { noonMidnightCustomization?: unknown }).noonMidnightCustomization;
+                        return next;
+                      }
+                      return {
+                        ...hm,
+                        noonMidnightCustomization: {
+                          enabled: true,
+                          expressionMode: hm.noonMidnightCustomization?.expressionMode ?? "textWords",
+                        },
+                      };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <span>Replace noon and midnight entries with the chosen expression</span>
+        </label>
+      </ConfigControlRow>
+      {enabled ? (
+        <ConfigControlRow label="Noon / midnight expression">
+          <select
+            className="config-input"
+            disabled={authoringOff}
+            aria-label="Noon and midnight expression mode"
+            value={mode}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const nextMode = e.currentTarget.value as HourMarkersNoonMidnightExpressionMode;
+                    commitHourMarkers(updateConfig, (hm) => ({
+                      ...hm,
+                      noonMidnightCustomization: {
+                        enabled: true,
+                        expressionMode: nextMode,
+                      },
+                    }));
+                  }
+                : undefined
+            }
+          >
+            {NOON_MIDNIGHT_EXPRESSION_MODES.map((m) => (
+              <option key={m} value={m}>
+                {labelForNoonMidnightExpressionMode(m)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+      ) : null}
+    </>
+  );
+}
+
 export type HourMarkersEditorProps = {
   config: LibrationConfigV2;
   /** When set, wired display-time controls call into the guarded update path. */
@@ -808,6 +907,7 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
             Default
           </button>
         </ConfigControlRow>
+        <NoonMidnightSection {...baseProps} />
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Behavior</legend>

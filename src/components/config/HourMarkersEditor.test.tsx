@@ -241,4 +241,34 @@ describe("HourMarkersEditor structured authoring", () => {
       screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }),
     ).not.toBeDisabled();
   });
+
+  it("noon/midnight customization toggles structured config", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness initial={baseCustomHourMarkers()}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    const customize = screen.getByRole("checkbox", {
+      name: /Customize noon and midnight indicator entries/i,
+    });
+    expect(customize).not.toBeChecked();
+    fireEvent.click(customize);
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "textWords",
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /Noon and midnight expression mode/i }), {
+      target: { value: "semanticGlyph" },
+    });
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toEqual({
+      enabled: true,
+      expressionMode: "semanticGlyph",
+    });
+    fireEvent.click(customize);
+    expect(last!.chrome.layout.hourMarkers.noonMidnightCustomization).toBeUndefined();
+  });
 });

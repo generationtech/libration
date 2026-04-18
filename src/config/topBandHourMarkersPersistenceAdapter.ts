@@ -23,6 +23,8 @@ import type {
   EffectiveTopBandHourMarkerBehavior,
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
+  HourMarkersNoonMidnightCustomization,
+  HourMarkersNoonMidnightExpressionMode,
   HourMarkersRadialLineAppearance,
   HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
@@ -148,6 +150,33 @@ function normalizeHourMarkersLayoutFromRaw(layoutRaw: unknown): HourMarkersConfi
   return out;
 }
 
+const NOON_MIDNIGHT_EXPRESSION_MODES = new Set<HourMarkersNoonMidnightExpressionMode>([
+  "textWords",
+  "boxedNumber",
+  "solarLunarPictogram",
+  "semanticGlyph",
+]);
+
+function normalizedNoonMidnightCustomization(
+  raw: unknown,
+): HourMarkersNoonMidnightCustomization | undefined {
+  if (raw === undefined || raw === null) {
+    return undefined;
+  }
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  if (raw.enabled !== true) {
+    return undefined;
+  }
+  let expressionMode: HourMarkersNoonMidnightExpressionMode = "textWords";
+  const em = raw.expressionMode;
+  if (typeof em === "string" && NOON_MIDNIGHT_EXPRESSION_MODES.has(em as HourMarkersNoonMidnightExpressionMode)) {
+    expressionMode = em as HourMarkersNoonMidnightExpressionMode;
+  }
+  return { enabled: true, expressionMode };
+}
+
 function normalizedTapeHourNumberOverlay(
   raw: unknown,
   realizationKind: string,
@@ -199,6 +228,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   }
 
   const tapeOpt = normalizedTapeHourNumberOverlay(raw.tapeHourNumberOverlay, kind);
+  const noonMidnightOpt = normalizedNoonMidnightCustomization(raw.noonMidnightCustomization);
 
   if (kind === "text") {
     const fid = realizationRaw.fontAssetId;
@@ -223,6 +253,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
+      ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
 
@@ -241,6 +272,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
+      ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
 
@@ -259,6 +291,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
+      ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
 
@@ -277,6 +310,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
       ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
+      ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
 

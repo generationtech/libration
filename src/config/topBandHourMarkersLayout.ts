@@ -21,6 +21,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
+import { resolveIndicatorEntryDiskDisplayLabel } from "./noonMidnightIndicatorSemantics.ts";
 import type { SemanticTopBandHourMarkersPlan } from "./topBandHourMarkersSemanticTypes.ts";
 import type {
   EffectiveTopBandHourMarkerBehavior,
@@ -106,6 +107,8 @@ export type LaidOutSemanticTopBandHourTextMarker = {
   sizePx: number;
   wrapHalfExtentPx: number;
   displayLabel: string;
+  /** Tape hour label before noon/midnight text substitution (for pictogram / boxed numeric content). */
+  tapeHourLabel: string;
 };
 
 /** Laid-out analog clock disk interior: static zone x + continuous solar-local hour for the hour hand. */
@@ -117,6 +120,8 @@ export type LaidOutSemanticTopBandAnalogClockMarker = {
   wrapHalfExtentPx: number;
   continuousHour0To24: number;
   continuousMinute0To60: number;
+  /** Civil label from the phased tape column (for noon/midnight pictogram numerals). */
+  tapeHourLabel: string;
 };
 
 /** Laid-out radial line disk interior (tape column x + same vertical center as hour-disk text / analog). */
@@ -128,6 +133,7 @@ export type LaidOutSemanticTopBandRadialLineMarker = {
   wrapHalfExtentPx: number;
   /** Civil-time label from the tape column (legacy glyph path passes it; unused for radial stroke). */
   displayLabel: string;
+  tapeHourLabel: string;
 };
 
 /** Laid-out radial wedge disk interior (same geometry as radial line; wedge angle comes from glyph style). */
@@ -138,6 +144,7 @@ export type LaidOutSemanticTopBandRadialWedgeMarker = {
   sizePx: number;
   wrapHalfExtentPx: number;
   displayLabel: string;
+  tapeHourLabel: string;
 };
 
 /**
@@ -286,6 +293,8 @@ export function layoutSemanticTopBandHourMarkers(
       { kind: "text", intrinsicContentHeightPx: textIntrinsicPx },
     );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
+    const tape = m.currentHourLabel;
+    const display = resolveIndicatorEntryDiskDisplayLabel(tape, h, plan.source.noonMidnightCustomization);
 
     out.push({
       structuralHour0To23: h,
@@ -293,7 +302,8 @@ export function layoutSemanticTopBandHourMarkers(
       centerY: numeralY,
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
-      displayLabel: m.currentHourLabel,
+      displayLabel: display,
+      tapeHourLabel: tape,
     });
   }
 
@@ -336,6 +346,8 @@ export function layoutSemanticTopBandRadialLineMarkers(
       { kind: "glyphHeadDisk" },
     );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
+    const tape = m.currentHourLabel;
+    const display = resolveIndicatorEntryDiskDisplayLabel(tape, h, plan.source.noonMidnightCustomization);
 
     out.push({
       structuralHour0To23: h,
@@ -343,7 +355,8 @@ export function layoutSemanticTopBandRadialLineMarkers(
       centerY: numeralY,
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
-      displayLabel: m.currentHourLabel,
+      displayLabel: display,
+      tapeHourLabel: tape,
     });
   }
 
@@ -386,6 +399,8 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
       { kind: "glyphHeadDisk" },
     );
     const halfExt = r > 0 ? topBandDiskWrapHalfExtentPx(r) : labelSize;
+    const tape = m.currentHourLabel;
+    const display = resolveIndicatorEntryDiskDisplayLabel(tape, h, plan.source.noonMidnightCustomization);
 
     out.push({
       structuralHour0To23: h,
@@ -393,7 +408,8 @@ export function layoutSemanticTopBandRadialWedgeMarkers(
       centerY: numeralY,
       sizePx: labelSize,
       wrapHalfExtentPx: halfExt,
-      displayLabel: m.currentHourLabel,
+      displayLabel: display,
+      tapeHourLabel: tape,
     });
   }
 
@@ -459,6 +475,7 @@ export function layoutSemanticTopBandAnalogClockMarkers(
       wrapHalfExtentPx: halfExt,
       continuousHour0To24: inst.content.wallClock.continuousHour0To24,
       continuousMinute0To60: inst.content.wallClock.continuousMinute0To60,
+      tapeHourLabel: m.currentHourLabel,
     });
   }
 

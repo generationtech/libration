@@ -141,6 +141,35 @@ describe("normalizeHourMarkersInput", () => {
     ).toEqual(cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG));
   });
 
+  it("normalizes noonMidnightCustomization when enabled", () => {
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+        noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
+      }),
+    ).toEqual({
+      indicatorEntriesAreaVisible: true,
+      realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+      layout: { sizeMultiplier: 1 },
+      noonMidnightCustomization: { enabled: true, expressionMode: "semanticGlyph" },
+    });
+  });
+
+  it("drops noonMidnightCustomization when not enabled", () => {
+    expect(
+      normalizeHourMarkersInput({
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+        noonMidnightCustomization: { enabled: false },
+      }),
+    ).toEqual({
+      indicatorEntriesAreaVisible: true,
+      realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+      layout: { sizeMultiplier: 1 },
+    });
+  });
+
   it("preserves valid behavior and drops invalid behavior", () => {
     expect(
       normalizeHourMarkersInput({
