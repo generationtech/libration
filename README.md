@@ -14,6 +14,7 @@ It uses:
 - a renderer-agnostic rendering pipeline
 
 It is a high-fidelity world time instrument built on a **render-plan architecture** and currently delivered as a local-first desktop application.
+
 ```mermaid
 flowchart LR
     R[Resolver] --> S[Semantic Planning]
@@ -32,6 +33,8 @@ flowchart LR
     class E,B downstream;
 ```
 
+Libration resolves rendering intent upstream and emits a backend-agnostic RenderPlan for execution.
+
 ---
 
 ## Project Philosophy
@@ -39,11 +42,11 @@ flowchart LR
 Libration is intended to be a canonical, publicly accessible, user-freedom-preserving reference implementation of this system.
 
 This project prioritizes the freedom of users to:
-- inspect the software
-- study how it works
-- modify it
-- share it
-- benefit from improvements made by others
+- 🔍 Inspect the software
+- 🧠 Study how it works
+- 🛠 Modify it
+- 🔄 Share it
+- 📈 Benefit from improvements made by others
 
 To preserve those freedoms downstream, Libration is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
 
@@ -57,6 +60,37 @@ Top band consists of:
 - Hour markers
 - Tickmark tape (hour / 15 / 5)
 - NATO timezone strip (continuous rectangular band)
+
+```mermaid
+flowchart TB
+    IE[Indicator Entries]
+    TT[Tickmark Tape]
+    NZ[NATO Timezone Strip]
+
+    SCENE[Scene Viewport]
+
+    IE --> TT
+    TT --> NZ
+    NZ --> SCENE
+
+    %% Styling
+    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef scene fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+    classDef boundary fill:#00000000,stroke:#00bcd4,stroke-width:2px,color:#00bcd4;
+
+    class IE,TT,NZ chrome;
+    class SCENE scene;
+
+    %% Conceptual boundary (chrome vs scene)
+    BOUNDARY[Reserved Layout Boundary]
+    NZ -.-> BOUNDARY
+    BOUNDARY -.-> SCENE
+
+    class BOUNDARY boundary;
+```
+
+Top chrome is composed in screen space and **reserves vertical layout**.  
+The scene viewport begins strictly below the visible chrome stack.
 
 The top instrument strip uses one built-in appearance for now; future tweaks will be direct config controls, not bundled palette presets.
 
@@ -90,6 +124,28 @@ Top-band hour markers now use a clean, explicit model:
 - **Layout** — size and placement semantics
 - **Appearance** — realization-scoped styling layered on top
 
+```mermaid
+flowchart TB
+    HM[Resolved Hour Marker Model]
+
+    B[Behavior]
+    R[Realization]
+    L[Layout]
+    A[Appearance]
+
+    B --- HM
+    R --- HM
+    L --- HM
+    A --- HM
+
+    %% Styling
+    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+
+    class HM center;
+    class B,R,L,A axis;
+```
+
 At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
 
 Implemented realizations:
@@ -122,9 +178,31 @@ That model is authoritative for:
 
 ### Indicator-band vertical model
 
-The top-most 24-hour indicator band now follows a strict final rule:
+```mermaid
+flowchart TB
+    TP[Top Padding]
+    CT[Content<br/>Intrinsic Height]
+    BP[Bottom Padding]
 
-`visible band height = intrinsic content height + resolved top padding + resolved bottom padding`
+    TOTAL[Total Indicator Band Height]
+
+    TP --> CT
+    CT --> BP
+    BP --> TOTAL
+
+    %% Styling
+    classDef padding fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef content fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef total fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+
+    class TP,BP padding;
+    class CT content;
+    class TOTAL total;
+```
+
+**Total Height = intrinsic content height + top padding + bottom padding**
+
+Padding affects spacing only. It does not change intrinsic text size, glyph size, or fitted marker geometry.
 
 Where:
 - intrinsic content height comes from text intrinsic sizing in text mode
@@ -157,6 +235,41 @@ The current data model is intentionally local-first:
 
 ## Font / Typography Status
 
+```mermaid
+flowchart TB
+    FA[fontAssetId]
+    FR[FontAssetRegistry]
+    RS[ResolveTextStyle]
+    RP[RenderPlan Text]
+    CB[Canvas Text Bridge]
+    CR[Canvas Native Text Rendering]
+    FG[Future Glyph Atlas or Outline Renderer]
+
+    FA --> FR
+    FR --> RS
+    RS --> RP
+    RP --> CB
+    CB --> CR
+
+    RP -. future .-> FG
+
+    %% Styling
+    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+    classDef future fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+
+    class FA,FR,RS pipeline;
+    class RP boundary;
+    class CB,CR backend;
+    class FG future;
+```
+
+Bundled font assets resolve into backend-agnostic text intent first.  
+Today, the active Canvas backend realizes that text through its Canvas text bridge and native Canvas text rendering path.
+
+A future glyph-atlas or outline-based text renderer would attach downstream of the same RenderPlan boundary.
+
 The project has:
 - a preprocessed font asset manifest
 - runtime font asset lookup by stable ID
@@ -175,9 +288,82 @@ The project does **not yet** use a custom glyph-outline or atlas-based text rend
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph UPSTREAM[Upstream Intent Resolution]
+        direction LR
+
+        subgraph SCENE[Scene Pipeline]
+            SR[Resolver] --> SS[Semantic Planning]
+            SS --> SL[Layout]
+            SL --> SA[Adapter]
+        end
+
+        subgraph CHROME[Chrome Pipeline]
+            CR[Resolver] --> CS[Semantic Planning]
+            CS --> CL[Layout]
+            CL --> CA[Adapter]
+        end
+    end
+
+    SA --> RP[RenderPlan]
+    CA --> RP
+
+    RP --> EX[Executor]
+    EX --> BE[Backend]
+
+    NS[Backend executes only: no product semantics]
+
+    RP -. hard boundary .- NS
+
+    %% Styling
+    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+    classDef group fill:#0f1720,stroke:#3b4b5c,color:#e6edf3;
+
+    class SR,SS,SL,SA,CR,CS,CL,CA pipeline;
+    class RP boundary;
+    class EX,BE backend;
+    class NS note;
+    class SCENE,CHROME,UPSTREAM group;
+```
+
+Libration resolves scene and chrome intent upstream, converts both into a shared **RenderPlan**, and only then hands execution to the backend.
+
+The backend executes drawing instructions only. It does not derive product semantics, layout policy, or chrome reservation rules.
+
 `Resolver / Planner / Layout / Adapter → RenderPlan → Executor`
 
 All rendering intent is resolved before backend execution.
+
+```mermaid
+flowchart TB
+    TC[Top Chrome Reserved Layout]
+    SV[Scene Viewport Computed Upstream]
+    SD[sceneLayerViewportPx]
+    BE[Backend Execution]
+
+    TC --> SV
+    SV --> SD
+    SD --> BE
+
+    NOTE[Backend does not derive viewport layout]
+
+    SD -. concrete layout data .-> NOTE
+
+    %% Styling
+    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
+    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+
+    class TC chrome;
+    class SV,SD boundary;
+    class BE backend;
+    class NOTE note;
+```
 
 The scene viewport for visible map content is also resolved upstream and passed to the backend as concrete layout data (`sceneLayerViewportPx`), so backends do not derive top-chrome reservation rules themselves.
 
