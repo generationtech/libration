@@ -19,6 +19,7 @@ import type {
   EffectiveTopBandHourMarkers,
 } from "./topBandHourMarkersTypes.ts";
 import {
+  anchoredTimezoneSegmentWallClockState,
   buildStructuralAnchor,
   structuralColumnCenterLongitudeDeg,
   type SemanticHourMarkerContent,
@@ -27,13 +28,13 @@ import {
 } from "./topBandHourMarkersSemanticTypes.ts";
 
 /**
- * Mean-solar longitude used for procedural wall-clock state for each structural hour column.
+ * Mean-solar longitude used for procedural wall-clock state when semantic planning does **not** use
+ * {@link BuildSemanticTopBandHourMarkersOptions.anchoredTimezoneSegment} (tape mode, tests, or missing chrome context).
  *
- * - {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}: sector center longitude (15° grid), matching
- *   structural zone centers and the present-time tick column.
+ * - {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}: inverse map of each structural zone center `centerX`
+ *   when paired with layout (legacy mean-solar path only if anchored segment options are omitted).
  * - {@link EffectiveTopBandHourMarkerBehavior.tapeAdvected}: inverse equirectangular map of each column’s phased
- *   tape `centerX` so hands match the geographic meridian at the disk’s visual position
- *   (aligns with the tick when that disk sits on the reference meridian).
+ *   tape `centerX` so hands match the geographic meridian at the disk’s visual position.
  */
 export function wallClockLongitudeDegForStructuralHourMarkers(
   behavior: EffectiveTopBandHourMarkerBehavior,
@@ -71,9 +72,21 @@ function semanticContentForInstance(
   structuralHour0To23: number,
   referenceNowMs: number | undefined,
   wallClockLongitudeDegByStructuralHour: readonly number[] | undefined,
+  anchoredTimezoneSegment: BuildSemanticTopBandHourMarkersOptions["anchoredTimezoneSegment"],
 ): SemanticHourMarkerContent {
   const h = structuralHour0To23;
   if (effective.content.kind === "localWallClock") {
+    if (
+      effective.behavior === "staticZoneAnchored" &&
+      anchoredTimezoneSegment !== undefined
+    ) {
+      const wallClock = anchoredTimezoneSegmentWallClockState(
+        anchoredTimezoneSegment.referenceFractionalHour,
+        h,
+        anchoredTimezoneSegment.presentTimeStructuralHour0To23,
+      );
+      return { kind: "localWallClock", structuralHour0To23: h, wallClock };
+    }
     const lon =
       wallClockLongitudeDegByStructuralHour !== undefined
         ? wallClockLongitudeDegByStructuralHour[h]!
@@ -90,7 +103,7 @@ function semanticContentForInstance(
 export type BuildSemanticTopBandHourMarkersOptions = {
   /**
    * Required for effective {@link EffectiveTopBandHourMarkerContent} `localWallClock` (analogClock, radialLine,
-   * radialWedge): mean-solar wall-clock state per structural column.
+   * radialWedge): mean-solar wall-clock state per structural column when anchored segment is not used.
    */
   referenceNowMs?: number;
   /**
@@ -98,6 +111,15 @@ export type BuildSemanticTopBandHourMarkersOptions = {
    * mean-solar wall clock (tape-advected phased x → longitude via {@link longitudeDegFromMapX}).
    */
   wallClockLongitudeDegByStructuralHour?: readonly number[];
+  /**
+   * For {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored} procedural realizations in product chrome:
+   * band-frame civil fractional hour at the present-time structural column (same basis as the map clock / phased tape)
+   * plus that column index. When set, overrides mean-solar longitude for wall-clock content.
+   */
+  anchoredTimezoneSegment?: {
+    referenceFractionalHour: number;
+    presentTimeStructuralHour0To23: number;
+  };
 };
 
 /**
@@ -113,6 +135,7 @@ export function buildSemanticTopBandHourMarkers(
   }
   const referenceNowMs = options?.referenceNowMs;
   const wallClockLon = options?.wallClockLongitudeDegByStructuralHour;
+  const anchored = options?.anchoredTimezoneSegment;
   if (wallClockLon !== undefined && wallClockLon.length !== 24) {
     throw new Error("buildSemanticTopBandHourMarkers: wallClockLongitudeDegByStructuralHour must have length 24");
   }
@@ -123,7 +146,7 @@ export function buildSemanticTopBandHourMarkers(
       structuralAnchor: buildStructuralAnchor(h),
       indicatorEntryNoonMidnightRole: indicatorEntryNoonMidnightRole(h),
       behavior: effective.behavior,
-      content: semanticContentForInstance(effective, h, referenceNowMs, wallClockLon),
+      content: semanticContentForInstance(effective, h, referenceNowMs, wallClockLon, anchored),
       realization: effective.realization,
       layout: effective.layout,
     });

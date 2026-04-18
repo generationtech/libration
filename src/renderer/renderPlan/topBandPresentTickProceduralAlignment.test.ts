@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection.ts";
 import { solarLocalWallClockStateFromUtcMs } from "../../core/solarLocalWallClock.ts";
+import { anchoredTimezoneSegmentWallClockState } from "../../config/topBandHourMarkersSemanticTypes.ts";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
@@ -39,6 +40,7 @@ import {
   buildUtcTopScaleLayout,
   computeTopBandCircleStackMetrics,
   computeUtcTopScaleRowMetrics,
+  referenceFractionalHourOfDay,
   resolveTopBandTimeFromConfig,
 } from "../displayChrome.ts";
 import { buildTopBandCircleBandHourStackRenderPlan } from "./topBandCircleBandHourStackPlan.ts";
@@ -93,7 +95,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     return { w, top, scale, rows, circleStack };
   }
 
-  it("identifies the structural column at the present-time tick and matches mean-solar wall clock for analog, radialLine, radialWedge (staticZoneAnchored)", () => {
+  it("identifies the structural column at the present-time tick and matches band-reference (map-clock) wall-clock for analog, radialLine, radialWedge (staticZoneAnchored)", () => {
     const { w, scale, rows, circleStack } = fixtureScale();
     const lon = scale.topBandAnchor.referenceLongitudeDeg;
     const hTick = structuralHourIndexFromReferenceLongitudeDeg(lon);
@@ -109,7 +111,15 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const lonAtTick = longitudeDegFromMapX(zoneX[hTick]!, w);
     expect(wallLon[hTick]).toBeCloseTo(lonAtTick, 7);
 
-    const expected = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, lonAtTick);
+    const refFrac = referenceFractionalHourOfDay(
+      REF_MS_NY_702,
+      RESOLVED_NY_LOCAL24.topBandMode,
+      RESOLVED_NY_LOCAL24.referenceTimeZone,
+    );
+    expect(scale.referenceFractionalHour).toBeCloseTo(refFrac, 7);
+    const expected = anchoredTimezoneSegmentWallClockState(refFrac, hTick, hTick);
+    const meanSolarAtTickLon = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, lonAtTick);
+    expect(expected.continuousHour0To24).not.toBeCloseTo(meanSolarAtTickLon.continuousHour0To24, 1);
     const tapeMarkers = scale.circleMarkers.map((m) => ({
       centerX: m.centerX,
       radiusPx: m.radiusPx,
@@ -128,6 +138,10 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const planAnalog = buildSemanticTopBandHourMarkers(effAnalog, {
       referenceNowMs: REF_MS_NY_702,
       wallClockLongitudeDegByStructuralHour: wallLon,
+      anchoredTimezoneSegment: {
+        referenceFractionalHour: refFrac,
+        presentTimeStructuralHour0To23: hTick,
+      },
     });
     const laidAnalog = layoutSemanticTopBandAnalogClockMarkers(planAnalog, {
       viewportWidthPx: w,
@@ -159,6 +173,10 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const planRadial = buildSemanticTopBandHourMarkers(effRadial, {
       referenceNowMs: REF_MS_NY_702,
       wallClockLongitudeDegByStructuralHour: wallLon,
+      anchoredTimezoneSegment: {
+        referenceFractionalHour: refFrac,
+        presentTimeStructuralHour0To23: hTick,
+      },
     });
     const laidRadial = layoutSemanticTopBandRadialLineMarkers(planRadial, {
       viewportWidthPx: w,
@@ -189,6 +207,10 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const planWedge = buildSemanticTopBandHourMarkers(effWedge, {
       referenceNowMs: REF_MS_NY_702,
       wallClockLongitudeDegByStructuralHour: wallLon,
+      anchoredTimezoneSegment: {
+        referenceFractionalHour: refFrac,
+        presentTimeStructuralHour0To23: hTick,
+      },
     });
     const laidWedge = layoutSemanticTopBandRadialWedgeMarkers(planWedge, {
       viewportWidthPx: w,
@@ -203,6 +225,11 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const atTickWedge = laidWedge.find((r) => r.structuralHour0To23 === hTick)!;
     expect(atTickWedge.centerX).toBeCloseTo(scale.nowX, 5);
     expect(atTickWedge.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 7);
+
+    const hEast = (hTick + 1) % 24;
+    const expectedEast = anchoredTimezoneSegmentWallClockState(refFrac, hEast, hTick);
+    const eastAnalog = laidAnalog.find((r) => r.structuralHour0To23 === hEast)!;
+    expect(eastAnalog.continuousHour0To24).toBeCloseTo(expectedEast.continuousHour0To24, 7);
   });
 
   it("tapeAdvected procedural glyphs at the present-tick column use phased tape longitude (analog + radial)", () => {
@@ -307,6 +334,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
       effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(layoutAnalog),
       glyphRenderContext: GLYPH_CTX,
       referenceNowMs: REF_MS_NY_702,
+      referenceFractionalHour: scale.referenceFractionalHour,
       structuralZoneCenterXPx: zoneX,
       presentTimeStructuralHour0To23: hTick,
     });

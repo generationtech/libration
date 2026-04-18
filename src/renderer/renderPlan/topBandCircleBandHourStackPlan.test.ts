@@ -97,6 +97,8 @@ function buildStackFromFixture(
     effectiveTopBandHourMarkers: args.eff,
     glyphRenderContext: GLYPH_CTX,
     referenceNowMs: args.referenceNowMs ?? f.referenceNowMs,
+    referenceFractionalHour: f.referenceFractionalHour,
+    presentTimeStructuralHour0To23: f.presentTimeStructuralHour0To23,
     structuralZoneCenterXPx: args.structuralZoneCenterXPx ?? f.structuralZoneCenterXPx,
   });
 }

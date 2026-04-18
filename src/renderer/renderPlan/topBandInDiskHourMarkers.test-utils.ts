@@ -23,6 +23,7 @@ import {
   computeUtcTopScaleRowMetrics,
   resolveTopBandTimeFromConfig,
 } from "../displayChrome.ts";
+import { structuralHourIndexFromReferenceLongitudeDeg } from "../structuralLongitudeGrid.ts";
 import {
   DEFAULT_DISPLAY_TIME_CONFIG,
   type DisplayChromeLayoutConfig,
@@ -52,6 +53,10 @@ export type TopBandHourDiskStackMarkerInput = {
 
 export type FullUtcTopBandHourDiskFixture = {
   referenceNowMs: number;
+  /** Band-frame civil fractional hour-of-day (see `UtcTopScaleLayout.referenceFractionalHour`). */
+  referenceFractionalHour: number;
+  /** Structural column index of the present-time tick (reference longitude segment). */
+  presentTimeStructuralHour0To23: number;
   viewportWidthPx: number;
   topBandYPx: number;
   circleBandHeightPx: number;
@@ -91,8 +96,14 @@ export function buildFullUtcTopBandHourDiskFixture(options?: {
     structuralHour0To23: m.utcHour,
   }));
 
+  const presentTimeStructuralHour0To23 = structuralHourIndexFromReferenceLongitudeDeg(
+    scale.topBandAnchor.referenceLongitudeDeg,
+  );
+
   return {
     referenceNowMs: nowMs,
+    referenceFractionalHour: scale.referenceFractionalHour,
+    presentTimeStructuralHour0To23,
     viewportWidthPx: w,
     topBandYPx: 0,
     circleBandHeightPx: rows.circleBandH,

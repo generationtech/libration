@@ -45,15 +45,41 @@ export type SemanticHourMarkerStructuralAnchor = {
 /**
  * Renderer-agnostic tape content for one marker instance (phasing/layout x is not part of this slice).
  */
-/** Solar-local civil time at a structural column center longitude (UTC time-of-day + lon/15h offset). */
+/**
+ * Clock-hand state for a top-band procedural marker: either mean-solar at a longitude (tape / fallback) or
+ * NATO-segment anchored time (static zone: band reference fractional hour ± structural column offset from the
+ * present-time tick), aligned with the same band-frame civil time as the phased tape and map clock.
+ */
 export type SemanticLocalWallClockState = {
   hour0To23: number;
   minute0To59: number;
-  /** Fractional hour-of-day [0,24) for continuous hour-hand placement (mean solar). */
+  /** Fractional hour-of-day [0,24) for continuous hour-hand placement. */
   continuousHour0To24: number;
-  /** Fractional minute-of-hour [0,60) for continuous minute-hand placement (mean solar). */
+  /** Fractional minute-of-hour [0,60) for continuous minute-hand placement. */
   continuousMinute0To60: number;
 };
+
+function wrapContinuousHour0To24(x: number): number {
+  return ((x % 24) + 24) % 24;
+}
+
+/**
+ * Civil clock state for structural column {@code structuralHour0To23} when the present-time tick sits in column
+ * {@code presentTimeStructuralHour0To23}: band-frame fractional hour at the tick plus one nominal hour per column east.
+ * Same time basis as the phased tape and map clock for that band mode / reference zone.
+ */
+export function anchoredTimezoneSegmentWallClockState(
+  referenceFractionalHourAtPresentTick: number,
+  structuralHour0To23: number,
+  presentTimeStructuralHour0To23: number,
+): SemanticLocalWallClockState {
+  const delta = structuralHour0To23 - presentTimeStructuralHour0To23;
+  const continuousHour0To24 = wrapContinuousHour0To24(referenceFractionalHourAtPresentTick + delta);
+  const continuousMinute0To60 = (continuousHour0To24 % 1) * 60;
+  const hour0To23 = Math.floor(continuousHour0To24) % 24;
+  const minute0To59 = Math.min(59, Math.floor(continuousMinute0To60));
+  return { hour0To23, minute0To59, continuousHour0To24, continuousMinute0To60 };
+}
 
 export type SemanticHourMarkerContent =
   | {

@@ -1791,6 +1791,7 @@ export function renderDisplayChrome(
       effectiveTopBandHourMarkers: chrome.effectiveTopBandHourMarkers,
       glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
       referenceNowMs: scale.referenceNowMs,
+      referenceFractionalHour: scale.referenceFractionalHour,
       structuralZoneCenterXPx:
         scale.segments.length === 24 ? scale.segments.map((s) => s.centerX) : undefined,
       presentTimeStructuralHour0To23:

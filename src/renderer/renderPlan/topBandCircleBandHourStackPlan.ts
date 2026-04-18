@@ -204,8 +204,14 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   tickBandHeightPx?: number;
   /** Defaults to {@link TOP_CHROME_STYLE} for tests and legacy callers. */
   chromeStyle?: TopChromeStyle;
-  /** Mean-solar reference instant for semantic analog and radial wall-clock pipelines; pair with {@link structuralZoneCenterXPx} when behavior is static-zone anchored. */
+  /** Reference instant for semantic analog/radial pipelines (mean-solar path and calendar framing); pair with {@link structuralZoneCenterXPx} when behavior is static-zone anchored. */
   referenceNowMs?: number;
+  /**
+   * Civil fractional hour-of-day [0,24) in the top-band reference frame (same value as {@link UtcTopScaleLayout.referenceFractionalHour}).
+   * With {@link presentTimeStructuralHour0To23}, drives anchored NATO-segment procedural wall-clock semantics when the
+   * effective hour-marker behavior is `staticZoneAnchored`.
+   */
+  referenceFractionalHour?: number;
   /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); static-zone anchoring for analog and radial layouts. */
   structuralZoneCenterXPx?: readonly number[];
   /**
@@ -250,6 +256,16 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     vw,
     options.structuralZoneCenterXPx,
   );
+
+  const anchoredTimezoneSegment =
+    effectiveMarkers.behavior === "staticZoneAnchored" &&
+    options.referenceFractionalHour !== undefined &&
+    options.presentTimeStructuralHour0To23 !== undefined
+      ? {
+          referenceFractionalHour: options.referenceFractionalHour,
+          presentTimeStructuralHour0To23: options.presentTimeStructuralHour0To23,
+        }
+      : undefined;
 
   const yCircleBottom = y0 + circleH;
   const circleBedY0 = y0 + circleH * 0.065;
@@ -358,6 +374,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
       wallClockLongitudeDegByStructuralHour,
+      anchoredTimezoneSegment,
     });
     const laidOutAnalog = layoutSemanticTopBandAnalogClockMarkers(semanticPlan, {
       viewportWidthPx: vw,
@@ -383,6 +400,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
       wallClockLongitudeDegByStructuralHour,
+      anchoredTimezoneSegment,
     });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(semanticPlan, {
       viewportWidthPx: vw,
@@ -408,6 +426,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
       referenceNowMs: options.referenceNowMs,
       wallClockLongitudeDegByStructuralHour,
+      anchoredTimezoneSegment,
     });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(semanticPlan, {
       viewportWidthPx: vw,
