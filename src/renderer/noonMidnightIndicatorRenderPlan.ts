@@ -27,9 +27,10 @@
  *
  * **solarLunarPictogram**: Sun/moon pictogram only (no embedded hour numeral).
  *
- * **boxedNumber**: Filled highlight rectangles behind the tape numeral use
- * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (broad, low-profile horizontal swash vs the numeral,
- * not a tight backing plate or strip-scale plaque). Color is the resolver’s derived treatment color. Analog clock uses the same model.
+ * **boxedNumber**: Filled highlight rectangle(s) behind the tape numeral use
+ * {@link boxedNumberHighlightHalfExtentsFromMarkerContentBox} (broad horizontal swash vs the numeral, not a tight
+ * backing plate). Noon tape `"12"` adds a broader swash plus a soft larger underlay fill (two rects, same treatment
+ * color). Other labels stay single-rect. Color is the resolver’s derived treatment color. Analog clock uses the same model.
  *
  * **textWords**: Renders NOON / MID for the word overlay; resolver may still expose MIDNIGHT as the semantic disk label.
  */
@@ -109,6 +110,19 @@ const BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC = 0.3;
 const BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC = 0.62;
 const BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC = 0.2;
 const BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC = 0.2;
+
+/**
+ * Noon tape `"12"` only: broad horizontal highlight band with generous horizontal and vertical overhang vs the
+ * numeral (word-processor swash, not a tight numeral-sized plate). Other tape labels keep {@link BOXED_NUMBER_*}.
+ */
+const HIGHLIGHTED_12_SWASH_HALF_H_FRAC = 0.42;
+const HIGHLIGHTED_12_SWASH_HALF_W_MIN_FRAC = 0.88;
+const HIGHLIGHTED_12_SWASH_HALF_W_PAD_FRAC = 0.34;
+const HIGHLIGHTED_12_SWASH_HALF_W_PER_CHAR_FRAC = 0.26;
+/** Slightly larger soft underlay (same center) for a mild highlight halo without backend blur. */
+export const HIGHLIGHTED_12_SOFT_UNDERLAY_HALF_EXTENT_SCALE = 1.16;
+const HIGHLIGHTED_12_SOFT_UNDERLAY_FILL_ALPHA = 0.32;
+
 /** Highlight fill alpha (treatment color is resolver-derived rgb/hex). */
 const BOXED_NUMBER_HIGHLIGHT_FILL_ALPHA = 0.72;
 /** Slightly larger tape numeral over the highlight (layout.size drives glyph metrics). */
@@ -146,18 +160,20 @@ export const TEXT_WORDS_NOON_LAYOUT_SIZE_FRAC = 0.64;
  * from the semantic layout’s marker content box size ({@link GlyphLayoutBox.size}) and the tape label span.
  * Applies to text, radialLine, radialWedge, and analogClock — in each case {@link GlyphLayoutBox.size} is the
  * solved disk box side from layout. Sized as a broad horizontal highlight span behind the numeral, not a tight
- * numeral-sized plate or strip-scale badge frame.
+ * numeral-sized plate or strip-scale badge frame. Tape `"12"` (noon) uses a broader swash; other labels unchanged.
  */
 export function boxedNumberHighlightHalfExtentsFromMarkerContentBox(
   markerContentBoxSizePx: number,
   label: string,
 ): { halfW: number; halfH: number } {
   const s = Math.max(0, markerContentBoxSizePx);
-  const halfH = s * BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC;
+  const noon12 = label === "12";
+  const halfH = s * (noon12 ? HIGHLIGHTED_12_SWASH_HALF_H_FRAC : BOXED_NUMBER_HIGHLIGHT_HALF_H_FRAC);
   const n = Math.max(1, label.length);
   const halfW = Math.max(
-    s * BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC,
-    n * s * BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC + s * BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC,
+    s * (noon12 ? HIGHLIGHTED_12_SWASH_HALF_W_MIN_FRAC : BOXED_NUMBER_HIGHLIGHT_HALF_W_MIN_FRAC),
+    n * s * (noon12 ? HIGHLIGHTED_12_SWASH_HALF_W_PER_CHAR_FRAC : BOXED_NUMBER_HIGHLIGHT_HALF_W_PER_CHAR_FRAC) +
+      s * (noon12 ? HIGHLIGHTED_12_SWASH_HALF_W_PAD_FRAC : BOXED_NUMBER_HIGHLIGHT_HALF_W_PAD_FRAC),
   );
   return { halfW, halfH };
 }
@@ -189,6 +205,19 @@ function pushHighlightBehindTapeNumeral(
   out: RenderPlanBuilder,
 ): void {
   const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
+  const u = HIGHLIGHTED_12_SOFT_UNDERLAY_HALF_EXTENT_SCALE;
+  if (text === "12") {
+    const uw = halfW * u;
+    const uh = halfH * u;
+    out.push({
+      kind: "rect",
+      x: cx - uw,
+      y: cy - uh,
+      width: uw * 2,
+      height: uh * 2,
+      fill: cssColorToRgbaFill(treatmentColor, HIGHLIGHTED_12_SOFT_UNDERLAY_FILL_ALPHA),
+    });
+  }
   out.push({
     kind: "rect",
     x: cx - halfW,
