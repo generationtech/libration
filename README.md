@@ -113,6 +113,7 @@ Recent simplification:
 - top-band alignment and timing behavior are unchanged
 - the present-time tick mark lives in the 24-hour tickmark tape only; it is no longer double-drawn into the upper indicator entries area
 
+![Accelerated map demo](docs/images/libration-map-demo.gif)
 ---
 
 ## Hour Marker Direction
