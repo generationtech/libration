@@ -151,7 +151,11 @@ export const LEGACY_TOP_BAND_TEXT_MODE_TO_FONT_ASSET_ID: Record<
 /** Canonical bundled font for top-band text hour markers when none is stored (truthful default). */
 export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zeroes-two";
 
-/** Default authored CSS background for the 24-hour indicator entries row (`hourMarkers.indicatorEntriesAreaBackgroundColor`). */
+/**
+ * Default authored CSS background for the 24-hour indicator entries row (`hourMarkers.indicatorEntriesAreaBackgroundColor`).
+ * The value is copied once from {@link TOP_CHROME_STYLE} so shipped defaults match the reference instrument strip;
+ * resolution and render planning use this string (or persisted overrides) only — they do not read `TOP_CHROME_STYLE` at runtime.
+ */
 export const DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR: string =
   TOP_CHROME_STYLE.instrument.circleBandBedDeep;
 

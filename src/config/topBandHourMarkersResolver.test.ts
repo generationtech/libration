@@ -409,4 +409,48 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     );
     expect(eff.indicatorEntriesArea.effectiveForegroundColor).toBe("#ffffff");
   });
+
+  it("text appearance.color overrides ink only; indicator entries background is unchanged", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#112233",
+          realization: { kind: "text", fontAssetId: "computer", appearance: { color: "#fedcba" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.indicatorEntriesArea.effectiveBackgroundColor).toBe("#112233");
+    expect((eff.realization as { resolvedAppearance: { color: string } }).resolvedAppearance.color).toBe("#fedcba");
+  });
+
+  it("analogClock without handColor uses contrast strokes on light and dark indicator entries backgrounds", () => {
+    const lightBg = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#ffffff",
+          realization: { kind: "analogClock", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const darkBg = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          indicatorEntriesAreaBackgroundColor: "#000000",
+          realization: { kind: "analogClock", appearance: {} },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    const rLight = lightBg.realization;
+    const rDark = darkBg.realization;
+    if (rLight.kind !== "analogClock" || rDark.kind !== "analogClock") {
+      throw new Error("expected analogClock");
+    }
+    expect(rLight.resolvedAppearance.handStroke).toBe("#000000");
+    expect(rLight.resolvedAppearance.ringStroke).toBe("#000000");
+    expect(rDark.resolvedAppearance.handStroke).toBe("#ffffff");
+    expect(rDark.resolvedAppearance.ringStroke).toBe("#ffffff");
+  });
 });

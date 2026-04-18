@@ -13,11 +13,17 @@
 
 /**
  * Deterministic black/white foreground selection for CSS background strings (renderer-agnostic).
+ *
+ * **Supported formats** (parsed for luminance): `#rgb`, `#rrggbb`, `rgb(r,g,b)`, `rgba(r,g,b,a)` with comma-separated
+ * components (0–255 / alpha 0–1). Alpha in `rgba` is ignored for luminance; only RGB channels are used.
+ *
+ * **Unsupported** (e.g. `hsl()`, `color()`, space-separated `rgb`, named colors): parsing yields no luminance; callers
+ * receive `#ffffff` from {@link blackOrWhiteForegroundForBackgroundCss} — always the same fallback for a given failure mode.
  */
 
 /**
  * Picks `#000000` or `#ffffff` for maximum contrast against a CSS color string.
- * Uses sRGB relative luminance (WCAG); invalid input falls back to `#ffffff`.
+ * Uses sRGB relative luminance (WCAG); unparseable input falls back deterministically to `#ffffff`.
  */
 export function blackOrWhiteForegroundForBackgroundCss(cssColor: string): "#000000" | "#ffffff" {
   const l = parseCssColorToLinearLuminance01(cssColor.trim());

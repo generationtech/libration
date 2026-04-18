@@ -41,6 +41,12 @@ function normalizeMarkerColor(raw: unknown): string | undefined {
   return t === "" ? undefined : t;
 }
 
+/**
+ * Analog clock ink: ring and hand default to {@link derivedForeground}, i.e. black/white contrast against the
+ * **indicator entries area background** only. Optional `appearance.handColor` overrides
+ * both strokes (author intent). Face fill defaults to {@link DEFAULT_ANALOG_FACE_FILL} and is not auto-contrasted
+ * against the indicator row — that keeps clock-face styling separate from row background ownership.
+ */
 function resolveAnalogClockResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "analogClock" }>,
   derivedForeground: "#000000" | "#ffffff",
@@ -70,6 +76,11 @@ function resolveRadialWedgeResolvedAppearance(
   return { fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill };
 }
 
+/**
+ * Indicator entries row visuals: background comes only from {@link HourMarkersConfig.indicatorEntriesAreaBackgroundColor}
+ * (after {@link resolvedAuthoredIndicatorEntriesAreaBackgroundColor}). Realization `appearance` fields never influence
+ * this object — they affect marker ink only (see branches below).
+ */
 function resolveIndicatorEntriesAreaEffective(layout: DisplayChromeLayoutConfig): {
   effectiveBackgroundColor: string;
   effectiveForegroundColor: "#000000" | "#ffffff";

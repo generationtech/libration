@@ -19,6 +19,12 @@ import {
 } from "./contrastForegroundOnCssBackground.ts";
 
 describe("blackOrWhiteForegroundForBackgroundCss", () => {
+  it("falls back deterministically to white foreground when the format is unsupported", () => {
+    expect(blackOrWhiteForegroundForBackgroundCss("hsl(0, 0%, 50%)")).toBe("#ffffff");
+    expect(blackOrWhiteForegroundForBackgroundCss("not-a-color")).toBe("#ffffff");
+    expect(blackOrWhiteForegroundForBackgroundCss("rgb(10 20 30)")).toBe("#ffffff");
+  });
+
   it("chooses white text on a dark rgba background", () => {
     expect(blackOrWhiteForegroundForBackgroundCss("rgba(4, 22, 58, 0.99)")).toBe("#ffffff");
   });
