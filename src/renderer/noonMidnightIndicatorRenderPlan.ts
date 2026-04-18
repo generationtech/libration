@@ -28,7 +28,8 @@
  * **solarLunarPictogram**: Dominant sun/moon + small secondary tape numeral (instrument-like).
  *
  * **boxedNumber**: Stroke rectangles use {@link boxedNumberStrokeHalfExtentsFromMarkerContentBox} for every
- * realization that draws a box (including analog after the clock face); there is no separate analog-only frame scale.
+ * realization that draws a box (including analog after the clock face); plaque geometry is keyed to the laid-out
+ * indicator-entry content box (strip-scale breathing room), not the numeral glyph footprint.
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
@@ -101,26 +102,33 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
 }
 
 /** Fractions of marker content box side — tied to {@link GlyphLayoutBox.size} from semantic layout only. */
-const BOXED_NUMBER_HALF_H_FRAC = 0.49;
-const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.46;
-/** Extra horizontal margin so short labels still get a badge-like frame in the strip. */
-const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.06;
-const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.24;
-const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.1;
-const BOXED_NUMBER_STROKE_WIDTH_MIN_PX = 2;
+const BOXED_NUMBER_HALF_H_FRAC = 0.58;
+const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.54;
+/** Extra horizontal margin so short labels still read as a strip-level plaque, not a numeral outline. */
+const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.14;
+const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.3;
+const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.15;
+const BOXED_NUMBER_STROKE_WIDTH_MIN_PX = 3;
 
 const SOLAR_DISK_R_FRAC = 0.46;
 const SOLAR_RAY_FRAC = 0.12;
 const SOLAR_LINE_STROKE_FRAC = 0.072;
 const SOLAR_CIRCLE_STROKE_FRAC = 0.078;
+/** Moon crescent uses a slightly larger layout pass than legacy factors so it matches sun prominence. */
+const MOON_PICTO_LAYOUT_SCALE = 1.08;
+const MOON_FILL_ALPHA_SUFFIX = "38";
+const MOON_STROKE_WEIGHT = 1.14;
 
-const SEMANTIC_DIAMOND_HALF_FRAC = 0.48;
+const SEMANTIC_DIAMOND_HALF_FRAC = 0.51;
+/** Midnight diamond is slightly larger + heavier stroke so hollow form does not read weaker than noon fill. */
+const SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC = 0.535;
 const SEMANTIC_NOON_STROKE_FRAC = 0.078;
-const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.1;
+const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.132;
 
 /** Small tape numeral under dominant pictogram/glyph; scales with marker content box. */
 const SECONDARY_NUMERAL_SIZE_FRAC = 0.38;
-const SECONDARY_NUMERAL_DOWN_FRAC = 0.3;
+const SECONDARY_NUMERAL_DOWN_PICTO_FRAC = 0.2;
+const SECONDARY_NUMERAL_DOWN_SEMANTIC_FRAC = 0.175;
 
 /**
  * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
@@ -208,12 +216,22 @@ function pushStrokeBoxAroundText(
   });
 }
 
-/** Tape numeral under dominant noon/midnight graphics — uses layout-derived size only. */
-function secondaryTapeNumeralLayout(base: GlyphLayoutBox): GlyphLayoutBox {
+/** Tape numeral under dominant pictogram — slightly below center; tuned for sun/moon + secondary pairing. */
+function secondaryTapeNumeralLayoutForPictogram(base: GlyphLayoutBox): GlyphLayoutBox {
   const s = base.size;
   return {
     cx: base.cx,
-    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_FRAC,
+    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_PICTO_FRAC,
+    size: s * SECONDARY_NUMERAL_SIZE_FRAC,
+  };
+}
+
+/** Tape numeral under semantic diamond — tighter vertical coupling with the glyph. */
+function secondaryTapeNumeralLayoutForSemanticGlyph(base: GlyphLayoutBox): GlyphLayoutBox {
+  const s = base.size;
+  return {
+    cx: base.cx,
+    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_SEMANTIC_FRAC,
     size: s * SECONDARY_NUMERAL_SIZE_FRAC,
   };
 }
@@ -420,16 +438,17 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         });
       }
     } else {
+      const moonStroke = Math.max(1, pictoStroke * MOON_STROKE_WEIGHT);
       out.push(
         createDescriptorPathItem({
-          pathDescriptor: moonCrescentDescriptor(cx, cy, size),
-          fill: `${args.markerColor}2a`,
+          pathDescriptor: moonCrescentDescriptor(cx, cy, size * MOON_PICTO_LAYOUT_SCALE),
+          fill: `${args.markerColor}${MOON_FILL_ALPHA_SUFFIX}`,
           stroke: args.markerColor,
-          strokeWidthPx: pictoStroke,
+          strokeWidthPx: moonStroke,
         }),
       );
     }
-    const numeralLayout = secondaryTapeNumeralLayout(args.layout);
+    const numeralLayout = secondaryTapeNumeralLayoutForPictogram(args.layout);
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
@@ -465,7 +484,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         out,
       );
     }
-    const half = size * SEMANTIC_DIAMOND_HALF_FRAC;
+    const half = size * (role === "noon" ? SEMANTIC_DIAMOND_HALF_FRAC : SEMANTIC_MIDNIGHT_DIAMOND_HALF_FRAC);
     const d = diamondDescriptor(cx, cy, half);
     if (role === "noon") {
       out.push(
@@ -481,11 +500,11 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         createDescriptorPathItem({
           pathDescriptor: d,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * SEMANTIC_MIDNIGHT_STROKE_FRAC),
+          strokeWidthPx: Math.max(2, size * SEMANTIC_MIDNIGHT_STROKE_FRAC),
         }),
       );
     }
-    const numeralLayout = secondaryTapeNumeralLayout(args.layout);
+    const numeralLayout = secondaryTapeNumeralLayoutForSemanticGlyph(args.layout);
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
