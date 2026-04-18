@@ -28,6 +28,7 @@ import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphT
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
+import { reorderLaidOutSemanticMarkersForPresentTickPaintOrder } from "./semanticTopBandHourMarkerEmitOrder.ts";
 
 /**
  * Emits radial-wedge glyphs for each laid-out instance, including phased wrap duplicates at the viewport seam.
@@ -39,6 +40,7 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers,
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
+  presentTimeStructuralHour0To23?: number,
 ): void {
   const realization = effectiveTopBandHourMarkers.realization;
   if (realization.kind !== "radialWedge") {
@@ -52,7 +54,12 @@ export function emitLaidOutSemanticTopBandRadialWedgeMarkersToRenderPlan(
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(effectiveTopBandHourMarkerSelection);
 
-  for (const inst of laidOut) {
+  const ordered = reorderLaidOutSemanticMarkersForPresentTickPaintOrder(
+    laidOut,
+    presentTimeStructuralHour0To23,
+  );
+
+  for (const inst of ordered) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(
       inst.centerX,
       inst.wrapHalfExtentPx,

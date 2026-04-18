@@ -140,10 +140,7 @@ function hourMarkersAfterRealizationKindChange(
   nextKind: HourMarkersRealizationConfig["kind"],
   hm: HourMarkersConfig,
 ): HourMarkersConfig {
-  let behavior = hm.behavior;
-  if (nextKind === "analogClock" && behavior === "tapeAdvected") {
-    behavior = "staticZoneAnchored";
-  }
+  const behavior = hm.behavior;
   const next: HourMarkersConfig = {
     ...hm,
     behavior,

@@ -1793,6 +1793,10 @@ export function renderDisplayChrome(
       referenceNowMs: scale.referenceNowMs,
       structuralZoneCenterXPx:
         scale.segments.length === 24 ? scale.segments.map((s) => s.centerX) : undefined,
+      presentTimeStructuralHour0To23:
+        scale.segments.length === 24
+          ? structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg)
+          : undefined,
     }),
   );
 

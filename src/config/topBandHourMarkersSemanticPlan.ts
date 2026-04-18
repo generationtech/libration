@@ -39,6 +39,12 @@ export function wallClockLongitudeDegForStructuralHourMarkers(
   behavior: EffectiveTopBandHourMarkerBehavior,
   markers: readonly { centerX: number; structuralHour0To23: number }[],
   viewportWidthPx: number,
+  /**
+   * When {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}, procedural layout x comes from these
+   * structural zone centers (same as {@link SemanticTopBandHourMarkerLayoutContext.structuralZoneCenterXPx}).
+   * Wall-clock longitude must be {@link longitudeDegFromMapX} of that x so time meaning matches the painted disk.
+   */
+  structuralZoneCenterXPx?: readonly number[],
 ): readonly number[] {
   const w = viewportWidthPx;
   const out: number[] = new Array(24);
@@ -51,6 +57,8 @@ export function wallClockLongitudeDegForStructuralHourMarkers(
     }
     if (behavior === "tapeAdvected") {
       out[h] = longitudeDegFromMapX(m.centerX, w);
+    } else if (structuralZoneCenterXPx?.length === 24) {
+      out[h] = longitudeDegFromMapX(structuralZoneCenterXPx[h]!, w);
     } else {
       out[h] = structuralColumnCenterLongitudeDeg(h);
     }

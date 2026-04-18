@@ -441,7 +441,9 @@ function structuralXForHour(
 }
 
 /**
- * Disk-row layout for analogClock + staticZoneAnchored: x from structural zone centers, y/size/wrap from tape columns.
+ * Disk-row layout for analogClock: x from structural zone centers when {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}
+ * and {@link SemanticTopBandHourMarkerLayoutContext.structuralZoneCenterXPx} is length 24; otherwise x from phased tape columns.
+ * y/size/wrap from tape columns.
  */
 export function layoutSemanticTopBandAnalogClockMarkers(
   plan: SemanticTopBandHourMarkersPlan,

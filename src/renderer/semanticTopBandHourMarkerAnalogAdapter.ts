@@ -23,6 +23,7 @@ import type { EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTy
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../glyphs/glyphToRenderPlan.ts";
 import { topBandWrapOffsetsForCenteredExtent } from "./topBandWrapOffsets.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
+import { reorderLaidOutSemanticMarkersForPresentTickPaintOrder } from "./semanticTopBandHourMarkerEmitOrder.ts";
 
 /**
  * Emits clock-face glyphs for each laid-out analog instance, including phased wrap duplicates at the viewport seam.
@@ -34,6 +35,7 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers,
   glyphRenderContext: GlyphRenderContext,
   out: RenderPlan["items"],
+  presentTimeStructuralHour0To23?: number,
 ): void {
   const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(effectiveTopBandHourMarkerSelection);
   if (spec.mode !== "analogClock") {
@@ -45,7 +47,12 @@ export function emitLaidOutSemanticTopBandAnalogClockMarkersToRenderPlan(
   }
   const ra = eff.resolvedAppearance;
 
-  for (const inst of laidOut) {
+  const ordered = reorderLaidOutSemanticMarkersForPresentTickPaintOrder(
+    laidOut,
+    presentTimeStructuralHour0To23,
+  );
+
+  for (const inst of ordered) {
     for (const wrapK of topBandWrapOffsetsForCenteredExtent(
       inst.centerX,
       inst.wrapHalfExtentPx,

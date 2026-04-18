@@ -107,17 +107,12 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
           `${IN_DISK_HOUR_ERR} analogClock selection requires effective realization kind "analogClock", got "${eff.realization.kind}"`,
         );
       }
-      if (eff.behavior !== "staticZoneAnchored") {
-        throw new Error(
-          `${IN_DISK_HOUR_ERR} analogClock requires effective behavior "staticZoneAnchored", got "${eff.behavior}"`,
-        );
-      }
       if (args.referenceNowMs === undefined) {
         throw new Error(`${IN_DISK_HOUR_ERR} analogClock requires referenceNowMs`);
       }
-      if (args.structuralZoneCenterXPx?.length !== 24) {
+      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
         throw new Error(
-          `${IN_DISK_HOUR_ERR} analogClock requires structuralZoneCenterXPx with 24 entries`,
+          `${IN_DISK_HOUR_ERR} analogClock with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
         );
       }
       return { kind: "semanticAnalogClockHourDisks" };
@@ -213,6 +208,11 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   referenceNowMs?: number;
   /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); static-zone anchoring for analog and radial layouts. */
   structuralZoneCenterXPx?: readonly number[];
+  /**
+   * Structural UTC column 0–23 containing the present-time tick (same index as {@link UtcTopScaleLayout.nowX}’s segment).
+   * When set, procedural hour-disk emission paints this column last so its wall-clock reads on top when wrap tiling overlaps disks near the IDL seam.
+   */
+  presentTimeStructuralHour0To23?: number;
 }): RenderPlan {
   const vw = options.viewportWidthPx;
   const items: RenderPlan["items"] = [];
@@ -230,6 +230,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   const gctx = options.glyphRenderContext;
   const effectiveMarkers = options.effectiveTopBandHourMarkers;
   const markers = options.markers;
+  const presentTickStructuralHour = options.presentTimeStructuralHour0To23;
 
   if (!effectiveMarkers.areaVisible) {
     return { items };
@@ -247,6 +248,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     effectiveMarkers.behavior,
     markers,
     vw,
+    options.structuralZoneCenterXPx,
   );
 
   const yCircleBottom = y0 + circleH;
@@ -375,6 +377,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       effectiveMarkers,
       gctx,
       items,
+      presentTickStructuralHour,
     );
   } else if (inDiskPath.kind === "semanticRadialLineHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
@@ -399,6 +402,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       effectiveMarkers,
       gctx,
       items,
+      presentTickStructuralHour,
     );
   } else if (inDiskPath.kind === "semanticRadialWedgeHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
@@ -423,6 +427,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       effectiveMarkers,
       gctx,
       items,
+      presentTickStructuralHour,
     );
   }
 
