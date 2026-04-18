@@ -15,13 +15,17 @@
  * Noon/midnight indicator-entry customization: emits specialized {@link RenderPlan} draws for structural hours
  * 0 and 12 when enabled. Returns whether the caller should skip its default emission for that instance.
  *
- * **Paint order (invariant)**: For modes that combine a procedural decoration (boxed stroke, sun/moon paths,
- * diamond path) with a numeral or word overlay, decoration is always pushed first and the glyph/text overlay
- * second so numerals paint above decoration across all realizations. {@link tryEmitNoonMidnightIndicatorDiskContent}
- * is the single planner for these combinations — adapters must not reorder.
+ * Non-`textWords` modes are **label-level** presentations for the upper indicator-entries strip: geometry is
+ * sized from {@link GlyphLayoutBox.size} (the laid-out marker content box), not as tiny marker decorations.
+ *
+ * **Paint order (invariant)**: Procedural backdrops (clock face, radial/wedge base, boxed stroke, sun/moon,
+ * diamond) are pushed before tape numerals / words so overlays read above structure. {@link tryEmitNoonMidnightIndicatorDiskContent}
+ * is the single planner — adapters must not reorder.
  *
  * **semanticGlyph**: Diamond = four-point path (top / right / bottom / left); not an axis-aligned square.
- * Noon = filled + stroked; midnight = stroke only (no fill). Numerals use the shared text glyph pass on top.
+ * Noon = filled + stroked; midnight = stroke only (no fill). Dominant diamond + small secondary tape numeral.
+ *
+ * **solarLunarPictogram**: Dominant sun/moon + small secondary tape numeral (instrument-like).
  *
  * **boxedNumber**: Stroke rectangles use {@link boxedNumberStrokeHalfExtentsFromMarkerContentBox} for every
  * realization that draws a box (including analog after the clock face); there is no separate analog-only frame scale.
@@ -81,7 +85,7 @@ function sunBurstLines(
 }
 
 function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPathDescriptor {
-  const R = size * 0.36;
+  const R = size * 0.44;
   const dx = R * 0.42;
   const r2 = R * 0.78;
   const theta0 = (70 * Math.PI) / 180;
@@ -96,6 +100,28 @@ function moonCrescentDescriptor(cx: number, cy: number, size: number): RenderPat
   return b.build();
 }
 
+/** Fractions of marker content box side — tied to {@link GlyphLayoutBox.size} from semantic layout only. */
+const BOXED_NUMBER_HALF_H_FRAC = 0.49;
+const BOXED_NUMBER_HALF_W_MIN_FRAC = 0.46;
+/** Extra horizontal margin so short labels still get a badge-like frame in the strip. */
+const BOXED_NUMBER_HALF_W_PAD_FRAC = 0.06;
+const BOXED_NUMBER_HALF_W_PER_CHAR_FRAC = 0.24;
+const BOXED_NUMBER_STROKE_WIDTH_FRAC = 0.1;
+const BOXED_NUMBER_STROKE_WIDTH_MIN_PX = 2;
+
+const SOLAR_DISK_R_FRAC = 0.46;
+const SOLAR_RAY_FRAC = 0.12;
+const SOLAR_LINE_STROKE_FRAC = 0.072;
+const SOLAR_CIRCLE_STROKE_FRAC = 0.078;
+
+const SEMANTIC_DIAMOND_HALF_FRAC = 0.48;
+const SEMANTIC_NOON_STROKE_FRAC = 0.078;
+const SEMANTIC_MIDNIGHT_STROKE_FRAC = 0.1;
+
+/** Small tape numeral under dominant pictogram/glyph; scales with marker content box. */
+const SECONDARY_NUMERAL_SIZE_FRAC = 0.38;
+const SECONDARY_NUMERAL_DOWN_FRAC = 0.3;
+
 /**
  * Half extents for the boxed-number stroke rectangle: derived from the semantic layout’s marker content box
  * size ({@link GlyphLayoutBox.size}) and the tape/numeral label span. Applies to text, radialLine, radialWedge,
@@ -108,9 +134,12 @@ export function boxedNumberStrokeHalfExtentsFromMarkerContentBox(
   label: string,
 ): { halfW: number; halfH: number } {
   const s = Math.max(0, markerContentBoxSizePx);
-  const halfH = s * 0.48;
+  const halfH = s * BOXED_NUMBER_HALF_H_FRAC;
   const n = Math.max(1, label.length);
-  const halfW = Math.max(s * 0.42, n * s * 0.2);
+  const halfW = Math.max(
+    s * BOXED_NUMBER_HALF_W_MIN_FRAC,
+    n * s * BOXED_NUMBER_HALF_W_PER_CHAR_FRAC + s * BOXED_NUMBER_HALF_W_PAD_FRAC,
+  );
   return { halfW, halfH };
 }
 
@@ -149,9 +178,10 @@ function pushGlyphContent(
   spec: HourMarkerRepresentationSpec,
   gctx: GlyphRenderContext,
   out: RenderPlanBuilder,
+  layoutOverride?: GlyphLayoutBox,
 ): void {
   const glyph = createHourMarkerGlyph(content, spec, typographyOverridesFor(args), args.markerColor);
-  emitGlyphToRenderPlan(glyph, args.layout, gctx, out);
+  emitGlyphToRenderPlan(glyph, layoutOverride ?? args.layout, gctx, out);
 }
 
 function pushStrokeBoxAroundText(
@@ -163,7 +193,10 @@ function pushStrokeBoxAroundText(
   out: RenderPlanBuilder,
 ): void {
   const { halfW, halfH } = boxedNumberStrokeHalfExtentsFromMarkerContentBox(markerContentBoxSizePx, text);
-  const sw = Math.max(1, markerContentBoxSizePx * 0.065);
+  const sw = Math.max(
+    BOXED_NUMBER_STROKE_WIDTH_MIN_PX,
+    markerContentBoxSizePx * BOXED_NUMBER_STROKE_WIDTH_FRAC,
+  );
   out.push({
     kind: "rect",
     x: cx - halfW,
@@ -173,6 +206,16 @@ function pushStrokeBoxAroundText(
     stroke,
     strokeWidthPx: sw,
   });
+}
+
+/** Tape numeral under dominant noon/midnight graphics — uses layout-derived size only. */
+function secondaryTapeNumeralLayout(base: GlyphLayoutBox): GlyphLayoutBox {
+  const s = base.size;
+  return {
+    cx: base.cx,
+    cy: base.cy + s * SECONDARY_NUMERAL_DOWN_FRAC,
+    size: s * SECONDARY_NUMERAL_SIZE_FRAC,
+  };
 }
 
 /**
@@ -328,15 +371,40 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   }
 
   if (mode === "solarLunarPictogram") {
-    const R = size * 0.38;
-    const ray = size * 0.1;
+    if (args.realizationKind === "analogClock") {
+      const ra = args.analogResolvedAppearance;
+      const ch = args.continuousHour0To24;
+      const cm = args.continuousMinute0To60;
+      if (ra === undefined || ch === undefined || cm === undefined) {
+        return false;
+      }
+      emitGlyphToRenderPlan(
+        {
+          kind: "clockFace",
+          hour: ch,
+          minute: cm,
+          styleId: args.hourSpec.glyphStyleId,
+          showMinuteHand: true,
+          ringStrokeOverride: ra.ringStroke,
+          handStrokeOverride: ra.handStroke,
+          faceFillOverride: ra.faceFill,
+        },
+        args.layout,
+        gctx,
+        out,
+      );
+    }
+    const R = size * SOLAR_DISK_R_FRAC;
+    const ray = size * SOLAR_RAY_FRAC;
+    const pictoStroke = Math.max(1, size * SOLAR_CIRCLE_STROKE_FRAC);
+    const rayStroke = Math.max(1, size * SOLAR_LINE_STROKE_FRAC);
     if (role === "noon") {
       out.push(
         createDescriptorPathItem({
           pathDescriptor: circlePathDescriptor(cx, cy, R),
           fill: `${args.markerColor}33`,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * 0.05),
+          strokeWidthPx: pictoStroke,
         }),
       );
       for (const ln of sunBurstLines(cx, cy, R, ray)) {
@@ -347,7 +415,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
           x2: ln.x2,
           y2: ln.y2,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * 0.045),
+          strokeWidthPx: rayStroke,
           lineCap: "round",
         });
       }
@@ -357,22 +425,47 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
           pathDescriptor: moonCrescentDescriptor(cx, cy, size),
           fill: `${args.markerColor}2a`,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * 0.05),
+          strokeWidthPx: pictoStroke,
         }),
       );
     }
+    const numeralLayout = secondaryTapeNumeralLayout(args.layout);
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
       numeralSpec,
       gctx,
       out,
+      numeralLayout,
     );
     return true;
   }
 
   if (mode === "semanticGlyph") {
-    const half = size * 0.42;
+    if (args.realizationKind === "analogClock") {
+      const ra = args.analogResolvedAppearance;
+      const ch = args.continuousHour0To24;
+      const cm = args.continuousMinute0To60;
+      if (ra === undefined || ch === undefined || cm === undefined) {
+        return false;
+      }
+      emitGlyphToRenderPlan(
+        {
+          kind: "clockFace",
+          hour: ch,
+          minute: cm,
+          styleId: args.hourSpec.glyphStyleId,
+          showMinuteHand: true,
+          ringStrokeOverride: ra.ringStroke,
+          handStrokeOverride: ra.handStroke,
+          faceFillOverride: ra.faceFill,
+        },
+        args.layout,
+        gctx,
+        out,
+      );
+    }
+    const half = size * SEMANTIC_DIAMOND_HALF_FRAC;
     const d = diamondDescriptor(cx, cy, half);
     if (role === "noon") {
       out.push(
@@ -380,7 +473,7 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
           pathDescriptor: d,
           fill: `${args.markerColor}44`,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * 0.05),
+          strokeWidthPx: Math.max(1, size * SEMANTIC_NOON_STROKE_FRAC),
         }),
       );
     } else {
@@ -388,16 +481,18 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
         createDescriptorPathItem({
           pathDescriptor: d,
           stroke: args.markerColor,
-          strokeWidthPx: Math.max(1, size * 0.065),
+          strokeWidthPx: Math.max(1, size * SEMANTIC_MIDNIGHT_STROKE_FRAC),
         }),
       );
     }
+    const numeralLayout = secondaryTapeNumeralLayout(args.layout);
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
       numeralSpec,
       gctx,
       out,
+      numeralLayout,
     );
     return true;
   }
