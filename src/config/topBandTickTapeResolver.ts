@@ -26,7 +26,9 @@ function hasTickTapeBackgroundAuthorOverride(layout: DisplayChromeLayoutConfig):
 
 /**
  * Resolved 24-hour tickmarks tape: background fill plus generic tape tick/baseline strokes.
- * Present-time / reference-meridian instrumentation on the rail uses separate chrome tokens and is not part of this object.
+ * The thick present-time tick core on the tape reads {@link tapeTickStroke} when
+ * {@link usesAuthoredTapeBackgroundOverride} is true so it matches ordinary tape ticks; the present-time halo and
+ * non-tape reference-meridian map strokes stay on dedicated chrome tokens elsewhere.
  */
 export type EffectiveTickTapeArea = {
   /** True when {@link DisplayChromeLayoutConfig.tickTapeAreaBackgroundColor} is a non-empty string. */
@@ -37,7 +39,7 @@ export type EffectiveTickTapeArea = {
    * under an authored background override (same helper family as indicator entries).
    */
   effectiveForegroundColor: "#000000" | "#ffffff";
-  /** Strokes for the ordinary tick hierarchy + horizontal baseline (not present-time instrumentation). */
+  /** Ordinary tape ticks + (when override) thick present-time tick core — same contrast-derived stroke family. */
   tapeTickStroke: string;
   tapeBaselineStroke: string;
 };

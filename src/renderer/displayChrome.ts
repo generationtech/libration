@@ -1631,13 +1631,15 @@ export function renderDisplayChrome(
     Math.max(tickHaloW, mapHaloW),
   );
 
+  // Thick present-time tape tick: core uses effective tape tick ink under a tape background override (same family as
+  // ordinary ticks); halo stays on the dedicated present-time token (separate instrumentation layer).
   const presentTimeTickStroke = {
     nowX: scale.nowX,
     viewportWidthPx: vw,
     wrapHalfExtentPx: refMeridianWrapHalf,
     coreLineWidthPx: nowTickLineWidth,
     haloLineWidthPx: tickHaloW,
-    coreStroke: st.ticks.presentTimeStroke,
+    coreStroke: tape.usesAuthoredTapeBackgroundOverride ? tape.tapeTickStroke : st.ticks.presentTimeStroke,
     haloStroke: st.ticks.presentTimeHaloStroke,
   } as const;
 

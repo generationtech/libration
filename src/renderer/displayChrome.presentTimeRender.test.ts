@@ -13,6 +13,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "../config/appConfig.ts";
+import { resolveEffectiveTickTapeArea } from "../config/topBandTickTapeResolver.ts";
 import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { createTimeContext } from "../core/time";
 import * as canvasExecutor from "./renderPlan/canvasRenderPlanExecutor";
@@ -221,6 +222,59 @@ describe("renderDisplayChrome — present-time tick instrumentation vs tick tape
       const ah = a.verticalSpans[0]!.yBottom - a.verticalSpans[0]!.yTop;
       const bh = b.verticalSpans[0]!.yBottom - b.verticalSpans[0]!.yTop;
       expect(ah).toBeCloseTo(bh, 7);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("present-time thick tick core uses dedicated stroke when no tape background override", () => {
+    const spy = vi.spyOn(presentTimeTickPlan, "buildTopBandPresentTimeTickRenderPlan");
+    try {
+      const time = createTimeContext(1_704_067_200_000, 0, false);
+      const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+      const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+      const layout = {
+        tickTapeVisible: true,
+        timezoneLetterRowVisible: false,
+      };
+      const chrome = buildDisplayChromeState({
+        time,
+        viewport,
+        frame,
+        displayChromeLayout: layout,
+      });
+      renderDisplayChrome(createChromeTestCanvas2DContext(), chrome, viewport);
+      const arg = spy.mock.calls[0]![0]!;
+      expect(arg.coreStroke).toBe(TOP_CHROME_STYLE.ticks.presentTimeStroke);
+      expect(arg.haloStroke).toBe(TOP_CHROME_STYLE.ticks.presentTimeHaloStroke);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("present-time thick tick core matches tape tick contrast stroke when tape background override is authored", () => {
+    const spy = vi.spyOn(presentTimeTickPlan, "buildTopBandPresentTimeTickRenderPlan");
+    try {
+      const time = createTimeContext(1_704_067_200_000, 0, false);
+      const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
+      const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
+      const layout = {
+        tickTapeVisible: true,
+        timezoneLetterRowVisible: false,
+        tickTapeAreaBackgroundColor: "#ffffff",
+      };
+      const chrome = buildDisplayChromeState({
+        time,
+        viewport,
+        frame,
+        displayChromeLayout: layout,
+      });
+      const eff = resolveEffectiveTickTapeArea(layout);
+      expect(eff.usesAuthoredTapeBackgroundOverride).toBe(true);
+      renderDisplayChrome(createChromeTestCanvas2DContext(), chrome, viewport);
+      const arg = spy.mock.calls[0]![0]!;
+      expect(arg.coreStroke).toBe(eff.tapeTickStroke);
+      expect(arg.haloStroke).toBe(TOP_CHROME_STYLE.ticks.presentTimeHaloStroke);
     } finally {
       spy.mockRestore();
     }
