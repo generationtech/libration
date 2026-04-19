@@ -130,21 +130,23 @@ Recent simplification:
 
 Top-band hour markers now use a clean, explicit model:
 
-- **Behavior** — how markers move or stay anchored
 - **Realization** — text or procedural glyph mode
 - **Layout** — size and placement semantics
 - **Appearance** — realization-scoped styling layered on top
+- **Behavior** — derived from realization kind rather than edited directly:
+  - text → `tapeAdvected`
+  - procedural → `staticZoneAnchored`
 
 ```mermaid
 flowchart TB
     HM[Resolved Hour Marker Model]
 
-    B[Behavior]
+    DB[Derived Behavior]
     R[Realization]
     L[Layout]
     A[Appearance]
 
-    B --- HM
+    DB --- HM
     R --- HM
     L --- HM
     A --- HM
@@ -154,10 +156,12 @@ flowchart TB
     classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
 
     class HM center;
-    class B,R,L,A axis;
+    class DB,R,L,A axis;
 ```
 
 At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
+
+For clock-like procedural markers, the static anchored product path now uses the same reference-city / band-frame present-time basis at the present-time tick that the rest of the map clock uses.
 
 Implemented realizations:
 - **Text**
@@ -167,6 +171,11 @@ Implemented realizations:
   - analog clock markers
   - radial wedge
   - radial line
+
+Clock-like appearance controls are now leveled across the procedural modes:
+- analog clock → hand color + face color
+- radial line → line color + face color
+- radial wedge → edge color + face color + annulus fill color
 
 Bundled font inventory currently includes:
 - Zeroes One

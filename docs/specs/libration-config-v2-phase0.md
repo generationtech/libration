@@ -60,7 +60,6 @@ Hour markers persist under:
 `chrome.layout.hourMarkers`
 
 Conceptually, the persisted model carries:
-- optional behavior override
 - realization choice
 - layout sizing
 - content-row padding overrides
@@ -68,17 +67,21 @@ Conceptually, the persisted model carries:
 - optional noon/midnight customization intent for the upper indicator entries strip
 - realization-scoped appearance overrides
 
-Runtime content remains derived from that structured intent rather than persisted as a second source of truth.
+Derived effective/runtime concerns now include:
+- behavior derived from realization kind:
+  - text → `tapeAdvected`
+  - non-text/procedural → `staticZoneAnchored`
+- runtime content derived from that intent rather than persisted as a second source of truth
 
 ```mermaid
 flowchart TB
     HM[Hour Marker Model]
-    B[Behavior]
+    DB[Derived Behavior]
     R[Realization]
     L[Layout]
     A[Appearance]
 
-    B --- HM
+    DB --- HM
     R --- HM
     L --- HM
     A --- HM
@@ -87,7 +90,7 @@ flowchart TB
     classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
 
     class HM center;
-    class B,R,L,A axis;
+    class DB,R,L,A axis;
 ```
 
 Top-band visibility that sits alongside this model is also structured in chrome layout state, including:
@@ -99,6 +102,7 @@ Additional strip-scoped structure now lives under `chrome.layout.hourMarkers` as
 - indicator entries area background color intent
 - resolver-derived effective foreground usage downstream of that background
 - optional `noonMidnightCustomization` with bounded expression modes for the upper strip only
+- leveled procedural appearance overrides for analog, radial line, and radial wedge surface layers
 
 ---
 

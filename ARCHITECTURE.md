@@ -385,9 +385,9 @@ For in-disk top-band hour markers, the supported contract is:
 - structured `chrome.layout.hourMarkers` present in normalized config
 - full 24-marker input after semantic planning
 - realization consistent with selection
-- analog clock additionally requires:
+- procedural clock-like realizations consume product chrome timing context for the supported path:
   - `referenceNowMs`
-  - `structuralZoneCenterXPx` with 24 entries
+  - static anchored product-path timing also uses reference-band context such as the present-tick structural index and reference fractional hour when available
 
 This means the current app runtime has one authoritative implementation rather than parallel semantic and fallback paths.
 
@@ -458,27 +458,31 @@ Do not reintroduce implicit padding derived from legacy head-disk Y hacks or any
 
 ## Behavioral / Representation Model
 
-For top-band hour markers, the runtime and editor now distinguish explicit persisted and derived concerns.
+For top-band hour markers, the runtime and editor now distinguish persisted/editor-facing concerns from fully derived effective/runtime concerns.
 
 Persisted/editor-facing axes:
-- **Behavior** — e.g. `tapeAdvected`, `staticZoneAnchored`
 - **Realization** — text, analogClock, radialLine, radialWedge
 - **Layout** — size and placement semantics, including content-row padding
 - **Appearance** — realization-specific appearance controls
 - **Indicator-entry strip controls** — strip background intent plus optional noon/midnight customization for the upper 24-hour entries area
 
-Derived runtime concern:
+Derived effective/runtime concerns:
+- **Behavior** — derived from realization kind:
+  - text → `tapeAdvected`
+  - non-text/procedural → `staticZoneAnchored`
 - **Content** — e.g. `hour24`, `localWallClock`
+  - static procedural clocks now use anchored timezone-segment / reference-city band-frame time at the present-time tick
+  - tape-advected procedural clocks remain longitude-driven when explicitly selected upstream
 
 ```mermaid
 flowchart TB
     HM[Resolved Hour Marker Model]
-    B[Behavior]
+    DB[Derived Behavior]
     R[Realization]
     L[Layout]
     A[Appearance]
 
-    B --- HM
+    DB --- HM
     R --- HM
     L --- HM
     A --- HM
@@ -487,7 +491,7 @@ flowchart TB
     classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
 
     class HM center;
-    class B,R,L,A axis;
+    class DB,R,L,A axis;
 ```
 
 This means `content` remains part of semantic runtime modeling, but it is no longer treated as a persisted/editor-owned axis for hour markers.
@@ -510,6 +514,10 @@ It now also carries strip-scoped indicator-entry concerns such as:
 - indicator entries area background color intent
 - resolver-derived effective foreground usage downstream of that background
 - optional `noonMidnightCustomization` with bounded expression modes
+- realization-scoped procedural appearance overrides, including:
+  - analog hand / face color
+  - radial line line / face color
+  - radial wedge edge / face / annulus fill color
 
 Legacy flat hour-marker persistence fields have been removed.
 
@@ -592,7 +600,7 @@ Typography / glyph subsystem is FUNCTIONAL and in active use.
 - semantic hour-marker resolver / planner / layout / realization adapters
 - semantic-only runtime path for in-disk hour markers
 - structured `chrome.layout.hourMarkers` persistence
-- dedicated `HourMarkersEditor` with canonical section structure: Behavior / Realization / Appearance / Layout
+- dedicated `HourMarkersEditor` with canonical section structure: Realization / Appearance / Layout
 - content-row top/bottom padding controls for the indicator band
 - independent `tickTapeVisible` / `timezoneLetterRowVisible` top-band visibility controls
 - structured-only hour-marker authoring, normalization, and runtime consumption

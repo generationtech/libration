@@ -35,8 +35,8 @@ Focus:
 - maintain Libration as the canonical public reference implementation of this system
 
 Current truthful top-band model:
-- **Behavior** → `tapeAdvected`, `staticZoneAnchored`
 - **Realization** → `text`, `analogClock`, `radialLine`, `radialWedge`
+- **Derived effective behavior** → `text` resolves to `tapeAdvected`; procedural realizations resolve to `staticZoneAnchored`
 - **Layout** → size / placement semantics, including content-row padding
 - **Appearance** → realization-scoped styling controls
 - **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis
@@ -63,9 +63,9 @@ flowchart TB
 
 Recent completed work:
 - extracted `HourMarkersEditor` from `ChromeTab`
-- reorganized hour-marker editing around the canonical sections: Behavior / Realization / Appearance / Layout
-- introduced user-selectable behavior overrides in the structured model
-- expanded realization-specific appearance for text, analogClock, radialLine, and radialWedge
+- reorganized hour-marker editing around the canonical sections: Realization / Appearance / Layout
+- removed authored hour-marker behavior and made effective behavior derived from realization kind
+- expanded realization-specific appearance for text, analogClock, radialLine, and radialWedge, including parallel face/ink controls across the three procedural clock modes
 - migrated persistence to structured `chrome.layout.hourMarkers`
 - removed legacy flat hour-marker fields
 - removed the obsolete `customRepresentationEnabled` hour-marker flag
@@ -84,6 +84,8 @@ Recent completed work:
   - highlighted `12`
   - sun / moon pictograms
   - semantic diamond glyphs
+- removed boxed hour numerals on the tick tape for clock/procedural modes
+- anchored static procedural clocks to the same reference-city / band-frame present-time basis as the map clock at the present-time tick
 - finalized the indicator-band vertical model so visible band height follows intrinsic content height plus resolved padding
 - corrected top chrome so it reserves layout space above the scene instead of overlaying map content
 - removed the remaining bundled top-strip palette selector and collapsed top chrome to one built-in appearance

@@ -50,12 +50,12 @@ Rendering intent is fully resolved before execution. Backends execute only.
 ```mermaid
 flowchart TB
     HM[Hour Marker Model]
-    B[Behavior]
+    DB[Derived Behavior]
     R[Realization]
     L[Layout]
     A[Appearance]
 
-    B --- HM
+    DB --- HM
     R --- HM
     L --- HM
     A --- HM
@@ -64,17 +64,18 @@ flowchart TB
     classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
 
     class HM center;
-    class B,R,L,A axis;
+    class DB,R,L,A axis;
 ```
 
 - preserve the truthful top-band hour-marker model:
-  - Behavior
-  - Realization
-  - Layout
-  - Appearance
+  - realization
+  - derived effective behavior (text → tapeAdvected; procedural → staticZoneAnchored)
+  - layout
+  - appearance
   - derived semantic content where required at runtime
 - preserve the invariant that indicator-band padding affects spacing only and never marker scale
 - preserve the independent top-band visibility controls for indicator entries, tick tape, and NATO row
+- do not reintroduce boxed hour numerals on the tick tape for clock/procedural modes
 - continue renderer-agnostic feature work without resurrecting migration scaffolding
 - preserve the intentional first-load default of `AppConfig.data.mode = "static"` unless explicitly changing product behavior
 - maintain public-repo coherence with AGPL-3.0 licensing and canonical-reference positioning
