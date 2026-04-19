@@ -21,10 +21,12 @@ import {
   resolveBottomChromeLabelPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
+import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
 import { createBottomChromeTextGlyph } from "../../glyphs/bottomChromeTextGlyphFromPolicy.ts";
 import { BOTTOM_CHROME_STYLE, type BottomChromeColorTokens } from "../../config/bottomChromeStyle";
 import { bottomChromeReadoutContentFromInformationBar } from "../../glyphs/bottomChromeContent.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
+import type { BottomChromeTextVisualPolicy } from "../../config/bottomChromeVisualPolicy.ts";
 import type { BottomInformationBarState } from "../bottomChromeTypes";
 import type { RenderPlan, RenderTextShadowStyle } from "./renderPlanTypes";
 
@@ -45,6 +47,20 @@ function sideReadoutShadowFromStyle(): RenderTextShadowStyle {
   };
 }
 
+/** Role sizing/weight from policy; face comes from the global product default font. */
+function withInheritedProductFontFace(
+  policy: BottomChromeTextVisualPolicy,
+  productDefaultFontAssetId: FontAssetId,
+): BottomChromeTextVisualPolicy {
+  return {
+    ...policy,
+    typographyOverrides: {
+      ...policy.typographyOverrides,
+      fontAssetId: productDefaultFontAssetId,
+    },
+  };
+}
+
 /**
  * Full bottom-band overlay: resolved band plate (structural rect) then micro label, time, and right date readouts.
  * Band fill defaults to transparent so the map-backed appearance matches the pre–Phase 2 text-only path.
@@ -59,6 +75,8 @@ export function buildBottomChromeBandRenderPlan(options: {
   bandPlateFill?: string;
   /** Bundled fonts + typography resolution for {@link TextGlyph} emission. */
   glyphRenderContext: GlyphRenderContext;
+  /** Global default bundled font (roles keep weight/spacing; face inherits this id). */
+  productDefaultFontAssetId: FontAssetId;
 }): RenderPlan {
   const colors = options.colors ?? BOTTOM_CHROME_STYLE.colors;
   const L = BOTTOM_CHROME_STYLE.layout;
@@ -77,9 +95,10 @@ export function buildBottomChromeBandRenderPlan(options: {
   const gctx = options.glyphRenderContext;
 
   const content = bottomChromeReadoutContentFromInformationBar(options.ib);
-  const labelPolicy = resolveBottomChromeLabelPolicy(colors);
-  const timePolicy = resolveBottomChromeTimePolicy(colors);
-  const datePolicy = resolveBottomChromeDatePolicy(colors);
+  const pid = options.productDefaultFontAssetId;
+  const labelPolicy = withInheritedProductFontFace(resolveBottomChromeLabelPolicy(colors), pid);
+  const timePolicy = withInheritedProductFontFace(resolveBottomChromeTimePolicy(colors), pid);
+  const datePolicy = withInheritedProductFontFace(resolveBottomChromeDatePolicy(colors), pid);
 
   const items: RenderPlan["items"] = [
     {

@@ -296,10 +296,10 @@ export type EffectiveTopBandHourMarkerSelection =
 
 /**
  * Local font override → global default → canonical zeroes-two. Inlined here (same rules as
- * `topBandTextChromeFont.ts`) so this module does not import that file — avoids a circular load with
- * `topBandTextChromeFont` importing `appConfig`.
+ * `productTextFont.ts`) so this module does not import that file — avoids a circular load with
+ * `productTextFont` importing `appConfig`.
  */
-function resolveEffectiveTopBandTextChromeFontAssetIdForLayout(
+function resolveEffectiveProductTextFontAssetIdForLayout(
   layout: DisplayChromeLayoutConfig,
   localFontAssetId?: FontAssetId,
 ): FontAssetId {
@@ -309,9 +309,14 @@ function resolveEffectiveTopBandTextChromeFontAssetIdForLayout(
   ) {
     return localFontAssetId;
   }
-  const g = layout.topBandTextChromeDefaultFontAssetId;
-  if (typeof g === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(g)) {
-    return g;
+  const primary = layout.defaultTextFontAssetId;
+  if (typeof primary === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(primary)) {
+    return primary;
+  }
+  const legacy = (layout as { topBandTextChromeDefaultFontAssetId?: FontAssetId })
+    .topBandTextChromeDefaultFontAssetId;
+  if (typeof legacy === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(legacy)) {
+    return legacy;
   }
   return DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 }
@@ -340,7 +345,7 @@ export function effectiveTopBandHourMarkerSelection(
     hm.realization.fontAssetId !== undefined ? hm.realization.fontAssetId : undefined;
   return {
     kind: "text",
-    fontAssetId: resolveEffectiveTopBandTextChromeFontAssetIdForLayout(layout, localFont),
+    fontAssetId: resolveEffectiveProductTextFontAssetIdForLayout(layout, localFont),
     sizeMultiplier,
   };
 }
@@ -383,15 +388,17 @@ export interface DisplayChromeLayoutConfig {
   timezoneLetterRowActiveCellBackgroundColor?: string;
   /**
    * Optional bundled font for NATO / structural zone letters only. When omitted, effective face resolves via
-   * {@link resolveEffectiveTopBandTextChromeFontAssetId} (global default, then canonical fallback) before
+   * {@link resolveEffectiveProductTextFontAssetId} (global default, then canonical fallback) before
    * `resolveTimezoneStripLetterPolicy`.
    */
   timezoneLetterRowFontAssetId?: FontAssetId;
   /**
-   * Global default bundled font for top-band text-oriented chrome (indicator entries, NATO letters when unset, etc.).
-   * When omitted, {@link resolveTopBandTextChromeDefaultFontAssetId} uses the canonical zeroes-two id.
+   * Global default bundled font for product text (top-band controls, bottom readouts, map pin labels, config UI).
+   * When omitted, {@link resolveDefaultProductTextFontAssetId} uses the canonical zeroes-two id.
+   *
+   * Legacy persisted key `topBandTextChromeDefaultFontAssetId` is normalized to this field.
    */
-  topBandTextChromeDefaultFontAssetId?: FontAssetId;
+  defaultTextFontAssetId?: FontAssetId;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**

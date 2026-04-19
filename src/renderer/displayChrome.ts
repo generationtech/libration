@@ -26,7 +26,10 @@ import {
 import {
   resolveEffectiveTopBandHourMarkers,
 } from "../config/topBandHourMarkersResolver.ts";
-import { resolveEffectiveTopBandTextChromeFontAssetId } from "../config/topBandTextChromeFont.ts";
+import {
+  resolveDefaultProductTextFontAssetId,
+  resolveEffectiveProductTextFontAssetId,
+} from "../config/productTextFont.ts";
 import {
   resolveEffectiveTickTapeArea,
   type EffectiveTickTapeArea,
@@ -1691,7 +1694,7 @@ export function renderDisplayChrome(
     chrome.displayChromeLayout.timezoneLetterRowVisible && zoneH > 0;
 
   if (drawTimezoneLetterRow) {
-    const resolvedTimezoneLetterFontAssetId = resolveEffectiveTopBandTextChromeFontAssetId(
+    const resolvedTimezoneLetterFontAssetId = resolveEffectiveProductTextFontAssetId(
       chrome.displayChromeLayout,
       chrome.displayChromeLayout.timezoneLetterRowFontAssetId,
     );
@@ -1884,7 +1887,13 @@ export function renderDisplayChrome(
         fadeColorBottom: overlayStyle.mapHudBoundaryFadeColorBottom,
       }),
     );
-    renderBottomChrome(ctx, viewport, bottomBand, chrome.informationBar);
+    renderBottomChrome(
+      ctx,
+      viewport,
+      bottomBand,
+      chrome.informationBar,
+      resolveDefaultProductTextFontAssetId(chrome.displayChromeLayout),
+    );
   }
 
   ctx.restore();

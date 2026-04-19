@@ -19,6 +19,8 @@ export type CityPinsLabelMode = "city" | "cityAndTime";
 /** Marker and text sizing tier (bootstrap maps from derived app config). */
 export type CityPinsScale = "small" | "medium" | "large";
 
+import type { FontAssetId } from "../typography/fontAssetTypes";
+
 /**
  * Equirectangular city markers: lon −180…180 left→right, lat +90…−90 top→bottom (matches base map).
  */
@@ -37,9 +39,11 @@ export interface CityPinsPayload {
   showLabels: boolean;
   labelMode: CityPinsLabelMode;
   scale: CityPinsScale;
+  /** Bundled font for pin name and time labels (resolved global default at layer construction). */
+  labelFontAssetId: FontAssetId;
 }
 
-/** Options supplied at layer construction (same fields as the runtime payload). */
+/** Options supplied at layer construction (same fields as the runtime payload except font id). */
 export type CityPinsPresentationOptions = Pick<CityPinsPayload, "showLabels" | "labelMode" | "scale">;
 
 export function isCityPinsPayload(data: unknown): data is CityPinsPayload {
@@ -49,6 +53,7 @@ export function isCityPinsPayload(data: unknown): data is CityPinsPayload {
   if (typeof o.showLabels !== "boolean") return false;
   if (o.labelMode !== "city" && o.labelMode !== "cityAndTime") return false;
   if (o.scale !== "small" && o.scale !== "medium" && o.scale !== "large") return false;
+  if (typeof o.labelFontAssetId !== "string" || o.labelFontAssetId.trim() === "") return false;
   for (const c of o.cities) {
     if (c === null || typeof c !== "object") return false;
     const row = c as Record<string, unknown>;

@@ -94,8 +94,8 @@ function cloneConfig(config: AppConfig): AppConfig {
       ...(dcl.timezoneLetterRowFontAssetId !== undefined
         ? { timezoneLetterRowFontAssetId: dcl.timezoneLetterRowFontAssetId }
         : {}),
-      ...(dcl.topBandTextChromeDefaultFontAssetId !== undefined
-        ? { topBandTextChromeDefaultFontAssetId: dcl.topBandTextChromeDefaultFontAssetId }
+      ...(dcl.defaultTextFontAssetId !== undefined
+        ? { defaultTextFontAssetId: dcl.defaultTextFontAssetId }
         : {}),
     },
     geography: {

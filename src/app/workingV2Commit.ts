@@ -14,6 +14,7 @@
 import type { RefObject } from "react";
 import { createLayerRegistryFromConfig } from "./bootstrap";
 import type { AppConfig, CustomPinConfig, LayerEnableFlags } from "../config/appConfig";
+import { resolveDefaultProductTextFontAssetId } from "../config/productTextFont";
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
 import {
   normalizeLibrationConfig,
@@ -106,11 +107,18 @@ function applyCommittedWorkingV2(
   const pinPresentationRequiresRegistry =
     pinPresentationChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
 
+  const productDefaultFontChanged =
+    resolveDefaultProductTextFontAssetId(prevDerived.displayChromeLayout) !==
+    resolveDefaultProductTextFontAssetId(nextDerived.displayChromeLayout);
+  const cityPinsFontRequiresRegistry =
+    productDefaultFontChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
+
   if (
     !layerEnableFlagsEqual(prevDerived.layers, nextDerived.layers) ||
     !visibleCityIdsSetEqual(prevDerived.visibleCityIds, nextDerived.visibleCityIds) ||
     !customPinsEqual(prevDerived.customPins, nextDerived.customPins) ||
-    pinPresentationRequiresRegistry
+    pinPresentationRequiresRegistry ||
+    cityPinsFontRequiresRegistry
   ) {
     registryRef.current = createLayerRegistryFromConfig(nextDerived);
   }

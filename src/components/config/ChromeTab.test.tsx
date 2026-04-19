@@ -75,9 +75,9 @@ describe("ChromeTab major areas", () => {
     expect(values).not.toContain("");
     expect(values).toContain("zeroes-two");
     fireEvent.change(sel, { target: { value: "computer" } });
-    expect(last?.chrome.layout.topBandTextChromeDefaultFontAssetId).toBe("computer");
+    expect(last?.chrome.layout.defaultTextFontAssetId).toBe("computer");
     fireEvent.change(sel, { target: { value: "zeroes-two" } });
-    expect(last?.chrome.layout.topBandTextChromeDefaultFontAssetId).toBeUndefined();
+    expect(last?.chrome.layout.defaultTextFontAssetId).toBeUndefined();
   });
 
   it("defaults to the hour-indicator editor so hour-marker controls are visible", () => {

@@ -334,26 +334,23 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="Default font for text chrome controls">
+        <ConfigControlRow label="Default font for product text">
           <select
             className="config-input"
             data-testid="chrome-global-text-font-select"
             disabled={!wired}
-            aria-label="Global default font for top-band text-oriented chrome controls"
-            value={
-              lay.topBandTextChromeDefaultFontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID
-            }
+            aria-label="Global default font for instrument text, map labels, and configuration panel"
+            value={lay.defaultTextFontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID}
             onChange={
               wired && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value as FontAssetId;
                     updateConfig((draft) => {
                       if (v === DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
-                        delete (
-                          draft.chrome.layout as { topBandTextChromeDefaultFontAssetId?: FontAssetId }
-                        ).topBandTextChromeDefaultFontAssetId;
+                        delete (draft.chrome.layout as { defaultTextFontAssetId?: FontAssetId })
+                          .defaultTextFontAssetId;
                       } else {
-                        draft.chrome.layout.topBandTextChromeDefaultFontAssetId = v;
+                        draft.chrome.layout.defaultTextFontAssetId = v;
                       }
                     });
                   }

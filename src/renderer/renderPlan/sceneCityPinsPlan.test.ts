@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it, vi, type Mock } from "vitest";
+import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../../config/appConfig";
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { CITY_PINS_KIND } from "../../layers/cityPinsPayload";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
@@ -20,6 +21,8 @@ import { buildCityPinsRenderPlan } from "./sceneCityPinsPlan";
 function latToY(latDeg: number, h: number): number {
   return ((90 - latDeg) / 180) * h;
 }
+
+const LABEL_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 
 describe("buildCityPinsRenderPlan", () => {
   it("returns no items for non-positive viewport dimensions", () => {
@@ -34,6 +37,7 @@ describe("buildCityPinsRenderPlan", () => {
           showLabels: true,
           labelMode: "city",
           scale: "medium",
+          labelFontAssetId: LABEL_FONT,
         },
       }).items,
     ).toEqual([]);
@@ -60,6 +64,7 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
+        labelFontAssetId: LABEL_FONT,
       },
     });
 
@@ -72,6 +77,7 @@ describe("buildCityPinsRenderPlan", () => {
       return;
     }
     expect(t0.text).toBe("New York");
+    expect(t0.font.assetId).toBe(LABEL_FONT);
     expect(t0.stroke?.color).toBe("rgba(8, 14, 28, 0.88)");
     expect(t0.opacity).toBe(0.9);
   });
@@ -97,6 +103,7 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: false,
         labelMode: "cityAndTime",
         scale: "medium",
+        labelFontAssetId: LABEL_FONT,
       },
     });
     expect(plan.items.every((i) => i.kind === "path2d")).toBe(true);
@@ -124,6 +131,7 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "cityAndTime",
         scale: "small",
+        labelFontAssetId: LABEL_FONT,
       },
     });
     const texts = plan.items.filter((i) => i.kind === "text");
@@ -153,6 +161,7 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "cityAndTime",
         scale: "medium",
+        labelFontAssetId: LABEL_FONT,
       },
     });
     const texts = plan.items.filter((i) => i.kind === "text");
@@ -182,6 +191,7 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
+        labelFontAssetId: LABEL_FONT,
       },
     });
     const x = mapXFromLongitudeDeg(lon, w);
@@ -255,6 +265,7 @@ describe("executeRenderPlanOnCanvas city pin plans", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
+        labelFontAssetId: LABEL_FONT,
       },
     });
     executeRenderPlanOnCanvas(ctx, plan);

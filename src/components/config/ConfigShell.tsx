@@ -11,9 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ReactNode, RefObject } from "react";
+import { resolveDefaultProductTextFontAssetId } from "../../config/productTextFont";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
+import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
 import { CONFIG_TAB_DEFS, type ConfigTabId } from "./configTabs";
 import type { UserPresetsUiProps } from "./userPresetsPanelTypes";
 import { ConfigTabPanel } from "./ConfigTabPanel";
@@ -87,6 +89,13 @@ export function ConfigShell({
   const [activeTabId, setActiveTabId] = useState<ConfigTabId>("layers");
   const config = workingV2Ref.current;
   const titleId = `${panelDomId}-title`;
+  const uiFontStack = useMemo(() => {
+    if (!config) {
+      return undefined;
+    }
+    const id = resolveDefaultProductTextFontAssetId(config.chrome.layout);
+    return canvasCssFontFamilyStackForBundledAssetId(id) ?? "system-ui, sans-serif";
+  }, [config]);
 
   if (!config) {
     return (
@@ -106,6 +115,11 @@ export function ConfigShell({
       className="config-shell"
       aria-label="Configuration"
       data-has-update-handler={updateConfig ? "true" : "false"}
+      style={
+        uiFontStack !== undefined
+          ? { ["--config-shell-body-font" as string]: uiFontStack }
+          : undefined
+      }
     >
       <header className="config-shell__header">
         <h1 id={titleId} className="config-shell__title">

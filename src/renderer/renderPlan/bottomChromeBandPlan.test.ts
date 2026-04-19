@@ -23,8 +23,10 @@ import { computeBottomChromeLayout } from "../bottomChromeLayout";
 import { resolveBottomChromeTypography } from "../bottomChrome";
 import type { BottomInformationBarState } from "../bottomChromeTypes";
 import { buildBottomChromeBandRenderPlan } from "./bottomChromeBandPlan";
+import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../../config/appConfig";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
+const PRODUCT_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 
 function sampleInformationBar(vw: number): BottomInformationBarState {
   const layout = computeBottomChromeLayout(vw);
@@ -49,6 +51,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       ib,
       typography: typo,
       glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
     });
 
     expect(plan.items).toHaveLength(4);
@@ -73,7 +76,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
     expect(a.textAlign).toBe("left");
     expect(a.letterSpacingEm).toBe(BOTTOM_CHROME_STYLE.layout.leftMicroLabelLetterSpacingEm);
     expect(a.shadow).toBeDefined();
-    expect(a.font.assetId).toBe("dotmatrix-regular");
+    expect(a.font.assetId).toBe(PRODUCT_FONT);
     expect(a.font.displayName.length).toBeGreaterThan(0);
 
     expect(b.text).toBe("3:45 PM");
@@ -113,6 +116,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       ib: empty,
       typography: typo,
       glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
     });
     const right = plan.items[3];
     expect(right.kind).toBe("text");
@@ -132,6 +136,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       ib,
       typography: typo,
       glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
     });
     const [, label, time] = plan.items;
     if (label.kind !== "text" || time.kind !== "text") {
@@ -154,6 +159,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       typography: typo,
       bandPlateFill: customFill,
       glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
     });
     const plate = plan.items[0];
     expect(plate.kind).toBe("rect");

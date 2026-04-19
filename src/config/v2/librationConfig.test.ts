@@ -104,18 +104,26 @@ describe("librationConfig v2 (Phase 1)", () => {
     });
   });
 
-  it("normalizeDisplayChromeLayout keeps valid topBandTextChromeDefaultFontAssetId and drops unknown font ids", () => {
+  it("normalizeDisplayChromeLayout keeps valid defaultTextFontAssetId, migrates legacy key, and drops unknown font ids", () => {
+    expect(
+      normalizeDisplayChromeLayout({
+        defaultTextFontAssetId: "computer",
+      }),
+    ).toEqual({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      defaultTextFontAssetId: "computer",
+    });
     expect(
       normalizeDisplayChromeLayout({
         topBandTextChromeDefaultFontAssetId: "computer",
       }),
     ).toEqual({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
-      topBandTextChromeDefaultFontAssetId: "computer",
+      defaultTextFontAssetId: "computer",
     });
     expect(
       normalizeDisplayChromeLayout({
-        topBandTextChromeDefaultFontAssetId: "not-a-bundled-font",
+        defaultTextFontAssetId: "not-a-bundled-font",
       }),
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });

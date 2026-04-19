@@ -94,7 +94,7 @@ export function resolveTopBandAnnotationPolicy(
  * NATO / structural zone letter in the timezone strip (single column glyph).
  * Default weight is heavier than the base `chromeZoneLabel` role so single-letter cells read clearly.
  * Pass the **resolved** bundled {@link FontAssetId} (local NATO override or global default from
- * {@link resolveEffectiveTopBandTextChromeFontAssetId}); face selection is not inferred inside this helper.
+ * {@link resolveEffectiveProductTextFontAssetId}); face selection is not inferred inside this helper.
  */
 export function resolveTimezoneStripLetterPolicy(
   chrome: TopChromeStyle,

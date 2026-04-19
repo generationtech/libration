@@ -18,6 +18,7 @@
 
 import { BOTTOM_CHROME_STYLE } from "../config/bottomChromeStyle";
 import { defaultFontAssetRegistry } from "../typography/fontAssetRegistry";
+import type { FontAssetId } from "../typography/fontAssetTypes";
 import { bottomChromeFontPx } from "./bottomChromeLayout";
 import type { BottomInformationBarState } from "./bottomChromeTypes";
 import { buildBottomChromeBandRenderPlan } from "./renderPlan/bottomChromeBandPlan";
@@ -46,6 +47,7 @@ export function renderBottomChrome(
   viewport: Viewport,
   bottomBand: BottomChromeBandRect,
   ib: BottomInformationBarState,
+  productDefaultFontAssetId: FontAssetId,
 ): void {
   const vw = viewport.width;
   const typo = resolveBottomChromeTypography(vw);
@@ -55,6 +57,7 @@ export function renderBottomChrome(
     ib,
     typography: typo,
     glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
+    productDefaultFontAssetId,
   });
   executeRenderPlanOnCanvas(ctx, plan);
 }

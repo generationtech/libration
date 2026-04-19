@@ -13,6 +13,7 @@
 
 import type { AppConfig } from "../config/appConfig";
 import { resolveCitiesForPins, resolveEnabledCustomPinsForMap } from "../config/appConfig";
+import { resolveDefaultProductTextFontAssetId } from "../config/productTextFont";
 import { getActiveAppConfig } from "../config/displayPresets";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createCityPinsLayer } from "../layers/cityPinsLayer";
@@ -49,6 +50,7 @@ export function createLayerRegistryFromConfig(
         resolveCitiesForPins(config),
         resolveEnabledCustomPinsForMap(config),
         config.pinPresentation,
+        resolveDefaultProductTextFontAssetId(config.displayChromeLayout),
       ),
     );
   }

@@ -13,6 +13,7 @@
 
 import { formatWallClockInTimeZone } from "../core/timeFormat";
 import type { ReferenceCity } from "../data/referenceCities";
+import type { FontAssetId } from "../typography/fontAssetTypes";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   CITY_PINS_KIND,
@@ -67,13 +68,14 @@ export type CityPinsCustomDefinition = {
 
 /**
  * Static reference city markers in equirectangular space (no live data, no interaction).
- * Pass the city list from app/bootstrap; the layer does not read global config.
+ * Pass the city list from app/bootstrap; `labelFontAssetId` is the resolved global default text font.
  * Optional `customPins` are merged after reference cities (same draw payload shape; no local time).
  */
 export function createCityPinsLayer(
   cities: readonly ReferenceCity[],
   customPins: readonly CityPinsCustomDefinition[] = [],
   presentation: CityPinsPresentationOptions,
+  labelFontAssetId: FontAssetId,
 ): Layer {
   const pinDefinitions = resolvePinDefinitions(cities, customPins);
   return {
@@ -101,6 +103,7 @@ export function createCityPinsLayer(
         showLabels: presentation.showLabels,
         labelMode: presentation.labelMode,
         scale: presentation.scale,
+        labelFontAssetId,
       };
       return {
         visible: true,

@@ -19,16 +19,9 @@
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
-import {
-  RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
-  type RenderPath2DItem,
-  type RenderPlan,
-  type RenderTextItem,
-} from "./renderPlanTypes";
+import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
+import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
 import { circlePath2D } from "./circlePath2D";
-
-const FONT_STACK = "system-ui, -apple-system, Segoe UI, sans-serif";
-const SYSTEM_UI_DISPLAY_NAME = "System UI stack";
 
 function mapLatToY(latDeg: number, viewportHeightPx: number): number {
   return ((90 - latDeg) / 180) * viewportHeightPx;
@@ -53,7 +46,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   }
 
   const layerOp = options.layerOpacity;
-  const { showLabels, labelMode, scale, cities } = options.payload;
+  const { showLabels, labelMode, scale, cities, labelFontAssetId } = options.payload;
+  const labelFontRec = defaultFontAssetRegistry.requireById(labelFontAssetId);
   const scaleFactor =
     scale === "small" ? 0.82 : scale === "large" ? 1.22 : 1;
 
@@ -107,9 +101,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
       text: city.name,
       fill: "rgba(245, 248, 255, 0.94)",
       font: {
-        assetId: RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
-        displayName: SYSTEM_UI_DISPLAY_NAME,
-        family: FONT_STACK,
+        assetId: labelFontAssetId,
+        displayName: labelFontRec.displayName,
         sizePx: nameSize,
         weight: 500,
         style: "normal",
@@ -136,9 +129,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
         text: city.localTimeLabel,
         fill: "rgba(215, 224, 242, 0.9)",
         font: {
-          assetId: RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
-          displayName: SYSTEM_UI_DISPLAY_NAME,
-          family: FONT_STACK,
+          assetId: labelFontAssetId,
+          displayName: labelFontRec.displayName,
           sizePx: timeSize,
           weight: 400,
           style: "normal",

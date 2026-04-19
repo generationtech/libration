@@ -4,6 +4,7 @@
   --config-shell-border: 1px solid var(--config-shell-border-color, rgba(128, 128, 128, 0.35));
   --config-shell-surface: var(--config-shell-bg, rgba(246, 246, 246, 0.97));
   --config-shell-text: var(--config-shell-fg, #0f0f0f);
+  font-family: var(--config-shell-body-font, inherit);
 
   /*
    * Shared data-entry controls (inputs, selects, buttons outside demo transport):

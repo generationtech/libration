@@ -218,14 +218,22 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
-  let topBandTextChromeDefaultFontAssetId: FontAssetId | undefined;
-  const globalFontRaw = (input as { topBandTextChromeDefaultFontAssetId?: unknown })
+  let defaultTextFontAssetId: FontAssetId | undefined;
+  const newGlobalRaw = (input as { defaultTextFontAssetId?: unknown }).defaultTextFontAssetId;
+  const legacyGlobalRaw = (input as { topBandTextChromeDefaultFontAssetId?: unknown })
     .topBandTextChromeDefaultFontAssetId;
-  if (typeof globalFontRaw === "string") {
-    const t = globalFontRaw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
-      topBandTextChromeDefaultFontAssetId = t as FontAssetId;
+  const pickGlobal = (raw: unknown): void => {
+    if (typeof raw !== "string") {
+      return;
     }
+    const t = raw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      defaultTextFontAssetId = t as FontAssetId;
+    }
+  };
+  pickGlobal(newGlobalRaw);
+  if (defaultTextFontAssetId === undefined) {
+    pickGlobal(legacyGlobalRaw);
   }
 
   return {
@@ -247,9 +255,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
       ? { timezoneLetterRowActiveCellBackgroundColor }
       : {}),
     ...(timezoneLetterRowFontAssetId !== undefined ? { timezoneLetterRowFontAssetId } : {}),
-    ...(topBandTextChromeDefaultFontAssetId !== undefined
-      ? { topBandTextChromeDefaultFontAssetId }
-      : {}),
+    ...(defaultTextFontAssetId !== undefined ? { defaultTextFontAssetId } : {}),
   };
 }
 
@@ -433,9 +439,7 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     ...(l.timezoneLetterRowFontAssetId !== undefined
       ? { timezoneLetterRowFontAssetId: l.timezoneLetterRowFontAssetId }
       : {}),
-    ...(l.topBandTextChromeDefaultFontAssetId !== undefined
-      ? { topBandTextChromeDefaultFontAssetId: l.topBandTextChromeDefaultFontAssetId }
-      : {}),
+    ...(l.defaultTextFontAssetId !== undefined ? { defaultTextFontAssetId: l.defaultTextFontAssetId } : {}),
   };
 }
 
@@ -595,13 +599,12 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowFontAssetId");
   }
-  const globalChromeFont = (lay as { topBandTextChromeDefaultFontAssetId?: unknown })
-    .topBandTextChromeDefaultFontAssetId;
+  const globalTextFont = (lay as { defaultTextFontAssetId?: unknown }).defaultTextFontAssetId;
   if (
-    globalChromeFont !== undefined &&
-    (typeof globalChromeFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(globalChromeFont))
+    globalTextFont !== undefined &&
+    (typeof globalTextFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(globalTextFont))
   ) {
-    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.topBandTextChromeDefaultFontAssetId");
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.defaultTextFontAssetId");
   }
   const hm = lay.hourMarkers;
   if (
