@@ -18,6 +18,7 @@ import {
   geographyTimezoneStripReferenceLabel,
   instrumentationLongitudeDegForReferenceTimeZone,
   REFERENCE_ZONE_TO_LONGITUDE_CITY_ID,
+  resolvePresentTimeContextLongitudeDeg,
   resolveTopBandAnchorLongitudeDeg,
 } from "./topBandAnchorLongitude";
 import { utcOffsetHoursForTimeZone } from "../core/timeZoneOffset";
@@ -109,6 +110,19 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.tokyo"), 7);
   });
 
+  it("presentTimeReferenceMode referenceCity: fixedCity anchor resolves tape like auto (not Tokyo)", () => {
+    const nowMs = Date.UTC(2026, 1, 1, 12, 0, 0);
+    const r = resolveTopBandAnchorLongitudeDeg({
+      nowMs,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local24",
+      topBandAnchor: { mode: "fixedCity", cityId: "city.tokyo" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
+    expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
+  });
+
   it("fixedCity with unknown id falls back to 0°", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 12, 0, 0),
@@ -187,6 +201,26 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
         "geographyFixedCoordinate",
       ),
     ).toBe(null);
+  });
+});
+
+describe("resolvePresentTimeContextLongitudeDeg", () => {
+  it("referenceCity + fixedCity uses the selected city longitude (not zone default)", () => {
+    const lon = resolvePresentTimeContextLongitudeDeg({
+      referenceTimeZone: "America/New_York",
+      topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(lon).toBeCloseTo(lonForCityId("city.knoxville"), 7);
+  });
+
+  it("referenceCity + auto uses zone default city longitude", () => {
+    const lon = resolvePresentTimeContextLongitudeDeg({
+      referenceTimeZone: "America/New_York",
+      topBandAnchor: { mode: "auto" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(lon).toBeCloseTo(instrumentationLongitudeDegForReferenceTimeZone("America/New_York"), 7);
   });
 });
 

@@ -49,8 +49,11 @@ export type DisplayTimeZoneConfig =
 export type TopBandTimeMode = "local12" | "local24" | "utc24";
 
 /**
- * Where the present-time (“now”) tick sits on the structural tape: the tape’s anchor meridian, or the reference IANA
- * zone’s default reference-city longitude (instrumentation only; tape phase and anchor stay on {@link topBandAnchor}).
+ * Where the present-time (“now”) tick’s **context** longitude comes from vs tape/world alignment.
+ * - {@code anchor}: tape alignment and present-time column share the resolved anchor meridian (including {@code fixedCity}).
+ * - {@code referenceCity}: present-time follows the user’s reference-city selection ({@code fixedCity} longitude); with
+ *   {@code fixedCity} anchor, tape alignment resolves like {@code auto} so the expressed strip frame does not jump when
+ *   the manual city changes.
  */
 export type PresentTimeReferenceMode = "anchor" | "referenceCity";
 
@@ -82,9 +85,10 @@ export interface DisplayTimeConfig {
   /** Longitude anchor for the time-phased circle row (default {@code auto}). */
   topBandAnchor: TopBandAnchorConfig;
   /**
-   * Present-time tick placement vs tape anchor. Default {@code anchor} — same meridian as {@link topBandAnchor}
-   * resolution. {@code referenceCity} uses the reference zone’s mapped reference-city longitude for the present-time
-   * tick only (tape phase and anchor unchanged).
+   * Present-time context vs tape alignment. Default {@code anchor} — coupled to {@link topBandAnchor}. {@code referenceCity}:
+   * with {@code fixedCity}, present-time uses that city’s longitude; tape uses {@code auto}-style alignment so manual city
+   * changes rebind instrumentation only. With {@code auto} anchor, present-time uses the zone’s default reference city
+   * (same as today).
    */
   presentTimeReferenceMode?: PresentTimeReferenceMode;
 }

@@ -263,41 +263,45 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(knoxLon, w), 5);
   });
 
-  it("referenceCity mode: tape anchor unchanged; nowX follows reference-zone default city (NYC)", () => {
+  it("referenceCity mode: tape alignment follows zone auto (NYC); present-time follows manual city (Knoxville)", () => {
     const resolved = resolveTopBandTimeFromConfig({
       ...baseDisplayTime,
       presentTimeReferenceMode: "referenceCity",
     });
-    expect(resolved.instrumentationLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(resolved.instrumentationLongitudeDeg).toBeCloseTo(knoxLon, 5);
     const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
-    expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(knoxLon, 5);
-    expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
-    expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(nycLon, w), 5);
-    expect(layout.nowX).not.toBeCloseTo(expectedPresentTimeIndicatorX(knoxLon, w), 3);
+    expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(knoxLon, w), 5);
+    expect(layout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(nycLon, 5);
   });
 
-  it("referenceCity mode: phased tape, phase calendar, and segment geometry match anchor mode", () => {
-    const anchorLayout = buildUtcTopScaleLayout(
-      t,
-      w,
-      80,
-      resolveTopBandTimeFromConfig({ ...baseDisplayTime, presentTimeReferenceMode: "anchor" }),
-    );
-    const instLayout = buildUtcTopScaleLayout(
-      t,
-      w,
-      80,
-      resolveTopBandTimeFromConfig({ ...baseDisplayTime, presentTimeReferenceMode: "referenceCity" }),
-    );
-    expect(instLayout.referenceFractionalHour).toBeCloseTo(anchorLayout.referenceFractionalHour, 10);
-    expect(instLayout.bandPhaseDayStartMs).toBe(anchorLayout.bandPhaseDayStartMs);
-    expect(instLayout.phasedTapeAnchorFrac).toBeCloseTo(anchorLayout.phasedTapeAnchorFrac, 10);
-    expect(instLayout.topBandAnchor.anchorX).toBeCloseTo(anchorLayout.topBandAnchor.anchorX, 10);
-    expect(instLayout.majorBoundaryXs).toEqual(anchorLayout.majorBoundaryXs);
-    expect(instLayout.segments).toEqual(anchorLayout.segments);
+  it("referenceCity mode: expressed strip frame is identical for different manual cities (same zone + instant)", () => {
+    const knoxResolved = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const nycResolved = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const knoxLayout = buildUtcTopScaleLayout(t, w, 80, knoxResolved);
+    const nycLayout = buildUtcTopScaleLayout(t, w, 80, nycResolved);
+    expect(knoxLayout.referenceFractionalHour).toBeCloseTo(nycLayout.referenceFractionalHour, 10);
+    expect(knoxLayout.bandPhaseDayStartMs).toBe(nycLayout.bandPhaseDayStartMs);
+    expect(knoxLayout.phasedTapeAnchorFrac).toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 10);
+    expect(knoxLayout.topBandAnchor.anchorX).toBeCloseTo(nycLayout.topBandAnchor.anchorX, 10);
+    expect(knoxLayout.majorBoundaryXs).toEqual(nycLayout.majorBoundaryXs);
+    expect(knoxLayout.segments).toEqual(nycLayout.segments);
+    expect(knoxLayout.expressedStripTimeFrame).toEqual(nycLayout.expressedStripTimeFrame);
+    expect(knoxLayout.nowX).not.toBeCloseTo(nycLayout.nowX, 3);
+    expect(knoxLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(nycLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
   });
 
-  it("referenceCity mode: sub-hour time advance changes phased position but keeps nowX column fixed", () => {
+  it("referenceCity mode: sub-hour time advance changes phased position; same city keeps present column center", () => {
     const tLater = t + 45 * 60 * 1000;
     const a0 = buildUtcTopScaleLayout(
       t,
@@ -313,6 +317,32 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     );
     expect(a0.nowX).toBeCloseTo(a1.nowX, 5);
     expect(a1.referenceFractionalHour).not.toBeCloseTo(a0.referenceFractionalHour, 4);
+  });
+
+  it("referenceCity mode: after rebinding city, phased strip state matches; only present-time column differs at same instant", () => {
+    const knoxRef = resolveTopBandTimeFromConfig({ ...baseDisplayTime, presentTimeReferenceMode: "referenceCity" });
+    const nycRef = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const tLater = t + 45 * 60 * 1000;
+    const knoxLater = buildUtcTopScaleLayout(tLater, w, 80, knoxRef);
+    const nycSameInstant = buildUtcTopScaleLayout(tLater, w, 80, nycRef);
+    expect(knoxLater.phasedTapeAnchorFrac).toBeCloseTo(nycSameInstant.phasedTapeAnchorFrac, 10);
+    expect(knoxLater.majorBoundaryXs).toEqual(nycSameInstant.majorBoundaryXs);
+    expect(knoxLater.nowX).not.toBeCloseTo(nycSameInstant.nowX, 3);
+  });
+
+  it("referenceCity mode: changing manual city does not alter resolved referenceTimeZone or topBandMode", () => {
+    const knoxResolved = resolveTopBandTimeFromConfig({ ...baseDisplayTime, presentTimeReferenceMode: "referenceCity" });
+    const nycResolved = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(knoxResolved.referenceTimeZone).toBe(nycResolved.referenceTimeZone);
+    expect(knoxResolved.topBandMode).toBe(nycResolved.topBandMode);
   });
 });
 

@@ -66,7 +66,7 @@ import {
   computeBottomChromeOverlayBottomMarginPx,
 } from "./bottomChromeLayout";
 import {
-  instrumentationLongitudeDegForReferenceTimeZone,
+  resolvePresentTimeContextLongitudeDeg,
   resolveTopBandAnchorLongitudeDeg,
   type TopBandAnchorLongitudeSource,
 } from "./topBandAnchorLongitude";
@@ -274,18 +274,20 @@ export interface UtcTopScaleCircleMarker {
 }
 
 /**
- * Longitude anchoring for the top tape circle row: resolved **anchor meridian** plus the tape’s horizontal anchor x.
- * The top band is anchored by longitude, not by civil timezone. A reference city used as an anchor contributes its
- * longitude for band alignment only. {@link anchorX} is {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}) —
- * continuous meridian position for map/scene registration. The present-time tick uses
- * {@link presentTimeIndicatorXFromReferenceLongitudeDeg} (center of the containing 15° column). In `local12` / `local24`, the phased
- * upper tape uses that same column-center basis via {@link UtcTopScaleLayout.phasedTapeAnchorFrac}. Letter boxes remain fixed structural
- * sectors underneath.
+ * Longitude anchoring for the top tape circle row: **tape alignment** meridian plus the tape’s horizontal anchor x.
+ * Civil timezone does not define structural columns. {@link anchorX} is {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}).
+ * The present-time tick column is {@link UtcTopScaleLayout.presentTimeIndicatorLongitudeDeg} (may differ in
+ * {@code referenceCity} mode). In `local12` / `local24`, phased placement uses the tape meridian’s structural column via
+ * {@link UtcTopScaleLayout.phasedTapeAnchorFrac}. Letter boxes remain fixed structural sectors underneath.
  */
 export interface TopBandLongitudeAnchor {
   /** `Intl` offset hours (fractional) for the reference IANA zone (DST-aware). Not used to place structural columns; echoed for debugging. */
   referenceOffsetHours: number;
-  /** Resolved reference meridian (from {@link resolveTopBandAnchorLongitudeDeg}); unchanged for map/selection semantics. */
+  /**
+   * Tape / world alignment meridian (from {@link resolveTopBandAnchorLongitudeDeg}). Phased tape and map registration;
+   * in {@code referenceCity} + {@code fixedCity}, resolved like {@code auto} so the expressed strip frame does not move
+   * when only the manual reference city changes.
+   */
   referenceLongitudeDeg: number;
   /** Horizontal position of the reference meridian on the top strip [0, widthPx] (same x as map pins for that lon). */
   anchorX: number;
@@ -293,6 +295,19 @@ export interface TopBandLongitudeAnchor {
   anchorFrac: number;
   /** How {@link referenceLongitudeDeg} was chosen (Chrome explicit modes vs geography vs zone fallback). */
   anchorSource: TopBandAnchorLongitudeSource;
+}
+
+/**
+ * Quantities defining the visible top-strip **expressed time frame** for the current instant: civil phase in the band,
+ * tape phase anchor, and calendar day used for band phasing. With {@code referenceCity} + {@code fixedCity}, these stay
+ * fixed across manual reference-city changes; only present-time instrumentation follows the new city.
+ */
+export interface ExpressedStripTimeFrame {
+  bandPhaseDayStartMs: number;
+  referenceFractionalHour: number;
+  phasedTapeAnchorFrac: number;
+  /** Same as {@link TopBandLongitudeAnchor.referenceLongitudeDeg} — tape alignment / phased horizontal basis. */
+  tapeAlignmentLongitudeDeg: number;
 }
 
 /**
@@ -315,13 +330,15 @@ export interface UtcTopScaleLayout {
   referenceNowMs: number;
   /** Civil fractional hour-of-day in the band frame; drives {@link topBandHourMarkerCenterX}. For {@link TopBandTimeMode} `utc24`, use UTC fractional hour ({@code referenceFractionalHour} = UTC hours 0–24 float); for `local12` / `local24`, the reference zone’s wall time. */
   referenceFractionalHour: number;
-  /** Longitude anchor (resolved meridian + exact-longitude x / {@link TopBandLongitudeAnchor.anchorFrac} for map registration). Not a civil-TZ selector. */
+  /** Longitude anchor (tape alignment meridian + exact-longitude x / {@link TopBandLongitudeAnchor.anchorFrac} for map registration). Not a civil-TZ selector. */
   topBandAnchor: TopBandLongitudeAnchor;
+  /** Strip phase basis for the current instant; duplicates key fields for a single “expressed frame” snapshot. */
+  expressedStripTimeFrame: ExpressedStripTimeFrame;
   /**
    * Normalized x [0,1) passed to {@link topBandHourMarkerCenterX} for the phased circle row and tick rail.
    * For {@link TopBandTimeMode} `utc24`, equals {@link TopBandLongitudeAnchor.anchorFrac} (exact meridian).
-   * For `local12` / `local24`, equals the structural 15° column center for the resolved anchor meridian (same basis as {@link nowX}),
-   * so the upper hour tape aligns with the timezone letterbox centerline and the present-time tick.
+   * For `local12` / `local24`, equals the structural 15° column center for the **tape alignment** meridian (may differ from
+   * {@link presentTimeIndicatorLongitudeDeg} in {@code referenceCity} mode).
    */
   phasedTapeAnchorFrac: number;
   /** Same as {@link tickHierarchy.hour}; phased hour boundaries (length 25). */
@@ -333,8 +350,8 @@ export interface UtcTopScaleLayout {
   /** Hour / quarter-major / quarter-minor tick x positions (phased like {@link topBandHourMarkerCenterX}). Omitted when {@link widthPx} is 0. */
   tickHierarchy?: TopTapeTickHierarchy;
   /**
-   * Longitude whose structural 15° column determines {@link nowX} (column center). Matches
-   * {@link TopBandLongitudeAnchor.referenceLongitudeDeg} unless {@link ResolvedTopBandTime.instrumentationLongitudeDeg} is set.
+   * Longitude whose structural 15° column determines {@link nowX} (column center). Present-time **context** meridian;
+   * may differ from {@link TopBandLongitudeAnchor.referenceLongitudeDeg} in {@code referenceCity} mode.
    */
   presentTimeIndicatorLongitudeDeg: number;
   /**
@@ -406,12 +423,14 @@ function resolveChromeTimeZone(explicit?: string): string {
 export interface ResolvedTopBandTime {
   referenceTimeZone: string;
   topBandMode: TopBandTimeMode;
+  /** Authoring intent; tape alignment may still follow {@code auto} when {@link presentTimeReferenceMode} is {@code referenceCity} and mode is {@code fixedCity}. */
   topBandAnchor: TopBandAnchorConfig;
   /** Effective present-time policy; default {@code anchor}. */
   presentTimeReferenceMode: PresentTimeReferenceMode;
   /**
-   * When {@link presentTimeReferenceMode} is {@code referenceCity}: longitude for the present-time tick only.
-   * Omitted in {@code anchor} mode (layout uses the tape anchor meridian).
+   * When {@link presentTimeReferenceMode} is {@code referenceCity}: resolved longitude for the present-time tick /
+   * instrumentation column only (user’s reference city when {@code fixedCity}, else zone default city).
+   * Omitted in {@code anchor} mode (layout uses the tape anchor meridian for present-time).
    */
   instrumentationLongitudeDeg?: number;
 }
@@ -420,14 +439,16 @@ export interface ResolvedTopBandTime {
 export function resolveTopBandTimeFromConfig(config: DisplayTimeConfig): ResolvedTopBandTime {
   const referenceTimeZone = resolveDisplayTimeReferenceZone(config.referenceTimeZone);
   const presentTimeReferenceMode = config.presentTimeReferenceMode ?? "anchor";
-  const instrumentationLongitudeDeg =
-    presentTimeReferenceMode === "referenceCity"
-      ? instrumentationLongitudeDegForReferenceTimeZone(referenceTimeZone)
-      : undefined;
+  const topBandAnchor = config.topBandAnchor ?? { mode: "auto" };
+  const instrumentationLongitudeDeg = resolvePresentTimeContextLongitudeDeg({
+    referenceTimeZone,
+    topBandAnchor,
+    presentTimeReferenceMode,
+  });
   return {
     referenceTimeZone,
     topBandMode: config.topBandMode,
-    topBandAnchor: config.topBandAnchor ?? { mode: "auto" },
+    topBandAnchor,
     presentTimeReferenceMode,
     instrumentationLongitudeDeg,
   };
@@ -669,6 +690,7 @@ function computeTopBandLongitudeAnchor(
   mode: TopBandTimeMode,
   referenceTimeZone: string,
   topBandAnchor: TopBandAnchorConfig,
+  presentTimeReferenceMode: PresentTimeReferenceMode,
   geography?: GeographyConfig,
 ): TopBandLongitudeAnchor {
   const w = Math.max(0, widthPx);
@@ -677,6 +699,7 @@ function computeTopBandLongitudeAnchor(
     referenceTimeZone,
     topBandMode: mode,
     topBandAnchor,
+    presentTimeReferenceMode,
     geography,
   });
   const anchorX = w === 0 ? 0 : mapXFromLongitudeDeg(referenceLongitudeDeg, w);
@@ -1285,6 +1308,7 @@ export function buildUtcTopScaleLayout(
     rt.topBandMode,
     rt.referenceTimeZone,
     rt.topBandAnchor,
+    rt.presentTimeReferenceMode,
     geography,
   );
 
@@ -1302,6 +1326,12 @@ export function buildUtcTopScaleLayout(
       referenceNowMs: nowMs,
       referenceFractionalHour,
       topBandAnchor,
+      expressedStripTimeFrame: {
+        bandPhaseDayStartMs,
+        referenceFractionalHour,
+        phasedTapeAnchorFrac: 0.5,
+        tapeAlignmentLongitudeDeg: topBandAnchor.referenceLongitudeDeg,
+      },
       phasedTapeAnchorFrac: 0.5,
       majorBoundaryXs: [],
       quarterMajorTickXs: [],
@@ -1445,6 +1475,12 @@ export function buildUtcTopScaleLayout(
     referenceNowMs: nowMs,
     referenceFractionalHour,
     topBandAnchor,
+    expressedStripTimeFrame: {
+      bandPhaseDayStartMs,
+      referenceFractionalHour,
+      phasedTapeAnchorFrac,
+      tapeAlignmentLongitudeDeg: topBandAnchor.referenceLongitudeDeg,
+    },
     phasedTapeAnchorFrac,
     majorBoundaryXs,
     quarterMajorTickXs,
