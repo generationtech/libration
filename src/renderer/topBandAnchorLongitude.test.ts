@@ -19,6 +19,7 @@ import {
   instrumentationLongitudeDegForReferenceTimeZone,
   REFERENCE_ZONE_TO_LONGITUDE_CITY_ID,
   resolvePresentTimeContextLongitudeDeg,
+  resolveTapeAlignmentLongitudeDeg,
   resolveTopBandAnchorLongitudeDeg,
 } from "./topBandAnchorLongitude";
 import { utcOffsetHoursForTimeZone } from "../core/timeZoneOffset";
@@ -110,19 +111,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.tokyo"), 7);
   });
 
-  it("presentTimeReferenceMode referenceCity: fixedCity anchor resolves tape like auto (not Tokyo)", () => {
-    const nowMs = Date.UTC(2026, 1, 1, 12, 0, 0);
-    const r = resolveTopBandAnchorLongitudeDeg({
-      nowMs,
-      referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
-      topBandAnchor: { mode: "fixedCity", cityId: "city.tokyo" },
-      presentTimeReferenceMode: "referenceCity",
-    });
-    expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
-    expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
-  });
-
   it("fixedCity with unknown id falls back to 0°", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 12, 0, 0),
@@ -201,6 +189,40 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
         "geographyFixedCoordinate",
       ),
     ).toBe(null);
+  });
+});
+
+describe("resolveTapeAlignmentLongitudeDeg", () => {
+  it("referenceCity + fixedCity: tape follows zone auto (not Tokyo city id)", () => {
+    const nowMs = Date.UTC(2026, 1, 1, 12, 0, 0);
+    const r = resolveTapeAlignmentLongitudeDeg({
+      nowMs,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local24",
+      topBandAnchor: { mode: "fixedCity", cityId: "city.tokyo" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
+    expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
+  });
+
+  it("referenceCity + fixedCity ignores geography fixedCoordinate (zone meridian only)", () => {
+    const nowMs = Date.UTC(2026, 5, 1, 12, 0, 0);
+    const geo = {
+      ...DEFAULT_GEOGRAPHY_CONFIG,
+      referenceMode: "fixedCoordinate" as const,
+      fixedCoordinate: { latitude: -33, longitude: 151.2, label: "Sydney area" },
+    };
+    const tape = resolveTapeAlignmentLongitudeDeg({
+      nowMs,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local24",
+      topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+      presentTimeReferenceMode: "referenceCity",
+      geography: geo,
+    });
+    expect(tape.anchorSource).toBe("referenceZoneLongitudeCity");
+    expect(tape.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
   });
 });
 

@@ -52,8 +52,9 @@ export type TopBandTimeMode = "local12" | "local24" | "utc24";
  * Where the present-time (“now”) tick’s **context** longitude comes from vs tape/world alignment.
  * - {@code anchor}: tape alignment and present-time column share the resolved anchor meridian (including {@code fixedCity}).
  * - {@code referenceCity}: present-time follows the user’s reference-city selection ({@code fixedCity} longitude); with
- *   {@code fixedCity} anchor, tape alignment resolves like {@code auto} so the expressed strip frame does not jump when
- *   the manual city changes.
+ *   {@code fixedCity} anchor, tape alignment resolves like {@code auto} for the reference IANA zone (not the selected
+ *   city’s longitude) and does not use geography’s fixed-coordinate override, so the strip frame stays stable when the
+ *   reference city changes.
  */
 export type PresentTimeReferenceMode = "anchor" | "referenceCity";
 
@@ -86,9 +87,9 @@ export interface DisplayTimeConfig {
   topBandAnchor: TopBandAnchorConfig;
   /**
    * Present-time context vs tape alignment. Default {@code anchor} — coupled to {@link topBandAnchor}. {@code referenceCity}:
-   * with {@code fixedCity}, present-time uses that city’s longitude; tape uses {@code auto}-style alignment so manual city
-   * changes rebind instrumentation only. With {@code auto} anchor, present-time uses the zone’s default reference city
-   * (same as today).
+   * with {@code fixedCity}, present-time uses that city’s longitude; tape uses zone-based ({@code auto}-style) alignment
+   * without geography fixed-coordinate coupling so manual city changes rebind instrumentation only. With {@code auto}
+   * anchor, present-time uses the zone’s default reference city (same as today).
    */
   presentTimeReferenceMode?: PresentTimeReferenceMode;
 }

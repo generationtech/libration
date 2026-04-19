@@ -67,7 +67,7 @@ import {
 } from "./bottomChromeLayout";
 import {
   resolvePresentTimeContextLongitudeDeg,
-  resolveTopBandAnchorLongitudeDeg,
+  resolveTapeAlignmentLongitudeDeg,
   type TopBandAnchorLongitudeSource,
 } from "./topBandAnchorLongitude";
 import { defaultFontAssetRegistry } from "../config/chromeTypography";
@@ -284,9 +284,9 @@ export interface TopBandLongitudeAnchor {
   /** `Intl` offset hours (fractional) for the reference IANA zone (DST-aware). Not used to place structural columns; echoed for debugging. */
   referenceOffsetHours: number;
   /**
-   * Tape / world alignment meridian (from {@link resolveTopBandAnchorLongitudeDeg}). Phased tape and map registration;
-   * in {@code referenceCity} + {@code fixedCity}, resolved like {@code auto} so the expressed strip frame does not move
-   * when only the manual reference city changes.
+   * Tape / world alignment meridian (from {@link resolveTapeAlignmentLongitudeDeg}). Phased tape and map registration;
+   * in {@code referenceCity} + {@code fixedCity}, zone-based (not the selected city’s longitude) and not geography
+   * fixed-coordinate, so changing the reference city rebinds present-time only.
    */
   referenceLongitudeDeg: number;
   /** Horizontal position of the reference meridian on the top strip [0, widthPx] (same x as map pins for that lon). */
@@ -418,12 +418,12 @@ function resolveChromeTimeZone(explicit?: string): string {
 
 /**
  * Resolved display-time inputs for the top band and bottom bar: IANA **civil** zone string + mode + longitude-anchor policy.
- * The reference zone drives wall-clock phasing and the bottom bar; the top tape’s horizontal alignment uses {@link resolveTopBandAnchorLongitudeDeg} (longitude), not civil-TZ boundaries.
+ * The reference zone drives wall-clock phasing and the bottom bar; the top tape’s horizontal alignment uses {@link resolveTapeAlignmentLongitudeDeg} (longitude), not civil-TZ boundaries.
  */
 export interface ResolvedTopBandTime {
   referenceTimeZone: string;
   topBandMode: TopBandTimeMode;
-  /** Authoring intent; tape alignment may still follow {@code auto} when {@link presentTimeReferenceMode} is {@code referenceCity} and mode is {@code fixedCity}. */
+  /** Authoring intent; tape alignment is derived in {@link resolveTapeAlignmentLongitudeDeg} (see {@link PresentTimeReferenceMode}). */
   topBandAnchor: TopBandAnchorConfig;
   /** Effective present-time policy; default {@code anchor}. */
   presentTimeReferenceMode: PresentTimeReferenceMode;
@@ -694,7 +694,7 @@ function computeTopBandLongitudeAnchor(
   geography?: GeographyConfig,
 ): TopBandLongitudeAnchor {
   const w = Math.max(0, widthPx);
-  const { referenceLongitudeDeg, referenceOffsetHours, anchorSource } = resolveTopBandAnchorLongitudeDeg({
+  const { referenceLongitudeDeg, referenceOffsetHours, anchorSource } = resolveTapeAlignmentLongitudeDeg({
     nowMs,
     referenceTimeZone,
     topBandMode: mode,

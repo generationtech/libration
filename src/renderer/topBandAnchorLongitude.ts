@@ -112,6 +112,11 @@ export function resolvePresentTimeContextLongitudeDeg(args: {
   return instrumentationLongitudeDegForReferenceTimeZone(args.referenceTimeZone);
 }
 
+/**
+ * When {@link PresentTimeReferenceMode} is {@code referenceCity} and the authoring anchor is {@code fixedCity},
+ * world/tape alignment follows the same meridian as {@code auto} for the reference IANA zone (see
+ * {@link resolveTapeAlignmentLongitudeDeg}) so the expressed strip frame does not track the selected reference city.
+ */
 function effectiveTopBandAnchorForTapeAlignment(args: {
   topBandAnchor: TopBandAnchorConfig;
   presentTimeReferenceMode: PresentTimeReferenceMode;
@@ -124,9 +129,46 @@ function effectiveTopBandAnchorForTapeAlignment(args: {
 }
 
 /**
- * Resolves the meridian used to place the top tape’s **longitude anchor** on the equirectangular strip.
- * The top band is anchored by longitude, not by civil timezone. Separated from civil-time phasing
- * (`topBandMode`, `zonedCalendarDayStartMs`, etc.).
+ * Resolves the meridian used for **tape / world alignment** (top strip phase anchor, {@link TopBandLongitudeAnchor},
+ * {@link UtcTopScaleLayout.expressedStripTimeFrame}). Call this from chrome layout; use {@link resolveTopBandAnchorLongitudeDeg}
+ * for policy-neutral longitude resolution when the authoring anchor is already effective.
+ *
+ * In {@code presentTimeReferenceMode="referenceCity"} with a {@code fixedCity} authoring anchor, alignment is
+ * zone-based ({@code auto} semantics) and **does not** use {@link GeographyConfig} fixed-coordinate override, so
+ * changing the reference city or geography viewpoint does not re-phase the tape against a map pin.
+ */
+export function resolveTapeAlignmentLongitudeDeg(options: {
+  nowMs: number;
+  referenceTimeZone: string;
+  topBandMode: TopBandTimeMode;
+  topBandAnchor: TopBandAnchorConfig;
+  presentTimeReferenceMode?: PresentTimeReferenceMode;
+  geography?: GeographyConfig;
+}): {
+  referenceLongitudeDeg: number;
+  referenceOffsetHours: number;
+  anchorSource: TopBandAnchorLongitudeSource;
+} {
+  const presentTimeReferenceMode = options.presentTimeReferenceMode ?? "anchor";
+  const effectiveAnchor = effectiveTopBandAnchorForTapeAlignment({
+    topBandAnchor: options.topBandAnchor,
+    presentTimeReferenceMode,
+  });
+  const ignoreGeographyForTapeAlignment =
+    presentTimeReferenceMode === "referenceCity" && options.topBandAnchor.mode === "fixedCity";
+  return resolveTopBandAnchorLongitudeDeg({
+    nowMs: options.nowMs,
+    referenceTimeZone: options.referenceTimeZone,
+    topBandMode: options.topBandMode,
+    topBandAnchor: effectiveAnchor,
+    geography: ignoreGeographyForTapeAlignment ? undefined : options.geography,
+  });
+}
+
+/**
+ * Resolves the meridian used to place a top-band **longitude anchor** on the equirectangular strip from an explicit
+ * {@link TopBandAnchorConfig} (no {@link PresentTimeReferenceMode} coupling). For display chrome tape alignment,
+ * prefer {@link resolveTapeAlignmentLongitudeDeg}.
  *
  * Resolution order: `fixedLongitude` → `fixedCity` → `auto` (when {@link GeographyConfig.referenceMode}
  * is {@code fixedCoordinate}, use that longitude; else reference IANA zone → city lookup → Greenwich fallback).
@@ -138,12 +180,6 @@ export function resolveTopBandAnchorLongitudeDeg(options: {
   referenceTimeZone: string;
   topBandMode: TopBandTimeMode;
   topBandAnchor: TopBandAnchorConfig;
-  /**
-   * When {@code referenceCity}, a {@code fixedCity} anchor does not steer tape/world alignment — tape uses the same
-   * resolution as {@code auto} so manual reference-city changes rebinding present-time only (see
-   * {@link resolvePresentTimeContextLongitudeDeg}). Default {@code anchor} preserves legacy coupled behavior.
-   */
-  presentTimeReferenceMode?: PresentTimeReferenceMode;
   /** When {@link TopBandAnchorConfig} is {@code auto} and mode is {@code fixedCoordinate}, overrides zone-based meridian. */
   geography?: GeographyConfig;
 }): {
@@ -153,11 +189,7 @@ export function resolveTopBandAnchorLongitudeDeg(options: {
   anchorSource: TopBandAnchorLongitudeSource;
 } {
   const { nowMs, referenceTimeZone, geography } = options;
-  const presentTimeReferenceMode = options.presentTimeReferenceMode ?? "anchor";
-  const topBandAnchor = effectiveTopBandAnchorForTapeAlignment({
-    topBandAnchor: options.topBandAnchor,
-    presentTimeReferenceMode,
-  });
+  const { topBandAnchor } = options;
 
   const referenceOffsetHours = utcOffsetHoursForTimeZone(nowMs, referenceTimeZone);
 

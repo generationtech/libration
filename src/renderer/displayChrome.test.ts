@@ -301,6 +301,34 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     expect(nycLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
   });
 
+  it("referenceCity mode: geography fixedCoordinate does not shift tape alignment when reference city changes", () => {
+    const geo = {
+      ...DEFAULT_GEOGRAPHY_CONFIG,
+      referenceMode: "fixedCoordinate" as const,
+      fixedCoordinate: { latitude: -33, longitude: 151.2, label: "Sydney area" },
+    };
+    const knoxResolved = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const nycResolved = resolveTopBandTimeFromConfig({
+      ...baseDisplayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const knoxLayout = buildUtcTopScaleLayout(t, w, 80, knoxResolved, geo);
+    const nycLayout = buildUtcTopScaleLayout(t, w, 80, nycResolved, geo);
+    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(
+      nycLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg,
+      7,
+    );
+    expect(knoxLayout.phasedTapeAnchorFrac).toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 10);
+    expect(knoxLayout.majorBoundaryXs).toEqual(nycLayout.majorBoundaryXs);
+    expect(knoxLayout.nowX).not.toBeCloseTo(nycLayout.nowX, 3);
+    expect(knoxLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(nycLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
+  });
+
   it("referenceCity mode: sub-hour time advance changes phased position; same city keeps present column center", () => {
     const tLater = t + 45 * 60 * 1000;
     const a0 = buildUtcTopScaleLayout(
