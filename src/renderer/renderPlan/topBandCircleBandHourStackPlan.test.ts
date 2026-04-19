@@ -44,8 +44,8 @@ import {
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
 
-/** Default top-band hour markers: strip look, role default font (no explicit font in selection). */
-const SEL_TEXT_DEFAULT = { kind: "text" as const, fontAssetId: undefined, sizeMultiplier: 1.25 };
+/** Default top-band hour markers: resolved global default font (zeroes-two baseline). */
+const SEL_TEXT_DEFAULT = { kind: "text" as const, fontAssetId: "zeroes-two", sizeMultiplier: 1.25 };
 
 const EFF_TEXT_DEFAULT = resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
 
@@ -196,7 +196,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
   it("throws when effectiveTopBandHourMarkers is missing", () => {
     expect(() =>
       resolveTopBandInDiskHourMarkerSemanticPath({
-        effectiveTopBandHourMarkerSelection: { kind: "text", fontAssetId: undefined, sizeMultiplier: 1 },
+        effectiveTopBandHourMarkerSelection: { kind: "text", fontAssetId: "zeroes-two", sizeMultiplier: 1 },
         effectiveTopBandHourMarkers: undefined,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,

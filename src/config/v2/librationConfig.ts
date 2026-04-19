@@ -218,6 +218,16 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
+  let topBandTextChromeDefaultFontAssetId: FontAssetId | undefined;
+  const globalFontRaw = (input as { topBandTextChromeDefaultFontAssetId?: unknown })
+    .topBandTextChromeDefaultFontAssetId;
+  if (typeof globalFontRaw === "string") {
+    const t = globalFontRaw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      topBandTextChromeDefaultFontAssetId = t as FontAssetId;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
@@ -237,6 +247,9 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
       ? { timezoneLetterRowActiveCellBackgroundColor }
       : {}),
     ...(timezoneLetterRowFontAssetId !== undefined ? { timezoneLetterRowFontAssetId } : {}),
+    ...(topBandTextChromeDefaultFontAssetId !== undefined
+      ? { topBandTextChromeDefaultFontAssetId }
+      : {}),
   };
 }
 
@@ -420,6 +433,9 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     ...(l.timezoneLetterRowFontAssetId !== undefined
       ? { timezoneLetterRowFontAssetId: l.timezoneLetterRowFontAssetId }
       : {}),
+    ...(l.topBandTextChromeDefaultFontAssetId !== undefined
+      ? { topBandTextChromeDefaultFontAssetId: l.topBandTextChromeDefaultFontAssetId }
+      : {}),
   };
 }
 
@@ -579,6 +595,14 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowFontAssetId");
   }
+  const globalChromeFont = (lay as { topBandTextChromeDefaultFontAssetId?: unknown })
+    .topBandTextChromeDefaultFontAssetId;
+  if (
+    globalChromeFont !== undefined &&
+    (typeof globalChromeFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(globalChromeFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.topBandTextChromeDefaultFontAssetId");
+  }
   const hm = lay.hourMarkers;
   if (
     typeof hm !== "object" ||
@@ -624,7 +648,10 @@ export function assertIsNormalizedLibrationConfig(
   }
   if (rk === "text") {
     const fontAssetId = (hm.realization as { fontAssetId?: unknown }).fontAssetId;
-    if (typeof fontAssetId !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fontAssetId)) {
+    if (
+      fontAssetId !== undefined &&
+      (typeof fontAssetId !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fontAssetId))
+    ) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers text fontAssetId");
     }
     const app = (hm.realization as { appearance?: unknown }).appearance;

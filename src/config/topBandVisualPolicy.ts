@@ -22,10 +22,7 @@
  * contract (behavior/content/realization) derived from `chrome.layout.hourMarkers`.
  */
 
-import {
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-  type EffectiveTopBandHourMarkerSelection,
-} from "./appConfig.ts";
+import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
 import type { HourMarkerGlyphStyleId } from "./types/hourMarkerGlyphStyleIds.ts";
 import {
   resolveDefaultHourMarkerRepresentationSpec,
@@ -95,24 +92,19 @@ export function resolveTopBandAnnotationPolicy(
 
 /**
  * NATO / structural zone letter in the timezone strip (single column glyph).
- * Default weight is heavier than the base `chromeZoneLabel` role so single-letter cells read clearly; optional
- * `fontAssetId` selects a bundled face for NATO letters only. When omitted, letters use
- * {@link DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID} (same canonical id as default top-band hour-marker text),
- * not the role’s default face — keeping NATO letter identity isolated from other `chromeZoneLabel` chrome.
+ * Default weight is heavier than the base `chromeZoneLabel` role so single-letter cells read clearly.
+ * Pass the **resolved** bundled {@link FontAssetId} (local NATO override or global default from
+ * {@link resolveEffectiveTopBandTextChromeFontAssetId}); face selection is not inferred inside this helper.
  */
 export function resolveTimezoneStripLetterPolicy(
   chrome: TopChromeStyle,
-  options?: { fontAssetId?: FontAssetId },
+  letterFontAssetId: FontAssetId,
 ): TopBandTextVisualPolicy {
   const typographyOverrides: ResolveTextStyleOverrides = {
     fontWeight: 900,
     letterSpacingPx: 0,
+    fontAssetId: letterFontAssetId,
   };
-  if (options?.fontAssetId !== undefined) {
-    typographyOverrides.fontAssetId = options.fontAssetId;
-  } else {
-    typographyOverrides.fontAssetId = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-  }
   return {
     role: "chromeZoneLabel",
     fill: chrome.zoneText.letter,
@@ -157,15 +149,11 @@ export function resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSele
   if (sel.kind !== "text") {
     return undefined;
   }
-  const out: ResolveTextStyleOverrides = {};
-  if (sel.fontAssetId !== undefined) {
-    out.fontAssetId = sel.fontAssetId;
-  }
+  const out: ResolveTextStyleOverrides = {
+    fontAssetId: sel.fontAssetId,
+  };
   if (sel.sizeMultiplier !== 1.0) {
     out.fontSizeMultiplier = sel.sizeMultiplier;
-  }
-  if (Object.keys(out).length === 0) {
-    return undefined;
   }
   return out;
 }

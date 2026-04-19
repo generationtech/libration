@@ -15,7 +15,6 @@ import {
   clampTopBandHourMarkerSizeMultiplier,
   cloneHourMarkersConfig,
   DEFAULT_HOUR_MARKERS_CONFIG,
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "./appConfig.ts";
 import { clampHourMarkerContentRowPaddingPx } from "./topBandHourMarkerContentRowVerticalMetrics.ts";
@@ -224,18 +223,18 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
 
   if (kind === "text") {
     const fid = realizationRaw.fontAssetId;
-    let fontAssetId: FontAssetId;
-    if (typeof fid === "string" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fid)) {
-      fontAssetId = fid;
-    } else {
-      fontAssetId = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-    }
     const appearance = normalizeTextAppearanceInput(realizationRaw.appearance);
-    const realization: HourMarkersRealizationConfig = {
-      kind: "text",
-      fontAssetId,
-      appearance,
-    };
+    const realization: HourMarkersRealizationConfig =
+      typeof fid === "string" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fid)
+        ? {
+            kind: "text",
+            fontAssetId: fid,
+            appearance,
+          }
+        : {
+            kind: "text",
+            appearance,
+          };
     return {
       indicatorEntriesAreaVisible,
       ...(indicatorEntriesAreaBackgroundColor !== undefined

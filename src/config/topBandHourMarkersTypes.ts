@@ -53,7 +53,7 @@ export type HourMarkersRadialWedgeAppearance = {
  * Placement behavior is not authored — see {@link resolveEffectiveHourMarkerBehavior}.
  */
 export type HourMarkersRealizationConfig =
-  | { kind: "text"; fontAssetId: FontAssetId; appearance: HourMarkersTextAppearance }
+  | { kind: "text"; fontAssetId?: FontAssetId; appearance: HourMarkersTextAppearance }
   | { kind: "analogClock"; appearance: HourMarkersAnalogClockAppearance }
   | { kind: "radialLine"; appearance: HourMarkersRadialLineAppearance }
   | { kind: "radialWedge"; appearance: HourMarkersRadialWedgeAppearance };

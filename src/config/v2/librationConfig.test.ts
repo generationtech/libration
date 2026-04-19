@@ -22,6 +22,7 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_GEOGRAPHY_CONFIG,
   DEFAULT_PIN_PRESENTATION,
+  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   effectiveTopBandHourMarkerSelection,
   resolveCitiesForPins,
   type AppConfig,
@@ -103,6 +104,22 @@ describe("librationConfig v2 (Phase 1)", () => {
     });
   });
 
+  it("normalizeDisplayChromeLayout keeps valid topBandTextChromeDefaultFontAssetId and drops unknown font ids", () => {
+    expect(
+      normalizeDisplayChromeLayout({
+        topBandTextChromeDefaultFontAssetId: "computer",
+      }),
+    ).toEqual({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      topBandTextChromeDefaultFontAssetId: "computer",
+    });
+    expect(
+      normalizeDisplayChromeLayout({
+        topBandTextChromeDefaultFontAssetId: "not-a-bundled-font",
+      }),
+    ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+  });
+
   it("normalizeDisplayChromeLayout keeps valid timezoneLetterRowFontAssetId and drops unknown font ids", () => {
     expect(
       normalizeDisplayChromeLayout({
@@ -163,7 +180,7 @@ describe("librationConfig v2 (Phase 1)", () => {
   it("effectiveTopBandHourMarkerSelection reads structured hourMarkers only", () => {
     expect(effectiveTopBandHourMarkerSelection(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG)).toEqual({
       kind: "text",
-      fontAssetId: undefined,
+      fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
       sizeMultiplier: 1.25,
     });
     expect(

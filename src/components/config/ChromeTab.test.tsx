@@ -59,6 +59,27 @@ describe("ChromeTab major areas", () => {
     expect(screen.getByRole("combobox", { name: /Chrome major area/i })).toHaveValue("hourIndicators");
   });
 
+  it("global default text chrome font lists bundled faces only and omits canonical default from storage", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    const sel = screen.getByTestId("chrome-global-text-font-select");
+    const values = Array.from(sel.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value);
+    expect(values).not.toContain("");
+    expect(values).toContain("zeroes-two");
+    fireEvent.change(sel, { target: { value: "computer" } });
+    expect(last?.chrome.layout.topBandTextChromeDefaultFontAssetId).toBe("computer");
+    fireEvent.change(sel, { target: { value: "zeroes-two" } });
+    expect(last?.chrome.layout.topBandTextChromeDefaultFontAssetId).toBeUndefined();
+  });
+
   it("defaults to the hour-indicator editor so hour-marker controls are visible", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);

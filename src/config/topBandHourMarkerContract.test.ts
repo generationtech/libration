@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import {
   cloneHourMarkersConfig,
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   effectiveTopBandHourMarkerSelection,
   LEGACY_TOP_BAND_TEXT_MODE_TO_FONT_ASSET_ID,
 } from "./appConfig";
@@ -119,12 +120,16 @@ describe("top-band hour marker contract", () => {
       });
     });
 
-    it("canonical default text realization → undefined font (typography role only)", () => {
+    it("canonical default text realization → resolved global default font (zeroes-two baseline)", () => {
       expect(
         effectiveTopBandHourMarkerSelection(
           normLay(cloneHourMarkersConfig(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers)),
         ),
-      ).toEqual({ kind: "text", fontAssetId: undefined, sizeMultiplier: 1.25 });
+      ).toEqual({
+        kind: "text",
+        fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+        sizeMultiplier: 1.25,
+      });
     });
   });
 });

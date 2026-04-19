@@ -12,7 +12,6 @@
  */
 
 import { useEffect, useState } from "react";
-import type { TopBandAnchorConfig, TopBandTimeMode } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import {
   anchorCitySelectOptions,
@@ -23,6 +22,14 @@ import {
   fixedZoneSelectOptions,
   labelForCuratedFixedZone,
 } from "./curatedFixedTimeZones";
+import {
+  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+  type TopBandAnchorConfig,
+  type TopBandTimeMode,
+} from "../../config/appConfig";
+import type { FontAssetId } from "../../typography/fontAssetTypes";
+import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { clampLongitudeDegForAnchor } from "./topBandAnchorClamp";
 import { ChromeMajorAreaSelector } from "./ChromeMajorAreaSelector";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -326,6 +333,42 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
                 : undefined
             }
           />
+        </ConfigControlRow>
+        <ConfigControlRow label="Default font for text chrome controls">
+          <select
+            className="config-input"
+            data-testid="chrome-global-text-font-select"
+            disabled={!wired}
+            aria-label="Global default font for top-band text-oriented chrome controls"
+            value={
+              lay.topBandTextChromeDefaultFontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID
+            }
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value as FontAssetId;
+                    updateConfig((draft) => {
+                      if (v === DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
+                        delete (
+                          draft.chrome.layout as { topBandTextChromeDefaultFontAssetId?: FontAssetId }
+                        ).topBandTextChromeDefaultFontAssetId;
+                      } else {
+                        draft.chrome.layout.topBandTextChromeDefaultFontAssetId = v;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
         </ConfigControlRow>
         <ChromeMajorAreaSelector value={chromeMajorArea} onChange={setChromeMajorArea} />
         {chromeMajorArea === "hourIndicators" ? (

@@ -31,6 +31,8 @@ export const TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS: readonly FontAssetId[] = 
   "zeroes-two",
 ];
 
+const TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
+
 /**
  * Explicit enable flags for composable scene layers. This module is the application
  * configuration source; layer modules remain unaware of it.
@@ -195,7 +197,6 @@ export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
   indicatorEntriesAreaBackgroundColor: DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
   realization: {
     kind: "text",
-    fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     appearance: {},
   },
   layout: {
@@ -228,7 +229,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
   if (r.kind === "text") {
     realization = {
       kind: "text",
-      fontAssetId: r.fontAssetId,
+      ...(r.fontAssetId !== undefined ? { fontAssetId: r.fontAssetId } : {}),
       appearance: { ...r.appearance },
     };
   } else if (r.kind === "analogClock") {
@@ -283,8 +284,8 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
 export type EffectiveTopBandHourMarkerSelection =
   | {
       kind: "text";
-      /** Bundled font override; omitted for the canonical default text realization (typography role only). */
-      fontAssetId?: FontAssetId;
+      /** Resolved bundled font (local override, else global default, else canonical fallback). */
+      fontAssetId: FontAssetId;
       sizeMultiplier: number;
     }
   | {
@@ -294,8 +295,30 @@ export type EffectiveTopBandHourMarkerSelection =
     };
 
 /**
+ * Local font override → global default → canonical zeroes-two. Inlined here (same rules as
+ * `topBandTextChromeFont.ts`) so this module does not import that file — avoids a circular load with
+ * `topBandTextChromeFont` importing `appConfig`.
+ */
+function resolveEffectiveTopBandTextChromeFontAssetIdForLayout(
+  layout: DisplayChromeLayoutConfig,
+  localFontAssetId?: FontAssetId,
+): FontAssetId {
+  if (
+    typeof localFontAssetId === "string" &&
+    TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(localFontAssetId)
+  ) {
+    return localFontAssetId;
+  }
+  const g = layout.topBandTextChromeDefaultFontAssetId;
+  if (typeof g === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(g)) {
+    return g;
+  }
+  return DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+}
+
+/**
  * Single source of truth for what top-band hour markers intend to render. Reads
- * {@link DisplayChromeLayoutConfig.hourMarkers} only.
+ * {@link DisplayChromeLayoutConfig.hourMarkers} and the global top-band text chrome default on {@link DisplayChromeLayoutConfig}.
  *
  * Layered contract: {@link resolveEffectiveTopBandHourMarkers} in `topBandHourMarkersResolver.ts` mirrors this intent
  * with behavior/content/realization; the render stack uses both selection and that resolved model.
@@ -313,12 +336,11 @@ export function effectiveTopBandHourMarkerSelection(
       sizeMultiplier,
     };
   }
-  if (isBaselineDefaultTopBandHourMarkerSelectionInput(layout)) {
-    return { kind: "text", fontAssetId: undefined, sizeMultiplier };
-  }
+  const localFont =
+    hm.realization.fontAssetId !== undefined ? hm.realization.fontAssetId : undefined;
   return {
     kind: "text",
-    fontAssetId: hm.realization.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    fontAssetId: resolveEffectiveTopBandTextChromeFontAssetIdForLayout(layout, localFont),
     sizeMultiplier,
   };
 }
@@ -360,10 +382,16 @@ export interface DisplayChromeLayoutConfig {
    */
   timezoneLetterRowActiveCellBackgroundColor?: string;
   /**
-   * Optional bundled font for NATO / structural zone letters only. When omitted, the implicit default from
-   * `resolveTimezoneStripLetterPolicy` applies at render time (not persisted).
+   * Optional bundled font for NATO / structural zone letters only. When omitted, effective face resolves via
+   * {@link resolveEffectiveTopBandTextChromeFontAssetId} (global default, then canonical fallback) before
+   * `resolveTimezoneStripLetterPolicy`.
    */
   timezoneLetterRowFontAssetId?: FontAssetId;
+  /**
+   * Global default bundled font for top-band text-oriented chrome (indicator entries, NATO letters when unset, etc.).
+   * When omitted, {@link resolveTopBandTextChromeDefaultFontAssetId} uses the canonical zeroes-two id.
+   */
+  topBandTextChromeDefaultFontAssetId?: FontAssetId;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**
@@ -392,33 +420,6 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
     );
   }
   return clampTopBandHourMarkerSizeMultiplier(raw);
-}
-
-/** Matches {@link DEFAULT_HOUR_MARKERS_CONFIG} for typography selection (undefined font → role-only path). */
-function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeLayoutConfig): boolean {
-  const dm = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers;
-  const hm = layout.hourMarkers;
-  if (resolvedHourMarkerLayoutSizeMultiplier(layout) !== dm.layout.sizeMultiplier) {
-    return false;
-  }
-  if (hm.realization.kind !== "text") {
-    return false;
-  }
-  const r = hm.realization;
-  const font = r.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-  if (font !== DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
-    return false;
-  }
-  if (Object.keys(r.appearance).length !== 0) {
-    return false;
-  }
-  if (
-    resolvedAuthoredIndicatorEntriesAreaBackgroundColor(hm) !==
-    resolvedAuthoredIndicatorEntriesAreaBackgroundColor(dm)
-  ) {
-    return false;
-  }
-  return true;
 }
 
 /**

@@ -44,7 +44,7 @@ describe("topBandVisualPolicy", () => {
   });
 
   it("resolveTimezoneStripLetterPolicy and caption policy use zone text fills and weights", () => {
-    const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE);
+    const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
     expect(letter.role).toBe("chromeZoneLabel");
     expect(letter.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
     expect(letter.typographyOverrides).toEqual({
@@ -53,7 +53,7 @@ describe("topBandVisualPolicy", () => {
       fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     });
 
-    const letterComputer = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, { fontAssetId: "computer" });
+    const letterComputer = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
     expect(letterComputer.typographyOverrides).toEqual({
       fontWeight: 900,
       letterSpacingPx: 0,
@@ -68,7 +68,9 @@ describe("topBandVisualPolicy", () => {
   });
 
   it("timezone letter and caption policies read distinct zone text fills from chrome tokens", () => {
-    expect(resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE).fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
+    expect(
+      resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID).fill,
+    ).toBe(TOP_CHROME_STYLE.zoneText.letter);
     expect(resolveTimezoneStripCaptionPolicy(TOP_CHROME_STYLE).fill).toBe(
       TOP_CHROME_STYLE.zoneText.geographyCaption,
     );
@@ -126,10 +128,10 @@ describe("topBandVisualPolicy", () => {
     expect(
       resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection({
         kind: "text",
-        fontAssetId: undefined,
+        fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
         sizeMultiplier: 1,
       }),
-    ).toBeUndefined();
+    ).toEqual({ fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID });
     expect(
       resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection({
         kind: "text",

@@ -21,10 +21,10 @@ import {
 } from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
+import { resolveEffectiveTopBandTextChromeFontAssetId } from "./topBandTextChromeFont.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveNoonMidnightCustomization,
@@ -256,8 +256,7 @@ export function resolveEffectiveTopBandHourMarkers(
 
   if (rk === "text") {
     const textColor = normalizeMarkerColor(hm.realization.appearance.color);
-    const fontAssetId =
-      hm.realization.fontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+    const fontAssetId = resolveEffectiveTopBandTextChromeFontAssetId(layout, hm.realization.fontAssetId);
     const realization: EffectiveTopBandHourMarkerRealization = {
       kind: "text",
       fontAssetId,

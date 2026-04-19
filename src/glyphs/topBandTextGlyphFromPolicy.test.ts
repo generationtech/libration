@@ -19,7 +19,10 @@ import { createTopBandTextGlyph } from "./topBandTextGlyphFromPolicy.ts";
 
 describe("createTopBandTextGlyph", () => {
   it("copies policy fields onto a TextGlyph", () => {
-    const g = createTopBandTextGlyph("Z", resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE));
+    const g = createTopBandTextGlyph(
+      "Z",
+      resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID),
+    );
     expect(g.kind).toBe("text");
     expect(g.text).toBe("Z");
     expect(g.role).toBe("chromeZoneLabel");

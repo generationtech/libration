@@ -29,14 +29,14 @@ describe("resolveTopBandHourMarkerTextIntrinsicContentHeightPxFromTypography", (
   it("uses nominal em scaling when lineHeightPx is absent", () => {
     const style = resolveTopBandHourMarkerTextResolvedStyleForLayout({
       fontRegistry: defaultFontAssetRegistry,
-      selection: { kind: "text", fontAssetId: undefined, sizeMultiplier: 1 },
+      selection: { kind: "text", fontAssetId: "zeroes-two", sizeMultiplier: 1 },
       markerLayoutBoxSizePx: 18,
     });
     expect(nominalTextIntrinsicContentHeightPxFromResolvedStyle(style)).toBeCloseTo(18, 10);
     expect(
       resolveTopBandHourMarkerTextIntrinsicContentHeightPxFromTypography({
         fontRegistry: defaultFontAssetRegistry,
-        selection: { kind: "text", fontAssetId: undefined, sizeMultiplier: 1 },
+        selection: { kind: "text", fontAssetId: "zeroes-two", sizeMultiplier: 1 },
         markerLayoutBoxSizePx: 18,
       }),
     ).toBeCloseTo(18, 10);

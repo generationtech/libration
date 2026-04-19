@@ -12,22 +12,16 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  cloneHourMarkersConfig,
-  DEFAULT_HOUR_MARKERS_CONFIG,
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-} from "./appConfig.ts";
+import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "./appConfig.ts";
 import { normalizeHourMarkersInput } from "./topBandHourMarkersPersistenceAdapter.ts";
 
 describe("normalizeHourMarkersInput", () => {
-  it("structured defaults: size, padding, bundled font, indicator entries background", () => {
+  it("structured defaults: size, padding, no local font override, indicator entries background", () => {
     const d = cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
     expect(d.layout.sizeMultiplier).toBe(1.25);
     expect(d.layout.contentPaddingTopPx).toBe(5);
     expect(d.layout.contentPaddingBottomPx).toBe(5);
-    expect(d.realization.kind === "text" ? d.realization.fontAssetId : null).toBe(
-      DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-    );
+    expect(d.realization.kind === "text" ? d.realization.fontAssetId : null).toBeUndefined();
     expect(d.indicatorEntriesAreaBackgroundColor).toBeDefined();
     expect(d.noonMidnightCustomization).toEqual({ enabled: true, expressionMode: "boxedNumber" });
   });
@@ -124,13 +118,13 @@ describe("normalizeHourMarkersInput", () => {
     });
   });
 
-  it("unknown text font id falls back to default bundled font", () => {
+  it("unknown text font id is dropped (inherit global default at resolve time)", () => {
     expect(
       normalizeHourMarkersInput({
         realization: { kind: "text", fontAssetId: "not-a-font" },
         layout: { sizeMultiplier: 1 },
       }).realization,
-    ).toEqual({ kind: "text", fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID, appearance: {} });
+    ).toEqual({ kind: "text", appearance: {} });
   });
 
   it("invalid custom realization kind returns default hour markers", () => {

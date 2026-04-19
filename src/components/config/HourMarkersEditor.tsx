@@ -234,7 +234,7 @@ function AppearanceSection({
         <ConfigControlRow label="Hour marker font">
           <select
             className="config-input"
-            value={fontId}
+            value={fontId ?? ""}
             disabled={authoringOff}
             aria-label="Font for top-band hour disk numerals"
             onChange={
@@ -245,15 +245,23 @@ function AppearanceSection({
                       if (hm.realization.kind !== "text") {
                         return hm;
                       }
-                      const nextFont: FontAssetId =
-                        v === "" ? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID : (v as FontAssetId);
+                      const appearance =
+                        hm.realization.kind === "text" ? { ...hm.realization.appearance } : {};
+                      if (v === "") {
+                        return {
+                          ...hm,
+                          realization: {
+                            kind: "text",
+                            appearance,
+                          },
+                        };
+                      }
                       return {
                         ...hm,
                         realization: {
                           kind: "text",
-                          fontAssetId: nextFont,
-                          appearance:
-                            hm.realization.kind === "text" ? { ...hm.realization.appearance } : {},
+                          fontAssetId: v as FontAssetId,
+                          appearance,
                         },
                       };
                     });

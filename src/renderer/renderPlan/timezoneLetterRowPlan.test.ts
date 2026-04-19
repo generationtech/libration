@@ -60,6 +60,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       anchorSource: layout.topBandAnchor.anchorSource,
       timezoneLetterRowVisible: false,
       glyphRenderContext: GLYPH_CTX,
+      resolvedTimezoneLetterFontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     });
     expect(plan.items).toHaveLength(0);
   });
@@ -106,6 +107,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       anchorSource: layout.topBandAnchor.anchorSource,
       timezoneLetterRowVisible: true,
       glyphRenderContext: GLYPH_CTX,
+      resolvedTimezoneLetterFontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     });
 
     const boundaryLines = plan.items.filter((i) => i.kind === "line" && i.y2 === bandBottom);
@@ -177,8 +179,8 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       geography: undefined,
       anchorSource: layout.topBandAnchor.anchorSource,
       timezoneLetterRowVisible: true,
-      timezoneLetterRowFontAssetId: "computer",
       glyphRenderContext: GLYPH_CTX,
+      resolvedTimezoneLetterFontAssetId: "computer",
     });
 
     const letterTexts = plan.items.filter(
