@@ -70,6 +70,7 @@ import {
   resolveTapeAlignmentLongitudeDeg,
   type TopBandAnchorLongitudeSource,
 } from "./topBandAnchorLongitude";
+import { REFERENCE_CITIES } from "../data/referenceCities";
 import { defaultFontAssetRegistry } from "../config/chromeTypography";
 import {
   computeHourMarkerContentRowVerticalMetrics,
@@ -350,10 +351,12 @@ export interface UtcTopScaleLayout {
   /** Hour / quarter-major / quarter-minor tick x positions (phased like {@link topBandHourMarkerCenterX}). Omitted when {@link widthPx} is 0. */
   tickHierarchy?: TopTapeTickHierarchy;
   /**
-   * Longitude whose structural 15° column determines {@link nowX} (column center). Present-time **context** meridian;
-   * may differ from {@link TopBandLongitudeAnchor.referenceLongitudeDeg} in {@code referenceCity} mode.
+   * Longitude whose structural 15° column determines {@link nowX} (column center). Same as
+   * {@link presentTimeContext.longitudeDeg}.
    */
   presentTimeIndicatorLongitudeDeg: number;
+  /** Unified present-time resolution for tick, NATO highlight, and zone labeling; authoritative for this layout. */
+  presentTimeContext: PresentTimeContext;
   /**
    * Horizontal position of the present-time (“now”) tick on the strip [0, widthPx]: **center** of the structural 15°
    * longitude column for {@link presentTimeIndicatorLongitudeDeg} (same x as that column’s
@@ -416,6 +419,80 @@ function resolveChromeTimeZone(explicit?: string): string {
   return explicit ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+/** IANA timezone identifier string (Olson ID). */
+export type IanaTimeZone = string;
+
+/**
+ * Single resolved snapshot for all present-time visuals: tick column, NATO active cell, and related labeling.
+ * Built from {@link resolveTapeAlignmentLongitudeDeg} and {@link resolvePresentTimeContextLongitudeDeg} so tape alignment
+ * and present-time instrumentation stay policy-consistent.
+ */
+export type PresentTimeContext = {
+  /** Longitude (°) whose structural 15° column carries the present-time tick (may differ from tape alignment in {@code referenceCity} mode). */
+  longitudeDeg: number;
+  /** Resolved reference IANA zone for the band / bottom bar (civil-time phasing). */
+  referenceTimeZone: IanaTimeZone;
+  /**
+   * IANA zone for present-time **cell** semantics: {@code fixedCity} uses that city’s bundled zone from
+   * {@link REFERENCE_CITIES}; otherwise {@link referenceTimeZone}.
+   */
+  zoneId: string;
+  /** Structural NATO letter for {@link longitudeDeg}’s column (same rule as {@link UtcTopScaleHourSegment.timezoneLetter}). */
+  natoLetter: string;
+  source: PresentTimeReferenceMode;
+};
+
+function resolvePresentTimeZoneId(
+  referenceTimeZone: string,
+  topBandAnchor: TopBandAnchorConfig,
+): string {
+  if (topBandAnchor.mode === "fixedCity") {
+    const city = REFERENCE_CITIES.find((c) => c.id === topBandAnchor.cityId);
+    if (city) {
+      return city.timeZone;
+    }
+  }
+  return referenceTimeZone;
+}
+
+/**
+ * Resolves {@link PresentTimeContext} for the current display-time policy. Pass the same {@code nowMs} and
+ * {@code geography} as {@link buildUtcTopScaleLayout} so the resolved object matches the layout snapshot.
+ */
+export function computePresentTimeContext(options: {
+  referenceTimeZone: string;
+  topBandMode: TopBandTimeMode;
+  topBandAnchor: TopBandAnchorConfig;
+  presentTimeReferenceMode: PresentTimeReferenceMode;
+  nowMs: number;
+  geography?: GeographyConfig;
+}): PresentTimeContext {
+  const tape = resolveTapeAlignmentLongitudeDeg({
+    nowMs: options.nowMs,
+    referenceTimeZone: options.referenceTimeZone,
+    topBandMode: options.topBandMode,
+    topBandAnchor: options.topBandAnchor,
+    presentTimeReferenceMode: options.presentTimeReferenceMode,
+    geography: options.geography,
+  });
+  const refCityLon = resolvePresentTimeContextLongitudeDeg({
+    referenceTimeZone: options.referenceTimeZone,
+    topBandAnchor: options.topBandAnchor,
+    presentTimeReferenceMode: options.presentTimeReferenceMode,
+  });
+  const presentLongitudeDeg = refCityLon !== undefined ? refCityLon : tape.referenceLongitudeDeg;
+  const zoneId = resolvePresentTimeZoneId(options.referenceTimeZone, options.topBandAnchor);
+  const idx = structuralHourIndexFromReferenceLongitudeDeg(presentLongitudeDeg);
+  const natoLetter = militaryTimeZoneLetterFromStructuralColumnIndex(idx);
+  return {
+    longitudeDeg: presentLongitudeDeg,
+    referenceTimeZone: options.referenceTimeZone,
+    zoneId,
+    natoLetter,
+    source: options.presentTimeReferenceMode,
+  };
+}
+
 /**
  * Resolved display-time inputs for the top band and bottom bar: IANA **civil** zone string + mode + longitude-anchor policy.
  * The reference zone drives wall-clock phasing and the bottom bar; the top tape’s horizontal alignment uses {@link resolveTapeAlignmentLongitudeDeg} (longitude), not civil-TZ boundaries.
@@ -428,29 +505,34 @@ export interface ResolvedTopBandTime {
   /** Effective present-time policy; default {@code anchor}. */
   presentTimeReferenceMode: PresentTimeReferenceMode;
   /**
-   * When {@link presentTimeReferenceMode} is {@code referenceCity}: resolved longitude for the present-time tick /
-   * instrumentation column only (user’s reference city when {@code fixedCity}, else zone default city).
-   * Omitted in {@code anchor} mode (layout uses the tape anchor meridian for present-time).
+   * Present-time instrumentation context. When {@code geography} affects tape alignment, pass the same {@code nowMs} /
+   * {@code geography} here as to {@link buildUtcTopScaleLayout} so this matches the layout.
    */
-  instrumentationLongitudeDeg?: number;
+  presentTimeContext: PresentTimeContext;
 }
 
 /** Maps {@link DisplayTimeConfig} to resolved zone + mode for layout and the bottom information bar. */
-export function resolveTopBandTimeFromConfig(config: DisplayTimeConfig): ResolvedTopBandTime {
+export function resolveTopBandTimeFromConfig(
+  config: DisplayTimeConfig,
+  resolution?: { nowMs?: number; geography?: GeographyConfig },
+): ResolvedTopBandTime {
   const referenceTimeZone = resolveDisplayTimeReferenceZone(config.referenceTimeZone);
   const presentTimeReferenceMode = config.presentTimeReferenceMode ?? "anchor";
   const topBandAnchor = config.topBandAnchor ?? { mode: "auto" };
-  const instrumentationLongitudeDeg = resolvePresentTimeContextLongitudeDeg({
+  const presentTimeContext = computePresentTimeContext({
     referenceTimeZone,
+    topBandMode: config.topBandMode,
     topBandAnchor,
     presentTimeReferenceMode,
+    nowMs: resolution?.nowMs ?? 0,
+    geography: resolution?.geography,
   });
   return {
     referenceTimeZone,
     topBandMode: config.topBandMode,
     topBandAnchor,
     presentTimeReferenceMode,
-    instrumentationLongitudeDeg,
+    presentTimeContext,
   };
 }
 
@@ -1312,10 +1394,15 @@ export function buildUtcTopScaleLayout(
     geography,
   );
 
-  const presentTimeIndicatorLongitudeDeg =
-    rt.instrumentationLongitudeDeg !== undefined
-      ? rt.instrumentationLongitudeDeg
-      : topBandAnchor.referenceLongitudeDeg;
+  const presentTimeContext = computePresentTimeContext({
+    referenceTimeZone: rt.referenceTimeZone,
+    topBandMode: rt.topBandMode,
+    topBandAnchor: rt.topBandAnchor,
+    presentTimeReferenceMode: rt.presentTimeReferenceMode,
+    nowMs,
+    geography,
+  });
+  const presentTimeIndicatorLongitudeDeg = presentTimeContext.longitudeDeg;
 
   if (w === 0) {
     return {
@@ -1337,6 +1424,7 @@ export function buildUtcTopScaleLayout(
       quarterMajorTickXs: [],
       quarterMinorTickXs: [],
       presentTimeIndicatorLongitudeDeg,
+      presentTimeContext,
       nowX: 0,
       circleMarkers: [],
       topBandMode: rt.topBandMode,
@@ -1487,6 +1575,7 @@ export function buildUtcTopScaleLayout(
     quarterMinorTickXs,
     tickHierarchy,
     presentTimeIndicatorLongitudeDeg,
+    presentTimeContext,
     nowX,
     rows,
     topBandLayout,
@@ -1524,7 +1613,10 @@ export function buildDisplayChromeState(options: {
   displayChromeLayout?: Partial<DisplayChromeLayoutConfig>;
 }): DisplayChromeState {
   const { time, viewport, frame } = options;
-  const resolved = resolveTopBandTimeFromConfig(options.displayTime ?? DEFAULT_DISPLAY_TIME_CONFIG);
+  const resolved = resolveTopBandTimeFromConfig(options.displayTime ?? DEFAULT_DISPLAY_TIME_CONFIG, {
+    nowMs: time.now,
+    geography: options.geography,
+  });
   const layout = {
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     ...options.displayChromeLayout,
@@ -1778,7 +1870,7 @@ export function renderDisplayChrome(
       zonePadY,
       tabBottomR,
       diskLabelSizePx,
-      referenceLongitudeDeg: scale.topBandAnchor.referenceLongitudeDeg,
+      presentTimeNatoLetter: scale.presentTimeContext.natoLetter,
       geography: chrome.geography,
       anchorSource: scale.topBandAnchor.anchorSource,
       timezoneLetterRowVisible: chrome.displayChromeLayout.timezoneLetterRowVisible,

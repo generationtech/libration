@@ -36,6 +36,7 @@ import {
   buildDisplayChromeState,
   buildUtcTopScaleLayout,
   computeUtcCircleMarkerRadius,
+  computePresentTimeContext,
   computeUtcTopScaleRowMetrics,
   longitudeDegFromMapX,
   resolveDisplayTimeReferenceZone,
@@ -256,7 +257,8 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
       presentTimeReferenceMode: "anchor",
     });
     expect(resolved.presentTimeReferenceMode).toBe("anchor");
-    expect(resolved.instrumentationLongitudeDeg).toBeUndefined();
+    expect(resolved.presentTimeContext.source).toBe("anchor");
+    expect(resolved.presentTimeContext.longitudeDeg).toBeCloseTo(knoxLon, 5);
     const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(knoxLon, 5);
     expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
@@ -268,7 +270,9 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
       ...baseDisplayTime,
       presentTimeReferenceMode: "referenceCity",
     });
-    expect(resolved.instrumentationLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(resolved.presentTimeContext.longitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(resolved.presentTimeContext.zoneId).toBe("America/New_York");
+    expect(resolved.presentTimeContext.source).toBe("referenceCity");
     const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 5);
     expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
@@ -371,6 +375,104 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     });
     expect(knoxResolved.referenceTimeZone).toBe(nycResolved.referenceTimeZone);
     expect(knoxResolved.topBandMode).toBe(nycResolved.topBandMode);
+  });
+});
+
+describe("PresentTimeContext propagation", () => {
+  const t = Date.UTC(2026, 3, 10, 17, 30, 0, 0);
+  const w = 1200;
+  const knoxLon = REFERENCE_CITIES.find((c) => c.id === "city.knoxville")!.longitude;
+  const nycLon = REFERENCE_CITIES.find((c) => c.id === "city.nyc")!.longitude;
+
+  const base: DisplayTimeConfig = {
+    ...DEFAULT_DISPLAY_TIME_CONFIG,
+    referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+    topBandMode: "local24",
+    topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+  };
+
+  it("referenceCity + fixedCity: tick longitude and NATO letter track the city; tape alignment unchanged across city picks", () => {
+    const knoxR = resolveTopBandTimeFromConfig({ ...base, presentTimeReferenceMode: "referenceCity" });
+    const nycR = resolveTopBandTimeFromConfig({
+      ...base,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const knoxL = buildUtcTopScaleLayout(t, w, 80, knoxR);
+    const nycL = buildUtcTopScaleLayout(t, w, 80, nycR);
+    expect(knoxL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycL.topBandAnchor.referenceLongitudeDeg, 5);
+    expect(knoxL.phasedTapeAnchorFrac).toBeCloseTo(nycL.phasedTapeAnchorFrac, 10);
+    expect(knoxL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(nycL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(knoxL.presentTimeContext.natoLetter).not.toBe(nycL.presentTimeContext.natoLetter);
+    expect(knoxL.presentTimeContext.natoLetter).toBe(militaryTimeZoneLetterFromLongitudeDeg(knoxLon));
+    expect(nycL.presentTimeContext.natoLetter).toBe(militaryTimeZoneLetterFromLongitudeDeg(nycLon));
+  });
+
+  it("anchor + fixedCity Knoxville matches prior behavior: present context longitude equals tape anchor", () => {
+    const resolved = resolveTopBandTimeFromConfig({ ...base, presentTimeReferenceMode: "anchor" });
+    const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
+    expect(layout.presentTimeContext.longitudeDeg).toBeCloseTo(layout.topBandAnchor.referenceLongitudeDeg, 5);
+    expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(layout.topBandAnchor.referenceLongitudeDeg, 5);
+    const h = structuralHourIndexFromReferenceLongitudeDeg(layout.presentTimeIndicatorLongitudeDeg);
+    expect(layout.presentTimeContext.natoLetter).toBe(layout.segments[h]!.timezoneLetter);
+  });
+
+  it("Knoxville (America/New_York): zoneId is the Eastern zone; NATO letter follows Knoxville longitude (same IANA as NYC)", () => {
+    const resolved = resolveTopBandTimeFromConfig({ ...base, presentTimeReferenceMode: "referenceCity" });
+    expect(resolved.presentTimeContext.zoneId).toBe("America/New_York");
+    const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
+    expect(layout.presentTimeContext.zoneId).toBe("America/New_York");
+    expect(layout.presentTimeContext.natoLetter).toBe(militaryTimeZoneLetterFromLongitudeDeg(knoxLon));
+    const nycResolved = resolveTopBandTimeFromConfig({
+      ...base,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    expect(nycResolved.presentTimeContext.zoneId).toBe("America/New_York");
+    expect(nycResolved.presentTimeContext.natoLetter).toBe(militaryTimeZoneLetterFromLongitudeDeg(nycLon));
+  });
+
+  it("recomputes presentTimeContext in layout with same now/geography as resolver (product path)", () => {
+    const geo = {
+      ...DEFAULT_GEOGRAPHY_CONFIG,
+      referenceMode: "fixedCoordinate" as const,
+      fixedCoordinate: { latitude: -33, longitude: 151.2, label: "Sydney area" },
+    };
+    const resolved = resolveTopBandTimeFromConfig(
+      { ...DEFAULT_DISPLAY_TIME_CONFIG, referenceTimeZone: { source: "fixed", timeZone: "America/New_York" } },
+      { nowMs: t, geography: geo },
+    );
+    const fromLayout = buildUtcTopScaleLayout(t, w, 80, resolved, geo).presentTimeContext;
+    const direct = computePresentTimeContext({
+      referenceTimeZone: resolved.referenceTimeZone,
+      topBandMode: resolved.topBandMode,
+      topBandAnchor: resolved.topBandAnchor,
+      presentTimeReferenceMode: resolved.presentTimeReferenceMode,
+      nowMs: t,
+      geography: geo,
+    });
+    expect(fromLayout).toEqual(direct);
+  });
+
+  it("changing reference city: NATO highlight column matches the present-time tick column", () => {
+    const knoxR = resolveTopBandTimeFromConfig({
+      ...base,
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const nycR = resolveTopBandTimeFromConfig({
+      ...base,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.nyc" },
+      presentTimeReferenceMode: "referenceCity",
+    });
+    const knoxL = buildUtcTopScaleLayout(t, w, 80, knoxR);
+    const nycL = buildUtcTopScaleLayout(t, w, 80, nycR);
+    const hKnox = structuralHourIndexFromReferenceLongitudeDeg(knoxL.presentTimeIndicatorLongitudeDeg);
+    const hNyc = structuralHourIndexFromReferenceLongitudeDeg(nycL.presentTimeIndicatorLongitudeDeg);
+    expect(knoxL.presentTimeContext.natoLetter).toBe(knoxL.segments[hKnox]!.timezoneLetter);
+    expect(nycL.presentTimeContext.natoLetter).toBe(nycL.segments[hNyc]!.timezoneLetter);
+    expect(knoxL.nowX).toBeCloseTo(knoxL.segments[hKnox]!.centerX, 5);
+    expect(nycL.nowX).toBeCloseTo(nycL.segments[hNyc]!.centerX, 5);
   });
 });
 

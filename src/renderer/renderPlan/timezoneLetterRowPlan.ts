@@ -24,11 +24,11 @@ import {
 import { createTopBandTextGlyph } from "../../glyphs/topBandTextGlyphFromPolicy.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
 import { alignCrispLineX } from "../crispLines";
+import { canonicalMilitaryZoneIndexFromLetter } from "../../config/structuralZoneLetters";
 import {
   geographyTimezoneStripReferenceLabel,
   type TopBandAnchorLongitudeSource,
 } from "../topBandAnchorLongitude";
-import { structuralHourIndexFromReferenceLongitudeDeg } from "../structuralLongitudeGrid";
 import {
   TOP_CHROME_STYLE,
   computeTimezoneLetterSizePx,
@@ -72,7 +72,8 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   /** From phased layout; unused for rectangular scale segments (caller contract unchanged). */
   tabBottomR: number;
   diskLabelSizePx: number;
-  referenceLongitudeDeg: number;
+  /** Structural NATO letter for the present-time column (from {@code presentTimeContext.natoLetter}). */
+  presentTimeNatoLetter: string;
   geography?: GeographyConfig;
   anchorSource: TopBandAnchorLongitudeSource;
   timezoneLetterRowVisible: boolean;
@@ -98,7 +99,11 @@ export function buildTimezoneLetterRowRenderPlan(options: {
     return { items };
   }
 
-  const activeStructuralHour = structuralHourIndexFromReferenceLongitudeDeg(options.referenceLongitudeDeg);
+  let activeStructuralHour = canonicalMilitaryZoneIndexFromLetter(options.presentTimeNatoLetter);
+  if (activeStructuralHour < 0) {
+    const fallback = options.segments.findIndex((s) => s.timezoneLetter === options.presentTimeNatoLetter);
+    activeStructuralHour = fallback >= 0 ? fallback : 0;
+  }
   const geoCaption = geographyTimezoneStripReferenceLabel(options.geography, options.anchorSource);
   const zoneTop = options.zoneTop;
   const zoneH = options.zoneH;

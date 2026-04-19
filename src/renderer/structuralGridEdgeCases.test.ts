@@ -230,22 +230,33 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
     expect(withGeo.referenceLongitudeDeg).toBe(-47.5);
     expect(baseline.referenceLongitudeDeg).toBe(-47.5);
 
-    const layoutA = buildUtcTopScaleLayout(t, w, 88, {
-      referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
-      topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
-      presentTimeReferenceMode: "anchor",
-    });
+    const layoutA = buildUtcTopScaleLayout(
+      t,
+      w,
+      88,
+      resolveTopBandTimeFromConfig(
+        {
+          referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+          topBandMode: "local24",
+          topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
+          presentTimeReferenceMode: "anchor",
+        },
+        { nowMs: t },
+      ),
+    );
     const layoutB = buildUtcTopScaleLayout(
       t,
       w,
       88,
-      {
-        referenceTimeZone: "America/New_York",
-        topBandMode: "local24",
-        topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
-        presentTimeReferenceMode: "anchor",
-      },
+      resolveTopBandTimeFromConfig(
+        {
+          referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+          topBandMode: "local24",
+          topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
+          presentTimeReferenceMode: "anchor",
+        },
+        { nowMs: t },
+      ),
       {
         ...DEFAULT_GEOGRAPHY_CONFIG,
         referenceMode: "fixedCoordinate",
@@ -260,22 +271,33 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
   it("auto anchor: geography fixedCoordinate overrides zone meridian; structural strip still fixed west→east ring", () => {
     const t = Date.UTC(2026, 4, 1, 12, 0, 0);
     const w = 1400;
-    const zoneOnly = buildUtcTopScaleLayout(t, w, 88, {
-      referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
-      topBandAnchor: { mode: "auto" },
-      presentTimeReferenceMode: "anchor",
-    });
+    const zoneOnly = buildUtcTopScaleLayout(
+      t,
+      w,
+      88,
+      resolveTopBandTimeFromConfig(
+        {
+          referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+          topBandMode: "local24",
+          topBandAnchor: { mode: "auto" },
+          presentTimeReferenceMode: "anchor",
+        },
+        { nowMs: t },
+      ),
+    );
     const withSydneyGeo = buildUtcTopScaleLayout(
       t,
       w,
       88,
-      {
-        referenceTimeZone: "America/New_York",
-        topBandMode: "local24",
-        topBandAnchor: { mode: "auto" },
-        presentTimeReferenceMode: "anchor",
-      },
+      resolveTopBandTimeFromConfig(
+        {
+          referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+          topBandMode: "local24",
+          topBandAnchor: { mode: "auto" },
+          presentTimeReferenceMode: "anchor",
+        },
+        { nowMs: t },
+      ),
       {
         ...DEFAULT_GEOGRAPHY_CONFIG,
         referenceMode: "fixedCoordinate",

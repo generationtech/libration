@@ -13,7 +13,11 @@
 
 import { describe, expect, it } from "vitest";
 import { REFERENCE_CITIES } from "../data/referenceCities";
-import { buildUtcTopScaleLayout, computeUtcSubsolarLongitudeDeg } from "../renderer/displayChrome";
+import {
+  buildUtcTopScaleLayout,
+  computeUtcSubsolarLongitudeDeg,
+  resolveTopBandTimeFromConfig,
+} from "../renderer/displayChrome";
 import {
   computeDayLineIndicatorCenterX,
   computeRawDayLineSeamCenterX,
@@ -79,12 +83,20 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
     const nowMs = Date.UTC(2026, 5, 15, 14, 30, 45, 123);
     const londonLon = REFERENCE_CITIES.find((c) => c.id === "city.london")!.longitude;
     const subsolarLon = computeUtcSubsolarLongitudeDeg(nowMs);
-    const layout = buildUtcTopScaleLayout(nowMs, widthPx, 104, {
-      referenceTimeZone: "Europe/London",
-      topBandMode: "utc24",
-      topBandAnchor: { mode: "auto" },
-      presentTimeReferenceMode: "anchor",
-    });
+    const layout = buildUtcTopScaleLayout(
+      nowMs,
+      widthPx,
+      104,
+      resolveTopBandTimeFromConfig(
+        {
+          referenceTimeZone: { source: "fixed", timeZone: "Europe/London" },
+          topBandMode: "utc24",
+          topBandAnchor: { mode: "auto" },
+          presentTimeReferenceMode: "anchor",
+        },
+        { nowMs },
+      ),
+    );
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(londonLon, 5);
     expect(layout.topBandAnchor.referenceLongitudeDeg).not.toBeCloseTo(subsolarLon, 1);
     expect(layout.topBandAnchor.anchorX).toBeCloseTo(scenePinXFromLongitude(londonLon, widthPx), 10);
@@ -107,12 +119,17 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
 
   it("top-band tape anchor x matches scene pin x for the resolved reference meridian", () => {
     const nycLon = REFERENCE_CITIES.find((c) => c.id === "city.nyc")!.longitude;
-    const layout = buildUtcTopScaleLayout(Date.now(), widthPx, 104, {
-      referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
-      topBandAnchor: { mode: "auto" },
-      presentTimeReferenceMode: "anchor",
-    });
+    const layout = buildUtcTopScaleLayout(
+      Date.now(),
+      widthPx,
+      104,
+      resolveTopBandTimeFromConfig({
+        referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+        topBandMode: "local24",
+        topBandAnchor: { mode: "auto" },
+        presentTimeReferenceMode: "anchor",
+      }),
+    );
     const { topBandAnchor: anchor } = layout;
     expect(anchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 3);
     expect(anchor.anchorX).toBeCloseTo(scenePinXFromLongitude(nycLon, widthPx), 10);
