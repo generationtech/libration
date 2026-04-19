@@ -1621,6 +1621,7 @@ export function renderDisplayChrome(
       ...stBase.timezoneTab,
       fillEven: tzEff.effectiveBackgroundColorEven,
       fillOdd: tzEff.effectiveBackgroundColorOdd,
+      fillActive: tzEff.effectiveBackgroundColorActive,
     },
     zoneText: {
       ...stBase.zoneText,
@@ -1704,6 +1705,7 @@ export function renderDisplayChrome(
       geography: chrome.geography,
       anchorSource: scale.topBandAnchor.anchorSource,
       timezoneLetterRowVisible: chrome.displayChromeLayout.timezoneLetterRowVisible,
+      activeCellLetterForeground: tzEff.effectiveLetterForegroundColorActiveCell,
       chromeStyle: st,
       glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
     });

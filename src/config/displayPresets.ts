@@ -88,6 +88,9 @@ function cloneConfig(config: AppConfig): AppConfig {
       ...(dcl.timezoneLetterRowLetterForegroundColor !== undefined
         ? { timezoneLetterRowLetterForegroundColor: dcl.timezoneLetterRowLetterForegroundColor }
         : {}),
+      ...(dcl.timezoneLetterRowActiveCellBackgroundColor !== undefined
+        ? { timezoneLetterRowActiveCellBackgroundColor: dcl.timezoneLetterRowActiveCellBackgroundColor }
+        : {}),
     },
     geography: {
       referenceMode: g.referenceMode,

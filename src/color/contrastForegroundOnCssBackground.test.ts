@@ -15,6 +15,9 @@ import { describe, expect, it } from "vitest";
 import {
   bestBlackOrWhiteForegroundForTwoBackgroundsCss,
   blackOrWhiteForegroundForBackgroundCss,
+  deriveDarkerNatoActiveCellBackgroundFromEvenOdd,
+  NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL,
+  parseCssColorToRgba8888,
   rgbaForegroundWithAlpha,
   relativeLuminanceFromSrgb01,
 } from "./contrastForegroundOnCssBackground.ts";
@@ -68,5 +71,24 @@ describe("relativeLuminanceFromSrgb01", () => {
   it("is 0 for black and 1 for white", () => {
     expect(relativeLuminanceFromSrgb01({ r: 0, g: 0, b: 0 })).toBe(0);
     expect(relativeLuminanceFromSrgb01({ r: 1, g: 1, b: 1 })).toBe(1);
+  });
+});
+
+describe("deriveDarkerNatoActiveCellBackgroundFromEvenOdd", () => {
+  it("averages channels then applies a fixed sRGB darken multiplier (deterministic)", () => {
+    const out = deriveDarkerNatoActiveCellBackgroundFromEvenOdd("#ffffff", "#ffffff", "#fallback");
+    expect(out).toBe(
+      `rgba(${Math.round(255 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL)}, ${Math.round(255 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL)}, ${Math.round(255 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL)}, 1)`,
+    );
+    const px = parseCssColorToRgba8888(out);
+    expect(px).toBeDefined();
+    const lum = relativeLuminanceFromSrgb01({ r: px!.r / 255, g: px!.g / 255, b: px!.b / 255 });
+    expect(lum).toBeLessThan(relativeLuminanceFromSrgb01({ r: 1, g: 1, b: 1 }));
+  });
+
+  it("returns fallback when a color cannot be parsed", () => {
+    expect(deriveDarkerNatoActiveCellBackgroundFromEvenOdd("hsl(0,0%,50%)", "#fff", "rgba(1,2,3,0.4)")).toBe(
+      "rgba(1,2,3,0.4)",
+    );
   });
 });

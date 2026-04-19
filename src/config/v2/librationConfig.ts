@@ -198,6 +198,16 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
+  let timezoneLetterRowActiveCellBackgroundColor: string | undefined;
+  const tzActRaw = (input as { timezoneLetterRowActiveCellBackgroundColor?: unknown })
+    .timezoneLetterRowActiveCellBackgroundColor;
+  if (typeof tzActRaw === "string") {
+    const t = tzActRaw.trim();
+    if (t !== "") {
+      timezoneLetterRowActiveCellBackgroundColor = t;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
@@ -212,6 +222,9 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
       : {}),
     ...(timezoneLetterRowLetterForegroundColor !== undefined
       ? { timezoneLetterRowLetterForegroundColor }
+      : {}),
+    ...(timezoneLetterRowActiveCellBackgroundColor !== undefined
+      ? { timezoneLetterRowActiveCellBackgroundColor }
       : {}),
   };
 }
@@ -390,6 +403,9 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     ...(l.timezoneLetterRowLetterForegroundColor !== undefined
       ? { timezoneLetterRowLetterForegroundColor: l.timezoneLetterRowLetterForegroundColor }
       : {}),
+    ...(l.timezoneLetterRowActiveCellBackgroundColor !== undefined
+      ? { timezoneLetterRowActiveCellBackgroundColor: l.timezoneLetterRowActiveCellBackgroundColor }
+      : {}),
   };
 }
 
@@ -533,6 +549,13 @@ export function assertIsNormalizedLibrationConfig(
   if (tzLetFg !== undefined && (typeof tzLetFg !== "string" || tzLetFg.trim() === "")) {
     throw new Error(
       "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowLetterForegroundColor",
+    );
+  }
+  const tzActBg = (lay as { timezoneLetterRowActiveCellBackgroundColor?: unknown })
+    .timezoneLetterRowActiveCellBackgroundColor;
+  if (tzActBg !== undefined && (typeof tzActBg !== "string" || tzActBg.trim() === "")) {
+    throw new Error(
+      "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowActiveCellBackgroundColor",
     );
   }
   const hm = lay.hourMarkers;

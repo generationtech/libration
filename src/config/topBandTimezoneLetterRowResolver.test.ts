@@ -14,9 +14,15 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+  DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
 } from "./appConfig";
+import {
+  deriveDarkerNatoActiveCellBackgroundFromEvenOdd,
+  parseCssColorToRgba8888,
+  relativeLuminanceFromSrgb01,
+} from "../color/contrastForegroundOnCssBackground.ts";
 import { TOP_CHROME_STYLE, TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA } from "./topChromeStyle.ts";
 import { resolveEffectiveTimezoneLetterRowArea } from "./topBandTimezoneLetterRowResolver";
 
@@ -24,10 +30,14 @@ describe("resolveEffectiveTimezoneLetterRowArea", () => {
   it("matches shipped defaults when no overrides are authored", () => {
     const eff = resolveEffectiveTimezoneLetterRowArea(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     expect(eff.usesAuthoredCellBackgroundOverride).toBe(false);
+    expect(eff.usesAuthoredActiveCellBackgroundOverride).toBe(false);
     expect(eff.usesAuthoredLetterForegroundOverride).toBe(false);
     expect(eff.effectiveBackgroundColorEven).toBe(DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN);
     expect(eff.effectiveBackgroundColorOdd).toBe(DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD);
+    expect(eff.effectiveBackgroundColorActive).toBe(TOP_CHROME_STYLE.timezoneTab.fillActive);
+    expect(eff.effectiveBackgroundColorActive).toBe(DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR);
     expect(eff.effectiveLetterForegroundColor).toBe(TOP_CHROME_STYLE.zoneText.letter);
+    expect(eff.effectiveLetterForegroundColorActiveCell).toBeUndefined();
   });
 
   it("applies cell background overrides to effective fills", () => {
@@ -38,6 +48,37 @@ describe("resolveEffectiveTimezoneLetterRowArea", () => {
     });
     expect(eff.effectiveBackgroundColorEven).toBe("#112233");
     expect(eff.effectiveBackgroundColorOdd).toBe("#445566");
+    expect(eff.usesAuthoredActiveCellBackgroundOverride).toBe(false);
+    const derived = deriveDarkerNatoActiveCellBackgroundFromEvenOdd(
+      "#112233",
+      "#445566",
+      TOP_CHROME_STYLE.timezoneTab.fillActive,
+    );
+    expect(eff.effectiveBackgroundColorActive).toBe(derived);
+    expect(eff.effectiveBackgroundColorActive).not.toBe(eff.effectiveBackgroundColorEven);
+    expect(eff.effectiveBackgroundColorActive).not.toBe(eff.effectiveBackgroundColorOdd);
+    const lumEven = relativeLuminanceFromSrgb01({ r: 0x11 / 255, g: 0x22 / 255, b: 0x33 / 255 });
+    const lumOdd = relativeLuminanceFromSrgb01({ r: 0x44 / 255, g: 0x55 / 255, b: 0x66 / 255 });
+    const px = parseCssColorToRgba8888(eff.effectiveBackgroundColorActive);
+    expect(px).toBeDefined();
+    const lumActive = relativeLuminanceFromSrgb01({
+      r: px!.r / 255,
+      g: px!.g / 255,
+      b: px!.b / 255,
+    });
+    const lumPalette = Math.max(lumEven, lumOdd);
+    expect(lumActive).toBeLessThan(lumPalette);
+  });
+
+  it("uses explicit active-cell background when authored", () => {
+    const eff = resolveEffectiveTimezoneLetterRowArea({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      timezoneLetterRowCellBackgroundColorEven: "#112233",
+      timezoneLetterRowCellBackgroundColorOdd: "#445566",
+      timezoneLetterRowActiveCellBackgroundColor: "#fedcba",
+    });
+    expect(eff.usesAuthoredActiveCellBackgroundOverride).toBe(true);
+    expect(eff.effectiveBackgroundColorActive).toBe("#fedcba");
   });
 
   it("derives automatic letter ink when cell backgrounds are authored and letter is not", () => {
@@ -70,5 +111,16 @@ describe("resolveEffectiveTimezoneLetterRowArea", () => {
       timezoneLetterRowLetterForegroundColor: "#00ff00",
     });
     expect(eff.effectiveLetterForegroundColor).toBe("#00ff00");
+    expect(eff.effectiveLetterForegroundColorActiveCell).toBeUndefined();
+  });
+
+  it("splits automatic letter ink for the active column when it differs from the alternating-row pick", () => {
+    const eff = resolveEffectiveTimezoneLetterRowArea({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      timezoneLetterRowCellBackgroundColorEven: "#aaaaaa",
+      timezoneLetterRowCellBackgroundColorOdd: "#aaaaaa",
+    });
+    expect(eff.effectiveLetterForegroundColorActiveCell).toBeDefined();
+    expect(eff.effectiveLetterForegroundColorActiveCell).not.toBe(eff.effectiveLetterForegroundColor);
   });
 });

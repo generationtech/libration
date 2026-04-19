@@ -75,6 +75,11 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   geography?: GeographyConfig;
   anchorSource: TopBandAnchorLongitudeSource;
   timezoneLetterRowVisible: boolean;
+  /**
+   * When set, the present-time column’s zone letter uses this fill instead of {@link TopChromeStyle.zoneText.letter}
+   * (automatic contrast split for the darker active cell).
+   */
+  activeCellLetterForeground?: string;
   /** Defaults to {@link TOP_CHROME_STYLE}. */
   chromeStyle?: TopChromeStyle;
   /** Bundled fonts + typography resolution for {@link TextGlyph} emission. */
@@ -142,6 +147,9 @@ export function buildTimezoneLetterRowRenderPlan(options: {
     }
   }
 
+  const baseLetterPolicy = resolveTimezoneStripLetterPolicy(st);
+  const activeLetterFill = options.activeCellLetterForeground;
+
   for (const seg of options.segments) {
     for (const wrapK of topBandWrapOffsetsForSpan(seg.x0, seg.x1, vw)) {
       const ox = wrapK * vw;
@@ -154,7 +162,12 @@ export function buildTimezoneLetterRowRenderPlan(options: {
       const cxLetter = (x0 + x1) * 0.5;
       const letterY = fillTop + fillH * tzTab.zoneLetterCenterFracOfBody;
 
-      const letterGlyph = createTopBandTextGlyph(seg.timezoneLetter, resolveTimezoneStripLetterPolicy(st));
+      const isActiveCol = seg.hour === activeStructuralHour;
+      const letterPolicy =
+        isActiveCol && activeLetterFill !== undefined
+          ? { ...baseLetterPolicy, fill: activeLetterFill }
+          : baseLetterPolicy;
+      const letterGlyph = createTopBandTextGlyph(seg.timezoneLetter, letterPolicy);
       emitGlyphToRenderPlan(
         letterGlyph,
         { cx: cxLetter, cy: letterY, size: zoneLetterSize },

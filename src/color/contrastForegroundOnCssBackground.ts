@@ -163,3 +163,59 @@ function parseRgbFunctionToSrgb01(s: string): { r: number; g: number; b: number 
   }
   return { r: r / 255, g: g / 255, b: b / 255 };
 }
+
+/**
+ * Parses supported CSS colors to 8-bit RGBA (same parse surface as luminance helpers: `#rgb`, `#rrggbb`, comma-`rgb`/`rgba`).
+ */
+export function parseCssColorToRgba8888(css: string): { r: number; g: number; b: number; a: number } | undefined {
+  const s = css.trim();
+  const hex = parseHexToSrgb01(s);
+  if (hex) {
+    return {
+      r: Math.round(hex.r * 255),
+      g: Math.round(hex.g * 255),
+      b: Math.round(hex.b * 255),
+      a: 1,
+    };
+  }
+  const m = s.match(/^rgba?\(\s*([^)]+)\s*\)$/i);
+  if (!m) {
+    return undefined;
+  }
+  const parts = m[1]!.split(",").map((p) => p.trim());
+  if (parts.length < 3) {
+    return undefined;
+  }
+  const r = parseFloat(parts[0]!);
+  const g = parseFloat(parts[1]!);
+  const b = parseFloat(parts[2]!);
+  const a = parts.length >= 4 ? parseFloat(parts[3]!) : 1;
+  if (![r, g, b, a].every((n) => Number.isFinite(n))) {
+    return undefined;
+  }
+  return { r, g, b, a: Math.max(0, Math.min(1, a)) };
+}
+
+/**
+ * Present-time NATO cell background when alternating row colors are customized but the active cell is not overridden:
+ * average the resolved even/odd sRGB channels, then multiply each channel by this factor (visibly darker than the pair).
+ * Averaged alpha is preserved (clamped). On parse failure, returns `fallbackCss`.
+ */
+export const NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL = 0.48;
+
+export function deriveDarkerNatoActiveCellBackgroundFromEvenOdd(
+  evenCss: string,
+  oddCss: string,
+  fallbackCss: string,
+): string {
+  const a = parseCssColorToRgba8888(evenCss);
+  const b = parseCssColorToRgba8888(oddCss);
+  if (!a || !b) {
+    return fallbackCss;
+  }
+  const r = Math.round((a.r + b.r) * 0.5 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL);
+  const g = Math.round((a.g + b.g) * 0.5 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL);
+  const bl = Math.round((a.b + b.b) * 0.5 * NATO_ACTIVE_CELL_DERIVED_DARKEN_SRGB_MUL);
+  const alpha = Math.max(0, Math.min(1, (a.a + b.a) * 0.5));
+  return `rgba(${r}, ${g}, ${bl}, ${alpha})`;
+}

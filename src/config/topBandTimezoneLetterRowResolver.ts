@@ -13,17 +13,17 @@
 
 import {
   bestBlackOrWhiteForegroundForTwoBackgroundsCss,
+  blackOrWhiteForegroundForBackgroundCss,
+  deriveDarkerNatoActiveCellBackgroundFromEvenOdd,
   rgbaForegroundWithAlpha,
 } from "../color/contrastForegroundOnCssBackground.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import {
+  DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
 } from "./appConfig.ts";
-import {
-  TOP_CHROME_STYLE,
-  TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA,
-} from "./topChromeStyle.ts";
+import { TOP_CHROME_STYLE, TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA } from "./topChromeStyle.ts";
 
 function trimOptionalColor(raw: unknown): string | undefined {
   if (typeof raw !== "string") {
@@ -46,12 +46,21 @@ function hasTimezoneCellBackgroundAuthorOverride(layout: DisplayChromeLayoutConf
 export type EffectiveTimezoneLetterRowArea = {
   /** True when either even or odd cell background is a non-empty authored string. */
   usesAuthoredCellBackgroundOverride: boolean;
+  /** True when {@link DisplayChromeLayoutConfig.timezoneLetterRowActiveCellBackgroundColor} is a non-empty string. */
+  usesAuthoredActiveCellBackgroundOverride: boolean;
   /** True when {@link DisplayChromeLayoutConfig.timezoneLetterRowLetterForegroundColor} is a non-empty string. */
   usesAuthoredLetterForegroundOverride: boolean;
   effectiveBackgroundColorEven: string;
   effectiveBackgroundColorOdd: string;
-  /** Final CSS color for NATO zone letters in the render plan. */
+  /** Present-time / active structural column cell fill for the render plan. */
+  effectiveBackgroundColorActive: string;
+  /** Final CSS color for NATO zone letters in the render plan (non-active cells, and active cell when no split). */
   effectiveLetterForegroundColor: string;
+  /**
+   * When set, the active column’s letter uses this instead of {@link effectiveLetterForegroundColor} (automatic ink
+   * split for contrast on the darker active fill).
+   */
+  effectiveLetterForegroundColorActiveCell?: string;
 };
 
 /**
@@ -66,13 +75,37 @@ export function resolveEffectiveTimezoneLetterRowArea(
   const st = TOP_CHROME_STYLE;
   const evenAuth = trimOptionalColor(layout.timezoneLetterRowCellBackgroundColorEven);
   const oddAuth = trimOptionalColor(layout.timezoneLetterRowCellBackgroundColorOdd);
+  const activeAuth = trimOptionalColor(layout.timezoneLetterRowActiveCellBackgroundColor);
   const letterAuth = trimOptionalColor(layout.timezoneLetterRowLetterForegroundColor);
 
   const usesAuthoredCellBackgroundOverride = hasTimezoneCellBackgroundAuthorOverride(layout);
+  const usesAuthoredActiveCellBackgroundOverride = activeAuth !== undefined;
   const usesAuthoredLetterForegroundOverride = letterAuth !== undefined;
 
   const effectiveBackgroundColorEven = evenAuth ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN;
   const effectiveBackgroundColorOdd = oddAuth ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD;
+
+  const builtinActiveFill = st.timezoneTab.fillActive;
+  let effectiveBackgroundColorActive: string;
+  if (usesAuthoredActiveCellBackgroundOverride) {
+    effectiveBackgroundColorActive = activeAuth!;
+  } else if (!usesAuthoredCellBackgroundOverride) {
+    effectiveBackgroundColorActive = builtinActiveFill;
+  } else {
+    effectiveBackgroundColorActive = deriveDarkerNatoActiveCellBackgroundFromEvenOdd(
+      effectiveBackgroundColorEven,
+      effectiveBackgroundColorOdd,
+      builtinActiveFill,
+    );
+  }
+
+  const sharedBwForAlternating =
+    !usesAuthoredLetterForegroundOverride && usesAuthoredCellBackgroundOverride
+      ? bestBlackOrWhiteForegroundForTwoBackgroundsCss(
+          effectiveBackgroundColorEven,
+          effectiveBackgroundColorOdd,
+        )
+      : undefined;
 
   let effectiveLetterForegroundColor: string;
   if (usesAuthoredLetterForegroundOverride) {
@@ -80,21 +113,33 @@ export function resolveEffectiveTimezoneLetterRowArea(
   } else if (!usesAuthoredCellBackgroundOverride) {
     effectiveLetterForegroundColor = st.zoneText.letter;
   } else {
-    const bw = bestBlackOrWhiteForegroundForTwoBackgroundsCss(
-      effectiveBackgroundColorEven,
-      effectiveBackgroundColorOdd,
-    );
     effectiveLetterForegroundColor = rgbaForegroundWithAlpha(
-      bw,
+      sharedBwForAlternating!,
+      TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA,
+    );
+  }
+
+  let effectiveLetterForegroundColorActiveCell: string | undefined = undefined;
+  if (
+    sharedBwForAlternating !== undefined &&
+    sharedBwForAlternating !== blackOrWhiteForegroundForBackgroundCss(effectiveBackgroundColorActive)
+  ) {
+    effectiveLetterForegroundColorActiveCell = rgbaForegroundWithAlpha(
+      blackOrWhiteForegroundForBackgroundCss(effectiveBackgroundColorActive),
       TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA,
     );
   }
 
   return {
     usesAuthoredCellBackgroundOverride,
+    usesAuthoredActiveCellBackgroundOverride,
     usesAuthoredLetterForegroundOverride,
     effectiveBackgroundColorEven,
     effectiveBackgroundColorOdd,
+    effectiveBackgroundColorActive,
     effectiveLetterForegroundColor,
+    ...(effectiveLetterForegroundColorActiveCell !== undefined
+      ? { effectiveLetterForegroundColorActiveCell }
+      : {}),
   };
 }

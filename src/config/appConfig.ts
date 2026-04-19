@@ -176,6 +176,13 @@ export const DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN: string =
 export const DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD: string =
   TOP_CHROME_STYLE.timezoneTab.fillOdd;
 
+/**
+ * Default present-time / active NATO cell fill when no layout override is stored (same as
+ * {@link TOP_CHROME_STYLE.timezoneTab.fillActive}).
+ */
+export const DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR: string =
+  TOP_CHROME_STYLE.timezoneTab.fillActive;
+
 /** Default NATO zone letter ink when no layout override is stored (same as {@link TOP_CHROME_STYLE.zoneText.letter}). */
 export const DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR: string = TOP_CHROME_STYLE.zoneText.letter;
 
@@ -343,6 +350,12 @@ export interface DisplayChromeLayoutConfig {
    * overrides) or automatic black/white contrast vs the resolved alternating backgrounds (when either cell override is set).
    */
   timezoneLetterRowLetterForegroundColor?: string;
+  /**
+   * Present-time / active structural column cell background. When omitted, effective fill is the shipped active token if
+   * neither alternating cell background is overridden; otherwise a deterministic darker color derived from the resolved
+   * even/odd palette.
+   */
+  timezoneLetterRowActiveCellBackgroundColor?: string;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**
