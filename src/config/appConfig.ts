@@ -230,7 +230,6 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
       ? { indicatorEntriesAreaBackgroundColor: h.indicatorEntriesAreaBackgroundColor }
       : {}),
     realization,
-    ...(h.behavior !== undefined ? { behavior: h.behavior } : {}),
     layout,
     ...(h.tapeHourNumberOverlay !== undefined
       ? { tapeHourNumberOverlay: { ...h.tapeHourNumberOverlay } }
@@ -309,7 +308,7 @@ export interface DisplayChromeLayoutConfig {
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**
-   * Sole persistence model for top-band hour markers (realization, optional behavior, layout).
+   * Sole persistence model for top-band hour markers (realization, layout).
    * Legacy flat `chrome.layout` hour-marker keys have been removed; normalization reads only this object.
    */
   hourMarkers: HourMarkersConfig;
@@ -344,10 +343,6 @@ function isBaselineDefaultTopBandHourMarkerSelectionInput(layout: DisplayChromeL
     return false;
   }
   if (hm.realization.kind !== "text") {
-    return false;
-  }
-  const eff = hm.behavior ?? "tapeAdvected";
-  if (eff !== "tapeAdvected") {
     return false;
   }
   const r = hm.realization;

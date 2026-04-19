@@ -33,7 +33,6 @@ import {
   HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX,
 } from "../../config/topBandHourMarkerContentRowVerticalMetrics";
 import { ConfigControlRow } from "./ConfigControlRow";
-import { HourMarkerBehaviorEditor } from "./HourMarkerBehaviorEditor";
 
 const HOUR_MARKER_REALIZATION_KINDS = [
   "text",
@@ -140,10 +139,8 @@ function hourMarkersAfterRealizationKindChange(
   nextKind: HourMarkersRealizationConfig["kind"],
   hm: HourMarkersConfig,
 ): HourMarkersConfig {
-  const behavior = hm.behavior;
   const next: HourMarkersConfig = {
     ...hm,
-    behavior,
     realization: realizationConfigForKind(nextKind, hm),
   };
   if (nextKind === "text") {
@@ -163,17 +160,6 @@ function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarke
     out.faceColor = a.faceColor;
   }
   return out;
-}
-
-function BehaviorSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
-  return (
-    <HourMarkerBehaviorEditor
-      hourMarkers={hourMarkers}
-      wired={wired}
-      updateConfig={updateConfig}
-      authoringDisabled={!wired || !entriesAreaEnabled}
-    />
-  );
 }
 
 function RealizationSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
@@ -925,7 +911,6 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Realization</legend>
         <RealizationSection {...baseProps} />
-        {hourMarkers.realization.kind === "text" ? <BehaviorSection {...baseProps} /> : null}
         <NoonMidnightSection {...baseProps} />
       </fieldset>
       <fieldset className="config-fieldset config-fieldset--plain">

@@ -206,7 +206,6 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "staticZoneAnchored",
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
@@ -224,7 +223,6 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
         ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         hourMarkers: {
           ...DEFAULT_HOUR_MARKERS_CONFIG,
-          behavior: "staticZoneAnchored",
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },

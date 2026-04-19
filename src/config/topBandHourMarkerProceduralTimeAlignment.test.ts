@@ -33,7 +33,6 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          behavior: "tapeAdvected",
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -163,44 +162,10 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("authored tapeAdvected and explicit staticZoneAnchored agree on procedural semantic wall-clock state (both resolve to static)", () => {
-    const effTape = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          behavior: "tapeAdvected",
-          realization: { kind: "radialLine", appearance: {} },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
-    );
-    const effStatic = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          behavior: "staticZoneAnchored",
-          realization: { kind: "radialLine", appearance: {} },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
-    );
-    const p1 = buildSemanticTopBandHourMarkers(effTape, { referenceNowMs: REF_MS });
-    const p2 = buildSemanticTopBandHourMarkers(effStatic, { referenceNowMs: REF_MS });
-    for (let h = 0; h < 24; h += 1) {
-      const t = p1.instances[h]!.content;
-      const s = p2.instances[h]!.content;
-      expect(t.kind).toBe("localWallClock");
-      expect(s.kind).toBe("localWallClock");
-      if (t.kind !== "localWallClock" || s.kind !== "localWallClock") {
-        continue;
-      }
-      expect(t.wallClock.continuousHour0To24).toBeCloseTo(s.wallClock.continuousHour0To24, 10);
-    }
-  });
-
-  it("procedural radialLine uses structural-column longitudes when product supplies wall-clock overrides (authored tapeAdvected ignored at effective layer)", () => {
+  it("procedural radialLine uses structural-column longitudes when product supplies wall-clock overrides", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
-          behavior: "tapeAdvected",
           realization: { kind: "radialLine", appearance: {} },
           layout: { sizeMultiplier: 1 },
         },
@@ -229,7 +194,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("unset behavior defaults to staticZoneAnchored for analogClock, radialLine, and radialWedge", () => {
+  it("analogClock, radialLine, and radialWedge resolve to staticZoneAnchored", () => {
     const kinds = [
       { kind: "analogClock" as const, realization: { kind: "analogClock" as const, appearance: {} } },
       { kind: "radialLine" as const, realization: { kind: "radialLine" as const, appearance: {} } },
@@ -248,16 +213,4 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("authored tapeAdvected on radialLine does not change effective behavior", () => {
-    const eff = resolveEffectiveTopBandHourMarkers(
-      normalizeDisplayChromeLayout({
-        hourMarkers: {
-          behavior: "tapeAdvected",
-          realization: { kind: "radialLine", appearance: {} },
-          layout: { sizeMultiplier: 1 },
-        },
-      }),
-    );
-    expect(eff.behavior).toBe("staticZoneAnchored");
-  });
 });

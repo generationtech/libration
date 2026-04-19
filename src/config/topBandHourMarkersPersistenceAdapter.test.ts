@@ -171,22 +171,22 @@ describe("normalizeHourMarkersInput", () => {
     });
   });
 
-  it("preserves valid behavior and drops invalid behavior", () => {
+  it("drops legacy behavior from normalized hourMarkers (not persisted)", () => {
     expect(
       normalizeHourMarkersInput({
         behavior: "tapeAdvected",
         realization: { kind: "text", fontAssetId: "zeroes-one" },
         layout: { sizeMultiplier: 1 },
       }),
-    ).toMatchObject({ behavior: "tapeAdvected" });
+    ).not.toHaveProperty("behavior");
 
     expect(
       normalizeHourMarkersInput({
         behavior: "bogus",
         realization: { kind: "text", fontAssetId: "zeroes-one" },
         layout: { sizeMultiplier: 1 },
-      }).behavior,
-    ).toBeUndefined();
+      }),
+    ).not.toHaveProperty("behavior");
   });
 
   it("normalizes and clamps hour-marker content-row padding fields", () => {

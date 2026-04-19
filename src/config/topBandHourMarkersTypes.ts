@@ -36,8 +36,7 @@ export type HourMarkersRadialWedgeAppearance = {
 
 /**
  * Persisted authoring intent for top-band hour markers (`chrome.layout.hourMarkers` only).
- * Content is derived at runtime when absent; optional {@link HourMarkersConfig.behavior} overrides defaults from
- * {@link resolveEffectiveTopBandHourMarkers}.
+ * Placement behavior is not authored — see {@link resolveEffectiveHourMarkerBehavior}.
  */
 export type HourMarkersRealizationConfig =
   | { kind: "text"; fontAssetId: FontAssetId; appearance: HourMarkersTextAppearance }
@@ -92,8 +91,6 @@ export interface HourMarkersConfig {
    * When omitted, the default from app config (`DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR`) is used at resolve time.
    */
   indicatorEntriesAreaBackgroundColor?: string;
-  /** When set, overrides behavior implied by realization kind (see resolver default mapping). */
-  behavior?: EffectiveTopBandHourMarkerBehavior;
   layout: {
     sizeMultiplier: number;
     /**

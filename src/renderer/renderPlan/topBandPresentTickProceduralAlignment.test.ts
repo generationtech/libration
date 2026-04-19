@@ -130,7 +130,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const effAnalog = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "staticZoneAnchored",
         realization: { kind: "analogClock", appearance: {} },
         layout: { sizeMultiplier: 1 },
       }),
@@ -165,7 +164,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const effRadial = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "staticZoneAnchored",
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       }),
@@ -199,7 +197,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const effWedge = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "staticZoneAnchored",
         realization: { kind: "radialWedge", appearance: {} },
         layout: { sizeMultiplier: 1 },
       }),
@@ -245,7 +242,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const effAnalog = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "tapeAdvected",
         realization: { kind: "analogClock", appearance: {} },
         layout: { sizeMultiplier: 1 },
       }),
@@ -281,7 +277,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const effRadial = resolveEffectiveTopBandHourMarkers(
       hourMarkersLayout({
         ...DEFAULT_HOUR_MARKERS_CONFIG,
-        behavior: "tapeAdvected",
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       }),
@@ -312,7 +307,6 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
 
     const layoutAnalog = hourMarkersLayout({
       ...DEFAULT_HOUR_MARKERS_CONFIG,
-      behavior: "staticZoneAnchored",
       realization: { kind: "analogClock", appearance: {} },
       layout: { sizeMultiplier: 1 },
     });

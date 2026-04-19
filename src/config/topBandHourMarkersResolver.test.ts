@@ -74,18 +74,7 @@ describe("defaultBehaviorFor", () => {
 });
 
 describe("resolveEffectiveHourMarkerBehavior", () => {
-  it("honors authored behavior for text realization", () => {
-    expect(
-      resolveEffectiveHourMarkerBehavior(
-        normalizeDisplayChromeLayout({
-          hourMarkers: {
-            behavior: "staticZoneAnchored",
-            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
-            layout: { sizeMultiplier: 1 },
-          },
-        }).hourMarkers,
-      ),
-    ).toBe("staticZoneAnchored");
+  it("derives tapeAdvected for text and staticZoneAnchored for non-text realizations", () => {
     expect(
       resolveEffectiveHourMarkerBehavior(
         normalizeDisplayChromeLayout({
@@ -96,26 +85,38 @@ describe("resolveEffectiveHourMarkerBehavior", () => {
         }).hourMarkers,
       ),
     ).toBe("tapeAdvected");
+    expect(
+      resolveEffectiveHourMarkerBehavior(
+        normalizeDisplayChromeLayout({
+          hourMarkers: {
+            realization: { kind: "analogClock", appearance: {} },
+            layout: { sizeMultiplier: 1 },
+          },
+        }).hourMarkers,
+      ),
+    ).toBe("staticZoneAnchored");
   });
 
-  it("forces staticZoneAnchored for non-text realizations even when authored tapeAdvected", () => {
-    for (const realization of [
-      { kind: "analogClock" as const, appearance: {} },
-      { kind: "radialLine" as const, appearance: {} },
-      { kind: "radialWedge" as const, appearance: {} },
-    ]) {
-      expect(
-        resolveEffectiveHourMarkerBehavior(
-          normalizeDisplayChromeLayout({
-            hourMarkers: {
-              behavior: "tapeAdvected",
-              realization,
-              layout: { sizeMultiplier: 1 },
-            },
-          }).hourMarkers,
-        ),
-      ).toBe("staticZoneAnchored");
-    }
+  it("ignores legacy persisted behavior (normalization strips it; mapping is from realization kind only)", () => {
+    const legacyText = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        behavior: "staticZoneAnchored",
+        realization: { kind: "text", fontAssetId: "computer", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    }).hourMarkers;
+    expect(legacyText).not.toHaveProperty("behavior");
+    expect(resolveEffectiveHourMarkerBehavior(legacyText)).toBe("tapeAdvected");
+
+    const legacyRadial = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        behavior: "tapeAdvected",
+        realization: { kind: "radialLine", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    }).hourMarkers;
+    expect(legacyRadial).not.toHaveProperty("behavior");
+    expect(resolveEffectiveHourMarkerBehavior(legacyRadial)).toBe("staticZoneAnchored");
   });
 });
 
@@ -168,34 +169,6 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
       layout: { sizeMultiplier: 1 },
       ...NOON_MIDNIGHT_DISABLED,
     });
-  });
-
-  it("respects persisted behavior override", () => {
-    expect(
-      resolveEffectiveTopBandHourMarkers(
-        normalizeDisplayChromeLayout({
-          hourMarkers: {
-            behavior: "staticZoneAnchored",
-            realization: { kind: "text", fontAssetId: "computer", appearance: {} },
-            layout: { sizeMultiplier: 1 },
-          },
-        }),
-      ).behavior,
-    ).toBe("staticZoneAnchored");
-  });
-
-  it("ignores authored tapeAdvected for procedural realizations in the effective model", () => {
-    expect(
-      resolveEffectiveTopBandHourMarkers(
-        normalizeDisplayChromeLayout({
-          hourMarkers: {
-            behavior: "tapeAdvected",
-            realization: { kind: "radialLine", appearance: {} },
-            layout: { sizeMultiplier: 1 },
-          },
-        }),
-      ).behavior,
-    ).toBe("staticZoneAnchored");
   });
 
   it("analog clock → analogClock realization + localWallClock + staticZoneAnchored behavior", () => {

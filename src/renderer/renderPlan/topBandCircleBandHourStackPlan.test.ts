@@ -281,7 +281,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
     const eff = effectiveTopBandHourMarkersForLayout({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
-        behavior: "staticZoneAnchored",
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },

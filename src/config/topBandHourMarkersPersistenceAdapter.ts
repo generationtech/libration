@@ -20,7 +20,6 @@ import {
 } from "./appConfig.ts";
 import { clampHourMarkerContentRowPaddingPx } from "./topBandHourMarkerContentRowVerticalMetrics.ts";
 import type {
-  EffectiveTopBandHourMarkerBehavior,
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
   HourMarkersNoonMidnightCustomization,
@@ -45,13 +44,6 @@ function normalizedTopBandHourMarkerColor(raw: unknown): string | undefined {
 
 function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
-}
-
-function normalizedHourMarkerBehavior(raw: unknown): EffectiveTopBandHourMarkerBehavior | undefined {
-  if (raw === "tapeAdvected" || raw === "staticZoneAnchored") {
-    return raw;
-  }
-  return undefined;
 }
 
 function normalizeTextAppearanceInput(raw: unknown): HourMarkersTextAppearance {
@@ -196,7 +188,7 @@ function normalizedTapeHourNumberOverlay(
 /**
  * Coerces unknown `chrome.layout.hourMarkers` input to a normalized {@link HourMarkersConfig}.
  * Missing or invalid payloads yield {@link DEFAULT_HOUR_MARKERS_CONFIG} (cloned).
- * Obsolete boolean flags on legacy payloads are ignored; only structured realization, layout, and behavior are canonical.
+ * Obsolete boolean flags on legacy payloads are ignored. Legacy `behavior` is ignored (not persisted).
  */
 export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   if (raw === undefined || raw === null) {
@@ -205,8 +197,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
   if (!isPlainObject(raw)) {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
-
-  const behaviorOpt = normalizedHourMarkerBehavior(raw.behavior);
 
   const layoutNorm = normalizeHourMarkersLayoutFromRaw(raw.layout);
   if (layoutNorm === null) {
@@ -250,7 +240,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         ? { indicatorEntriesAreaBackgroundColor }
         : {}),
       realization,
-      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
@@ -269,7 +258,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         ? { indicatorEntriesAreaBackgroundColor }
         : {}),
       realization,
-      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
@@ -288,7 +276,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         ? { indicatorEntriesAreaBackgroundColor }
         : {}),
       realization,
-      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
@@ -307,7 +294,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         ? { indicatorEntriesAreaBackgroundColor }
         : {}),
       realization,
-      ...(behaviorOpt !== undefined ? { behavior: behaviorOpt } : {}),
       layout: layoutNorm,
       ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),

@@ -157,24 +157,19 @@ function resolveIndicatorEntriesAreaEffective(layout: DisplayChromeLayoutConfig)
   return { effectiveBackgroundColor, effectiveForegroundColor };
 }
 
-/** Default phased-vs-structural placement when `hourMarkers.behavior` is unset. */
+/**
+ * Derived placement: text hour labels advect with the longitude tape; procedural/clock glyphs anchor to structural zones.
+ * Not authored — {@link HourMarkersConfig} has no behavior field.
+ */
 export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): EffectiveTopBandHourMarkerBehavior {
-  if (kind === "text") {
-    return "tapeAdvected";
-  }
-  return "staticZoneAnchored";
+  return kind === "text" ? "tapeAdvected" : "staticZoneAnchored";
 }
 
 /**
- * Runtime hour-marker placement behavior. Only {@link HourMarkersRealizationConfig} `text` honors authored
- * `hourMarkers.behavior`; clock/procedural realizations are fixed to
- * {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored} regardless of persisted config.
+ * Effective hour-marker placement from {@link HourMarkersConfig.realization.kind} only (legacy persisted `behavior` is ignored).
  */
 export function resolveEffectiveHourMarkerBehavior(hm: HourMarkersConfig): EffectiveTopBandHourMarkerBehavior {
-  if (hm.realization.kind === "text") {
-    return hm.behavior ?? defaultBehaviorFor("text");
-  }
-  return "staticZoneAnchored";
+  return defaultBehaviorFor(hm.realization.kind);
 }
 
 const NOON_MIDNIGHT_EXPRESSION_MODES = new Set<HourMarkersNoonMidnightExpressionMode>([
@@ -226,9 +221,7 @@ function resolveEffectiveNoonMidnightCustomization(
 
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
- * Content follows realization kind; behavior follows {@link resolveEffectiveHourMarkerBehavior} (text honors
- * authored `hourMarkers.behavior` or {@link defaultBehaviorFor}; procedural/clock modes are fixed to
- * `staticZoneAnchored`).
+ * Content follows realization kind; behavior follows {@link resolveEffectiveHourMarkerBehavior} (derived from kind).
  *
  * `areaVisible` on the effective model mirrors `hourMarkers.indicatorEntriesAreaVisible` (default true):
  * it controls structural presence of the indicator entries band, not behavior or realization.

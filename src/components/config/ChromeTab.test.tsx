@@ -321,7 +321,6 @@ describe("ChromeTab top-band hour markers", () => {
 
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeEnabled();
-    expect(screen.getByRole("combobox", { name: /Top-band hour marker placement behavior/i })).toBeEnabled();
     expect(screen.getByRole("slider", { name: /Hour marker size multiplier/i })).toBeEnabled();
 
     fireEvent.change(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i }), {

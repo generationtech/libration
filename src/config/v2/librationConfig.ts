@@ -540,12 +540,8 @@ export function assertIsNormalizedLibrationConfig(
     }
   }
   const hmBehavior = (hm as { behavior?: unknown }).behavior;
-  if (
-    hmBehavior !== undefined &&
-    hmBehavior !== "tapeAdvected" &&
-    hmBehavior !== "staticZoneAnchored"
-  ) {
-    throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers behavior");
+  if (hmBehavior !== undefined) {
+    throw new Error("assertIsNormalizedLibrationConfig: hourMarkers.behavior must not be present on normalized config");
   }
   const nm = (hm as { noonMidnightCustomization?: unknown }).noonMidnightCustomization;
   if (nm !== undefined) {
