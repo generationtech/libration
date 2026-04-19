@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { formatWallClockInTimeZone } from "../core/timeFormat";
+import { formatPinDateTimeLabel } from "../core/pinDateTimeDisplayFormat";
 import type { ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
@@ -68,15 +68,16 @@ export type CityPinsCustomDefinition = {
 
 /**
  * Static reference city markers in equirectangular space (no live data, no interaction).
- * Pass the city list from app/bootstrap; `labelFontAssetId` is the resolved pin label font (local override,
- * else product-wide default, else canonical fallback).
+ * Pass the city list from app/bootstrap; resolved city-name and date/time fonts come from product policy
+ * (local overrides else global default).
  * Optional `customPins` are merged after reference cities (same draw payload shape; no local time).
  */
 export function createCityPinsLayer(
   cities: readonly ReferenceCity[],
   customPins: readonly CityPinsCustomDefinition[] = [],
   presentation: CityPinsPresentationOptions,
-  labelFontAssetId: FontAssetId,
+  cityNameFontAssetId: FontAssetId,
+  dateTimeFontAssetId: FontAssetId,
 ): Layer {
   const pinDefinitions = resolvePinDefinitions(cities, customPins);
   return {
@@ -96,7 +97,7 @@ export function createCityPinsLayer(
         localTimeLabel:
           c.kind === "custom"
             ? ""
-            : formatWallClockInTimeZone(time.now, c.timeZone),
+            : formatPinDateTimeLabel(time.now, c.timeZone, presentation.pinDateTimeDisplayMode),
       }));
       const data: CityPinsPayload = {
         kind: CITY_PINS_KIND,
@@ -104,7 +105,8 @@ export function createCityPinsLayer(
         showLabels: presentation.showLabels,
         labelMode: presentation.labelMode,
         scale: presentation.scale,
-        labelFontAssetId,
+        cityNameFontAssetId,
+        dateTimeFontAssetId,
       };
       return {
         visible: true,

@@ -56,6 +56,51 @@ export function GeneralTab({ config, updateConfig, userPresetsUi }: GeneralTabPr
 
       <section
         className="config-section"
+        aria-labelledby="config-global-product-defaults-heading"
+      >
+        <h2 id="config-global-product-defaults-heading" className="config-section__title">
+          Global product defaults
+        </h2>
+        <ConfigControlRow label="Default font for product text">
+          <select
+            className="config-input"
+            data-testid="general-global-text-font-select"
+            disabled={!wired}
+            aria-label="Global default font for instrument text, map labels, and configuration panel"
+            value={lay.defaultTextFontAssetId ?? PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value as FontAssetId;
+                    updateConfig((draft) => {
+                      if (v === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
+                        delete (draft.chrome.layout as { defaultTextFontAssetId?: FontAssetId })
+                          .defaultTextFontAssetId;
+                      } else {
+                        draft.chrome.layout.defaultTextFontAssetId = v;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
+        </ConfigControlRow>
+      </section>
+
+      <section
+        className="config-section"
         aria-labelledby="config-panel-typography-heading"
       >
         <h2 id="config-panel-typography-heading" className="config-section__title">
@@ -63,7 +108,7 @@ export function GeneralTab({ config, updateConfig, userPresetsUi }: GeneralTabPr
         </h2>
         <p className="config-section__hint">
           Font for text in this panel only. The default row inherits the product-wide default font set under
-          Chrome → Layout chrome. An explicit choice overrides that default for the panel.
+          Global product defaults. An explicit choice overrides that default for the panel.
         </p>
         <ConfigControlRow label="Panel font">
           <select

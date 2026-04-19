@@ -372,42 +372,6 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             })}
           </select>
         </ConfigControlRow>
-        <ConfigControlRow label="Default font for product text">
-          <select
-            className="config-input"
-            data-testid="chrome-global-text-font-select"
-            disabled={!wired}
-            aria-label="Global default font for instrument text, map labels, and configuration panel"
-            value={lay.defaultTextFontAssetId ?? PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const v = e.currentTarget.value as FontAssetId;
-                    updateConfig((draft) => {
-                      if (v === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
-                        delete (draft.chrome.layout as { defaultTextFontAssetId?: FontAssetId })
-                          .defaultTextFontAssetId;
-                      } else {
-                        draft.chrome.layout.defaultTextFontAssetId = v;
-                      }
-                    });
-                  }
-                : undefined
-            }
-          >
-            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
-              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
-            </option>
-            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
-              const rec = defaultFontAssetRegistry.getById(id);
-              return rec ? (
-                <option key={id} value={id}>
-                  {rec.displayName}
-                </option>
-              ) : null;
-            })}
-          </select>
-        </ConfigControlRow>
         <ChromeMajorAreaSelector value={chromeMajorArea} onChange={setChromeMajorArea} />
         {chromeMajorArea === "hourIndicators" ? (
           <HourIndicatorsEditor config={config} updateConfig={updateConfig} />

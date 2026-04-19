@@ -16,7 +16,6 @@ import { useCallback, useState, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DEFAULT_APP_CONFIG } from "../../config/appConfig";
-import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productFontConstants";
 import {
   appConfigToV2,
   defaultLibrationConfigV2,
@@ -32,7 +31,7 @@ function ChromeTabTestHarness({
   initial: LibrationConfigV2;
   children?: (ctx: { config: LibrationConfigV2 }) => ReactNode;
 }) {
-  const [config, setConfig] = useState(() => normalizeLibrationConfig(initial));
+  const [config, setConfig] = useState<LibrationConfigV2>(() => normalizeLibrationConfig(initial));
   const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
     setConfig((prev) => {
       const draft = normalizeLibrationConfig(prev);
@@ -51,6 +50,12 @@ function ChromeTabTestHarness({
 describe("ChromeTab major areas", () => {
   afterEach(() => {
     cleanup();
+  });
+
+  it("does not host the global default product text font control (moved to General tab)", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    expect(screen.queryByTestId("chrome-global-text-font-select")).toBeNull();
   });
 
   it("renders a Chrome major-area selector", () => {
@@ -73,33 +78,9 @@ describe("ChromeTab major areas", () => {
     );
     const sel = screen.getByTestId("chrome-bottom-readout-font-select");
     fireEvent.change(sel, { target: { value: "flip-clock" } });
-    expect(last?.chrome.layout.bottomReadoutFontAssetId).toBe("flip-clock");
+    expect(last!.chrome.layout.bottomReadoutFontAssetId).toBe("flip-clock");
     fireEvent.change(sel, { target: { value: "" } });
-    expect(last?.chrome.layout.bottomReadoutFontAssetId).toBeUndefined();
-  });
-
-  it("global default text font lists renderer baseline and bundled faces; renderer choice omits storage", () => {
-    let last: LibrationConfigV2 | null = null;
-    const initial = defaultLibrationConfigV2();
-    render(
-      <ChromeTabTestHarness initial={initial}>
-        {({ config }) => {
-          last = config;
-          return null;
-        }}
-      </ChromeTabTestHarness>,
-    );
-    const sel = screen.getByTestId("chrome-global-text-font-select");
-    const values = Array.from(sel.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value);
-    expect(values).not.toContain("");
-    expect(values).toContain(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
-    expect(values).toContain("zeroes-two");
-    fireEvent.change(sel, { target: { value: "computer" } });
-    expect(last?.chrome.layout.defaultTextFontAssetId).toBe("computer");
-    fireEvent.change(sel, { target: { value: "zeroes-two" } });
-    expect(last?.chrome.layout.defaultTextFontAssetId).toBe("zeroes-two");
-    fireEvent.change(sel, { target: { value: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } });
-    expect(last?.chrome.layout.defaultTextFontAssetId).toBeUndefined();
+    expect(last!.chrome.layout.bottomReadoutFontAssetId).toBeUndefined();
   });
 
   it("defaults to the hour-indicator editor so hour-marker controls are visible", () => {
@@ -141,9 +122,9 @@ describe("ChromeTab major areas", () => {
     );
     fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "natoTimezone" } });
     fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "computer" } });
-    expect(last?.chrome.layout.timezoneLetterRowFontAssetId).toBe("computer");
+    expect(last!.chrome.layout.timezoneLetterRowFontAssetId).toBe("computer");
     fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "" } });
-    expect(last?.chrome.layout.timezoneLetterRowFontAssetId).toBeUndefined();
+    expect(last!.chrome.layout.timezoneLetterRowFontAssetId).toBeUndefined();
   });
 
   it("does not persist major-area selection in config when switching areas", () => {

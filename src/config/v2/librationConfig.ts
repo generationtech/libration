@@ -30,6 +30,7 @@ import type {
   PinLabelMode,
   PinPresentationConfig,
   PinScale,
+  PinDateTimeDisplayMode,
 } from "../appConfig";
 import {
   cloneHourMarkersConfig,
@@ -42,6 +43,7 @@ import {
   DEMO_TIME_SPEED_MAX,
   DEMO_TIME_SPEED_MIN,
   DEFAULT_PIN_PRESENTATION,
+  PIN_DATE_TIME_DISPLAY_MODE_SET,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
   type DemoTimeConfig,
@@ -285,8 +287,20 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   };
 }
 
+function parseOptionalProductTextFontId(raw: unknown): FontAssetId | undefined {
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+  const t = raw.trim();
+  if (t === "" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
+    return undefined;
+  }
+  return t as FontAssetId;
+}
+
 /**
  * Coerces unknown v2 `pins.presentation` input to a stable {@link PinPresentationConfig}.
+ * Legacy `pinTextFontAssetId` is read once: if both split font fields are absent, it seeds both surfaces.
  */
 export function normalizePinPresentation(input: unknown): PinPresentationConfig {
   if (!isPlainObject(input)) {
@@ -300,19 +314,34 @@ export function normalizePinPresentation(input: unknown): PinPresentationConfig 
   const sc = input.scale;
   const scale: PinScale =
     sc === "small" || sc === "medium" || sc === "large" ? sc : DEFAULT_PIN_PRESENTATION.scale;
-  let pinTextFontAssetId: FontAssetId | undefined;
-  const pinFontRaw = (input as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
-  if (typeof pinFontRaw === "string") {
-    const t = pinFontRaw.trim();
-    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
-      pinTextFontAssetId = t as FontAssetId;
-    }
+
+  let pinCityNameFontAssetId = parseOptionalProductTextFontId(
+    (input as { pinCityNameFontAssetId?: unknown }).pinCityNameFontAssetId,
+  );
+  let pinDateTimeFontAssetId = parseOptionalProductTextFontId(
+    (input as { pinDateTimeFontAssetId?: unknown }).pinDateTimeFontAssetId,
+  );
+  const legacyPinText = parseOptionalProductTextFontId(
+    (input as { pinTextFontAssetId?: unknown }).pinTextFontAssetId,
+  );
+  if (legacyPinText !== undefined && pinCityNameFontAssetId === undefined && pinDateTimeFontAssetId === undefined) {
+    pinCityNameFontAssetId = legacyPinText;
+    pinDateTimeFontAssetId = legacyPinText;
   }
+
+  const dmRaw = (input as { pinDateTimeDisplayMode?: unknown }).pinDateTimeDisplayMode;
+  const pinDateTimeDisplayMode: PinDateTimeDisplayMode =
+    typeof dmRaw === "string" && PIN_DATE_TIME_DISPLAY_MODE_SET.has(dmRaw)
+      ? (dmRaw as PinDateTimeDisplayMode)
+      : DEFAULT_PIN_PRESENTATION.pinDateTimeDisplayMode;
+
   return {
     showLabels,
     labelMode,
     scale,
-    ...(pinTextFontAssetId !== undefined ? { pinTextFontAssetId } : {}),
+    pinDateTimeDisplayMode,
+    ...(pinCityNameFontAssetId !== undefined ? { pinCityNameFontAssetId } : {}),
+    ...(pinDateTimeFontAssetId !== undefined ? { pinDateTimeFontAssetId } : {}),
   };
 }
 
@@ -574,12 +603,26 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation");
   }
-  const pinTextFont = (pres as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
+  const pinCityNameFont = (pres as { pinCityNameFontAssetId?: unknown }).pinCityNameFontAssetId;
   if (
-    pinTextFont !== undefined &&
-    (typeof pinTextFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(pinTextFont))
+    pinCityNameFont !== undefined &&
+    (typeof pinCityNameFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(pinCityNameFont))
   ) {
-    throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinTextFontAssetId");
+    throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinCityNameFontAssetId");
+  }
+  const pinDtFont = (pres as { pinDateTimeFontAssetId?: unknown }).pinDateTimeFontAssetId;
+  if (
+    pinDtFont !== undefined &&
+    (typeof pinDtFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(pinDtFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinDateTimeFontAssetId");
+  }
+  const pdtm = (pres as { pinDateTimeDisplayMode?: unknown }).pinDateTimeDisplayMode;
+  if (
+    typeof pdtm !== "string" ||
+    !PIN_DATE_TIME_DISPLAY_MODE_SET.has(pdtm)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinDateTimeDisplayMode");
   }
   if (typeof c.geography !== "object" || c.geography === null) {
     throw new Error("assertIsNormalizedLibrationConfig: geography must be an object");

@@ -20,7 +20,8 @@ import {
   resolveConfigUiTextFontAssetId,
   resolveDefaultProductTextFontAssetId,
   resolveEffectiveProductTextFontAssetId,
-  resolvePinLabelTextFontAssetId,
+  resolvePinCityNameTextFontAssetId,
+  resolvePinDateTimeTextFontAssetId,
 } from "./productTextFont.ts";
 
 describe("productTextFont", () => {
@@ -110,15 +111,26 @@ describe("productTextFont", () => {
     expect(resolveConfigUiTextFontAssetId({})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
-  it("resolvePinLabelTextFontAssetId: presentation override wins, else global, else renderer baseline", () => {
+  it("resolvePinCityNameTextFontAssetId: presentation override wins, else global, else renderer baseline", () => {
     expect(
-      resolvePinLabelTextFontAssetId(
+      resolvePinCityNameTextFontAssetId(
         { defaultTextFontAssetId: "computer" },
-        { pinTextFontAssetId: "dotmatrix-regular" },
+        { pinCityNameFontAssetId: "dotmatrix-regular" },
       ),
     ).toBe("dotmatrix-regular");
-    expect(resolvePinLabelTextFontAssetId({ defaultTextFontAssetId: "computer" }, {})).toBe("computer");
-    expect(resolvePinLabelTextFontAssetId({}, {})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
+    expect(resolvePinCityNameTextFontAssetId({ defaultTextFontAssetId: "computer" }, {})).toBe("computer");
+    expect(resolvePinCityNameTextFontAssetId({}, {})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
+  });
+
+  it("resolvePinDateTimeTextFontAssetId: presentation override wins, else global, else renderer baseline", () => {
+    expect(
+      resolvePinDateTimeTextFontAssetId(
+        { defaultTextFontAssetId: "computer" },
+        { pinDateTimeFontAssetId: "flip-clock" },
+      ),
+    ).toBe("flip-clock");
+    expect(resolvePinDateTimeTextFontAssetId({ defaultTextFontAssetId: "computer" }, {})).toBe("computer");
+    expect(resolvePinDateTimeTextFontAssetId({}, {})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
   it("omitRendererDefaultSentinelFromTypographyOverrides strips sentinel only", () => {

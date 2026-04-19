@@ -161,7 +161,6 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       0,
       Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
     );
-    const fillH = Math.max(0, zoneH - zonePadY * 2);
     const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
 
     const plan = buildTimezoneLetterRowRenderPlan({

@@ -171,14 +171,15 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });
 
-  it("normalizePinPresentation keeps valid pinTextFontAssetId (including renderer sentinel) and drops unknown ids", () => {
+  it("normalizePinPresentation migrates legacy pinTextFontAssetId to both pin fonts when split fields absent", () => {
     expect(
       normalizePinPresentation({
         pinTextFontAssetId: "computer",
       }),
     ).toEqual({
       ...DEFAULT_PIN_PRESENTATION,
-      pinTextFontAssetId: "computer",
+      pinCityNameFontAssetId: "computer",
+      pinDateTimeFontAssetId: "computer",
     });
     expect(
       normalizePinPresentation({
@@ -186,11 +187,41 @@ describe("librationConfig v2 (Phase 1)", () => {
       }),
     ).toEqual({
       ...DEFAULT_PIN_PRESENTATION,
-      pinTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      pinCityNameFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      pinDateTimeFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
     });
     expect(
       normalizePinPresentation({
         pinTextFontAssetId: "not-a-font",
+      }),
+    ).toEqual(DEFAULT_PIN_PRESENTATION);
+  });
+
+  it("normalizePinPresentation keeps valid split pin fonts and does not emit legacy pinTextFontAssetId", () => {
+    expect(
+      normalizePinPresentation({
+        pinCityNameFontAssetId: "computer",
+        pinDateTimeFontAssetId: "dotmatrix-regular",
+      }),
+    ).toEqual({
+      ...DEFAULT_PIN_PRESENTATION,
+      pinCityNameFontAssetId: "computer",
+      pinDateTimeFontAssetId: "dotmatrix-regular",
+    });
+  });
+
+  it("normalizePinPresentation coerces pinDateTimeDisplayMode and defaults invalid values", () => {
+    expect(
+      normalizePinPresentation({
+        pinDateTimeDisplayMode: "dateOnly",
+      }),
+    ).toEqual({
+      ...DEFAULT_PIN_PRESENTATION,
+      pinDateTimeDisplayMode: "dateOnly",
+    });
+    expect(
+      normalizePinPresentation({
+        pinDateTimeDisplayMode: "bogus",
       }),
     ).toEqual(DEFAULT_PIN_PRESENTATION);
   });
@@ -374,6 +405,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       showLabels: false,
       labelMode: "city",
       scale: "large",
+      pinDateTimeDisplayMode: DEFAULT_PIN_PRESENTATION.pinDateTimeDisplayMode,
     });
   });
 
@@ -408,6 +440,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     const cfg: AppConfig = {
       ...DEFAULT_APP_CONFIG,
       pinPresentation: {
+        ...DEFAULT_PIN_PRESENTATION,
         showLabels: false,
         labelMode: "city",
         scale: "large",

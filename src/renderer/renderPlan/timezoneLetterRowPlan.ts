@@ -35,6 +35,7 @@ import {
   type TopChromeStyle,
 } from "../../config/topChromeStyle.ts";
 import { topBandWrapOffsetsForCenteredExtent, topBandWrapOffsetsForSpan } from "../topBandWrapOffsets";
+import type { FontAssetId } from "../../typography/fontAssetTypes";
 import type { RenderPlan } from "./renderPlanTypes";
 
 function truncateTimezoneStripCaption(s: string, maxChars: number): string {

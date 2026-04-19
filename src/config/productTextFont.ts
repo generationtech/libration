@@ -94,12 +94,20 @@ export function resolveConfigUiTextFontAssetId(layout: ProductTextFontLayoutSlic
   return resolveEffectiveProductTextFontAssetId(layout, layout.configUiFontAssetId);
 }
 
-/** Map pin name + time labels: optional override on pin presentation → global default → renderer default. */
-export function resolvePinLabelTextFontAssetId(
+/** Reference pin city-name line: optional override → global default → renderer default. */
+export function resolvePinCityNameTextFontAssetId(
   layout: ProductTextFontLayoutSlice,
-  pinPresentation: { pinTextFontAssetId?: FontAssetId },
+  pinPresentation: { pinCityNameFontAssetId?: FontAssetId },
 ): FontAssetId {
-  return resolveEffectiveProductTextFontAssetId(layout, pinPresentation.pinTextFontAssetId);
+  return resolveEffectiveProductTextFontAssetId(layout, pinPresentation.pinCityNameFontAssetId);
+}
+
+/** Reference pin date/time line: optional override → global default → renderer default. */
+export function resolvePinDateTimeTextFontAssetId(
+  layout: ProductTextFontLayoutSlice,
+  pinPresentation: { pinDateTimeFontAssetId?: FontAssetId },
+): FontAssetId {
+  return resolveEffectiveProductTextFontAssetId(layout, pinPresentation.pinDateTimeFontAssetId);
 }
 
 /**

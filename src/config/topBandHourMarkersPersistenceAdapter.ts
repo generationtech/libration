@@ -28,7 +28,6 @@ import type {
   HourMarkersRealizationConfig,
   HourMarkersTextAppearance,
 } from "./topBandHourMarkersTypes.ts";
-import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
 function normalizedTopBandHourMarkerColor(raw: unknown): string | undefined {
   if (typeof raw !== "string") {

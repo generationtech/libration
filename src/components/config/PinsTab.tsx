@@ -13,10 +13,12 @@
 
 import {
   ALL_REFERENCE_CITY_IDS,
+  PIN_DATE_TIME_DISPLAY_MODES,
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
   PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   type CustomPinConfig,
+  type PinDateTimeDisplayMode,
   type PinLabelMode,
   type PinScale,
 } from "../../config/appConfig";
@@ -28,6 +30,27 @@ import { ConfigControlRow } from "./ConfigControlRow";
 
 const PIN_LABEL_MODES: readonly PinLabelMode[] = ["city", "cityAndTime"];
 const PIN_SCALES: readonly PinScale[] = ["small", "medium", "large"];
+
+function labelForPinDateTimeDisplayMode(mode: PinDateTimeDisplayMode): string {
+  switch (mode) {
+    case "time":
+      return "Time only";
+    case "timeWithSeconds":
+      return "Time with seconds";
+    case "timeAndDate":
+      return "Time and date";
+    case "dateAndTime":
+      return "Date and time";
+    case "dateOnly":
+      return "Date only";
+    case "hidden":
+      return "Hidden";
+    default: {
+      const _x: never = mode;
+      return String(_x);
+    }
+  }
+}
 
 export type PinsTabProps = {
   config: LibrationConfigV2;
@@ -322,7 +345,9 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
           Pin labels
         </h2>
         <p className="config-section__hint">
-          Reference cities can show local time next to the name; custom pins use the label only.
+          Reference cities can show local time next to the name; custom pins use the label only. City name and
+          date/time lines can use different fonts; the secondary line format is chosen below (not font or
+          layout).
         </p>
         <ConfigControlRow label="Show labels">
           <input
@@ -369,23 +394,23 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
             ))}
           </select>
         </ConfigControlRow>
-        <ConfigControlRow label="Pin label font">
+        <ConfigControlRow label="City name font">
           <select
             className="config-input"
-            data-testid="pins-pin-text-font-select"
-            value={config.pins.presentation.pinTextFontAssetId ?? ""}
+            data-testid="pins-pin-city-name-font-select"
+            value={config.pins.presentation.pinCityNameFontAssetId ?? ""}
             disabled={!wired}
-            aria-label="Font for city pin name and local time labels"
+            aria-label="Font for city pin name line"
             onChange={
               wired && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value;
                     updateConfig((draft) => {
                       if (v === "") {
-                        delete (draft.pins.presentation as { pinTextFontAssetId?: FontAssetId })
-                          .pinTextFontAssetId;
+                        delete (draft.pins.presentation as { pinCityNameFontAssetId?: FontAssetId })
+                          .pinCityNameFontAssetId;
                       } else {
-                        draft.pins.presentation.pinTextFontAssetId = v as FontAssetId;
+                        draft.pins.presentation.pinCityNameFontAssetId = v as FontAssetId;
                       }
                     });
                   }
@@ -404,6 +429,68 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
                 </option>
               ) : null;
             })}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Date/time font">
+          <select
+            className="config-input"
+            data-testid="pins-pin-datetime-font-select"
+            value={config.pins.presentation.pinDateTimeFontAssetId ?? ""}
+            disabled={!wired}
+            aria-label="Font for city pin date and time line"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      if (v === "") {
+                        delete (draft.pins.presentation as { pinDateTimeFontAssetId?: FontAssetId })
+                          .pinDateTimeFontAssetId;
+                      } else {
+                        draft.pins.presentation.pinDateTimeFontAssetId = v as FontAssetId;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Date/time display">
+          <select
+            className="config-input"
+            data-testid="pins-pin-datetime-display-mode-select"
+            value={config.pins.presentation.pinDateTimeDisplayMode}
+            disabled={!wired}
+            aria-label="Format for city pin date and time line"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const pinDateTimeDisplayMode = e.currentTarget.value as PinDateTimeDisplayMode;
+                    updateConfig((draft) => {
+                      draft.pins.presentation.pinDateTimeDisplayMode = pinDateTimeDisplayMode;
+                    });
+                  }
+                : undefined
+            }
+          >
+            {PIN_DATE_TIME_DISPLAY_MODES.map((m) => (
+              <option key={m} value={m}>
+                {labelForPinDateTimeDisplayMode(m)}
+              </option>
+            ))}
           </select>
         </ConfigControlRow>
       </section>

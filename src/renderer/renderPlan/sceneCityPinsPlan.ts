@@ -47,11 +47,16 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   }
 
   const layerOp = options.layerOpacity;
-  const { showLabels, labelMode, scale, cities, labelFontAssetId } = options.payload;
-  const labelDisplayName =
-    labelFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID
+  const { showLabels, labelMode, scale, cities, cityNameFontAssetId, dateTimeFontAssetId } =
+    options.payload;
+  const cityNameDisplayName =
+    cityNameFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID
       ? "Renderer default"
-      : defaultFontAssetRegistry.requireById(labelFontAssetId).displayName;
+      : defaultFontAssetRegistry.requireById(cityNameFontAssetId).displayName;
+  const dateTimeDisplayName =
+    dateTimeFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID
+      ? "Renderer default"
+      : defaultFontAssetRegistry.requireById(dateTimeFontAssetId).displayName;
   const scaleFactor =
     scale === "small" ? 0.82 : scale === "large" ? 1.22 : 1;
 
@@ -105,8 +110,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
       text: city.name,
       fill: "rgba(245, 248, 255, 0.94)",
       font: {
-        assetId: labelFontAssetId,
-        displayName: labelDisplayName,
+        assetId: cityNameFontAssetId,
+        displayName: cityNameDisplayName,
         sizePx: nameSize,
         weight: 500,
         style: "normal",
@@ -133,8 +138,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
         text: city.localTimeLabel,
         fill: "rgba(215, 224, 242, 0.9)",
         font: {
-          assetId: labelFontAssetId,
-          displayName: labelDisplayName,
+          assetId: dateTimeFontAssetId,
+          displayName: dateTimeDisplayName,
           sizePx: timeSize,
           weight: 400,
           style: "normal",

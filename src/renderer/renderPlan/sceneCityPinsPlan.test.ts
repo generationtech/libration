@@ -23,6 +23,7 @@ function latToY(latDeg: number, h: number): number {
 }
 
 const LABEL_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+const ALT_FONT = "computer";
 
 describe("buildCityPinsRenderPlan", () => {
   it("returns no items for non-positive viewport dimensions", () => {
@@ -37,7 +38,8 @@ describe("buildCityPinsRenderPlan", () => {
           showLabels: true,
           labelMode: "city",
           scale: "medium",
-          labelFontAssetId: LABEL_FONT,
+          cityNameFontAssetId: LABEL_FONT,
+          dateTimeFontAssetId: LABEL_FONT,
         },
       }).items,
     ).toEqual([]);
@@ -64,7 +66,8 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
 
@@ -80,6 +83,40 @@ describe("buildCityPinsRenderPlan", () => {
     expect(t0.font.assetId).toBe(LABEL_FONT);
     expect(t0.stroke?.color).toBe("rgba(8, 14, 28, 0.88)");
     expect(t0.opacity).toBe(0.9);
+  });
+
+  it("uses separate payload fonts for city name vs date/time lines", () => {
+    const plan = buildCityPinsRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      layerOpacity: 1,
+      payload: {
+        kind: CITY_PINS_KIND,
+        cities: [
+          {
+            id: "nyc",
+            name: "New York",
+            latDeg: 40.7,
+            lonDeg: -74,
+            localTimeLabel: "12:00:00",
+          },
+        ],
+        showLabels: true,
+        labelMode: "cityAndTime",
+        scale: "medium",
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: ALT_FONT,
+      },
+    });
+    const texts = plan.items.filter((i) => i.kind === "text");
+    expect(texts.length).toBe(2);
+    expect(texts[0]?.kind).toBe("text");
+    expect(texts[1]?.kind).toBe("text");
+    if (texts[0]?.kind !== "text" || texts[1]?.kind !== "text") {
+      return;
+    }
+    expect(texts[0].font.assetId).toBe(LABEL_FONT);
+    expect(texts[1].font.assetId).toBe(ALT_FONT);
   });
 
   it("skips label items when showLabels is false", () => {
@@ -103,7 +140,8 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: false,
         labelMode: "cityAndTime",
         scale: "medium",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
     expect(plan.items.every((i) => i.kind === "path2d")).toBe(true);
@@ -131,7 +169,8 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "cityAndTime",
         scale: "small",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
     const texts = plan.items.filter((i) => i.kind === "text");
@@ -161,7 +200,8 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "cityAndTime",
         scale: "medium",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
     const texts = plan.items.filter((i) => i.kind === "text");
@@ -191,7 +231,8 @@ describe("buildCityPinsRenderPlan", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
     const x = mapXFromLongitudeDeg(lon, w);
@@ -265,7 +306,8 @@ describe("executeRenderPlanOnCanvas city pin plans", () => {
         showLabels: true,
         labelMode: "city",
         scale: "medium",
-        labelFontAssetId: LABEL_FONT,
+        cityNameFontAssetId: LABEL_FONT,
+        dateTimeFontAssetId: LABEL_FONT,
       },
     });
     executeRenderPlanOnCanvas(ctx, plan);

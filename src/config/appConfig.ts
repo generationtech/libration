@@ -17,9 +17,6 @@ import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 export type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
 import { resolveEffectiveProductTextFontAssetId } from "./productTextFont.ts";
-import {
-  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
-} from "./productFontConstants.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 
 export {
@@ -430,6 +427,22 @@ export type PinLabelMode = "city" | "cityAndTime";
 export type PinScale = "small" | "medium" | "large";
 
 /**
+ * Pin secondary line: wall-clock text content in the city’s IANA zone (typography/layout are separate).
+ * Default matches legacy pin time: hour, minute, second (locale default 12/24h).
+ */
+export const PIN_DATE_TIME_DISPLAY_MODES = [
+  "time",
+  "timeWithSeconds",
+  "timeAndDate",
+  "dateAndTime",
+  "dateOnly",
+  "hidden",
+] as const;
+export type PinDateTimeDisplayMode = (typeof PIN_DATE_TIME_DISPLAY_MODES)[number];
+
+export const PIN_DATE_TIME_DISPLAY_MODE_SET = new Set<string>(PIN_DATE_TIME_DISPLAY_MODES);
+
+/**
  * Map pin presentation derived from v2 `pins.presentation` (bootstrap passes this into the city pins layer).
  */
 export interface PinPresentationConfig {
@@ -437,16 +450,24 @@ export interface PinPresentationConfig {
   labelMode: PinLabelMode;
   scale: PinScale;
   /**
-   * Optional bundled font for reference-city pin name and local time labels (one surface).
-   * When omitted, pin labels inherit the global default text font.
+   * Optional bundled font for the reference-city name line.
+   * When omitted, inherits the product-wide default text font.
    */
-  pinTextFontAssetId?: FontAssetId;
+  pinCityNameFontAssetId?: FontAssetId;
+  /**
+   * Optional bundled font for the pin date/time line.
+   * When omitted, inherits the product-wide default text font.
+   */
+  pinDateTimeFontAssetId?: FontAssetId;
+  /** Format of the secondary line for reference-city local wall time. */
+  pinDateTimeDisplayMode: PinDateTimeDisplayMode;
 }
 
 export const DEFAULT_PIN_PRESENTATION: PinPresentationConfig = {
   showLabels: true,
   labelMode: "cityAndTime",
   scale: "medium",
+  pinDateTimeDisplayMode: "timeWithSeconds",
 };
 
 /** Geographic reference for product semantics (v2 `geography` domain); independent of display-chrome anchor controls. */
