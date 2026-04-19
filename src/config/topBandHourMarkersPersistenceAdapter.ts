@@ -27,7 +27,6 @@ import type {
   HourMarkersRadialLineAppearance,
   HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
-  HourMarkersTapeHourNumberOverlay,
   HourMarkersTextAppearance,
 } from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
@@ -189,22 +188,6 @@ function normalizedNoonMidnightCustomization(
   return { enabled: true, expressionMode };
 }
 
-function normalizedTapeHourNumberOverlay(
-  raw: unknown,
-  realizationKind: string,
-): HourMarkersTapeHourNumberOverlay | undefined {
-  if (realizationKind === "text") {
-    return undefined;
-  }
-  if (!isPlainObject(raw)) {
-    return undefined;
-  }
-  if (raw.enabled === true) {
-    return { enabled: true };
-  }
-  return undefined;
-}
-
 /**
  * Coerces unknown `chrome.layout.hourMarkers` input to a normalized {@link HourMarkersConfig}.
  * Missing or invalid payloads yield {@link DEFAULT_HOUR_MARKERS_CONFIG} (cloned).
@@ -237,7 +220,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     return cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG);
   }
 
-  const tapeOpt = normalizedTapeHourNumberOverlay(raw.tapeHourNumberOverlay, kind);
   const noonMidnightOpt = normalizedNoonMidnightCustomization(raw.noonMidnightCustomization);
 
   if (kind === "text") {
@@ -261,7 +243,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         : {}),
       realization,
       layout: layoutNorm,
-      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
@@ -279,7 +260,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         : {}),
       realization,
       layout: layoutNorm,
-      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
@@ -297,7 +277,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         : {}),
       realization,
       layout: layoutNorm,
-      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }
@@ -315,7 +294,6 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
         : {}),
       realization,
       layout: layoutNorm,
-      ...(tapeOpt !== undefined ? { tapeHourNumberOverlay: tapeOpt } : {}),
       ...(noonMidnightOpt !== undefined ? { noonMidnightCustomization: noonMidnightOpt } : {}),
     };
   }

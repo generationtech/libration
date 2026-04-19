@@ -49,9 +49,6 @@ export function TickTapeEditor({ config, updateConfig }: TickTapeEditorProps) {
           }
         />
       </ConfigControlRow>
-      <p className="config-section__hint">
-        Boxed numerals on the tape are toggled from the indicator editor when using glyph hour markers.
-      </p>
       <p className="config-section__hint">More tick-rail options will appear here as this area expands.</p>
     </div>
   );

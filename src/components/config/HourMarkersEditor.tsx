@@ -136,21 +136,14 @@ function realizationConfigForKind(
   }
 }
 
-/** Commits a realization kind change and drops glyph-only fields invalid for the new kind (e.g. tape overlay for text). */
 function hourMarkersAfterRealizationKindChange(
   nextKind: HourMarkersRealizationConfig["kind"],
   hm: HourMarkersConfig,
 ): HourMarkersConfig {
-  const next: HourMarkersConfig = {
+  return {
     ...hm,
     realization: realizationConfigForKind(nextKind, hm),
   };
-  if (nextKind === "text") {
-    const { tapeHourNumberOverlay: _omit, ...rest } = next;
-    void _omit;
-    return rest;
-  }
-  return next;
 }
 
 function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarkersAnalogClockAppearance {
@@ -808,8 +801,6 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
   const sm = hourMarkers.layout.sizeMultiplier;
   const padTop = hourMarkers.layout.contentPaddingTopPx;
   const padBottom = hourMarkers.layout.contentPaddingBottomPx;
-  const rk = hourMarkers.realization.kind;
-  const tapeOn = hourMarkers.tapeHourNumberOverlay?.enabled === true;
   const authoringOff = !wired || !entriesAreaEnabled;
   return (
     <>
@@ -924,30 +915,6 @@ function LayoutSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }:
           px (empty = auto)
         </span>
       </ConfigControlRow>
-      {rk !== "text" ? (
-        <ConfigControlRow label="Tape hour numbers">
-          <label className="config-control-row__checkbox">
-            <input
-              type="checkbox"
-              disabled={authoringOff}
-              aria-label="Show boxed hour numerals on the tick tape (glyph mode)"
-              checked={tapeOn}
-              onChange={
-                wired && entriesAreaEnabled && updateConfig
-                  ? (e) => {
-                      const on = e.currentTarget.checked;
-                      commitHourMarkers(updateConfig, (hm) => ({
-                        ...hm,
-                        tapeHourNumberOverlay: on ? { enabled: true } : undefined,
-                      }));
-                    }
-                  : undefined
-              }
-            />
-            <span>Boxed numerals on tick tape</span>
-          </label>
-        </ConfigControlRow>
-      ) : null}
     </>
   );
 }

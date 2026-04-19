@@ -571,19 +571,6 @@ export function assertIsNormalizedLibrationConfig(
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers.noonMidnightCustomization.expressionMode");
     }
   }
-  const tapeOv = (hm as { tapeHourNumberOverlay?: unknown }).tapeHourNumberOverlay;
-  if (tapeOv !== undefined) {
-    if (rk === "text") {
-      throw new Error("assertIsNormalizedLibrationConfig: hourMarkers tapeHourNumberOverlay is invalid for text");
-    }
-    if (
-      typeof tapeOv !== "object" ||
-      tapeOv === null ||
-      (tapeOv as { enabled?: unknown }).enabled !== true
-    ) {
-      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers tapeHourNumberOverlay");
-    }
-  }
   const geo = c.geography;
   if (
     typeof geo !== "object" ||

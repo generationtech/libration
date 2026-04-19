@@ -231,9 +231,6 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
       : {}),
     realization,
     layout,
-    ...(h.tapeHourNumberOverlay !== undefined
-      ? { tapeHourNumberOverlay: { ...h.tapeHourNumberOverlay } }
-      : {}),
     ...(h.noonMidnightCustomization !== undefined
       ? {
           noonMidnightCustomization: {

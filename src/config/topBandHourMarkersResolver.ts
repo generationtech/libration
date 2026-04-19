@@ -250,10 +250,6 @@ export function resolveEffectiveTopBandHourMarkers(
   if (ly.contentPaddingBottomPx !== undefined) {
     layoutOut.contentPaddingBottomPx = ly.contentPaddingBottomPx;
   }
-  const tapeHourNumberOverlay =
-    hm.realization.kind !== "text" && hm.tapeHourNumberOverlay?.enabled === true
-      ? ({ enabled: true } as const)
-      : undefined;
 
   const rk = hm.realization.kind;
   const behavior = resolveEffectiveHourMarkerBehavior(hm);
@@ -277,7 +273,6 @@ export function resolveEffectiveTopBandHourMarkers(
       realization,
       layout: layoutOut,
       noonMidnightCustomization,
-      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -294,7 +289,6 @@ export function resolveEffectiveTopBandHourMarkers(
       },
       layout: layoutOut,
       noonMidnightCustomization,
-      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -311,7 +305,6 @@ export function resolveEffectiveTopBandHourMarkers(
       },
       layout: layoutOut,
       noonMidnightCustomization,
-      ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
     };
   }
 
@@ -327,6 +320,5 @@ export function resolveEffectiveTopBandHourMarkers(
     },
     layout: layoutOut,
     noonMidnightCustomization,
-    ...(tapeHourNumberOverlay !== undefined ? { tapeHourNumberOverlay } : {}),
   };
 }

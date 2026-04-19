@@ -62,14 +62,6 @@ export type HourMarkersRealizationConfig =
 export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
 
 /**
- * Optional tick-tape presentation: boxed hour numerals on the middle tick rail (glyph contexts).
- * Not a separate realization kind — companion chrome only.
- */
-export type HourMarkersTapeHourNumberOverlay = {
-  enabled: boolean;
-};
-
-/**
  * How noon (structural hour 12) and midnight (structural hour 0) are expressed on the 24-hour indicator entries row.
  * Only applies when {@link HourMarkersNoonMidnightCustomization.enabled} is true.
  */
@@ -120,8 +112,6 @@ export interface HourMarkersConfig {
      */
     contentPaddingBottomPx?: number;
   };
-  /** Optional boxed numerals carried on the hourly tick tape (glyph realization contexts). */
-  tapeHourNumberOverlay?: HourMarkersTapeHourNumberOverlay;
   /** Optional noon/midnight treatment for indicator entries (hour columns 0 and 12). */
   noonMidnightCustomization?: HourMarkersNoonMidnightCustomization;
 }
@@ -230,8 +220,6 @@ export type EffectiveTopBandHourMarkers = {
   content: EffectiveTopBandHourMarkerContent;
   realization: EffectiveTopBandHourMarkerRealization;
   layout: EffectiveTopBandHourMarkerLayout;
-  /** Resolved optional tape overlay (companion presentation, not a realization kind). */
-  tapeHourNumberOverlay?: { enabled: boolean };
   /** Noon/midnight indicator-entry customization (semantic + layout consume; renderer adapts per realization). */
   noonMidnightCustomization: EffectiveNoonMidnightCustomization;
 };

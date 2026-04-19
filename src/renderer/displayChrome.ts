@@ -77,7 +77,6 @@ import { buildTopBandPresentTimeTickRenderPlan } from "./renderPlan/topBandPrese
 import { buildTopBandTickRailRenderPlan } from "./renderPlan/topBandTickRailPlan";
 import { buildTimezoneLetterRowRenderPlan } from "./renderPlan/timezoneLetterRowPlan";
 import { buildTopBandCircleBandHourStackRenderPlan } from "./renderPlan/topBandCircleBandHourStackPlan";
-import { buildTopBandTapeHourNumberOverlayRenderPlan } from "./renderPlan/topBandTapeHourNumberOverlayPlan.ts";
 import {
   buildTopBandChromeBackgroundRenderPlan,
   buildTopBandInterBandSeamLinesRenderPlan,
@@ -1738,31 +1737,6 @@ export function renderDisplayChrome(
             };
           })
         : [];
-
-  if (
-    showTickTape &&
-    tickH > 0 &&
-    chrome.effectiveTopBandHourMarkers.tapeHourNumberOverlay?.enabled === true
-  ) {
-    executeRenderPlanOnCanvas(
-      ctx,
-      buildTopBandTapeHourNumberOverlayRenderPlan({
-        viewportWidthPx: vw,
-        tickBaselineY,
-        tickBandHeightPx: tickH,
-        markers: markers.map((m) => ({
-          centerX: m.centerX,
-          structuralHour0To23: m.utcHour,
-        })),
-        topBandMode: scale.topBandMode,
-        textFill: st.ticks.stroke,
-        boxFill: "rgba(6, 26, 54, 0.94)",
-        boxStroke: "rgba(130, 188, 228, 0.42)",
-        fontSizePx: Math.max(6, diskLabelSizePx * 0.48),
-        glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
-      }),
-    );
-  }
 
   executeRenderPlanOnCanvas(
     ctx,
