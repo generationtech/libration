@@ -144,6 +144,41 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });
 
+  it("normalizeDisplayChromeLayout keeps valid bottomReadoutFontAssetId and configUiFontAssetId, drops unknown ids", () => {
+    expect(
+      normalizeDisplayChromeLayout({
+        bottomReadoutFontAssetId: "computer",
+        configUiFontAssetId: "flip-clock",
+      }),
+    ).toEqual({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      bottomReadoutFontAssetId: "computer",
+      configUiFontAssetId: "flip-clock",
+    });
+    expect(
+      normalizeDisplayChromeLayout({
+        bottomReadoutFontAssetId: "bogus",
+        configUiFontAssetId: "bogus",
+      }),
+    ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+  });
+
+  it("normalizePinPresentation keeps valid pinTextFontAssetId and drops unknown ids", () => {
+    expect(
+      normalizePinPresentation({
+        pinTextFontAssetId: "computer",
+      }),
+    ).toEqual({
+      ...DEFAULT_PIN_PRESENTATION,
+      pinTextFontAssetId: "computer",
+    });
+    expect(
+      normalizePinPresentation({
+        pinTextFontAssetId: "not-a-font",
+      }),
+    ).toEqual(DEFAULT_PIN_PRESENTATION);
+  });
+
   it("normalizeDisplayChromeLayout ignores unknown obsolete flat hour-marker property names", () => {
     const baseline = normalizeDisplayChromeLayout({});
     expect(

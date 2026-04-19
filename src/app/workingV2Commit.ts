@@ -78,7 +78,8 @@ function pinPresentationEqual(
   return (
     a.showLabels === b.showLabels &&
     a.labelMode === b.labelMode &&
-    a.scale === b.scale
+    a.scale === b.scale &&
+    a.pinTextFontAssetId === b.pinTextFontAssetId
   );
 }
 

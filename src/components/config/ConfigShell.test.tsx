@@ -17,7 +17,7 @@ import { createRef } from "react";
 import { render } from "@testing-library/react";
 import { normalizeLibrationConfig, defaultLibrationConfigV2 } from "../../config/v2/librationConfig";
 import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
-import { resolveDefaultProductTextFontAssetId } from "../../config/productTextFont";
+import { resolveConfigUiTextFontAssetId } from "../../config/productTextFont";
 import { ConfigShell } from "./ConfigShell";
 
 describe("ConfigShell", () => {
@@ -33,7 +33,7 @@ describe("ConfigShell", () => {
         },
       },
     });
-    const resolvedId = resolveDefaultProductTextFontAssetId(config.chrome.layout);
+    const resolvedId = resolveConfigUiTextFontAssetId(config.chrome.layout);
     const expectedStack = canvasCssFontFamilyStackForBundledAssetId(resolvedId);
     expect(expectedStack).toBeDefined();
 
@@ -44,6 +44,36 @@ describe("ConfigShell", () => {
       <ConfigShell workingV2Ref={workingV2Ref} panelDomId="test-config-shell" />,
     );
     const shell = container.querySelector("#test-config-shell");
+    expect(shell).not.toBeNull();
+    const el = shell as HTMLElement;
+    expect(el.style.getPropertyValue("--config-shell-body-font").trim()).toBe(expectedStack!.trim());
+  });
+
+  it("applies panel CSS font from configUiFontAssetId when set", () => {
+    const base = defaultLibrationConfigV2();
+    const config = normalizeLibrationConfig({
+      ...base,
+      chrome: {
+        ...base.chrome,
+        layout: {
+          ...base.chrome.layout,
+          defaultTextFontAssetId: "computer",
+          configUiFontAssetId: "kremlin",
+        },
+      },
+    });
+    const resolvedId = resolveConfigUiTextFontAssetId(config.chrome.layout);
+    expect(resolvedId).toBe("kremlin");
+    const expectedStack = canvasCssFontFamilyStackForBundledAssetId(resolvedId);
+    expect(expectedStack).toBeDefined();
+
+    const workingV2Ref = createRef<ReturnType<typeof normalizeLibrationConfig> | null>();
+    workingV2Ref.current = config;
+
+    const { container } = render(
+      <ConfigShell workingV2Ref={workingV2Ref} panelDomId="test-config-shell-2" />,
+    );
+    const shell = container.querySelector("#test-config-shell-2");
     expect(shell).not.toBeNull();
     const el = shell as HTMLElement;
     expect(el.style.getPropertyValue("--config-shell-body-font").trim()).toBe(expectedStack!.trim());

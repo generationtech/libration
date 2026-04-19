@@ -14,8 +14,11 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "./appConfig.ts";
 import {
+  resolveBottomReadoutTextFontAssetId,
+  resolveConfigUiTextFontAssetId,
   resolveDefaultProductTextFontAssetId,
   resolveEffectiveProductTextFontAssetId,
+  resolvePinLabelTextFontAssetId,
 } from "./productTextFont.ts";
 
 describe("productTextFont", () => {
@@ -72,5 +75,42 @@ describe("productTextFont", () => {
     expect(resolveEffectiveProductTextFontAssetId(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, undefined)).toBe(
       DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
     );
+  });
+
+  it("resolveBottomReadoutTextFontAssetId: layout local override wins, else global, else zeroes-two", () => {
+    expect(
+      resolveBottomReadoutTextFontAssetId({
+        bottomReadoutFontAssetId: "flip-clock",
+        defaultTextFontAssetId: "computer",
+      }),
+    ).toBe("flip-clock");
+    expect(
+      resolveBottomReadoutTextFontAssetId({
+        defaultTextFontAssetId: "computer",
+      }),
+    ).toBe("computer");
+    expect(resolveBottomReadoutTextFontAssetId({})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+  });
+
+  it("resolveConfigUiTextFontAssetId: layout local override wins, else global, else zeroes-two", () => {
+    expect(
+      resolveConfigUiTextFontAssetId({
+        configUiFontAssetId: "kremlin",
+        defaultTextFontAssetId: "computer",
+      }),
+    ).toBe("kremlin");
+    expect(resolveConfigUiTextFontAssetId({ defaultTextFontAssetId: "computer" })).toBe("computer");
+    expect(resolveConfigUiTextFontAssetId({})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+  });
+
+  it("resolvePinLabelTextFontAssetId: presentation override wins, else global, else zeroes-two", () => {
+    expect(
+      resolvePinLabelTextFontAssetId(
+        { defaultTextFontAssetId: "computer" },
+        { pinTextFontAssetId: "dotmatrix-regular" },
+      ),
+    ).toBe("dotmatrix-regular");
+    expect(resolvePinLabelTextFontAssetId({ defaultTextFontAssetId: "computer" }, {})).toBe("computer");
+    expect(resolvePinLabelTextFontAssetId({}, {})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
   });
 });

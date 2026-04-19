@@ -13,7 +13,7 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode, RefObject } from "react";
-import { resolveDefaultProductTextFontAssetId } from "../../config/productTextFont";
+import { resolveConfigUiTextFontAssetId } from "../../config/productTextFont";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
 import { CONFIG_TAB_DEFS, type ConfigTabId } from "./configTabs";
@@ -73,6 +73,7 @@ function renderActiveTabContent(
       return (
         <GeneralTab
           config={config}
+          updateConfig={updateConfig}
           userPresetsUi={userPresetsUi}
         />
       );
@@ -93,7 +94,7 @@ export function ConfigShell({
     if (!config) {
       return undefined;
     }
-    const id = resolveDefaultProductTextFontAssetId(config.chrome.layout);
+    const id = resolveConfigUiTextFontAssetId(config.chrome.layout);
     return canvasCssFontFamilyStackForBundledAssetId(id) ?? "system-ui, sans-serif";
   }, [config]);
 

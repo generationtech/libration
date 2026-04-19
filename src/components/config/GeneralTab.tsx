@@ -12,18 +12,25 @@
  */
 
 import { useState } from "react";
+import { TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
+import type { FontAssetId } from "../../typography/fontAssetTypes";
+import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { ConfigControlRow } from "./ConfigControlRow";
 import type { UserPresetsUiProps } from "./userPresetsPanelTypes";
 
 export type GeneralTabProps = {
   config: LibrationConfigV2;
+  /** When set, panel font override can be edited. */
+  updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
   userPresetsUi?: UserPresetsUiProps;
 };
 
-export function GeneralTab({ config, userPresetsUi }: GeneralTabProps) {
+export function GeneralTab({ config, updateConfig, userPresetsUi }: GeneralTabProps) {
   const [newPresetName, setNewPresetName] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const wired = Boolean(updateConfig);
+  const lay = config.chrome.layout;
 
   return (
     <div className="config-tab-stack">
@@ -40,6 +47,52 @@ export function GeneralTab({ config, userPresetsUi }: GeneralTabProps) {
             value={String(config.meta.schemaVersion)}
             aria-label="Schema version"
           />
+        </ConfigControlRow>
+      </section>
+
+      <section
+        className="config-section"
+        aria-labelledby="config-panel-typography-heading"
+      >
+        <h2 id="config-panel-typography-heading" className="config-section__title">
+          Configuration panel
+        </h2>
+        <p className="config-section__hint">
+          Font for text in this panel only. The default row inherits the product-wide default font set under
+          Chrome → Layout chrome. An explicit choice overrides that default for the panel.
+        </p>
+        <ConfigControlRow label="Panel font">
+          <select
+            className="config-input"
+            data-testid="config-shell-panel-font-select"
+            value={lay.configUiFontAssetId ?? ""}
+            disabled={!wired}
+            aria-label="Font for configuration panel text"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      if (v === "") {
+                        delete (draft.chrome.layout as { configUiFontAssetId?: FontAssetId }).configUiFontAssetId;
+                      } else {
+                        draft.chrome.layout.configUiFontAssetId = v as FontAssetId;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
         </ConfigControlRow>
       </section>
 

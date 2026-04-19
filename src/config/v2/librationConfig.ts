@@ -236,6 +236,24 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     pickGlobal(legacyGlobalRaw);
   }
 
+  let bottomReadoutFontAssetId: FontAssetId | undefined;
+  const brRaw = (input as { bottomReadoutFontAssetId?: unknown }).bottomReadoutFontAssetId;
+  if (typeof brRaw === "string") {
+    const t = brRaw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      bottomReadoutFontAssetId = t as FontAssetId;
+    }
+  }
+
+  let configUiFontAssetId: FontAssetId | undefined;
+  const cuRaw = (input as { configUiFontAssetId?: unknown }).configUiFontAssetId;
+  if (typeof cuRaw === "string") {
+    const t = cuRaw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      configUiFontAssetId = t as FontAssetId;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
@@ -256,6 +274,8 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
       : {}),
     ...(timezoneLetterRowFontAssetId !== undefined ? { timezoneLetterRowFontAssetId } : {}),
     ...(defaultTextFontAssetId !== undefined ? { defaultTextFontAssetId } : {}),
+    ...(bottomReadoutFontAssetId !== undefined ? { bottomReadoutFontAssetId } : {}),
+    ...(configUiFontAssetId !== undefined ? { configUiFontAssetId } : {}),
   };
 }
 
@@ -274,7 +294,20 @@ export function normalizePinPresentation(input: unknown): PinPresentationConfig 
   const sc = input.scale;
   const scale: PinScale =
     sc === "small" || sc === "medium" || sc === "large" ? sc : DEFAULT_PIN_PRESENTATION.scale;
-  return { showLabels, labelMode, scale };
+  let pinTextFontAssetId: FontAssetId | undefined;
+  const pinFontRaw = (input as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
+  if (typeof pinFontRaw === "string") {
+    const t = pinFontRaw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      pinTextFontAssetId = t as FontAssetId;
+    }
+  }
+  return {
+    showLabels,
+    labelMode,
+    scale,
+    ...(pinTextFontAssetId !== undefined ? { pinTextFontAssetId } : {}),
+  };
 }
 
 function clampLongitudeDegGeography(lon: number): number {
@@ -440,6 +473,10 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
       ? { timezoneLetterRowFontAssetId: l.timezoneLetterRowFontAssetId }
       : {}),
     ...(l.defaultTextFontAssetId !== undefined ? { defaultTextFontAssetId: l.defaultTextFontAssetId } : {}),
+    ...(l.bottomReadoutFontAssetId !== undefined
+      ? { bottomReadoutFontAssetId: l.bottomReadoutFontAssetId }
+      : {}),
+    ...(l.configUiFontAssetId !== undefined ? { configUiFontAssetId: l.configUiFontAssetId } : {}),
   };
 }
 
@@ -531,6 +568,13 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation");
   }
+  const pinTextFont = (pres as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
+  if (
+    pinTextFont !== undefined &&
+    (typeof pinTextFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(pinTextFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinTextFontAssetId");
+  }
   if (typeof c.geography !== "object" || c.geography === null) {
     throw new Error("assertIsNormalizedLibrationConfig: geography must be an object");
   }
@@ -605,6 +649,20 @@ export function assertIsNormalizedLibrationConfig(
     (typeof globalTextFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(globalTextFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.defaultTextFontAssetId");
+  }
+  const bottomReadoutFont = (lay as { bottomReadoutFontAssetId?: unknown }).bottomReadoutFontAssetId;
+  if (
+    bottomReadoutFont !== undefined &&
+    (typeof bottomReadoutFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(bottomReadoutFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.bottomReadoutFontAssetId");
+  }
+  const configUiFont = (lay as { configUiFontAssetId?: unknown }).configUiFontAssetId;
+  if (
+    configUiFont !== undefined &&
+    (typeof configUiFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(configUiFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.configUiFontAssetId");
   }
   const hm = lay.hourMarkers;
   if (

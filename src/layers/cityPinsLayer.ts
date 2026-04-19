@@ -68,7 +68,8 @@ export type CityPinsCustomDefinition = {
 
 /**
  * Static reference city markers in equirectangular space (no live data, no interaction).
- * Pass the city list from app/bootstrap; `labelFontAssetId` is the resolved global default text font.
+ * Pass the city list from app/bootstrap; `labelFontAssetId` is the resolved pin label font (local override,
+ * else product-wide default, else canonical fallback).
  * Optional `customPins` are merged after reference cities (same draw payload shape; no local time).
  */
 export function createCityPinsLayer(

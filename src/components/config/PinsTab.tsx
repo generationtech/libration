@@ -13,12 +13,15 @@
 
 import {
   ALL_REFERENCE_CITY_IDS,
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   type CustomPinConfig,
   type PinLabelMode,
   type PinScale,
 } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { REFERENCE_CITIES } from "../../data/referenceCities";
+import type { FontAssetId } from "../../typography/fontAssetTypes";
+import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 const PIN_LABEL_MODES: readonly PinLabelMode[] = ["city", "cityAndTime"];
@@ -362,6 +365,40 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
                 {m === "city" ? "City name only" : "City name and local time"}
               </option>
             ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Pin label font">
+          <select
+            className="config-input"
+            data-testid="pins-pin-text-font-select"
+            value={config.pins.presentation.pinTextFontAssetId ?? ""}
+            disabled={!wired}
+            aria-label="Font for city pin name and local time labels"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      if (v === "") {
+                        delete (draft.pins.presentation as { pinTextFontAssetId?: FontAssetId })
+                          .pinTextFontAssetId;
+                      } else {
+                        draft.pins.presentation.pinTextFontAssetId = v as FontAssetId;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
           </select>
         </ConfigControlRow>
       </section>

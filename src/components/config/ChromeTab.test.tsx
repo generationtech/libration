@@ -59,6 +59,24 @@ describe("ChromeTab major areas", () => {
     expect(screen.getByRole("combobox", { name: /Chrome major area/i })).toHaveValue("hourIndicators");
   });
 
+  it("bottom readout font stores override and clears on Default (typography role)", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    const sel = screen.getByTestId("chrome-bottom-readout-font-select");
+    fireEvent.change(sel, { target: { value: "flip-clock" } });
+    expect(last?.chrome.layout.bottomReadoutFontAssetId).toBe("flip-clock");
+    fireEvent.change(sel, { target: { value: "" } });
+    expect(last?.chrome.layout.bottomReadoutFontAssetId).toBeUndefined();
+  });
+
   it("global default text chrome font lists bundled faces only and omits canonical default from storage", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = defaultLibrationConfigV2();

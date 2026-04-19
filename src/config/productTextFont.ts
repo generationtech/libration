@@ -17,6 +17,10 @@
  *
  * Precedence for a given surface: explicit local font override → {@link resolveDefaultProductTextFontAssetId}
  * → {@link DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID} (zeroes-two).
+ *
+ * Thin surface helpers ({@link resolveBottomReadoutTextFontAssetId}, {@link resolvePinLabelTextFontAssetId},
+ * {@link resolveConfigUiTextFontAssetId}) all delegate to {@link resolveEffectiveProductTextFontAssetId} so
+ * precedence is not duplicated in render or UI paths.
  */
 
 import {
@@ -34,6 +38,10 @@ export type ProductTextFontLayoutSlice = {
    * documents use {@link defaultTextFontAssetId} only.
    */
   topBandTextChromeDefaultFontAssetId?: FontAssetId;
+  /** Optional local override for the lower-left bottom readout only. */
+  bottomReadoutFontAssetId?: FontAssetId;
+  /** Optional local override for configuration panel UI (DOM) only. */
+  configUiFontAssetId?: FontAssetId;
 };
 
 const SELECTABLE_FONT_IDS = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
@@ -74,4 +82,22 @@ export function resolveEffectiveProductTextFontAssetId(
     return localFontAssetId;
   }
   return resolveDefaultProductTextFontAssetId(layout);
+}
+
+/** Bottom readout: local override on layout → global default → zeroes-two. */
+export function resolveBottomReadoutTextFontAssetId(layout: ProductTextFontLayoutSlice): FontAssetId {
+  return resolveEffectiveProductTextFontAssetId(layout, layout.bottomReadoutFontAssetId);
+}
+
+/** Configuration panel DOM: local override on layout → global default → zeroes-two. */
+export function resolveConfigUiTextFontAssetId(layout: ProductTextFontLayoutSlice): FontAssetId {
+  return resolveEffectiveProductTextFontAssetId(layout, layout.configUiFontAssetId);
+}
+
+/** Map pin name + time labels: optional override on pin presentation → global default → zeroes-two. */
+export function resolvePinLabelTextFontAssetId(
+  layout: ProductTextFontLayoutSlice,
+  pinPresentation: { pinTextFontAssetId?: FontAssetId },
+): FontAssetId {
+  return resolveEffectiveProductTextFontAssetId(layout, pinPresentation.pinTextFontAssetId);
 }

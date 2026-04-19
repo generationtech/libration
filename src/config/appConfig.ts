@@ -399,6 +399,16 @@ export interface DisplayChromeLayoutConfig {
    * Legacy persisted key `topBandTextChromeDefaultFontAssetId` is normalized to this field.
    */
   defaultTextFontAssetId?: FontAssetId;
+  /**
+   * Optional bundled font for the lower-left bottom time/date readout only.
+   * When omitted, the readout inherits {@link defaultTextFontAssetId} (then canonical fallback).
+   */
+  bottomReadoutFontAssetId?: FontAssetId;
+  /**
+   * Optional bundled font for configuration panel DOM text (via CSS bridge).
+   * When omitted, the panel inherits {@link defaultTextFontAssetId} (then canonical fallback).
+   */
+  configUiFontAssetId?: FontAssetId;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**
@@ -454,6 +464,11 @@ export interface PinPresentationConfig {
   showLabels: boolean;
   labelMode: PinLabelMode;
   scale: PinScale;
+  /**
+   * Optional bundled font for reference-city pin name and local time labels (one surface).
+   * When omitted, pin labels inherit the global default text font.
+   */
+  pinTextFontAssetId?: FontAssetId;
 }
 
 export const DEFAULT_PIN_PRESENTATION: PinPresentationConfig = {

@@ -97,6 +97,12 @@ function cloneConfig(config: AppConfig): AppConfig {
       ...(dcl.defaultTextFontAssetId !== undefined
         ? { defaultTextFontAssetId: dcl.defaultTextFontAssetId }
         : {}),
+      ...(dcl.bottomReadoutFontAssetId !== undefined
+        ? { bottomReadoutFontAssetId: dcl.bottomReadoutFontAssetId }
+        : {}),
+      ...(dcl.configUiFontAssetId !== undefined
+        ? { configUiFontAssetId: dcl.configUiFontAssetId }
+        : {}),
     },
     geography: {
       referenceMode: g.referenceMode,

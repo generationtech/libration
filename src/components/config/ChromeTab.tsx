@@ -334,6 +334,40 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           />
         </ConfigControlRow>
+        <ConfigControlRow label="Bottom readout font">
+          <select
+            className="config-input"
+            data-testid="chrome-bottom-readout-font-select"
+            value={lay.bottomReadoutFontAssetId ?? ""}
+            disabled={!wired}
+            aria-label="Font for lower-left bottom time and date readout"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      if (v === "") {
+                        delete (draft.chrome.layout as { bottomReadoutFontAssetId?: FontAssetId })
+                          .bottomReadoutFontAssetId;
+                      } else {
+                        draft.chrome.layout.bottomReadoutFontAssetId = v as FontAssetId;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
+        </ConfigControlRow>
         <ConfigControlRow label="Default font for product text">
           <select
             className="config-input"

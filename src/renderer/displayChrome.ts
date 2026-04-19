@@ -27,7 +27,7 @@ import {
   resolveEffectiveTopBandHourMarkers,
 } from "../config/topBandHourMarkersResolver.ts";
 import {
-  resolveDefaultProductTextFontAssetId,
+  resolveBottomReadoutTextFontAssetId,
   resolveEffectiveProductTextFontAssetId,
 } from "../config/productTextFont.ts";
 import {
@@ -1892,7 +1892,7 @@ export function renderDisplayChrome(
       viewport,
       bottomBand,
       chrome.informationBar,
-      resolveDefaultProductTextFontAssetId(chrome.displayChromeLayout),
+      resolveBottomReadoutTextFontAssetId(chrome.displayChromeLayout),
     );
   }
 
