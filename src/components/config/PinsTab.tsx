@@ -101,14 +101,17 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
     <div className="config-tab-stack">
       <section
         className="config-section"
+        data-testid="pins-section-viewpoint"
         aria-labelledby="config-pins-reference-heading"
       >
         <h2 id="config-pins-reference-heading" className="config-section__title">
-          Reference pins
+          Viewpoint &amp; visible cities
         </h2>
         <p className="config-section__hint">
-          Choose which reference cities appear when the City pins layer is on. (If that layer is
-          off, changes here still apply and show when you turn it back on.)
+          Map context only: which bundled reference cities render as pins when the City pins layer is
+          on. This is independent of the Chrome tab&apos;s tape &quot;anchor city&quot;, which only
+          supplies longitude for the instrument strip. (If City pins are off, choices here still apply
+          when you turn the layer back on.)
         </p>
         <fieldset className="config-fieldset config-fieldset--plain">
           <legend className="config-fieldset__legend">Visible reference cities</legend>

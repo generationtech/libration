@@ -29,22 +29,24 @@ export function GeographyTab({ config, updateConfig }: GeographyTabProps) {
     <div className="config-tab-stack">
       <section
         className="config-section"
+        data-testid="geography-section-world-alignment"
         aria-labelledby="config-geography-heading"
       >
         <h2 id="config-geography-heading" className="config-section__title">
-          Geography
+          Geography (meridian override)
         </h2>
         <p className="config-section__hint">
-          Geographic reference for product behavior. When the display chrome top-band anchor is
-          &quot;Auto&quot;, a fixed coordinate here sets the reference meridian; explicit Chrome anchor
-          modes still take precedence.
+          Optional geographic anchor used when the Chrome tab&apos;s tape meridian anchor is Auto: a
+          fixed coordinate here sets the reference longitude for sliding the top tape. Explicit tape
+          anchor modes on the Chrome tab (fixed city or fixed longitude) always override this.
+          Greenwich here means use the zone-based auto path without a geography coordinate override.
         </p>
-        <ConfigControlRow label="Reference mode">
+        <ConfigControlRow label="Geography reference">
           <select
             className="config-input"
             value={geo.referenceMode}
             disabled={!wired}
-            aria-label="Geographic reference mode"
+            aria-label="Geography reference mode"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -56,13 +58,13 @@ export function GeographyTab({ config, updateConfig }: GeographyTabProps) {
                 : undefined
             }
           >
-            <option value="greenwich">Greenwich</option>
-            <option value="fixedCoordinate">Fixed coordinate</option>
+            <option value="greenwich">Greenwich (no coordinate override)</option>
+            <option value="fixedCoordinate">Fixed coordinate (meridian for Auto anchor)</option>
           </select>
         </ConfigControlRow>
         {geo.referenceMode === "fixedCoordinate" ? (
           <>
-            <ConfigControlRow label="Label">
+            <ConfigControlRow label="Location label">
               <input
                 type="text"
                 className="config-input"

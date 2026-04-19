@@ -60,6 +60,15 @@ describe("DataTab demo time UX", () => {
     vi.useRealTimers();
   });
 
+  it("renders Data & time source section", () => {
+    const initial = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    render(<DataTabTestHarness initial={initial} />);
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Data & time source" }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("data-section-time-source")).toBeInTheDocument();
+  });
+
   it("initializes demo start to current UTC instant once on Static → Demo mode change", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2022-05-04T15:30:00.000Z"));
@@ -75,7 +84,7 @@ describe("DataTab demo time UX", () => {
       </DataTabTestHarness>,
     );
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Data pipeline mode" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Time source (data pipeline mode)" }), {
       target: { value: "demo" },
     });
 
@@ -103,7 +112,7 @@ describe("DataTab demo time UX", () => {
       </DataTabTestHarness>,
     );
 
-    const modeSelect = screen.getByRole("combobox", { name: "Data pipeline mode" });
+    const modeSelect = screen.getByRole("combobox", { name: "Time source (data pipeline mode)" });
 
     fireEvent.change(modeSelect, { target: { value: "demo" } });
     expect(lastConfig!.data.demoTime.startIsoUtc).toBe("2021-01-01T12:00:00.000Z");
@@ -127,7 +136,7 @@ describe("DataTab demo time UX", () => {
 
     render(<DataTabTestHarness initial={initial} />);
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Data pipeline mode" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Time source (data pipeline mode)" }), {
       target: { value: "demo" },
     });
 
@@ -162,7 +171,7 @@ describe("DataTab demo time UX", () => {
       </DataTabTestHarness>,
     );
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Data pipeline mode" }), "demo");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Time source (data pipeline mode)" }), "demo");
 
     const speedInput = screen.getByRole("spinbutton", { name: "Playback speed" });
     expect(speedInput).toHaveAttribute("min", String(DEMO_TIME_SPEED_MIN));

@@ -58,8 +58,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
           Scene layers
         </h2>
         <p className="config-section__hint">
-          Toggle which map and overlay layers are shown. Layers are read-only when the panel has no
-          live update handler.
+          Toggle which map and overlay layers are shown. UTC clock and Local clock are on-map
+          instruments that use the same resolved time as the Chrome instrument strip; they do not
+          change how time is computed. Layers are read-only when the panel has no live update handler.
         </p>
         {LAYER_KEYS.map((key) => {
           return (

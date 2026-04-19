@@ -77,7 +77,7 @@ describe("Phase 3 mutations guard (ALLOW_PHASE3_MUTATIONS false)", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Open configuration panel" }));
     await user.click(screen.getByRole("tab", { name: "Data" }));
-    await user.selectOptions(screen.getByRole("combobox", { name: "Data pipeline mode" }), "demo");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Time source (data pipeline mode)" }), "demo");
     await user.click(screen.getByRole("checkbox", { name: "Show data annotations when available" }));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
@@ -89,7 +89,7 @@ describe("Phase 3 mutations guard (ALLOW_PHASE3_MUTATIONS false)", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Open configuration panel" }));
     await user.click(screen.getByRole("tab", { name: "Data" }));
-    await user.selectOptions(screen.getByRole("combobox", { name: "Data pipeline mode" }), "demo");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Time source (data pipeline mode)" }), "demo");
     await user.click(screen.getByRole("checkbox", { name: "Enable demo time" }));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();

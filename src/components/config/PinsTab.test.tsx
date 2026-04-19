@@ -50,6 +50,15 @@ describe("PinsTab pin labels", () => {
     cleanup();
   });
 
+  it("renders Viewpoint & visible cities section", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<PinsTabTestHarness initial={initial} />);
+    expect(screen.getByTestId("pins-section-viewpoint")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Viewpoint & visible cities" }),
+    ).toBeInTheDocument();
+  });
+
   it("stores split city name and date/time font overrides and clears on Default (typography role)", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = defaultLibrationConfigV2();

@@ -31,6 +31,7 @@ import {
 } from "../../config/appConfig";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
+import { labelForTopBandAnchorMode, labelForTopBandTimeMode } from "./clockConfigUiLabels";
 import { clampLongitudeDegForAnchor } from "./topBandAnchorClamp";
 import { ChromeMajorAreaSelector } from "./ChromeMajorAreaSelector";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -105,45 +106,27 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
     <div className="config-tab-stack">
       <section
         className="config-section"
-        aria-labelledby="config-chrome-display-heading"
+        data-testid="chrome-section-time"
+        aria-labelledby="config-chrome-time-heading"
       >
-        <h2 id="config-chrome-display-heading" className="config-section__title">
-          Display time
+        <h2 id="config-chrome-time-heading" className="config-section__title">
+          Time
         </h2>
         <p className="config-section__hint">
-          Wired: top band mode, reference timezone source, fixed zone when applicable, and top band
-          anchor.
+          Civil-time interpretation for the instrument strip and bottom readout: which IANA zone defines
+          “local” calendar and offset, and how the top strip labels that instant. Authoritative
+          “now” is the system clock unless Data is set to Demo with demo time enabled — set that on the
+          Data tab.
         </p>
-        <ConfigControlRow label="Top band mode">
-          <select
-            className="config-input"
-            value={dt.topBandMode}
-            disabled={!wired}
-            aria-label="Top band mode"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const mode = e.currentTarget.value as TopBandTimeMode;
-                    updateConfig((draft) => {
-                      draft.chrome.displayTime.topBandMode = mode;
-                    });
-                  }
-                : undefined
-            }
-          >
-            {TOP_BAND_MODES.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Reference timezone source">
+        <h3 className="config-section__title config-section__title--sub">
+          Civil time &amp; top strip labels
+        </h3>
+        <ConfigControlRow label="Civil-time zone source">
           <select
             className="config-input"
             value={tz.source}
             disabled={!wired}
-            aria-label="Reference timezone source"
+            aria-label="Civil-time zone source"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -167,17 +150,17 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
                 : undefined
             }
           >
-            <option value="system">System</option>
-            <option value="fixed">Fixed (IANA)</option>
+            <option value="system">System (OS timezone)</option>
+            <option value="fixed">Fixed IANA zone</option>
           </select>
         </ConfigControlRow>
         {tz.source === "fixed" ? (
-          <ConfigControlRow label="Fixed IANA time zone">
+          <ConfigControlRow label="Fixed IANA zone">
             <select
               className="config-input"
               value={tz.timeZone}
               disabled={!wired}
-              aria-label="Fixed IANA time zone"
+              aria-label="Fixed IANA zone"
               onChange={
                 wired && updateConfig
                   ? (e) => {
@@ -200,12 +183,51 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             </select>
           </ConfigControlRow>
         ) : null}
-        <ConfigControlRow label="Top band anchor mode">
+        <ConfigControlRow label="Top strip clock style">
+          <select
+            className="config-input"
+            value={dt.topBandMode}
+            disabled={!wired}
+            aria-label="Top strip clock style"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const mode = e.currentTarget.value as TopBandTimeMode;
+                    updateConfig((draft) => {
+                      draft.chrome.displayTime.topBandMode = mode;
+                    });
+                  }
+                : undefined
+            }
+          >
+            {TOP_BAND_MODES.map((m) => (
+              <option key={m} value={m}>
+                {labelForTopBandTimeMode(m)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+      </section>
+      <section
+        className="config-section"
+        data-testid="chrome-section-world-alignment"
+        aria-labelledby="config-chrome-world-alignment-heading"
+      >
+        <h2 id="config-chrome-world-alignment-heading" className="config-section__title">
+          World alignment (tape meridian)
+        </h2>
+        <p className="config-section__hint">
+          Horizontal placement of the time-phased top tape on the map: which longitude anchors the strip.
+          This is separate from civil-time rules above — a city chosen here supplies longitude for alignment
+          only. When anchor is Auto, the Geography tab can pin the meridian to a fixed coordinate instead of
+          the zone default; explicit anchor modes here still win.
+        </p>
+        <ConfigControlRow label="Tape meridian anchor">
           <select
             className="config-input"
             value={anchor.mode}
             disabled={!wired}
-            aria-label="Top band anchor mode"
+            aria-label="Tape meridian anchor"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -220,18 +242,18 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           >
             {ANCHOR_MODES.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {labelForTopBandAnchorMode(m)}
               </option>
             ))}
           </select>
         </ConfigControlRow>
         {anchor.mode === "fixedCity" ? (
-          <ConfigControlRow label="Anchor reference city">
+          <ConfigControlRow label="Anchor city (longitude only)">
             <select
               className="config-input"
               value={anchor.cityId}
               disabled={!wired}
-              aria-label="Top band anchor reference city"
+              aria-label="Tape anchor city (longitude for alignment only)"
               onChange={
                 wired && updateConfig
                   ? (e) => {
@@ -261,7 +283,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
               className="config-input"
               inputMode="decimal"
               disabled={!wired}
-              aria-label="Top band anchor longitude in degrees"
+              aria-label="Tape anchor longitude in degrees"
               value={lonDraft !== null ? lonDraft : String(anchor.longitudeDeg)}
               onChange={(e) => {
                 setLonDraft(e.currentTarget.value);

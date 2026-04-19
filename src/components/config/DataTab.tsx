@@ -48,19 +48,25 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
 
   return (
     <div className="config-tab-stack">
-      <section className="config-section" aria-labelledby="config-data-heading">
+      <section
+        className="config-section"
+        data-testid="data-section-time-source"
+        aria-labelledby="config-data-heading"
+      >
         <h2 id="config-data-heading" className="config-section__title">
-          Data
+          Data &amp; time source
         </h2>
         <p className="config-section__hint">
-          Local configuration only. No live network feeds, subscriptions, or background refresh.
+          Local configuration only — no live network feeds. Choose what supplies authoritative
+          &quot;now&quot;: the real system clock (Static) or a deterministic demo timeline (Demo). The
+          Chrome tab then interprets that instant for civil time and instrument display.
         </p>
-        <ConfigControlRow label="Mode">
+        <ConfigControlRow label="Time source">
           <select
             className="config-input"
             value={data.mode}
             disabled={!wired}
-            aria-label="Data pipeline mode"
+            aria-label="Time source (data pipeline mode)"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -76,8 +82,8 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
                 : undefined
             }
           >
-            <option value="static">Static (built-in / offline)</option>
-            <option value="demo">Demo (illustrative sequences only)</option>
+            <option value="static">System clock (static / offline data)</option>
+            <option value="demo">Demo (synthetic timeline)</option>
           </select>
         </ConfigControlRow>
         <ConfigControlRow label="Show data annotations">
@@ -101,8 +107,10 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
             }
           />
         </ConfigControlRow>
+        <h3 className="config-section__title config-section__title--sub">Demo timeline</h3>
         <p className="config-section__hint">
-          Demo time: local deterministic playback only — not live data. Set mode to Demo to configure.
+          When time source is Demo, you can drive a synthetic UTC clock with optional acceleration.
+          Pause / resume / reset below are session-only and do not change saved configuration.
         </p>
         <ConfigControlRow label="Enable demo time">
           <input
@@ -167,10 +175,6 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
             }
           />
         </ConfigControlRow>
-        <p className="config-section__hint">
-          Local demo playback (this session only): pause, resume, or reset to the configured demo
-          start — does not change saved configuration.
-        </p>
         <ConfigControlRow label="Demo playback">
           <div className="config-demo-transport">
             {transportEnabled && demoTransport ? (

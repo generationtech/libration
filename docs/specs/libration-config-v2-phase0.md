@@ -175,3 +175,16 @@ Hour-marker persistence now requires:
 `chrome.layout.hourMarkers`
 
 Older saved configs that only contained legacy flat hour-marker fields are no longer compatible. This was an intentional full cutover.
+
+---
+
+## Configuration panel mental model (time vs alignment vs pins)
+
+The UI groups behavior into four ideas that map to existing v2 fields without renaming persisted keys:
+
+1. **Time source** — `data.mode` and `data.demoTime`: whether authoritative “now” comes from the system clock or from deterministic demo playback.
+2. **Time interpretation** — `chrome.displayTime.referenceTimeZone` and `chrome.displayTime.topBandMode`: which IANA zone defines civil “local” for the instrument strip and how that instant is labeled (12h / 24h local / UTC).
+3. **World alignment** — `chrome.displayTime.topBandAnchor` and, when the anchor is Auto, `geography`: which longitude slides the time-phased top tape on the map (including geography’s fixed coordinate as an override path). This is intentionally decoupled from civil-time membership in structural columns.
+4. **Viewpoint / context** — `pins.reference.visibleCityIds`, custom pins, and pin presentation: what appears on the map as markers and labels; distinct from a Chrome “anchor city”, which only contributes longitude for tape alignment.
+
+Future “keep the world fixed while changing perspective” modes can extend the Viewpoint group without overloading anchor or zone fields.

@@ -52,6 +52,34 @@ describe("ChromeTab major areas", () => {
     cleanup();
   });
 
+  it("renders Time and World alignment sections separately", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+    expect(screen.getByTestId("chrome-section-time")).toBeInTheDocument();
+    expect(screen.getByTestId("chrome-section-world-alignment")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Time" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "World alignment (tape meridian)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("persists raw topBandMode keys when using the labeled top strip control", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Top strip clock style" }), {
+      target: { value: "utc24" },
+    });
+    expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
+  });
+
   it("does not host the global default product text font control (moved to General tab)", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);
