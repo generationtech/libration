@@ -159,11 +159,21 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
 
   const hourMarkers = normalizeHourMarkersInput(input.hourMarkers);
 
+  let tickTapeAreaBackgroundColor: string | undefined;
+  const ttBgRaw = (input as { tickTapeAreaBackgroundColor?: unknown }).tickTapeAreaBackgroundColor;
+  if (typeof ttBgRaw === "string") {
+    const t = ttBgRaw.trim();
+    if (t !== "") {
+      tickTapeAreaBackgroundColor = t;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
     hourMarkers,
+    ...(tickTapeAreaBackgroundColor !== undefined ? { tickTapeAreaBackgroundColor } : {}),
   };
 }
 
@@ -329,6 +339,9 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
+    ...(l.tickTapeAreaBackgroundColor !== undefined
+      ? { tickTapeAreaBackgroundColor: l.tickTapeAreaBackgroundColor }
+      : {}),
   };
 }
 
@@ -448,6 +461,10 @@ export function assertIsNormalizedLibrationConfig(
     typeof lay.timezoneLetterRowVisible !== "boolean"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout");
+  }
+  const ttTapeBg = (lay as { tickTapeAreaBackgroundColor?: unknown }).tickTapeAreaBackgroundColor;
+  if (ttTapeBg !== undefined && (typeof ttTapeBg !== "string" || ttTapeBg.trim() === "")) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.tickTapeAreaBackgroundColor");
   }
   const hm = lay.hourMarkers;
   if (

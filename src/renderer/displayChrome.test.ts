@@ -21,6 +21,7 @@ import {
   type DisplayTimeConfig,
 } from "../config/appConfig";
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
+import { resolveEffectiveTickTapeArea } from "../config/topBandTickTapeResolver.ts";
 import { structuralZoneLetterFromIndex } from "../config/structuralZoneLetters";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
@@ -1033,6 +1034,9 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.displayChromeLayout).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
     expect(chrome.effectiveTopBandHourMarkers).toEqual(
       resolveEffectiveTopBandHourMarkers(chrome.displayChromeLayout),
+    );
+    expect(chrome.effectiveTickTapeArea).toEqual(
+      resolveEffectiveTickTapeArea(chrome.displayChromeLayout),
     );
     expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 78 });
     expect(chrome.bottomBand.x).toBe(0);

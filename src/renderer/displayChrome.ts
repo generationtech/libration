@@ -26,6 +26,10 @@ import {
 import {
   resolveEffectiveTopBandHourMarkers,
 } from "../config/topBandHourMarkersResolver.ts";
+import {
+  resolveEffectiveTickTapeArea,
+  type EffectiveTickTapeArea,
+} from "../config/topBandTickTapeResolver.ts";
 import type {
   EffectiveTopBandHourMarkerLayout,
   EffectiveTopBandHourMarkers,
@@ -357,6 +361,11 @@ export interface DisplayChromeState {
    * Resolved hour-marker contract from {@link displayChromeLayout.hourMarkers} (carried for semantic planners and tests).
    */
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers;
+  /**
+   * Tickmarks tape band fill plus generic tick/baseline strokes (from {@link displayChromeLayout} via
+   * {@link resolveEffectiveTickTapeArea}).
+   */
+  effectiveTickTapeArea: EffectiveTickTapeArea;
   /** Same object as {@link AppConfig.geography} from the authoritative config pipeline; optional for tests. */
   geography?: GeographyConfig;
   frameNumber: number;
@@ -1444,6 +1453,7 @@ export function buildDisplayChromeState(options: {
   const stForRows = TOP_CHROME_STYLE;
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout);
+  const effectiveTickTapeArea = resolveEffectiveTickTapeArea(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const baseCircleStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
   const canonicalSolve =
@@ -1500,6 +1510,7 @@ export function buildDisplayChromeState(options: {
     }),
     displayChromeLayout: layout,
     effectiveTopBandHourMarkers,
+    effectiveTickTapeArea,
     geography: options.geography,
     frameNumber: frame.frameNumber,
   };
@@ -1587,6 +1598,7 @@ export function renderDisplayChrome(
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
   const st = TOP_CHROME_STYLE;
+  const tape = chrome.effectiveTickTapeArea;
   const tzTab = st.timezoneTab;
   const zonePadY = Math.max(
     0,
@@ -1639,7 +1651,7 @@ export function renderDisplayChrome(
       circleBandBottomYPx: yCircleBottom,
       tickBandHeightPx: tickH,
       stripBackgroundFill: st.instrument.stripBackground,
-      tickRailBackgroundFill: st.instrument.tickRailBackground,
+      tickRailBackgroundFill: tape.effectiveBackgroundColor,
     }),
   );
 
@@ -1685,9 +1697,9 @@ export function renderDisplayChrome(
         quarterMinorTickXs: scale.quarterMinorTickXs,
         quarterMajorTickXs: scale.quarterMajorTickXs,
         majorBoundaryXs: scale.majorBoundaryXs,
-        baselineStroke: st.ticks.baseline,
+        baselineStroke: tape.tapeBaselineStroke,
         baselineStrokeWidthPx: st.ticks.baselineLineWidth,
-        tickStroke: st.ticks.stroke,
+        tickStroke: tape.tapeTickStroke,
         tickStrokeWidthPx: st.ticks.lineWidth,
       }),
     );

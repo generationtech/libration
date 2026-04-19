@@ -102,6 +102,33 @@ describe("ChromeTab major areas", () => {
   });
 });
 
+describe("ChromeTab tick tape area", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("persists tick tape background on structured chrome.layout and resets to default", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
+    fireEvent.change(screen.getByLabelText(/24-hour tickmarks tape area background color/i), {
+      target: { value: "#aabbcc" },
+    });
+    expect(last!.chrome.layout.tickTapeAreaBackgroundColor).toBe("#aabbcc");
+
+    fireEvent.click(screen.getByRole("button", { name: /Reset tickmarks tape area background to default/i }));
+    expect(last!.chrome.layout.tickTapeAreaBackgroundColor).toBeUndefined();
+  });
+});
+
 describe("ChromeTab top-band hour markers", () => {
   afterEach(() => {
     cleanup();

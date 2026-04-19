@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -49,7 +50,50 @@ export function TickTapeEditor({ config, updateConfig }: TickTapeEditorProps) {
           }
         />
       </ConfigControlRow>
-      <p className="config-section__hint">More tick-rail options will appear here as this area expands.</p>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">Tickmarks tape area</legend>
+        <ConfigControlRow label="Background color">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="24-hour tickmarks tape area background color"
+            title={
+              lay.tickTapeAreaBackgroundColor === undefined
+                ? "Default tick tape bed — pick to override"
+                : "Background for the tickmarks tape band only"
+            }
+            value={lay.tickTapeAreaBackgroundColor ?? DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR}
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    updateConfig((draft) => {
+                      draft.chrome.layout.tickTapeAreaBackgroundColor = e.currentTarget.value;
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Reset tickmarks tape area background to default"
+            disabled={!wired || lay.tickTapeAreaBackgroundColor === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      delete (draft.chrome.layout as { tickTapeAreaBackgroundColor?: string })
+                        .tickTapeAreaBackgroundColor;
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+      </fieldset>
     </div>
   );
 }

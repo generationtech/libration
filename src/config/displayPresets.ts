@@ -76,6 +76,9 @@ function cloneConfig(config: AppConfig): AppConfig {
       tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,
       hourMarkers: cloneHourMarkersConfig(dcl.hourMarkers),
+      ...(dcl.tickTapeAreaBackgroundColor !== undefined
+        ? { tickTapeAreaBackgroundColor: dcl.tickTapeAreaBackgroundColor }
+        : {}),
     },
     geography: {
       referenceMode: g.referenceMode,

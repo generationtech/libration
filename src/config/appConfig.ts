@@ -159,6 +159,13 @@ export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zer
 export const DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR: string =
   TOP_CHROME_STYLE.instrument.circleBandBedDeep;
 
+/**
+ * Default authored CSS background for the 24-hour tickmarks tape band (`chrome.layout.tickTapeAreaBackgroundColor`).
+ * Copied once from {@link TOP_CHROME_STYLE.instrument.tickRailBackground}; resolution uses this string when no override is stored.
+ */
+export const DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR: string =
+  TOP_CHROME_STYLE.instrument.tickRailBackground;
+
 /** Default structured hour markers for {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG}. */
 export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
   indicatorEntriesAreaVisible: true,
@@ -302,6 +309,12 @@ export interface DisplayChromeLayoutConfig {
   bottomInformationBarVisible: boolean;
   /** Center tickmark tape (baseline + ticks) between the circle band and NATO row. */
   tickTapeVisible: boolean;
+  /**
+   * Authored CSS background for the tickmarks tape band only (middle strip).
+   * When omitted, the default from {@link DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR} is used at resolve time and
+   * generic tape tick/baseline ink follow the built-in chrome style unchanged.
+   */
+  tickTapeAreaBackgroundColor?: string;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**

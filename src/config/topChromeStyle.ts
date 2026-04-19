@@ -370,4 +370,13 @@ export const TOP_CHROME_STYLE = {
   },
 } as const;
 
+/**
+ * When the 24-hour tickmarks tape background is user-overridden, resolver rebuilds tape/baseline ink as
+ * `rgba(#000|#fff, α)` using these alphas — matching {@link TOP_CHROME_STYLE.ticks} stroke/baseline opacities.
+ */
+export const TOP_CHROME_TICK_TAPE_CONTRAST_INK_ALPHAS = {
+  tickStroke: 0.88,
+  baselineStroke: 0.26,
+} as const;
+
 export type TopChromeStyle = typeof TOP_CHROME_STYLE;
