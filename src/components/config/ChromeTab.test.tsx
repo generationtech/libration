@@ -80,6 +80,24 @@ describe("ChromeTab major areas", () => {
     expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
   });
 
+  it("sets presentTimeReferenceMode via the testing selector and omits key for anchor", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    const sel = screen.getByTestId("chrome-present-time-reference-mode-select");
+    fireEvent.change(sel, { target: { value: "referenceCity" } });
+    expect(last!.chrome.displayTime.presentTimeReferenceMode).toBe("referenceCity");
+    fireEvent.change(sel, { target: { value: "anchor" } });
+    expect(last!.chrome.displayTime.presentTimeReferenceMode).toBeUndefined();
+  });
+
   it("does not host the global default product text font control (moved to General tab)", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);

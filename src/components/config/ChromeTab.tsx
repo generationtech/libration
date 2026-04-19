@@ -26,6 +26,7 @@ import {
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
   PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+  type PresentTimeReferenceMode,
   type TopBandAnchorConfig,
   type TopBandTimeMode,
 } from "../../config/appConfig";
@@ -44,6 +45,8 @@ const DEFAULT_FIXED_ZONE_WHEN_ENABLING = "UTC";
 const TOP_BAND_MODES: readonly TopBandTimeMode[] = ["local12", "local24", "utc24"];
 
 const ANCHOR_MODES: readonly TopBandAnchorConfig["mode"][] = ["auto", "fixedCity", "fixedLongitude"];
+
+const PRESENT_TIME_REFERENCE_MODES: readonly PresentTimeReferenceMode[] = ["anchor", "referenceCity"];
 
 const DEFAULT_FIXED_CITY_ID =
   CURATED_ANCHOR_REFERENCE_CITY_OPTIONS.find((c) => c.id === "city.knoxville")?.id ??
@@ -324,6 +327,35 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             />
           </ConfigControlRow>
         ) : null}
+        <ConfigControlRow label="Present-time reference (testing)">
+          <select
+            className="config-input"
+            data-testid="chrome-present-time-reference-mode-select"
+            value={dt.presentTimeReferenceMode ?? "anchor"}
+            disabled={!wired}
+            aria-label="Present-time reference mode for testing"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const mode = e.currentTarget.value as PresentTimeReferenceMode;
+                    updateConfig((draft) => {
+                      if (mode === "anchor") {
+                        delete draft.chrome.displayTime.presentTimeReferenceMode;
+                      } else {
+                        draft.chrome.displayTime.presentTimeReferenceMode = "referenceCity";
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            {PRESENT_TIME_REFERENCE_MODES.map((m) => (
+              <option key={m} value={m}>
+                {m === "anchor" ? "Anchor-coupled (current)" : "Reference-city context only"}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
       </section>
       <section
         className="config-section"
