@@ -24,7 +24,6 @@ import {
 import { createTopBandTextGlyph } from "../../glyphs/topBandTextGlyphFromPolicy.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
 import { alignCrispLineX } from "../crispLines";
-import { canonicalMilitaryZoneIndexFromLetter } from "../../config/structuralZoneLetters";
 import {
   geographyTimezoneStripReferenceLabel,
   type TopBandAnchorLongitudeSource,
@@ -72,7 +71,13 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   /** From phased layout; unused for rectangular scale segments (caller contract unchanged). */
   tabBottomR: number;
   diskLabelSizePx: number;
-  /** Structural NATO letter for the present-time column (from {@code presentTimeContext.natoLetter}). */
+  /**
+   * Structural column index 0–23 for the present-time tick (from present-time longitude only; see
+   * `structuralHourIndexFromReferenceLongitudeDeg` in `structuralLongitudeGrid.ts`).
+   * Drives active NATO cell selection; must not be derived from zone, tape anchor, or segment-letter fallback.
+   */
+  presentTimeStructuralHour0To23: number;
+  /** Same letter as {@code segments[presentTimeStructuralHour0To23].timezoneLetter}; checked for parity with context. */
   presentTimeNatoLetter: string;
   geography?: GeographyConfig;
   anchorSource: TopBandAnchorLongitudeSource;
@@ -99,10 +104,17 @@ export function buildTimezoneLetterRowRenderPlan(options: {
     return { items };
   }
 
-  let activeStructuralHour = canonicalMilitaryZoneIndexFromLetter(options.presentTimeNatoLetter);
-  if (activeStructuralHour < 0) {
-    const fallback = options.segments.findIndex((s) => s.timezoneLetter === options.presentTimeNatoLetter);
-    activeStructuralHour = fallback >= 0 ? fallback : 0;
+  const activeStructuralHour = Math.max(
+    0,
+    Math.min(23, Math.floor(options.presentTimeStructuralHour0To23)),
+  );
+  if (
+    options.segments.length === 24 &&
+    options.segments[activeStructuralHour]?.timezoneLetter !== options.presentTimeNatoLetter
+  ) {
+    throw new Error(
+      `NATO active cell: structural hour ${activeStructuralHour} segment letter ${options.segments[activeStructuralHour]?.timezoneLetter} does not match presentTimeContext.natoLetter ${options.presentTimeNatoLetter}`,
+    );
   }
   const geoCaption = geographyTimezoneStripReferenceLabel(options.geography, options.anchorSource);
   const zoneTop = options.zoneTop;

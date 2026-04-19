@@ -25,6 +25,7 @@ import {
   computeTimezoneLetterSizePx,
   TOP_CHROME_STYLE,
 } from "../../config/topChromeStyle.ts";
+import { structuralHourIndexFromReferenceLongitudeDeg } from "../structuralLongitudeGrid";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
@@ -55,6 +56,9 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       zonePadY,
       tabBottomR: 4,
       diskLabelSizePx: 14,
+      presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(
+        layout.presentTimeContext.longitudeDeg,
+      ),
       presentTimeNatoLetter: layout.presentTimeContext.natoLetter,
       geography: DEFAULT_GEOGRAPHY_CONFIG,
       anchorSource: layout.topBandAnchor.anchorSource,
@@ -102,6 +106,9 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       zonePadY,
       tabBottomR,
       diskLabelSizePx,
+      presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(
+        layout.presentTimeContext.longitudeDeg,
+      ),
       presentTimeNatoLetter: layout.presentTimeContext.natoLetter,
       geography: undefined,
       anchorSource: layout.topBandAnchor.anchorSource,
@@ -174,6 +181,9 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       zonePadY,
       tabBottomR,
       diskLabelSizePx,
+      presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(
+        layout.presentTimeContext.longitudeDeg,
+      ),
       presentTimeNatoLetter: layout.presentTimeContext.natoLetter,
       geography: undefined,
       anchorSource: layout.topBandAnchor.anchorSource,
@@ -190,5 +200,56 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     if (tzLetter?.kind === "text") {
       expect(tzLetter.font.assetId).toBe("computer");
     }
+  });
+
+  it("throws if presentTimeStructuralHour0To23 does not match presentTimeNatoLetter for that column", () => {
+    const vw = 960;
+    const now = Date.UTC(2026, 3, 7, 15, 30, 0);
+    const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
+      timezoneLetterRowVisible: true,
+    });
+    const rows = layout.rows ?? computeUtcTopScaleRowMetrics(80);
+    const y0 = 0;
+    const circleH = rows.circleBandH;
+    const tickH = rows.tickBandH;
+    const yTickBottom = y0 + circleH + tickH;
+    const bandBottom = y0 + 80;
+    const zoneH = bandBottom - yTickBottom;
+    const tzTab = TOP_CHROME_STYLE.timezoneTab;
+    const zonePadY = Math.max(
+      0,
+      Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
+    );
+    const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
+    const circleStack = computeTopBandCircleStackMetrics(rows.circleBandH);
+    const sw = vw / 24;
+    const r = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
+    const diskLabelSizePx = computeHourDiskLabelSizePx(r, vw);
+
+    expect(() =>
+      buildTimezoneLetterRowRenderPlan({
+        viewportWidthPx: vw,
+        segments: layout.segments,
+        majorBoundaryXs: layout.majorBoundaryXs,
+        zoneTop: yTickBottom,
+        zoneH,
+        bandBottom,
+        segGapX: 0.4,
+        zonePadY,
+        tabBottomR,
+        diskLabelSizePx,
+        presentTimeStructuralHour0To23: (structuralHourIndexFromReferenceLongitudeDeg(
+          layout.presentTimeContext.longitudeDeg,
+        ) +
+          1) %
+          24,
+        presentTimeNatoLetter: layout.presentTimeContext.natoLetter,
+        geography: undefined,
+        anchorSource: layout.topBandAnchor.anchorSource,
+        timezoneLetterRowVisible: true,
+        glyphRenderContext: GLYPH_CTX,
+        resolvedTimezoneLetterFontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+      }),
+    ).toThrow(/NATO active cell/);
   });
 });

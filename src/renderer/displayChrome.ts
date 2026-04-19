@@ -480,10 +480,11 @@ export function computePresentTimeContext(options: {
     topBandAnchor: options.topBandAnchor,
     presentTimeReferenceMode: options.presentTimeReferenceMode,
   });
+  /** Present-time column: sole basis for {@link PresentTimeContext.natoLetter} (structural 15° sector, not mean-solar letter at raw lon). */
   const presentLongitudeDeg = refCityLon !== undefined ? refCityLon : tape.referenceLongitudeDeg;
   const zoneId = resolvePresentTimeZoneId(options.referenceTimeZone, options.topBandAnchor);
-  const idx = structuralHourIndexFromReferenceLongitudeDeg(presentLongitudeDeg);
-  const natoLetter = militaryTimeZoneLetterFromStructuralColumnIndex(idx);
+  const structuralColumnIndex0To23 = structuralHourIndexFromReferenceLongitudeDeg(presentLongitudeDeg);
+  const natoLetter = militaryTimeZoneLetterFromStructuralColumnIndex(structuralColumnIndex0To23);
   return {
     longitudeDeg: presentLongitudeDeg,
     referenceTimeZone: options.referenceTimeZone,
@@ -1375,7 +1376,9 @@ export function buildUtcTopScaleLayout(
   hourMarkerDiskRowIntrinsicContentHeightPx?: number,
 ): UtcTopScaleLayout {
   const w = Math.max(0, widthPx);
-  const rt = resolved ?? resolveTopBandTimeFromConfig(DEFAULT_DISPLAY_TIME_CONFIG);
+  const rt =
+    resolved ??
+    resolveTopBandTimeFromConfig(DEFAULT_DISPLAY_TIME_CONFIG, { nowMs, geography });
   const dayStart = utcDayStartMs(nowMs);
   const utcMsOfDay = nowMs - dayStart;
   const { bandPhaseDayStartMs } = bandPhaseFraction(
@@ -1870,6 +1873,9 @@ export function renderDisplayChrome(
       zonePadY,
       tabBottomR,
       diskLabelSizePx,
+      presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(
+        scale.presentTimeContext.longitudeDeg,
+      ),
       presentTimeNatoLetter: scale.presentTimeContext.natoLetter,
       geography: chrome.geography,
       anchorSource: scale.topBandAnchor.anchorSource,

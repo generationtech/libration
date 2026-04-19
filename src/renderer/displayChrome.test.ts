@@ -474,6 +474,102 @@ describe("PresentTimeContext propagation", () => {
     expect(knoxL.nowX).toBeCloseTo(knoxL.segments[hKnox]!.centerX, 5);
     expect(nycL.nowX).toBeCloseTo(nycL.segments[hNyc]!.centerX, 5);
   });
+
+  it("A: referenceCity + fixedCity Knoxville — first-layout NATO column matches structural sector on first evaluation", () => {
+    const resolved = resolveTopBandTimeFromConfig(
+      { ...base, presentTimeReferenceMode: "referenceCity" },
+      { nowMs: t },
+    );
+    const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
+    const h = structuralHourIndexFromReferenceLongitudeDeg(knoxLon);
+    expect(layout.presentTimeContext.longitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(structuralHourIndexFromReferenceLongitudeDeg(layout.presentTimeContext.longitudeDeg)).toBe(h);
+    expect(layout.presentTimeContext.natoLetter).toBe(layout.segments[h]!.timezoneLetter);
+    expect(layout.nowX).toBeCloseTo(layout.segments[h]!.centerX, 5);
+  });
+
+  it("B: referenceCity Knoxville → Cairo — tick column and NATO letter move together; tape anchor unchanged", () => {
+    const knoxR = resolveTopBandTimeFromConfig(
+      {
+        ...base,
+        topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+        presentTimeReferenceMode: "referenceCity",
+      },
+      { nowMs: t },
+    );
+    const cairoR = resolveTopBandTimeFromConfig(
+      {
+        ...base,
+        topBandAnchor: { mode: "fixedCity", cityId: "city.cairo" },
+        presentTimeReferenceMode: "referenceCity",
+      },
+      { nowMs: t },
+    );
+    const cairoLon = REFERENCE_CITIES.find((c) => c.id === "city.cairo")!.longitude;
+    const knoxL = buildUtcTopScaleLayout(t, w, 80, knoxR);
+    const cairoL = buildUtcTopScaleLayout(t, w, 80, cairoR);
+    expect(knoxL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(cairoL.topBandAnchor.referenceLongitudeDeg, 5);
+    expect(knoxL.phasedTapeAnchorFrac).toBeCloseTo(cairoL.phasedTapeAnchorFrac, 10);
+    expect(cairoL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(cairoLon, 5);
+    const hCairo = structuralHourIndexFromReferenceLongitudeDeg(cairoLon);
+    expect(cairoL.presentTimeContext.natoLetter).toBe(cairoL.segments[hCairo]!.timezoneLetter);
+    expect(cairoL.nowX).toBeCloseTo(cairoL.segments[hCairo]!.centerX, 5);
+  });
+
+  it("C: fixed present-time longitude — natoLetter unchanged when reference IANA or topBandMode changes if longitudeDeg is unchanged", () => {
+    const resolvedNy = resolveTopBandTimeFromConfig(
+      {
+        ...base,
+        referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+        presentTimeReferenceMode: "referenceCity",
+      },
+      { nowMs: t },
+    );
+    const resolvedLondonSameCity = resolveTopBandTimeFromConfig(
+      {
+        ...base,
+        referenceTimeZone: { source: "fixed", timeZone: "Europe/London" },
+        topBandMode: "utc24",
+        presentTimeReferenceMode: "referenceCity",
+      },
+      { nowMs: t },
+    );
+    const a = buildUtcTopScaleLayout(t, w, 80, resolvedNy).presentTimeContext;
+    const b = buildUtcTopScaleLayout(t, w, 80, resolvedLondonSameCity).presentTimeContext;
+    expect(a.longitudeDeg).toBeCloseTo(b.longitudeDeg, 5);
+    expect(a.natoLetter).toBe(b.natoLetter);
+  });
+
+  it("D: auto anchor — NATO letter equals PresentTimeContext.natoLetter from longitude-only structural column", () => {
+    const resolved = resolveTopBandTimeFromConfig(
+      {
+        ...DEFAULT_DISPLAY_TIME_CONFIG,
+        referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+        topBandAnchor: { mode: "auto" },
+        presentTimeReferenceMode: "anchor",
+      },
+      { nowMs: t },
+    );
+    const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
+    const h = structuralHourIndexFromReferenceLongitudeDeg(layout.presentTimeContext.longitudeDeg);
+    expect(layout.presentTimeContext.natoLetter).toBe(layout.segments[h]!.timezoneLetter);
+  });
+
+  it("E: anchor + fixedLongitude — tick and NATO column stay tied to presentTimeContext.longitudeDeg", () => {
+    const resolved = resolveTopBandTimeFromConfig(
+      {
+        ...DEFAULT_DISPLAY_TIME_CONFIG,
+        referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+        topBandAnchor: { mode: "fixedLongitude", longitudeDeg: 31.2 },
+        presentTimeReferenceMode: "anchor",
+      },
+      { nowMs: t },
+    );
+    const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
+    const h = structuralHourIndexFromReferenceLongitudeDeg(layout.presentTimeContext.longitudeDeg);
+    expect(layout.presentTimeContext.natoLetter).toBe(layout.segments[h]!.timezoneLetter);
+    expect(layout.nowX).toBeCloseTo(layout.segments[h]!.centerX, 5);
+  });
 });
 
 describe("buildUtcTopScaleLayout", () => {
