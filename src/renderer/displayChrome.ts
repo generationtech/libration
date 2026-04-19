@@ -277,8 +277,8 @@ export interface UtcTopScaleCircleMarker {
 /**
  * Longitude anchoring for the top tape circle row: **tape alignment** meridian plus the tape’s horizontal anchor x.
  * Civil timezone does not define structural columns. {@link anchorX} is {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}).
- * The present-time tick column is {@link UtcTopScaleLayout.presentTimeIndicatorLongitudeDeg} (may differ in
- * {@code referenceCity} mode). In `local12` / `local24`, phased placement uses the tape meridian’s structural column via
+ * The present-time tick column uses {@link UtcTopScaleLayout.presentTimeIndicatorLongitudeDeg}; in {@code referenceCity} mode it matches
+ * {@link referenceLongitudeDeg}. In `local12` / `local24`, phased placement uses the tape meridian’s structural column via
  * {@link UtcTopScaleLayout.phasedTapeAnchorFrac}. Letter boxes remain fixed structural sectors underneath.
  */
 export interface TopBandLongitudeAnchor {
@@ -286,8 +286,7 @@ export interface TopBandLongitudeAnchor {
   referenceOffsetHours: number;
   /**
    * Tape / world alignment meridian (from {@link resolveTapeAlignmentLongitudeDeg}). Phased tape and map registration;
-   * in {@code referenceCity} + {@code fixedCity}, zone-based (not the selected city’s longitude) and not geography
-   * fixed-coordinate, so changing the reference city rebinds present-time only.
+   * in {@code referenceCity} mode, same longitude as {@link PresentTimeContext.longitudeDeg}.
    */
   referenceLongitudeDeg: number;
   /** Horizontal position of the reference meridian on the top strip [0, widthPx] (same x as map pins for that lon). */
@@ -300,8 +299,8 @@ export interface TopBandLongitudeAnchor {
 
 /**
  * Quantities defining the visible top-strip **expressed time frame** for the current instant: civil phase in the band,
- * tape phase anchor, and calendar day used for band phasing. With {@code referenceCity} + {@code fixedCity}, these stay
- * fixed across manual reference-city changes; only present-time instrumentation follows the new city.
+ * tape phase anchor, and calendar day used for band phasing. With {@code referenceCity}, changing the reference city
+ * updates {@link tapeAlignmentLongitudeDeg} and phased layout together with the present-time column.
  */
 export interface ExpressedStripTimeFrame {
   bandPhaseDayStartMs: number;
@@ -316,6 +315,7 @@ export interface ExpressedStripTimeFrame {
  * tick hierarchy (hour / quarter-major / quarter-minor), present-time indicator x ({@link UtcTopScaleLayout.nowX}), and a **time-phased** circle row whose positions drift with
  * the configured band fractional day and a **longitude anchor** for phased placement. Civil time display is derived independently from IANA timezone data
  * ({@link referenceFractionalHour}); structural longitude sectors and civil timezone membership are intentionally decoupled. Labels and phase calendar follow {@link UtcTopScaleLayout.topBandMode}.
+ * In {@code referenceCity} mode, tape alignment longitude matches {@link presentTimeContext.longitudeDeg}.
  */
 export interface UtcTopScaleLayout {
   widthPx: number;
@@ -338,8 +338,8 @@ export interface UtcTopScaleLayout {
   /**
    * Normalized x [0,1) passed to {@link topBandHourMarkerCenterX} for the phased circle row and tick rail.
    * For {@link TopBandTimeMode} `utc24`, equals {@link TopBandLongitudeAnchor.anchorFrac} (exact meridian).
-   * For `local12` / `local24`, equals the structural 15° column center for the **tape alignment** meridian (may differ from
-   * {@link presentTimeIndicatorLongitudeDeg} in {@code referenceCity} mode).
+   * For `local12` / `local24`, equals the structural 15° column center for the tape alignment meridian (same column as
+   * the present-time tick when {@link presentTimeContext.source} is {@code referenceCity}).
    */
   phasedTapeAnchorFrac: number;
   /** Same as {@link tickHierarchy.hour}; phased hour boundaries (length 25). */
@@ -424,11 +424,10 @@ export type IanaTimeZone = string;
 
 /**
  * Single resolved snapshot for all present-time visuals: tick column, NATO active cell, and related labeling.
- * Built from {@link resolveTapeAlignmentLongitudeDeg} and {@link resolvePresentTimeContextLongitudeDeg} so tape alignment
- * and present-time instrumentation stay policy-consistent.
+ * In {@code referenceCity} mode, {@link longitudeDeg} is also the tape alignment meridian (see {@link resolveTapeAlignmentLongitudeDeg}).
  */
 export type PresentTimeContext = {
-  /** Longitude (°) whose structural 15° column carries the present-time tick (may differ from tape alignment in {@code referenceCity} mode). */
+  /** Longitude (°) whose structural 15° column carries the present-time tick; same as tape alignment when {@code source} is {@code referenceCity}. */
   longitudeDeg: number;
   /** Resolved reference IANA zone for the band / bottom bar (civil-time phasing). */
   referenceTimeZone: IanaTimeZone;
@@ -497,6 +496,7 @@ export function computePresentTimeContext(options: {
 /**
  * Resolved display-time inputs for the top band and bottom bar: IANA **civil** zone string + mode + longitude-anchor policy.
  * The reference zone drives wall-clock phasing and the bottom bar; the top tape’s horizontal alignment uses {@link resolveTapeAlignmentLongitudeDeg} (longitude), not civil-TZ boundaries.
+ * In {@code referenceCity} mode, tape alignment matches {@link PresentTimeContext.longitudeDeg}.
  */
 export interface ResolvedTopBandTime {
   referenceTimeZone: string;

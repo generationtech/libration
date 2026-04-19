@@ -84,7 +84,8 @@ function longitudeDegForReferenceCityId(cityId: string): number | undefined {
 
 /**
  * Longitude of the default reference city for an IANA zone string (same mapping as auto top-band anchor’s
- * {@code referenceZoneLongitudeCity} path). Used for present-time instrumentation when decoupled from the tape anchor.
+ * {@code referenceZoneLongitudeCity} path). Used when {@code referenceCity} mode resolves present-time/tape longitude from
+ * the zone’s bundled city (e.g. anchor mode {@code auto}).
  */
 export function instrumentationLongitudeDegForReferenceTimeZone(referenceTimeZone: string): number {
   const cityId = REFERENCE_ZONE_TO_LONGITUDE_CITY_ID[referenceTimeZone];
@@ -93,9 +94,9 @@ export function instrumentationLongitudeDegForReferenceTimeZone(referenceTimeZon
 }
 
 /**
- * Longitude for the present-time (“now”) tick when {@link PresentTimeReferenceMode} is {@code referenceCity}.
- * Uses the user’s {@link TopBandAnchorConfig} {@code fixedCity} longitude when that mode is active; otherwise falls
- * back to {@link instrumentationLongitudeDegForReferenceTimeZone} (reference zone’s bundled default city).
+ * Longitude for present-time instrumentation when {@link PresentTimeReferenceMode} is {@code referenceCity}.
+ * Same meridian drives the present-time tick, NATO highlight, and (via {@link resolveTapeAlignmentLongitudeDeg}) tape
+ * alignment — no separate zone-based tape anchor.
  */
 export function resolvePresentTimeContextLongitudeDeg(args: {
   referenceTimeZone: string;
@@ -113,29 +114,13 @@ export function resolvePresentTimeContextLongitudeDeg(args: {
 }
 
 /**
- * When {@link PresentTimeReferenceMode} is {@code referenceCity} and the authoring anchor is {@code fixedCity},
- * world/tape alignment follows the same meridian as {@code auto} for the reference IANA zone (see
- * {@link resolveTapeAlignmentLongitudeDeg}) so the expressed strip frame does not track the selected reference city.
- */
-function effectiveTopBandAnchorForTapeAlignment(args: {
-  topBandAnchor: TopBandAnchorConfig;
-  presentTimeReferenceMode: PresentTimeReferenceMode;
-}): TopBandAnchorConfig {
-  const { topBandAnchor, presentTimeReferenceMode } = args;
-  if (presentTimeReferenceMode === "referenceCity" && topBandAnchor.mode === "fixedCity") {
-    return { mode: "auto" };
-  }
-  return topBandAnchor;
-}
-
-/**
  * Resolves the meridian used for **tape / world alignment** (top strip phase anchor, {@link TopBandLongitudeAnchor},
  * {@link UtcTopScaleLayout.expressedStripTimeFrame}). Call this from chrome layout; use {@link resolveTopBandAnchorLongitudeDeg}
  * for policy-neutral longitude resolution when the authoring anchor is already effective.
  *
- * In {@code presentTimeReferenceMode="referenceCity"} with a {@code fixedCity} authoring anchor, alignment is
- * zone-based ({@code auto} semantics) and **does not** use {@link GeographyConfig} fixed-coordinate override, so
- * changing the reference city or geography viewpoint does not re-phase the tape against a map pin.
+ * When {@code presentTimeReferenceMode === "referenceCity"}, the tape uses the same longitude as
+ * {@link resolvePresentTimeContextLongitudeDeg} (and thus {@link PresentTimeContext.longitudeDeg}): reference-city
+ * selection re-phases the whole strip together with the present-time tick and NATO highlight.
  */
 export function resolveTapeAlignmentLongitudeDeg(options: {
   nowMs: number;
@@ -150,18 +135,27 @@ export function resolveTapeAlignmentLongitudeDeg(options: {
   anchorSource: TopBandAnchorLongitudeSource;
 } {
   const presentTimeReferenceMode = options.presentTimeReferenceMode ?? "anchor";
-  const effectiveAnchor = effectiveTopBandAnchorForTapeAlignment({
-    topBandAnchor: options.topBandAnchor,
-    presentTimeReferenceMode,
-  });
-  const ignoreGeographyForTapeAlignment =
-    presentTimeReferenceMode === "referenceCity" && options.topBandAnchor.mode === "fixedCity";
+  if (presentTimeReferenceMode === "referenceCity") {
+    const referenceLongitudeDeg = resolvePresentTimeContextLongitudeDeg({
+      referenceTimeZone: options.referenceTimeZone,
+      topBandAnchor: options.topBandAnchor,
+      presentTimeReferenceMode: "referenceCity",
+    })!;
+    const referenceOffsetHours = utcOffsetHoursForTimeZone(options.nowMs, options.referenceTimeZone);
+    const anchorSource: TopBandAnchorLongitudeSource =
+      options.topBandAnchor.mode === "fixedCity" ? "fixedCity" : "referenceZoneLongitudeCity";
+    return {
+      referenceLongitudeDeg,
+      referenceOffsetHours,
+      anchorSource,
+    };
+  }
   return resolveTopBandAnchorLongitudeDeg({
     nowMs: options.nowMs,
     referenceTimeZone: options.referenceTimeZone,
     topBandMode: options.topBandMode,
-    topBandAnchor: effectiveAnchor,
-    geography: ignoreGeographyForTapeAlignment ? undefined : options.geography,
+    topBandAnchor: options.topBandAnchor,
+    geography: options.geography,
   });
 }
 

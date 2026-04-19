@@ -265,7 +265,7 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(knoxLon, w), 5);
   });
 
-  it("referenceCity mode: tape alignment follows zone auto (NYC); present-time follows manual city (Knoxville)", () => {
+  it("referenceCity mode: tape alignment and present-time both follow manual city (Knoxville)", () => {
     const resolved = resolveTopBandTimeFromConfig({
       ...baseDisplayTime,
       presentTimeReferenceMode: "referenceCity",
@@ -274,13 +274,16 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     expect(resolved.presentTimeContext.zoneId).toBe("America/New_York");
     expect(resolved.presentTimeContext.source).toBe("referenceCity");
     const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
-    expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(knoxLon, 5);
     expect(layout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(layout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(
+      resolved.presentTimeContext.longitudeDeg,
+      5,
+    );
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(knoxLon, w), 5);
-    expect(layout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(nycLon, 5);
   });
 
-  it("referenceCity mode: expressed strip frame is identical for different manual cities (same zone + instant)", () => {
+  it("referenceCity mode: different manual cities re-phase tape and present-time together (same zone + instant)", () => {
     const knoxResolved = resolveTopBandTimeFromConfig({
       ...baseDisplayTime,
       topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
@@ -295,17 +298,25 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     const nycLayout = buildUtcTopScaleLayout(t, w, 80, nycResolved);
     expect(knoxLayout.referenceFractionalHour).toBeCloseTo(nycLayout.referenceFractionalHour, 10);
     expect(knoxLayout.bandPhaseDayStartMs).toBe(nycLayout.bandPhaseDayStartMs);
-    expect(knoxLayout.phasedTapeAnchorFrac).toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 10);
-    expect(knoxLayout.topBandAnchor.anchorX).toBeCloseTo(nycLayout.topBandAnchor.anchorX, 10);
-    expect(knoxLayout.majorBoundaryXs).toEqual(nycLayout.majorBoundaryXs);
+    expect(knoxLayout.phasedTapeAnchorFrac).not.toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 4);
+    expect(knoxLayout.topBandAnchor.anchorX).not.toBeCloseTo(nycLayout.topBandAnchor.anchorX, 3);
+    expect(knoxLayout.majorBoundaryXs).not.toEqual(nycLayout.majorBoundaryXs);
     expect(knoxLayout.segments).toEqual(nycLayout.segments);
-    expect(knoxLayout.expressedStripTimeFrame).toEqual(nycLayout.expressedStripTimeFrame);
+    expect(knoxLayout.expressedStripTimeFrame).not.toEqual(nycLayout.expressedStripTimeFrame);
     expect(knoxLayout.nowX).not.toBeCloseTo(nycLayout.nowX, 3);
     expect(knoxLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
     expect(nycLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(
+      knoxResolved.presentTimeContext.longitudeDeg,
+      5,
+    );
+    expect(nycLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(
+      nycResolved.presentTimeContext.longitudeDeg,
+      5,
+    );
   });
 
-  it("referenceCity mode: geography fixedCoordinate does not shift tape alignment when reference city changes", () => {
+  it("referenceCity mode: geography fixedCoordinate does not override tape; tape follows each reference city longitude", () => {
     const geo = {
       ...DEFAULT_GEOGRAPHY_CONFIG,
       referenceMode: "fixedCoordinate" as const,
@@ -322,12 +333,15 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     });
     const knoxLayout = buildUtcTopScaleLayout(t, w, 80, knoxResolved, geo);
     const nycLayout = buildUtcTopScaleLayout(t, w, 80, nycResolved, geo);
-    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(
+    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(knoxLon, 7);
+    expect(nycLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(nycLon, 7);
+    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).not.toBeCloseTo(
       nycLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg,
-      7,
+      3,
     );
-    expect(knoxLayout.phasedTapeAnchorFrac).toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 10);
-    expect(knoxLayout.majorBoundaryXs).toEqual(nycLayout.majorBoundaryXs);
+    expect(knoxLayout.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).not.toBeCloseTo(geo.fixedCoordinate.longitude, 3);
+    expect(knoxLayout.phasedTapeAnchorFrac).not.toBeCloseTo(nycLayout.phasedTapeAnchorFrac, 4);
+    expect(knoxLayout.majorBoundaryXs).not.toEqual(nycLayout.majorBoundaryXs);
     expect(knoxLayout.nowX).not.toBeCloseTo(nycLayout.nowX, 3);
     expect(knoxLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
     expect(nycLayout.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
@@ -351,7 +365,7 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     expect(a1.referenceFractionalHour).not.toBeCloseTo(a0.referenceFractionalHour, 4);
   });
 
-  it("referenceCity mode: after rebinding city, phased strip state matches; only present-time column differs at same instant", () => {
+  it("referenceCity mode: after rebinding city, phased strip and tape shift with the new city at the same instant", () => {
     const knoxRef = resolveTopBandTimeFromConfig({ ...baseDisplayTime, presentTimeReferenceMode: "referenceCity" });
     const nycRef = resolveTopBandTimeFromConfig({
       ...baseDisplayTime,
@@ -361,8 +375,8 @@ describe("presentTimeReferenceMode: referenceCity instrumentation", () => {
     const tLater = t + 45 * 60 * 1000;
     const knoxLater = buildUtcTopScaleLayout(tLater, w, 80, knoxRef);
     const nycSameInstant = buildUtcTopScaleLayout(tLater, w, 80, nycRef);
-    expect(knoxLater.phasedTapeAnchorFrac).toBeCloseTo(nycSameInstant.phasedTapeAnchorFrac, 10);
-    expect(knoxLater.majorBoundaryXs).toEqual(nycSameInstant.majorBoundaryXs);
+    expect(knoxLater.phasedTapeAnchorFrac).not.toBeCloseTo(nycSameInstant.phasedTapeAnchorFrac, 4);
+    expect(knoxLater.majorBoundaryXs).not.toEqual(nycSameInstant.majorBoundaryXs);
     expect(knoxLater.nowX).not.toBeCloseTo(nycSameInstant.nowX, 3);
   });
 
@@ -391,7 +405,7 @@ describe("PresentTimeContext propagation", () => {
     topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
   };
 
-  it("referenceCity + fixedCity: tick longitude and NATO letter track the city; tape alignment unchanged across city picks", () => {
+  it("referenceCity + fixedCity: tape, tick longitude, and NATO letter track the city together", () => {
     const knoxR = resolveTopBandTimeFromConfig({ ...base, presentTimeReferenceMode: "referenceCity" });
     const nycR = resolveTopBandTimeFromConfig({
       ...base,
@@ -400,8 +414,12 @@ describe("PresentTimeContext propagation", () => {
     });
     const knoxL = buildUtcTopScaleLayout(t, w, 80, knoxR);
     const nycL = buildUtcTopScaleLayout(t, w, 80, nycR);
-    expect(knoxL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycL.topBandAnchor.referenceLongitudeDeg, 5);
-    expect(knoxL.phasedTapeAnchorFrac).toBeCloseTo(nycL.phasedTapeAnchorFrac, 10);
+    expect(knoxL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(knoxLon, 5);
+    expect(nycL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 5);
+    expect(knoxL.topBandAnchor.referenceLongitudeDeg).not.toBeCloseTo(nycL.topBandAnchor.referenceLongitudeDeg, 3);
+    expect(knoxL.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(knoxR.presentTimeContext.longitudeDeg, 5);
+    expect(nycL.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(nycR.presentTimeContext.longitudeDeg, 5);
+    expect(knoxL.phasedTapeAnchorFrac).not.toBeCloseTo(nycL.phasedTapeAnchorFrac, 4);
     expect(knoxL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(knoxLon, 5);
     expect(nycL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(nycLon, 5);
     expect(knoxL.presentTimeContext.natoLetter).not.toBe(nycL.presentTimeContext.natoLetter);
@@ -488,7 +506,7 @@ describe("PresentTimeContext propagation", () => {
     expect(layout.nowX).toBeCloseTo(layout.segments[h]!.centerX, 5);
   });
 
-  it("B: referenceCity Knoxville → Cairo — tick column and NATO letter move together; tape anchor unchanged", () => {
+  it("B: referenceCity Knoxville → Cairo — tape, tick column, and NATO letter move together", () => {
     const knoxR = resolveTopBandTimeFromConfig(
       {
         ...base,
@@ -508,8 +526,10 @@ describe("PresentTimeContext propagation", () => {
     const cairoLon = REFERENCE_CITIES.find((c) => c.id === "city.cairo")!.longitude;
     const knoxL = buildUtcTopScaleLayout(t, w, 80, knoxR);
     const cairoL = buildUtcTopScaleLayout(t, w, 80, cairoR);
-    expect(knoxL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(cairoL.topBandAnchor.referenceLongitudeDeg, 5);
-    expect(knoxL.phasedTapeAnchorFrac).toBeCloseTo(cairoL.phasedTapeAnchorFrac, 10);
+    expect(knoxL.topBandAnchor.referenceLongitudeDeg).not.toBeCloseTo(cairoL.topBandAnchor.referenceLongitudeDeg, 3);
+    expect(cairoL.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(cairoLon, 5);
+    expect(cairoL.expressedStripTimeFrame.tapeAlignmentLongitudeDeg).toBeCloseTo(cairoR.presentTimeContext.longitudeDeg, 5);
+    expect(knoxL.phasedTapeAnchorFrac).not.toBeCloseTo(cairoL.phasedTapeAnchorFrac, 4);
     expect(cairoL.presentTimeIndicatorLongitudeDeg).toBeCloseTo(cairoLon, 5);
     const hCairo = structuralHourIndexFromReferenceLongitudeDeg(cairoLon);
     expect(cairoL.presentTimeContext.natoLetter).toBe(cairoL.segments[hCairo]!.timezoneLetter);

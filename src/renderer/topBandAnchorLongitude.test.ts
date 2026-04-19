@@ -193,7 +193,7 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
 });
 
 describe("resolveTapeAlignmentLongitudeDeg", () => {
-  it("referenceCity + fixedCity: tape follows zone auto (not Tokyo city id)", () => {
+  it("referenceCity + fixedCity: tape follows selected city longitude (same as present-time context)", () => {
     const nowMs = Date.UTC(2026, 1, 1, 12, 0, 0);
     const r = resolveTapeAlignmentLongitudeDeg({
       nowMs,
@@ -202,11 +202,11 @@ describe("resolveTapeAlignmentLongitudeDeg", () => {
       topBandAnchor: { mode: "fixedCity", cityId: "city.tokyo" },
       presentTimeReferenceMode: "referenceCity",
     });
-    expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
-    expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
+    expect(r.anchorSource).toBe("fixedCity");
+    expect(r.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.tokyo"), 7);
   });
 
-  it("referenceCity + fixedCity ignores geography fixedCoordinate (zone meridian only)", () => {
+  it("referenceCity + fixedCity ignores geography fixedCoordinate (uses reference city longitude)", () => {
     const nowMs = Date.UTC(2026, 5, 1, 12, 0, 0);
     const geo = {
       ...DEFAULT_GEOGRAPHY_CONFIG,
@@ -221,8 +221,8 @@ describe("resolveTapeAlignmentLongitudeDeg", () => {
       presentTimeReferenceMode: "referenceCity",
       geography: geo,
     });
-    expect(tape.anchorSource).toBe("referenceZoneLongitudeCity");
-    expect(tape.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.nyc"), 7);
+    expect(tape.anchorSource).toBe("fixedCity");
+    expect(tape.referenceLongitudeDeg).toBeCloseTo(lonForCityId("city.knoxville"), 7);
   });
 });
 
