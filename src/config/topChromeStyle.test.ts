@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { TOP_CHROME_STYLE } from "./topChromeStyle";
+import {
+  computeTimezoneLetterSizePx,
+  NATO_ZONE_LETTER_MAX_HEIGHT_FRAC_OF_BODY,
+  TOP_CHROME_STYLE,
+} from "./topChromeStyle";
 
 describe("TOP_CHROME_STYLE", () => {
   it("exposes stable instrument field colors for the fixed top strip", () => {
@@ -23,5 +27,20 @@ describe("TOP_CHROME_STYLE", () => {
   it("uses unified tick stroke width token", () => {
     expect(TOP_CHROME_STYLE.ticks.lineWidth).toBeGreaterThan(0);
     expect(TOP_CHROME_STYLE.ticks.presentTimeTickWidthMulTapeTick).toBeGreaterThan(1);
+  });
+});
+
+describe("computeTimezoneLetterSizePx", () => {
+  it("returns the disk label size when the zone body height is unknown", () => {
+    expect(computeTimezoneLetterSizePx(14, 0)).toBe(14);
+  });
+
+  it("caps em size to a fraction of the inner NATO body height when the strip is short", () => {
+    const body = 15;
+    expect(computeTimezoneLetterSizePx(20, body)).toBe(body * NATO_ZONE_LETTER_MAX_HEIGHT_FRAC_OF_BODY);
+  });
+
+  it("does not upsize past the hour-disk label scale", () => {
+    expect(computeTimezoneLetterSizePx(14, 100)).toBe(14);
   });
 });

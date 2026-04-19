@@ -23,6 +23,6 @@ describe("createTopBandTextGlyph", () => {
     expect(g.text).toBe("Z");
     expect(g.role).toBe("chromeZoneLabel");
     expect(g.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
-    expect(g.typographyOverrides).toEqual({ fontWeight: 800 });
+    expect(g.typographyOverrides).toEqual({ fontWeight: 800, letterSpacingPx: 0 });
   });
 });

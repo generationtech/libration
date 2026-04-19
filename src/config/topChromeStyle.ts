@@ -73,9 +73,9 @@ export interface TopChromeTimezoneTabTokens {
    */
   neckBodyCornerFilletFrac: number;
   /**
-   * Vertical center of the zone letter within the body band only (below yNeck): 0.5 = midpoint of body;
-   * slightly above 0.5 nudges the glyph down so it does not ride up toward the neck after silhouette changes.
-   * Slightly below prior values recenters NATO letters in a taller tab body.
+   * Vertical anchor for the zone letter within the NATO / timezone **rectangular** body (between horizontal paddings):
+   * {@link buildTimezoneLetterRowRenderPlan} places `cy` at `fillTop + fillH * this` with `textBaseline: "middle"`.
+   * 0.5 is geometric center; values >0.5 shift the anchor downward in the cell.
    */
   zoneLetterCenterFracOfBody: number;
   /**
@@ -215,11 +215,23 @@ export function computeHourDiskLabelSizePx(
 }
 
 /**
- * NATO zone letter font size (CSS px): identical to circled hour-disk numerals — pass the value from
- * {@link computeHourDiskLabelSizePx} (single sizing source).
+ * Max fraction of the NATO row **inner body height** ({@link buildTimezoneLetterRowRenderPlan} `fillH`) used for the
+ * zone letter em size. Keeps clear vertical inset in short strips while {@link computeHourDiskLabelSizePx} still sets the ceiling.
  */
-export function computeTimezoneLetterSizePx(diskLabelSizePx: number): number {
-  return diskLabelSizePx;
+export const NATO_ZONE_LETTER_MAX_HEIGHT_FRAC_OF_BODY = 0.87 as const;
+
+/**
+ * NATO zone letter font size (CSS px): scales with hour-disk labels, but caps against the zone body height so letters
+ * stay proportioned inside the (reduced) NATO row instead of filling the cell edge-to-edge.
+ */
+export function computeTimezoneLetterSizePx(diskLabelSizePx: number, zoneLetterBodyHeightPx: number): number {
+  const disk = Math.max(0, diskLabelSizePx);
+  const body = Math.max(0, zoneLetterBodyHeightPx);
+  if (body <= 0) {
+    return disk;
+  }
+  const maxFit = body * NATO_ZONE_LETTER_MAX_HEIGHT_FRAC_OF_BODY;
+  return Math.min(disk, maxFit);
 }
 
 /**
@@ -291,7 +303,7 @@ export const TOP_CHROME_STYLE = {
     zoneFillPadMaxPx: 2,
     neckTopShoulderFilletFrac: 0.038,
     neckBodyCornerFilletFrac: 0.031,
-    zoneLetterCenterFracOfBody: 0.535,
+    zoneLetterCenterFracOfBody: 0.5,
     neckHighlightInsetFracOfTopFillet: 0.38,
     neckHighlightInsetMinPx: 0.65,
     neckHighlightInsetMaxPx: 1.25,

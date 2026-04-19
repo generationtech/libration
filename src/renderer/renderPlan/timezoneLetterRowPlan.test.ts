@@ -20,7 +20,11 @@ import {
   computeUtcTopScaleRowMetrics,
 } from "../displayChrome";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
+import {
+  computeHourDiskLabelSizePx,
+  computeTimezoneLetterSizePx,
+  TOP_CHROME_STYLE,
+} from "../../config/topChromeStyle.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
@@ -83,6 +87,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       0,
       Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
     );
+    const fillH = Math.max(0, zoneH - zonePadY * 2);
     const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
 
     const plan = buildTimezoneLetterRowRenderPlan({
@@ -124,6 +129,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     if (tzLetter?.kind === "text") {
       expect(tzLetter.font.assetId).toBe("dotmatrix-regular");
       expect(tzLetter.font.displayName.toLowerCase()).toContain("dotmatrix");
+      expect(tzLetter.font.sizePx).toBe(computeTimezoneLetterSizePx(diskLabelSizePx, fillH));
     }
 
     const rects = plan.items.filter((i) => i.kind === "rect");

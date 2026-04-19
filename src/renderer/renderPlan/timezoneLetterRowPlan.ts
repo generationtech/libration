@@ -97,8 +97,6 @@ export function buildTimezoneLetterRowRenderPlan(options: {
 
   const activeStructuralHour = structuralHourIndexFromReferenceLongitudeDeg(options.referenceLongitudeDeg);
   const geoCaption = geographyTimezoneStripReferenceLabel(options.geography, options.anchorSource);
-  const zoneLetterSize = computeTimezoneLetterSizePx(options.diskLabelSizePx);
-
   const zoneTop = options.zoneTop;
   const zoneH = options.zoneH;
   const bandBottom = options.bandBottom;
@@ -121,6 +119,7 @@ export function buildTimezoneLetterRowRenderPlan(options: {
 
   const fillTop = zoneTop + options.zonePadY;
   const fillH = Math.max(0, zoneH - options.zonePadY * 2);
+  const zoneLetterSize = computeTimezoneLetterSizePx(options.diskLabelSizePx, fillH);
 
   // Fills use full structural [x0,x1] (ignore options.segGapX) so the row reads as one continuous scale; phased math in displayChrome is unchanged.
 

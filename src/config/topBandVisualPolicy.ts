@@ -94,7 +94,7 @@ export function resolveTimezoneStripLetterPolicy(chrome: TopChromeStyle): TopBan
   return {
     role: "chromeZoneLabel",
     fill: chrome.zoneText.letter,
-    typographyOverrides: { fontWeight: 800 },
+    typographyOverrides: { fontWeight: 800, letterSpacingPx: 0 },
   };
 }
 
