@@ -79,6 +79,15 @@ function cloneConfig(config: AppConfig): AppConfig {
       ...(dcl.tickTapeAreaBackgroundColor !== undefined
         ? { tickTapeAreaBackgroundColor: dcl.tickTapeAreaBackgroundColor }
         : {}),
+      ...(dcl.timezoneLetterRowCellBackgroundColorEven !== undefined
+        ? { timezoneLetterRowCellBackgroundColorEven: dcl.timezoneLetterRowCellBackgroundColorEven }
+        : {}),
+      ...(dcl.timezoneLetterRowCellBackgroundColorOdd !== undefined
+        ? { timezoneLetterRowCellBackgroundColorOdd: dcl.timezoneLetterRowCellBackgroundColorOdd }
+        : {}),
+      ...(dcl.timezoneLetterRowLetterForegroundColor !== undefined
+        ? { timezoneLetterRowLetterForegroundColor: dcl.timezoneLetterRowLetterForegroundColor }
+        : {}),
     },
     geography: {
       referenceMode: g.referenceMode,

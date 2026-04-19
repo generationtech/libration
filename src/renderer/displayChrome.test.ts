@@ -22,6 +22,7 @@ import {
 } from "../config/appConfig";
 import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkersResolver.ts";
 import { resolveEffectiveTickTapeArea } from "../config/topBandTickTapeResolver.ts";
+import { resolveEffectiveTimezoneLetterRowArea } from "../config/topBandTimezoneLetterRowResolver.ts";
 import { structuralZoneLetterFromIndex } from "../config/structuralZoneLetters";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
@@ -833,7 +834,7 @@ describe("computeUtcTopScaleRowMetrics", () => {
     // Reference split at 104px height (circle + tick + NATO); NATO band is intentionally shorter than the prior ~36px slice.
     expect(r.timezoneBandH).toBeGreaterThanOrEqual(15);
     expect(r.circleBandH + r.tickBandH + r.timezoneBandH).toBe(104);
-    expect(r).toEqual({ topBandHeightPx: 104, circleBandH: 57, tickBandH: 19, timezoneBandH: 28 });
+    expect(r).toEqual({ topBandHeightPx: 104, circleBandH: 57, tickBandH: 25, timezoneBandH: 22 });
   });
 
   it("allocates no height to the timezone row when timezoneLetterRowVisible is false", () => {
@@ -1037,6 +1038,9 @@ describe("buildDisplayChromeState", () => {
     );
     expect(chrome.effectiveTickTapeArea).toEqual(
       resolveEffectiveTickTapeArea(chrome.displayChromeLayout),
+    );
+    expect(chrome.effectiveTimezoneLetterRowArea).toEqual(
+      resolveEffectiveTimezoneLetterRowArea(chrome.displayChromeLayout),
     );
     expect(chrome.topBand).toEqual({ x: 0, y: 0, width: 1920, height: 78 });
     expect(chrome.bottomBand.x).toBe(0);

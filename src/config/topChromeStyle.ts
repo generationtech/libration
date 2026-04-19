@@ -371,6 +371,12 @@ export const TOP_CHROME_STYLE = {
 } as const;
 
 /**
+ * Alpha applied to automatic black/white NATO / timezone letter ink when alternating cell backgrounds are authored;
+ * matches {@link TOP_CHROME_STYLE.zoneText.letter} opacity.
+ */
+export const TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA = 0.98 as const;
+
+/**
  * When the 24-hour tickmarks tape background is user-overridden, resolver rebuilds tape/baseline ink as
  * `rgba(#000|#fff, α)` using these alphas — matching {@link TOP_CHROME_STYLE.ticks} stroke/baseline opacities.
  */

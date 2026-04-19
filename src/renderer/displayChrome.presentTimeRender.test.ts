@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { cloneHourMarkersConfig, DEFAULT_HOUR_MARKERS_CONFIG } from "../config/appConfig.ts";
+import {
+  cloneHourMarkersConfig,
+  DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+  DEFAULT_HOUR_MARKERS_CONFIG,
+} from "../config/appConfig.ts";
 import { resolveEffectiveTickTapeArea } from "../config/topBandTickTapeResolver.ts";
 import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { createTimeContext } from "../core/time";
@@ -259,6 +263,7 @@ describe("renderDisplayChrome — present-time tick instrumentation vs tick tape
       const viewport = { width: 800, height: 600, devicePixelRatio: 1 };
       const frame = { frameNumber: 1, now: time.now, deltaMs: time.deltaMs };
       const layout = {
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
         tickTapeVisible: true,
         timezoneLetterRowVisible: false,
         tickTapeAreaBackgroundColor: "#ffffff",

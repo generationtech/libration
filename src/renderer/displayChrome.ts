@@ -30,6 +30,10 @@ import {
   resolveEffectiveTickTapeArea,
   type EffectiveTickTapeArea,
 } from "../config/topBandTickTapeResolver.ts";
+import {
+  resolveEffectiveTimezoneLetterRowArea,
+  type EffectiveTimezoneLetterRowArea,
+} from "../config/topBandTimezoneLetterRowResolver.ts";
 import type {
   EffectiveTopBandHourMarkerLayout,
   EffectiveTopBandHourMarkers,
@@ -70,6 +74,7 @@ import {
   TOP_CHROME_CIRCLE_STACK_LAYOUT,
   TOP_CHROME_STYLE,
   type TopChromeHourDiskLabelTokens,
+  type TopChromeStyle,
 } from "../config/topChromeStyle";
 import { hourCircleHeadMetrics } from "../config/topBandHourMarkersLayout.ts";
 import type { FontAssetRegistry } from "../typography/fontAssetRegistry.ts";
@@ -366,6 +371,11 @@ export interface DisplayChromeState {
    * {@link resolveEffectiveTickTapeArea}).
    */
   effectiveTickTapeArea: EffectiveTickTapeArea;
+  /**
+   * NATO / timezone letter row fills plus letter ink (from {@link displayChromeLayout} via
+   * {@link resolveEffectiveTimezoneLetterRowArea}).
+   */
+  effectiveTimezoneLetterRowArea: EffectiveTimezoneLetterRowArea;
   /** Same object as {@link AppConfig.geography} from the authoritative config pipeline; optional for tests. */
   geography?: GeographyConfig;
   frameNumber: number;
@@ -763,13 +773,16 @@ export function computeUtcCircleMarkerRadius(circleRowH: number, segmentWidthPx:
 
 /**
  * Proportional split of the fixed top band: circle stack → tick rail → longitude / timezone tabs.
- * Timezone strip height follows {@link TOP_BAND_THREE_ROW_ALLOC} (shorter NATO row vs the prior ~34.5% fraction);
+ * Timezone strip height follows {@link TOP_BAND_THREE_ROW_ALLOC} (NATO row uses a smaller height fraction than legacy ~34.5%);
  * tick rail keeps a usable floor via {@link TOP_BAND_THREE_ROW_ALLOC.minTickBandPx}.
  */
 export const TOP_BAND_THREE_ROW_ALLOC = {
   circleFracOfH: 0.55,
-  /** Shorter NATO strip vs prior ~34.5%; remainder flows to tick rail. */
-  timezoneFracOfH: 0.27,
+  /**
+   * NATO / timezone letter row slice of the fixed top-band height (remainder is tick rail after circle allocation).
+   * Was 0.27; 0.216 yields ~20% less NATO band height at typical top-band sizes (difference flows to the tick rail).
+   */
+  timezoneFracOfH: 0.216,
   minCirclePx: 36,
   minTimezonePx: 15,
   minTickBandPx: 13,
@@ -1454,6 +1467,7 @@ export function buildDisplayChromeState(options: {
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
   const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout);
   const effectiveTickTapeArea = resolveEffectiveTickTapeArea(layout);
+  const effectiveTimezoneLetterRowArea = resolveEffectiveTimezoneLetterRowArea(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const baseCircleStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
   const canonicalSolve =
@@ -1511,6 +1525,7 @@ export function buildDisplayChromeState(options: {
     displayChromeLayout: layout,
     effectiveTopBandHourMarkers,
     effectiveTickTapeArea,
+    effectiveTimezoneLetterRowArea,
     geography: options.geography,
     frameNumber: frame.frameNumber,
   };
@@ -1597,8 +1612,21 @@ export function renderDisplayChrome(
   const { tickBaselineY, majorTickTopY } = topBandTickRailMajorTickVerticalSpan(yCircleBottom, tickH);
   const zoneTop = yTickBottom;
   const zoneH = bandBottom - zoneTop;
-  const st = TOP_CHROME_STYLE;
+  const stBase = TOP_CHROME_STYLE;
   const tape = chrome.effectiveTickTapeArea;
+  const tzEff = chrome.effectiveTimezoneLetterRowArea;
+  const st = {
+    ...stBase,
+    timezoneTab: {
+      ...stBase.timezoneTab,
+      fillEven: tzEff.effectiveBackgroundColorEven,
+      fillOdd: tzEff.effectiveBackgroundColorOdd,
+    },
+    zoneText: {
+      ...stBase.zoneText,
+      letter: tzEff.effectiveLetterForegroundColor,
+    },
+  } as TopChromeStyle;
   const tzTab = st.timezoneTab;
   const zonePadY = Math.max(
     0,
@@ -1652,7 +1680,7 @@ export function renderDisplayChrome(
       topBandHeightPx: tb.height,
       circleBandBottomYPx: yCircleBottom,
       tickBandHeightPx: tickH,
-      stripBackgroundFill: st.instrument.stripBackground,
+      stripBackgroundFill: stBase.instrument.stripBackground,
       tickRailBackgroundFill: tape.effectiveBackgroundColor,
     }),
   );

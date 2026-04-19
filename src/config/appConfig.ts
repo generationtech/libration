@@ -166,6 +166,19 @@ export const DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR: string =
 export const DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR: string =
   TOP_CHROME_STYLE.instrument.tickRailBackground;
 
+/**
+ * Default alternating NATO / timezone letter row cell fills (`chrome.layout` optional overrides).
+ * Copied once from {@link TOP_CHROME_STYLE.timezoneTab} so defaults match shipped chrome; resolution uses these when no
+ * override is stored.
+ */
+export const DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN: string =
+  TOP_CHROME_STYLE.timezoneTab.fillEven;
+export const DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD: string =
+  TOP_CHROME_STYLE.timezoneTab.fillOdd;
+
+/** Default NATO zone letter ink when no layout override is stored (same as {@link TOP_CHROME_STYLE.zoneText.letter}). */
+export const DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR: string = TOP_CHROME_STYLE.zoneText.letter;
+
 /** Default structured hour markers for {@link DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG}. */
 export const DEFAULT_HOUR_MARKERS_CONFIG: HourMarkersConfig = {
   indicatorEntriesAreaVisible: true,
@@ -315,6 +328,21 @@ export interface DisplayChromeLayoutConfig {
    * generic tape tick/baseline ink follow the built-in chrome style unchanged.
    */
   tickTapeAreaBackgroundColor?: string;
+  /**
+   * Alternating NATO / timezone letter row cell background (even structural column index). When omitted, default from
+   * {@link DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN} is used at resolve time.
+   */
+  timezoneLetterRowCellBackgroundColorEven?: string;
+  /**
+   * Alternating cell background (odd structural column index). When omitted, default from
+   * {@link DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD} is used at resolve time.
+   */
+  timezoneLetterRowCellBackgroundColorOdd?: string;
+  /**
+   * NATO zone letter ink override. When omitted, effective ink is either the shipped default letter color (no cell
+   * overrides) or automatic black/white contrast vs the resolved alternating backgrounds (when either cell override is set).
+   */
+  timezoneLetterRowLetterForegroundColor?: string;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**

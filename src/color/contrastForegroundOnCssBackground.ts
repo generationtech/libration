@@ -75,6 +75,52 @@ function parseCssColorToLinearLuminance01(css: string): number | undefined {
   return undefined;
 }
 
+/** WCAG contrast ratio for two relative luminances in [0, 1] (opaque sRGB). */
+function wcagContrastRatio(lumA: number, lumB: number): number {
+  const L1 = Math.max(lumA, lumB);
+  const L2 = Math.min(lumA, lumB);
+  return (L1 + 0.05) / (L2 + 0.05);
+}
+
+function contrastRatioTextOnBackground(fgLum01: 0 | 1, bgCss: string): number {
+  const bgL = parseCssColorToLinearLuminance01(bgCss);
+  if (bgL === undefined) {
+    return 1;
+  }
+  return wcagContrastRatio(fgLum01, bgL);
+}
+
+/**
+ * Picks `#000000` or `#ffffff` that maximizes the **minimum** WCAG contrast ratio against both backgrounds; breaks ties
+ * by the higher **average** of the two ratios, then `#ffffff`.
+ */
+export function bestBlackOrWhiteForegroundForTwoBackgroundsCss(
+  backgroundA: string,
+  backgroundB: string,
+): "#000000" | "#ffffff" {
+  const score = (c: "#000000" | "#ffffff") => {
+    const fgL = c === "#000000" ? 0 : 1;
+    const ca = contrastRatioTextOnBackground(fgL, backgroundA);
+    const cb = contrastRatioTextOnBackground(fgL, backgroundB);
+    return { min: Math.min(ca, cb), avg: (ca + cb) / 2 };
+  };
+  const s0 = score("#000000");
+  const s1 = score("#ffffff");
+  if (s1.min > s0.min + 1e-9) {
+    return "#ffffff";
+  }
+  if (s0.min > s1.min + 1e-9) {
+    return "#000000";
+  }
+  if (s1.avg > s0.avg + 1e-9) {
+    return "#ffffff";
+  }
+  if (s0.avg > s1.avg + 1e-9) {
+    return "#000000";
+  }
+  return "#ffffff";
+}
+
 function parseHexToSrgb01(s: string): { r: number; g: number; b: number } | undefined {
   if (!s.startsWith("#")) {
     return undefined;

@@ -11,6 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import {
+  DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
+  DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
+  DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR,
+} from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -49,7 +54,138 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
           }
         />
       </ConfigControlRow>
-      <p className="config-section__hint">More NATO strip options will appear here as this area expands.</p>
+      <fieldset className="config-fieldset config-fieldset--plain">
+        <legend className="config-fieldset__legend">NATO letter row appearance</legend>
+        <ConfigControlRow label="Alternating cell background (even columns)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="NATO timezone strip even-column cell background color"
+            title={
+              lay.timezoneLetterRowCellBackgroundColorEven === undefined
+                ? "Default even-column fill — pick to override"
+                : "Even-column cell background"
+            }
+            value={
+              lay.timezoneLetterRowCellBackgroundColorEven ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN
+            }
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    updateConfig((draft) => {
+                      draft.chrome.layout.timezoneLetterRowCellBackgroundColorEven = e.currentTarget.value;
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Reset even-column NATO cell background to default"
+            disabled={!wired || lay.timezoneLetterRowCellBackgroundColorEven === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      delete (draft.chrome.layout as { timezoneLetterRowCellBackgroundColorEven?: string })
+                        .timezoneLetterRowCellBackgroundColorEven;
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Alternating cell background (odd columns)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="NATO timezone strip odd-column cell background color"
+            title={
+              lay.timezoneLetterRowCellBackgroundColorOdd === undefined
+                ? "Default odd-column fill — pick to override"
+                : "Odd-column cell background"
+            }
+            value={
+              lay.timezoneLetterRowCellBackgroundColorOdd ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD
+            }
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    updateConfig((draft) => {
+                      draft.chrome.layout.timezoneLetterRowCellBackgroundColorOdd = e.currentTarget.value;
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Reset odd-column NATO cell background to default"
+            disabled={!wired || lay.timezoneLetterRowCellBackgroundColorOdd === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      delete (draft.chrome.layout as { timezoneLetterRowCellBackgroundColorOdd?: string })
+                        .timezoneLetterRowCellBackgroundColorOdd;
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Zone letter color">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="NATO zone letter foreground color"
+            title={
+              lay.timezoneLetterRowLetterForegroundColor === undefined
+                ? "Automatic contrast vs cell backgrounds — pick to override"
+                : "Zone letter color override"
+            }
+            value={
+              lay.timezoneLetterRowLetterForegroundColor ?? DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR
+            }
+            disabled={!wired}
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    updateConfig((draft) => {
+                      draft.chrome.layout.timezoneLetterRowLetterForegroundColor = e.currentTarget.value;
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear NATO zone letter color override (automatic contrast)"
+            disabled={!wired || lay.timezoneLetterRowLetterForegroundColor === undefined}
+            onClick={
+              wired && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      delete (draft.chrome.layout as { timezoneLetterRowLetterForegroundColor?: string })
+                        .timezoneLetterRowLetterForegroundColor;
+                    });
+                  }
+                : undefined
+            }
+          >
+            Automatic
+          </button>
+        </ConfigControlRow>
+      </fieldset>
     </div>
   );
 }

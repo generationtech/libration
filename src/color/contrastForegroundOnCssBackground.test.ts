@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  bestBlackOrWhiteForegroundForTwoBackgroundsCss,
   blackOrWhiteForegroundForBackgroundCss,
   rgbaForegroundWithAlpha,
   relativeLuminanceFromSrgb01,
@@ -50,6 +51,16 @@ describe("rgbaForegroundWithAlpha", () => {
 
   it("builds rgba from white", () => {
     expect(rgbaForegroundWithAlpha("#ffffff", 0.5)).toBe("rgba(255, 255, 255, 0.5)");
+  });
+});
+
+describe("bestBlackOrWhiteForegroundForTwoBackgroundsCss", () => {
+  it("prefers black when both backgrounds are light", () => {
+    expect(bestBlackOrWhiteForegroundForTwoBackgroundsCss("#ffffff", "#eeeeee")).toBe("#000000");
+  });
+
+  it("prefers white when both backgrounds are dark", () => {
+    expect(bestBlackOrWhiteForegroundForTwoBackgroundsCss("#000000", "#111111")).toBe("#ffffff");
   });
 });
 

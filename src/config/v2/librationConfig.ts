@@ -168,12 +168,51 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
+  let timezoneLetterRowCellBackgroundColorEven: string | undefined;
+  const tzEvenRaw = (input as { timezoneLetterRowCellBackgroundColorEven?: unknown })
+    .timezoneLetterRowCellBackgroundColorEven;
+  if (typeof tzEvenRaw === "string") {
+    const t = tzEvenRaw.trim();
+    if (t !== "") {
+      timezoneLetterRowCellBackgroundColorEven = t;
+    }
+  }
+
+  let timezoneLetterRowCellBackgroundColorOdd: string | undefined;
+  const tzOddRaw = (input as { timezoneLetterRowCellBackgroundColorOdd?: unknown })
+    .timezoneLetterRowCellBackgroundColorOdd;
+  if (typeof tzOddRaw === "string") {
+    const t = tzOddRaw.trim();
+    if (t !== "") {
+      timezoneLetterRowCellBackgroundColorOdd = t;
+    }
+  }
+
+  let timezoneLetterRowLetterForegroundColor: string | undefined;
+  const tzFgRaw = (input as { timezoneLetterRowLetterForegroundColor?: unknown })
+    .timezoneLetterRowLetterForegroundColor;
+  if (typeof tzFgRaw === "string") {
+    const t = tzFgRaw.trim();
+    if (t !== "") {
+      timezoneLetterRowLetterForegroundColor = t;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
     hourMarkers,
     ...(tickTapeAreaBackgroundColor !== undefined ? { tickTapeAreaBackgroundColor } : {}),
+    ...(timezoneLetterRowCellBackgroundColorEven !== undefined
+      ? { timezoneLetterRowCellBackgroundColorEven }
+      : {}),
+    ...(timezoneLetterRowCellBackgroundColorOdd !== undefined
+      ? { timezoneLetterRowCellBackgroundColorOdd }
+      : {}),
+    ...(timezoneLetterRowLetterForegroundColor !== undefined
+      ? { timezoneLetterRowLetterForegroundColor }
+      : {}),
   };
 }
 
@@ -342,6 +381,15 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     ...(l.tickTapeAreaBackgroundColor !== undefined
       ? { tickTapeAreaBackgroundColor: l.tickTapeAreaBackgroundColor }
       : {}),
+    ...(l.timezoneLetterRowCellBackgroundColorEven !== undefined
+      ? { timezoneLetterRowCellBackgroundColorEven: l.timezoneLetterRowCellBackgroundColorEven }
+      : {}),
+    ...(l.timezoneLetterRowCellBackgroundColorOdd !== undefined
+      ? { timezoneLetterRowCellBackgroundColorOdd: l.timezoneLetterRowCellBackgroundColorOdd }
+      : {}),
+    ...(l.timezoneLetterRowLetterForegroundColor !== undefined
+      ? { timezoneLetterRowLetterForegroundColor: l.timezoneLetterRowLetterForegroundColor }
+      : {}),
   };
 }
 
@@ -465,6 +513,27 @@ export function assertIsNormalizedLibrationConfig(
   const ttTapeBg = (lay as { tickTapeAreaBackgroundColor?: unknown }).tickTapeAreaBackgroundColor;
   if (ttTapeBg !== undefined && (typeof ttTapeBg !== "string" || ttTapeBg.trim() === "")) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.tickTapeAreaBackgroundColor");
+  }
+  const tzEven = (lay as { timezoneLetterRowCellBackgroundColorEven?: unknown })
+    .timezoneLetterRowCellBackgroundColorEven;
+  if (tzEven !== undefined && (typeof tzEven !== "string" || tzEven.trim() === "")) {
+    throw new Error(
+      "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowCellBackgroundColorEven",
+    );
+  }
+  const tzOdd = (lay as { timezoneLetterRowCellBackgroundColorOdd?: unknown })
+    .timezoneLetterRowCellBackgroundColorOdd;
+  if (tzOdd !== undefined && (typeof tzOdd !== "string" || tzOdd.trim() === "")) {
+    throw new Error(
+      "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowCellBackgroundColorOdd",
+    );
+  }
+  const tzLetFg = (lay as { timezoneLetterRowLetterForegroundColor?: unknown })
+    .timezoneLetterRowLetterForegroundColor;
+  if (tzLetFg !== undefined && (typeof tzLetFg !== "string" || tzLetFg.trim() === "")) {
+    throw new Error(
+      "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowLetterForegroundColor",
+    );
   }
   const hm = lay.hourMarkers;
   if (
