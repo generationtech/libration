@@ -22,7 +22,10 @@
  * contract (behavior/content/realization) derived from `chrome.layout.hourMarkers`.
  */
 
-import type { EffectiveTopBandHourMarkerSelection } from "./appConfig.ts";
+import {
+  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+  type EffectiveTopBandHourMarkerSelection,
+} from "./appConfig.ts";
 import type { HourMarkerGlyphStyleId } from "./types/hourMarkerGlyphStyleIds.ts";
 import {
   resolveDefaultHourMarkerRepresentationSpec,
@@ -93,7 +96,9 @@ export function resolveTopBandAnnotationPolicy(
 /**
  * NATO / structural zone letter in the timezone strip (single column glyph).
  * Default weight is heavier than the base `chromeZoneLabel` role so single-letter cells read clearly; optional
- * `fontAssetId` selects a bundled face for NATO letters only.
+ * `fontAssetId` selects a bundled face for NATO letters only. When omitted, letters use
+ * {@link DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID} (same canonical id as default top-band hour-marker text),
+ * not the role’s default face — keeping NATO letter identity isolated from other `chromeZoneLabel` chrome.
  */
 export function resolveTimezoneStripLetterPolicy(
   chrome: TopChromeStyle,
@@ -105,6 +110,8 @@ export function resolveTimezoneStripLetterPolicy(
   };
   if (options?.fontAssetId !== undefined) {
     typographyOverrides.fontAssetId = options.fontAssetId;
+  } else {
+    typographyOverrides.fontAssetId = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
   }
   return {
     role: "chromeZoneLabel",

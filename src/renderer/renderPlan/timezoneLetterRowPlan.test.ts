@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { DEFAULT_GEOGRAPHY_CONFIG } from "../../config/appConfig";
+import { DEFAULT_GEOGRAPHY_CONFIG, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../../config/appConfig";
 import {
   buildUtcTopScaleLayout,
   computeTopBandCircleStackMetrics,
@@ -127,8 +127,8 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     const tzLetter = letterTexts[0];
     expect(tzLetter?.kind).toBe("text");
     if (tzLetter?.kind === "text") {
-      expect(tzLetter.font.assetId).toBe("dotmatrix-regular");
-      expect(tzLetter.font.displayName.toLowerCase()).toContain("dotmatrix");
+      expect(tzLetter.font.assetId).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+      expect(tzLetter.font.displayName.toLowerCase()).toContain("zeroes");
       expect(tzLetter.font.sizePx).toBe(computeTimezoneLetterSizePx(diskLabelSizePx, fillH));
     }
 

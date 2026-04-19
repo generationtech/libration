@@ -85,7 +85,7 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   chromeStyle?: TopChromeStyle;
   /** Bundled fonts + typography resolution for {@link TextGlyph} emission. */
   glyphRenderContext: GlyphRenderContext;
-  /** When set, NATO letters use this bundled font; otherwise the default `chromeZoneLabel` role asset applies. */
+  /** When set, NATO letters use this bundled font; otherwise policy applies the default NATO letter face (see `resolveTimezoneStripLetterPolicy`). */
   timezoneLetterRowFontAssetId?: FontAssetId;
 }): RenderPlan {
   const st = options.chromeStyle ?? TOP_CHROME_STYLE;

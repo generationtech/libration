@@ -360,8 +360,8 @@ export interface DisplayChromeLayoutConfig {
    */
   timezoneLetterRowActiveCellBackgroundColor?: string;
   /**
-   * Optional bundled font for NATO / structural zone letters only. When omitted, letters use the default asset for the
-   * `chromeZoneLabel` typography role (same as prior releases).
+   * Optional bundled font for NATO / structural zone letters only. When omitted, the implicit default from
+   * `resolveTimezoneStripLetterPolicy` applies at render time (not persisted).
    */
   timezoneLetterRowFontAssetId?: FontAssetId;
   /** NATO structural letter row under the tick rail on the top strip. */

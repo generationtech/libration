@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../config/appConfig.ts";
 import { resolveTimezoneStripLetterPolicy } from "../config/topBandVisualPolicy.ts";
 import { TOP_CHROME_STYLE } from "../config/topChromeStyle.ts";
 import { createTopBandTextGlyph } from "./topBandTextGlyphFromPolicy.ts";
@@ -23,6 +24,10 @@ describe("createTopBandTextGlyph", () => {
     expect(g.text).toBe("Z");
     expect(g.role).toBe("chromeZoneLabel");
     expect(g.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
-    expect(g.typographyOverrides).toEqual({ fontWeight: 900, letterSpacingPx: 0 });
+    expect(g.typographyOverrides).toEqual({
+      fontWeight: 900,
+      letterSpacingPx: 0,
+      fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    });
   });
 });

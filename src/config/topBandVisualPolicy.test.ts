@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "./appConfig.ts";
 import {
   getDefaultTopBandRowVisibilityPolicy,
   hourMarkerRepresentationSpecForTopBandEffectiveSelection,
@@ -46,7 +47,11 @@ describe("topBandVisualPolicy", () => {
     const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE);
     expect(letter.role).toBe("chromeZoneLabel");
     expect(letter.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
-    expect(letter.typographyOverrides).toEqual({ fontWeight: 900, letterSpacingPx: 0 });
+    expect(letter.typographyOverrides).toEqual({
+      fontWeight: 900,
+      letterSpacingPx: 0,
+      fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    });
 
     const letterComputer = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, { fontAssetId: "computer" });
     expect(letterComputer.typographyOverrides).toEqual({
