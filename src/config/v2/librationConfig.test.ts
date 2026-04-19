@@ -22,11 +22,11 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_GEOGRAPHY_CONFIG,
   DEFAULT_PIN_PRESENTATION,
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
   effectiveTopBandHourMarkerSelection,
   resolveCitiesForPins,
   type AppConfig,
 } from "../appConfig";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../productFontConstants";
 import { ALL_DISPLAY_PRESET_IDS, getAppConfigForPreset } from "../displayPresets";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter";
 import {
@@ -128,6 +128,14 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });
 
+  it("normalizeDisplayChromeLayout drops explicit renderer-default sentinel on global default (canonical omission)", () => {
+    expect(
+      normalizeDisplayChromeLayout({
+        defaultTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      }),
+    ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+  });
+
   it("normalizeDisplayChromeLayout keeps valid timezoneLetterRowFontAssetId and drops unknown font ids", () => {
     expect(
       normalizeDisplayChromeLayout({
@@ -163,7 +171,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
   });
 
-  it("normalizePinPresentation keeps valid pinTextFontAssetId and drops unknown ids", () => {
+  it("normalizePinPresentation keeps valid pinTextFontAssetId (including renderer sentinel) and drops unknown ids", () => {
     expect(
       normalizePinPresentation({
         pinTextFontAssetId: "computer",
@@ -171,6 +179,14 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual({
       ...DEFAULT_PIN_PRESENTATION,
       pinTextFontAssetId: "computer",
+    });
+    expect(
+      normalizePinPresentation({
+        pinTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      }),
+    ).toEqual({
+      ...DEFAULT_PIN_PRESENTATION,
+      pinTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
     });
     expect(
       normalizePinPresentation({
@@ -223,7 +239,7 @@ describe("librationConfig v2 (Phase 1)", () => {
   it("effectiveTopBandHourMarkerSelection reads structured hourMarkers only", () => {
     expect(effectiveTopBandHourMarkerSelection(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG)).toEqual({
       kind: "text",
-      fontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+      fontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
       sizeMultiplier: 1.25,
     });
     expect(
@@ -581,7 +597,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     );
   });
 
-  it("dependency boundary: librationConfig.ts imports only appConfig and hour-marker adapters", () => {
+  it("dependency boundary: librationConfig.ts imports only appConfig, productFontConstants, and hour-marker adapters", () => {
     const src = librationConfigSource;
     const importFrom = /from\s+["']([^"']+)["']/g;
     const specifiers: string[] = [];
@@ -589,7 +605,11 @@ describe("librationConfig v2 (Phase 1)", () => {
     while ((m = importFrom.exec(src)) !== null) {
       specifiers.push(m[1]);
     }
-    const allowed = new Set(["../appConfig", "../topBandHourMarkersPersistenceAdapter.ts"]);
+    const allowed = new Set([
+      "../appConfig",
+      "../productFontConstants.ts",
+      "../topBandHourMarkersPersistenceAdapter.ts",
+    ]);
     for (const spec of specifiers) {
       expect(allowed.has(spec), `unexpected import ${spec}`).toBe(true);
     }

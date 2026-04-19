@@ -15,8 +15,8 @@ import {
   clampTopBandHourMarkerSizeMultiplier,
   cloneHourMarkersConfig,
   DEFAULT_HOUR_MARKERS_CONFIG,
-  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "./appConfig.ts";
+import { PRODUCT_TEXT_FONT_VALID_ID_SET } from "./productFontConstants.ts";
 import { clampHourMarkerContentRowPaddingPx } from "./topBandHourMarkerContentRowVerticalMetrics.ts";
 import type {
   HourMarkersAnalogClockAppearance,
@@ -29,8 +29,6 @@ import type {
   HourMarkersTextAppearance,
 } from "./topBandHourMarkersTypes.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
-
-const TOP_BAND_HOUR_MARKER_FONT_ID_SET = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
 
 function normalizedTopBandHourMarkerColor(raw: unknown): string | undefined {
   if (typeof raw !== "string") {
@@ -225,7 +223,7 @@ export function normalizeHourMarkersInput(raw: unknown): HourMarkersConfig {
     const fid = realizationRaw.fontAssetId;
     const appearance = normalizeTextAppearanceInput(realizationRaw.appearance);
     const realization: HourMarkersRealizationConfig =
-      typeof fid === "string" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fid)
+      typeof fid === "string" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(fid)
         ? {
             kind: "text",
             fontAssetId: fid,

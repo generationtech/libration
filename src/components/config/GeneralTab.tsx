@@ -12,7 +12,11 @@
  */
 
 import { useState } from "react";
-import { TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS } from "../../config/appConfig";
+import {
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+} from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
@@ -84,6 +88,9 @@ export function GeneralTab({ config, updateConfig, userPresetsUi }: GeneralTabPr
             }
           >
             <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
               const rec = defaultFontAssetRegistry.getById(id);
               return rec ? (

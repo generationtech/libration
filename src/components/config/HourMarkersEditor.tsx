@@ -15,7 +15,8 @@ import { useRef } from "react";
 import {
   cloneHourMarkersConfig,
   DEFAULT_INDICATOR_ENTRIES_AREA_BACKGROUND_COLOR,
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "../../config/appConfig";
 import type {
@@ -117,10 +118,9 @@ function realizationConfigForKind(
     case "text":
       return {
         kind: "text",
-        fontAssetId:
-          hm.realization.kind === "text"
-            ? hm.realization.fontAssetId
-            : DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+        ...(hm.realization.kind === "text" && hm.realization.fontAssetId !== undefined
+          ? { fontAssetId: hm.realization.fontAssetId }
+          : {}),
         appearance: {},
       };
     case "analogClock":
@@ -270,6 +270,9 @@ function AppearanceSection({
             }
           >
             <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {hourMarkerFontOptions.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.label}
@@ -1024,10 +1027,11 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
   const hourMarkers = lay.hourMarkers;
   const wired = Boolean(updateConfig);
   const entriesAreaEnabled = hourMarkers.indicatorEntriesAreaVisible !== false;
-  const hourMarkerFontOptions = TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
-    const rec = defaultFontAssetRegistry.getById(id);
-    return rec ? { id: rec.id as FontAssetId, label: rec.displayName } : null;
-  }).filter((x): x is { id: FontAssetId; label: string } => x !== null);
+  const hourMarkerFontOptions: readonly { id: FontAssetId; label: string }[] =
+    TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+      const rec = defaultFontAssetRegistry.getById(id);
+      return rec ? { id: rec.id as FontAssetId, label: rec.displayName } : null;
+    }).filter((x): x is { id: FontAssetId; label: string } => x !== null);
 
   const baseProps: HourMarkerEditorBaseProps = { hourMarkers, wired, entriesAreaEnabled, updateConfig };
 

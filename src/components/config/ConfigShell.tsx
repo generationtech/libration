@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from "react";
 import type { ReactNode, RefObject } from "react";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productFontConstants";
 import { resolveConfigUiTextFontAssetId } from "../../config/productTextFont";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
@@ -95,6 +96,9 @@ export function ConfigShell({
       return undefined;
     }
     const id = resolveConfigUiTextFontAssetId(config.chrome.layout);
+    if (id === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
+      return undefined;
+    }
     return canvasCssFontFamilyStackForBundledAssetId(id) ?? "system-ui, sans-serif";
   }, [config]);
 

@@ -19,9 +19,13 @@
  * (manifest `sourceNames.familyName`, not marketing `displayName`).
  */
 
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { ResolvedTextStyle } from "../../typography/typographyTypes.ts";
 import type { RenderFontStyle, RenderTextItem } from "../renderPlan/renderPlanTypes.ts";
 import { canvasCssFontFamilyStackForBundledAssetId } from "./bundledFontCanvasFamily.ts";
+
+/** Minimal CSS family stack so Canvas 2D uses the host environment’s default sans-serif (not a bundled face). */
+export const CANVAS_RENDERER_DEFAULT_FONT_FAMILY_STACK = "sans-serif";
 
 function cssFontFamilyFromDisplayName(displayName: string): string {
   const escaped = displayName.includes(" ") ? `"${displayName.replace(/"/g, '\\"')}"` : displayName;
@@ -36,6 +40,9 @@ function cssFontFamilyFromDisplayName(displayName: string): string {
 export function canvasFontFamilyFromRenderTextFont(font: RenderFontStyle): string {
   if (font.family !== undefined && font.family.length > 0) {
     return font.family;
+  }
+  if (font.assetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
+    return CANVAS_RENDERER_DEFAULT_FONT_FAMILY_STACK;
   }
   const bundled = canvasCssFontFamilyStackForBundledAssetId(font.assetId);
   if (bundled !== undefined) {

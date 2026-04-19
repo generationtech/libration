@@ -16,6 +16,7 @@ import { useCallback, useState, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DEFAULT_APP_CONFIG } from "../../config/appConfig";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productFontConstants";
 import {
   appConfigToV2,
   defaultLibrationConfigV2,
@@ -77,7 +78,7 @@ describe("ChromeTab major areas", () => {
     expect(last?.chrome.layout.bottomReadoutFontAssetId).toBeUndefined();
   });
 
-  it("global default text chrome font lists bundled faces only and omits canonical default from storage", () => {
+  it("global default text font lists renderer baseline and bundled faces; renderer choice omits storage", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = defaultLibrationConfigV2();
     render(
@@ -91,10 +92,13 @@ describe("ChromeTab major areas", () => {
     const sel = screen.getByTestId("chrome-global-text-font-select");
     const values = Array.from(sel.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value);
     expect(values).not.toContain("");
+    expect(values).toContain(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
     expect(values).toContain("zeroes-two");
     fireEvent.change(sel, { target: { value: "computer" } });
     expect(last?.chrome.layout.defaultTextFontAssetId).toBe("computer");
     fireEvent.change(sel, { target: { value: "zeroes-two" } });
+    expect(last?.chrome.layout.defaultTextFontAssetId).toBe("zeroes-two");
+    fireEvent.change(sel, { target: { value: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } });
     expect(last?.chrome.layout.defaultTextFontAssetId).toBeUndefined();
   });
 

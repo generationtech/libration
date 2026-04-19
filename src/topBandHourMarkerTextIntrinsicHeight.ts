@@ -24,6 +24,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "./config/appConfig.ts";
+import { omitRendererDefaultSentinelFromTypographyOverrides } from "./config/productTextFont.ts";
 import {
   hourMarkerRepresentationSpecForTopBandEffectiveSelection,
   resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection,
@@ -63,12 +64,13 @@ export function resolveTopBandHourMarkerTextResolvedStyleForLayout(args: {
   const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(args.selection);
   const typographyOverrides =
     resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(args.selection);
+  const resolveOverrides = omitRendererDefaultSentinelFromTypographyOverrides(typographyOverrides);
   const hints = resolveHourMarkerGlyphStyle(spec.glyphStyleId).text ?? {};
   const insetFrac = Math.max(0, hints.insetFrac ?? 0);
   const effectiveSizePx = args.markerLayoutBoxSizePx * (1 - 2 * insetFrac);
   return resolveTextStyle(args.fontRegistry, spec.textRole, {
     fontSizePx: effectiveSizePx,
-    ...typographyOverrides,
+    ...resolveOverrides,
   });
 }
 

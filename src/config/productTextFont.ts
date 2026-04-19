@@ -12,26 +12,32 @@
  */
 
 /**
- * Single product-level default bundled font: chrome text controls, bottom readouts, map pin labels,
+ * Product-level default text font policy: bundled faces and {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}
+ * (renderer/backend default — not a manifest font). Applies to chrome text, bottom readouts, map pin labels,
  * and configuration UI (DOM bridge). Policy-only — no renderer imports.
  *
- * Precedence for a given surface: explicit local font override → {@link resolveDefaultProductTextFontAssetId}
- * → {@link DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID} (zeroes-two).
+ * **Precedence for a surface**
+ * 1. Explicit local font override (bundled id or renderer-default sentinel), when valid
+ * 2. Explicit product-wide `defaultTextFontAssetId`, when valid
+ * 3. {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID} (baseline; omitting the global field means this)
+ * 4. Defensive: bundled zeroes-two (`DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID` in appConfig) only where a
+ *    code path cannot represent renderer default — resolution here does not fall back to zeroes-two.
  *
- * Thin surface helpers ({@link resolveBottomReadoutTextFontAssetId}, {@link resolvePinLabelTextFontAssetId},
- * {@link resolveConfigUiTextFontAssetId}) all delegate to {@link resolveEffectiveProductTextFontAssetId} so
- * precedence is not duplicated in render or UI paths.
+ * Thin surface helpers delegate to {@link resolveEffectiveProductTextFontAssetId} so precedence stays
+ * centralized.
  */
 
 import {
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
-} from "./appConfig.ts";
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  isValidProductTextFontChoiceId,
+} from "./productFontConstants.ts";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
+
+export { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "./productFontConstants.ts";
 
 /** Layout fields that affect global default font resolution (subset of {@link DisplayChromeLayoutConfig}). */
 export type ProductTextFontLayoutSlice = {
-  /** Canonical v2 field: global default bundled font for product text surfaces. */
+  /** Canonical v2 field: global default font for product text surfaces (bundled id or renderer-default sentinel). */
   defaultTextFontAssetId?: FontAssetId;
   /**
    * Legacy persisted key (pre–product-wide rename). Accepted by resolvers for raw objects; normalized
@@ -44,60 +50,72 @@ export type ProductTextFontLayoutSlice = {
   configUiFontAssetId?: FontAssetId;
 };
 
-const SELECTABLE_FONT_IDS = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
-
-function isSelectableProductFontId(id: string): id is FontAssetId {
-  return SELECTABLE_FONT_IDS.has(id);
-}
-
 function readAuthoredGlobalDefault(layout: ProductTextFontLayoutSlice): FontAssetId | undefined {
   const primary = layout.defaultTextFontAssetId;
-  if (typeof primary === "string" && isSelectableProductFontId(primary)) {
+  if (typeof primary === "string" && isValidProductTextFontChoiceId(primary)) {
     return primary;
   }
   const legacy = layout.topBandTextChromeDefaultFontAssetId;
-  if (typeof legacy === "string" && isSelectableProductFontId(legacy)) {
+  if (typeof legacy === "string" && isValidProductTextFontChoiceId(legacy)) {
     return legacy;
   }
   return undefined;
 }
 
 /**
- * Effective global default bundled font: structured field when valid, otherwise
- * {@link DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID} (zeroes-two).
+ * Effective global default font: valid structured field when set; otherwise
+ * {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID} (renderer baseline — not zeroes-two).
  */
 export function resolveDefaultProductTextFontAssetId(layout: ProductTextFontLayoutSlice): FontAssetId {
-  return readAuthoredGlobalDefault(layout) ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+  return readAuthoredGlobalDefault(layout) ?? PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID;
 }
 
 /**
- * Resolves bundled font for a control with an optional local override: local wins, else
+ * Resolves font choice for a control with an optional local override: local wins when valid, else
  * {@link resolveDefaultProductTextFontAssetId}.
  */
 export function resolveEffectiveProductTextFontAssetId(
   layout: ProductTextFontLayoutSlice,
   localFontAssetId?: FontAssetId,
 ): FontAssetId {
-  if (typeof localFontAssetId === "string" && isSelectableProductFontId(localFontAssetId)) {
+  if (typeof localFontAssetId === "string" && isValidProductTextFontChoiceId(localFontAssetId)) {
     return localFontAssetId;
   }
   return resolveDefaultProductTextFontAssetId(layout);
 }
 
-/** Bottom readout: local override on layout → global default → zeroes-two. */
+/** Bottom readout: local override on layout → global default → renderer default. */
 export function resolveBottomReadoutTextFontAssetId(layout: ProductTextFontLayoutSlice): FontAssetId {
   return resolveEffectiveProductTextFontAssetId(layout, layout.bottomReadoutFontAssetId);
 }
 
-/** Configuration panel DOM: local override on layout → global default → zeroes-two. */
+/** Configuration panel DOM: local override on layout → global default → renderer default. */
 export function resolveConfigUiTextFontAssetId(layout: ProductTextFontLayoutSlice): FontAssetId {
   return resolveEffectiveProductTextFontAssetId(layout, layout.configUiFontAssetId);
 }
 
-/** Map pin name + time labels: optional override on pin presentation → global default → zeroes-two. */
+/** Map pin name + time labels: optional override on pin presentation → global default → renderer default. */
 export function resolvePinLabelTextFontAssetId(
   layout: ProductTextFontLayoutSlice,
   pinPresentation: { pinTextFontAssetId?: FontAssetId },
 ): FontAssetId {
   return resolveEffectiveProductTextFontAssetId(layout, pinPresentation.pinTextFontAssetId);
+}
+
+/**
+ * Strips {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID} from typography overrides so
+ * {@link resolveTextStyle} can use the role’s bundled face for metrics; emit paths still pass the
+ * sentinel through {@link glyphs/glyphToRenderPlan.ts!emitTextGlyph} for the final Canvas font.
+ */
+export function omitRendererDefaultSentinelFromTypographyOverrides<T extends { fontAssetId?: FontAssetId }>(
+  overrides: T | undefined,
+): Omit<T, "fontAssetId"> | undefined {
+  if (!overrides) {
+    return undefined;
+  }
+  if (overrides.fontAssetId !== PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
+    return overrides;
+  }
+  const { fontAssetId: _omit, ...rest } = overrides;
+  return Object.keys(rest).length > 0 ? (rest as Omit<T, "fontAssetId">) : undefined;
 }

@@ -15,6 +15,8 @@ import {
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
   DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "../../config/appConfig";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
@@ -85,6 +87,9 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
             }
           >
             <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
               const rec = defaultFontAssetRegistry.getById(id);
               return rec ? (

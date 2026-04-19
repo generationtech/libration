@@ -39,7 +39,7 @@ export interface CityPinsPayload {
   showLabels: boolean;
   labelMode: CityPinsLabelMode;
   scale: CityPinsScale;
-  /** Bundled font for pin name and time labels (resolved global default at layer construction). */
+  /** Resolved font for pin labels (bundled id or renderer-default sentinel from product policy). */
   labelFontAssetId: FontAssetId;
 }
 

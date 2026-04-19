@@ -13,6 +13,8 @@
 
 import {
   ALL_REFERENCE_CITY_IDS,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   type CustomPinConfig,
   type PinLabelMode,
@@ -391,6 +393,9 @@ export function PinsTab({ config, updateConfig }: PinsTabProps) {
             }
           >
             <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
               const rec = defaultFontAssetRegistry.getById(id);
               return rec ? (

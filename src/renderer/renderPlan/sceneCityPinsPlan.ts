@@ -18,6 +18,7 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
@@ -47,7 +48,10 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
 
   const layerOp = options.layerOpacity;
   const { showLabels, labelMode, scale, cities, labelFontAssetId } = options.payload;
-  const labelFontRec = defaultFontAssetRegistry.requireById(labelFontAssetId);
+  const labelDisplayName =
+    labelFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID
+      ? "Renderer default"
+      : defaultFontAssetRegistry.requireById(labelFontAssetId).displayName;
   const scaleFactor =
     scale === "small" ? 0.82 : scale === "large" ? 1.22 : 1;
 
@@ -102,7 +106,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
       fill: "rgba(245, 248, 255, 0.94)",
       font: {
         assetId: labelFontAssetId,
-        displayName: labelFontRec.displayName,
+        displayName: labelDisplayName,
         sizePx: nameSize,
         weight: 500,
         style: "normal",
@@ -130,7 +134,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
         fill: "rgba(215, 224, 242, 0.9)",
         font: {
           assetId: labelFontAssetId,
-          displayName: labelFontRec.displayName,
+          displayName: labelDisplayName,
           sizePx: timeSize,
           weight: 400,
           style: "normal",

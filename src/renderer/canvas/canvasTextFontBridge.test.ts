@@ -12,7 +12,9 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import {
+  CANVAS_RENDERER_DEFAULT_FONT_FAMILY_STACK,
   canvasFontFamilyFromRenderTextFont,
   canvasFontStringFromRenderTextFont,
 } from "./canvasTextFontBridge.ts";
@@ -70,5 +72,17 @@ describe("canvasTextFontBridge", () => {
         baseFont({ assetId: "not-a-bundled-font", displayName: "Fallback Name" }),
       ),
     ).toBe(`"Fallback Name", system-ui, sans-serif`);
+  });
+
+  it("canvasFontFamilyFromRenderTextFont maps product renderer-default sentinel to environment sans-serif", () => {
+    expect(
+      canvasFontFamilyFromRenderTextFont(
+        baseFont({
+          assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+          displayName: "Renderer default",
+          family: undefined,
+        }),
+      ),
+    ).toBe(CANVAS_RENDERER_DEFAULT_FONT_FAMILY_STACK);
   });
 });

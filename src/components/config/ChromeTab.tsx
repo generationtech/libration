@@ -23,7 +23,8 @@ import {
   labelForCuratedFixedZone,
 } from "./curatedFixedTimeZones";
 import {
-  DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   type TopBandAnchorConfig,
   type TopBandTimeMode,
@@ -358,6 +359,9 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           >
             <option value="">Default (typography role)</option>
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
               const rec = defaultFontAssetRegistry.getById(id);
               return rec ? (
@@ -374,13 +378,13 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             data-testid="chrome-global-text-font-select"
             disabled={!wired}
             aria-label="Global default font for instrument text, map labels, and configuration panel"
-            value={lay.defaultTextFontAssetId ?? DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID}
+            value={lay.defaultTextFontAssetId ?? PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}
             onChange={
               wired && updateConfig
                 ? (e) => {
                     const v = e.currentTarget.value as FontAssetId;
                     updateConfig((draft) => {
-                      if (v === DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID) {
+                      if (v === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
                         delete (draft.chrome.layout as { defaultTextFontAssetId?: FontAssetId })
                           .defaultTextFontAssetId;
                       } else {
@@ -391,6 +395,9 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
                 : undefined
             }
           >
+            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
+              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
+            </option>
             {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
               const rec = defaultFontAssetRegistry.getById(id);
               return rec ? (

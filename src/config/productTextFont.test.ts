@@ -12,8 +12,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "./appConfig.ts";
+import { DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG } from "./appConfig.ts";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "./productFontConstants.ts";
 import {
+  omitRendererDefaultSentinelFromTypographyOverrides,
   resolveBottomReadoutTextFontAssetId,
   resolveConfigUiTextFontAssetId,
   resolveDefaultProductTextFontAssetId,
@@ -22,21 +24,26 @@ import {
 } from "./productTextFont.ts";
 
 describe("productTextFont", () => {
-  it("resolveDefaultProductTextFontAssetId uses zeroes-two when global field is absent or invalid", () => {
-    expect(resolveDefaultProductTextFontAssetId({})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+  it("resolveDefaultProductTextFontAssetId uses renderer-default sentinel when global field is absent or invalid", () => {
+    expect(resolveDefaultProductTextFontAssetId({})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
     expect(
       resolveDefaultProductTextFontAssetId({
         defaultTextFontAssetId: "bogus-id",
       } as { defaultTextFontAssetId?: string }),
-    ).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+    ).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
-  it("resolveDefaultProductTextFontAssetId keeps valid global ids", () => {
+  it("resolveDefaultProductTextFontAssetId keeps valid global ids (bundled and renderer sentinel)", () => {
     expect(
       resolveDefaultProductTextFontAssetId({
         defaultTextFontAssetId: "computer",
       }),
     ).toBe("computer");
+    expect(
+      resolveDefaultProductTextFontAssetId({
+        defaultTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      }),
+    ).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
   it("accepts legacy topBandTextChromeDefaultFontAssetId until migrated away", () => {
@@ -68,16 +75,16 @@ describe("productTextFont", () => {
     ).toBe("computer");
   });
 
-  it("resolveEffectiveProductTextFontAssetId: omitted local and global uses canonical fallback", () => {
+  it("resolveEffectiveProductTextFontAssetId: omitted local and global uses renderer baseline", () => {
     expect(resolveEffectiveProductTextFontAssetId({}, undefined)).toBe(
-      DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+      PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
     );
-    expect(resolveEffectiveProductTextFontAssetId(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, undefined)).toBe(
-      DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-    );
+    expect(
+      resolveEffectiveProductTextFontAssetId(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, undefined),
+    ).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
-  it("resolveBottomReadoutTextFontAssetId: layout local override wins, else global, else zeroes-two", () => {
+  it("resolveBottomReadoutTextFontAssetId: layout local override wins, else global, else renderer baseline", () => {
     expect(
       resolveBottomReadoutTextFontAssetId({
         bottomReadoutFontAssetId: "flip-clock",
@@ -89,10 +96,10 @@ describe("productTextFont", () => {
         defaultTextFontAssetId: "computer",
       }),
     ).toBe("computer");
-    expect(resolveBottomReadoutTextFontAssetId({})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+    expect(resolveBottomReadoutTextFontAssetId({})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
-  it("resolveConfigUiTextFontAssetId: layout local override wins, else global, else zeroes-two", () => {
+  it("resolveConfigUiTextFontAssetId: layout local override wins, else global, else renderer baseline", () => {
     expect(
       resolveConfigUiTextFontAssetId({
         configUiFontAssetId: "kremlin",
@@ -100,10 +107,10 @@ describe("productTextFont", () => {
       }),
     ).toBe("kremlin");
     expect(resolveConfigUiTextFontAssetId({ defaultTextFontAssetId: "computer" })).toBe("computer");
-    expect(resolveConfigUiTextFontAssetId({})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+    expect(resolveConfigUiTextFontAssetId({})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
   });
 
-  it("resolvePinLabelTextFontAssetId: presentation override wins, else global, else zeroes-two", () => {
+  it("resolvePinLabelTextFontAssetId: presentation override wins, else global, else renderer baseline", () => {
     expect(
       resolvePinLabelTextFontAssetId(
         { defaultTextFontAssetId: "computer" },
@@ -111,6 +118,26 @@ describe("productTextFont", () => {
       ),
     ).toBe("dotmatrix-regular");
     expect(resolvePinLabelTextFontAssetId({ defaultTextFontAssetId: "computer" }, {})).toBe("computer");
-    expect(resolvePinLabelTextFontAssetId({}, {})).toBe(DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID);
+    expect(resolvePinLabelTextFontAssetId({}, {})).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
+  });
+
+  it("omitRendererDefaultSentinelFromTypographyOverrides strips sentinel only", () => {
+    expect(omitRendererDefaultSentinelFromTypographyOverrides(undefined)).toBeUndefined();
+    expect(
+      omitRendererDefaultSentinelFromTypographyOverrides({
+        fontAssetId: "computer",
+      }),
+    ).toEqual({ fontAssetId: "computer" });
+    expect(
+      omitRendererDefaultSentinelFromTypographyOverrides({
+        fontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+      }),
+    ).toBeUndefined();
+    expect(
+      omitRendererDefaultSentinelFromTypographyOverrides({
+        fontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+        fontSizeMultiplier: 1.2,
+      }),
+    ).toEqual({ fontSizeMultiplier: 1.2 });
   });
 });

@@ -22,6 +22,10 @@
  * where migrated; stroke caps/joins come from {@link resolveHourMarkerGlyphStyle} — no Canvas state in emitters.
  */
 
+import {
+  omitRendererDefaultSentinelFromTypographyOverrides,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+} from "../config/productTextFont.ts";
 import type { FontAssetRegistry } from "../typography/fontAssetRegistry.ts";
 import { resolveTextStyle } from "../typography/typographyResolver.ts";
 import type { RenderPlan, RenderTextAlign } from "../renderer/renderPlan/renderPlanTypes.ts";
@@ -66,9 +70,13 @@ function emitTextGlyph(
   const x = layout.cx;
   const textAlign: RenderTextAlign = glyph.textAlign ?? "center";
 
+  const rawOverrides = glyph.typographyOverrides;
+  const useRendererDefault =
+    rawOverrides?.fontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID;
+  const resolveOverrides = omitRendererDefaultSentinelFromTypographyOverrides(rawOverrides);
   const style = resolveTextStyle(ctx.fontRegistry, glyph.role, {
     fontSizePx: effectiveSize,
-    ...glyph.typographyOverrides,
+    ...resolveOverrides,
   });
   const trackingPx = hints.trackingPx ?? 0;
   const letterSpacingEm =
@@ -85,8 +93,8 @@ function emitTextGlyph(
     text: glyph.text,
     fill,
     font: {
-      assetId: style.fontAssetId,
-      displayName: style.displayName,
+      assetId: useRendererDefault ? PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID : style.fontAssetId,
+      displayName: useRendererDefault ? "Renderer default" : style.displayName,
       sizePx: style.fontSizePx,
       weight: typeof weight === "number" ? weight : weight,
       style: style.fontStyle,

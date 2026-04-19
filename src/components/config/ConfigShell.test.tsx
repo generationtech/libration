@@ -16,6 +16,7 @@ import { describe, expect, it } from "vitest";
 import { createRef } from "react";
 import { render } from "@testing-library/react";
 import { normalizeLibrationConfig, defaultLibrationConfigV2 } from "../../config/v2/librationConfig";
+import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productFontConstants";
 import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
 import { resolveConfigUiTextFontAssetId } from "../../config/productTextFont";
 import { ConfigShell } from "./ConfigShell";
@@ -77,5 +78,31 @@ describe("ConfigShell", () => {
     expect(shell).not.toBeNull();
     const el = shell as HTMLElement;
     expect(el.style.getPropertyValue("--config-shell-body-font").trim()).toBe(expectedStack!.trim());
+  });
+
+  it("does not set --config-shell-body-font when resolved panel font is renderer default (inherit)", () => {
+    const base = defaultLibrationConfigV2();
+    const config = normalizeLibrationConfig({
+      ...base,
+      chrome: {
+        ...base.chrome,
+        layout: {
+          ...base.chrome.layout,
+          defaultTextFontAssetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+        },
+      },
+    });
+    expect(resolveConfigUiTextFontAssetId(config.chrome.layout)).toBe(PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID);
+
+    const workingV2Ref = createRef<ReturnType<typeof normalizeLibrationConfig> | null>();
+    workingV2Ref.current = config;
+
+    const { container } = render(
+      <ConfigShell workingV2Ref={workingV2Ref} panelDomId="test-config-shell-renderer-default" />,
+    );
+    const shell = container.querySelector("#test-config-shell-renderer-default");
+    expect(shell).not.toBeNull();
+    const el = shell as HTMLElement;
+    expect(el.style.getPropertyValue("--config-shell-body-font").trim()).toBe("");
   });
 });

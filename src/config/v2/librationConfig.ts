@@ -42,12 +42,15 @@ import {
   DEMO_TIME_SPEED_MAX,
   DEMO_TIME_SPEED_MIN,
   DEFAULT_PIN_PRESENTATION,
-  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
   type DemoTimeConfig,
   type FontAssetId,
 } from "../appConfig";
+import {
+  PRODUCT_TEXT_FONT_VALID_ID_SET,
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+} from "../productFontConstants.ts";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
 
 /** v2 document identity; numeric `2` matches Phase 0 contract. */
@@ -81,7 +84,6 @@ function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
 }
 
-const TOP_BAND_HOUR_MARKER_FONT_ID_SET = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
 
 function tryParseCustomPinRecord(item: unknown): CustomPinConfig | null {
   if (!isPlainObject(item)) {
@@ -213,7 +215,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   const tzFontRaw = (input as { timezoneLetterRowFontAssetId?: unknown }).timezoneLetterRowFontAssetId;
   if (typeof tzFontRaw === "string") {
     const t = tzFontRaw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
       timezoneLetterRowFontAssetId = t as FontAssetId;
     }
   }
@@ -227,7 +229,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
       return;
     }
     const t = raw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
       defaultTextFontAssetId = t as FontAssetId;
     }
   };
@@ -235,12 +237,16 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   if (defaultTextFontAssetId === undefined) {
     pickGlobal(legacyGlobalRaw);
   }
+  /** Canonical storage: omit explicit renderer-default sentinel — same effective semantics as absent field. */
+  if (defaultTextFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID) {
+    defaultTextFontAssetId = undefined;
+  }
 
   let bottomReadoutFontAssetId: FontAssetId | undefined;
   const brRaw = (input as { bottomReadoutFontAssetId?: unknown }).bottomReadoutFontAssetId;
   if (typeof brRaw === "string") {
     const t = brRaw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
       bottomReadoutFontAssetId = t as FontAssetId;
     }
   }
@@ -249,7 +255,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   const cuRaw = (input as { configUiFontAssetId?: unknown }).configUiFontAssetId;
   if (typeof cuRaw === "string") {
     const t = cuRaw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
       configUiFontAssetId = t as FontAssetId;
     }
   }
@@ -298,7 +304,7 @@ export function normalizePinPresentation(input: unknown): PinPresentationConfig 
   const pinFontRaw = (input as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
   if (typeof pinFontRaw === "string") {
     const t = pinFontRaw.trim();
-    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+    if (t !== "" && PRODUCT_TEXT_FONT_VALID_ID_SET.has(t)) {
       pinTextFontAssetId = t as FontAssetId;
     }
   }
@@ -571,7 +577,7 @@ export function assertIsNormalizedLibrationConfig(
   const pinTextFont = (pres as { pinTextFontAssetId?: unknown }).pinTextFontAssetId;
   if (
     pinTextFont !== undefined &&
-    (typeof pinTextFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(pinTextFont))
+    (typeof pinTextFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(pinTextFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid pins.presentation.pinTextFontAssetId");
   }
@@ -639,28 +645,28 @@ export function assertIsNormalizedLibrationConfig(
   const tzFont = (lay as { timezoneLetterRowFontAssetId?: unknown }).timezoneLetterRowFontAssetId;
   if (
     tzFont !== undefined &&
-    (typeof tzFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(tzFont))
+    (typeof tzFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(tzFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowFontAssetId");
   }
   const globalTextFont = (lay as { defaultTextFontAssetId?: unknown }).defaultTextFontAssetId;
   if (
     globalTextFont !== undefined &&
-    (typeof globalTextFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(globalTextFont))
+    (typeof globalTextFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(globalTextFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.defaultTextFontAssetId");
   }
   const bottomReadoutFont = (lay as { bottomReadoutFontAssetId?: unknown }).bottomReadoutFontAssetId;
   if (
     bottomReadoutFont !== undefined &&
-    (typeof bottomReadoutFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(bottomReadoutFont))
+    (typeof bottomReadoutFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(bottomReadoutFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.bottomReadoutFontAssetId");
   }
   const configUiFont = (lay as { configUiFontAssetId?: unknown }).configUiFontAssetId;
   if (
     configUiFont !== undefined &&
-    (typeof configUiFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(configUiFont))
+    (typeof configUiFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(configUiFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.configUiFontAssetId");
   }
@@ -711,7 +717,7 @@ export function assertIsNormalizedLibrationConfig(
     const fontAssetId = (hm.realization as { fontAssetId?: unknown }).fontAssetId;
     if (
       fontAssetId !== undefined &&
-      (typeof fontAssetId !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(fontAssetId))
+      (typeof fontAssetId !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(fontAssetId))
     ) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers text fontAssetId");
     }

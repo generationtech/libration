@@ -16,22 +16,17 @@ import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 
 export type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
+import { resolveEffectiveProductTextFontAssetId } from "./productTextFont.ts";
+import {
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+} from "./productFontConstants.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 
-/**
- * Font assets exposed in UI for top-band hour disk numerals (must stay aligned with bundled manifest ids).
- */
-export const TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS: readonly FontAssetId[] = [
-  "computer",
-  "dotmatrix-regular",
-  "dseg7modern-regular",
-  "flip-clock",
-  "kremlin",
-  "zeroes-one",
-  "zeroes-two",
-];
-
-const TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET = new Set<string>(TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS);
+export {
+  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+} from "./productFontConstants.ts";
 
 /**
  * Explicit enable flags for composable scene layers. This module is the application
@@ -152,7 +147,10 @@ export const LEGACY_TOP_BAND_TEXT_MODE_TO_FONT_ASSET_ID: Record<
   terminal: "computer",
 };
 
-/** Canonical bundled font for top-band text hour markers when none is stored (truthful default). */
+/**
+ * Canonical **bundled** face id for legacy hour-marker text defaults and tests (zeroes-two).
+ * Product-wide text baseline is {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}, not this constant.
+ */
 export const DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID: FontAssetId = "zeroes-two";
 
 /**
@@ -284,7 +282,7 @@ export function cloneHourMarkersConfig(h: HourMarkersConfig): HourMarkersConfig 
 export type EffectiveTopBandHourMarkerSelection =
   | {
       kind: "text";
-      /** Resolved bundled font (local override, else global default, else canonical fallback). */
+      /** Resolved font choice (bundled id or renderer-default sentinel). */
       fontAssetId: FontAssetId;
       sizeMultiplier: number;
     }
@@ -293,33 +291,6 @@ export type EffectiveTopBandHourMarkerSelection =
       glyphMode: TopBandHourMarkerGlyphMode;
       sizeMultiplier: number;
     };
-
-/**
- * Local font override → global default → canonical zeroes-two. Inlined here (same rules as
- * `productTextFont.ts`) so this module does not import that file — avoids a circular load with
- * `productTextFont` importing `appConfig`.
- */
-function resolveEffectiveProductTextFontAssetIdForLayout(
-  layout: DisplayChromeLayoutConfig,
-  localFontAssetId?: FontAssetId,
-): FontAssetId {
-  if (
-    typeof localFontAssetId === "string" &&
-    TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(localFontAssetId)
-  ) {
-    return localFontAssetId;
-  }
-  const primary = layout.defaultTextFontAssetId;
-  if (typeof primary === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(primary)) {
-    return primary;
-  }
-  const legacy = (layout as { topBandTextChromeDefaultFontAssetId?: FontAssetId })
-    .topBandTextChromeDefaultFontAssetId;
-  if (typeof legacy === "string" && TOP_BAND_TEXT_CHROME_SELECTABLE_FONT_ID_SET.has(legacy)) {
-    return legacy;
-  }
-  return DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
-}
 
 /**
  * Single source of truth for what top-band hour markers intend to render. Reads
@@ -345,7 +316,7 @@ export function effectiveTopBandHourMarkerSelection(
     hm.realization.fontAssetId !== undefined ? hm.realization.fontAssetId : undefined;
   return {
     kind: "text",
-    fontAssetId: resolveEffectiveProductTextFontAssetIdForLayout(layout, localFont),
+    fontAssetId: resolveEffectiveProductTextFontAssetId(layout, localFont),
     sizeMultiplier,
   };
 }
@@ -393,8 +364,9 @@ export interface DisplayChromeLayoutConfig {
    */
   timezoneLetterRowFontAssetId?: FontAssetId;
   /**
-   * Global default bundled font for product text (top-band controls, bottom readouts, map pin labels, config UI).
-   * When omitted, {@link resolveDefaultProductTextFontAssetId} uses the canonical zeroes-two id.
+   * Global default font for product text (top-band controls, bottom readouts, map pin labels, config UI):
+   * bundled id or {@link PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}. When omitted, effective default is
+   * renderer-native baseline (see {@link resolveDefaultProductTextFontAssetId}).
    *
    * Legacy persisted key `topBandTextChromeDefaultFontAssetId` is normalized to this field.
    */
