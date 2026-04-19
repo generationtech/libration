@@ -27,15 +27,21 @@ import { TOP_CHROME_STYLE, TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA } f
 import { resolveEffectiveTimezoneLetterRowArea } from "./topBandTimezoneLetterRowResolver";
 
 describe("resolveEffectiveTimezoneLetterRowArea", () => {
-  it("matches shipped defaults when no overrides are authored", () => {
+  it("derives active cell from built-in even/odd defaults when no overrides are authored", () => {
     const eff = resolveEffectiveTimezoneLetterRowArea(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+    const expectedDerived = deriveDarkerNatoActiveCellBackgroundFromEvenOdd(
+      DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
+      DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
+      DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR,
+    );
     expect(eff.usesAuthoredCellBackgroundOverride).toBe(false);
     expect(eff.usesAuthoredActiveCellBackgroundOverride).toBe(false);
     expect(eff.usesAuthoredLetterForegroundOverride).toBe(false);
     expect(eff.effectiveBackgroundColorEven).toBe(DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN);
     expect(eff.effectiveBackgroundColorOdd).toBe(DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD);
-    expect(eff.effectiveBackgroundColorActive).toBe(TOP_CHROME_STYLE.timezoneTab.fillActive);
-    expect(eff.effectiveBackgroundColorActive).toBe(DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR);
+    expect(eff.effectiveBackgroundColorActive).toBe(expectedDerived);
+    expect(eff.effectiveBackgroundColorActive).not.toBe(TOP_CHROME_STYLE.timezoneTab.fillActive);
+    expect(eff.effectiveBackgroundColorActive).not.toBe(DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR);
     expect(eff.effectiveLetterForegroundColor).toBe(TOP_CHROME_STYLE.zoneText.letter);
     expect(eff.effectiveLetterForegroundColorActiveCell).toBeUndefined();
   });
@@ -122,5 +128,16 @@ describe("resolveEffectiveTimezoneLetterRowArea", () => {
     });
     expect(eff.effectiveLetterForegroundColorActiveCell).toBeDefined();
     expect(eff.effectiveLetterForegroundColorActiveCell).not.toBe(eff.effectiveLetterForegroundColor);
+  });
+
+  it("falls back to the legacy active token when effective even/odd cannot be parsed for derivation", () => {
+    const eff = resolveEffectiveTimezoneLetterRowArea({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      timezoneLetterRowCellBackgroundColorEven: "hsl(0, 0%, 50%)",
+      timezoneLetterRowCellBackgroundColorOdd: "hsl(0, 0%, 60%)",
+    });
+    expect(eff.usesAuthoredCellBackgroundOverride).toBe(true);
+    expect(eff.usesAuthoredActiveCellBackgroundOverride).toBe(false);
+    expect(eff.effectiveBackgroundColorActive).toBe(DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR);
   });
 });

@@ -177,8 +177,9 @@ export const DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD: string =
   TOP_CHROME_STYLE.timezoneTab.fillOdd;
 
 /**
- * Default present-time / active NATO cell fill when no layout override is stored (same as
- * {@link TOP_CHROME_STYLE.timezoneTab.fillActive}).
+ * Legacy active-cell fill token (same as {@link TOP_CHROME_STYLE.timezoneTab.fillActive}).
+ * Normal active appearance is derived from effective even/odd NATO backgrounds; this string is reserved for defensive
+ * fallback when that derivation cannot parse those fills (resolver passes it as the derive utility’s fallback).
  */
 export const DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR: string =
   TOP_CHROME_STYLE.timezoneTab.fillActive;
@@ -351,9 +352,9 @@ export interface DisplayChromeLayoutConfig {
    */
   timezoneLetterRowLetterForegroundColor?: string;
   /**
-   * Present-time / active structural column cell background. When omitted, effective fill is the shipped active token if
-   * neither alternating cell background is overridden; otherwise a deterministic darker color derived from the resolved
-   * even/odd palette.
+   * Present-time / active structural column cell background. When omitted, effective fill is a deterministic darker color
+   * derived from the resolved even/odd NATO palette (including built-in defaults); the legacy active token is used only
+   * as an internal fallback when that derivation cannot run.
    */
   timezoneLetterRowActiveCellBackgroundColor?: string;
   /** NATO structural letter row under the tick rail on the top strip. */

@@ -12,11 +12,11 @@
  */
 
 import {
-  DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
   DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR,
 } from "../../config/appConfig";
+import { resolveEffectiveTimezoneLetterRowArea } from "../../config/topBandTimezoneLetterRowResolver";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -29,6 +29,7 @@ export type NatoTimezoneEditorProps = {
 export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorProps) {
   const lay = config.chrome.layout;
   const wired = Boolean(updateConfig);
+  const effectiveTzLetterRow = resolveEffectiveTimezoneLetterRowArea(lay);
 
   return (
     <div data-testid="chrome-editor-nato-timezone">
@@ -150,12 +151,12 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
             aria-label="Present-time NATO timezone cell background color"
             title={
               lay.timezoneLetterRowActiveCellBackgroundColor === undefined
-                ? "Default active-cell fill — shipped token, or darker derived palette when alternating cells are customized"
+                ? "Automatic active-cell fill — darker shade derived from the current even/odd NATO palette"
                 : "Present-time / active cell background override"
             }
             value={
               lay.timezoneLetterRowActiveCellBackgroundColor ??
-              DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR
+              effectiveTzLetterRow.effectiveBackgroundColorActive
             }
             disabled={!wired}
             onChange={
@@ -171,7 +172,7 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
           <button
             type="button"
             className="config-input"
-            aria-label="Reset present-time NATO cell background to automatic (built-in or derived)"
+            aria-label="Reset present-time NATO cell background to automatic (derived from even/odd palette)"
             disabled={!wired || lay.timezoneLetterRowActiveCellBackgroundColor === undefined}
             onClick={
               wired && updateConfig

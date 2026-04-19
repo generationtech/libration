@@ -25,6 +25,9 @@ import {
 } from "./appConfig.ts";
 import { TOP_CHROME_STYLE, TOP_CHROME_ZONE_LETTER_AUTOMATIC_FOREGROUND_ALPHA } from "./topChromeStyle.ts";
 
+/** Defensive fallback when {@link deriveDarkerNatoActiveCellBackgroundFromEvenOdd} cannot parse effective even/odd fills. */
+const ACTIVE_CELL_DERIVATION_FALLBACK_CSS = DEFAULT_TIMEZONE_LETTER_ROW_ACTIVE_CELL_BACKGROUND_COLOR;
+
 function trimOptionalColor(raw: unknown): string | undefined {
   if (typeof raw !== "string") {
     return undefined;
@@ -85,17 +88,14 @@ export function resolveEffectiveTimezoneLetterRowArea(
   const effectiveBackgroundColorEven = evenAuth ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN;
   const effectiveBackgroundColorOdd = oddAuth ?? DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD;
 
-  const builtinActiveFill = st.timezoneTab.fillActive;
   let effectiveBackgroundColorActive: string;
   if (usesAuthoredActiveCellBackgroundOverride) {
     effectiveBackgroundColorActive = activeAuth!;
-  } else if (!usesAuthoredCellBackgroundOverride) {
-    effectiveBackgroundColorActive = builtinActiveFill;
   } else {
     effectiveBackgroundColorActive = deriveDarkerNatoActiveCellBackgroundFromEvenOdd(
       effectiveBackgroundColorEven,
       effectiveBackgroundColorOdd,
-      builtinActiveFill,
+      ACTIVE_CELL_DERIVATION_FALLBACK_CSS,
     );
   }
 
