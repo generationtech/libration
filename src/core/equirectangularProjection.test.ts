@@ -83,6 +83,7 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
       referenceTimeZone: "Europe/London",
       topBandMode: "utc24",
       topBandAnchor: { mode: "auto" },
+      presentTimeReferenceMode: "anchor",
     });
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(londonLon, 5);
     expect(layout.topBandAnchor.referenceLongitudeDeg).not.toBeCloseTo(subsolarLon, 1);
@@ -110,6 +111,7 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
       referenceTimeZone: "America/New_York",
       topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
+      presentTimeReferenceMode: "anchor",
     });
     const { topBandAnchor: anchor } = layout;
     expect(anchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 3);

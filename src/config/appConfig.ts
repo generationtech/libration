@@ -49,6 +49,12 @@ export type DisplayTimeZoneConfig =
 export type TopBandTimeMode = "local12" | "local24" | "utc24";
 
 /**
+ * Where the present-time (“now”) tick sits on the structural tape: the tape’s anchor meridian, or the reference IANA
+ * zone’s default reference-city longitude (instrumentation only; tape phase and anchor stay on {@link topBandAnchor}).
+ */
+export type PresentTimeReferenceMode = "anchor" | "referenceCity";
+
+/**
  * **Longitude anchor** for the time-phased top tape (horizontal alignment), separate from civil-time semantics.
  * The top band is anchored by longitude, not by civil timezone. A fixed reference city contributes **its longitude** for
  * tape alignment only — it does not select structural 15° columns via IANA rules.
@@ -75,6 +81,12 @@ export interface DisplayTimeConfig {
   topBandMode: TopBandTimeMode;
   /** Longitude anchor for the time-phased circle row (default {@code auto}). */
   topBandAnchor: TopBandAnchorConfig;
+  /**
+   * Present-time tick placement vs tape anchor. Default {@code anchor} — same meridian as {@link topBandAnchor}
+   * resolution. {@code referenceCity} uses the reference zone’s mapped reference-city longitude for the present-time
+   * tick only (tape phase and anchor unchanged).
+   */
+  presentTimeReferenceMode?: PresentTimeReferenceMode;
 }
 
 /**

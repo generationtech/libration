@@ -234,6 +234,7 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
       referenceTimeZone: "America/New_York",
       topBandMode: "local24",
       topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
+      presentTimeReferenceMode: "anchor",
     });
     const layoutB = buildUtcTopScaleLayout(
       t,
@@ -243,6 +244,7 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
         referenceTimeZone: "America/New_York",
         topBandMode: "local24",
         topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
+        presentTimeReferenceMode: "anchor",
       },
       {
         ...DEFAULT_GEOGRAPHY_CONFIG,
@@ -262,6 +264,7 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
       referenceTimeZone: "America/New_York",
       topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
+      presentTimeReferenceMode: "anchor",
     });
     const withSydneyGeo = buildUtcTopScaleLayout(
       t,
@@ -271,6 +274,7 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
         referenceTimeZone: "America/New_York",
         topBandMode: "local24",
         topBandAnchor: { mode: "auto" },
+        presentTimeReferenceMode: "anchor",
       },
       {
         ...DEFAULT_GEOGRAPHY_CONFIG,

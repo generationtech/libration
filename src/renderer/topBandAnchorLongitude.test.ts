@@ -16,6 +16,7 @@ import { REFERENCE_CITIES } from "../data/referenceCities";
 import { DEFAULT_GEOGRAPHY_CONFIG } from "../config/appConfig";
 import {
   geographyTimezoneStripReferenceLabel,
+  instrumentationLongitudeDegForReferenceTimeZone,
   REFERENCE_ZONE_TO_LONGITUDE_CITY_ID,
   resolveTopBandAnchorLongitudeDeg,
 } from "./topBandAnchorLongitude";
@@ -186,5 +187,18 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
         "geographyFixedCoordinate",
       ),
     ).toBe(null);
+  });
+});
+
+describe("instrumentationLongitudeDegForReferenceTimeZone", () => {
+  it("matches the auto anchor reference-city longitude for mapped zones (e.g. America/New_York → NYC)", () => {
+    expect(instrumentationLongitudeDegForReferenceTimeZone("America/New_York")).toBeCloseTo(
+      lonForCityId("city.nyc"),
+      7,
+    );
+  });
+
+  it("returns Greenwich when the zone has no reference-city mapping", () => {
+    expect(instrumentationLongitudeDegForReferenceTimeZone("Etc/GMT+3")).toBe(0);
   });
 });

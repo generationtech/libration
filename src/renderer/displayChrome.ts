@@ -20,6 +20,7 @@ import {
   type DisplayTimeConfig,
   type EffectiveTopBandHourMarkerSelection,
   type GeographyConfig,
+  type PresentTimeReferenceMode,
   type TopBandAnchorConfig,
   type TopBandTimeMode,
 } from "../config/appConfig";
@@ -64,7 +65,11 @@ import {
   computeBottomChromeLayout,
   computeBottomChromeOverlayBottomMarginPx,
 } from "./bottomChromeLayout";
-import { resolveTopBandAnchorLongitudeDeg, type TopBandAnchorLongitudeSource } from "./topBandAnchorLongitude";
+import {
+  instrumentationLongitudeDegForReferenceTimeZone,
+  resolveTopBandAnchorLongitudeDeg,
+  type TopBandAnchorLongitudeSource,
+} from "./topBandAnchorLongitude";
 import { defaultFontAssetRegistry } from "../config/chromeTypography";
 import {
   computeHourMarkerContentRowVerticalMetrics,
@@ -328,9 +333,14 @@ export interface UtcTopScaleLayout {
   /** Hour / quarter-major / quarter-minor tick x positions (phased like {@link topBandHourMarkerCenterX}). Omitted when {@link widthPx} is 0. */
   tickHierarchy?: TopTapeTickHierarchy;
   /**
+   * Longitude whose structural 15° column determines {@link nowX} (column center). Matches
+   * {@link TopBandLongitudeAnchor.referenceLongitudeDeg} unless {@link ResolvedTopBandTime.instrumentationLongitudeDeg} is set.
+   */
+  presentTimeIndicatorLongitudeDeg: number;
+  /**
    * Horizontal position of the present-time (“now”) tick on the strip [0, widthPx]: **center** of the structural 15°
-   * longitude column containing {@link TopBandLongitudeAnchor.referenceLongitudeDeg} (same x as that column’s
-   * {@link UtcTopScaleHourSegment.centerX}). {@link TopBandLongitudeAnchor.anchorX} stays on the exact meridian for map/scene
+   * longitude column for {@link presentTimeIndicatorLongitudeDeg} (same x as that column’s
+   * {@link UtcTopScaleHourSegment.centerX}). {@link TopBandLongitudeAnchor.anchorX} stays on the tape anchor meridian for map/scene
    * registration; phased tape placement uses {@link phasedTapeAnchorFrac}.
    */
   nowX: number;
@@ -397,14 +407,29 @@ export interface ResolvedTopBandTime {
   referenceTimeZone: string;
   topBandMode: TopBandTimeMode;
   topBandAnchor: TopBandAnchorConfig;
+  /** Effective present-time policy; default {@code anchor}. */
+  presentTimeReferenceMode: PresentTimeReferenceMode;
+  /**
+   * When {@link presentTimeReferenceMode} is {@code referenceCity}: longitude for the present-time tick only.
+   * Omitted in {@code anchor} mode (layout uses the tape anchor meridian).
+   */
+  instrumentationLongitudeDeg?: number;
 }
 
 /** Maps {@link DisplayTimeConfig} to resolved zone + mode for layout and the bottom information bar. */
 export function resolveTopBandTimeFromConfig(config: DisplayTimeConfig): ResolvedTopBandTime {
+  const referenceTimeZone = resolveDisplayTimeReferenceZone(config.referenceTimeZone);
+  const presentTimeReferenceMode = config.presentTimeReferenceMode ?? "anchor";
+  const instrumentationLongitudeDeg =
+    presentTimeReferenceMode === "referenceCity"
+      ? instrumentationLongitudeDegForReferenceTimeZone(referenceTimeZone)
+      : undefined;
   return {
-    referenceTimeZone: resolveDisplayTimeReferenceZone(config.referenceTimeZone),
+    referenceTimeZone,
     topBandMode: config.topBandMode,
     topBandAnchor: config.topBandAnchor ?? { mode: "auto" },
+    presentTimeReferenceMode,
+    instrumentationLongitudeDeg,
   };
 }
 
@@ -1263,6 +1288,11 @@ export function buildUtcTopScaleLayout(
     geography,
   );
 
+  const presentTimeIndicatorLongitudeDeg =
+    rt.instrumentationLongitudeDeg !== undefined
+      ? rt.instrumentationLongitudeDeg
+      : topBandAnchor.referenceLongitudeDeg;
+
   if (w === 0) {
     return {
       widthPx: 0,
@@ -1276,6 +1306,7 @@ export function buildUtcTopScaleLayout(
       majorBoundaryXs: [],
       quarterMajorTickXs: [],
       quarterMinorTickXs: [],
+      presentTimeIndicatorLongitudeDeg,
       nowX: 0,
       circleMarkers: [],
       topBandMode: rt.topBandMode,
@@ -1343,7 +1374,8 @@ export function buildUtcTopScaleLayout(
     quarterMinor: quarterMinorTickXs,
   };
 
-  const structuralIdxForPresentTime = structuralHourIndexFromReferenceLongitudeDeg(topBandAnchor.referenceLongitudeDeg);
+  const structuralIdxForPresentTime =
+    structuralHourIndexFromReferenceLongitudeDeg(presentTimeIndicatorLongitudeDeg);
   const nowX = segments[structuralIdxForPresentTime]!.centerX;
 
   const rows =
@@ -1418,6 +1450,7 @@ export function buildUtcTopScaleLayout(
     quarterMajorTickXs,
     quarterMinorTickXs,
     tickHierarchy,
+    presentTimeIndicatorLongitudeDeg,
     nowX,
     rows,
     topBandLayout,
@@ -1823,7 +1856,7 @@ export function renderDisplayChrome(
         scale.segments.length === 24 ? scale.segments.map((s) => s.centerX) : undefined,
       presentTimeStructuralHour0To23:
         scale.segments.length === 24
-          ? structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg)
+          ? structuralHourIndexFromReferenceLongitudeDeg(scale.presentTimeIndicatorLongitudeDeg)
           : undefined,
     }),
   );

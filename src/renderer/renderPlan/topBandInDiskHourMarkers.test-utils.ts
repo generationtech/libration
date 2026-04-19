@@ -97,7 +97,7 @@ export function buildFullUtcTopBandHourDiskFixture(options?: {
   }));
 
   const presentTimeStructuralHour0To23 = structuralHourIndexFromReferenceLongitudeDeg(
-    scale.topBandAnchor.referenceLongitudeDeg,
+    scale.presentTimeIndicatorLongitudeDeg,
   );
 
   return {

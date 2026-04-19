@@ -82,6 +82,16 @@ function longitudeDegForReferenceCityId(cityId: string): number | undefined {
 }
 
 /**
+ * Longitude of the default reference city for an IANA zone string (same mapping as auto top-band anchor’s
+ * {@code referenceZoneLongitudeCity} path). Used for present-time instrumentation when decoupled from the tape anchor.
+ */
+export function instrumentationLongitudeDegForReferenceTimeZone(referenceTimeZone: string): number {
+  const cityId = REFERENCE_ZONE_TO_LONGITUDE_CITY_ID[referenceTimeZone];
+  const lon = cityId !== undefined ? longitudeDegForReferenceCityId(cityId) : undefined;
+  return lon !== undefined ? lon : 0;
+}
+
+/**
  * Resolves the meridian used to place the top tape’s **longitude anchor** on the equirectangular strip.
  * The top band is anchored by longitude, not by civil timezone. Separated from civil-time phasing
  * (`topBandMode`, `zonedCalendarDayStartMs`, etc.).

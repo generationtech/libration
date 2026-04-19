@@ -480,6 +480,9 @@ function cloneDisplayTime(dt: DisplayTimeConfig): DisplayTimeConfig {
         : anchor.mode === "fixedCity"
           ? { mode: "fixedCity", cityId: anchor.cityId }
           : { mode: "auto" },
+    ...(dt.presentTimeReferenceMode === "referenceCity"
+      ? { presentTimeReferenceMode: "referenceCity" as const }
+      : {}),
   };
 }
 

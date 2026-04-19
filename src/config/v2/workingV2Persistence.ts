@@ -92,10 +92,19 @@ function validateDisplayTime(dt: unknown): DisplayTimeConfig | null {
   } else {
     return null;
   }
+  const ptrm = dt.presentTimeReferenceMode;
+  if (
+    ptrm !== undefined &&
+    ptrm !== "anchor" &&
+    ptrm !== "referenceCity"
+  ) {
+    return null;
+  }
   return {
     referenceTimeZone,
     topBandMode: mode,
     topBandAnchor,
+    ...(ptrm === "referenceCity" ? { presentTimeReferenceMode: "referenceCity" as const } : {}),
   };
 }
 
