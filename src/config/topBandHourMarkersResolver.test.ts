@@ -677,6 +677,48 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     );
   });
 
+  it("radialWedge appearance.faceColor overrides derived disk face fill", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialWedge", appearance: { faceColor: "#ddeeff" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialWedge");
+    if (eff.realization.kind !== "radialWedge") {
+      throw new Error("expected radialWedge");
+    }
+    expect(eff.realization.resolvedAppearance.faceFill).toBe("#ddeeff");
+    expect(eff.realization.resolvedAppearance.fillColor).toBe(
+      interpolateRgbStringBetweenCssColors(
+        eff.indicatorEntriesArea.effectiveBackgroundColor,
+        eff.indicatorEntriesArea.effectiveForegroundColor,
+        0.62,
+      ),
+    );
+    expect(eff.realization.resolvedAppearance.strokeColor).toBe(
+      rgbaForegroundWithAlpha(eff.indicatorEntriesArea.effectiveForegroundColor, 0.72),
+    );
+  });
+
+  it("radialWedge appearance.edgeColor overrides derived wedge edge stroke", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialWedge", appearance: { edgeColor: "#ff00aa" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialWedge");
+    if (eff.realization.kind !== "radialWedge") {
+      throw new Error("expected radialWedge");
+    }
+    expect(eff.realization.resolvedAppearance.strokeColor).toBe("#ff00aa");
+  });
+
   it("radialLine uses contrast foreground on light and dark indicator entries backgrounds", () => {
     const light = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
@@ -725,6 +767,39 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         0.25,
       ),
     );
+  });
+
+  it("radialLine appearance.lineColor overrides default line ink", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialLine", appearance: { lineColor: "#c0ffee" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialLine");
+    if (eff.realization.kind !== "radialLine") {
+      throw new Error("expected radialLine");
+    }
+    expect(eff.realization.resolvedAppearance.lineColor).toBe("#c0ffee");
+  });
+
+  it("radialLine appearance.faceColor overrides derived face fill without changing resolved line ink when lineColor absent", () => {
+    const eff = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: {
+          realization: { kind: "radialLine", appearance: { faceColor: "#112233" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      }),
+    );
+    expect(eff.realization.kind).toBe("radialLine");
+    if (eff.realization.kind !== "radialLine") {
+      throw new Error("expected radialLine");
+    }
+    expect(eff.realization.resolvedAppearance.lineColor).toBe(eff.indicatorEntriesArea.effectiveForegroundColor);
+    expect(eff.realization.resolvedAppearance.faceFill).toBe("#112233");
   });
 
   it("radialWedge default stroke tracks contrast foreground on light and dark indicator entries backgrounds", () => {

@@ -88,13 +88,13 @@ describe("normalizeHourMarkersInput", () => {
         realization: {
           kind: "radialLine",
           color: "#111",
-          appearance: { lineColor: "  #aabbcc  " },
+          appearance: { lineColor: "  #aabbcc  ", faceColor: " #ddeeff " },
         },
         layout: { sizeMultiplier: 1 },
       }).realization,
     ).toEqual({
       kind: "radialLine",
-      appearance: { lineColor: "#aabbcc" },
+      appearance: { lineColor: "#aabbcc", faceColor: "#ddeeff" },
     });
 
     expect(
@@ -114,13 +114,13 @@ describe("normalizeHourMarkersInput", () => {
       normalizeHourMarkersInput({
         realization: {
           kind: "radialWedge",
-          appearance: { fillColor: "#030303" },
+          appearance: { fillColor: "#030303", faceColor: " #040404 ", edgeColor: " #050505" },
         },
         layout: { sizeMultiplier: 1 },
       }).realization,
     ).toEqual({
       kind: "radialWedge",
-      appearance: { fillColor: "#030303" },
+      appearance: { fillColor: "#030303", faceColor: "#040404", edgeColor: "#050505" },
     });
   });
 

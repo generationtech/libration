@@ -84,7 +84,15 @@ function normalizeRadialLineAppearanceInput(raw: unknown): HourMarkersRadialLine
     return {};
   }
   const lineColor = normalizedTopBandHourMarkerColor(raw.lineColor);
-  return lineColor !== undefined ? { lineColor } : {};
+  const faceColor = normalizedTopBandHourMarkerColor(raw.faceColor);
+  const out: HourMarkersRadialLineAppearance = {};
+  if (lineColor !== undefined) {
+    out.lineColor = lineColor;
+  }
+  if (faceColor !== undefined) {
+    out.faceColor = faceColor;
+  }
+  return out;
 }
 
 function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWedgeAppearance {
@@ -95,7 +103,19 @@ function normalizeRadialWedgeAppearanceInput(raw: unknown): HourMarkersRadialWed
     return {};
   }
   const fillColor = normalizedTopBandHourMarkerColor(raw.fillColor);
-  return fillColor !== undefined ? { fillColor } : {};
+  const faceColor = normalizedTopBandHourMarkerColor(raw.faceColor);
+  const edgeColor = normalizedTopBandHourMarkerColor(raw.edgeColor);
+  const out: HourMarkersRadialWedgeAppearance = {};
+  if (fillColor !== undefined) {
+    out.fillColor = fillColor;
+  }
+  if (faceColor !== undefined) {
+    out.faceColor = faceColor;
+  }
+  if (edgeColor !== undefined) {
+    out.edgeColor = edgeColor;
+  }
+  return out;
 }
 
 /**

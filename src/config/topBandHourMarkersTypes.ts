@@ -26,12 +26,26 @@ export type HourMarkersAnalogClockAppearance = {
 
 /** Structured colors for radial-line hour markers. */
 export type HourMarkersRadialLineAppearance = {
+  /** Radial stroke ink; when omitted, resolver uses contrast foreground on the indicator entries row. */
   lineColor?: string;
+  /** Filled disk behind the radial stroke; when omitted, resolver blends row background toward resolved line ink. */
+  faceColor?: string;
 };
 
 /** Structured colors for radial-wedge hour markers. */
 export type HourMarkersRadialWedgeAppearance = {
+  /**
+   * Wedge annulus interior fill (distinct from the full disk face behind the wedge).
+   * When omitted, resolver blends row background toward contrast foreground at t ≈ 0.62.
+   */
   fillColor?: string;
+  /** Full disk behind the wedge annulus (analog-style “face”); when omitted, resolver uses the analog face blend (t = 0.25). */
+  faceColor?: string;
+  /**
+   * Wedge edge / outline ink (resolved {@link EffectiveRadialWedgeResolvedAppearance.strokeColor}).
+   * When omitted, resolver uses contrast foreground at a fixed alpha for visibility on the row.
+   */
+  edgeColor?: string;
 };
 
 /**

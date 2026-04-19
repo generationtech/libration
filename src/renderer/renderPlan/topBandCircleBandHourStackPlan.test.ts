@@ -1268,6 +1268,35 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(radial?.kind).toBe("line");
     });
 
+    it("glyph radialLine uses authored face color for marker disk fill", () => {
+      const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
+      const eff = effectiveTopBandHourMarkersForLayout({
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        hourMarkers: {
+          realization: { kind: "radialLine", appearance: { faceColor: "#123456" } },
+          layout: { sizeMultiplier: 1 },
+        },
+      });
+      const plan = buildStackFromFixture(f, {
+        sel: {
+          kind: "glyph",
+          glyphMode: "radialLine",
+          sizeMultiplier: 1,
+        },
+        eff,
+        topBandYPx: 10,
+      });
+      expect(
+        plan.items.some(
+          (i) =>
+            i.kind === "path2d" &&
+            i.pathKind === "descriptor" &&
+            i.fill === "#123456" &&
+            i.stroke === undefined,
+        ),
+      ).toBe(true);
+    });
+
     it("glyph radialWedge uses selection color for fill", () => {
       const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
       const eff = effectiveTopBandHourMarkersForLayout({
@@ -1288,6 +1317,43 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       });
       const wedge = plan.items.filter((i) => i.kind === "path2d").find((p) => p.fill === "#aabbcc");
       expect(wedge?.kind).toBe("path2d");
+    });
+
+    it("glyph radialWedge uses authored face color for disk and edge color for wedge stroke", () => {
+      const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 400, topBandHeightPx: 80 });
+      const eff = effectiveTopBandHourMarkersForLayout({
+        ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+        hourMarkers: {
+          realization: {
+            kind: "radialWedge",
+            appearance: { faceColor: "#abcdef", edgeColor: "#112233" },
+          },
+          layout: { sizeMultiplier: 1 },
+        },
+      });
+      const plan = buildStackFromFixture(f, {
+        sel: {
+          kind: "glyph",
+          glyphMode: "radialWedge",
+          sizeMultiplier: 1,
+        },
+        eff,
+        topBandYPx: 10,
+      });
+      expect(
+        plan.items.some(
+          (i) =>
+            i.kind === "path2d" &&
+            i.pathKind === "descriptor" &&
+            i.fill === "#abcdef" &&
+            i.stroke === undefined,
+        ),
+      ).toBe(true);
+      expect(
+        plan.items.some(
+          (i) => i.kind === "path2d" && i.fill !== "#abcdef" && i.stroke === "#112233",
+        ),
+      ).toBe(true);
     });
 
     it("glyph analogClock uses selection color for ring stroke and hour hand", () => {

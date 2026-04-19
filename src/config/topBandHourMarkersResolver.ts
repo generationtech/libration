@@ -77,8 +77,9 @@ function resolveAnalogClockResolvedAppearance(
 }
 
 /**
- * Radial line: default line color is the indicator row’s contrast foreground (`blackOrWhiteForegroundForBackgroundCss`
- * on the resolved row background). Optional `appearance.lineColor` overrides.
+ * Radial line: default line color is the indicator row’s contrast foreground. Optional `appearance.lineColor`
+ * overrides line ink. Face fill defaults to the analog face policy (blend row background toward resolved line ink at
+ * t = 0.25); optional `appearance.faceColor` overrides that disk fill.
  */
 function resolveRadialLineResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialLine" }>,
@@ -87,14 +88,16 @@ function resolveRadialLineResolvedAppearance(
     effectiveForegroundColor: "#000000" | "#ffffff";
   },
 ): EffectiveRadialLineResolvedAppearance {
-  const fromAppearance = normalizeMarkerColor(r.appearance.lineColor);
+  const lineFromAppearance = normalizeMarkerColor(r.appearance.lineColor);
+  const faceFromAppearance = normalizeMarkerColor(r.appearance.faceColor);
   const defaultLine = indicatorEntriesArea.effectiveForegroundColor;
-  const lineColor = fromAppearance !== undefined ? fromAppearance : defaultLine;
-  const faceFill = interpolateRgbStringBetweenCssColors(
+  const lineColor = lineFromAppearance !== undefined ? lineFromAppearance : defaultLine;
+  const derivedFaceFill = interpolateRgbStringBetweenCssColors(
     indicatorEntriesArea.effectiveBackgroundColor,
     lineColor,
     0.25,
   );
+  const faceFill = faceFromAppearance !== undefined ? faceFromAppearance : derivedFaceFill;
   return { lineColor, faceFill };
 }
 
@@ -112,9 +115,10 @@ const RADIAL_WEDGE_DEFAULT_STROKE_ALPHA = 0.72;
 const RADIAL_WEDGE_DEFAULT_FILL_BLEND_T = 0.62;
 
 /**
- * Radial wedge: default fill is interpolated between row background and contrast foreground at
- * {@link RADIAL_WEDGE_DEFAULT_FILL_BLEND_T}. Default wedge edge stroke uses contrast foreground at
- * {@link RADIAL_WEDGE_DEFAULT_STROKE_ALPHA}.
+ * Radial wedge: default annulus fill blends row background toward contrast foreground at
+ * {@link RADIAL_WEDGE_DEFAULT_FILL_BLEND_T} (`appearance.fillColor` overrides). Default edge stroke uses contrast
+ * foreground at {@link RADIAL_WEDGE_DEFAULT_STROKE_ALPHA} (`appearance.edgeColor` overrides the full stroke string).
+ * Default disk face behind the wedge uses the analog face blend (t = 0.25); `appearance.faceColor` overrides.
  */
 function resolveRadialWedgeResolvedAppearance(
   r: Extract<HourMarkersRealizationConfig, { kind: "radialWedge" }>,
@@ -123,23 +127,25 @@ function resolveRadialWedgeResolvedAppearance(
     effectiveForegroundColor: "#000000" | "#ffffff";
   },
 ): EffectiveRadialWedgeResolvedAppearance {
-  const fromAppearance = normalizeMarkerColor(r.appearance.fillColor);
+  const fillFromAppearance = normalizeMarkerColor(r.appearance.fillColor);
+  const faceFromAppearance = normalizeMarkerColor(r.appearance.faceColor);
+  const edgeFromAppearance = normalizeMarkerColor(r.appearance.edgeColor);
   const fg = indicatorEntriesArea.effectiveForegroundColor;
   const defaultFill = interpolateRgbStringBetweenCssColors(
     indicatorEntriesArea.effectiveBackgroundColor,
     fg,
     RADIAL_WEDGE_DEFAULT_FILL_BLEND_T,
   );
-  const strokeColor = rgbaForegroundWithAlpha(fg, RADIAL_WEDGE_DEFAULT_STROKE_ALPHA);
-  const faceFill = interpolateRgbStringBetweenCssColors(
+  const defaultStroke = rgbaForegroundWithAlpha(fg, RADIAL_WEDGE_DEFAULT_STROKE_ALPHA);
+  const defaultFaceFill = interpolateRgbStringBetweenCssColors(
     indicatorEntriesArea.effectiveBackgroundColor,
     fg,
     0.25,
   );
   return {
-    fillColor: fromAppearance !== undefined ? fromAppearance : defaultFill,
-    strokeColor,
-    faceFill,
+    fillColor: fillFromAppearance !== undefined ? fillFromAppearance : defaultFill,
+    strokeColor: edgeFromAppearance !== undefined ? edgeFromAppearance : defaultStroke,
+    faceFill: faceFromAppearance !== undefined ? faceFromAppearance : defaultFaceFill,
   };
 }
 

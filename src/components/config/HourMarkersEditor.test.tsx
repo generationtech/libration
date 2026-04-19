@@ -321,6 +321,41 @@ describe("HourMarkersEditor structured authoring", () => {
     });
   });
 
+  it("radialLine appearance exposes line color and face color controls", () => {
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "radialLine", appearance: {} },
+        })}
+      />,
+    );
+    expect(
+      screen.getByLabelText(/Top-band radial line hour marker line color/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Top-band radial line hour marker face color/i),
+    ).toBeInTheDocument();
+  });
+
+  it("radialWedge appearance exposes edge, face, and wedge fill controls", () => {
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "radialWedge", appearance: {} },
+        })}
+      />,
+    );
+    expect(
+      screen.getByLabelText(/Top-band radial wedge hour marker edge color/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Top-band radial wedge hour marker face color/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Top-band radial wedge hour marker wedge fill color/i),
+    ).toBeInTheDocument();
+  });
+
   it("noon/midnight expression mode is preserved in the editor when customization is toggled off then on", () => {
     let last: LibrationConfigV2 | null = null;
     render(

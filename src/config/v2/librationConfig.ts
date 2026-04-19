@@ -525,18 +525,27 @@ export function assertIsNormalizedLibrationConfig(
     if (typeof app !== "object" || app === null || Array.isArray(app)) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance");
     }
-    const o = app as { lineColor?: unknown };
+    const o = app as { lineColor?: unknown; faceColor?: unknown };
     if (o.lineColor !== undefined && typeof o.lineColor !== "string") {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance.lineColor");
+    }
+    if (o.faceColor !== undefined && typeof o.faceColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialLine appearance.faceColor");
     }
   } else if (rk === "radialWedge") {
     const app = (hm.realization as { appearance?: unknown }).appearance;
     if (typeof app !== "object" || app === null || Array.isArray(app)) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance");
     }
-    const o = app as { fillColor?: unknown };
+    const o = app as { fillColor?: unknown; faceColor?: unknown; edgeColor?: unknown };
     if (o.fillColor !== undefined && typeof o.fillColor !== "string") {
       throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.fillColor");
+    }
+    if (o.faceColor !== undefined && typeof o.faceColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.faceColor");
+    }
+    if (o.edgeColor !== undefined && typeof o.edgeColor !== "string") {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid hourMarkers radialWedge appearance.edgeColor");
     }
   }
   const hmBehavior = (hm as { behavior?: unknown }).behavior;

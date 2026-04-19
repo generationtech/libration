@@ -22,6 +22,8 @@ import type {
   HourMarkersAnalogClockAppearance,
   HourMarkersConfig,
   HourMarkersNoonMidnightExpressionMode,
+  HourMarkersRadialLineAppearance,
+  HourMarkersRadialWedgeAppearance,
   HourMarkersRealizationConfig,
 } from "../../config/topBandHourMarkersTypes";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
@@ -158,6 +160,31 @@ function compactAnalogAppearance(a: HourMarkersAnalogClockAppearance): HourMarke
   }
   if (a.faceColor !== undefined) {
     out.faceColor = a.faceColor;
+  }
+  return out;
+}
+
+function compactRadialLineAppearance(a: HourMarkersRadialLineAppearance): HourMarkersRadialLineAppearance {
+  const out: HourMarkersRadialLineAppearance = {};
+  if (a.lineColor !== undefined) {
+    out.lineColor = a.lineColor;
+  }
+  if (a.faceColor !== undefined) {
+    out.faceColor = a.faceColor;
+  }
+  return out;
+}
+
+function compactRadialWedgeAppearance(a: HourMarkersRadialWedgeAppearance): HourMarkersRadialWedgeAppearance {
+  const out: HourMarkersRadialWedgeAppearance = {};
+  if (a.edgeColor !== undefined) {
+    out.edgeColor = a.edgeColor;
+  }
+  if (a.faceColor !== undefined) {
+    out.faceColor = a.faceColor;
+  }
+  if (a.fillColor !== undefined) {
+    out.fillColor = a.fillColor;
   }
   return out;
 }
@@ -447,116 +474,316 @@ function AppearanceSection({
   if (rk === "radialLine") {
     const r = hourMarkers.realization;
     const line = r.appearance.lineColor;
+    const face = r.appearance.faceColor;
     return (
-      <ConfigControlRow label="Line color (optional)">
-        <input
-          type="color"
-          className="config-input"
-          aria-label="Top-band radial line hour marker color"
-          title={line === undefined ? "No line color override" : "Radial line stroke color"}
-          value={line ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={authoringOff}
-          onChange={
-            wired && entriesAreaEnabled && updateConfig
-              ? (e) => {
-                  const v = e.currentTarget.value;
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "radialLine") {
-                      return hm;
-                    }
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "radialLine",
-                      appearance: { lineColor: v },
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        />
-        <button
-          type="button"
-          className="config-input"
-          aria-label="Clear radial line color override"
-          disabled={authoringOff || line === undefined}
-          onClick={
-            wired && entriesAreaEnabled && updateConfig
-              ? () => {
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "radialLine") {
-                      return hm;
-                    }
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "radialLine",
-                      appearance: {},
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        >
-          Default
-        </button>
-      </ConfigControlRow>
+      <>
+        <ConfigControlRow label="Line color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band radial line hour marker line color"
+            title={line === undefined ? "No line color override" : "Radial line stroke color"}
+            value={line ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={authoringOff}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialLine") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialLine",
+                        appearance: compactRadialLineAppearance({
+                          ...cur.appearance,
+                          lineColor: v,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear radial line stroke color override"
+            disabled={authoringOff || line === undefined}
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialLine") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialLine",
+                        appearance: compactRadialLineAppearance({
+                          ...cur.appearance,
+                          lineColor: undefined,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Face color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band radial line hour marker face color"
+            title={face === undefined ? "No face color override" : "Disk fill behind the radial line"}
+            value={face ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={authoringOff}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialLine") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialLine",
+                        appearance: compactRadialLineAppearance({
+                          ...cur.appearance,
+                          faceColor: v,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear radial line face color override"
+            disabled={authoringOff || face === undefined}
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialLine") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialLine",
+                        appearance: compactRadialLineAppearance({
+                          ...cur.appearance,
+                          faceColor: undefined,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+      </>
     );
   }
 
   if (rk === "radialWedge") {
     const r = hourMarkers.realization;
+    const edge = r.appearance.edgeColor;
+    const face = r.appearance.faceColor;
     const fill = r.appearance.fillColor;
     return (
-      <ConfigControlRow label="Fill color (optional)">
-        <input
-          type="color"
-          className="config-input"
-          aria-label="Top-band radial wedge hour marker fill color"
-          title={fill === undefined ? "No fill color override" : "Wedge fill color"}
-          value={fill ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
-          disabled={authoringOff}
-          onChange={
-            wired && entriesAreaEnabled && updateConfig
-              ? (e) => {
-                  const v = e.currentTarget.value;
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "radialWedge") {
-                      return hm;
-                    }
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "radialWedge",
-                      appearance: { fillColor: v },
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        />
-        <button
-          type="button"
-          className="config-input"
-          aria-label="Clear radial wedge fill color override"
-          disabled={authoringOff || fill === undefined}
-          onClick={
-            wired && entriesAreaEnabled && updateConfig
-              ? () => {
-                  commitHourMarkers(updateConfig, (hm) => {
-                    if (hm.realization.kind !== "radialWedge") {
-                      return hm;
-                    }
-                    const realization: HourMarkersRealizationConfig = {
-                      kind: "radialWedge",
-                      appearance: {},
-                    };
-                    return { ...hm, realization };
-                  });
-                }
-              : undefined
-          }
-        >
-          Default
-        </button>
-      </ConfigControlRow>
+      <>
+        <ConfigControlRow label="Edge color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band radial wedge hour marker edge color"
+            title={edge === undefined ? "No edge color override" : "Wedge outline / edge ink"}
+            value={edge ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={authoringOff}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          edgeColor: v,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear radial wedge edge color override"
+            disabled={authoringOff || edge === undefined}
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          edgeColor: undefined,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Face color (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band radial wedge hour marker face color"
+            title={face === undefined ? "No face color override" : "Full disk behind the wedge annulus"}
+            value={face ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={authoringOff}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          faceColor: v,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear radial wedge face color override"
+            disabled={authoringOff || face === undefined}
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          faceColor: undefined,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Wedge fill (optional)">
+          <input
+            type="color"
+            className="config-input"
+            aria-label="Top-band radial wedge hour marker wedge fill color"
+            title={fill === undefined ? "No wedge fill override" : "Wedge annulus interior fill"}
+            value={fill ?? TOP_BAND_HOUR_MARKER_COLOR_INPUT_PLACEHOLDER}
+            disabled={authoringOff}
+            onChange={
+              wired && entriesAreaEnabled && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          fillColor: v,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          />
+          <button
+            type="button"
+            className="config-input"
+            aria-label="Clear radial wedge annulus fill color override"
+            disabled={authoringOff || fill === undefined}
+            onClick={
+              wired && entriesAreaEnabled && updateConfig
+                ? () => {
+                    commitHourMarkers(updateConfig, (hm) => {
+                      if (hm.realization.kind !== "radialWedge") {
+                        return hm;
+                      }
+                      const cur = hm.realization;
+                      const realization: HourMarkersRealizationConfig = {
+                        kind: "radialWedge",
+                        appearance: compactRadialWedgeAppearance({
+                          ...cur.appearance,
+                          fillColor: undefined,
+                        }),
+                      };
+                      return { ...hm, realization };
+                    });
+                  }
+                : undefined
+            }
+          >
+            Default
+          </button>
+        </ConfigControlRow>
+      </>
     );
   }
 
