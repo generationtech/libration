@@ -15,7 +15,10 @@ import {
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_EVEN,
   DEFAULT_TIMEZONE_LETTER_ROW_CELL_BACKGROUND_COLOR_ODD,
   DEFAULT_TIMEZONE_LETTER_ROW_LETTER_FOREGROUND_COLOR,
+  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "../../config/appConfig";
+import type { FontAssetId } from "../../typography/fontAssetTypes";
+import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { resolveEffectiveTimezoneLetterRowArea } from "../../config/topBandTimezoneLetterRowResolver";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
@@ -58,6 +61,40 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
       </ConfigControlRow>
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">NATO letter row appearance</legend>
+        <ConfigControlRow label="Zone letter font">
+          <select
+            className="config-input"
+            value={lay.timezoneLetterRowFontAssetId ?? ""}
+            disabled={!wired}
+            aria-label="Font for NATO timezone letters"
+            data-testid="nato-timezone-letter-font-select"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      if (v === "") {
+                        delete (draft.chrome.layout as { timezoneLetterRowFontAssetId?: string })
+                          .timezoneLetterRowFontAssetId;
+                      } else {
+                        draft.chrome.layout.timezoneLetterRowFontAssetId = v as FontAssetId;
+                      }
+                    });
+                  }
+                : undefined
+            }
+          >
+            <option value="">Default (typography role)</option>
+            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
+              const rec = defaultFontAssetRegistry.getById(id);
+              return rec ? (
+                <option key={id} value={id}>
+                  {rec.displayName}
+                </option>
+              ) : null;
+            })}
+          </select>
+        </ConfigControlRow>
         <ConfigControlRow label="Alternating cell background (even columns)">
           <input
             type="color"

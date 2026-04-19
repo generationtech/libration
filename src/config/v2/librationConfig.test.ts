@@ -103,6 +103,22 @@ describe("librationConfig v2 (Phase 1)", () => {
     });
   });
 
+  it("normalizeDisplayChromeLayout keeps valid timezoneLetterRowFontAssetId and drops unknown font ids", () => {
+    expect(
+      normalizeDisplayChromeLayout({
+        timezoneLetterRowFontAssetId: "computer",
+      }),
+    ).toEqual({
+      ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
+      timezoneLetterRowFontAssetId: "computer",
+    });
+    expect(
+      normalizeDisplayChromeLayout({
+        timezoneLetterRowFontAssetId: "not-a-bundled-font",
+      }),
+    ).toEqual(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG);
+  });
+
   it("normalizeDisplayChromeLayout ignores unknown obsolete flat hour-marker property names", () => {
     const baseline = normalizeDisplayChromeLayout({});
     expect(

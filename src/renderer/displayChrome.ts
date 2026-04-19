@@ -1708,6 +1708,7 @@ export function renderDisplayChrome(
       activeCellLetterForeground: tzEff.effectiveLetterForegroundColorActiveCell,
       chromeStyle: st,
       glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
+      timezoneLetterRowFontAssetId: chrome.displayChromeLayout.timezoneLetterRowFontAssetId,
     });
     executeRenderPlanOnCanvas(ctx, zonePlan);
   }

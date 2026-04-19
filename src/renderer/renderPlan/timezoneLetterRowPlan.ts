@@ -17,6 +17,7 @@
  */
 
 import type { GeographyConfig } from "../../config/appConfig";
+import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
 import {
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
@@ -84,6 +85,8 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   chromeStyle?: TopChromeStyle;
   /** Bundled fonts + typography resolution for {@link TextGlyph} emission. */
   glyphRenderContext: GlyphRenderContext;
+  /** When set, NATO letters use this bundled font; otherwise the default `chromeZoneLabel` role asset applies. */
+  timezoneLetterRowFontAssetId?: FontAssetId;
 }): RenderPlan {
   const st = options.chromeStyle ?? TOP_CHROME_STYLE;
   const gctx = options.glyphRenderContext;
@@ -146,7 +149,12 @@ export function buildTimezoneLetterRowRenderPlan(options: {
     }
   }
 
-  const baseLetterPolicy = resolveTimezoneStripLetterPolicy(st);
+  const baseLetterPolicy = resolveTimezoneStripLetterPolicy(
+    st,
+    options.timezoneLetterRowFontAssetId !== undefined
+      ? { fontAssetId: options.timezoneLetterRowFontAssetId }
+      : undefined,
+  );
   const activeLetterFill = options.activeCellLetterForeground;
 
   for (const seg of options.segments) {

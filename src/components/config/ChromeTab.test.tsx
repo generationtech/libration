@@ -85,6 +85,24 @@ describe("ChromeTab major areas", () => {
     expect(screen.getByRole("checkbox", { name: /Show NATO timezone letter row on the top strip/i })).toBeInTheDocument();
   });
 
+  it("persists NATO zone letter font on chrome.layout and clears when default is chosen", () => {
+    let last: LibrationConfigV2 | null = null;
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "natoTimezone" } });
+    fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "computer" } });
+    expect(last?.chrome.layout.timezoneLetterRowFontAssetId).toBe("computer");
+    fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "" } });
+    expect(last?.chrome.layout.timezoneLetterRowFontAssetId).toBeUndefined();
+  });
+
   it("does not persist major-area selection in config when switching areas", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = defaultLibrationConfigV2();

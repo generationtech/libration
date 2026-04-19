@@ -46,6 +46,7 @@ import {
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
   TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
   type DemoTimeConfig,
+  type FontAssetId,
 } from "../appConfig";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
 
@@ -208,6 +209,15 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
+  let timezoneLetterRowFontAssetId: FontAssetId | undefined;
+  const tzFontRaw = (input as { timezoneLetterRowFontAssetId?: unknown }).timezoneLetterRowFontAssetId;
+  if (typeof tzFontRaw === "string") {
+    const t = tzFontRaw.trim();
+    if (t !== "" && TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(t)) {
+      timezoneLetterRowFontAssetId = t as FontAssetId;
+    }
+  }
+
   return {
     bottomInformationBarVisible: bottom,
     tickTapeVisible: tickTape,
@@ -226,6 +236,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     ...(timezoneLetterRowActiveCellBackgroundColor !== undefined
       ? { timezoneLetterRowActiveCellBackgroundColor }
       : {}),
+    ...(timezoneLetterRowFontAssetId !== undefined ? { timezoneLetterRowFontAssetId } : {}),
   };
 }
 
@@ -406,6 +417,9 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     ...(l.timezoneLetterRowActiveCellBackgroundColor !== undefined
       ? { timezoneLetterRowActiveCellBackgroundColor: l.timezoneLetterRowActiveCellBackgroundColor }
       : {}),
+    ...(l.timezoneLetterRowFontAssetId !== undefined
+      ? { timezoneLetterRowFontAssetId: l.timezoneLetterRowFontAssetId }
+      : {}),
   };
 }
 
@@ -557,6 +571,13 @@ export function assertIsNormalizedLibrationConfig(
     throw new Error(
       "assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowActiveCellBackgroundColor",
     );
+  }
+  const tzFont = (lay as { timezoneLetterRowFontAssetId?: unknown }).timezoneLetterRowFontAssetId;
+  if (
+    tzFont !== undefined &&
+    (typeof tzFont !== "string" || !TOP_BAND_HOUR_MARKER_FONT_ID_SET.has(tzFont))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.timezoneLetterRowFontAssetId");
   }
   const hm = lay.hourMarkers;
   if (

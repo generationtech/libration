@@ -46,7 +46,14 @@ describe("topBandVisualPolicy", () => {
     const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE);
     expect(letter.role).toBe("chromeZoneLabel");
     expect(letter.fill).toBe(TOP_CHROME_STYLE.zoneText.letter);
-    expect(letter.typographyOverrides).toEqual({ fontWeight: 800, letterSpacingPx: 0 });
+    expect(letter.typographyOverrides).toEqual({ fontWeight: 900, letterSpacingPx: 0 });
+
+    const letterComputer = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, { fontAssetId: "computer" });
+    expect(letterComputer.typographyOverrides).toEqual({
+      fontWeight: 900,
+      letterSpacingPx: 0,
+      fontAssetId: "computer",
+    });
 
     const cap = resolveTimezoneStripCaptionPolicy(TOP_CHROME_STYLE);
     expect(cap.role).toBe("chromeZoneLabel");

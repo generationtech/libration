@@ -13,6 +13,8 @@
 
 import { REFERENCE_CITIES, type ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
+
+export type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
 
@@ -357,6 +359,11 @@ export interface DisplayChromeLayoutConfig {
    * as an internal fallback when that derivation cannot run.
    */
   timezoneLetterRowActiveCellBackgroundColor?: string;
+  /**
+   * Optional bundled font for NATO / structural zone letters only. When omitted, letters use the default asset for the
+   * `chromeZoneLabel` typography role (same as prior releases).
+   */
+  timezoneLetterRowFontAssetId?: FontAssetId;
   /** NATO structural letter row under the tick rail on the top strip. */
   timezoneLetterRowVisible: boolean;
   /**

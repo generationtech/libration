@@ -30,6 +30,7 @@ import {
   resolveTopBandHourNumeralSpec,
   type HourMarkerRepresentationSpec,
 } from "./types/hourMarkerRepresentationSpec.ts";
+import type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { ResolveTextStyleOverrides, TypographyRole } from "../typography/typographyTypes.ts";
 import type { TopChromeStyle } from "./topChromeStyle.ts";
 import { TOP_CHROME_CIRCLE_STACK_LAYOUT } from "./topChromeStyle.ts";
@@ -89,12 +90,26 @@ export function resolveTopBandAnnotationPolicy(
   };
 }
 
-/** NATO / structural zone letter in the timezone strip (single column glyph). */
-export function resolveTimezoneStripLetterPolicy(chrome: TopChromeStyle): TopBandTextVisualPolicy {
+/**
+ * NATO / structural zone letter in the timezone strip (single column glyph).
+ * Default weight is heavier than the base `chromeZoneLabel` role so single-letter cells read clearly; optional
+ * `fontAssetId` selects a bundled face for NATO letters only.
+ */
+export function resolveTimezoneStripLetterPolicy(
+  chrome: TopChromeStyle,
+  options?: { fontAssetId?: FontAssetId },
+): TopBandTextVisualPolicy {
+  const typographyOverrides: ResolveTextStyleOverrides = {
+    fontWeight: 900,
+    letterSpacingPx: 0,
+  };
+  if (options?.fontAssetId !== undefined) {
+    typographyOverrides.fontAssetId = options.fontAssetId;
+  }
   return {
     role: "chromeZoneLabel",
     fill: chrome.zoneText.letter,
-    typographyOverrides: { fontWeight: 800, letterSpacingPx: 0 },
+    typographyOverrides,
   };
 }
 
