@@ -57,6 +57,7 @@ import {
   resolveReferenceFrameCivilTimeZone,
 } from "../core/displayTimeReference";
 import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
+import { instantAtBandCivilHour } from "../core/tapeInstant.ts";
 import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat";
 export {
@@ -266,7 +267,7 @@ export type TopBandMarkerAnnotationKind = "none" | "noon" | "midnight";
 export interface UtcTopScaleCircleMarker {
   centerX: number;
   radiusPx: number;
-  /** Structural hour index 0–23 for this marker (reference-zone civil day for local modes, UTC for utc24). */
+  /** Band civil hour column 0–23 (reference-zone day; not necessarily equal to the UTC hour shown in utc24 labels). */
   utcHour: number;
   /** Disk numeral — current hour marker (same as {@link currentHourLabel}). */
   label: string;
@@ -306,21 +307,21 @@ export interface TopBandLongitudeAnchor {
  * Deterministic layout for the Libration-style top scale: 24 **structural longitude** segments (equirectangular x from longitude),
  * tick hierarchy (hour / quarter-major / quarter-minor), read-point indicator x ({@link UtcTopScaleLayout.nowX}), and a **time-phased** circle row whose positions drift with
  * the configured band fractional day and a **longitude anchor** for phased placement. Civil time display is derived independently from IANA timezone data
- * ({@link referenceFractionalHour}); structural longitude sectors and civil timezone membership are intentionally decoupled. Labels and phase calendar follow {@link UtcTopScaleLayout.topBandMode}.
+ * ({@link referenceFractionalHour}); structural longitude sectors and civil timezone membership are intentionally decoupled.
+ * Hour numerals follow {@link UtcTopScaleLayout.topBandMode} for formatting only.
  */
 export interface UtcTopScaleLayout {
   widthPx: number;
   segments: readonly UtcTopScaleHourSegment[];
   /** UTC midnight at the start of the UTC calendar day that contains {@link referenceNowMs}; used for meridian-grid NATO row labels. */
   utcDayStartMs: number;
-  /**
-   * Start of the calendar day used to phase the moving circle row (UTC day for {@link TopBandTimeMode}
-   * `utc24`, otherwise the configured reference zone’s midnight).
-   */
+  /** Start of the calendar day used to phase the moving circle row — always the reference IANA zone’s midnight (same as {@link CivilProjection.dayStartMs}); independent of {@link TopBandTimeMode}. */
   bandPhaseDayStartMs: number;
   /** Wall-time instant used to phase the circle band (matches `now` in {@link buildUtcTopScaleLayout}). */
   referenceNowMs: number;
-  /** Civil fractional hour-of-day in the band frame; drives {@link topBandHourMarkerCenterX}. For {@link TopBandTimeMode} `utc24`, use UTC fractional hour ({@code referenceFractionalHour} = UTC hours 0–24 float); for `local12` / `local24`, the reference zone’s wall time. */
+  /** Resolved IANA zone for {@link deriveCivilProjection} / bottom readout; same for all {@link TopBandTimeMode} values. */
+  referenceTimeZone: string;
+  /** Civil fractional hour-of-day in the reference zone; drives {@link topBandHourMarkerCenterX}. Display mode does not change this value. */
   referenceFractionalHour: number;
   /** Longitude anchor (resolved meridian + exact-longitude x / {@link TopBandLongitudeAnchor.anchorFrac} for map registration). Not a civil-TZ selector. */
   topBandAnchor: TopBandLongitudeAnchor;
@@ -436,18 +437,61 @@ function formatTopBandLocal12Label(hour0To23: number): string {
   return mod === 0 ? "12" : String(mod);
 }
 
-/** Label for one circle marker given structural hour index 0–23 and mode (formatting only). */
-export function topBandCircleLabel(hourIndex: number, mode: TopBandTimeMode): string {
+/**
+ * When {@link TopBandTimeMode} is `utc24`, pass this so tape numerals show the UTC hour at each **band civil** column
+ * (formatting only; geometry uses {@link deriveCivilProjection} regardless of mode).
+ */
+export type TopBandTapeLabelContext = {
+  nowUtcInstant: number;
+  referenceTimeZoneId: string;
+};
+
+function utcTapeNumeralFromBandCivilHour(
+  nowUtcInstant: number,
+  referenceTimeZoneId: string,
+  civilHour0To23: number,
+): string {
+  const inst = instantAtBandCivilHour(nowUtcInstant, referenceTimeZoneId, civilHour0To23);
+  if (inst === null) {
+    return civilHour0To23.toString().padStart(2, "0");
+  }
+  return new Date(inst).getUTCHours().toString().padStart(2, "0");
+}
+
+/**
+ * Label for one circle marker: band civil hour index 0–23, formatting from {@link TopBandTimeMode}.
+ * For `utc24`, supply {@link TopBandTapeLabelContext} so labels are UTC hours at that band civil instant; omitted context
+ * falls back to padded civil index (tests / intrinsic sizing only).
+ */
+export function topBandCircleLabel(
+  hourIndex: number,
+  mode: TopBandTimeMode,
+  tapeLabelContext?: TopBandTapeLabelContext,
+): string {
   const dm = displayTimeModeFromTopBandTimeMode(mode);
+  if (dm === "utc") {
+    if (tapeLabelContext === undefined) {
+      return hourIndex.toString().padStart(2, "0");
+    }
+    return utcTapeNumeralFromBandCivilHour(
+      tapeLabelContext.nowUtcInstant,
+      tapeLabelContext.referenceTimeZoneId,
+      hourIndex,
+    );
+  }
   if (dm === "12hr") {
     return formatTopBandLocal12Label(hourIndex);
   }
   return hourIndex.toString().padStart(2, "0");
 }
 
-/** Next civil hour label for the plain numeral row above the disk (same sequence as {@link topBandCircleLabel}, wrapping). */
-export function topBandNextHourLabel(utcHour: number, mode: TopBandTimeMode): string {
-  return topBandCircleLabel((utcHour + 1) % 24, mode);
+/** Next band-civil-hour label for the plain numeral row above the disk (wraps 23 → 0). */
+export function topBandNextHourLabel(
+  utcHour: number,
+  mode: TopBandTimeMode,
+  tapeLabelContext?: TopBandTapeLabelContext,
+): string {
+  return topBandCircleLabel((utcHour + 1) % 24, mode, tapeLabelContext);
 }
 
 /**
@@ -1036,6 +1080,8 @@ export function solveCanonicalHourMarkerDiskBandHeightPx(args: {
   fontRegistry: FontAssetRegistry;
   /** Tape label mode for text intrinsic (max ink across {@link topBandCircleLabel} columns). */
   topBandMode: TopBandTimeMode;
+  /** When `topBandMode` is `utc24`, supplies instants for UTC tape numerals (same width as padded hours). */
+  tapeLabelContext?: TopBandTapeLabelContext;
   /**
    * Retained for call-site compatibility; intrinsic fixed-point solve no longer uses this value (padding-inclusive row
    * height must not gate convergence — see loop below).
@@ -1061,7 +1107,7 @@ export function solveCanonicalHourMarkerDiskBandHeightPx(args: {
   const baseLabelSeed = computeHourDiskLabelSizePx(rWidthSeed, vw, args.hourDiskLabelTokens);
   const markerContentSeed = baseLabelSeed * sm * glyphBoost;
   const hourLabelsWestToEast = Array.from({ length: 24 }, (_, h) =>
-    topBandCircleLabel(h, args.topBandMode),
+    topBandCircleLabel(h, args.topBandMode, args.tapeLabelContext),
   );
   let intrinsicPx: number;
   if (args.selection.kind === "text") {
@@ -1195,6 +1241,8 @@ export function buildUtcTopScaleLayout(
   const phasedTapeAnchorFrac = resolveTapeAnchorFraction(readPoint, w);
   const nowX = readPoint.x;
 
+  const tapeLabelCtx: TopBandTapeLabelContext = { nowUtcInstant: nowMs, referenceTimeZoneId: rt.referenceTimeZone };
+
   if (w === 0) {
     return {
       widthPx: 0,
@@ -1202,6 +1250,7 @@ export function buildUtcTopScaleLayout(
       utcDayStartMs: dayStart,
       bandPhaseDayStartMs,
       referenceNowMs: nowMs,
+      referenceTimeZone: rt.referenceTimeZone,
       referenceFractionalHour,
       topBandAnchor,
       phasedTapeAnchorFrac: 0.5,
@@ -1312,7 +1361,7 @@ export function buildUtcTopScaleLayout(
           const cr = computeUtcCircleMarkerRadius(radiusContentH, sw);
           const out: UtcTopScaleCircleMarker[] = [];
           for (let h = 0; h < 24; h += 1) {
-            const cur = topBandCircleLabel(h, rt.topBandMode);
+            const cur = topBandCircleLabel(h, rt.topBandMode, tapeLabelCtx);
             const ak = topBandMarkerAnnotationKind(h, rt.topBandMode);
             out.push({
               centerX: topBandHourMarkerCenterX(h, referenceFractionalHour, w, phasedTapeAnchorFrac),
@@ -1320,7 +1369,7 @@ export function buildUtcTopScaleLayout(
               utcHour: h,
               label: cur,
               currentHourLabel: cur,
-              nextHourLabel: topBandNextHourLabel(h, rt.topBandMode),
+              nextHourLabel: topBandNextHourLabel(h, rt.topBandMode, tapeLabelCtx),
               annotationKind: ak,
               annotationLabel: topBandMarkerAnnotationLabel(ak),
             });
@@ -1335,6 +1384,7 @@ export function buildUtcTopScaleLayout(
     utcDayStartMs: dayStart,
     bandPhaseDayStartMs,
     referenceNowMs: nowMs,
+    referenceTimeZone: rt.referenceTimeZone,
     referenceFractionalHour,
     topBandAnchor,
     phasedTapeAnchorFrac,
@@ -1400,6 +1450,10 @@ export function buildDisplayChromeState(options: {
   const effectiveTimezoneLetterRowArea = resolveEffectiveTimezoneLetterRowArea(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
   const baseCircleStack = computeTopBandCircleStackMetrics(baseRows.circleBandH);
+  const tapeLabelContext: TopBandTapeLabelContext = {
+    nowUtcInstant: time.now,
+    referenceTimeZoneId: resolved.referenceTimeZone,
+  };
   const canonicalSolve =
     w > 0 && effectiveTopBandHourMarkers.areaVisible
       ? solveCanonicalHourMarkerDiskBandHeightPx({
@@ -1410,6 +1464,7 @@ export function buildDisplayChromeState(options: {
           hourMarkerLayout: effectiveTopBandHourMarkers.layout,
           fontRegistry: defaultFontAssetRegistry,
           topBandMode: resolved.topBandMode,
+          tapeLabelContext,
           baseDiskBandGuessPx: baseCircleStack.diskBandH,
         })
       : { diskBandHeightPx: 0, intrinsicContentHeightPx: 0 };
@@ -1704,13 +1759,17 @@ export function renderDisplayChrome(
       : scale.segments.length === 24 && sw > 0
         ? Array.from({ length: 24 }, (_, h) => {
             const ak = topBandMarkerAnnotationKind(h, scale.topBandMode);
+            const tl: TopBandTapeLabelContext = {
+              nowUtcInstant: scale.referenceNowMs,
+              referenceTimeZoneId: scale.referenceTimeZone,
+            };
             return {
               centerX: topBandHourMarkerCenterX(h, scale.referenceFractionalHour, vw, tapeAnchorFrac),
               radiusPx: markerRadiusPx,
               utcHour: h,
-              label: topBandCircleLabel(h, scale.topBandMode),
-              currentHourLabel: topBandCircleLabel(h, scale.topBandMode),
-              nextHourLabel: topBandNextHourLabel(h, scale.topBandMode),
+              label: topBandCircleLabel(h, scale.topBandMode, tl),
+              currentHourLabel: topBandCircleLabel(h, scale.topBandMode, tl),
+              nextHourLabel: topBandNextHourLabel(h, scale.topBandMode, tl),
               annotationKind: ak,
               annotationLabel: topBandMarkerAnnotationLabel(ak),
             };

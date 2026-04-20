@@ -621,6 +621,27 @@ describe("buildUtcTopScaleLayout", () => {
     expect(anchorXs[0]).toBeCloseTo(anchorXs[1]!, 7);
     expect(anchorXs[1]).toBeCloseTo(anchorXs[2]!, 7);
   });
+
+  it("Knoxville reference: 12hr / 24hr / utc24 share read point, tape anchor, and civil fractional hour", () => {
+    const t = Date.UTC(2026, 6, 15, 21, 30, 0);
+    const w = 1600;
+    const base: Omit<DisplayTimeConfig, "topBandMode"> = {
+      ...DEFAULT_DISPLAY_TIME_CONFIG,
+      referenceTimeZone: { source: "fixed", timeZone: "America/New_York" },
+      topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+    };
+    const modes = ["local12", "local24", "utc24"] as const;
+    const layouts = modes.map((topBandMode) =>
+      buildUtcTopScaleLayout(t, w, 80, resolveTopBandTimeFromConfig({ ...base, topBandMode })),
+    );
+    for (let i = 1; i < layouts.length; i += 1) {
+      expect(layouts[i]!.readPoint.x).toBeCloseTo(layouts[0]!.readPoint.x, 5);
+      expect(layouts[i]!.phasedTapeAnchorFrac).toBeCloseTo(layouts[0]!.phasedTapeAnchorFrac, 10);
+      expect(layouts[i]!.referenceFractionalHour).toBeCloseTo(layouts[0]!.referenceFractionalHour, 10);
+      expect(layouts[i]!.civilProjection.fractionalHour).toBeCloseTo(layouts[0]!.civilProjection.fractionalHour, 10);
+      expect(layouts[i]!.referenceTimeZone).toBe(layouts[0]!.referenceTimeZone);
+    }
+  });
 });
 
 describe("utc24 reference meridian anchoring", () => {
@@ -1507,9 +1528,19 @@ describe("topBandCircleLabel", () => {
     ]);
   });
 
-  it("emits padded 24-hour labels for local24 and utc24", () => {
+  it("emits padded 24-hour civil indices for local24", () => {
     expect(topBandCircleLabel(7, "local24")).toBe("07");
+  });
+
+  it("utc24 without label context falls back to padded band hour index (intrinsic sizing / legacy)", () => {
     expect(topBandCircleLabel(7, "utc24")).toBe("07");
+  });
+
+  it("utc24 with label context: numeral is UTC hour at that band civil column, not the civil index", () => {
+    const t = Date.UTC(2026, 7, 10, 19, 0, 0);
+    const ctx = { nowUtcInstant: t, referenceTimeZoneId: "America/New_York" };
+    expect(topBandCircleLabel(15, "local24")).toBe("15");
+    expect(topBandCircleLabel(15, "utc24", ctx)).toBe("19");
   });
 });
 
