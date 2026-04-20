@@ -1058,7 +1058,7 @@ describe("buildBottomInformationBarState", () => {
       topBandMode: "utc24",
     });
     expect(ib24.referenceTimeLine.startsWith("18:")).toBe(true);
-    expect(ibUtc.referenceTimeLine.startsWith("22:")).toBe(true);
+    expect(ibUtc.referenceTimeLine).toBe("22:04:05");
   });
 
   it("uses 12-hour wall clock with AM/PM for local12", () => {
@@ -1071,6 +1071,18 @@ describe("buildBottomInformationBarState", () => {
     });
     expect(ib.referenceTimeLine).toMatch(/\b(AM|PM)\b/i);
     expect(ib.referenceTimeLine.startsWith("14:")).toBe(false);
+  });
+
+  it("local12 does not left-pad single-digit hours (e.g. 7:07:59 PM, not 07:07:59 PM)", () => {
+    const t = Date.UTC(2024, 0, 1, 19, 7, 59);
+    const ib = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "UTC",
+      topBandMode: "local12",
+    });
+    expect(ib.referenceTimeLine).not.toMatch(/^0\d:/);
+    expect(ib.referenceTimeLine).toMatch(/\b7:07:59/);
   });
 
   it("adds a subdued system-local line only when the device zone differs from the reference zone", () => {

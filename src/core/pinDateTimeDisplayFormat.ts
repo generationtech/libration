@@ -12,6 +12,7 @@
  */
 
 import type { PinDateTimeDisplayMode } from "../config/appConfig";
+import { intlHourOptionForClock, localePrefersHour12 } from "./timeFormat";
 
 /** One formatter per (mode, IANA zone); DST via Intl. */
 const CACHE = new Map<string, (d: Date) => string>();
@@ -24,21 +25,25 @@ function buildFormatter(
   mode: Exclude<PinDateTimeDisplayMode, "hidden">,
   timeZone: string,
 ): (d: Date) => string {
+  const h12 = localePrefersHour12();
+  const hourOpt = intlHourOptionForClock(h12);
   switch (mode) {
     case "time": {
       const fmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
-        hour: "2-digit",
+        hour: hourOpt,
         minute: "2-digit",
+        hour12: h12,
       });
       return (d) => fmt.format(d);
     }
     case "timeWithSeconds": {
       const fmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
-        hour: "2-digit",
+        hour: hourOpt,
         minute: "2-digit",
         second: "2-digit",
+        hour12: h12,
       });
       return (d) => fmt.format(d);
     }
@@ -54,16 +59,22 @@ function buildFormatter(
     case "dateAndTime": {
       const fmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
-        dateStyle: "short",
-        timeStyle: "medium",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: hourOpt,
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: h12,
       });
       return (d) => fmt.format(d);
     }
     case "timeAndDate": {
       const timeFmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
-        hour: "2-digit",
+        hour: hourOpt,
         minute: "2-digit",
+        hour12: h12,
       });
       const dateFmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
