@@ -138,7 +138,7 @@ export function GeographyTab({ config, updateConfig }: GeographyTabProps) {
                 readOnly={!wired}
                 disabled={!wired}
                 tabIndex={wired ? 0 : -1}
-                aria-label="Show fixed coordinate label on the active NATO timezone tab when this meridian anchors the top band"
+                aria-label="Show fixed coordinate label on the structural NATO tab for the read-point column when this meridian anchors the top band"
                 onChange={
                   wired && updateConfig
                     ? (e) => {

@@ -158,7 +158,8 @@ export interface DisplayChromeBandRect {
 /**
  * One UTC column on the top instrument scale (structural index 0–23, left to right), CSS pixel geometry from
  * {@link mapXFromLongitudeDeg} on −180° + 15°·[h, h+1].
- * {@link label} is the **longitude solar hour** numeral at this column’s center (not a fixed UTC 00–23 strip).
+ * {@link label} is a **meridian-offset grid hour** at this column’s center (UTC day + lon/15, wrapped) — structural
+ * overlay only; not the reference IANA civil clock.
  */
 export interface UtcTopScaleHourSegment {
   /** Column index 0–23; used for alternating band fill in the timezone band. */
@@ -168,8 +169,11 @@ export interface UtcTopScaleHourSegment {
   centerX: number;
   /** Longitude (°) at column center; structural, from the UTC 15° grid. */
   centerLongitudeDeg: number;
-  /** Local solar hour 0–23: UTC time-of-day + longitude/15, wrapped into the civil day. */
-  solarHour: number;
+  /**
+   * Hour 0–23 from UTC ms-of-day + longitude/15 (structural equirect grid). Used for NATO-row numerals only — not civil
+   * wall time in the reference zone.
+   */
+  structuralMeridianHour0To23: number;
   label: string;
   /**
    * Libration-modeled **structural** zone letter for this 15° column (west→east index {@link hour}): NATO letter from
@@ -270,12 +274,13 @@ export interface UtcTopScaleCircleMarker {
 }
 
 /**
- * Longitude anchoring for the top tape circle row: resolved **anchor meridian** plus the tape’s horizontal anchor x.
- * The top band is anchored by longitude, not by civil timezone. A reference city used as an anchor contributes its
- * longitude for band alignment only. {@link anchorX} is {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}) —
- * continuous meridian position for map/scene registration. The present-time tick uses
- * {@link presentTimeIndicatorXFromReferenceLongitudeDeg} (center of the containing 15° column). In `local12` / `local24`, the phased
- * upper tape uses that same column-center basis via {@link UtcTopScaleLayout.phasedTapeAnchorFrac}. Letter boxes remain fixed structural
+ * Longitude anchoring for the top tape: resolved **read-point meridian** plus exact meridian x on the strip.
+ * Civil date/time and phased tape positions come from the reference IANA zone ({@link deriveCivilProjection}); the anchor
+ * only fixes **where** on the strip that civil hour is read (center of the 15° column containing the meridian). A
+ * reference city contributes longitude for spatial registration only. {@link anchorX} is
+ * {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}) for map/scene alignment. The read-point tick uses
+ * {@link presentTimeIndicatorXFromReferenceLongitudeDeg} (column center, not raw meridian x). Phased tape registration
+ * uses {@link UtcTopScaleLayout.phasedTapeAnchorFrac} from that read point. The NATO letter row stays on fixed structural
  * sectors underneath.
  */
 export interface TopBandLongitudeAnchor {
@@ -293,14 +298,14 @@ export interface TopBandLongitudeAnchor {
 
 /**
  * Deterministic layout for the Libration-style top scale: 24 **structural longitude** segments (equirectangular x from longitude),
- * tick hierarchy (hour / quarter-major / quarter-minor), present-time indicator x ({@link UtcTopScaleLayout.nowX}), and a **time-phased** circle row whose positions drift with
+ * tick hierarchy (hour / quarter-major / quarter-minor), read-point indicator x ({@link UtcTopScaleLayout.nowX}), and a **time-phased** circle row whose positions drift with
  * the configured band fractional day and a **longitude anchor** for phased placement. Civil time display is derived independently from IANA timezone data
  * ({@link referenceFractionalHour}); structural longitude sectors and civil timezone membership are intentionally decoupled. Labels and phase calendar follow {@link UtcTopScaleLayout.topBandMode}.
  */
 export interface UtcTopScaleLayout {
   widthPx: number;
   segments: readonly UtcTopScaleHourSegment[];
-  /** UTC midnight at the start of the UTC calendar day that contains {@link referenceNowMs}; used for structural solar-hour segments. */
+  /** UTC midnight at the start of the UTC calendar day that contains {@link referenceNowMs}; used for meridian-grid NATO row labels. */
   utcDayStartMs: number;
   /**
    * Start of the calendar day used to phase the moving circle row (UTC day for {@link TopBandTimeMode}
@@ -330,10 +335,11 @@ export interface UtcTopScaleLayout {
   /** Hour / quarter-major / quarter-minor tick x positions (phased like {@link topBandHourMarkerCenterX}). Omitted when {@link widthPx} is 0. */
   tickHierarchy?: TopTapeTickHierarchy;
   /**
-   * Horizontal position of the present-time (“now”) tick on the strip [0, widthPx]: **center** of the structural 15°
+   * Horizontal position of the **read-point** tick on the strip [0, widthPx]: **center** of the structural 15°
    * longitude column containing {@link TopBandLongitudeAnchor.referenceLongitudeDeg} (same x as that column’s
    * {@link UtcTopScaleHourSegment.centerX}). {@link TopBandLongitudeAnchor.anchorX} stays on the exact meridian for map/scene
-   * registration; phased tape placement uses {@link phasedTapeAnchorFrac}.
+   * registration; phased civil tape placement uses {@link phasedTapeAnchorFrac}. Authoritative civil instant is the
+   * resolver’s `nowUtcInstant`, not this geometry alone.
    */
   nowX: number;
   /** Multi-row header metrics; omitted when width is 0 or {@link topBandHeightPx} was not provided. */
@@ -608,11 +614,11 @@ function computeTopBandLongitudeAnchor(
 }
 
 /**
- * Local solar hour 0–23 at `lonDeg` for the given UTC time-of-day within the calendar day:
+ * Structural meridian-grid hour 0–23 at `lonDeg` for the given UTC time-of-day within the calendar day:
  * `floor(((utcMsOfDay + lon/15·h in ms) mod 24h) / 1h)`. No DST or political boundaries.
- * Map / structural 15° grid — not IANA civil chrome wall time.
+ * Equirect / NATO-style overlay — not IANA civil wall time.
  */
-export function solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay: number, lonDeg: number): number {
+export function structuralMeridianHour0To23FromUtcMsOfDay(utcMsOfDay: number, lonDeg: number): number {
   const offsetMs = (lonDeg / 15) * MS_PER_HOUR;
   const localMs = ((utcMsOfDay + offsetMs) % MS_PER_DAY + MS_PER_DAY) % MS_PER_DAY;
   return Math.floor(localMs / MS_PER_HOUR);
@@ -661,7 +667,7 @@ export function militaryZoneLetterFromStructuralHourIndex(structuralHourIndex: n
   return militaryTimeZoneLetterFromStructuralColumnIndex(structuralHourIndex);
 }
 
-/** Present-time tick x: same as {@link readPointXFromReferenceLongitudeDeg}. */
+/** Read-point tick x: same as {@link readPointXFromReferenceLongitudeDeg}. */
 export const presentTimeIndicatorXFromReferenceLongitudeDeg = readPointXFromReferenceLongitudeDeg;
 
 function formatLongitudeLabelAtCenter(lonDeg: number): string {
@@ -1130,9 +1136,9 @@ function buildTopBandLayoutFromRows(widthPx: number, rows: UtcTopScaleRowMetrics
 }
 
 /**
- * Builds hour columns, boundary/tick positions, and present-time indicator x ({@link UtcTopScaleLayout.nowX}) for the top instrument scale.
- * Segments still carry **longitude solar** metadata per structural column (for future zone UI). The **circle row** and
- * **tick rail** share phased x from {@link topBandHourMarkerCenterX} using {@link UtcTopScaleLayout.phasedTapeAnchorFrac}; labels and
+ * Builds hour columns, boundary/tick positions, and read-point indicator x ({@link UtcTopScaleLayout.nowX}) for the top instrument scale.
+ * Segments carry **meridian-grid** metadata per structural column (NATO row labels). The **circle row** and **tick rail**
+ * share phased x from {@link topBandHourMarkerCenterX} using {@link UtcTopScaleLayout.phasedTapeAnchorFrac}; civil labels and
  * phase follow {@link ResolvedTopBandTime}.
  * Pure geometry for tests; {@link buildDisplayChromeState} embeds the same result for the top band width.
  * Pass {@link topBandHeightPx} to attach {@link UtcTopScaleRowMetrics} for multi-row chrome.
@@ -1213,7 +1219,7 @@ export function buildUtcTopScaleLayout(
     const x0 = mapXFromLongitudeDeg(lon0, w);
     const x1 = mapXFromLongitudeDeg(lon1, w);
     const centerX = mapXFromLongitudeDeg(lonCenter, w);
-    const solarHour = solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay, lonCenter);
+    const structuralMeridianHour0To23 = structuralMeridianHour0To23FromUtcMsOfDay(utcMsOfDay, lonCenter);
     const nominalUtcOffsetHours = roundedStructuralMeridianUtcOffsetHours(lonCenter);
     segments.push({
       hour: h,
@@ -1221,8 +1227,8 @@ export function buildUtcTopScaleLayout(
       x1,
       centerX,
       centerLongitudeDeg: lonCenter,
-      solarHour,
-      label: solarHour.toString().padStart(2, "0"),
+      structuralMeridianHour0To23,
+      label: structuralMeridianHour0To23.toString().padStart(2, "0"),
       timezoneLetter: militaryTimeZoneLetterFromStructuralColumnIndex(h),
       nominalUtcOffsetHours,
       longitudeLabel: formatLongitudeLabelAtCenter(lonCenter),
@@ -1659,7 +1665,7 @@ export function renderDisplayChrome(
       }),
     );
 
-    // Present-time “now” tick: structural column center for the resolved anchor meridian (presentTimeIndicatorXFromReferenceLongitudeDeg), tick rail only;
+    // Read-point tick (authoritative instant from resolver; horizontal position = sector center for anchor meridian).
     // Halo + core; seam tiling uses {@link refMeridianWrapHalf} so thick strokes stay continuous at x≈0 / x≈width.
     executeRenderPlanOnCanvas(
       ctx,

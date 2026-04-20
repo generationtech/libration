@@ -38,8 +38,12 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
 
   return (
     <div data-testid="chrome-editor-nato-timezone">
-      <h3 className="config-section__title config-section__title--sub">NATO timezone area</h3>
+      <h3 className="config-section__title config-section__title--sub">NATO / structural zone row</h3>
       <p className="config-section__hint">{descriptionForChromeMajorArea("natoTimezone")}</p>
+      <p className="config-section__hint">
+        This row is a fixed 15° geometric grid with military-style letters — not your reference civil clock. Civil date and
+        time come from the zone and instant above; the highlighted cell only marks the read-point column.
+      </p>
       <ConfigControlRow label="NATO timezone letter row">
         <input
           type="checkbox"
@@ -186,15 +190,15 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
             Default
           </button>
         </ConfigControlRow>
-        <ConfigControlRow label="Present-time / active timezone cell background">
+        <ConfigControlRow label="Read-point column highlight (structural)">
           <input
             type="color"
             className="config-input"
-            aria-label="Present-time NATO timezone cell background color"
+            aria-label="Read-point column background color in the NATO structural row"
             title={
               lay.timezoneLetterRowActiveCellBackgroundColor === undefined
-                ? "Automatic active-cell fill — darker shade derived from the current even/odd NATO palette"
-                : "Present-time / active cell background override"
+                ? "Automatic read-point column fill — darker shade derived from the current even/odd NATO palette"
+                : "Read-point column background override (structural overlay)"
             }
             value={
               lay.timezoneLetterRowActiveCellBackgroundColor ??
@@ -214,7 +218,7 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
           <button
             type="button"
             className="config-input"
-            aria-label="Reset present-time NATO cell background to automatic (derived from even/odd palette)"
+            aria-label="Reset read-point NATO cell background to automatic (derived from even/odd palette)"
             disabled={!wired || lay.timezoneLetterRowActiveCellBackgroundColor === undefined}
             onClick={
               wired && updateConfig

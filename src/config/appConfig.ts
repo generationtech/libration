@@ -350,9 +350,10 @@ export interface DisplayChromeLayoutConfig {
    */
   timezoneLetterRowLetterForegroundColor?: string;
   /**
-   * Present-time / active structural column cell background. When omitted, effective fill is a deterministic darker color
-   * derived from the resolved even/odd NATO palette (including built-in defaults); the legacy active token is used only
-   * as an internal fallback when that derivation cannot run.
+   * Background for the structural column that contains the read-point meridian (NATO row “active” cell). Not a second civil
+   * clock. When omitted, effective fill is a deterministic darker color derived from the resolved even/odd NATO palette
+   * (including built-in defaults); the legacy active token is used only as an internal fallback when that derivation
+   * cannot run.
    */
   timezoneLetterRowActiveCellBackgroundColor?: string;
   /**

@@ -629,7 +629,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     );
 
     const labelToggle = screen.getByRole("checkbox", {
-      name: "Show fixed coordinate label on the active NATO timezone tab when this meridian anchors the top band",
+      name: "Show fixed coordinate label on the structural NATO tab for the read-point column when this meridian anchors the top band",
     });
     expect(labelToggle).not.toBeChecked();
     await user.click(labelToggle);

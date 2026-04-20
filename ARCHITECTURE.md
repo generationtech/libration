@@ -152,7 +152,7 @@ Current top-band design:
 flowchart TB
     IE[Indicator Entries]
     TT[Tickmark Tape]
-    NZ[NATO Timezone Strip]
+    NZ[NATO / structural zone row]
     SCENE[Scene Viewport]
 
     IE --> TT
@@ -208,9 +208,9 @@ flowchart TB
 The scene viewport is resolved upstream and handed to the backend as concrete layout data.
 
 Top-band major areas now expose independent visibility controls for:
-- 24-hour indicator entries
-- 24-hour tickmark tape
-- NATO timezone row
+- 24-hour indicator entries (civil-phased at the read point)
+- 24-hour tickmark tape (same phased band)
+- NATO / structural zone row (geometric overlay — not the reference civil clock)
 
 The 24-hour indicator entries area now has its own structured strip-scoped presentation controls:
 - authored strip background color intent in config
@@ -225,7 +225,7 @@ The 24-hour indicator entries area now has its own structured strip-scoped prese
 Recent chrome simplification:
 - hour-marker circle backgrounds have been removed from the top-band render plan
 - broad tape-level `NOON` / `MIDNIGHT` annotations are no longer emitted as a separate legacy pass
-- marker placement, timing, and tape alignment remain unchanged
+- phased tape and read-point registration follow the resolver-owned instant and reference zone; display mode changes labels only
 
 Chrome is:
 - visually integrated
@@ -484,7 +484,7 @@ Derived effective/runtime concerns:
   - text → `civilPhased`
   - non-text/procedural → `civilColumnAnchored`
 - **Content** — e.g. `hour24`, `localWallClock`
-  - column-anchored procedural clocks use anchored timezone-segment / reference-city band-frame time at the present-time tick
+  - column-anchored procedural clocks use the same resolver instant and civil projection as the phased tape, aligned to the read-point structural column
   - display mode (`local12` / `local24` / `utc24`) affects labels only — not tape geometry or read-point registration
 
 ```mermaid

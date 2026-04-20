@@ -55,7 +55,7 @@ export type EffectiveTimezoneLetterRowArea = {
   usesAuthoredLetterForegroundOverride: boolean;
   effectiveBackgroundColorEven: string;
   effectiveBackgroundColorOdd: string;
-  /** Present-time / active structural column cell fill for the render plan. */
+  /** Read-point column (structural) cell fill for the render plan — not a second civil clock. */
   effectiveBackgroundColorActive: string;
   /** Final CSS color for NATO zone letters in the render plan (non-active cells, and active cell when no split). */
   effectiveLetterForegroundColor: string;

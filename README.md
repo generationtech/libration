@@ -65,7 +65,7 @@ Top band consists of:
 flowchart TB
     IE[Indicator Entries]
     TT[Tickmark Tape]
-    NZ[NATO Timezone Strip]
+    NZ[NATO / structural zone row]
 
     SCENE[Scene Viewport]
 
@@ -100,9 +100,9 @@ Top chrome is now treated as real application layout:
 - hiding top-band areas reclaims that space instead of leaving map content hidden underneath chrome
 
 Chrome editing is now organized by major area rather than one long mixed panel. Current major areas include:
-- 24-hour indicator entries
-- 24-hour tickmarks tape
-- NATO timezone area
+- 24-hour indicator entries (civil-phased at the read point)
+- 24-hour tickmarks tape (same phased band; format changes do not move ticks)
+- NATO / structural zone row (15° grid — not the reference civil clock)
 
 Each top-band area now has independent persisted visibility where applicable, including:
 - `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
@@ -120,8 +120,8 @@ The 24-hour indicator entries area now also supports its own focused feature set
   - semantic diamond glyphs
 
 Recent simplification:
-- top-band alignment and timing behavior are unchanged
-- the present-time tick mark lives in the 24-hour tickmark tape only; it is no longer double-drawn into the upper indicator entries area
+- one resolver-owned instant and reference frame: phased tape follows civil time in the IANA zone; the read-point meridian fixes horizontal registration only
+- the read-point tick is drawn in the tickmark tape only; it is not duplicated in the upper indicator entries area
 
 ![Accelerated map demo](docs/images/libration-map-demo.gif)
 ---
@@ -161,7 +161,7 @@ flowchart TB
 
 At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
 
-For clock-like procedural markers, the civil-column-anchored path uses the same reference-city / band-frame present-time basis at the present-time tick that the rest of the map clock uses.
+For clock-like procedural markers, the civil-column-anchored path uses the same resolver instant and reference civil zone as the bottom bar and phased tape; disk x aligns to the read-point column (structural sector center for the anchor meridian).
 
 Implemented realizations:
 - **Text**

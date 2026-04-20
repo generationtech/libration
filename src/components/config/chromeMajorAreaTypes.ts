@@ -31,7 +31,7 @@ export function labelForChromeMajorArea(id: ChromeMajorAreaId): string {
     case "tickTape":
       return "24-hour tickmarks tape";
     case "natoTimezone":
-      return "NATO timezone area";
+      return "NATO / structural zone row";
     default: {
       const _exhaustive: never = id;
       return _exhaustive;

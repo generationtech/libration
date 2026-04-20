@@ -43,7 +43,7 @@ import {
   mapXFromLongitudeDeg,
   resolveTopBandTimeFromConfig,
   referenceFractionalHourOfDay,
-  solarLocalHour0To23FromUtcMsOfDay,
+  structuralMeridianHour0To23FromUtcMsOfDay,
   militaryZoneLetterFromStructuralHourIndex,
   CANONICAL_MILITARY_ZONE_LETTERS_WEST_TO_EAST,
   MILITARY_ZONE_LETTERS_WEST_TO_EAST,
@@ -264,7 +264,7 @@ describe("buildUtcTopScaleLayout", () => {
     }
   });
 
-  it("derives structural segment labels from UTC + longitude offset (solar hour); circle row uses fixed 00–23 UTC", () => {
+  it("derives structural segment labels from UTC + longitude offset (meridian grid); circle row uses fixed 00–23 UTC", () => {
     const width = 2400;
     const t0 = Date.UTC(2026, 3, 4, 0, 0, 0);
     const layout = buildUtcTopScaleLayout(t0, width, 80, RESOLVED_UTC_UTC24);
@@ -273,16 +273,18 @@ describe("buildUtcTopScaleLayout", () => {
       const seg = layout.segments[h]!;
       const lon = longitudeDegFromMapX(seg.centerX, w);
       const utcMsOfDay = t0 - layout.utcDayStartMs;
-      expect(seg.solarHour).toBe(solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay, lon));
-      expect(seg.label).toBe(seg.solarHour.toString().padStart(2, "0"));
+      expect(seg.structuralMeridianHour0To23).toBe(
+        structuralMeridianHour0To23FromUtcMsOfDay(utcMsOfDay, lon),
+      );
+      expect(seg.label).toBe(seg.structuralMeridianHour0To23.toString().padStart(2, "0"));
     }
-    // Midnight UTC: left column center ≈ −172.5° → solar hour 12; right column ≈ +172.5° → 11
-    expect(layout.segments[0]!.solarHour).toBe(12);
+    // Midnight UTC: left column center ≈ −172.5° → meridian-grid hour 12; right column ≈ +172.5° → 11
+    expect(layout.segments[0]!.structuralMeridianHour0To23).toBe(12);
     expect(layout.segments[0]!.label).toBe("12");
     expect(layout.segments[0]!.timezoneLetter).toBe("M");
     expect(layout.segments[0]!.nominalUtcOffsetHours).toBe(-12);
     expect(layout.segments[12]!.timezoneLetter).toBe("Z");
-    expect(layout.segments[23]!.solarHour).toBe(11);
+    expect(layout.segments[23]!.structuralMeridianHour0To23).toBe(11);
     expect(layout.segments[23]!.label).toBe("11");
     expect(layout.segments[23]!.timezoneLetter).toBe("L");
     const tapeAf = layout.phasedTapeAnchorFrac;
@@ -300,30 +302,32 @@ describe("buildUtcTopScaleLayout", () => {
     }
   });
 
-  it("wraps solar hours correctly across 0/23 for longitude and time-of-day", () => {
+  it("wraps meridian-grid hours correctly across 0/23 for longitude and time-of-day", () => {
     const width = 480;
     const day = Date.UTC(2025, 6, 1, 0, 0, 0);
     // 23:30 UTC → utcMsOfDay = 23.5 h; at lon 0, local ≈ 23.5 → hour 23
     const t2330 = day + (23 * 3600 + 1800) * 1000;
-    expect(solarLocalHour0To23FromUtcMsOfDay(t2330 - day, 0)).toBe(23);
+    expect(structuralMeridianHour0To23FromUtcMsOfDay(t2330 - day, 0)).toBe(23);
     const layoutEdge = buildUtcTopScaleLayout(t2330, width);
     const mid = layoutEdge.segments[12]!;
-    expect(mid.solarHour).toBe(solarLocalHour0To23FromUtcMsOfDay(t2330 - day, longitudeDegFromMapX(mid.centerX, width)));
+    expect(mid.structuralMeridianHour0To23).toBe(
+      structuralMeridianHour0To23FromUtcMsOfDay(t2330 - day, longitudeDegFromMapX(mid.centerX, width)),
+    );
 
-    // Near day rollover: 23:45 UTC, positive lon pushes into next solar day → hour 0
+    // Near day rollover: 23:45 UTC, positive lon pushes wrapped grid hour → 0
     const t2345 = day + (23 * 3600 + 2700) * 1000;
-    expect(solarLocalHour0To23FromUtcMsOfDay(t2345 - day, 15)).toBe(0);
+    expect(structuralMeridianHour0To23FromUtcMsOfDay(t2345 - day, 15)).toBe(0);
   });
 
-  it("shifts segment solar labels when UTC advances; circle row keeps 00–23 and phases centerX", () => {
+  it("shifts segment meridian-grid labels when UTC advances; circle row keeps 00–23 and phases centerX", () => {
     const width = 1920;
     const day = Date.UTC(2024, 5, 10, 0, 0, 0);
     const t0 = day;
     const t1 = day + 3600 * 1000;
     const a = buildUtcTopScaleLayout(t0, width, 80, RESOLVED_UTC_UTC24);
     const b = buildUtcTopScaleLayout(t1, width, 80, RESOLVED_UTC_UTC24);
-    expect(a.segments[0]!.solarHour).toBe(12);
-    expect(b.segments[0]!.solarHour).toBe(13);
+    expect(a.segments[0]!.structuralMeridianHour0To23).toBe(12);
+    expect(b.segments[0]!.structuralMeridianHour0To23).toBe(13);
     expect(a.circleMarkers[0]!.label).toBe("00");
     expect(b.circleMarkers[0]!.label).toBe("00");
     expect(b.circleMarkers[0]!.centerX).toBeCloseTo(

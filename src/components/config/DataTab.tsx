@@ -102,7 +102,8 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
           />
         </ConfigControlRow>
         <p className="config-section__hint">
-          Demo time: local deterministic playback only — not live data. Set mode to Demo to configure.
+          Demo time replaces the wall-clock instant only (`nowUtcInstant`); reference zone, meridian read point, and display
+          formatting stay as configured. Local deterministic playback — not live data. Set mode to Demo to configure.
         </p>
         <ConfigControlRow label="Enable demo time">
           <input
