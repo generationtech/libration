@@ -551,7 +551,10 @@ function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
   return `${month} ${day} ${year}`.trim();
 }
 
-/** Bottom-left clock: reference-frame civil wall time (display mode is formatting only; tape geometry is independent). */
+/**
+ * Bottom-left clock: reference-frame civil wall time for `local12` / `local24`; for `utc24`, the same instant formatted
+ * in UTC (true UTC clock, not reference civil time with 24-hour numerals). Tape geometry is unchanged across modes.
+ */
 function bottomTimeReadoutPresentation(
   nowMs: number,
   referenceWallClockZone: string,
@@ -559,9 +562,10 @@ function bottomTimeReadoutPresentation(
 ): { microLabel: string; timeLine: string } {
   const dm = displayTimeModeFromTopBandTimeMode(mode);
   const hour12 = dm === "12hr";
+  const wallZone = dm === "utc" ? "UTC" : referenceWallClockZone;
   return {
     microLabel: "REFERENCE TIME",
-    timeLine: formatWallClockInTimeZone(nowMs, referenceWallClockZone, hour12),
+    timeLine: formatWallClockInTimeZone(nowMs, wallZone, hour12),
   };
 }
 
@@ -575,11 +579,12 @@ export function buildBottomInformationBarState(options: {
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
   const mode = options.topBandMode ?? DEFAULT_DISPLAY_TIME_CONFIG.topBandMode;
+  const dm = displayTimeModeFromTopBandTimeMode(mode);
+  const calendarZone = dm === "utc" ? "UTC" : tz;
   const { microLabel, timeLine: referenceTimeLine } = bottomTimeReadoutPresentation(options.nowMs, tz, mode);
   const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   let systemLocalLine: string | undefined;
   if (systemTz !== tz) {
-    const dm = displayTimeModeFromTopBandTimeMode(mode);
     const hour12 = dm === "12hr";
     systemLocalLine = `THIS DEVICE · ${formatWallClockInTimeZone(options.nowMs, systemTz, hour12)}`;
   }
@@ -587,8 +592,8 @@ export function buildBottomInformationBarState(options: {
   return {
     referenceMicroLabel: microLabel,
     referenceTimeLine,
-    referenceDateLine: formatLocalDateLine(options.nowMs, tz),
-    rightPanelDateLine: formatRightPanelDateLine(options.nowMs, tz),
+    referenceDateLine: formatLocalDateLine(options.nowMs, calendarZone),
+    rightPanelDateLine: formatRightPanelDateLine(options.nowMs, calendarZone),
     systemLocalLine,
     bottomChromeLayout: computeBottomChromeLayout(options.bottomBandWidthPx),
   };

@@ -1030,7 +1030,7 @@ describe("buildBottomInformationBarState", () => {
     }
   });
 
-  it("reference zone drives primary clock; utc display mode is formatting-only", () => {
+  it("utc24 formats the reference instant in UTC, not reference-zone civil 24-hour time", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1039,7 +1039,26 @@ describe("buildBottomInformationBarState", () => {
       topBandMode: "utc24",
     });
     expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
-    expect(ib.referenceTimeLine.startsWith("09:")).toBe(true);
+    expect(ib.referenceTimeLine.startsWith("14:")).toBe(true);
+  });
+
+  it("Knoxville frame (America/New_York): local civil 18:04 EDT reads as ~22:04 UTC in utc24; local24 unchanged", () => {
+    // July 10 2026 22:04:05 UTC = 18:04:05 Eastern (EDT, UTC−4).
+    const t = Date.UTC(2026, 6, 10, 22, 4, 5);
+    const ib24 = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "America/New_York",
+      topBandMode: "local24",
+    });
+    const ibUtc = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "America/New_York",
+      topBandMode: "utc24",
+    });
+    expect(ib24.referenceTimeLine.startsWith("18:")).toBe(true);
+    expect(ibUtc.referenceTimeLine.startsWith("22:")).toBe(true);
   });
 
   it("uses 12-hour wall clock with AM/PM for local12", () => {
