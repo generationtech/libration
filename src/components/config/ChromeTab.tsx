@@ -143,7 +143,8 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
         <p className="config-section__hint">
           One instant and one reference frame: civil date and time follow the IANA zone; the top strip read point follows
           the meridian policy below. Hour label style is formatting only — it does not move tape geometry or change which
-          instant is shown.
+          instant is shown. Civil time zone source picks which IANA wall clock backs the reference frame (bottom readout
+          and tape phase); it is separate from read-point meridian registration and from structural NATO overlays.
         </p>
         <ConfigControlRow label="Hour label format (top band)">
           <select

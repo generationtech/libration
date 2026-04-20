@@ -17,9 +17,11 @@
  */
 
 import type { GeographyConfig } from "../../config/appConfig";
+import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcOffsetHours.ts";
 import {
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
+  resolveTimezoneStripUtcOffsetPolicy,
 } from "../../config/topBandVisualPolicy.ts";
 import { createTopBandTextGlyph } from "../../glyphs/topBandTextGlyphFromPolicy.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
@@ -54,6 +56,8 @@ export interface TimezoneLetterRowSegmentInput {
   x0: number;
   x1: number;
   timezoneLetter: string;
+  /** Nominal UTC offset hours on the structural 15° grid (subrow; not IANA civil offset). */
+  nominalUtcOffsetHours: number;
 }
 
 /**
@@ -150,6 +154,7 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   }
 
   const baseLetterPolicy = resolveTimezoneStripLetterPolicy(st, options.resolvedTimezoneLetterFontAssetId);
+  const offsetPolicy = resolveTimezoneStripUtcOffsetPolicy(st, options.resolvedTimezoneLetterFontAssetId);
   const activeLetterFill = options.activeCellLetterForeground;
 
   for (const seg of options.segments) {
@@ -162,7 +167,10 @@ export function buildTimezoneLetterRowRenderPlan(options: {
         continue;
       }
       const cxLetter = (x0 + x1) * 0.5;
-      const letterY = fillTop + fillH * tzTab.zoneLetterCenterFracOfBody;
+      /** NATO letter upper; offset subrow lower — keeps letters readable with structural UTC offset metadata. */
+      const letterY = fillTop + fillH * 0.38;
+      const offsetSize = Math.max(6, Math.min(Math.round(zoneLetterSize * 0.36), 9));
+      const offsetY = fillTop + fillH * 0.66;
 
       const isActiveCol = seg.hour === activeStructuralHour;
       const letterPolicy =
@@ -177,9 +185,15 @@ export function buildTimezoneLetterRowRenderPlan(options: {
         items,
       );
 
+      const offsetGlyph = createTopBandTextGlyph(
+        formatNatoUtcOffsetHoursLabel(seg.nominalUtcOffsetHours),
+        offsetPolicy,
+      );
+      emitGlyphToRenderPlan(offsetGlyph, { cx: cxLetter, cy: offsetY, size: offsetSize }, gctx, items);
+
       if (geoCaption && seg.hour === activeStructuralHour) {
         const capSize = Math.max(7, Math.min(Math.round(zoneLetterSize * 0.34), 10));
-        const capYTop = letterY + zoneLetterSize * 0.52;
+        const capYTop = offsetY + offsetSize * 0.52;
         const capGlyph = createTopBandTextGlyph(
           truncateTimezoneStripCaption(geoCaption, 26),
           resolveTimezoneStripCaptionPolicy(st),

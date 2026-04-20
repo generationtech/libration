@@ -12,28 +12,46 @@
  */
 
 import type { PinDateTimeDisplayMode } from "../config/appConfig";
-import { intlHourOptionForClock, localePrefersHour12 } from "./timeFormat";
+import type { DisplayTimeMode } from "./chromeTimeDomain";
+import { intlHourOptionForClock } from "./timeFormat";
 
-/** One formatter per (mode, IANA zone); DST via Intl. */
+/** One formatter per (pin layout mode, display time mode, effective IANA zone for Intl). */
 const CACHE = new Map<string, (d: Date) => string>();
 
-function cacheKey(mode: PinDateTimeDisplayMode, timeZone: string): string {
-  return `${mode}\0${timeZone}`;
+function cacheKey(
+  mode: PinDateTimeDisplayMode,
+  displayTimeMode: DisplayTimeMode,
+  effectiveZone: string,
+): string {
+  return `${mode}\0${displayTimeMode}\0${effectiveZone}`;
+}
+
+function hour12AndZoneForInstrumentMode(
+  pinIanaZone: string,
+  displayTimeMode: DisplayTimeMode,
+): { timeZone: string; hour12: boolean } {
+  if (displayTimeMode === "utc") {
+    return { timeZone: "UTC", hour12: false };
+  }
+  return {
+    timeZone: pinIanaZone,
+    hour12: displayTimeMode === "12hr",
+  };
 }
 
 function buildFormatter(
   mode: Exclude<PinDateTimeDisplayMode, "hidden">,
   timeZone: string,
+  hour12: boolean,
 ): (d: Date) => string {
-  const h12 = localePrefersHour12();
-  const hourOpt = intlHourOptionForClock(h12);
+  const hourOpt = intlHourOptionForClock(hour12);
   switch (mode) {
     case "time": {
       const fmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
         hour: hourOpt,
         minute: "2-digit",
-        hour12: h12,
+        hour12,
       });
       return (d) => fmt.format(d);
     }
@@ -43,7 +61,7 @@ function buildFormatter(
         hour: hourOpt,
         minute: "2-digit",
         second: "2-digit",
-        hour12: h12,
+        hour12,
       });
       return (d) => fmt.format(d);
     }
@@ -65,7 +83,7 @@ function buildFormatter(
         hour: hourOpt,
         minute: "2-digit",
         second: "2-digit",
-        hour12: h12,
+        hour12,
       });
       return (d) => fmt.format(d);
     }
@@ -74,7 +92,7 @@ function buildFormatter(
         timeZone,
         hour: hourOpt,
         minute: "2-digit",
-        hour12: h12,
+        hour12,
       });
       const dateFmt = new Intl.DateTimeFormat(undefined, {
         timeZone,
@@ -88,21 +106,25 @@ function buildFormatter(
 }
 
 /**
- * Resolved secondary-line string for a reference pin’s local wall time (content only — not font/layout).
- * Uses the runtime locale (undefined) for Intl, matching {@link formatWallClockInTimeZone} for {@code timeWithSeconds}.
+ * Resolved secondary-line string for a reference pin’s time (content only — not font/layout).
+ * {@link displayTimeMode} follows the instrument “Hour label format” (12h civil / 24h civil / UTC-style); the pin’s IANA
+ * zone is still used for local wall time when mode is 12hr or 24hr, and ignored for the clock digits when mode is UTC
+ * (same instant, UTC labels).
  */
 export function formatPinDateTimeLabel(
   nowMs: number,
   timeZone: string,
   mode: PinDateTimeDisplayMode,
+  displayTimeMode: DisplayTimeMode,
 ): string {
   if (mode === "hidden") {
     return "";
   }
-  const k = cacheKey(mode, timeZone);
+  const { timeZone: effectiveZone, hour12 } = hour12AndZoneForInstrumentMode(timeZone, displayTimeMode);
+  const k = cacheKey(mode, displayTimeMode, effectiveZone);
   let fn = CACHE.get(k);
   if (!fn) {
-    fn = buildFormatter(mode, timeZone);
+    fn = buildFormatter(mode, effectiveZone, hour12);
     CACHE.set(k, fn);
   }
   return fn(new Date(nowMs));

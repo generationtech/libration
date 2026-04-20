@@ -25,6 +25,7 @@ import {
   computeTimezoneLetterSizePx,
   TOP_CHROME_STYLE,
 } from "../../config/topChromeStyle.ts";
+import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcOffsetHours.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
@@ -126,6 +127,11 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(letterTexts.length).toBeGreaterThanOrEqual(24);
     expect(new Set(letterTexts.map((t) => (t.kind === "text" ? t.text : ""))).size).toBe(24);
     expect(letterTexts[0]!.kind === "text" && letterTexts[0]!.text).toBe(layout.segments[0]!.timezoneLetter);
+
+    for (let h = 0; h < 24; h += 1) {
+      const expected = formatNatoUtcOffsetHoursLabel(layout.segments[h]!.nominalUtcOffsetHours);
+      expect(plan.items.some((i) => i.kind === "text" && i.text === expected)).toBe(true);
+    }
     const tzLetter = letterTexts[0];
     expect(tzLetter?.kind).toBe("text");
     if (tzLetter?.kind === "text") {

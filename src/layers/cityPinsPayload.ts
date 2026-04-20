@@ -20,6 +20,7 @@ export type CityPinsLabelMode = "city" | "cityAndTime";
 export type CityPinsScale = "small" | "medium" | "large";
 
 import type { PinDateTimeDisplayMode } from "../config/appConfig";
+import type { DisplayTimeMode } from "../core/chromeTimeDomain";
 import type { FontAssetId } from "../typography/fontAssetTypes";
 
 /**
@@ -49,6 +50,8 @@ export interface CityPinsPayload {
 /** Options supplied at layer construction (payload fonts resolved at bootstrap; display mode shapes the time string). */
 export type CityPinsPresentationOptions = Pick<CityPinsPayload, "showLabels" | "labelMode" | "scale"> & {
   pinDateTimeDisplayMode: PinDateTimeDisplayMode;
+  /** Instrument-wide hour label policy (12h / 24h / UTC-style); must match {@link AppConfig.displayTime}. */
+  displayTimeMode: DisplayTimeMode;
 };
 
 export function isCityPinsPayload(data: unknown): data is CityPinsPayload {

@@ -116,12 +116,19 @@ function applyCommittedWorkingV2(
   const cityPinsFontRequiresRegistry =
     productDefaultFontChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
 
+  /** City pins layer captures hour-label policy at construction; rebuild when it changes. */
+  const cityPinsHourLabelPolicyChanged =
+    prevDerived.displayTime.topBandMode !== nextDerived.displayTime.topBandMode;
+  const cityPinsHourLabelRequiresRegistry =
+    cityPinsHourLabelPolicyChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
+
   if (
     !layerEnableFlagsEqual(prevDerived.layers, nextDerived.layers) ||
     !visibleCityIdsSetEqual(prevDerived.visibleCityIds, nextDerived.visibleCityIds) ||
     !customPinsEqual(prevDerived.customPins, nextDerived.customPins) ||
     pinPresentationRequiresRegistry ||
-    cityPinsFontRequiresRegistry
+    cityPinsFontRequiresRegistry ||
+    cityPinsHourLabelRequiresRegistry
   ) {
     registryRef.current = createLayerRegistryFromConfig(nextDerived);
   }

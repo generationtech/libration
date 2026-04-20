@@ -55,7 +55,6 @@ import {
   topBandHourMarkerCenterX,
   topBandNextHourLabel,
   topBandMarkerAnnotationKind,
-  topBandMarkerAnnotationLabel,
   computeTopBandCircleStackMetrics,
   computeUtcSubsolarLongitudeDeg,
   utcDayStartMs,
@@ -501,7 +500,7 @@ describe("buildUtcTopScaleLayout", () => {
     for (let h = 0; h < 24; h += 1) {
       const seg = layout.segments[h]!;
       const cur = h.toString().padStart(2, "0");
-      const ak = topBandMarkerAnnotationKind(h, "utc24");
+      expect(topBandMarkerAnnotationKind(h, "utc24")).toBe("none");
       expect(layout.circleMarkers[h]).toEqual({
         centerX: topBandHourMarkerCenterX(h, layout.referenceFractionalHour, 1200, af),
         radiusPx: r,
@@ -509,8 +508,8 @@ describe("buildUtcTopScaleLayout", () => {
         label: cur,
         currentHourLabel: cur,
         nextHourLabel: topBandNextHourLabel(h, "utc24"),
-        annotationKind: ak,
-        annotationLabel: topBandMarkerAnnotationLabel(ak),
+        annotationKind: "none",
+        annotationLabel: undefined,
       });
       expect(layout.circleMarkers[h]!.centerX).not.toBeCloseTo(seg.centerX, 5);
     }
@@ -640,6 +639,21 @@ describe("buildUtcTopScaleLayout", () => {
       expect(layouts[i]!.referenceFractionalHour).toBeCloseTo(layouts[0]!.referenceFractionalHour, 10);
       expect(layouts[i]!.civilProjection.fractionalHour).toBeCloseTo(layouts[0]!.civilProjection.fractionalHour, 10);
       expect(layouts[i]!.referenceTimeZone).toBe(layouts[0]!.referenceTimeZone);
+    }
+  });
+});
+
+describe("topBandMarkerAnnotationKind", () => {
+  it("local12 marks structural noon and midnight only", () => {
+    expect(topBandMarkerAnnotationKind(0, "local12")).toBe("midnight");
+    expect(topBandMarkerAnnotationKind(12, "local12")).toBe("noon");
+    expect(topBandMarkerAnnotationKind(11, "local12")).toBe("none");
+  });
+
+  it("local24 and utc24 never apply noon/midnight crown roles", () => {
+    for (const mode of ["local24", "utc24"] as const) {
+      expect(topBandMarkerAnnotationKind(0, mode)).toBe("none");
+      expect(topBandMarkerAnnotationKind(12, mode)).toBe("none");
     }
   });
 });

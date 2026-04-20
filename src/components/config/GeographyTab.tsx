@@ -37,9 +37,10 @@ export function GeographyTab({ config, updateConfig }: GeographyTabProps) {
         <p className="config-section__hint">
           Map and scene geography. When chrome&apos;s read point meridian is &quot;Auto&quot;, a fixed coordinate here
           supplies the anchor meridian; explicit read-point modes in the Chrome tab still take precedence. This does not
-          replace the IANA civil zone — it only participates in resolving the reference frame meridian.
+          replace the IANA civil zone — it only participates in resolving the reference frame meridian. Use this when you
+          want the strip anchored to a specific longitude without choosing a fixed city or longitude in Chrome.
         </p>
-        <ConfigControlRow label="Reference mode">
+        <ConfigControlRow label="Meridian anchor (when read point is Auto)">
           <select
             className="config-input"
             value={geo.referenceMode}

@@ -20,6 +20,7 @@ import {
   interpolateRgbStringBetweenCssColors,
 } from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
+import type { DisplayTimeMode } from "../core/chromeTimeDomain.ts";
 import {
   resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
@@ -202,7 +203,12 @@ function resolveEffectiveNoonMidnightCustomization(
     effectiveBackgroundColor: string;
     effectiveForegroundColor: "#000000" | "#ffffff";
   },
+  displayTimeMode: DisplayTimeMode,
 ): EffectiveNoonMidnightCustomization {
+  /** Noon/midnight emphasis is a civil 12-hour presentation convention only. */
+  if (displayTimeMode !== "12hr") {
+    return { enabled: false };
+  }
   /** Authored noon/midnight intent applies only to text hour-marker realization (indicator-entry disk labels). */
   if (hm.realization.kind !== "text") {
     return { enabled: false };
@@ -234,11 +240,17 @@ function resolveEffectiveNoonMidnightCustomization(
  */
 export function resolveEffectiveTopBandHourMarkers(
   layout: DisplayChromeLayoutConfig,
+  options?: { displayTimeMode?: DisplayTimeMode },
 ): EffectiveTopBandHourMarkers {
+  const displayTimeMode: DisplayTimeMode = options?.displayTimeMode ?? "12hr";
   const hm = layout.hourMarkers;
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
   const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
-  const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(hm, indicatorEntriesArea);
+  const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(
+    hm,
+    indicatorEntriesArea,
+    displayTimeMode,
+  );
   const derivedFg = indicatorEntriesArea.effectiveForegroundColor;
 
   const sizeMultiplier = resolvedHourMarkerLayoutSizeMultiplier(layout);

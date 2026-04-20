@@ -271,6 +271,22 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
+  it("disables noon/midnight customization for 24-hour and UTC-style display modes", () => {
+    const layout = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "text", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+        noonMidnightCustomization: { enabled: true, expressionMode: "boxedNumber" },
+      },
+    });
+    expect(resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode: "24hr" }).noonMidnightCustomization).toEqual({
+      enabled: false,
+    });
+    expect(resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode: "utc" }).noonMidnightCustomization).toEqual({
+      enabled: false,
+    });
+  });
+
   it("radial wedge mapping", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(

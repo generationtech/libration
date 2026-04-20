@@ -97,7 +97,12 @@ export function createCityPinsLayer(
         localTimeLabel:
           c.kind === "custom"
             ? ""
-            : formatPinDateTimeLabel(time.now, c.timeZone, presentation.pinDateTimeDisplayMode),
+            : formatPinDateTimeLabel(
+                time.now,
+                c.timeZone,
+                presentation.pinDateTimeDisplayMode,
+                presentation.displayTimeMode,
+              ),
       }));
       const data: CityPinsPayload = {
         kind: CITY_PINS_KIND,

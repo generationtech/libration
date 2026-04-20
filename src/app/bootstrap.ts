@@ -12,6 +12,7 @@
  */
 
 import type { AppConfig } from "../config/appConfig";
+import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode";
 import { resolveCitiesForPins, resolveEnabledCustomPinsForMap } from "../config/appConfig";
 import {
   resolvePinCityNameTextFontAssetId,
@@ -52,7 +53,10 @@ export function createLayerRegistryFromConfig(
       createCityPinsLayer(
         resolveCitiesForPins(config),
         resolveEnabledCustomPinsForMap(config),
-        config.pinPresentation,
+        {
+          ...config.pinPresentation,
+          displayTimeMode: displayTimeModeFromTopBandTimeMode(config.displayTime.topBandMode),
+        },
         resolvePinCityNameTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
         resolvePinDateTimeTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
       ),

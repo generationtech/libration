@@ -21,6 +21,7 @@ import {
   resolveTopBandUpperNumeralPolicy,
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
+  resolveTimezoneStripUtcOffsetPolicy,
   shouldRenderTopBandUpperNumerals,
 } from "./topBandVisualPolicy.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
@@ -74,6 +75,18 @@ describe("topBandVisualPolicy", () => {
     expect(resolveTimezoneStripCaptionPolicy(TOP_CHROME_STYLE).fill).toBe(
       TOP_CHROME_STYLE.zoneText.geographyCaption,
     );
+  });
+
+  it("resolveTimezoneStripUtcOffsetPolicy uses subordinate zone text fill and resolved font", () => {
+    const p = resolveTimezoneStripUtcOffsetPolicy(TOP_CHROME_STYLE, "computer");
+    expect(p.role).toBe("chromeZoneLabel");
+    expect(p.fill).toBe(TOP_CHROME_STYLE.zoneText.utcOffsetSubrow);
+    expect(p.typographyOverrides).toEqual({
+      fontWeight: 650,
+      letterSpacingPx: 0,
+      fontAssetId: "computer",
+    });
+    expect(p.textBaseline).toBe("middle");
   });
 
   it("shouldRenderTopBandUpperNumerals matches current gate (positive height, meets floor)", () => {

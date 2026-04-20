@@ -31,3 +31,14 @@ export function roundedStructuralMeridianUtcOffsetHours(lonDeg: number): number 
 export function nominalUtcOffsetHoursFromLongitudeDeg(lonDeg: number): number {
   return roundedStructuralMeridianUtcOffsetHours(lonDeg);
 }
+
+/**
+ * Compact label for NATO / structural 15° grid cells: signed integer hours, no leading zero on magnitude
+ * (`+3`, `-2`, `0`).
+ */
+export function formatNatoUtcOffsetHoursLabel(nominalUtcOffsetHours: number): string {
+  if (nominalUtcOffsetHours === 0) {
+    return "0";
+  }
+  return nominalUtcOffsetHours > 0 ? `+${nominalUtcOffsetHours}` : String(nominalUtcOffsetHours);
+}

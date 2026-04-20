@@ -52,10 +52,7 @@ import type { CivilProjection, ReadPoint } from "../core/chromeTimeDomain.ts";
 import { deriveCivilProjection } from "../core/civilProjection.ts";
 import { roundedStructuralMeridianUtcOffsetHours } from "../core/structuralMeridianUtcOffsetHours.ts";
 import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
-import {
-  resolveDisplayTimeReferenceZone,
-  resolveReferenceFrameCivilTimeZone,
-} from "../core/displayTimeReference";
+import { resolveReferenceFrameCivilTimeZone } from "../core/displayTimeReference";
 import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
 import { instantAtBandCivilHour } from "../core/tapeInstant.ts";
 import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
@@ -496,13 +493,16 @@ export function topBandNextHourLabel(
 
 /**
  * Noon/midnight annotation for structural hour `utcHour` in the band’s civil frame.
- * Hour 0 → midnight; hour 12 → noon (local12, local24, utc24).
+ * Only {@link TopBandTimeMode} `local12` is allowed to show noon/midnight semantics; 24-hour and UTC-style labels are
+ * numeric only (no crown emphasis).
  */
 export function topBandMarkerAnnotationKind(
   utcHour: number,
-  /** Reserved for future per-mode noon/midnight policy; currently structural hour 0/12 only. */
-  _mode: TopBandTimeMode,
+  mode: TopBandTimeMode,
 ): TopBandMarkerAnnotationKind {
+  if (displayTimeModeFromTopBandTimeMode(mode) !== "12hr") {
+    return "none";
+  }
   if (utcHour === 0) {
     return "midnight";
   }
@@ -1450,7 +1450,8 @@ export function buildDisplayChromeState(options: {
       : computeBottomChromeOverlayBottomMarginPx(h);
   const stForRows = TOP_CHROME_STYLE;
   const hourMarkerSel = effectiveTopBandHourMarkerSelection(layout);
-  const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout);
+  const displayTimeMode = displayTimeModeFromTopBandTimeMode(resolved.topBandMode);
+  const effectiveTopBandHourMarkers = resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode });
   const effectiveTickTapeArea = resolveEffectiveTickTapeArea(layout);
   const effectiveTimezoneLetterRowArea = resolveEffectiveTimezoneLetterRowArea(layout);
   const baseRows = computeUtcTopScaleRowMetrics(baseTop, layout);
