@@ -17,7 +17,7 @@ import {
   DEMO_TIME_SPEED_MIN,
 } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
-import { resolveDisplayTimeReferenceZone } from "../../core/displayTimeReference";
+import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { DemoTimeStartFields } from "./DemoTimeStartFields";
 import { demoTimeStartIsoUtcNow } from "./demoTimeStartIso";
@@ -130,9 +130,7 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
           <DemoTimeStartFields
             committedStartIsoUtc={data.demoTime.startIsoUtc}
             topBandMode={config.chrome.displayTime.topBandMode}
-            resolvedReferenceTimeZone={resolveDisplayTimeReferenceZone(
-              config.chrome.displayTime.referenceTimeZone,
-            )}
+            resolvedReferenceTimeZone={resolveReferenceFrameCivilTimeZone(config.chrome.displayTime)}
             disabled={!demoControlsEnabled}
             onCommit={
               demoControlsEnabled && updateConfig

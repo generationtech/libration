@@ -21,7 +21,7 @@ import {
   DEMO_TIME_SPEED_MIN,
 } from "../../config/appConfig";
 import { getActiveAppConfig } from "../../config/displayPresets";
-import { resolveDisplayTimeReferenceZone } from "../../core/displayTimeReference";
+import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
 import { formatWallClockInTimeZone } from "../../core/timeFormat";
 import { effectiveDemoWallClockZone } from "./demoTimeStartIso";
 import {
@@ -121,7 +121,7 @@ describe("DataTab demo time UX", () => {
     const dt = initial.chrome.displayTime;
     const wallZone = effectiveDemoWallClockZone(
       dt.topBandMode,
-      resolveDisplayTimeReferenceZone(dt.referenceTimeZone),
+      resolveReferenceFrameCivilTimeZone(dt),
     );
     const hour12 = dt.topBandMode === "local12";
 

@@ -11,7 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { DisplayTimeZoneConfig } from "../config/appConfig";
+import type { DisplayTimeConfig, DisplayTimeZoneConfig } from "../config/appConfig";
+import { REFERENCE_CITIES } from "../data/referenceCities";
 
 export function isValidIanaTimeZone(timeZone: string): boolean {
   try {
@@ -35,4 +36,27 @@ export function resolveDisplayTimeReferenceZone(config: DisplayTimeZoneConfig): 
     return z;
   }
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * Effective IANA zone for the chrome **reference frame** civil clock (bottom readout, tape phase, read-point registration).
+ *
+ * - When the user sets an explicit fixed IANA zone, that always wins (may differ from the read-point meridian).
+ * - When civil source is {@code system}, the zone follows the selected **reference city** meridian mode
+ *   ({@link DisplayTimeConfig.topBandAnchor} {@code fixedCity}) so civil time and tape registration agree.
+ * - Otherwise ({@code system} with {@code auto} / {@code fixedLongitude} anchor), uses {@link resolveDisplayTimeReferenceZone}.
+ */
+export function resolveReferenceFrameCivilTimeZone(displayTime: DisplayTimeConfig): string {
+  const tzConfig = displayTime.referenceTimeZone;
+  if (tzConfig.source === "fixed") {
+    return resolveDisplayTimeReferenceZone(tzConfig);
+  }
+  const anchor = displayTime.topBandAnchor ?? { mode: "auto" };
+  if (anchor.mode === "fixedCity") {
+    const city = REFERENCE_CITIES.find((c) => c.id === anchor.cityId);
+    if (city !== undefined) {
+      return city.timeZone;
+    }
+  }
+  return resolveDisplayTimeReferenceZone(tzConfig);
 }

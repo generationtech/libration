@@ -40,6 +40,7 @@ import {
   computeUtcTopScaleRowMetrics,
   longitudeDegFromMapX,
   resolveDisplayTimeReferenceZone,
+  resolveReferenceFrameCivilTimeZone,
   mapXFromLongitudeDeg,
   resolveTopBandTimeFromConfig,
   referenceFractionalHourOfDay,
@@ -1145,11 +1146,47 @@ describe("buildDisplayChromeState", () => {
     const ib = buildBottomInformationBarState({
       nowMs: time.now,
       bottomBandWidthPx: 400,
-      chromeTimeZone: resolveDisplayTimeReferenceZone(dt.referenceTimeZone),
+      chromeTimeZone: resolveReferenceFrameCivilTimeZone(dt),
       topBandMode: dt.topBandMode,
     });
     expect(chrome.informationBar.referenceDateLine).toBe(ib.referenceDateLine);
     expect(chrome.informationBar.referenceTimeLine).toBe(ib.referenceTimeLine);
+  });
+
+  it("aligns bottom reference readout and tape civil projection when system civil + fixedCity Cairo", () => {
+    const t = Date.UTC(2024, 5, 15, 10, 30, 0);
+    const time = createTimeContext(t, 0, false);
+    const displayTime: DisplayTimeConfig = {
+      ...DEFAULT_DISPLAY_TIME_CONFIG,
+      referenceTimeZone: { source: "system" },
+      topBandMode: "local24",
+      topBandAnchor: { mode: "fixedCity", cityId: "city.cairo" },
+    };
+    const resolved = resolveTopBandTimeFromConfig(displayTime);
+    expect(resolved.referenceTimeZone).toBe("Africa/Cairo");
+
+    const chrome = buildDisplayChromeState({
+      time,
+      viewport: { width: 800, height: 600, devicePixelRatio: 1 },
+      frame: { frameNumber: 1, now: time.now, deltaMs: 0 },
+      displayTime,
+    });
+
+    const ib = buildBottomInformationBarState({
+      nowMs: time.now,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: resolved.referenceTimeZone,
+      topBandMode: displayTime.topBandMode,
+    });
+    expect(chrome.informationBar.referenceTimeLine).toBe(ib.referenceTimeLine);
+    expect(chrome.utcTopScale.referenceFractionalHour).toBeCloseTo(
+      referenceFractionalHourOfDay(t, "Africa/Cairo"),
+      10,
+    );
+    expect(chrome.utcTopScale.civilProjection.fractionalHour).toBeCloseTo(
+      referenceFractionalHourOfDay(t, "Africa/Cairo"),
+      10,
+    );
   });
 
   it("applies geography fixedCoordinate meridian when top band anchor is auto", () => {
@@ -1424,6 +1461,39 @@ describe("resolveDisplayTimeReferenceZone", () => {
     const sys = Intl.DateTimeFormat().resolvedOptions().timeZone;
     expect(resolveDisplayTimeReferenceZone({ source: "fixed", timeZone: "Not/A_Valid_Zone" })).toBe(sys);
     expect(resolveDisplayTimeReferenceZone({ source: "fixed", timeZone: "   " })).toBe(sys);
+  });
+});
+
+describe("resolveReferenceFrameCivilTimeZone", () => {
+  it("uses the reference city's IANA zone when civil source is system and anchor is fixedCity", () => {
+    expect(
+      resolveReferenceFrameCivilTimeZone({
+        ...DEFAULT_DISPLAY_TIME_CONFIG,
+        referenceTimeZone: { source: "system" },
+        topBandAnchor: { mode: "fixedCity", cityId: "city.cairo" },
+      }),
+    ).toBe("Africa/Cairo");
+  });
+
+  it("keeps an explicit fixed IANA zone when it differs from the fixedCity anchor (intentional split)", () => {
+    expect(
+      resolveReferenceFrameCivilTimeZone({
+        ...DEFAULT_DISPLAY_TIME_CONFIG,
+        referenceTimeZone: { source: "fixed", timeZone: "Europe/London" },
+        topBandAnchor: { mode: "fixedCity", cityId: "city.cairo" },
+      }),
+    ).toBe("Europe/London");
+  });
+
+  it("uses the runtime system zone when civil source is system and anchor is auto", () => {
+    const sys = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    expect(
+      resolveReferenceFrameCivilTimeZone({
+        ...DEFAULT_DISPLAY_TIME_CONFIG,
+        referenceTimeZone: { source: "system" },
+        topBandAnchor: { mode: "auto" },
+      }),
+    ).toBe(sys);
   });
 });
 

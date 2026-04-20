@@ -74,6 +74,20 @@ describe("chrome time model invariants", () => {
     expect(xTape).toBeCloseTo(r.readPoint.x, 5);
   });
 
+  it("E: system civil + fixedCity anchor uses that city's IANA zone for civil projection", () => {
+    const r = resolveChromeTime({
+      timeBasis: { nowUtcInstant },
+      displayTime: {
+        referenceTimeZone: { source: "system" },
+        topBandMode: "local24",
+        topBandAnchor: { mode: "fixedCity", cityId: "city.cairo" },
+      },
+      viewportWidthPx,
+    });
+    expect(r.referenceFrame.timeZoneId).toBe("Africa/Cairo");
+    expect(r.civilProjection).toEqual(deriveCivilProjection(nowUtcInstant, "Africa/Cairo"));
+  });
+
   it("D: display mode isolation — TopBandTimeMode does not change civil geometry or tape anchor", () => {
     const r12 = resolveChromeTime({
       timeBasis: { nowUtcInstant },

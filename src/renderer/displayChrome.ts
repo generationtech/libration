@@ -52,11 +52,18 @@ import type { CivilProjection, ReadPoint } from "../core/chromeTimeDomain.ts";
 import { deriveCivilProjection } from "../core/civilProjection.ts";
 import { roundedStructuralMeridianUtcOffsetHours } from "../core/structuralMeridianUtcOffsetHours.ts";
 import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
-import { resolveDisplayTimeReferenceZone } from "../core/displayTimeReference";
+import {
+  resolveDisplayTimeReferenceZone,
+  resolveReferenceFrameCivilTimeZone,
+} from "../core/displayTimeReference";
 import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
 import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat";
-export { resolveDisplayTimeReferenceZone, isValidIanaTimeZone } from "../core/displayTimeReference";
+export {
+  resolveDisplayTimeReferenceZone,
+  resolveReferenceFrameCivilTimeZone,
+  isValidIanaTimeZone,
+} from "../core/displayTimeReference";
 export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
@@ -410,7 +417,7 @@ export interface ResolvedTopBandTime {
 /** Maps {@link DisplayTimeConfig} to resolved zone + mode for layout and the bottom information bar. */
 export function resolveTopBandTimeFromConfig(config: DisplayTimeConfig): ResolvedTopBandTime {
   return {
-    referenceTimeZone: resolveDisplayTimeReferenceZone(config.referenceTimeZone),
+    referenceTimeZone: resolveReferenceFrameCivilTimeZone(config),
     topBandMode: config.topBandMode,
     topBandAnchor: config.topBandAnchor ?? { mode: "auto" },
   };

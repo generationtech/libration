@@ -18,7 +18,7 @@ import type {
   TopBandTimeMode,
 } from "../config/appConfig.ts";
 import { REFERENCE_CITIES } from "../data/referenceCities.ts";
-import { resolveDisplayTimeReferenceZone } from "./displayTimeReference.ts";
+import { resolveReferenceFrameCivilTimeZone } from "./displayTimeReference.ts";
 import type { CivilProjection, ReadPoint, ReferenceFrame, TimeBasis } from "./chromeTimeDomain.ts";
 import { deriveCivilProjection } from "./civilProjection.ts";
 import {
@@ -79,7 +79,7 @@ export function resolveChromeTime(options: {
   viewportWidthPx: number;
 }): ResolvedChromeTime {
   const { nowUtcInstant } = options.timeBasis;
-  const timeZoneId = resolveDisplayTimeReferenceZone(options.displayTime.referenceTimeZone);
+  const timeZoneId = resolveReferenceFrameCivilTimeZone(options.displayTime);
   const topBandAnchor = options.displayTime.topBandAnchor ?? { mode: "auto" };
   const anchor = resolveTopBandAnchorLongitudeDeg({
     nowMs: nowUtcInstant,
