@@ -42,11 +42,11 @@ export function labelForChromeMajorArea(id: ChromeMajorAreaId): string {
 export function descriptionForChromeMajorArea(id: ChromeMajorAreaId): string {
   switch (id) {
     case "hourIndicators":
-      return "Controls the top row of hour indicators above the tick tape.";
+      return "Hour disks and entries row — civil-phased at the read point; display mode changes labels only, not tape registration.";
     case "tickTape":
-      return "Controls the hour and minute tick rail below the indicators.";
+      return "Tick rail — same phased band as the hour row; ticks do not shift when you change hour label format.";
     case "natoTimezone":
-      return "Controls the timezone letter strip beneath the tick tape.";
+      return "Structural 15° / NATO letter row — geometric sectors independent of the reference civil zone.";
     default: {
       const _exhaustive: never = id;
       return _exhaustive;

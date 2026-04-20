@@ -21,15 +21,22 @@ export interface BottomBarDayCell {
 }
 
 /**
- * Bottom instrument overlay: primary clock (left) and calendar (right) — not map layers.
+ * Bottom instrument overlay: reference-frame civil readout (left) and calendar (right) — not map layers.
+ * Tape geometry and read-point registration do not depend on these strings.
  */
 export interface BottomInformationBarState {
-  /** `LOCAL TIME` for `local12` / `local24`; `UTC TIME` for `utc24`. */
-  localMicroLabel: string;
-  localTimeLine: string;
-  /** Full date string (legacy composite) — same semantics as pre-refactor single line. */
-  localDateLine: string;
-  /** Single-line calendar for the right panel (month, day, year; same zone as {@link localDateLine}). */
+  /** Micro label above the primary clock (e.g. reference-frame caption). */
+  referenceMicroLabel: string;
+  /** Primary wall-clock line: civil time in the resolved reference IANA zone. */
+  referenceTimeLine: string;
+  /** Long-form calendar line in the reference zone (left stack; same civil frame as {@link referenceTimeLine}). */
+  referenceDateLine: string;
+  /** Single-line calendar for the right panel (month, day, year; same reference zone). */
   rightPanelDateLine: string;
+  /**
+   * Optional single subdued line: this device’s system-local wall time, same clock style as the primary line.
+   * Emitted only when the system zone differs from the reference zone; informational — does not affect chrome time semantics.
+   */
+  systemLocalLine?: string;
   bottomChromeLayout: BottomChromeLayout;
 }

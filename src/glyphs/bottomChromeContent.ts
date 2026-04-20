@@ -18,7 +18,7 @@ export type BottomChromeTimeContent = {
   label: string;
 };
 
-/** Semantic payload for the micro label above the clock (e.g. LOCAL TIME). */
+/** Semantic payload for the micro label above the primary clock (e.g. reference-frame caption). */
 export type BottomChromeLabelContent = {
   label: string;
 };
@@ -35,12 +35,16 @@ export function bottomChromeReadoutContentFromInformationBar(
   label: BottomChromeLabelContent;
   time: BottomChromeTimeContent;
   date: BottomChromeDateContent;
+  systemLocal?: BottomChromeTimeContent;
 } {
   return {
-    label: { label: ib.localMicroLabel },
-    time: { label: ib.localTimeLine },
+    label: { label: ib.referenceMicroLabel },
+    time: { label: ib.referenceTimeLine },
     date: {
       label: ib.rightPanelDateLine.length > 0 ? ib.rightPanelDateLine : "\u00a0",
     },
+    ...(ib.systemLocalLine !== undefined && ib.systemLocalLine.length > 0
+      ? { systemLocal: { label: ib.systemLocalLine } }
+      : {}),
   };
 }

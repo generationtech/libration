@@ -648,17 +648,17 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
 
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    expect(screen.getByRole("combobox", { name: "Top band mode" })).not.toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Reference timezone source" })).not.toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Hour label format for top band hour markers" })).not.toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Civil time zone source for reference frame" })).not.toBeDisabled();
     expect(
-      screen.queryByRole("combobox", { name: "Fixed IANA time zone" }),
+      screen.queryByRole("combobox", { name: "Fixed IANA time zone for civil time in reference frame" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Top band anchor mode" })).not.toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" })).not.toBeDisabled();
     expect(
-      screen.getByRole("combobox", { name: "Top band anchor reference city" }),
+      screen.getByRole("combobox", { name: "Reference city for read point meridian" }),
     ).not.toBeDisabled();
     expect(
-      screen.getByRole("checkbox", { name: "Show bottom time and date readout" }),
+      screen.getByRole("checkbox", { name: "Show bottom reference time and date readout" }),
     ).not.toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
     await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
@@ -677,10 +677,10 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
 
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    expect(screen.getByRole("combobox", { name: "Top band mode" })).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Reference timezone source" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Hour label format for top band hour markers" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Civil time zone source for reference frame" })).toBeDisabled();
     expect(
-      screen.getByRole("checkbox", { name: "Show bottom time and date readout" }),
+      screen.getByRole("checkbox", { name: "Show bottom reference time and date readout" }),
     ).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
     await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
@@ -707,7 +707,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const bottomCb = screen.getByRole("checkbox", { name: "Show bottom time and date readout" });
+    const bottomCb = screen.getByRole("checkbox", { name: "Show bottom reference time and date readout" });
     await user.click(bottomCb);
     expect(ref.current!.chrome.layout.bottomInformationBarVisible).toBe(false);
     expect(derivedAppConfigRef.current.displayChromeLayout.bottomInformationBarVisible).toBe(false);
@@ -738,7 +738,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const modeSelect = screen.getByRole("combobox", { name: "Top band mode" });
+    const modeSelect = screen.getByRole("combobox", { name: "Hour label format for top band hour markers" });
     await user.selectOptions(modeSelect, "utc24");
 
     expect(ref.current!.chrome.displayTime.topBandMode).toBe("utc24");
@@ -764,7 +764,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const sourceSelect = screen.getByRole("combobox", { name: "Reference timezone source" });
+    const sourceSelect = screen.getByRole("combobox", { name: "Civil time zone source for reference frame" });
     await user.selectOptions(sourceSelect, "fixed");
 
     expect(ref.current!.chrome.displayTime.referenceTimeZone).toEqual({
@@ -803,7 +803,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const zoneSelect = screen.getByRole("combobox", { name: "Fixed IANA time zone" });
+    const zoneSelect = screen.getByRole("combobox", { name: "Fixed IANA time zone for civil time in reference frame" });
     await user.selectOptions(zoneSelect, "America/New_York");
 
     expect(derivedAppConfigRef.current.displayTime.referenceTimeZone).toEqual({
@@ -849,7 +849,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const anchorMode = screen.getByRole("combobox", { name: "Top band anchor mode" });
+    const anchorMode = screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" });
     expect(anchorMode).toBeVisible();
 
     await user.selectOptions(anchorMode, "auto");
@@ -880,9 +880,9 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     );
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Top band anchor mode" }), "fixedCity");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" }), "fixedCity");
     await user.selectOptions(
-      screen.getByRole("combobox", { name: "Top band anchor reference city" }),
+      screen.getByRole("combobox", { name: "Reference city for read point meridian" }),
       "city.tokyo",
     );
 
@@ -919,10 +919,10 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     );
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Top band anchor mode" }), "fixedLongitude");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" }), "fixedLongitude");
 
     const lonInput = screen.getByRole("textbox", {
-      name: "Top band anchor longitude in degrees",
+      name: "Anchor meridian longitude in degrees east",
     });
     await user.clear(lonInput);
     await user.type(lonInput, "-33.5");
@@ -961,7 +961,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
     const lonInput = screen.getByRole("textbox", {
-      name: "Top band anchor longitude in degrees",
+      name: "Anchor meridian longitude in degrees east",
     });
     await user.clear(lonInput);
     await user.type(lonInput, "not-a-number");
@@ -1000,7 +1000,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
     const lonInput = screen.getByRole("textbox", {
-      name: "Top band anchor longitude in degrees",
+      name: "Anchor meridian longitude in degrees east",
     });
     await user.clear(lonInput);
     await user.type(lonInput, "500");
@@ -1035,8 +1035,8 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     );
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    await user.selectOptions(screen.getByRole("combobox", { name: "Top band anchor mode" }), "auto");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Top band anchor mode" }), "fixedCity");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" }), "auto");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" }), "fixedCity");
 
     expect(registryRef.current).toBe(registryBefore);
     expect(spy).not.toHaveBeenCalled();

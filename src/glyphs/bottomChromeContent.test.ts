@@ -19,9 +19,9 @@ import { bottomChromeReadoutContentFromInformationBar } from "./bottomChromeCont
 function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInformationBarState {
   const layout = computeBottomChromeLayout(800);
   return {
-    localMicroLabel: "LOCAL TIME",
-    localTimeLine: "3:45 PM",
-    localDateLine: "Apr 7, 2026",
+    referenceMicroLabel: "REFERENCE TIME",
+    referenceTimeLine: "3:45 PM",
+    referenceDateLine: "Apr 7, 2026",
     rightPanelDateLine: "Mon",
     bottomChromeLayout: layout,
     ...overrides,
@@ -31,12 +31,19 @@ function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInf
 describe("bottomChromeReadoutContentFromInformationBar", () => {
   it("passes micro label and time strings through unchanged", () => {
     const c = bottomChromeReadoutContentFromInformationBar(ibSample());
-    expect(c.label.label).toBe("LOCAL TIME");
+    expect(c.label.label).toBe("REFERENCE TIME");
     expect(c.time.label).toBe("3:45 PM");
   });
 
   it("uses nbsp for empty right panel date", () => {
     const c = bottomChromeReadoutContentFromInformationBar(ibSample({ rightPanelDateLine: "" }));
     expect(c.date.label).toBe("\u00a0");
+  });
+
+  it("includes optional system-local payload when systemLocalLine is set", () => {
+    const c = bottomChromeReadoutContentFromInformationBar(
+      ibSample({ systemLocalLine: "THIS DEVICE · 1:00 PM" }),
+    );
+    expect(c.systemLocal?.label).toBe("THIS DEVICE · 1:00 PM");
   });
 });

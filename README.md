@@ -7,10 +7,10 @@
 Libration is a canonical reference implementation of a longitude-first world time visualization system.
 
 It uses:
-- a longitude-first time model
+- a longitude-first map and structural 15° grid (independent of political time zones)
 - 24 fixed structural sectors (15° each)
-- UTC as canonical time
-- display-time derived via reference-time logic
+- one authoritative UTC instant per frame and a resolved **reference frame** (IANA civil zone + read-point meridian + civil projection)
+- top-band **display modes** (12h / 24h / UTC-style labels) as formatting only — they do not move tape geometry or the read point
 - a renderer-agnostic rendering pipeline
 
 It is a high-fidelity world time instrument built on a **render-plan architecture** and currently delivered as a local-first desktop application.

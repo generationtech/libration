@@ -168,6 +168,19 @@ flowchart TB
 
 Top chrome reserves real layout space. The scene viewport begins strictly below the visible chrome stack.
 
+### Chrome time model (product contract)
+
+Display chrome time is **resolver-owned**, not fragmented in config:
+
+- **One instant** — `TimeBasis.nowUtcInstant` (from live wall clock or demo playback).
+- **One reference frame** — IANA zone for civil wall time plus the anchor meridian that sets the horizontal **read point** on the phased top band (city / auto / geography policy — not two competing “times”).
+- **One civil projection** — wall clock in the reference zone derived from that instant.
+- **One read point** — horizontal registration for the phased hour row; **display mode** (`local12` / `local24` / `utc24`) changes numerals and bottom-bar clock style only.
+
+The bottom bar shows **reference civil time** as primary; when the device’s system zone differs from the reference zone, an optional **subordinate** “this device” line shows local wall time for orientation only (no semantic effect).
+
+The fixed **structural** 15° / NATO letter row is geometric (equirectangular sectors); it is not “UTC as the user’s civil clock” and does not replace the reference-frame civil zone.
+
 ```mermaid
 flowchart TB
     TC[Top Chrome Reserved]

@@ -392,8 +392,8 @@ function resolveChromeTimeZone(explicit?: string): string {
 }
 
 /**
- * Resolved display-time inputs for the top band and bottom bar: IANA **civil** zone string + mode + longitude-anchor policy.
- * The reference zone drives wall-clock phasing and the bottom bar; the top tape’s horizontal alignment uses {@link resolveTopBandAnchorLongitudeDeg} (longitude), not civil-TZ boundaries.
+ * Resolved display-time inputs for the top band and bottom bar: IANA civil zone + formatting mode + read-point meridian policy.
+ * The resolver combines these into a single {@link ReferenceFrame} (zone + anchor meridian + label).
  */
 export interface ResolvedTopBandTime {
   referenceTimeZone: string;
@@ -495,7 +495,7 @@ function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
   return `${month} ${day} ${year}`.trim();
 }
 
-/** Bottom-left clock: primary reference-zone civil time (formatting only; geometry is independent). */
+/** Bottom-left clock: reference-frame civil wall time (display mode is formatting only; tape geometry is independent). */
 function bottomTimeReadoutPresentation(
   nowMs: number,
   referenceWallClockZone: string,
@@ -519,13 +519,21 @@ export function buildBottomInformationBarState(options: {
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
   const mode = options.topBandMode ?? DEFAULT_DISPLAY_TIME_CONFIG.topBandMode;
-  const { microLabel, timeLine: localTimeLine } = bottomTimeReadoutPresentation(options.nowMs, tz, mode);
+  const { microLabel, timeLine: referenceTimeLine } = bottomTimeReadoutPresentation(options.nowMs, tz, mode);
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let systemLocalLine: string | undefined;
+  if (systemTz !== tz) {
+    const dm = displayTimeModeFromTopBandTimeMode(mode);
+    const hour12 = dm === "12hr";
+    systemLocalLine = `THIS DEVICE · ${formatWallClockInTimeZone(options.nowMs, systemTz, hour12)}`;
+  }
 
   return {
-    localMicroLabel: microLabel,
-    localTimeLine,
-    localDateLine: formatLocalDateLine(options.nowMs, tz),
+    referenceMicroLabel: microLabel,
+    referenceTimeLine,
+    referenceDateLine: formatLocalDateLine(options.nowMs, tz),
     rightPanelDateLine: formatRightPanelDateLine(options.nowMs, tz),
+    systemLocalLine,
     bottomChromeLayout: computeBottomChromeLayout(options.bottomBandWidthPx),
   };
 }

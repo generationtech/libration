@@ -44,6 +44,36 @@ const TOP_BAND_MODES: readonly TopBandTimeMode[] = ["local12", "local24", "utc24
 
 const ANCHOR_MODES: readonly TopBandAnchorConfig["mode"][] = ["auto", "fixedCity", "fixedLongitude"];
 
+function labelForTopBandMode(mode: TopBandTimeMode): string {
+  switch (mode) {
+    case "local12":
+      return "12-hour labels (reference civil)";
+    case "local24":
+      return "24-hour labels (reference civil)";
+    case "utc24":
+      return "24-hour UTC-style labels (formatting)";
+    default: {
+      const _e: never = mode;
+      return _e;
+    }
+  }
+}
+
+function labelForAnchorMode(mode: TopBandAnchorConfig["mode"]): string {
+  switch (mode) {
+    case "auto":
+      return "Auto (from zone / geography)";
+    case "fixedCity":
+      return "Fixed reference city meridian";
+    case "fixedLongitude":
+      return "Fixed longitude";
+    default: {
+      const _e: never = mode;
+      return _e;
+    }
+  }
+}
+
 const DEFAULT_FIXED_CITY_ID =
   CURATED_ANCHOR_REFERENCE_CITY_OPTIONS.find((c) => c.id === "city.knoxville")?.id ??
   CURATED_ANCHOR_REFERENCE_CITY_OPTIONS[0]!.id;
@@ -108,18 +138,19 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
         aria-labelledby="config-chrome-display-heading"
       >
         <h2 id="config-chrome-display-heading" className="config-section__title">
-          Display time
+          Reference frame &amp; clock display
         </h2>
         <p className="config-section__hint">
-          Wired: top band mode, reference timezone source, fixed zone when applicable, and top band
-          anchor.
+          One instant and one reference frame: civil date and time follow the IANA zone; the top strip read point follows
+          the meridian policy below. Hour label style is formatting only — it does not move tape geometry or change which
+          instant is shown.
         </p>
-        <ConfigControlRow label="Top band mode">
+        <ConfigControlRow label="Hour label format (top band)">
           <select
             className="config-input"
             value={dt.topBandMode}
             disabled={!wired}
-            aria-label="Top band mode"
+            aria-label="Hour label format for top band hour markers"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -133,17 +164,17 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           >
             {TOP_BAND_MODES.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {labelForTopBandMode(m)}
               </option>
             ))}
           </select>
         </ConfigControlRow>
-        <ConfigControlRow label="Reference timezone source">
+        <ConfigControlRow label="Civil time zone source">
           <select
             className="config-input"
             value={tz.source}
             disabled={!wired}
-            aria-label="Reference timezone source"
+            aria-label="Civil time zone source for reference frame"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -172,12 +203,12 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           </select>
         </ConfigControlRow>
         {tz.source === "fixed" ? (
-          <ConfigControlRow label="Fixed IANA time zone">
+          <ConfigControlRow label="Fixed IANA zone (civil clock)">
             <select
               className="config-input"
               value={tz.timeZone}
               disabled={!wired}
-              aria-label="Fixed IANA time zone"
+              aria-label="Fixed IANA time zone for civil time in reference frame"
               onChange={
                 wired && updateConfig
                   ? (e) => {
@@ -200,12 +231,12 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             </select>
           </ConfigControlRow>
         ) : null}
-        <ConfigControlRow label="Top band anchor mode">
+        <ConfigControlRow label="Read point meridian">
           <select
             className="config-input"
             value={anchor.mode}
             disabled={!wired}
-            aria-label="Top band anchor mode"
+            aria-label="Read point meridian policy for top strip registration"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -220,18 +251,18 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           >
             {ANCHOR_MODES.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {labelForAnchorMode(m)}
               </option>
             ))}
           </select>
         </ConfigControlRow>
         {anchor.mode === "fixedCity" ? (
-          <ConfigControlRow label="Anchor reference city">
+          <ConfigControlRow label="Reference city (meridian)">
             <select
               className="config-input"
               value={anchor.cityId}
               disabled={!wired}
-              aria-label="Top band anchor reference city"
+              aria-label="Reference city for read point meridian"
               onChange={
                 wired && updateConfig
                   ? (e) => {
@@ -255,13 +286,13 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           </ConfigControlRow>
         ) : null}
         {anchor.mode === "fixedLongitude" ? (
-          <ConfigControlRow label="Anchor longitude (°)">
+          <ConfigControlRow label="Anchor meridian longitude (° east)">
             <input
               type="text"
               className="config-input"
               inputMode="decimal"
               disabled={!wired}
-              aria-label="Top band anchor longitude in degrees"
+              aria-label="Anchor meridian longitude in degrees east"
               value={lonDraft !== null ? lonDraft : String(anchor.longitudeDeg)}
               onChange={(e) => {
                 setLonDraft(e.currentTarget.value);
@@ -314,7 +345,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           Fixed instrument chrome around the map. Choose an area to edit; settings are grouped by where
           they apply on the strip (does not change civil-time or anchor semantics).
         </p>
-        <ConfigControlRow label="Bottom time &amp; date readout">
+        <ConfigControlRow label="Bottom reference time &amp; date readout">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
@@ -322,7 +353,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             readOnly={!wired}
             disabled={!wired}
             tabIndex={wired ? 0 : -1}
-            aria-label="Show bottom time and date readout"
+            aria-label="Show bottom reference time and date readout"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -341,7 +372,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             data-testid="chrome-bottom-readout-font-select"
             value={lay.bottomReadoutFontAssetId ?? ""}
             disabled={!wired}
-            aria-label="Font for lower-left bottom time and date readout"
+            aria-label="Font for lower-left bottom reference time and date readout"
             onChange={
               wired && updateConfig
                 ? (e) => {

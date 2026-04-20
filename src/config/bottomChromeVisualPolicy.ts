@@ -23,8 +23,9 @@
  * | Readout              | Role               | Notes                                      |
  * | -------------------- | ------------------ | ------------------------------------------ |
  * | Left micro label     | `chromeZoneLabel`  | Weight 600; layout `leftMicroLabelLetterSpacingEm` |
- * | Local time (primary) | `chromeHourPrimary`| Weight 700; zero extra tracking            |
+ * | Reference time (primary) | `chromeHourPrimary`| Weight 700; zero extra tracking            |
  * | Right date line      | `chromeZoneLabel`  | Weight 700; fill matches primary time     |
+ * | System-local info    | `chromeZoneLabel`  | Weight 600; subdued fill                   |
  */
 
 import type { HourMarkerGlyphStyleId } from "./types/hourMarkerGlyphStyleIds.ts";
@@ -49,7 +50,19 @@ export type BottomChromeTextVisualPolicy = {
   letterSpacingEm?: number;
 };
 
-/** Local time — matches prior weight (700) and zero extra tracking vs raw canvas defaults. */
+/** Subordinate informational line (system-local clock when shown). */
+export function resolveBottomChromeSecondaryReadoutPolicy(
+  colors: BottomChromeColorTokens,
+): BottomChromeTextVisualPolicy {
+  return {
+    role: "chromeZoneLabel",
+    fill: colors.secondaryReadout,
+    typographyOverrides: { fontWeight: 600 },
+    letterSpacingEm: 0,
+  };
+}
+
+/** Reference-frame primary clock — weight 700 and zero extra tracking vs raw canvas defaults. */
 export function resolveBottomChromeTimePolicy(colors: BottomChromeColorTokens): BottomChromeTextVisualPolicy {
   return {
     role: "chromeHourPrimary",
@@ -59,7 +72,7 @@ export function resolveBottomChromeTimePolicy(colors: BottomChromeColorTokens): 
   };
 }
 
-/** Micro label — zone strip role with emphasis (600) and layout token letter spacing. */
+/** Micro label above primary clock — zone strip role with emphasis (600) and layout token letter spacing. */
 export function resolveBottomChromeLabelPolicy(colors: BottomChromeColorTokens): BottomChromeTextVisualPolicy {
   return {
     role: "chromeZoneLabel",

@@ -45,18 +45,20 @@ export type DisplayTimeZoneConfig =
   | { source: "system" }
   | { source: "fixed"; timeZone: string };
 
-/** How the top hour-marker tape labels and day phase are interpreted (see `docs` / ARCHITECTURE). */
+/**
+ * Formatting-only hour labels for the top band and matching clock style for the bottom readout.
+ * Does not change {@code nowUtcInstant}, civil projection, read point, or tape registration — only numerals and 12/24h presentation.
+ */
 export type TopBandTimeMode = "local12" | "local24" | "utc24";
 
 /**
- * **Longitude anchor** for the time-phased top tape (horizontal alignment), separate from civil-time semantics.
- * The top band is anchored by longitude, not by civil timezone. A fixed reference city contributes **its longitude** for
- * tape alignment only — it does not select structural 15° columns via IANA rules.
+ * Meridian policy for the single chrome **read point** on the top strip (where the reference civil hour registers on the
+ * phased tape). Resolved with {@link referenceTimeZone} into one {@link ReferenceFrame} in the chrome resolver — not two
+ * competing authorities: the IANA zone supplies civil time; the anchor supplies the anchor meridian for horizontal placement.
  *
- * - `auto`: map the effective reference IANA zone to a default reference city id, then use that city’s longitude from
- *   {@link REFERENCE_CITIES}; if unmapped, Greenwich (0°). (The zone string is a lookup key; membership does not define column placement.)
- * - `fixedLongitude`: explicit meridian.
- * - `fixedCity`: longitude from the named reference city id.
+ * - `auto`: derive a default meridian from the resolved reference zone and geography (see {@link resolveTopBandAnchorLongitudeDeg}).
+ * - `fixedLongitude`: explicit anchor meridian (degrees east).
+ * - `fixedCity`: anchor meridian from the named reference city (longitude only; structural columns remain the fixed 15° grid).
  */
 export type TopBandAnchorConfig =
   | { mode: "auto" }
@@ -64,16 +66,15 @@ export type TopBandAnchorConfig =
   | { mode: "fixedCity"; cityId: string };
 
 /**
- * Controls reference timezone and top-band clock mode for display chrome only (not map layers).
- * Civil time display is derived independently from IANA timezone data ({@link referenceTimeZone}); the top tape’s
- * longitude anchor ({@link topBandAnchor}) is resolved separately — structural longitude sectors and civil timezone
- * membership are intentionally decoupled.
- * Default: system timezone, 12-hour-style top tape labels; bottom bar follows the same resolved zone.
+ * Display-chrome time **intent** (not map layers): reference IANA civil zone, formatting-only band mode, and read-point
+ * meridian policy. Runtime derives one {@link TimeBasis}, one {@link ReferenceFrame}, {@link CivilProjection}, and
+ * {@link ReadPoint} — config does not store those resolved objects.
  */
 export interface DisplayTimeConfig {
+  /** IANA zone for civil wall clock and calendar in the reference frame (primary bottom readout). */
   referenceTimeZone: DisplayTimeZoneConfig;
   topBandMode: TopBandTimeMode;
-  /** Longitude anchor for the time-phased circle row (default {@code auto}). */
+  /** How the anchor meridian for the read point is chosen (default {@code auto}). */
   topBandAnchor: TopBandAnchorConfig;
 }
 
@@ -323,7 +324,7 @@ export function effectiveTopBandHourMarkerSelection(
  * Independent of civil-time semantics in {@link DisplayTimeConfig}.
  */
 export interface DisplayChromeLayoutConfig {
-  /** Lower floating civil-time + date readouts. */
+  /** Lower floating reference civil time + date readouts (optional subordinate system-local line when zones differ). */
   bottomInformationBarVisible: boolean;
   /** Center tickmark tape (baseline + ticks) between the circle band and NATO row. */
   tickTapeVisible: boolean;

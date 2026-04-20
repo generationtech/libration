@@ -31,9 +31,9 @@ const PRODUCT_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 function sampleInformationBar(vw: number): BottomInformationBarState {
   const layout = computeBottomChromeLayout(vw);
   return {
-    localMicroLabel: "LOCAL TIME",
-    localTimeLine: "3:45 PM",
-    localDateLine: "Apr 7, 2026",
+    referenceMicroLabel: "REFERENCE TIME",
+    referenceTimeLine: "3:45 PM",
+    referenceDateLine: "Apr 7, 2026",
     rightPanelDateLine: "Monday, April 7, 2026",
     bottomChromeLayout: layout,
   };
@@ -72,7 +72,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       throw new Error("expected text items");
     }
 
-    expect(a.text).toBe("LOCAL TIME");
+    expect(a.text).toBe("REFERENCE TIME");
     expect(a.textAlign).toBe("left");
     expect(a.letterSpacingEm).toBe(BOTTOM_CHROME_STYLE.layout.leftMicroLabelLetterSpacingEm);
     expect(a.shadow).toBeDefined();
@@ -102,6 +102,32 @@ describe("buildBottomChromeBandRenderPlan", () => {
     expect(c.font.weight).toBe(datePolicy.typographyOverrides?.fontWeight);
   });
 
+  it("emits a fifth text glyph when systemLocalLine is present", () => {
+    const vw = 960;
+    const typo = resolveBottomChromeTypography(vw);
+    const ib: BottomInformationBarState = {
+      ...sampleInformationBar(vw),
+      systemLocalLine: "THIS DEVICE · 10:30:45",
+    };
+    const plan = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand: { x: 0, y: 900, width: vw, height: 56 },
+      ib,
+      typography: typo,
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    expect(plan.items).toHaveLength(5);
+    const [, , time, sys, date] = plan.items;
+    expect(time.kind).toBe("text");
+    expect(sys.kind).toBe("text");
+    expect(date.kind).toBe("text");
+    if (sys.kind === "text") {
+      expect(sys.text).toBe("THIS DEVICE · 10:30:45");
+      expect(sys.y).toBeGreaterThan((time as { y: number }).y);
+    }
+  });
+
   it("uses nbsp when right panel date is empty", () => {
     const vw = 640;
     const typo = resolveBottomChromeTypography(vw);
@@ -118,7 +144,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       glyphRenderContext: GLYPH_CTX,
       productDefaultFontAssetId: PRODUCT_FONT,
     });
-    const right = plan.items[3];
+    const right = plan.items[plan.items.length - 1];
     expect(right.kind).toBe("text");
     if (right.kind === "text") {
       expect(right.text).toBe("\u00a0");

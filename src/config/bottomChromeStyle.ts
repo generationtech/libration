@@ -18,10 +18,12 @@
 
 /** rgba(...) / color strings for bottom chrome panels and navigator. */
 export interface BottomChromeColorTokens {
-  /** Micro label above the primary clock (e.g. LOCAL TIME). */
+  /** Micro label above the primary clock (e.g. reference-frame caption). */
   microLabel: string;
   /** Primary clock readout. */
   primaryTime: string;
+  /** Subordinate informational line (e.g. system-local clock when distinct from the reference zone). */
+  secondaryReadout: string;
   /** Day cell weekday line (short). */
   dayCellWeekday: string;
   /** Day cell date line (month + day). */
@@ -116,10 +118,15 @@ export interface BottomChromeLayoutTokens {
   dayCellSelectedEmphasis: number;
   /** Micro label baseline Y as a fraction of band height (0 = top of band). */
   leftMicroLabelYFracOfBandHeight: number;
-  /** Letter-spacing (em) for the LOCAL TIME / UTC TIME micro label. */
+  /** Letter-spacing (em) for the reference-frame micro label above the primary clock. */
   leftMicroLabelLetterSpacingEm: number;
   /** Primary clock Y as a fraction of band height. */
   leftPrimaryTimeYFracOfBandHeight: number;
+  /**
+   * Optional subordinate left readout (system-local informational line), baseline Y as a fraction of band height.
+   * Placed below {@link leftPrimaryTimeYFracOfBandHeight} when {@link BottomInformationBarState.systemLocalLine} is set.
+   */
+  leftSecondaryReadoutYFracOfBandHeight: number;
   /** Vertical center for boundary glyphs / day-line midline reference. */
   centerDayLineMidYFracOfBandHeight: number;
   /** Day cell weekday line Y (center strip). */
@@ -209,6 +216,7 @@ export const BOTTOM_CHROME_STYLE: BottomChromeStyle = {
   colors: {
     microLabel: "rgba(112, 124, 156, 0.62)",
     primaryTime: "rgba(252, 253, 255, 0.99)",
+    secondaryReadout: "rgba(148, 160, 188, 0.72)",
     dayCellWeekday: "rgba(162, 176, 206, 0.92)",
     dayCellDate: "rgba(228, 232, 244, 0.96)",
     dayCellBackgroundMuted: "rgba(255, 255, 255, 0.038)",
@@ -276,6 +284,7 @@ export const BOTTOM_CHROME_STYLE: BottomChromeStyle = {
     leftMicroLabelYFracOfBandHeight: 0.24,
     leftMicroLabelLetterSpacingEm: 0.12,
     leftPrimaryTimeYFracOfBandHeight: 0.555,
+    leftSecondaryReadoutYFracOfBandHeight: 0.82,
     centerDayLineMidYFracOfBandHeight: 0.52,
     centerDayCellWeekdayYFracOfBandHeight: 0.34,
     centerDayCellDateYFracOfBandHeight: 0.62,

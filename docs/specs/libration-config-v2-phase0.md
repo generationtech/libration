@@ -144,6 +144,14 @@ Scene/chrome composition now also preserves a renderer-agnostic boundary: the vi
 
 ---
 
+## Chrome `displayTime` intent (reference frame)
+
+`chrome.displayTime` stores **intent** only: civil IANA zone source, formatting-only hour-label mode, and read-point meridian policy.
+
+Runtime derives `TimeBasis`, `ReferenceFrame`, `CivilProjection`, and `ReadPoint` in the chrome resolver. The editor labels these as a single reference-frame story (zone + meridian policy); display mode does not alter tape geometry or registration.
+
+---
+
 ## Status
 
 The truthful top-band hour-marker runtime contract is in place.

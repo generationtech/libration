@@ -32,12 +32,19 @@ type BottomChromeBandRect = { x: number; y: number; width: number; height: numbe
 export function resolveBottomChromeTypography(viewportWidthPx: number): {
   microLabelPx: number;
   primaryTimePx: number;
+  secondaryReadoutPx: number;
 } {
   const T = BOTTOM_CHROME_STYLE.typography;
   const vw = Math.max(0, viewportWidthPx);
   return {
     microLabelPx: bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
     primaryTimePx: bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth),
+    secondaryReadoutPx: bottomChromeFontPx(
+      vw,
+      T.dayCellDateSecondaryMinPx,
+      T.dayCellDateSecondaryMaxPx,
+      T.dayCellDateSecondaryFracOfViewportWidth,
+    ),
   };
 }
 

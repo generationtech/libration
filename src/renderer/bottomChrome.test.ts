@@ -24,6 +24,7 @@ describe("bottom chrome emphasis and typography", () => {
   it("exposes readable side-readout colors for floating labels over the map", () => {
     expect(BOTTOM_CHROME_STYLE.colors.primaryTime.length).toBeGreaterThan(8);
     expect(BOTTOM_CHROME_STYLE.colors.microLabel.length).toBeGreaterThan(8);
+    expect(BOTTOM_CHROME_STYLE.colors.secondaryReadout.length).toBeGreaterThan(8);
   });
 
   it("resolves deterministic typography sizes from viewport width", () => {
@@ -34,6 +35,8 @@ describe("bottom chrome emphasis and typography", () => {
     expect(a.primaryTimePx).toBeLessThanOrEqual(19);
     const narrow = resolveBottomChromeTypography(640);
     expect(narrow.primaryTimePx).toBeLessThanOrEqual(a.primaryTimePx);
+    expect(a.secondaryReadoutPx).toBeGreaterThan(0);
+    expect(a.secondaryReadoutPx).toBeLessThanOrEqual(a.primaryTimePx);
   });
 
   it("defines map→HUD boundary fade tokens with ordered depth bounds (no top hairline token)", () => {

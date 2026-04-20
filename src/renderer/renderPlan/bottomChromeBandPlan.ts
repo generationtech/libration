@@ -19,6 +19,7 @@
 import {
   resolveBottomChromeDatePolicy,
   resolveBottomChromeLabelPolicy,
+  resolveBottomChromeSecondaryReadoutPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
 import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
@@ -62,14 +63,15 @@ function withInheritedProductFontFace(
 }
 
 /**
- * Full bottom-band overlay: resolved band plate (structural rect) then micro label, time, and right date readouts.
+ * Full bottom-band overlay: resolved band plate (structural rect) then micro label, primary time, optional
+ * subordinate system-local line, and right date readouts.
  * Band fill defaults to transparent so the map-backed appearance matches the pre–Phase 2 text-only path.
  */
 export function buildBottomChromeBandRenderPlan(options: {
   viewportWidthPx: number;
   bottomBand: BottomChromeBandRect;
   ib: BottomInformationBarState;
-  typography: { microLabelPx: number; primaryTimePx: number };
+  typography: { microLabelPx: number; primaryTimePx: number; secondaryReadoutPx: number };
   colors?: BottomChromeColorTokens;
   /** Overrides default band plate fill (e.g. in tests). */
   bandPlateFill?: string;
@@ -87,6 +89,7 @@ export function buildBottomChromeBandRenderPlan(options: {
   const sideLift = bh * L.sideReadoutVerticalLiftFracOfBandHeight;
   const timeY = by + bh * L.leftPrimaryTimeYFracOfBandHeight - sideLift;
   const labelY = by + bh * L.leftMicroLabelYFracOfBandHeight - sideLift;
+  const secondaryY = by + bh * L.leftSecondaryReadoutYFracOfBandHeight - sideLift;
   const vw = Math.max(0, options.viewportWidthPx);
   const rx = vw - padX;
   const shadow = sideReadoutShadowFromStyle();
@@ -98,6 +101,7 @@ export function buildBottomChromeBandRenderPlan(options: {
   const pid = options.productDefaultFontAssetId;
   const labelPolicy = withInheritedProductFontFace(resolveBottomChromeLabelPolicy(colors), pid);
   const timePolicy = withInheritedProductFontFace(resolveBottomChromeTimePolicy(colors), pid);
+  const secondaryPolicy = withInheritedProductFontFace(resolveBottomChromeSecondaryReadoutPolicy(colors), pid);
   const datePolicy = withInheritedProductFontFace(resolveBottomChromeDatePolicy(colors), pid);
 
   const items: RenderPlan["items"] = [
@@ -123,6 +127,14 @@ export function buildBottomChromeBandRenderPlan(options: {
     gctx,
     items,
   );
+  if (content.systemLocal !== undefined) {
+    emitGlyphToRenderPlan(
+      createBottomChromeTextGlyph(content.systemLocal.label, secondaryPolicy, { textAlign: "left", shadow }),
+      { cx: padX, cy: secondaryY, size: options.typography.secondaryReadoutPx },
+      gctx,
+      items,
+    );
+  }
   emitGlyphToRenderPlan(
     createBottomChromeTextGlyph(content.date.label, datePolicy, { textAlign: "right", shadow }),
     { cx: rx, cy: timeY, size: options.typography.primaryTimePx },

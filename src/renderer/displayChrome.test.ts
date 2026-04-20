@@ -979,11 +979,11 @@ describe("buildBottomInformationBarState", () => {
       topBandMode: "local24",
     });
 
-    expect(ib.localMicroLabel).toBe("REFERENCE TIME");
-    expect(ib.localDateLine).toBe("Monday, January 1, 2024");
+    expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
+    expect(ib.referenceDateLine).toBe("Monday, January 1, 2024");
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
     expect(ib.rightPanelDateLine).toBe("January 1 2024");
-    expect(ib.localTimeLine.length).toBeGreaterThan(4);
+    expect(ib.referenceTimeLine.length).toBeGreaterThan(4);
   });
 
   it("uses 24-hour wall clock for local24 and utc24 (no AM/PM)", () => {
@@ -995,10 +995,10 @@ describe("buildBottomInformationBarState", () => {
         chromeTimeZone: "UTC",
         topBandMode,
       });
-      expect(ib.localMicroLabel).toBe("REFERENCE TIME");
-      expect(ib.localTimeLine).toMatch(/^\d{2}:\d{2}:\d{2}$/);
-      expect(ib.localTimeLine).not.toMatch(/\b(AM|PM)\b/i);
-      expect(ib.localTimeLine.startsWith("14:")).toBe(true);
+      expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
+      expect(ib.referenceTimeLine).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+      expect(ib.referenceTimeLine).not.toMatch(/\b(AM|PM)\b/i);
+      expect(ib.referenceTimeLine.startsWith("14:")).toBe(true);
     }
   });
 
@@ -1010,8 +1010,8 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib.localMicroLabel).toBe("REFERENCE TIME");
-    expect(ib.localTimeLine.startsWith("09:")).toBe(true);
+    expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
+    expect(ib.referenceTimeLine.startsWith("09:")).toBe(true);
   });
 
   it("uses 12-hour wall clock with AM/PM for local12", () => {
@@ -1022,8 +1022,28 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    expect(ib.localTimeLine).toMatch(/\b(AM|PM)\b/i);
-    expect(ib.localTimeLine.startsWith("14:")).toBe(false);
+    expect(ib.referenceTimeLine).toMatch(/\b(AM|PM)\b/i);
+    expect(ib.referenceTimeLine.startsWith("14:")).toBe(false);
+  });
+
+  it("adds a subdued system-local line only when the device zone differs from the reference zone", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const otherZone = systemTz === "UTC" ? "America/New_York" : "UTC";
+    const ibOther = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: otherZone,
+      topBandMode: "local24",
+    });
+    expect(ibOther.systemLocalLine).toMatch(/^THIS DEVICE · /);
+    const ibSame = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: systemTz,
+      topBandMode: "local24",
+    });
+    expect(ibSame.systemLocalLine).toBeUndefined();
   });
 });
 
@@ -1100,7 +1120,7 @@ describe("buildDisplayChromeState", () => {
         chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
-    expect(chrome.informationBar.localDateLine).toBe("Monday, January 1, 2024");
+    expect(chrome.informationBar.referenceDateLine).toBe("Monday, January 1, 2024");
     expect(chrome.informationBar.bottomChromeLayout.viewportWidthPx).toBe(800);
     expect(chrome.frameNumber).toBe(1);
   });
@@ -1124,8 +1144,8 @@ describe("buildDisplayChromeState", () => {
       chromeTimeZone: resolveDisplayTimeReferenceZone(dt.referenceTimeZone),
       topBandMode: dt.topBandMode,
     });
-    expect(chrome.informationBar.localDateLine).toBe(ib.localDateLine);
-    expect(chrome.informationBar.localTimeLine).toBe(ib.localTimeLine);
+    expect(chrome.informationBar.referenceDateLine).toBe(ib.referenceDateLine);
+    expect(chrome.informationBar.referenceTimeLine).toBe(ib.referenceTimeLine);
   });
 
   it("applies geography fixedCoordinate meridian when top band anchor is auto", () => {

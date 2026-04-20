@@ -35,9 +35,9 @@ export function GeographyTab({ config, updateConfig }: GeographyTabProps) {
           Geography
         </h2>
         <p className="config-section__hint">
-          Geographic reference for product behavior. When the display chrome top-band anchor is
-          &quot;Auto&quot;, a fixed coordinate here sets the reference meridian; explicit Chrome anchor
-          modes still take precedence.
+          Map and scene geography. When chrome&apos;s read point meridian is &quot;Auto&quot;, a fixed coordinate here
+          supplies the anchor meridian; explicit read-point modes in the Chrome tab still take precedence. This does not
+          replace the IANA civil zone — it only participates in resolving the reference frame meridian.
         </p>
         <ConfigControlRow label="Reference mode">
           <select
