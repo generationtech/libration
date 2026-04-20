@@ -168,7 +168,7 @@ describe("normalizeHourMarkersInput", () => {
   it("drops legacy behavior from normalized hourMarkers (not persisted)", () => {
     expect(
       normalizeHourMarkersInput({
-        behavior: "tapeAdvected",
+        behavior: "civilPhased",
         realization: { kind: "text", fontAssetId: "zeroes-one" },
         layout: { sizeMultiplier: 1 },
       }),

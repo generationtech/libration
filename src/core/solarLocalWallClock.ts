@@ -24,7 +24,7 @@ function utcMsOfDayFromUtcMs(referenceNowMs: number): number {
 
 /**
  * Mean-solar local wall-clock state at {@code lonDeg} for the UTC calendar day containing {@code referenceNowMs}.
- * Same offset model as {@link solarLocalHour0To23FromUtcMsOfDay} in display chrome (continuous lon/15 hours), with
+ * Same offset model as {@link solarLocalHour0To23FromUtcMsOfDay} for structural/geographic overlays (continuous lon/15 hours), with
  * fractional hour for clock hands.
  */
 export function solarLocalWallClockStateFromUtcMs(

@@ -137,7 +137,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
     }
   });
 
-  it("analogClock resolves to staticZoneAnchored localWallClock semantics with per-zone wall clock state", () => {
+  it("analogClock resolves to civilColumnAnchored localWallClock semantics with anchored civil tape state", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -147,12 +147,16 @@ describe("buildSemanticTopBandHourMarkers", () => {
       }),
     );
     expect(eff.realization.kind).toBe("analogClock");
-    expect(eff.behavior).toBe("staticZoneAnchored");
-    const t = Date.UTC(2024, 5, 15, 12, 30, 0);
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: t });
+    expect(eff.behavior).toBe("civilColumnAnchored");
+    const plan = buildSemanticTopBandHourMarkers(eff, {
+      anchoredTimezoneSegment: {
+        referenceFractionalHour: 14.5,
+        presentTimeStructuralHour0To23: 5,
+      },
+    });
     expect(plan.instances).toHaveLength(24);
     for (const inst of plan.instances) {
-      expect(inst.behavior).toBe("staticZoneAnchored");
+      expect(inst.behavior).toBe("civilColumnAnchored");
       expect(inst.content.kind).toBe("localWallClock");
       if (inst.content.kind === "localWallClock") {
         expect(inst.content.structuralHour0To23).toBe(inst.structuralHour0To23);
@@ -176,7 +180,10 @@ describe("buildSemanticTopBandHourMarkers", () => {
   });
 
   it("radialLine and radialWedge map to matching realization kinds and localWallClock semantic content", () => {
-    const ref = Date.UTC(2024, 5, 15, 18, 42, 30);
+    const anchored = {
+      referenceFractionalHour: 18.7,
+      presentTimeStructuralHour0To23: 3,
+    };
     const line = buildSemanticTopBandHourMarkers(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
@@ -186,7 +193,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
           },
         }),
       ),
-      { referenceNowMs: ref },
+      { anchoredTimezoneSegment: anchored },
     );
     expect(line.source.realization.kind).toBe("radialLine");
     expect(line.source.content.kind).toBe("localWallClock");
@@ -208,7 +215,7 @@ describe("buildSemanticTopBandHourMarkers", () => {
           },
         }),
       ),
-      { referenceNowMs: ref },
+      { anchoredTimezoneSegment: anchored },
     );
     expect(wedge.source.realization.kind).toBe("radialWedge");
     expect(wedge.source.content.kind).toBe("localWallClock");

@@ -212,7 +212,6 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
     const withGeo = resolveTopBandAnchorLongitudeDeg({
       nowMs: t,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
       geography: {
         ...DEFAULT_GEOGRAPHY_CONFIG,
@@ -223,7 +222,6 @@ describe("Phase 9a — chrome anchor / geography vs structural strip (independen
     const baseline = resolveTopBandAnchorLongitudeDeg({
       nowMs: t,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedLongitude", longitudeDeg: -47.5 },
     });
     expect(withGeo.anchorSource).toBe("fixedLongitude");

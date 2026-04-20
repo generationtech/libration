@@ -31,13 +31,11 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const utc24 = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "America/New_York",
-      topBandMode: "utc24",
       topBandAnchor: { mode: "auto" },
     });
     const local24 = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
     });
     expect(utc24.referenceLongitudeDeg).toBeCloseTo(local24.referenceLongitudeDeg, 7);
@@ -51,7 +49,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
     });
     expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
@@ -65,7 +62,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "Asia/Tokyo",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
     });
     expect(r.anchorSource).toBe("referenceZoneLongitudeCity");
@@ -79,7 +75,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "Africa/Nairobi",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
     });
     expect(r.anchorSource).toBe("greenwichFallback");
@@ -90,7 +85,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 0, 0, 0),
       referenceTimeZone: "UTC",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedLongitude", longitudeDeg: 123.45 },
     });
     expect(r.anchorSource).toBe("fixedLongitude");
@@ -101,7 +95,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 12, 0, 0),
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedCity", cityId: "city.tokyo" },
     });
     expect(r.anchorSource).toBe("fixedCity");
@@ -112,7 +105,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 12, 0, 0),
       referenceTimeZone: "UTC",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedCity", cityId: "city.unknown" },
     });
     expect(r.anchorSource).toBe("greenwichFallback");
@@ -124,7 +116,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
       geography: DEFAULT_GEOGRAPHY_CONFIG,
     });
@@ -137,7 +128,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs,
       referenceTimeZone: "America/New_York",
-      topBandMode: "local24",
       topBandAnchor: { mode: "auto" },
       geography: {
         ...DEFAULT_GEOGRAPHY_CONFIG,
@@ -153,7 +143,6 @@ describe("resolveTopBandAnchorLongitudeDeg", () => {
     const r = resolveTopBandAnchorLongitudeDeg({
       nowMs: Date.UTC(2026, 1, 1, 0, 0, 0),
       referenceTimeZone: "UTC",
-      topBandMode: "local24",
       topBandAnchor: { mode: "fixedLongitude", longitudeDeg: 42 },
       geography: {
         ...DEFAULT_GEOGRAPHY_CONFIG,

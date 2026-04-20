@@ -20,6 +20,7 @@ import {
   resolveTopBandTimeFromConfig,
   topBandWrapOffsetsForCenteredExtent,
 } from "../displayChrome";
+import { structuralHourIndexFromReferenceLongitudeDeg } from "../structuralLongitudeGrid.ts";
 import {
   cloneHourMarkersConfig,
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
@@ -80,7 +81,6 @@ function buildStackFromFixture(
     sel: ReturnType<typeof effectiveTopBandHourMarkerSelection>;
     eff: EffectiveTopBandHourMarkers;
     topBandYPx?: number;
-    referenceNowMs?: number;
     structuralZoneCenterXPx?: readonly number[];
   },
 ) {
@@ -96,7 +96,6 @@ function buildStackFromFixture(
     effectiveTopBandHourMarkerSelection: args.sel,
     effectiveTopBandHourMarkers: args.eff,
     glyphRenderContext: GLYPH_CTX,
-    referenceNowMs: args.referenceNowMs ?? f.referenceNowMs,
     referenceFractionalHour: f.referenceFractionalHour,
     presentTimeStructuralHour0To23: f.presentTimeStructuralHour0To23,
     structuralZoneCenterXPx: args.structuralZoneCenterXPx ?? f.structuralZoneCenterXPx,
@@ -122,7 +121,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: eff,
         markerCount: 0,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
     ).toEqual({ kind: "hourMarkerEntriesAbsent" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);
   });
@@ -142,7 +141,6 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
     },
   });
   const structuralX = Array.from({ length: 24 }, (_, i) => i * 10);
-  const refMs = Date.now();
   const effRadialLine = effectiveTopBandHourMarkersForLayout({
     ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
     hourMarkers: {
@@ -164,28 +162,28 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
       effectiveTopBandHourMarkers: effText,
       markerCount: 24,
       structuralZoneCenterXPx: undefined,
-      referenceNowMs: undefined,
+      referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
     });
     const analogPath = resolveTopBandInDiskHourMarkerSemanticPath({
       effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "analogClock", sizeMultiplier: 1 },
       effectiveTopBandHourMarkers: effAnalog,
       markerCount: 24,
       structuralZoneCenterXPx: structuralX,
-      referenceNowMs: refMs,
+      referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
     });
     const linePath = resolveTopBandInDiskHourMarkerSemanticPath({
       effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "radialLine", sizeMultiplier: 1 },
       effectiveTopBandHourMarkers: effRadialLine,
       markerCount: 24,
       structuralZoneCenterXPx: structuralX,
-      referenceNowMs: refMs,
+      referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
     });
     const wedgePath = resolveTopBandInDiskHourMarkerSemanticPath({
       effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "radialWedge", sizeMultiplier: 1 },
       effectiveTopBandHourMarkers: effRadialWedge,
       markerCount: 24,
       structuralZoneCenterXPx: structuralX,
-      referenceNowMs: refMs,
+      referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
     });
     expect(textPath).toEqual({ kind: "semanticTextHourDisks" });
     expect(analogPath).toEqual({ kind: "semanticAnalogClockHourDisks" });
@@ -200,7 +198,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: undefined,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
     ).toThrow(/effectiveTopBandHourMarkers is required/);
   });
@@ -212,7 +210,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: effText,
         markerCount: 1,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
     ).toThrow(/expected 24 tape columns/);
   });
@@ -224,21 +222,21 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: effAnalog,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
     ).toThrow(/text selection requires effective realization kind "text"/);
   });
 
-  it("throws when analogClock is missing referenceNowMs", () => {
+  it("throws when analogClock is missing civil anchor inputs", () => {
     expect(() =>
       resolveTopBandInDiskHourMarkerSemanticPath({
         effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "analogClock", sizeMultiplier: 1 },
         effectiveTopBandHourMarkers: effAnalog,
         markerCount: 24,
         structuralZoneCenterXPx: structuralX,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
-    ).toThrow(/analogClock requires referenceNowMs/);
+    ).toThrow(/analogClock requires referenceFractionalHour and presentTimeStructuralHour0To23/);
   });
 
   it("throws when analogClock is missing structuralZoneCenterXPx (24)", () => {
@@ -248,36 +246,36 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: effAnalog,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: refMs,
+        referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
       }),
     ).toThrow(/structuralZoneCenterXPx with 24 entries/);
   });
 
-  it("throws when radialLine is missing referenceNowMs", () => {
+  it("throws when radialLine is missing civil anchor inputs", () => {
     expect(() =>
       resolveTopBandInDiskHourMarkerSemanticPath({
         effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "radialLine", sizeMultiplier: 1 },
         effectiveTopBandHourMarkers: effRadialLine,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
-    ).toThrow(/radialLine requires referenceNowMs/);
+    ).toThrow(/radialLine requires referenceFractionalHour and presentTimeStructuralHour0To23/);
   });
 
-  it("throws when radialWedge is missing referenceNowMs", () => {
+  it("throws when radialWedge is missing civil anchor inputs", () => {
     expect(() =>
       resolveTopBandInDiskHourMarkerSemanticPath({
         effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "radialWedge", sizeMultiplier: 1 },
         effectiveTopBandHourMarkers: effRadialWedge,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: undefined,
+        referenceFractionalHour: undefined, presentTimeStructuralHour0To23: undefined,
       }),
-    ).toThrow(/radialWedge requires referenceNowMs/);
+    ).toThrow(/radialWedge requires referenceFractionalHour and presentTimeStructuralHour0To23/);
   });
 
-  it("throws when radialLine is staticZoneAnchored but structuralZoneCenterXPx is not length 24", () => {
+  it("throws when radialLine is civilColumnAnchored but structuralZoneCenterXPx is not length 24", () => {
     const eff = effectiveTopBandHourMarkersForLayout({
       ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
       hourMarkers: {
@@ -285,16 +283,16 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         layout: { sizeMultiplier: 1 },
       },
     });
-    expect(eff.behavior).toBe("staticZoneAnchored");
+    expect(eff.behavior).toBe("civilColumnAnchored");
     expect(() =>
       resolveTopBandInDiskHourMarkerSemanticPath({
         effectiveTopBandHourMarkerSelection: { kind: "glyph", glyphMode: "radialLine", sizeMultiplier: 1 },
         effectiveTopBandHourMarkers: eff,
         markerCount: 24,
         structuralZoneCenterXPx: undefined,
-        referenceNowMs: refMs,
+        referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
       }),
-    ).toThrow(/radialLine with staticZoneAnchored requires structuralZoneCenterXPx/);
+    ).toThrow(/radialLine with civilColumnAnchored requires structuralZoneCenterXPx/);
   });
 
   it("throws when radialLine selection does not match realization", () => {
@@ -304,7 +302,7 @@ describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
         effectiveTopBandHourMarkers: effRadialWedge,
         markerCount: 24,
         structuralZoneCenterXPx: structuralX,
-        referenceNowMs: refMs,
+        referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
       }),
     ).toThrow(/radialLine selection requires effective realization kind "radialLine"/);
   });
@@ -475,7 +473,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         sizeMultiplier: 1,
       },
       eff,
-      referenceNowMs: refMs,
     });
     expect(plan.items.some((i) => i.kind === "path2d")).toBe(true);
     const hand = plan.items.find(
@@ -514,7 +511,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       effectiveTopBandHourMarkerSelection: SEL_TEXT_DEFAULT,
       effectiveTopBandHourMarkers: EFF_TEXT_DEFAULT,
       glyphRenderContext: GLYPH_CTX,
-      referenceNowMs: fCustomStack.referenceNowMs,
+      referenceFractionalHour: fCustomStack.referenceFractionalHour, presentTimeStructuralHour0To23: fCustomStack.presentTimeStructuralHour0To23,
       structuralZoneCenterXPx: fCustomStack.structuralZoneCenterXPx,
     });
     const upper = plan.items.filter((i) => i.kind === "text" && i.text === m6.nextHourLabel);
@@ -593,7 +590,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       effectiveTopBandHourMarkerSelection: SEL_TEXT_DEFAULT,
       effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG),
       glyphRenderContext: GLYPH_CTX,
-      referenceNowMs: scale.referenceNowMs,
+      referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
       structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
     });
 
@@ -658,7 +655,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: sel,
         effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(layout),
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: scale.referenceNowMs,
+        referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
     }
@@ -784,7 +781,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: effectiveTopBandHourMarkerSelection(LAYOUT_ANALOG_GLYPH),
         effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(LAYOUT_ANALOG_GLYPH),
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: refMs,
+        referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
@@ -794,7 +791,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(LAYOUT_ANALOG_GLYPH),
           markerCount: 24,
           structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
-          referenceNowMs: refMs,
+          referenceFractionalHour: 14.25, presentTimeStructuralHour0To23: 11,
         }).kind,
       ).toBe("semanticAnalogClockHourDisks");
 
@@ -843,7 +840,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           effectiveTopBandHourMarkers: eff,
           markerCount: 24,
           structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
-          referenceNowMs: scale.referenceNowMs,
+          referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         }),
       ).toEqual({ kind: "semanticRadialLineHourDisks" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);
 
@@ -867,7 +864,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: sel,
         effectiveTopBandHourMarkers: eff,
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: scale.referenceNowMs,
+        referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
@@ -926,7 +923,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: sel,
         effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(LAYOUT_RADIAL_COLORED),
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: scale.referenceNowMs,
+        referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
@@ -986,7 +983,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
           effectiveTopBandHourMarkers: eff,
           markerCount: 24,
           structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
-          referenceNowMs: scale.referenceNowMs,
+          referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         }),
       ).toEqual({ kind: "semanticRadialWedgeHourDisks" } satisfies TopBandInDiskHourMarkerSemanticRenderPath);
 
@@ -1010,7 +1007,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: sel,
         effectiveTopBandHourMarkers: eff,
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: scale.referenceNowMs,
+        referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
@@ -1066,7 +1063,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         effectiveTopBandHourMarkerSelection: sel,
         effectiveTopBandHourMarkers: resolveEffectiveTopBandHourMarkers(LAYOUT_WEDGE_COLORED),
         glyphRenderContext: GLYPH_CTX,
-        referenceNowMs: scale.referenceNowMs,
+        referenceFractionalHour: scale.referenceFractionalHour, presentTimeStructuralHour0To23: structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg),
         structuralZoneCenterXPx: scale.segments.map((s) => s.centerX),
       });
 
@@ -1375,7 +1372,6 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
         },
         eff,
         topBandYPx: 10,
-        referenceNowMs: refMs,
       });
       const faceRing = plan.items
         .filter((i) => i.kind === "path2d")

@@ -59,7 +59,8 @@ export type HourMarkersRealizationConfig =
   | { kind: "radialWedge"; appearance: HourMarkersRadialWedgeAppearance };
 
 /** How phased hour markers move with the longitude tape vs fixed structural columns. */
-export type EffectiveTopBandHourMarkerBehavior = "tapeAdvected" | "staticZoneAnchored";
+/** Text numerals move with the civil-phased tape; procedural glyphs use fixed structural column positions. */
+export type EffectiveTopBandHourMarkerBehavior = "civilPhased" | "civilColumnAnchored";
 
 /**
  * How noon (structural hour 12) and midnight (structural hour 0) are expressed on the 24-hour indicator entries row.
@@ -117,7 +118,7 @@ export interface HourMarkersConfig {
 }
 
 /**
- * What civil-time content the marker encodes: 24h tape labels (text) vs mean-solar local wall-clock per structural
+ * What civil-time content the marker encodes: 24h tape labels (text) vs reference-zone civil wall-clock per structural
  * column (analogClock, radialLine, radialWedge procedural angles).
  */
 export type EffectiveTopBandHourMarkerContent =

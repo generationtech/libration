@@ -52,7 +52,6 @@ export type TopBandHourDiskStackMarkerInput = {
 };
 
 export type FullUtcTopBandHourDiskFixture = {
-  referenceNowMs: number;
   /** Band-frame civil fractional hour-of-day (see `UtcTopScaleLayout.referenceFractionalHour`). */
   referenceFractionalHour: number;
   /** Structural column index of the present-time tick (reference longitude segment). */
@@ -101,7 +100,6 @@ export function buildFullUtcTopBandHourDiskFixture(options?: {
   );
 
   return {
-    referenceNowMs: nowMs,
     referenceFractionalHour: scale.referenceFractionalHour,
     presentTimeStructuralHour0To23,
     viewportWidthPx: w,

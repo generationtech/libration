@@ -11,9 +11,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-export {
-  geographyTimezoneStripReferenceLabel,
-  REFERENCE_ZONE_TO_LONGITUDE_CITY_ID,
-  resolveTopBandAnchorLongitudeDeg,
-  type TopBandAnchorLongitudeSource,
-} from "../core/topBandAnchorLongitude.ts";
+import type { TopBandTimeMode } from "../config/appConfig.ts";
+import type { DisplayTimeMode } from "./chromeTimeDomain.ts";
+
+/** Maps persisted {@link TopBandTimeMode} to formatting-only {@link DisplayTimeMode}. */
+export function displayTimeModeFromTopBandTimeMode(mode: TopBandTimeMode): DisplayTimeMode {
+  if (mode === "local12") {
+    return "12hr";
+  }
+  if (mode === "local24") {
+    return "24hr";
+  }
+  return "utc";
+}

@@ -108,7 +108,7 @@ describe("layoutSemanticTopBandHourMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       hourMarkerLayout({ kind: "analogClock", appearance: {} }),
     );
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 6, 0, 0) });
+    const plan = buildSemanticTopBandHourMarkers(eff, { anchoredTimezoneSegment: { referenceFractionalHour: 6, presentTimeStructuralHour0To23: 4 } });
     const tapeMarkers = scale.circleMarkers.map((m) => ({
       centerX: m.centerX,
       radiusPx: m.radiusPx,
@@ -154,7 +154,7 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       hourMarkerLayout({ kind: "radialLine", appearance: {} }),
     );
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) });
+    const plan = buildSemanticTopBandHourMarkers(eff, { anchoredTimezoneSegment: { referenceFractionalHour: 12.57, presentTimeStructuralHour0To23: 7 } });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(plan, {
       viewportWidthPx: w,
       topBandYPx: 0,
@@ -210,8 +210,8 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
         layout: { sizeMultiplier: 1 },
       },
     });
-    expect(eff.behavior).toBe("staticZoneAnchored");
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 6, 0, 0) });
+    expect(eff.behavior).toBe("civilColumnAnchored");
+    const plan = buildSemanticTopBandHourMarkers(eff, { anchoredTimezoneSegment: { referenceFractionalHour: 6, presentTimeStructuralHour0To23: 4 } });
     const laidOut = layoutSemanticTopBandRadialLineMarkers(plan, {
       viewportWidthPx: w,
       topBandYPx: 0,
@@ -256,7 +256,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       hourMarkerLayout({ kind: "radialWedge", appearance: {} }),
     );
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) });
+    const plan = buildSemanticTopBandHourMarkers(eff, { anchoredTimezoneSegment: { referenceFractionalHour: 12.57, presentTimeStructuralHour0To23: 7 } });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(plan, {
       viewportWidthPx: w,
       topBandYPx: 0,
@@ -271,7 +271,7 @@ describe("layoutSemanticTopBandRadialWedgeMarkers", () => {
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(
       buildSemanticTopBandHourMarkers(
         resolveEffectiveTopBandHourMarkers(hourMarkerLayout({ kind: "radialLine", appearance: {} })),
-        { referenceNowMs: Date.UTC(2024, 0, 1, 12, 34, 0) },
+        { anchoredTimezoneSegment: { referenceFractionalHour: 12.57, presentTimeStructuralHour0To23: 7 } },
       ),
       {
         viewportWidthPx: w,

@@ -92,7 +92,7 @@ export type SemanticTopBandHourMarkerLayoutContext = {
   effectiveTopBandHourMarkerSelection?: EffectiveTopBandHourMarkerSelection;
   /**
    * Structural (NATO) column center x from {@link UtcTopScaleHourSegment.centerX}, length 24.
-   * Used when {@link EffectiveTopBandHourMarkers.behavior} is `staticZoneAnchored` for analog clocks and radial glyphs.
+   * Used when {@link EffectiveTopBandHourMarkers.behavior} is `civilColumnAnchored` for analog clocks and radial glyphs.
    */
   structuralZoneCenterXPx?: readonly number[];
 };
@@ -434,14 +434,14 @@ function structuralXForHour(
   tapeColumn: TopBandHourMarkerTapeColumn,
   structuralZoneCenterXPx: readonly number[] | undefined,
 ): number {
-  if (behavior === "staticZoneAnchored" && structuralZoneCenterXPx?.length === 24) {
+  if (behavior === "civilColumnAnchored" && structuralZoneCenterXPx?.length === 24) {
     return structuralZoneCenterXPx[structuralHour0To23]!;
   }
   return tapeColumn.centerX;
 }
 
 /**
- * Disk-row layout for analogClock: x from structural zone centers when {@link EffectiveTopBandHourMarkerBehavior.staticZoneAnchored}
+ * Disk-row layout for analogClock: x from structural zone centers when {@link EffectiveTopBandHourMarkerBehavior.civilColumnAnchored}
  * and {@link SemanticTopBandHourMarkerLayoutContext.structuralZoneCenterXPx} is length 24; otherwise x from phased tape columns.
  * y/size/wrap from tape columns.
  */

@@ -13,7 +13,6 @@
 
 import { describe, expect, it } from "vitest";
 import { longitudeDegFromMapX } from "../core/equirectangularProjection.ts";
-import { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import { hourToTheta } from "../glyphs/glyphGeometry.ts";
 import { normalizeDisplayChromeLayout } from "./v2/librationConfig.ts";
@@ -22,14 +21,19 @@ import {
   buildSemanticTopBandHourMarkers,
   wallClockLongitudeDegForStructuralHourMarkers,
 } from "./topBandHourMarkersSemanticPlan.ts";
-import { structuralColumnCenterLongitudeDeg } from "./topBandHourMarkersSemanticTypes.ts";
+import {
+  anchoredTimezoneSegmentWallClockState,
+  structuralColumnCenterLongitudeDeg,
+} from "./topBandHourMarkersSemanticTypes.ts";
 import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "./topBandVisualPolicy.ts";
 
-/** Non-exact minute-bearing instant (not top-of-hour). */
-const REF_MS = Date.UTC(2026, 3, 18, 15, 37, 22);
+const ANCHORED = {
+  referenceFractionalHour: 15.62,
+  presentTimeStructuralHour0To23: 10,
+} as const;
 
-describe("top-band hour marker procedural time vs semantic wall clock", () => {
-  it("radialLine and radialWedge glyph hour matches continuous solar hour for each structural column (effective staticZoneAnchored)", () => {
+describe("top-band hour marker procedural time vs semantic wall clock (civil anchored)", () => {
+  it("radialLine and radialWedge glyph hour matches anchored civil wall clock per structural column", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -38,8 +42,8 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    expect(eff.behavior).toBe("staticZoneAnchored");
-    const plan = buildSemanticTopBandHourMarkers(eff, { referenceNowMs: REF_MS });
+    expect(eff.behavior).toBe("civilColumnAnchored");
+    const plan = buildSemanticTopBandHourMarkers(eff, { anchoredTimezoneSegment: ANCHORED });
     const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection({
       kind: "glyph",
       glyphMode: "radialLine",
@@ -48,8 +52,11 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
 
     for (const inst of plan.instances) {
       const h = inst.structuralHour0To23;
-      const lon = structuralColumnCenterLongitudeDeg(h);
-      const expected = solarLocalWallClockStateFromUtcMs(REF_MS, lon);
+      const expected = anchoredTimezoneSegmentWallClockState(
+        ANCHORED.referenceFractionalHour,
+        h,
+        ANCHORED.presentTimeStructuralHour0To23,
+      );
       expect(inst.content.kind).toBe("localWallClock");
       if (inst.content.kind !== "localWallClock") {
         continue;
@@ -79,8 +86,8 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    expect(effWedge.behavior).toBe("staticZoneAnchored");
-    const planW = buildSemanticTopBandHourMarkers(effWedge, { referenceNowMs: REF_MS });
+    expect(effWedge.behavior).toBe("civilColumnAnchored");
+    const planW = buildSemanticTopBandHourMarkers(effWedge, { anchoredTimezoneSegment: ANCHORED });
     const specW = hourMarkerRepresentationSpecForTopBandEffectiveSelection({
       kind: "glyph",
       glyphMode: "radialWedge",
@@ -88,8 +95,11 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     });
     for (const inst of planW.instances) {
       const h = inst.structuralHour0To23;
-      const lon = structuralColumnCenterLongitudeDeg(h);
-      const expected = solarLocalWallClockStateFromUtcMs(REF_MS, lon);
+      const expected = anchoredTimezoneSegmentWallClockState(
+        ANCHORED.referenceFractionalHour,
+        h,
+        ANCHORED.presentTimeStructuralHour0To23,
+      );
       expect(inst.content.kind).toBe("localWallClock");
       if (inst.content.kind !== "localWallClock") {
         continue;
@@ -109,8 +119,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("radial procedural angle matches analog clock hour-hand angle for the same column and reference instant", () => {
-    const ref = REF_MS;
+  it("radial procedural angle matches analog clock hour-hand angle for the same column (same anchored civil basis)", () => {
     const effAnalog = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -127,8 +136,8 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    const analogPlan = buildSemanticTopBandHourMarkers(effAnalog, { referenceNowMs: ref });
-    const radialPlan = buildSemanticTopBandHourMarkers(effRadial, { referenceNowMs: ref });
+    const analogPlan = buildSemanticTopBandHourMarkers(effAnalog, { anchoredTimezoneSegment: ANCHORED });
+    const radialPlan = buildSemanticTopBandHourMarkers(effRadial, { anchoredTimezoneSegment: ANCHORED });
     const spec = hourMarkerRepresentationSpecForTopBandEffectiveSelection({
       kind: "glyph",
       glyphMode: "radialLine",
@@ -162,7 +171,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
     }
   });
 
-  it("procedural radialLine uses structural-column longitudes when product supplies wall-clock overrides", () => {
+  it("wallClockLongitudeDegForStructuralHourMarkers uses structural column centers for civilColumnAnchored layout", () => {
     const eff = resolveEffectiveTopBandHourMarkers(
       normalizeDisplayChromeLayout({
         hourMarkers: {
@@ -171,30 +180,19 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
         },
       }),
     );
-    expect(eff.behavior).toBe("staticZoneAnchored");
+    expect(eff.behavior).toBe("civilColumnAnchored");
     const w = 2400;
-    const cx = 317.5;
-    const markers = Array.from({ length: 24 }, (_, h) => ({
-      centerX: h === 7 ? cx : h * 10,
+    const zoneX = Array.from({ length: 24 }, (_, h) => (h / 24) * w + w / 48);
+    const markers = zoneX.map((centerX, h) => ({
+      centerX,
       structuralHour0To23: h,
     }));
-    const wallLon = wallClockLongitudeDegForStructuralHourMarkers(eff.behavior, markers, w);
+    const wallLon = wallClockLongitudeDegForStructuralHourMarkers(eff.behavior, markers, w, zoneX);
+    expect(wallLon[7]).toBeCloseTo(longitudeDegFromMapX(zoneX[7]!, w), 10);
     expect(wallLon[7]).toBeCloseTo(structuralColumnCenterLongitudeDeg(7), 10);
-    expect(wallLon[7]).not.toBeCloseTo(longitudeDegFromMapX(cx, w), 3);
-    const plan = buildSemanticTopBandHourMarkers(eff, {
-      referenceNowMs: REF_MS,
-      wallClockLongitudeDegByStructuralHour: wallLon,
-    });
-    const expected = solarLocalWallClockStateFromUtcMs(REF_MS, wallLon[7]!);
-    const inst = plan.instances[7]!;
-    expect(inst.content.kind).toBe("localWallClock");
-    if (inst.content.kind === "localWallClock") {
-      expect(inst.content.wallClock.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 10);
-      expect(inst.content.wallClock.continuousMinute0To60).toBeCloseTo(expected.continuousMinute0To60, 10);
-    }
   });
 
-  it("analogClock, radialLine, and radialWedge resolve to staticZoneAnchored", () => {
+  it("analogClock, radialLine, and radialWedge resolve to civilColumnAnchored", () => {
     const kinds = [
       { kind: "analogClock" as const, realization: { kind: "analogClock" as const, appearance: {} } },
       { kind: "radialLine" as const, realization: { kind: "radialLine" as const, appearance: {} } },
@@ -209,8 +207,7 @@ describe("top-band hour marker procedural time vs semantic wall clock", () => {
           },
         }),
       );
-      expect(eff.behavior).toBe("staticZoneAnchored");
+      expect(eff.behavior).toBe("civilColumnAnchored");
     }
   });
-
 });

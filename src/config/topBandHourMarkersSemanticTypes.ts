@@ -44,11 +44,9 @@ export type SemanticHourMarkerStructuralAnchor = {
 
 /**
  * Renderer-agnostic tape content for one marker instance (phasing/layout x is not part of this slice).
- */
-/**
- * Clock-hand state for a top-band procedural marker: either mean-solar at a longitude (tape / fallback) or
- * NATO-segment anchored time (static zone: band reference fractional hour ± structural column offset from the
- * present-time tick), aligned with the same band-frame civil time as the phased tape and map clock.
+ *
+ * Clock-hand state for procedural markers uses reference-zone civil time: either column-anchored civil wall clock
+ * ({@link anchoredTimezoneSegmentWallClockState}) or phased 24h labels — not mean-solar time as chrome semantics.
  */
 export type SemanticLocalWallClockState = {
   hour0To23: number;

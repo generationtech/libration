@@ -23,10 +23,7 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../../config/appConfig.ts";
-import {
-  buildSemanticTopBandHourMarkers,
-  wallClockLongitudeDegForStructuralHourMarkers,
-} from "../../config/topBandHourMarkersSemanticPlan.ts";
+import { buildSemanticTopBandHourMarkers } from "../../config/topBandHourMarkersSemanticPlan.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import {
   layoutSemanticTopBandAnalogClockMarkers,
@@ -69,14 +66,16 @@ export type TopBandInDiskHourMarkerSemanticRenderPath =
 /**
  * Resolves the in-disk semantic render path or throws with a developer-facing message.
  * Requires {@link EffectiveTopBandHourMarkers}, 24 tape columns, selection ↔ effective realization consistency, and for
- * analogClock and radial glyphs {@link referenceNowMs}; for static-zone behavior, {@link structuralZoneCenterXPx} length 24.
+ * analogClock and radial glyphs {@link referenceFractionalHour} + {@link presentTimeStructuralHour0To23}; for
+ * civilColumnAnchored, {@link structuralZoneCenterXPx} length 24.
  */
 export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection;
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers | undefined;
   markerCount: number;
   structuralZoneCenterXPx: readonly number[] | undefined;
-  referenceNowMs: number | undefined;
+  referenceFractionalHour: number | undefined;
+  presentTimeStructuralHour0To23: number | undefined;
 }): TopBandInDiskHourMarkerSemanticRenderPath {
   if (args.effectiveTopBandHourMarkers === undefined) {
     throw new Error(`${IN_DISK_HOUR_ERR} effectiveTopBandHourMarkers is required`);
@@ -107,12 +106,17 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
           `${IN_DISK_HOUR_ERR} analogClock selection requires effective realization kind "analogClock", got "${eff.realization.kind}"`,
         );
       }
-      if (args.referenceNowMs === undefined) {
-        throw new Error(`${IN_DISK_HOUR_ERR} analogClock requires referenceNowMs`);
-      }
-      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+      if (
+        args.referenceFractionalHour === undefined ||
+        args.presentTimeStructuralHour0To23 === undefined
+      ) {
         throw new Error(
-          `${IN_DISK_HOUR_ERR} analogClock with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
+          `${IN_DISK_HOUR_ERR} analogClock requires referenceFractionalHour and presentTimeStructuralHour0To23`,
+        );
+      }
+      if (eff.behavior === "civilColumnAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+        throw new Error(
+          `${IN_DISK_HOUR_ERR} analogClock with civilColumnAnchored requires structuralZoneCenterXPx with 24 entries`,
         );
       }
       return { kind: "semanticAnalogClockHourDisks" };
@@ -123,12 +127,17 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
           `${IN_DISK_HOUR_ERR} radialLine selection requires effective realization kind "radialLine", got "${eff.realization.kind}"`,
         );
       }
-      if (args.referenceNowMs === undefined) {
-        throw new Error(`${IN_DISK_HOUR_ERR} radialLine requires referenceNowMs`);
-      }
-      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+      if (
+        args.referenceFractionalHour === undefined ||
+        args.presentTimeStructuralHour0To23 === undefined
+      ) {
         throw new Error(
-          `${IN_DISK_HOUR_ERR} radialLine with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
+          `${IN_DISK_HOUR_ERR} radialLine requires referenceFractionalHour and presentTimeStructuralHour0To23`,
+        );
+      }
+      if (eff.behavior === "civilColumnAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+        throw new Error(
+          `${IN_DISK_HOUR_ERR} radialLine with civilColumnAnchored requires structuralZoneCenterXPx with 24 entries`,
         );
       }
       return { kind: "semanticRadialLineHourDisks" };
@@ -139,12 +148,17 @@ export function resolveTopBandInDiskHourMarkerSemanticPath(args: {
           `${IN_DISK_HOUR_ERR} radialWedge selection requires effective realization kind "radialWedge", got "${eff.realization.kind}"`,
         );
       }
-      if (args.referenceNowMs === undefined) {
-        throw new Error(`${IN_DISK_HOUR_ERR} radialWedge requires referenceNowMs`);
-      }
-      if (eff.behavior === "staticZoneAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+      if (
+        args.referenceFractionalHour === undefined ||
+        args.presentTimeStructuralHour0To23 === undefined
+      ) {
         throw new Error(
-          `${IN_DISK_HOUR_ERR} radialWedge with staticZoneAnchored requires structuralZoneCenterXPx with 24 entries`,
+          `${IN_DISK_HOUR_ERR} radialWedge requires referenceFractionalHour and presentTimeStructuralHour0To23`,
+        );
+      }
+      if (eff.behavior === "civilColumnAnchored" && args.structuralZoneCenterXPx?.length !== 24) {
+        throw new Error(
+          `${IN_DISK_HOUR_ERR} radialWedge with civilColumnAnchored requires structuralZoneCenterXPx with 24 entries`,
         );
       }
       return { kind: "semanticRadialWedgeHourDisks" };
@@ -204,12 +218,10 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   tickBandHeightPx?: number;
   /** Defaults to {@link TOP_CHROME_STYLE} for tests and legacy callers. */
   chromeStyle?: TopChromeStyle;
-  /** Reference instant for semantic analog/radial pipelines (mean-solar path and calendar framing); pair with {@link structuralZoneCenterXPx} when behavior is static-zone anchored. */
-  referenceNowMs?: number;
   /**
    * Civil fractional hour-of-day [0,24) in the top-band reference frame (same value as {@link UtcTopScaleLayout.referenceFractionalHour}).
    * With {@link presentTimeStructuralHour0To23}, drives anchored NATO-segment procedural wall-clock semantics when the
-   * effective hour-marker behavior is `staticZoneAnchored`.
+   * effective hour-marker behavior is `civilColumnAnchored`.
    */
   referenceFractionalHour?: number;
   /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); static-zone anchoring for analog and radial layouts. */
@@ -247,20 +259,12 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     effectiveTopBandHourMarkers: effectiveMarkers,
     markerCount: markers.length,
     structuralZoneCenterXPx: options.structuralZoneCenterXPx,
-    referenceNowMs: options.referenceNowMs,
+    referenceFractionalHour: options.referenceFractionalHour,
+    presentTimeStructuralHour0To23: options.presentTimeStructuralHour0To23,
   });
 
-  const wallClockLongitudeDegByStructuralHour = wallClockLongitudeDegForStructuralHourMarkers(
-    effectiveMarkers.behavior,
-    markers,
-    vw,
-    options.structuralZoneCenterXPx,
-  );
-
   const anchoredTimezoneSegment =
-    effectiveMarkers.behavior === "staticZoneAnchored" &&
-    options.referenceFractionalHour !== undefined &&
-    options.presentTimeStructuralHour0To23 !== undefined
+    options.referenceFractionalHour !== undefined && options.presentTimeStructuralHour0To23 !== undefined
       ? {
           referenceFractionalHour: options.referenceFractionalHour,
           presentTimeStructuralHour0To23: options.presentTimeStructuralHour0To23,
@@ -372,8 +376,6 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan(laidOut, vw, topBandSel, effectiveMarkers, gctx, items);
   } else if (inDiskPath.kind === "semanticAnalogClockHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
-      referenceNowMs: options.referenceNowMs,
-      wallClockLongitudeDegByStructuralHour,
       anchoredTimezoneSegment,
     });
     const laidOutAnalog = layoutSemanticTopBandAnalogClockMarkers(semanticPlan, {
@@ -398,8 +400,6 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     );
   } else if (inDiskPath.kind === "semanticRadialLineHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
-      referenceNowMs: options.referenceNowMs,
-      wallClockLongitudeDegByStructuralHour,
       anchoredTimezoneSegment,
     });
     const laidOutRadial = layoutSemanticTopBandRadialLineMarkers(semanticPlan, {
@@ -424,8 +424,6 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     );
   } else if (inDiskPath.kind === "semanticRadialWedgeHourDisks") {
     const semanticPlan = buildSemanticTopBandHourMarkers(effectiveMarkers, {
-      referenceNowMs: options.referenceNowMs,
-      wallClockLongitudeDegByStructuralHour,
       anchoredTimezoneSegment,
     });
     const laidOutWedge = layoutSemanticTopBandRadialWedgeMarkers(semanticPlan, {

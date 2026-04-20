@@ -66,15 +66,15 @@ function defaultAnalogFaceFillFromIndicatorRow(): string {
 
 describe("defaultBehaviorFor", () => {
   it("maps realization kinds to resolver defaults", () => {
-    expect(defaultBehaviorFor("text")).toBe("tapeAdvected");
-    expect(defaultBehaviorFor("radialLine")).toBe("staticZoneAnchored");
-    expect(defaultBehaviorFor("radialWedge")).toBe("staticZoneAnchored");
-    expect(defaultBehaviorFor("analogClock")).toBe("staticZoneAnchored");
+    expect(defaultBehaviorFor("text")).toBe("civilPhased");
+    expect(defaultBehaviorFor("radialLine")).toBe("civilColumnAnchored");
+    expect(defaultBehaviorFor("radialWedge")).toBe("civilColumnAnchored");
+    expect(defaultBehaviorFor("analogClock")).toBe("civilColumnAnchored");
   });
 });
 
 describe("resolveEffectiveHourMarkerBehavior", () => {
-  it("derives tapeAdvected for text and staticZoneAnchored for non-text realizations", () => {
+  it("derives civilPhased for text and civilColumnAnchored for non-text realizations", () => {
     expect(
       resolveEffectiveHourMarkerBehavior(
         normalizeDisplayChromeLayout({
@@ -84,7 +84,7 @@ describe("resolveEffectiveHourMarkerBehavior", () => {
           },
         }).hourMarkers,
       ),
-    ).toBe("tapeAdvected");
+    ).toBe("civilPhased");
     expect(
       resolveEffectiveHourMarkerBehavior(
         normalizeDisplayChromeLayout({
@@ -94,34 +94,34 @@ describe("resolveEffectiveHourMarkerBehavior", () => {
           },
         }).hourMarkers,
       ),
-    ).toBe("staticZoneAnchored");
+    ).toBe("civilColumnAnchored");
   });
 
   it("ignores legacy persisted behavior (normalization strips it; mapping is from realization kind only)", () => {
     const legacyText = normalizeDisplayChromeLayout({
       hourMarkers: {
-        behavior: "staticZoneAnchored",
+        behavior: "civilColumnAnchored",
         realization: { kind: "text", fontAssetId: "computer", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
     }).hourMarkers;
     expect(legacyText).not.toHaveProperty("behavior");
-    expect(resolveEffectiveHourMarkerBehavior(legacyText)).toBe("tapeAdvected");
+    expect(resolveEffectiveHourMarkerBehavior(legacyText)).toBe("civilPhased");
 
     const legacyRadial = normalizeDisplayChromeLayout({
       hourMarkers: {
-        behavior: "tapeAdvected",
+        behavior: "civilPhased",
         realization: { kind: "radialLine", appearance: {} },
         layout: { sizeMultiplier: 1 },
       },
     }).hourMarkers;
     expect(legacyRadial).not.toHaveProperty("behavior");
-    expect(resolveEffectiveHourMarkerBehavior(legacyRadial)).toBe("staticZoneAnchored");
+    expect(resolveEffectiveHourMarkerBehavior(legacyRadial)).toBe("civilColumnAnchored");
   });
 });
 
 describe("resolveEffectiveTopBandHourMarkers", () => {
-  it("structured text uses persisted font + tapeAdvected + hour24", () => {
+  it("structured text uses persisted font + civilPhased + hour24", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
@@ -134,7 +134,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "tapeAdvected",
+      behavior: "civilPhased",
       content: { kind: "hour24" },
       realization: {
         kind: "text",
@@ -159,7 +159,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "tapeAdvected",
+      behavior: "civilPhased",
       content: { kind: "hour24" },
       realization: {
         kind: "text",
@@ -171,7 +171,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
-  it("analog clock → analogClock realization + localWallClock + staticZoneAnchored behavior", () => {
+  it("analog clock → analogClock realization + localWallClock + civilColumnAnchored behavior", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(
         normalizeDisplayChromeLayout({
@@ -184,7 +184,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "staticZoneAnchored",
+      behavior: "civilColumnAnchored",
       content: { kind: "localWallClock" },
       realization: {
         kind: "analogClock",
@@ -212,7 +212,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "staticZoneAnchored",
+      behavior: "civilColumnAnchored",
       content: { kind: "localWallClock" },
       realization: {
         kind: "radialLine",
@@ -284,7 +284,7 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     ).toEqual({
       areaVisible: true,
       indicatorEntriesArea: INDICATOR_ENTRIES_AREA_DEFAULT,
-      behavior: "staticZoneAnchored",
+      behavior: "civilColumnAnchored",
       content: { kind: "localWallClock" },
       realization: {
         kind: "radialWedge",

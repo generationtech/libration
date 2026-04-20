@@ -289,7 +289,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layout.topBandAnchor.referenceOffsetHours).toBe(0);
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(0, 5);
     expect(layout.topBandAnchor.anchorX).toBeCloseTo(expectedTopTapeAnchorX(0, w), 5);
-    expect(tapeAf).toBeCloseTo(layout.topBandAnchor.anchorFrac, 7);
+    expect(tapeAf).toBeCloseTo(layout.nowX / w, 7);
     for (let h = 0; h < 24; h += 1) {
       expect(layout.circleMarkers[h]!.utcHour).toBe(h);
       expect(layout.circleMarkers[h]!.label).toBe(h.toString().padStart(2, "0"));
@@ -355,7 +355,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layout.quarterMinorTickXs[1]).toBeCloseTo(topBandHourMarkerCenterX(2 / 12, ref, w, af), 5);
 
     expect(layout.majorBoundaryXs[12]).toBeCloseTo(layout.circleMarkers[12]!.centerX, 5);
-    expect(layout.majorBoundaryXs[12]).toBeCloseTo(layout.topBandAnchor.anchorX, 5);
+    expect(layout.majorBoundaryXs[12]).toBeCloseTo(layout.nowX, 5);
   });
 
   it("exposes TopBandLayout and TopTapeTickHierarchy; segment edges stay longitude-mapped; tick x matches phased band", () => {
@@ -528,7 +528,7 @@ describe("buildUtcTopScaleLayout", () => {
     const t = Date.UTC(2026, 4, 1, 7, 41, 22, 407);
     const layout = buildUtcTopScaleLayout(t, 1000, 80, RESOLVED_UTC_UTC24);
     expect(layout.referenceFractionalHour).toBeCloseTo(
-      referenceFractionalHourOfDay(t, "utc24", "UTC"),
+      referenceFractionalHourOfDay(t, "UTC"),
       7,
     );
     expect(layout.nowX).toBeCloseTo(
@@ -541,7 +541,7 @@ describe("buildUtcTopScaleLayout", () => {
     const w = 86400;
     const anchorFrac = 0.4;
     const h = 14;
-    const t0 = referenceFractionalHourOfDay(Date.UTC(2026, 2, 3, 14, 30, 0, 0), "utc24", "UTC");
+    const t0 = referenceFractionalHourOfDay(Date.UTC(2026, 2, 3, 14, 30, 0, 0), "UTC");
     const t1 = t0 + 1 / 3600;
     const x0 = topBandHourMarkerCenterX(h, t0, w, anchorFrac);
     const x1 = topBandHourMarkerCenterX(h, t1, w, anchorFrac);
@@ -555,7 +555,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layoutHalf.referenceFractionalHour).toBeCloseTo(6.5, 5);
     const m6h = layoutHalf.circleMarkers[6]!.centerX;
     const m7h = layoutHalf.circleMarkers[7]!.centerX;
-    expect((m6h + m7h) / 2).toBeCloseTo(layoutHalf.topBandAnchor.anchorX, 5);
+    expect((m6h + m7h) / 2).toBeCloseTo(layoutHalf.nowX, 5);
 
     const tFrac = Date.UTC(2026, 5, 15, 6, 30, 45, 123);
     const layout = buildUtcTopScaleLayout(tFrac, w, 80, RESOLVED_UTC_UTC24);
@@ -565,7 +565,7 @@ describe("buildUtcTopScaleLayout", () => {
     const ref = layout.referenceFractionalHour;
     const m6 = layout.circleMarkers[6]!.centerX;
     const m7 = layout.circleMarkers[7]!.centerX;
-    expect(m6 + (ref - 6) * (m7 - m6)).toBeCloseTo(layout.topBandAnchor.anchorX, 3);
+    expect(m6 + (ref - 6) * (m7 - m6)).toBeCloseTo(layout.nowX, 3);
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(0, w), 5);
     for (let h = 0; h < 24; h += 1) {
       expect(layout.circleMarkers[h]!.centerX).toBeCloseTo(
@@ -575,13 +575,17 @@ describe("buildUtcTopScaleLayout", () => {
     }
   });
 
-  it("utc24: tape phasing matches UTC when referenceTimeZone is America/New_York (anchor meridian still NYC longitude from auto mapping)", () => {
+  it("America/New_York display mode: tape uses reference-zone civil phasing (not UTC civil), anchor unchanged", () => {
     const t = Date.UTC(2026, 8, 1, 14, 20, 0, 0);
     const w = 1920;
     const utcLayout = buildUtcTopScaleLayout(t, w, 80, RESOLVED_UTC_UTC24);
     const nyUtcLayout = buildUtcTopScaleLayout(t, w, 80, RESOLVED_NY_UTC24);
-    expect(nyUtcLayout.referenceFractionalHour).toBeCloseTo(utcLayout.referenceFractionalHour, 7);
-    expect(nyUtcLayout.bandPhaseDayStartMs).toBe(utcLayout.bandPhaseDayStartMs);
+    expect(nyUtcLayout.referenceFractionalHour).toBeCloseTo(
+      referenceFractionalHourOfDay(t, "America/New_York"),
+      7,
+    );
+    expect(utcLayout.referenceFractionalHour).toBeCloseTo(referenceFractionalHourOfDay(t, "UTC"), 7);
+    expect(nyUtcLayout.bandPhaseDayStartMs).toBe(zonedCalendarDayStartMs(t, "America/New_York"));
     const nycLon = REFERENCE_CITIES.find((c) => c.id === "city.nyc")!.longitude;
     expect(nyUtcLayout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(nycLon, 3);
     expect(nyUtcLayout.topBandAnchor.anchorX).toBeCloseTo(expectedTopTapeAnchorX(nycLon, w), 5);
@@ -591,7 +595,7 @@ describe("buildUtcTopScaleLayout", () => {
     for (let h = 0; h < 24; h += 1) {
       expect(nyUtcLayout.circleMarkers[h]!.centerX).not.toBeCloseTo(utcLayout.circleMarkers[h]!.centerX, 5);
     }
-    const nyLocalFractional = referenceFractionalHourOfDay(t, "local24", "America/New_York");
+    const nyLocalFractional = referenceFractionalHourOfDay(t, "America/New_York");
     expect(Math.abs(nyLocalFractional - utcLayout.referenceFractionalHour)).toBeGreaterThan(0.25);
   });
 
@@ -975,7 +979,7 @@ describe("buildBottomInformationBarState", () => {
       topBandMode: "local24",
     });
 
-    expect(ib.localMicroLabel).toBe("LOCAL TIME");
+    expect(ib.localMicroLabel).toBe("REFERENCE TIME");
     expect(ib.localDateLine).toBe("Monday, January 1, 2024");
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
     expect(ib.rightPanelDateLine).toBe("January 1 2024");
@@ -991,14 +995,14 @@ describe("buildBottomInformationBarState", () => {
         chromeTimeZone: "UTC",
         topBandMode,
       });
-      expect(ib.localMicroLabel).toBe(topBandMode === "utc24" ? "UTC TIME" : "LOCAL TIME");
+      expect(ib.localMicroLabel).toBe("REFERENCE TIME");
       expect(ib.localTimeLine).toMatch(/^\d{2}:\d{2}:\d{2}$/);
       expect(ib.localTimeLine).not.toMatch(/\b(AM|PM)\b/i);
       expect(ib.localTimeLine.startsWith("14:")).toBe(true);
     }
   });
 
-  it("utc24: bottom label is UTC TIME and clock uses UTC even when reference zone is not UTC", () => {
+  it("reference zone drives primary clock; utc display mode is formatting-only", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1006,8 +1010,8 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib.localMicroLabel).toBe("UTC TIME");
-    expect(ib.localTimeLine.startsWith("14:")).toBe(true);
+    expect(ib.localMicroLabel).toBe("REFERENCE TIME");
+    expect(ib.localTimeLine.startsWith("09:")).toBe(true);
   });
 
   it("uses 12-hour wall clock with AM/PM for local12", () => {
@@ -1449,7 +1453,7 @@ const DISPLAY_TIME_LONDON_LOCAL24: DisplayTimeConfig = {
 };
 
 describe("top band longitude anchor (reference zone → meridian; civil IANA time separate)", () => {
-  it("utc24: tape anchor follows Greenwich meridian x, not subsolar", () => {
+  it("utc display mode: tape registers civil noon at read point (Greenwich sector); anchor x is geographic", () => {
     const w = 2000;
     const t6 = Date.UTC(2026, 0, 10, 6, 0, 0);
     const layout6 = buildUtcTopScaleLayout(t6, w, 80, RESOLVED_UTC_UTC24);
@@ -1464,7 +1468,7 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     expect(noonBand.referenceFractionalHour).toBeCloseTo(12, 5);
     expect(noonBand.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(0, 5);
     expect(noonBand.topBandAnchor.anchorX).toBeCloseTo(expectedTopTapeAnchorX(0, w), 5);
-    expect(noonBand.circleMarkers[12]!.centerX).toBeCloseTo(noonBand.topBandAnchor.anchorX, 5);
+    expect(noonBand.circleMarkers[12]!.centerX).toBeCloseTo(noonBand.nowX, 5);
     expect(noonBand.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(0, w), 5);
   });
 

@@ -164,11 +164,11 @@ function resolveIndicatorEntriesAreaEffective(layout: DisplayChromeLayoutConfig)
 }
 
 /**
- * Derived placement: text hour labels advect with the longitude tape; procedural/clock glyphs anchor to structural zones.
+ * Derived placement: text hour labels move with the civil-phased tape; procedural glyphs anchor to structural columns.
  * Not authored — {@link HourMarkersConfig} has no behavior field.
  */
 export function defaultBehaviorFor(kind: HourMarkersRealizationConfig["kind"]): EffectiveTopBandHourMarkerBehavior {
-  return kind === "text" ? "tapeAdvected" : "staticZoneAnchored";
+  return kind === "text" ? "civilPhased" : "civilColumnAnchored";
 }
 
 /**

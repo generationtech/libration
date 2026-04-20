@@ -47,9 +47,14 @@ import {
   longitudeDegFromMapX,
   mapXFromLongitudeDeg,
 } from "../core/equirectangularProjection";
+import { resolveChromeTimeFromResolvedTopBand, resolveTapeAnchorFraction } from "../core/chromeTimeResolver.ts";
+import type { CivilProjection, ReadPoint } from "../core/chromeTimeDomain.ts";
+import { deriveCivilProjection } from "../core/civilProjection.ts";
+import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
 import { resolveDisplayTimeReferenceZone } from "../core/displayTimeReference";
+import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
+import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat";
-import { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 export { resolveDisplayTimeReferenceZone, isValidIanaTimeZone } from "../core/displayTimeReference";
 export { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
@@ -97,11 +102,7 @@ import {
 } from "./renderPlan/topBandFixedFramingPlan";
 import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransitionPlan";
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
-import {
-  LON_PER_UTC_STRUCTURAL_HOUR,
-  structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg,
-  structuralHourIndexFromReferenceLongitudeDeg,
-} from "./structuralLongitudeGrid";
+import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
 export type { BottomBarDayCell, BottomInformationBarState } from "./bottomChromeTypes";
 
 export {
@@ -284,7 +285,7 @@ export interface TopBandLongitudeAnchor {
   referenceLongitudeDeg: number;
   /** Horizontal position of the reference meridian on the top strip [0, widthPx] (same x as map pins for that lon). */
   anchorX: number;
-  /** {@link anchorX} / widthPx — exact meridian. Used as the phased-tape anchor only for {@link TopBandTimeMode} `utc24`; local modes use {@link UtcTopScaleLayout.phasedTapeAnchorFrac} (structural column center). */
+  /** {@link anchorX} / widthPx — exact meridian on the map strip (not the tape registration anchor). */
   anchorFrac: number;
   /** How {@link referenceLongitudeDeg} was chosen (Chrome explicit modes vs geography vs zone fallback). */
   anchorSource: TopBandAnchorLongitudeSource;
@@ -313,12 +314,13 @@ export interface UtcTopScaleLayout {
   /** Longitude anchor (resolved meridian + exact-longitude x / {@link TopBandLongitudeAnchor.anchorFrac} for map registration). Not a civil-TZ selector. */
   topBandAnchor: TopBandLongitudeAnchor;
   /**
-   * Normalized x [0,1) passed to {@link topBandHourMarkerCenterX} for the phased circle row and tick rail.
-   * For {@link TopBandTimeMode} `utc24`, equals {@link TopBandLongitudeAnchor.anchorFrac} (exact meridian).
-   * For `local12` / `local24`, equals the structural 15° column center for the resolved anchor meridian (same basis as {@link nowX}),
-   * so the upper hour tape aligns with the timezone letterbox centerline and the present-time tick.
+   * Normalized x [0,1) for tape registration: {@link ReadPoint.x} / width (reference civil hour sits at the read point).
    */
   phasedTapeAnchorFrac: number;
+  /** Explicit read location; {@link nowX} matches {@link ReadPoint.x}. */
+  readPoint: ReadPoint;
+  /** Resolver-only civil projection for the reference zone (same instant as {@link referenceNowMs}). */
+  civilProjection: CivilProjection;
   /** Same as {@link tickHierarchy.hour}; phased hour boundaries (length 25). */
   majorBoundaryXs: readonly number[];
   /** Same as {@link tickHierarchy.quarterMajor}; phased quarter-hour majors (length 72). */
@@ -408,63 +410,12 @@ export function resolveTopBandTimeFromConfig(config: DisplayTimeConfig): Resolve
   };
 }
 
-function bandPhaseFraction(
-  nowMs: number,
-  mode: TopBandTimeMode,
-  referenceTimeZone: string,
-): { bandPhaseDayStartMs: number; fracDay: number } {
-  if (mode === "utc24") {
-    const bandPhaseDayStartMs = utcDayStartMs(nowMs);
-    return {
-      bandPhaseDayStartMs,
-      fracDay: (nowMs - bandPhaseDayStartMs) / MS_PER_DAY,
-    };
-  }
-  const bandPhaseDayStartMs = zonedCalendarDayStartMs(nowMs, referenceTimeZone);
-  return {
-    bandPhaseDayStartMs,
-    fracDay: (nowMs - bandPhaseDayStartMs) / MS_PER_DAY,
-  };
-}
-
 /**
- * Civil fractional hour-of-day ∈ [0, 24) in the band’s reference frame: `hour + min/60 + sec/3600 + ms/3600000`.
- * For {@link TopBandTimeMode} `utc24`, components are UTC; for `local12` / `local24`, the resolved reference IANA zone.
- * Used for top-tape geometry so hour markers track **wall time** smoothly (including sub-second motion) and stay consistent
- * when a calendar day is not exactly 86_400_000 ms (DST). The present-time indicator x is derived separately from the
- * structural column center (see {@link presentTimeIndicatorXFromReferenceLongitudeDeg}); this value supplies civil
- * fractional time-of-day for phased tape motion only.
+ * Civil fractional hour-of-day ∈ [0, 24) in the reference IANA zone (`hour + min/60 + sec/3600 + ms/3600000`).
+ * Used for top-tape geometry; display mode does not affect this value.
  */
-export function referenceFractionalHourOfDay(
-  nowMs: number,
-  mode: TopBandTimeMode,
-  /** Used only for `local12` / `local24`; ignored when {@code mode} is {@code utc24}. */
-  referenceTimeZone: string,
-): number {
-  if (mode === "utc24") {
-    const d = new Date(nowMs);
-    const h = d.getUTCHours();
-    const m = d.getUTCMinutes();
-    const s = d.getUTCSeconds();
-    const ms = d.getUTCMilliseconds();
-    return h + m / 60 + s / 3600 + ms / 3600000;
-  }
-  const d = new Date(nowMs);
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: referenceTimeZone,
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: false,
-    hourCycle: "h23",
-    fractionalSecondDigits: 3,
-  } as Intl.DateTimeFormatOptions).formatToParts(d) as ReadonlyArray<{ type: string; value: string }>;
-  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
-  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
-  const secondWhole = Number(parts.find((p) => p.type === "second")?.value ?? 0);
-  const fracSec = parts.find((p) => p.type === "fractionalSecond")?.value;
-  const second = secondWhole + (fracSec !== undefined ? Number(fracSec) / 1000 : 0);
-  return hour + minute / 60 + second / 3600;
+export function referenceFractionalHourOfDay(nowMs: number, referenceTimeZone: string): number {
+  return deriveCivilProjection(nowMs, referenceTimeZone).fractionalHour;
 }
 
 function formatTopBandLocal12Label(hour0To23: number): string {
@@ -473,9 +424,10 @@ function formatTopBandLocal12Label(hour0To23: number): string {
   return mod === 0 ? "12" : String(mod);
 }
 
-/** Label for one circle marker given structural hour index 0–23 and mode. */
+/** Label for one circle marker given structural hour index 0–23 and mode (formatting only). */
 export function topBandCircleLabel(hourIndex: number, mode: TopBandTimeMode): string {
-  if (mode === "local12") {
+  const dm = displayTimeModeFromTopBandTimeMode(mode);
+  if (dm === "12hr") {
     return formatTopBandLocal12Label(hourIndex);
   }
   return hourIndex.toString().padStart(2, "0");
@@ -543,21 +495,17 @@ function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
   return `${month} ${day} ${year}`.trim();
 }
 
-/** Bottom-left clock: label + wall time string, keyed to {@link TopBandTimeMode} (same policy as the top band). */
+/** Bottom-left clock: primary reference-zone civil time (formatting only; geometry is independent). */
 function bottomTimeReadoutPresentation(
   nowMs: number,
   referenceWallClockZone: string,
   mode: TopBandTimeMode,
 ): { microLabel: string; timeLine: string } {
-  if (mode === "utc24") {
-    return {
-      microLabel: "UTC TIME",
-      timeLine: formatWallClockInTimeZone(nowMs, "UTC", false),
-    };
-  }
+  const dm = displayTimeModeFromTopBandTimeMode(mode);
+  const hour12 = dm === "12hr";
   return {
-    microLabel: "LOCAL TIME",
-    timeLine: formatWallClockInTimeZone(nowMs, referenceWallClockZone, mode === "local12"),
+    microLabel: "REFERENCE TIME",
+    timeLine: formatWallClockInTimeZone(nowMs, referenceWallClockZone, hour12),
   };
 }
 
@@ -582,11 +530,7 @@ export function buildBottomInformationBarState(options: {
   };
 }
 
-/** Maps a real value to its fractional part in [0, 1) (stable for negative inputs). */
-export function wrapFraction01(x: number): number {
-  const u = x % 1;
-  return u < 0 ? u + 1 : u;
-}
+export { wrapFraction01 } from "../core/tapeRegistration.ts";
 
 /**
  * Half-extent for {@link topBandWrapOffsetsForCenteredExtent} when tiling the reference-meridian indicator: must cover the
@@ -605,11 +549,8 @@ export function presentTimeIndicatorWrapHalfExtentPx(
  * Horizontal position (CSS px) on the phased top band for civil time `hourIndex` hours into the band day on a strip of
  * width {@link widthPx}. For **circle markers**, pass an integer structural hour 0–23. For **tick geometry**, pass a
  * fractional band hour (e.g. `h + 1/4` for a quarter-hour tick) — same formula.
- * {@link referenceFractionalHour} is civil fractional hour-of-day in the band frame ({@link referenceFractionalHourOfDay}).
- * {@code anchorFrac} is the phased-band anchor in normalized strip coordinates: for `utc24`, {@link TopBandLongitudeAnchor.anchorFrac}
- * (exact meridian); for `local12` / `local24`, {@link UtcTopScaleLayout.phasedTapeAnchorFrac} (structural column centerline).
- * Alignment: when civil time equals `hourIndex` (integer hour), marker `hourIndex` sits on that anchor; the band drifts
- * so fractional time-of-day straddles hour markers continuously (`anchorFrac + (hourIndex − referenceFractionalHour) / 24`, wrapped).
+ * {@link referenceFractionalHour} is civil fractional hour-of-day in the reference zone ({@link deriveCivilProjection}).
+ * {@code anchorFrac} is {@link resolveTapeAnchorFraction}({@link ReadPoint}, width) — registration targets the read point.
  */
 export function topBandHourMarkerCenterX(
   hourIndex: number,
@@ -617,11 +558,7 @@ export function topBandHourMarkerCenterX(
   widthPx: number,
   anchorFrac: number,
 ): number {
-  const w = Math.max(0, widthPx);
-  if (w === 0) {
-    return 0;
-  }
-  return wrapFraction01(anchorFrac + (hourIndex - referenceFractionalHour) / 24) * w;
+  return tapeHourToX(hourIndex, referenceFractionalHour, widthPx, anchorFrac);
 }
 
 /**
@@ -641,7 +578,6 @@ export function topBandTimezoneTabPaddedCenterX(
 function computeTopBandLongitudeAnchor(
   nowMs: number,
   widthPx: number,
-  mode: TopBandTimeMode,
   referenceTimeZone: string,
   topBandAnchor: TopBandAnchorConfig,
   geography?: GeographyConfig,
@@ -650,7 +586,6 @@ function computeTopBandLongitudeAnchor(
   const { referenceLongitudeDeg, referenceOffsetHours, anchorSource } = resolveTopBandAnchorLongitudeDeg({
     nowMs,
     referenceTimeZone,
-    topBandMode: mode,
     topBandAnchor,
     geography,
   });
@@ -732,24 +667,8 @@ export function nominalUtcOffsetHoursFromLongitudeDeg(lonDeg: number): number {
   return roundedMeanSolarUtcOffsetHours(lonDeg);
 }
 
-/**
- * Horizontal x for the present-time tick on the top tape: **center** of the structural 15° column whose sector contains
- * {@code referenceLongitudeDeg} (same {@link UtcTopScaleHourSegment.centerX} as that column). Distinct from
- * {@link mapXFromLongitudeDeg}({@code referenceLongitudeDeg}) / {@link TopBandLongitudeAnchor.anchorX}, which remain the
- * exact resolved meridian for map registration. Phased hour-tape alignment in local modes uses {@link UtcTopScaleLayout.phasedTapeAnchorFrac}
- * (this x / width).
- */
-export function presentTimeIndicatorXFromReferenceLongitudeDeg(
-  referenceLongitudeDeg: number,
-  widthPx: number,
-): number {
-  const w = Math.max(0, widthPx);
-  if (w === 0) {
-    return 0;
-  }
-  const lonCenter = structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(referenceLongitudeDeg);
-  return mapXFromLongitudeDeg(lonCenter, w);
-}
+/** Present-time tick x: same as {@link readPointXFromReferenceLongitudeDeg}. */
+export const presentTimeIndicatorXFromReferenceLongitudeDeg = readPointXFromReferenceLongitudeDeg;
 
 function formatLongitudeLabelAtCenter(lonDeg: number): string {
   const rounded = Math.round(lonDeg);
@@ -1248,20 +1167,27 @@ export function buildUtcTopScaleLayout(
   const rt = resolved ?? resolveTopBandTimeFromConfig(DEFAULT_DISPLAY_TIME_CONFIG);
   const dayStart = utcDayStartMs(nowMs);
   const utcMsOfDay = nowMs - dayStart;
-  const { bandPhaseDayStartMs } = bandPhaseFraction(
-    nowMs,
-    rt.topBandMode,
-    rt.referenceTimeZone,
-  );
-  const referenceFractionalHour = referenceFractionalHourOfDay(nowMs, rt.topBandMode, rt.referenceTimeZone);
+  const chromeTime = resolveChromeTimeFromResolvedTopBand({
+    timeBasis: { nowUtcInstant: nowMs },
+    referenceTimeZone: rt.referenceTimeZone,
+    topBandMode: rt.topBandMode,
+    topBandAnchor: rt.topBandAnchor,
+    geography,
+    viewportWidthPx: w,
+  });
+  const civilProjection = chromeTime.civilProjection;
+  const readPoint = chromeTime.readPoint;
+  const bandPhaseDayStartMs = civilProjection.dayStartMs;
+  const referenceFractionalHour = civilProjection.fractionalHour;
   const topBandAnchor = computeTopBandLongitudeAnchor(
     nowMs,
     w,
-    rt.topBandMode,
     rt.referenceTimeZone,
     rt.topBandAnchor,
     geography,
   );
+  const phasedTapeAnchorFrac = resolveTapeAnchorFraction(readPoint, w);
+  const nowX = readPoint.x;
 
   if (w === 0) {
     return {
@@ -1273,6 +1199,8 @@ export function buildUtcTopScaleLayout(
       referenceFractionalHour,
       topBandAnchor,
       phasedTapeAnchorFrac: 0.5,
+      readPoint,
+      civilProjection,
       majorBoundaryXs: [],
       quarterMajorTickXs: [],
       quarterMinorTickXs: [],
@@ -1307,13 +1235,6 @@ export function buildUtcTopScaleLayout(
     });
   }
 
-  const phasedTapeAnchorFrac =
-    rt.topBandMode === "utc24"
-      ? topBandAnchor.anchorFrac
-      : wrapFraction01(
-          presentTimeIndicatorXFromReferenceLongitudeDeg(topBandAnchor.referenceLongitudeDeg, w) / w,
-        );
-
   const ref = referenceFractionalHour;
   const tapeAf = phasedTapeAnchorFrac;
 
@@ -1342,9 +1263,6 @@ export function buildUtcTopScaleLayout(
     quarterMajor: quarterMajorTickXs,
     quarterMinor: quarterMinorTickXs,
   };
-
-  const structuralIdxForPresentTime = structuralHourIndexFromReferenceLongitudeDeg(topBandAnchor.referenceLongitudeDeg);
-  const nowX = segments[structuralIdxForPresentTime]!.centerX;
 
   const rows =
     rowMetricsOverride !== undefined
@@ -1414,6 +1332,8 @@ export function buildUtcTopScaleLayout(
     referenceFractionalHour,
     topBandAnchor,
     phasedTapeAnchorFrac,
+    readPoint,
+    civilProjection,
     majorBoundaryXs,
     quarterMajorTickXs,
     quarterMinorTickXs,
@@ -1817,7 +1737,6 @@ export function renderDisplayChrome(
       ),
       effectiveTopBandHourMarkers: chrome.effectiveTopBandHourMarkers,
       glyphRenderContext: { fontRegistry: defaultFontAssetRegistry },
-      referenceNowMs: scale.referenceNowMs,
       referenceFractionalHour: scale.referenceFractionalHour,
       structuralZoneCenterXPx:
         scale.segments.length === 24 ? scale.segments.map((s) => s.centerX) : undefined,
