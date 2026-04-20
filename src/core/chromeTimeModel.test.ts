@@ -17,7 +17,10 @@ import { resolveChromeTime, resolveTapeAnchorFraction } from "./chromeTimeResolv
 import { deriveCivilProjection } from "./civilProjection.ts";
 import { displayTimeModeFromTopBandTimeMode } from "./displayTimeMode.ts";
 import { phasedTapeAnchorFraction, tapeHourToX } from "./tapeRegistration.ts";
+import { mapXFromLongitudeDeg } from "./equirectangularProjection.ts";
 import { readPointXFromReferenceLongitudeDeg } from "./readPointLongitude.ts";
+import { REFERENCE_CITIES } from "../data/referenceCities.ts";
+import { structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg } from "../renderer/structuralLongitudeGrid.ts";
 import { topBandHourMarkerCenterX } from "../renderer/displayChrome.ts";
 
 describe("chrome time model invariants", () => {
@@ -126,6 +129,25 @@ describe("chrome time model invariants", () => {
     const x12 = readPointXFromReferenceLongitudeDeg(lon, viewportWidthPx);
     const x24 = readPointXFromReferenceLongitudeDeg(lon, viewportWidthPx);
     expect(x12).toBe(x24);
+  });
+
+  it("G: Knoxville, Cairo, Mumbai — read-point x matches exact longitude, not 15° sector center", () => {
+    const w = viewportWidthPx;
+    for (const id of ["city.knoxville", "city.cairo", "city.mumbai"] as const) {
+      const lon = REFERENCE_CITIES.find((c) => c.id === id)!.longitude;
+      const xRead = readPointXFromReferenceLongitudeDeg(lon, w);
+      const xExact = mapXFromLongitudeDeg(lon, w);
+      const xSector = mapXFromLongitudeDeg(structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(lon), w);
+      expect(xRead).toBeCloseTo(xExact, 10);
+      expect(xRead).not.toBeCloseTo(xSector, 2);
+    }
+  });
+
+  it("H: read-point x changes continuously with longitude (not 15° jumps)", () => {
+    const w = 1000;
+    const x0 = readPointXFromReferenceLongitudeDeg(10.0, w);
+    const x1 = readPointXFromReferenceLongitudeDeg(10.01, w);
+    expect(x1 - x0).toBeCloseTo((0.01 / 360) * w, 5);
   });
 
   it("F: civil vs meridian overlay — IANA civil projection differs from meridian-offset solar wall clock", async () => {

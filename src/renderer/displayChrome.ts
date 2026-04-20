@@ -283,12 +283,11 @@ export interface UtcTopScaleCircleMarker {
 /**
  * Longitude anchoring for the top tape: resolved **read-point meridian** plus exact meridian x on the strip.
  * Civil date/time and phased tape positions come from the reference IANA zone ({@link deriveCivilProjection}); the anchor
- * only fixes **where** on the strip that civil hour is read (center of the 15° column containing the meridian). A
- * reference city contributes longitude for spatial registration only. {@link anchorX} is
- * {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}) for map/scene alignment. The read-point tick uses
- * {@link presentTimeIndicatorXFromReferenceLongitudeDeg} (column center, not raw meridian x). Phased tape registration
- * uses {@link UtcTopScaleLayout.phasedTapeAnchorFrac} from that read point. The NATO letter row stays on fixed structural
- * sectors underneath.
+ * only fixes **where** on the strip that civil hour is read (exact reference longitude on the equirectangular grid). A
+ * reference city contributes longitude for spatial registration only. {@link anchorX} and the authoritative read-point tick
+ * both use {@link mapXFromLongitudeDeg}({@link referenceLongitudeDeg}) — same x as map pins. Phased tape registration uses
+ * {@link UtcTopScaleLayout.phasedTapeAnchorFrac} from that exact-meridian read point. The NATO letter row stays on fixed
+ * structural sectors underneath (non-authoritative for civil time placement).
  */
 export interface TopBandLongitudeAnchor {
   /** `Intl` offset hours (fractional) for the reference IANA zone (DST-aware). Not used to place structural columns; echoed for debugging. */
@@ -297,7 +296,7 @@ export interface TopBandLongitudeAnchor {
   referenceLongitudeDeg: number;
   /** Horizontal position of the reference meridian on the top strip [0, widthPx] (same x as map pins for that lon). */
   anchorX: number;
-  /** {@link anchorX} / widthPx — exact meridian on the map strip (not the tape registration anchor). */
+  /** {@link anchorX} / widthPx — exact meridian; matches phased tape anchor when the read point uses the same longitude. */
   anchorFrac: number;
   /** How {@link referenceLongitudeDeg} was chosen (Chrome explicit modes vs geography vs zone fallback). */
   anchorSource: TopBandAnchorLongitudeSource;
@@ -342,11 +341,11 @@ export interface UtcTopScaleLayout {
   /** Hour / quarter-major / quarter-minor tick x positions (phased like {@link topBandHourMarkerCenterX}). Omitted when {@link widthPx} is 0. */
   tickHierarchy?: TopTapeTickHierarchy;
   /**
-   * Horizontal position of the **read-point** tick on the strip [0, widthPx]: **center** of the structural 15°
-   * longitude column containing {@link TopBandLongitudeAnchor.referenceLongitudeDeg} (same x as that column’s
-   * {@link UtcTopScaleHourSegment.centerX}). {@link TopBandLongitudeAnchor.anchorX} stays on the exact meridian for map/scene
-   * registration; phased civil tape placement uses {@link phasedTapeAnchorFrac}. Authoritative civil instant is the
-   * resolver’s `nowUtcInstant`, not this geometry alone.
+   * Horizontal position of the **read-point** tick on the strip [0, widthPx]: exact resolved reference longitude
+   * ({@link mapXFromLongitudeDeg} of {@link TopBandLongitudeAnchor.referenceLongitudeDeg}), same as
+   * {@link TopBandLongitudeAnchor.anchorX}. Structural 15° {@link UtcTopScaleHourSegment.centerX} values are for NATO/grid
+   * overlays only. Phased civil tape placement uses {@link phasedTapeAnchorFrac} (= {@link ReadPoint.x}/width). Authoritative
+   * civil instant is the resolver’s `nowUtcInstant`, not this geometry alone.
    */
   nowX: number;
   /** Multi-row header metrics; omitted when width is 0 or {@link topBandHeightPx} was not provided. */
@@ -1672,7 +1671,7 @@ export function renderDisplayChrome(
       }),
     );
 
-    // Read-point tick (authoritative instant from resolver; horizontal position = sector center for anchor meridian).
+    // Read-point tick (authoritative instant from resolver; horizontal position = exact reference meridian x).
     // Halo + core; seam tiling uses {@link refMeridianWrapHalf} so thick strokes stay continuous at x≈0 / x≈width.
     executeRenderPlanOnCanvas(
       ctx,

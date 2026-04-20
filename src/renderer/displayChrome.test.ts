@@ -83,7 +83,7 @@ function expectedTopTapeAnchorX(referenceLongitudeDeg: number, widthPx: number):
   return mapXFromLongitudeDeg(referenceLongitudeDeg, widthPx);
 }
 
-/** Present-time tick x: center of the structural 15° column containing the resolved anchor longitude. */
+/** Present-time tick x: exact resolved reference longitude on the strip (same as {@link mapXFromLongitudeDeg}). */
 function expectedPresentTimeIndicatorX(referenceLongitudeDeg: number, widthPx: number): number {
   return presentTimeIndicatorXFromReferenceLongitudeDeg(referenceLongitudeDeg, widthPx);
 }
@@ -107,16 +107,17 @@ const DISPLAY_TIME_NY_UTC24: DisplayTimeConfig = {
 
 const RESOLVED_NY_UTC24: ResolvedTopBandTime = resolveTopBandTimeFromConfig(DISPLAY_TIME_NY_UTC24);
 
-describe("present-time tick (tick rail, structural column center)", () => {
-  it("uses layout.nowX at the center of the structural column for the resolved anchor meridian (not exact meridian x)", () => {
+describe("present-time tick (tick rail, exact reference meridian)", () => {
+  it("uses layout.nowX at the exact resolved anchor longitude (matches anchorX; structural column center may differ)", () => {
     const w = 1737;
     const t = Date.UTC(2026, 2, 20, 15, 44, 12, 888);
     const layout = buildUtcTopScaleLayout(t, w, 80, RESOLVED_UTC_UTC24);
     const lon = layout.topBandAnchor.referenceLongitudeDeg;
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(lon, w), 7);
-    expect(layout.nowX).toBeCloseTo(layout.segments[structuralHourIndexFromReferenceLongitudeDeg(lon)]!.centerX, 7);
+    expect(layout.nowX).toBeCloseTo(layout.topBandAnchor.anchorX, 7);
     expect(layout.topBandAnchor.anchorX).toBeCloseTo(expectedTopTapeAnchorX(lon, w), 5);
-    expect(layout.nowX).not.toBeCloseTo(layout.topBandAnchor.anchorX, 3);
+    const h = structuralHourIndexFromReferenceLongitudeDeg(lon);
+    expect(layout.nowX).not.toBeCloseTo(layout.segments[h]!.centerX, 3);
   });
 
   it("places the now tick segment on the same vertical span as major hour ticks in the tick rail", () => {
@@ -178,7 +179,7 @@ describe("structuralHourIndexFromReferenceLongitudeDeg", () => {
     expect(structuralHourIndexFromReferenceLongitudeDeg(180)).toBe(23);
   });
 
-  it("matches the segment column that contains anchorX for UTC / Greenwich anchor", () => {
+  it("places the exact-meridian read point inside the structural column that contains Greenwich (0°)", () => {
     const w = 1440;
     const t = Date.UTC(2025, 1, 1, 6, 0, 0);
     const layout = buildUtcTopScaleLayout(t, w, 80, RESOLVED_UTC_UTC24);
@@ -186,14 +187,15 @@ describe("structuralHourIndexFromReferenceLongitudeDeg", () => {
     const idx = structuralHourIndexFromReferenceLongitudeDeg(layout.topBandAnchor.referenceLongitudeDeg);
     expect(idx).toBe(12);
     const seg = layout.segments[idx]!;
-    expect(layout.nowX).toBeCloseTo(seg.centerX, 7);
+    expect(layout.nowX).toBeCloseTo(layout.topBandAnchor.anchorX, 7);
+    expect(layout.nowX).not.toBeCloseTo(seg.centerX, 3);
     expect(layout.nowX).toBeGreaterThanOrEqual(seg.x0 - 1e-4);
     expect(layout.nowX).toBeLessThanOrEqual(seg.x1 + 1e-4);
   });
 });
 
-describe("present-time indicator x (sector center vs anchor meridian)", () => {
-  it("gives the same nowX for two longitudes in the same structural sector", () => {
+describe("present-time indicator x (exact meridian vs structural sector)", () => {
+  it("gives different nowX for two longitudes in the same structural sector (continuous longitude)", () => {
     const w = 1600;
     const t = Date.UTC(2026, 4, 1, 12, 0, 0);
     const insideSector = resolveTopBandTimeFromConfig({
@@ -211,7 +213,7 @@ describe("present-time indicator x (sector center vs anchor meridian)", () => {
     const a = buildUtcTopScaleLayout(t, w, 80, insideSector);
     const b = buildUtcTopScaleLayout(t, w, 80, sameSectorOther);
     expect(structuralHourIndexFromReferenceLongitudeDeg(1.2)).toBe(structuralHourIndexFromReferenceLongitudeDeg(13.9));
-    expect(a.nowX).toBeCloseTo(b.nowX, 7);
+    expect(a.nowX).not.toBeCloseTo(b.nowX, 3);
     expect(a.topBandAnchor.anchorX).not.toBeCloseTo(b.topBandAnchor.anchorX, 5);
   });
 
@@ -401,7 +403,7 @@ describe("buildUtcTopScaleLayout", () => {
     }
   });
 
-  it("utc24: UTC + auto anchor uses Greenwich (0°); nowX is sector center for that meridian, not exact anchor x", () => {
+  it("utc24: UTC + auto anchor uses Greenwich (0°); nowX matches exact anchor meridian x", () => {
     const day = Date.UTC(2024, 5, 15, 0, 0, 0);
     const noon = day + 12 * 3600 * 1000;
     const w = 1000;
@@ -412,10 +414,10 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layout.topBandAnchor.referenceLongitudeDeg).toBeCloseTo(0, 5);
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(0, w), 5);
     expect(layout.topBandAnchor.anchorX).toBeCloseTo(expectedTopTapeAnchorX(0, w), 5);
-    expect(layout.nowX).not.toBeCloseTo(layout.topBandAnchor.anchorX, 3);
+    expect(layout.nowX).toBeCloseTo(layout.topBandAnchor.anchorX, 7);
   });
 
-  it("utc24: nowX matches structural column center for the resolved anchor, not necessarily exact meridian x", () => {
+  it("utc24: nowX matches exact meridian x for the resolved anchor longitude", () => {
     const w = 1333;
     const t = Date.UTC(2024, 5, 15, 12, 34, 56, 789);
     const layout = buildUtcTopScaleLayout(t, w, undefined, RESOLVED_UTC_UTC24);
@@ -423,7 +425,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(lon, w), 7);
   });
 
-  it("utc24: nowX uses Greenwich sector center, not subsolar when they differ", () => {
+  it("utc24: nowX uses Greenwich exact meridian, not subsolar when they differ", () => {
     const w = 1737;
     const t = Date.UTC(2026, 2, 20, 15, 44, 12, 888);
     const subsolarDeg = computeUtcSubsolarLongitudeDeg(t);
@@ -433,7 +435,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(mapXFromLongitudeDeg(subsolarDeg, w)).not.toBeCloseTo(layout.nowX, 3);
   });
 
-  it("local12 / local24: same instant yields same nowX (same sector center for Berlin anchor)", () => {
+  it("local12 / local24: same instant yields same nowX (same exact meridian for Berlin anchor)", () => {
     const w = 1100;
     const t = Date.UTC(2026, 8, 1, 14, 20, 0, 0);
     const local24 = resolveTopBandTimeFromConfig({
@@ -456,7 +458,7 @@ describe("buildUtcTopScaleLayout", () => {
     }
   });
 
-  it("local12 / local24: upper phased tape uses structural column center (nowX) as anchor, not raw meridian frac", () => {
+  it("local12 / local24: phased tape anchor matches exact-meridian anchorFrac (same as nowX/w)", () => {
     const w = 1100;
     const t = Date.UTC(2026, 8, 1, 14, 20, 0, 0);
     for (const topBandMode of ["local12", "local24"] as const) {
@@ -469,7 +471,7 @@ describe("buildUtcTopScaleLayout", () => {
       const layout = buildUtcTopScaleLayout(t, w, 80, resolved);
       const fh = layout.referenceFractionalHour;
       expect(layout.phasedTapeAnchorFrac).toBeCloseTo(layout.nowX / w, 7);
-      expect(layout.phasedTapeAnchorFrac).not.toBeCloseTo(layout.topBandAnchor.anchorFrac, 3);
+      expect(layout.phasedTapeAnchorFrac).toBeCloseTo(layout.topBandAnchor.anchorFrac, 7);
       expect(topBandHourMarkerCenterX(fh, fh, w, layout.phasedTapeAnchorFrac)).toBeCloseTo(layout.nowX, 5);
     }
   });
@@ -633,7 +635,7 @@ describe("utc24 reference meridian anchoring", () => {
     expect(layoutMid.majorBoundaryXs[0]).toBeCloseTo(layoutMid.circleMarkers[0]!.centerX, 5);
   });
 
-  it("noon UTC: Greenwich anchor (~0°) matches subsolar; anchorX is exact meridian; nowX is sector center", () => {
+  it("noon UTC: Greenwich anchor (~0°) matches subsolar; anchorX and nowX are the exact meridian", () => {
     const noon = Date.UTC(2026, 3, 10, 12, 0, 0, 0);
     const w = 1000;
     expect(computeUtcSubsolarLongitudeDeg(noon)).toBeCloseTo(0, 5);
@@ -643,7 +645,7 @@ describe("utc24 reference meridian anchoring", () => {
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(0, w), 5);
   });
 
-  it("midnight UTC: Greenwich anchor stays ~0° resolved lon; anchorX is exact meridian; nowX is sector center", () => {
+  it("midnight UTC: Greenwich anchor stays ~0° resolved lon; anchorX and nowX are the exact meridian", () => {
     const midnight = Date.UTC(2026, 3, 10, 0, 0, 0, 0);
     const w = 1000;
     expect(computeUtcSubsolarLongitudeDeg(midnight)).toBeCloseTo(-180, 5);
@@ -1547,7 +1549,7 @@ const DISPLAY_TIME_LONDON_LOCAL24: DisplayTimeConfig = {
 };
 
 describe("top band longitude anchor (reference zone → meridian; civil IANA time separate)", () => {
-  it("utc display mode: tape registers civil noon at read point (Greenwich sector); anchor x is geographic", () => {
+  it("utc display mode: tape registers civil noon at read point (Greenwich exact meridian); anchor x is geographic", () => {
     const w = 2000;
     const t6 = Date.UTC(2026, 0, 10, 6, 0, 0);
     const layout6 = buildUtcTopScaleLayout(t6, w, 80, RESOLVED_UTC_UTC24);
@@ -1583,14 +1585,14 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(nycLon, w), 5);
     const tapeAf = layout.phasedTapeAnchorFrac;
     expect(tapeAf).toBeCloseTo(layout.nowX / w, 7);
-    expect(tapeAf).not.toBeCloseTo(layout.topBandAnchor.anchorFrac, 3);
+    expect(tapeAf).toBeCloseTo(layout.topBandAnchor.anchorFrac, 7);
     const m12 = topBandHourMarkerCenterX(12, layout.referenceFractionalHour, w, tapeAf);
     const m13 = topBandHourMarkerCenterX(13, layout.referenceFractionalHour, w, tapeAf);
     expect((m12 + m13) / 2).toBeCloseTo(layout.nowX, 5);
     expect(layout.circleMarkers[12]!.centerX).toBeCloseTo(m12, 5);
   });
 
-  it("at 12:30 New York local, anchor lies midway between hour-12 and hour-13 markers; nowX is structural sector center", () => {
+  it("at 12:30 New York local, anchor lies midway between hour-12 and hour-13 markers; nowX is exact NYC meridian", () => {
     const w = 2400;
     const probe = Date.UTC(2026, 6, 10, 10, 0, 0);
     const dayStart = zonedCalendarDayStartMs(probe, "America/New_York");
@@ -1618,7 +1620,7 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     }
   });
 
-  it("America/New_York at 12:33 AM local: nowX at sector center; anchor interpolates between hour 0 and 1 markers", () => {
+  it("America/New_York at 12:33 AM local: nowX at exact NYC meridian; anchor interpolates between hour 0 and 1 markers", () => {
     const w = 2400;
     const probe = Date.UTC(2026, 6, 10, 10, 0, 0);
     const dayStart = zonedCalendarDayStartMs(probe, "America/New_York");
@@ -1640,7 +1642,7 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     expect(m0 + fh * (m1 - m0)).toBeCloseTo(layout.nowX, 3);
   });
 
-  it("America/New_York at 12:19 AM local: first 12-hour label is 12; nowX at sector center", () => {
+  it("America/New_York at 12:19 AM local: first 12-hour label is 12; nowX at exact NYC meridian", () => {
     const w = 1200;
     const probe = Date.UTC(2026, 6, 10, 10, 0, 0);
     const dayStart = zonedCalendarDayStartMs(probe, "America/New_York");
@@ -1659,7 +1661,7 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     expect(layout.nowX).toBeCloseTo(expectedPresentTimeIndicatorX(nycLon, w), 5);
   });
 
-  it("America/New_York at 12:39 PM local: anchor 65% from hour-12 toward hour-13; nowX at sector center", () => {
+  it("America/New_York at 12:39 PM local: anchor 65% from hour-12 toward hour-13; nowX at exact NYC meridian", () => {
     const w = 2400;
     const probe = Date.UTC(2026, 6, 10, 10, 0, 0);
     const dayStart = zonedCalendarDayStartMs(probe, "America/New_York");
@@ -1749,7 +1751,7 @@ describe("top band longitude anchor (reference zone → meridian; civil IANA tim
     );
   });
 
-  it("local24: nowX stable across reference-zone midnight (same NYC sector center; anchor meridian unchanged)", () => {
+  it("local24: nowX stable across reference-zone midnight (same NYC exact meridian; anchor meridian unchanged)", () => {
     const w = 1200;
     const resolved = resolveTopBandTimeFromConfig(DISPLAY_TIME_NY_LOCAL24);
     const probe = Date.UTC(2026, 6, 10, 10, 0, 0);

@@ -111,8 +111,8 @@ describe("Phase 9a — structuralHourIndexFromReferenceLongitudeDeg (±180°, 15
   });
 });
 
-describe("Phase 9a — structuralBlockCenterLongitudeDeg & present-time x (sector centers vs seam)", () => {
-  it("uses the same column center for all longitudes within a sector (anchor independence of column center)", () => {
+describe("Phase 9a — structuralBlockCenterLongitudeDeg & exact-meridian read point (vs seam)", () => {
+  it("uses the same column center for all longitudes within a sector (structural NATO grid only)", () => {
     const c0 = structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(-179);
     const c1 = structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(-170);
     expect(c0).toBe(c1);
@@ -123,17 +123,15 @@ describe("Phase 9a — structuralBlockCenterLongitudeDeg & present-time x (secto
     expect(structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(180)).toBeCloseTo(172.5, 7);
   });
 
-  it("present-time x uses structural column center longitude, not raw meridian x (longitude-first tape)", () => {
+  it("present-time x uses exact reference longitude, not the 15° structural column center", () => {
     const w = 1737;
     const lon = 3.7;
-    const ix = structuralHourIndexFromReferenceLongitudeDeg(lon);
     const centerLon = structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg(lon);
-    expect(presentTimeIndicatorXFromReferenceLongitudeDeg(lon, w)).toBeCloseTo(
-      mapXFromLongitudeDeg(centerLon, w),
-      7,
-    );
+    expect(presentTimeIndicatorXFromReferenceLongitudeDeg(lon, w)).toBeCloseTo(mapXFromLongitudeDeg(lon, w), 7);
     expect(mapXFromLongitudeDeg(lon, w)).not.toBeCloseTo(mapXFromLongitudeDeg(centerLon, w), 3);
-    expect(ix).toBe(structuralHourIndexFromReferenceLongitudeDeg(centerLon));
+    expect(structuralHourIndexFromReferenceLongitudeDeg(lon)).toBe(
+      structuralHourIndexFromReferenceLongitudeDeg(centerLon),
+    );
   });
 });
 

@@ -227,7 +227,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); civil-column anchoring for analog and radial layouts when behavior is `civilColumnAnchored`. */
   structuralZoneCenterXPx?: readonly number[];
   /**
-   * Structural UTC column 0–23 containing the present-time tick (same index as {@link UtcTopScaleLayout.nowX}’s segment).
+   * Structural UTC column 0–23 containing the reference meridian (same index as the segment that contains the exact-meridian read point).
    * When set, procedural hour-disk emission paints this column last so its wall-clock reads on top when wrap tiling overlaps disks near the IDL seam.
    */
   presentTimeStructuralHour0To23?: number;

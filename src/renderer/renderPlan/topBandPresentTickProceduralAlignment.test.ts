@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { longitudeDegFromMapX } from "../../core/equirectangularProjection.ts";
+import { longitudeDegFromMapX, mapXFromLongitudeDeg } from "../../core/equirectangularProjection.ts";
 import { solarLocalWallClockStateFromUtcMs } from "../../core/solarLocalWallClock.ts";
 import { anchoredTimezoneSegmentWallClockState } from "../../config/topBandHourMarkersSemanticTypes.ts";
 import {
@@ -99,7 +99,8 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const { w, scale, rows, circleStack } = fixtureScale();
     const lon = scale.topBandAnchor.referenceLongitudeDeg;
     const hTick = structuralHourIndexFromReferenceLongitudeDeg(lon);
-    expect(scale.nowX).toBeCloseTo(scale.segments[hTick]!.centerX, 5);
+    expect(scale.nowX).toBeCloseTo(mapXFromLongitudeDeg(lon, w), 5);
+    expect(scale.nowX).not.toBeCloseTo(scale.segments[hTick]!.centerX, 3);
 
     const zoneX = scale.segments.map((s) => s.centerX);
     const wallLon = wallClockLongitudeDegForStructuralHourMarkers(
@@ -147,7 +148,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
       structuralZoneCenterXPx: zoneX,
     });
     const atTickAnalog = laidAnalog.find((r) => r.structuralHour0To23 === hTick)!;
-    expect(atTickAnalog.centerX).toBeCloseTo(scale.nowX, 5);
+    expect(atTickAnalog.centerX).toBeCloseTo(zoneX[hTick]!, 5);
     expect(atTickAnalog.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 7);
     expect(atTickAnalog.continuousMinute0To60).toBeCloseTo(expected.continuousMinute0To60, 7);
     expect(hourToTheta(atTickAnalog.continuousHour0To24)).toBeCloseTo(
@@ -179,7 +180,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
       structuralZoneCenterXPx: zoneX,
     });
     const atTickRadial = laidRadial.find((r) => r.structuralHour0To23 === hTick)!;
-    expect(atTickRadial.centerX).toBeCloseTo(scale.nowX, 5);
+    expect(atTickRadial.centerX).toBeCloseTo(zoneX[hTick]!, 5);
     expect(atTickRadial.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 7);
     expect(hourToTheta(atTickRadial.continuousHour0To24)).toBeCloseTo(
       hourToTheta(expected.continuousHour0To24),
@@ -210,7 +211,7 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
       structuralZoneCenterXPx: zoneX,
     });
     const atTickWedge = laidWedge.find((r) => r.structuralHour0To23 === hTick)!;
-    expect(atTickWedge.centerX).toBeCloseTo(scale.nowX, 5);
+    expect(atTickWedge.centerX).toBeCloseTo(zoneX[hTick]!, 5);
     expect(atTickWedge.continuousHour0To24).toBeCloseTo(expected.continuousHour0To24, 7);
 
     const hEast = (hTick + 1) % 24;
