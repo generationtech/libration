@@ -69,7 +69,7 @@ flowchart TB
 
 - preserve the truthful top-band hour-marker model:
   - realization
-  - derived effective behavior (text → tapeAdvected; procedural → staticZoneAnchored)
+  - derived effective behavior (text → civilPhased; procedural → civilColumnAnchored)
   - layout
   - appearance
   - derived semantic content where required at runtime

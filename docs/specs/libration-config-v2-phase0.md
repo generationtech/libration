@@ -69,8 +69,8 @@ Conceptually, the persisted model carries:
 
 Derived effective/runtime concerns now include:
 - behavior derived from realization kind:
-  - text → `tapeAdvected`
-  - non-text/procedural → `staticZoneAnchored`
+  - text → `civilPhased`
+  - non-text/procedural → `civilColumnAnchored`
 - runtime content derived from that intent rather than persisted as a second source of truth
 
 ```mermaid

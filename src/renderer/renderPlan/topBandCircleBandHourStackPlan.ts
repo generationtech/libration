@@ -224,7 +224,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
    * effective hour-marker behavior is `civilColumnAnchored`.
    */
   referenceFractionalHour?: number;
-  /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); static-zone anchoring for analog and radial layouts. */
+  /** Structural {@link UtcTopScaleHourSegment.centerX} per hour (24); civil-column anchoring for analog and radial layouts when behavior is `civilColumnAnchored`. */
   structuralZoneCenterXPx?: readonly number[];
   /**
    * Structural UTC column 0–23 containing the present-time tick (same index as {@link UtcTopScaleLayout.nowX}’s segment).

@@ -12,7 +12,7 @@
  */
 
 /**
- * Analog-clock realization adapter: laid-out semantic static-zone analog clocks → {@link ClockFaceGlyph} →
+ * Analog-clock realization adapter: laid-out semantic civil-column-anchored (or phased-tape) analog clocks → {@link ClockFaceGlyph} →
  * {@link RenderPlan} items (default style token + optional selection color).
  */
 

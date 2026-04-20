@@ -17,7 +17,7 @@
  * Single source of truth for **letter order** and **which letters exist**.
  *
  * The top chrome draws **24** structural columns (−180°…+180° in 15° sectors). Each column `h` ∈ [0, 23] is labeled with
- * the NATO letter for **mean solar UTC offset** at that column’s **west edge** longitude −180° + 15°·`h` — i.e. the same
+ * the NATO letter for **meridian nominal UTC offset** (lon/15 rounded to hours) at that column’s **west edge** longitude −180° + 15°·`h` — i.e. the same
  * rule as `militaryTimeZoneLetterFromLongitudeDeg` in `src/renderer/displayChrome.ts` at `lon0` (not anchor-dependent).
  * Labels are **fixed** to those sectors; the longitude anchor affects **tape/time** placement only, not strip letters.
  * **J** is omitted from the alphabet; apparent letter repetition at wrapped map edges is a **projection/wrap** artifact, not a

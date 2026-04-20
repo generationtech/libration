@@ -27,13 +27,15 @@ import {
   mapXFromLongitudeDeg,
 } from "../core/equirectangularProjection";
 import {
+  nominalUtcOffsetHoursFromLongitudeDeg,
+  roundedStructuralMeridianUtcOffsetHours,
+} from "../core/structuralMeridianUtcOffsetHours.ts";
+import {
   buildUtcTopScaleLayout,
   militaryTimeZoneLetterFromLongitudeDeg,
   militaryTimeZoneLetterFromStructuralColumnIndex,
-  nominalUtcOffsetHoursFromLongitudeDeg,
   presentTimeIndicatorXFromReferenceLongitudeDeg,
   resolveTopBandTimeFromConfig,
-  roundedMeanSolarUtcOffsetHours,
   structuralBlockCenterLongitudeDegFromReferenceLongitudeDeg,
   structuralHourIndexFromReferenceLongitudeDeg,
   topBandWrapOffsetsForSpan,
@@ -149,9 +151,9 @@ describe("Phase 9a — military letter / offset helpers (west-edge column rule, 
     }
   });
 
-  it("mean-solar offset ties at half-hour meridians resolve away from 0 (documented rounding)", () => {
-    expect(roundedMeanSolarUtcOffsetHours(7.5)).toBe(1);
-    expect(roundedMeanSolarUtcOffsetHours(-7.5)).toBe(-1);
+  it("meridian nominal offset ties at half-hour longitudes resolve away from 0 (documented rounding)", () => {
+    expect(roundedStructuralMeridianUtcOffsetHours(7.5)).toBe(1);
+    expect(roundedStructuralMeridianUtcOffsetHours(-7.5)).toBe(-1);
     expect(nominalUtcOffsetHoursFromLongitudeDeg(7.5)).toBe(1);
     expect(nominalUtcOffsetHoursFromLongitudeDeg(-7.5)).toBe(-1);
   });

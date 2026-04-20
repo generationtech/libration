@@ -36,7 +36,7 @@ Focus:
 
 Current truthful top-band model:
 - **Realization** → `text`, `analogClock`, `radialLine`, `radialWedge`
-- **Derived effective behavior** → `text` resolves to `tapeAdvected`; procedural realizations resolve to `staticZoneAnchored`
+- **Derived effective behavior** → `text` resolves to `civilPhased` (read-point–registered phased tape); procedural realizations resolve to `civilColumnAnchored` (structural column centers when anchored)
 - **Layout** → size / placement semantics, including content-row padding
 - **Appearance** → realization-scoped styling controls
 - **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis

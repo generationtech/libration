@@ -134,8 +134,8 @@ Top-band hour markers now use a clean, explicit model:
 - **Layout** — size and placement semantics
 - **Appearance** — realization-scoped styling layered on top
 - **Behavior** — derived from realization kind rather than edited directly:
-  - text → `tapeAdvected`
-  - procedural → `staticZoneAnchored`
+  - text → `civilPhased` (phased tape x from civil fractional hour + read-point registration)
+  - procedural → `civilColumnAnchored` (disk x on structural 15° column centers when the semantic plan is anchored)
 
 ```mermaid
 flowchart TB
@@ -161,7 +161,7 @@ flowchart TB
 
 At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
 
-For clock-like procedural markers, the static anchored product path now uses the same reference-city / band-frame present-time basis at the present-time tick that the rest of the map clock uses.
+For clock-like procedural markers, the civil-column-anchored path uses the same reference-city / band-frame present-time basis at the present-time tick that the rest of the map clock uses.
 
 Implemented realizations:
 - **Text**

@@ -59,7 +59,7 @@ export type ClockFaceGlyph = {
 
 export type RadialLineGlyph = {
   kind: "radialLine";
-  /** Hour-hand angle source: mean-solar continuous hour-of-day [0,24), or structural 0–23 when integer-only. */
+  /** Hour-hand angle source: civil fractional hour-of-day [0,24) from the semantic plan, or structural 0–23 when integer-only. */
   hour: number;
   styleId?: HourMarkerGlyphStyleId;
   /** Top-band layout override for line stroke. */
@@ -70,7 +70,7 @@ export type RadialLineGlyph = {
 
 export type RadialWedgeGlyph = {
   kind: "radialWedge";
-  /** Wedge bisector angle: mean-solar continuous hour-of-day [0,24), or structural 0–23 when integer-only. */
+  /** Wedge bisector angle: civil fractional hour-of-day [0,24) from the semantic plan, or structural 0–23 when integer-only. */
   hour: number;
   styleId?: HourMarkerGlyphStyleId;
   /** Top-band layout override for wedge fill. */

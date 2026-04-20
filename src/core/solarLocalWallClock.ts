@@ -23,9 +23,10 @@ function utcMsOfDayFromUtcMs(referenceNowMs: number): number {
 }
 
 /**
- * Mean-solar local wall-clock state at {@code lonDeg} for the UTC calendar day containing {@code referenceNowMs}.
- * Same offset model as {@link solarLocalHour0To23FromUtcMsOfDay} for structural/geographic overlays (continuous lon/15 hours), with
- * fractional hour for clock hands.
+ * Meridian-offset local wall-clock state at {@code lonDeg} for the UTC calendar day containing {@code referenceNowMs}.
+ * UTC time-of-day plus longitude/15 (same model as `solarLocalHour0To23FromUtcMsOfDay` in the display chrome module) for
+ * map/scene/geometric overlays — not IANA civil chrome time (`deriveCivilProjection`).
+ * Fractional hour supports clock-hand continuity where solar geometry is intentional.
  */
 export function solarLocalWallClockStateFromUtcMs(
   referenceNowMs: number,

@@ -114,7 +114,7 @@ describe("chrome time model invariants", () => {
     expect(x12).toBe(x24);
   });
 
-  it("F: solar containment — core civil projection does not import mean-solar wall clock", async () => {
+  it("F: civil vs meridian overlay — IANA civil projection differs from meridian-offset solar wall clock", async () => {
     const civilMod = await import("./civilProjection.ts");
     const resolverMod = await import("./chromeTimeResolver.ts");
     expect(civilMod).toBeDefined();

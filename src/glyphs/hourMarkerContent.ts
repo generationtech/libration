@@ -20,7 +20,7 @@ export type HourMarkerContent = {
   /** Label string for text-backed representations (local12/24/UTC as resolved by the planner). */
   displayLabel: string;
   /**
-   * Mean-solar continuous hour-of-day [0,24) for radial line/wedge spoke angle; matches semantic wall-clock hour hand.
+   * Civil fractional hour-of-day [0,24) for radial line/wedge spoke angle (same basis as semantic wall-clock hour hand).
    * When omitted, procedural radial modes use {@link structuralHour0To23} only (integer structural slot).
    */
   continuousHour0To24?: number;

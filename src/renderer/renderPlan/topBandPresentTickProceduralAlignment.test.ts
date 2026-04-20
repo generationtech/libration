@@ -114,8 +114,8 @@ describe("present-time tick vs procedural wall-clock (laid-out instance at nowX)
     const refFrac = referenceFractionalHourOfDay(REF_MS_NY_702, RESOLVED_NY_LOCAL24.referenceTimeZone);
     expect(scale.referenceFractionalHour).toBeCloseTo(refFrac, 7);
     const expected = anchoredTimezoneSegmentWallClockState(refFrac, hTick, hTick);
-    const meanSolarAtTickLon = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, lonAtTick);
-    expect(expected.continuousHour0To24).not.toBeCloseTo(meanSolarAtTickLon.continuousHour0To24, 1);
+    const meridianOffsetWallClockAtTickLon = solarLocalWallClockStateFromUtcMs(REF_MS_NY_702, lonAtTick);
+    expect(expected.continuousHour0To24).not.toBeCloseTo(meridianOffsetWallClockAtTickLon.continuousHour0To24, 1);
     const tapeMarkers = scale.circleMarkers.map((m) => ({
       centerX: m.centerX,
       radiusPx: m.radiusPx,

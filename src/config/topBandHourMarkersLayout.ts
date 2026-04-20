@@ -111,7 +111,7 @@ export type LaidOutSemanticTopBandHourTextMarker = {
   tapeHourLabel: string;
 };
 
-/** Laid-out analog clock disk interior: static zone x + continuous solar-local hour for the hour hand. */
+/** Laid-out analog clock disk interior: civil-column anchor x when `civilColumnAnchored`, else phased tape x; fractional civil hour for the hour hand. */
 export type LaidOutSemanticTopBandAnalogClockMarker = {
   structuralHour0To23: number;
   centerX: number;
@@ -131,7 +131,7 @@ export type LaidOutSemanticTopBandRadialLineMarker = {
   centerY: number;
   sizePx: number;
   wrapHalfExtentPx: number;
-  /** Mean-solar hour-of-day for spoke angle; matches semantic {@link SemanticLocalWallClockState.continuousHour0To24}. */
+  /** Civil fractional hour-of-day for spoke angle; matches semantic {@link SemanticLocalWallClockState.continuousHour0To24}. */
   continuousHour0To24: number;
   /** Civil-time label from the tape column (legacy glyph path passes it; unused for radial stroke). */
   displayLabel: string;

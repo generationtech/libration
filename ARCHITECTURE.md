@@ -468,11 +468,11 @@ Persisted/editor-facing axes:
 
 Derived effective/runtime concerns:
 - **Behavior** — derived from realization kind:
-  - text → `tapeAdvected`
-  - non-text/procedural → `staticZoneAnchored`
+  - text → `civilPhased`
+  - non-text/procedural → `civilColumnAnchored`
 - **Content** — e.g. `hour24`, `localWallClock`
-  - static procedural clocks now use anchored timezone-segment / reference-city band-frame time at the present-time tick
-  - tape-advected procedural clocks remain longitude-driven when explicitly selected upstream
+  - column-anchored procedural clocks use anchored timezone-segment / reference-city band-frame time at the present-time tick
+  - display mode (`local12` / `local24` / `utc24`) affects labels only — not tape geometry or read-point registration
 
 ```mermaid
 flowchart TB

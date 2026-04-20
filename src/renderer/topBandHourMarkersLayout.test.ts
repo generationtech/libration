@@ -98,7 +98,7 @@ describe("layoutSemanticTopBandHourMarkers", () => {
     }
   });
 
-  it("static-zone analog layout uses structural segment centerX, not phased tape centerX", () => {
+  it("civil-column-anchored analog layout uses structural segment centerX, not phased tape centerX", () => {
     const w = 960;
     const top = 88;
     const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
@@ -139,7 +139,7 @@ describe("layoutSemanticTopBandHourMarkers", () => {
 });
 
 describe("layoutSemanticTopBandRadialLineMarkers", () => {
-  it("produces 24 laid-out instances on phased tape centerX (tape-advected), same x as text layout", () => {
+  it("produces 24 laid-out instances on phased tape centerX (civilPhased), same x as text layout", () => {
     const w = 960;
     const top = 88;
     const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);
@@ -189,7 +189,7 @@ describe("layoutSemanticTopBandRadialLineMarkers", () => {
     }
   });
 
-  it("static-zone radial layout uses structural segment centerX, not phased tape centerX", () => {
+  it("civil-column-anchored radial layout uses structural segment centerX, not phased tape centerX", () => {
     const w = 960;
     const top = 88;
     const scale = buildUtcTopScaleLayout(Date.now(), w, top, RESOLVED_UTC);

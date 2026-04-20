@@ -209,7 +209,7 @@ describe("DemoTimeStartFields", () => {
     vi.useRealTimers();
   });
 
-  it("native date change commits merged instant preserving wall time-of-day (UTC mode)", () => {
+  it("native date change commits merged instant preserving wall time-of-day (UTC reference zone)", () => {
     const onCommit = vi.fn();
     render(
       <DemoTimeStartFields

@@ -50,13 +50,13 @@ import {
 import { resolveChromeTimeFromResolvedTopBand, resolveTapeAnchorFraction } from "../core/chromeTimeResolver.ts";
 import type { CivilProjection, ReadPoint } from "../core/chromeTimeDomain.ts";
 import { deriveCivilProjection } from "../core/civilProjection.ts";
+import { roundedStructuralMeridianUtcOffsetHours } from "../core/structuralMeridianUtcOffsetHours.ts";
 import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
 import { resolveDisplayTimeReferenceZone } from "../core/displayTimeReference";
 import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
 import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat";
 export { resolveDisplayTimeReferenceZone, isValidIanaTimeZone } from "../core/displayTimeReference";
-export { solarLocalWallClockStateFromUtcMs } from "../core/solarLocalWallClock.ts";
 export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
@@ -177,7 +177,7 @@ export interface UtcTopScaleHourSegment {
    * not civil TZ. Independent of the top-band longitude anchor (tape alignment).
    */
   timezoneLetter: string;
-  /** Rounded mean solar UTC offset in hours ∈ [−12, 12] for {@link centerLongitudeDeg}. */
+  /** Meridian nominal UTC offset in hours ∈ [−12, 12] for {@link centerLongitudeDeg} (structural 15° grid, not civil IANA). */
   nominalUtcOffsetHours: number;
   /** Compact longitude label at column center, e.g. `172°W`. */
   longitudeLabel: string;
@@ -602,6 +602,7 @@ function computeTopBandLongitudeAnchor(
 /**
  * Local solar hour 0–23 at `lonDeg` for the given UTC time-of-day within the calendar day:
  * `floor(((utcMsOfDay + lon/15·h in ms) mod 24h) / 1h)`. No DST or political boundaries.
+ * Map / structural 15° grid — not IANA civil chrome wall time.
  */
 export function solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay: number, lonDeg: number): number {
   const offsetMs = (lonDeg / 15) * MS_PER_HOUR;
@@ -625,23 +626,13 @@ export {
 export const MILITARY_ZONE_LETTERS_WEST_TO_EAST = CANONICAL_MILITARY_ZONE_LETTERS_WEST_TO_EAST;
 
 /**
- * Nearest integer mean-solar UTC offset for {@code lonDeg}/15, with half-hour ties resolved away from 0
- * (so ±11.5°/h → ±12, matching edge columns on the 24×15° strip).
- */
-export function roundedMeanSolarUtcOffsetHours(lonDeg: number): number {
-  const q = lonDeg / 15;
-  const o = q >= 0 ? Math.floor(q + 0.5) : Math.ceil(q - 0.5);
-  return Math.max(-12, Math.min(12, o));
-}
-
-/**
- * NATO military time-zone letter from mean solar UTC offset {@code lonDeg}/15 hours (J omitted east of Zulu; west −12h uses M per Libration, not Y).
+ * NATO military time-zone letter from meridian nominal UTC offset {@code lonDeg}/15 hours (J omitted east of Zulu; west −12h uses M per Libration, not Y).
  * Purely geometric; independent of frame time except through caller-supplied longitude.
  * **Top-strip tab letters** use this at each column’s **west-edge** longitude −180° + 15°·`h` (see
  * {@link militaryTimeZoneLetterFromStructuralColumnIndex}), not the anchor meridian.
  */
 export function militaryTimeZoneLetterFromLongitudeDeg(lonDeg: number): string {
-  const o = roundedMeanSolarUtcOffsetHours(lonDeg);
+  const o = roundedStructuralMeridianUtcOffsetHours(lonDeg);
   if (o === 0) return "Z";
   if (o > 0) return EAST_OF_ZULU_LETTERS[o - 1]!;
   return WEST_OF_ZULU_LETTERS[-o - 1]!;
@@ -660,11 +651,6 @@ export function militaryTimeZoneLetterFromStructuralColumnIndex(h: number): stri
 /** Retained alias for fixed sector→letter mapping (see {@link militaryTimeZoneLetterFromStructuralColumnIndex}). */
 export function militaryZoneLetterFromStructuralHourIndex(structuralHourIndex: number): string {
   return militaryTimeZoneLetterFromStructuralColumnIndex(structuralHourIndex);
-}
-
-/** Rounded mean solar UTC offset hours ∈ [−12, 12] for {@code lonDeg}. */
-export function nominalUtcOffsetHoursFromLongitudeDeg(lonDeg: number): number {
-  return roundedMeanSolarUtcOffsetHours(lonDeg);
 }
 
 /** Present-time tick x: same as {@link readPointXFromReferenceLongitudeDeg}. */
@@ -1220,7 +1206,7 @@ export function buildUtcTopScaleLayout(
     const x1 = mapXFromLongitudeDeg(lon1, w);
     const centerX = mapXFromLongitudeDeg(lonCenter, w);
     const solarHour = solarLocalHour0To23FromUtcMsOfDay(utcMsOfDay, lonCenter);
-    const nominalUtcOffsetHours = roundedMeanSolarUtcOffsetHours(lonCenter);
+    const nominalUtcOffsetHours = roundedStructuralMeridianUtcOffsetHours(lonCenter);
     segments.push({
       hour: h,
       x0,

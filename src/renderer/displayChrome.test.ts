@@ -24,6 +24,7 @@ import { resolveEffectiveTopBandHourMarkers } from "../config/topBandHourMarkers
 import { resolveEffectiveTickTapeArea } from "../config/topBandTickTapeResolver.ts";
 import { resolveEffectiveTimezoneLetterRowArea } from "../config/topBandTimezoneLetterRowResolver.ts";
 import { structuralZoneLetterFromIndex } from "../config/structuralZoneLetters";
+import { nominalUtcOffsetHoursFromLongitudeDeg } from "../core/structuralMeridianUtcOffsetHours.ts";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   computeBottomChromeLayout,
@@ -49,7 +50,6 @@ import {
   STRUCTURAL_ZONE_LETTERS_WEST_TO_EAST,
   militaryTimeZoneLetterFromStructuralColumnIndex,
   militaryTimeZoneLetterFromLongitudeDeg,
-  nominalUtcOffsetHoursFromLongitudeDeg,
   topBandCircleLabel,
   topBandHourMarkerCenterX,
   topBandNextHourLabel,
@@ -87,7 +87,7 @@ function expectedPresentTimeIndicatorX(referenceLongitudeDeg: number, widthPx: n
   return presentTimeIndicatorXFromReferenceLongitudeDeg(referenceLongitudeDeg, widthPx);
 }
 
-/** Deterministic chrome time: fixed UTC + UTC-phased top band (legacy test baseline). */
+/** Deterministic chrome time: fixed UTC instant + read-point–registered phased top band (stable test baseline). */
 const DISPLAY_TIME_UTC_UTC24: DisplayTimeConfig = {
   ...DEFAULT_DISPLAY_TIME_CONFIG,
   referenceTimeZone: { source: "fixed", timeZone: "UTC" },
@@ -858,7 +858,7 @@ describe("computeUtcTopScaleRowMetrics", () => {
 });
 
 describe("militaryTimeZoneLetterFromLongitudeDeg", () => {
-  it("maps mean solar offsets to NATO letters (J omitted east of Zulu; Libration −12h uses M not Y)", () => {
+  it("maps meridian nominal UTC offsets to NATO letters (J omitted east of Zulu; Libration −12h uses M not Y)", () => {
     expect(militaryTimeZoneLetterFromLongitudeDeg(0)).toBe("Z");
     expect(militaryTimeZoneLetterFromLongitudeDeg(15)).toBe("A");
     expect(militaryTimeZoneLetterFromLongitudeDeg(150)).toBe("K");
