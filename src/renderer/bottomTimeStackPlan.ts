@@ -13,6 +13,7 @@
 
 /**
  * Lower-left bottom HUD: optional reference-city civil date and/or time (single zone, no labels).
+ * The date row always uses the reference IANA zone; the time row follows global hour-label mode (12/24/UTC).
  */
 
 import type { DisplayChromeLayoutConfig } from "../config/appConfig.ts";
@@ -51,6 +52,7 @@ export function buildBottomTimeStackLines(options: {
   const bottomTimeShowSeconds = lay.bottomTimeShowSeconds !== false;
   const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
   const hour12 = dm === "12hr";
+  const timeZoneForTimeRow = dm === "utc" ? "UTC" : options.referenceTimeZone;
   const lines: BottomTimeStackLine[] = [];
   if (showDate) {
     lines.push({
@@ -59,7 +61,7 @@ export function buildBottomTimeStackLines(options: {
     });
   }
   if (showTime) {
-    const timeText = formatWallClockInTimeZone(options.nowMs, options.referenceTimeZone, hour12, {
+    const timeText = formatWallClockInTimeZone(options.nowMs, timeZoneForTimeRow, hour12, {
       includeSeconds: bottomTimeShowSeconds,
     });
     lines.push({ role: "time", text: timeText });

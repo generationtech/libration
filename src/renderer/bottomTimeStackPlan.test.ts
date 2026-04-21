@@ -54,7 +54,7 @@ describe("buildBottomTimeStackLines", () => {
     expect(lines[0]!.role).toBe("date");
   });
 
-  it("uses reference IANA zone for both date and time", () => {
+  it("uses reference IANA zone for date; utc24 formats the time row in UTC", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const lines = buildBottomTimeStackLines({
       nowMs: t,
@@ -65,7 +65,7 @@ describe("buildBottomTimeStackLines", () => {
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.role).toBe("time");
     if (timeLine?.role === "time") {
-      expect(timeLine.text).toMatch(/09:05:06/);
+      expect(timeLine.text).toMatch(/14:05:06/);
     }
   });
 
@@ -112,6 +112,58 @@ describe("buildBottomTimeStackLines", () => {
       expect(timeLine.text).toMatch(/14:05\b/);
       expect(timeLine.text).not.toMatch(/14:05:06/);
     }
+  });
+
+  it("utc24 still omits seconds when bottomTimeShowSeconds is false", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const lines = buildBottomTimeStackLines({
+      nowMs: t,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "utc24",
+      bottomTimeStack: { bottomTimeShowSeconds: false },
+    });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.text).toMatch(/14:05\b/);
+    expect(timeLine?.text).not.toMatch(/14:05:06/);
+  });
+});
+
+describe("buildBottomTimeStackLines hour-label mode (America/New_York)", () => {
+  const referenceTimeZone = "America/New_York";
+  /** July 15 2024 07:35:30 UTC → 03:35:30 in New York (EDT). */
+  const nowMs = Date.UTC(2024, 6, 15, 7, 35, 30);
+
+  it("local12: time row is reference-city 12-hour wall clock", () => {
+    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "local12" });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.text).toMatch(/\b(AM|PM)\b/i);
+    expect(timeLine?.text).toMatch(/3:35:30/);
+  });
+
+  it("local24: time row is reference-city 24-hour wall clock", () => {
+    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "local24" });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.text).toMatch(/03:35:30/);
+    expect(timeLine?.text).not.toMatch(/\b(AM|PM)\b/i);
+  });
+
+  it("utc24: time row is UTC 24-hour for the same instant", () => {
+    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "utc24" });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.text).toMatch(/07:35:30/);
+  });
+
+  it("utc24: date row stays on the reference-zone calendar when UTC calendar date differs", () => {
+    const edgeMs = Date.UTC(2024, 0, 1, 4, 30, 0);
+    const lines = buildBottomTimeStackLines({
+      nowMs: edgeMs,
+      referenceTimeZone,
+      topBandMode: "utc24",
+    });
+    const dateLine = lines.find((l) => l.role === "date");
+    expect(dateLine?.text).toMatch(/December 31 2023/);
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.text).toMatch(/04:30:00/);
   });
 });
 

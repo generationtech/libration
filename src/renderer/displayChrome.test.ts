@@ -1084,7 +1084,7 @@ describe("buildBottomInformationBarState", () => {
     }
   });
 
-  it("single time row uses reference IANA civil wall time only (no UTC row)", () => {
+  it("utc24: lower-left time row is UTC 24-hour while reference zone is used for the date row", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1095,7 +1095,7 @@ describe("buildBottomInformationBarState", () => {
     const timeRow = ib.leftTimeStackLines.find((l) => l.role === "time")!;
     expect(timeRow.role).toBe("time");
     if (timeRow.role === "time") {
-      expect(timeRow.text).toMatch(/09:05:06/);
+      expect(timeRow.text).toMatch(/14:05:06/);
     }
     expect(ib.leftTimeStackLines.filter((l) => l.role === "time")).toHaveLength(1);
   });

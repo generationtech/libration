@@ -371,8 +371,8 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           />
         </ConfigControlRow>
         <p className="config-section__hint">
-          Lower-left instrument text (not map layers): civil date and wall time in the resolved reference-city timezone.
-          Hour/minute/second formatting follows the global hour-label mode; size and font apply to this readout.
+          Lower-left instrument text (not map layers): civil date in the reference-city timezone; time row follows the
+          global hour-label mode (12-hour, 24-hour reference wall time, or UTC 24-hour). Size and font apply to this readout.
         </p>
         <ConfigControlRow label="Show date">
           <input

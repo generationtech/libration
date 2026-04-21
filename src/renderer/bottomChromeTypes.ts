@@ -31,7 +31,7 @@ export type BottomTimeStackLine =
  * Tape geometry and read-point registration do not depend on these strings.
  */
 export interface BottomInformationBarState {
-  /** Top-to-bottom: optional date, then optional time (reference IANA civil zone only). */
+  /** Top-to-bottom: optional date (reference zone), then optional time (mode-aware: reference wall clock or UTC). */
   leftTimeStackLines: BottomTimeStackLine[];
   bottomChromeLayout: BottomChromeLayout;
 }
