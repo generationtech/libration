@@ -101,3 +101,49 @@ export function utcFocusAnnotationPreferredX(options: {
   }
   return options.focusedHourX - offsetPx;
 }
+
+/** UTC fractional hour-of-day in [0, 24) from `nowMs` (minutes, seconds, ms included). */
+export function utcFractionalHourOfDayMs(nowMs: number): number {
+  const d = new Date(nowMs);
+  return (
+    d.getUTCHours() +
+    d.getUTCMinutes() / 60 +
+    d.getUTCSeconds() / 3600 +
+    d.getUTCMilliseconds() / 3_600_000
+  );
+}
+
+/**
+ * Shortest signed hour difference in (-12, 12] between an integer tape hour [0, 23] and a fractional UTC hour,
+ * for consistent linear placement on a 24h strip without screen-edge wrap.
+ */
+export function shortestSignedHourDeltaHours(labelHour0To23: number, utcHourFloat: number): number {
+  let d = labelHour0To23 - utcHourFloat;
+  while (d > 12) {
+    d -= 24;
+  }
+  while (d <= -12) {
+    d += 24;
+  }
+  return d;
+}
+
+/** `readPointX` is where the current instant falls on the tape; hour labels offset by Δhour × spacing. */
+export function utcFocusLabelCenterXFromUtcHourFloat(options: {
+  readPointX: number;
+  labelHour0To23: number;
+  utcHourFloat: number;
+  hourSpacingPx: number;
+}): number {
+  const spacing = Math.max(0, options.hourSpacingPx);
+  const delta = shortestSignedHourDeltaHours(options.labelHour0To23, options.utcHourFloat);
+  return options.readPointX + delta * spacing;
+}
+
+/** Parses `"00"`–`"23"` tape labels; returns NaN if not two decimal digits. */
+export function hour0To23FromPad2TapeLabel(label: string): number {
+  if (!/^\d{2}$/.test(label)) {
+    return Number.NaN;
+  }
+  return Number.parseInt(label, 10);
+}

@@ -14,13 +14,17 @@
 import { describe, expect, it } from "vitest";
 import {
   clampUtcFocusAnnotationX,
+  hour0To23FromPad2TapeLabel,
   placeUtcFocusAnnotationXWithGap,
+  shortestSignedHourDeltaHours,
   utcFocusAnnotationCenterY,
   utcFocusAnnotationMinGapPx,
   utcFocusAnnotationPreferredX,
   UTC_FOCUS_ANNOTATION_HOUR_OFFSET,
   UTC_FOCUS_WINDOW_HOURS,
   utcFocusAnnotationSide,
+  utcFocusLabelCenterXFromUtcHourFloat,
+  utcFractionalHourOfDayMs,
 } from "./utcTopTapeFocusTreatment";
 
 describe("utcTopTapeFocusTreatment", () => {
@@ -81,6 +85,35 @@ describe("utcTopTapeFocusTreatment", () => {
     expect(utcFocusAnnotationMinGapPx({ hourSpacingPx: 60, labelSizePx: 10 })).toBeGreaterThan(
       utcFocusAnnotationMinGapPx({ hourSpacingPx: 20, labelSizePx: 10 }),
     );
+  });
+
+  it("computes fractional UTC hour-of-day including minutes and seconds", () => {
+    const ms = Date.UTC(2024, 5, 10, 16, 59, 45, 500);
+    expect(utcFractionalHourOfDayMs(ms)).toBeCloseTo(16 + 59 / 60 + 45.5 / 3600, 10);
+  });
+
+  it("shortestSignedHourDeltaHours wraps across midnight for the three-hour window", () => {
+    expect(shortestSignedHourDeltaHours(23, 0.25)).toBeCloseTo(-1.25, 10);
+    expect(shortestSignedHourDeltaHours(0, 23.5)).toBeCloseTo(0.5, 10);
+    expect(shortestSignedHourDeltaHours(17, 16.9833)).toBeCloseTo(0.0167, 4);
+  });
+
+  it("utcFocusLabelCenterXFromUtcHourFloat places the fractional instant at readPointX", () => {
+    const readPointX = 400;
+    const hourSpacingPx = 40;
+    const utcHourFloat = 16 + 59 / 60 + 30 / 3600;
+    const x17 = utcFocusLabelCenterXFromUtcHourFloat({
+      readPointX,
+      labelHour0To23: 17,
+      utcHourFloat,
+      hourSpacingPx,
+    });
+    expect(x17 - readPointX).toBeCloseTo(shortestSignedHourDeltaHours(17, utcHourFloat) * hourSpacingPx, 8);
+  });
+
+  it("parses pad-2 tape labels", () => {
+    expect(hour0To23FromPad2TapeLabel("07")).toBe(7);
+    expect(Number.isNaN(hour0To23FromPad2TapeLabel("7"))).toBe(true);
   });
 
   it("places annotation with enforced separation from focused-hour cluster", () => {

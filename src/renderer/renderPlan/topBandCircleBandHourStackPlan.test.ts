@@ -40,8 +40,11 @@ import {
   type TopBandInDiskHourMarkerSemanticRenderPath,
 } from "./topBandCircleBandHourStackPlan";
 import {
+  hour0To23FromPad2TapeLabel,
   utcFocusAnnotationCenterY,
   utcFocusAnnotationMinGapPx,
+  utcFocusLabelCenterXFromUtcHourFloat,
+  utcFractionalHourOfDayMs,
 } from "./utcTopTapeFocusTreatment.ts";
 import { buildFullUtcTopBandHourDiskFixture, effectiveTopBandHourMarkersForLayout } from "./topBandInDiskHourMarkers.test-utils.ts";
 import { noonHighlighted12SwashGeometryFromMarkerContentBox } from "../noonMidnightIndicatorRenderPlan.ts";
@@ -490,16 +493,94 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     ).toBe("15");
   });
 
-  it("highlights only the current UTC hour with native 24hr strip-scale anchor geometry (00/12 swash footprint)", () => {
-    const refMs = Date.UTC(2024, 0, 15, 14, 12, 0);
+  it("UTC focus positions the fractional instant at the read point (≈16:59 → hour 17 numerically closest)", () => {
+    const refMs = Date.UTC(2026, 3, 21, 16, 59, 30, 250);
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
-    const utcHour = new Date(refMs).getUTCHours();
-    const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!.centerX;
+    const readPointX = 333;
+    const hourSpacingPx = f.viewportWidthPx / 24;
+    const utcHourFloat = utcFractionalHourOfDayMs(refMs);
+    const utcH = new Date(refMs).getUTCHours();
+    const labels = [utcH - 1, utcH, utcH + 1].map((h) => pad2HourLabel(h));
+    const distFromRead = (cx: number) => Math.abs(cx - readPointX);
+    let closestLabel = labels[0]!;
+    let closestDist = Number.POSITIVE_INFINITY;
+    for (const lab of labels) {
+      const lh = hour0To23FromPad2TapeLabel(lab);
+      const cx = utcFocusLabelCenterXFromUtcHourFloat({
+        readPointX,
+        labelHour0To23: lh,
+        utcHourFloat,
+        hourSpacingPx,
+      });
+      const d = distFromRead(cx);
+      if (d < closestDist) {
+        closestDist = d;
+        closestLabel = lab;
+      }
+    }
+    expect(closestLabel).toBe("17");
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
       topBandMode: "utc24",
       readPointX,
+      nowMs: refMs,
+    });
+    const label17 = plan.items.find((i) => i.kind === "text" && i.text === "17");
+    expect(label17?.kind).toBe("text");
+    if (label17?.kind === "text") {
+      expect(distFromRead(label17.x)).toBe(closestDist);
+    }
+  });
+
+  it("UTC focus disk label x follows readPoint + Δ×spacing, not civil marker.centerX", () => {
+    const refMs = Date.UTC(2024, 5, 10, 16, 20, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
+    const readPointX = 123.456;
+    const hourSpacingPx = f.viewportWidthPx / 24;
+    const utcHourFloat = utcFractionalHourOfDayMs(refMs);
+    const utcH = new Date(refMs).getUTCHours();
+    const markerForCurrent = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcH))!;
+    const expectedCx = utcFocusLabelCenterXFromUtcHourFloat({
+      readPointX,
+      labelHour0To23: utcH,
+      utcHourFloat,
+      hourSpacingPx,
+    });
+    expect(Math.abs(expectedCx - markerForCurrent.centerX)).toBeGreaterThan(2);
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX,
+      nowMs: refMs,
+    });
+    const text = plan.items.find((i) => i.kind === "text" && i.text === pad2HourLabel(utcH));
+    expect(text?.kind).toBe("text");
+    if (text?.kind === "text") {
+      expect(text.x).toBeCloseTo(expectedCx, 5);
+    }
+  });
+
+  it("highlights only the current UTC hour with native 24hr strip-scale anchor geometry (00/12 swash footprint)", () => {
+    const refMs = Date.UTC(2024, 0, 15, 14, 12, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
+    const utcHour = new Date(refMs).getUTCHours();
+    const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!.centerX;
+    const hourSpacingPx = f.viewportWidthPx / 24;
+    const utcHourFloat = utcFractionalHourOfDayMs(refMs);
+    const expectedFocusedCx = utcFocusLabelCenterXFromUtcHourFloat({
+      readPointX,
+      labelHour0To23: utcHour,
+      utcHourFloat,
+      hourSpacingPx,
+    });
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX,
+      nowMs: refMs,
     });
     const highlightRects = plan.items.filter(
       (i) =>
@@ -512,11 +593,11 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     expect(highlight?.kind).toBe("rect");
     if (highlight?.kind === "rect") {
       const highlightCenterX = highlight.x + highlight.width * 0.5;
-      const focusedMarker = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!;
-      expect(Math.abs(highlightCenterX - focusedMarker.centerX)).toBeLessThanOrEqual(960 / 24);
+      expect(Math.abs(highlightCenterX - expectedFocusedCx)).toBeLessThanOrEqual(0.001);
       const swash = noonHighlighted12SwashGeometryFromMarkerContentBox(f.diskLabelSizePx);
       expect(highlight.width).toBeCloseTo(swash.halfW * 2, 5);
       expect(highlight.height).toBeCloseTo(swash.extentAboveNumeralAnchor + swash.extentBelowNumeralAnchor, 5);
+      const focusedMarker = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!;
       const highlightedText = plan.items.find(
         (i) =>
           i.kind === "text" &&
@@ -570,15 +651,30 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       return;
     }
     const utcH = new Date(refMs).getUTCHours();
+    const hourSpacingPx = f.viewportWidthPx / 24;
+    const utcHourFloat = utcFractionalHourOfDayMs(refMs);
     const coreMarkers = [utcH - 1, utcH, utcH + 1]
       .map((h) => f.markers.find((m) => m.currentHourLabel === pad2HourLabel(h)))
-      .filter((m): m is (typeof f.markers)[number] => m !== undefined)
-      .filter((m) => m.centerX >= 0 && m.centerX <= f.viewportWidthPx);
+      .filter((m): m is (typeof f.markers)[number] => m !== undefined);
     const coreSpans = coreMarkers
-      .map((marker) =>
-        plan.items.find(
-          (i) => i.kind === "text" && i.text === marker.currentHourLabel && Math.abs(i.x - marker.centerX) < 0.001,
-        ))
+      .map((marker) => {
+        const lh = hour0To23FromPad2TapeLabel(marker.currentHourLabel);
+        if (Number.isNaN(lh)) {
+          return undefined;
+        }
+        const expectedCx = utcFocusLabelCenterXFromUtcHourFloat({
+          readPointX,
+          labelHour0To23: lh,
+          utcHourFloat,
+          hourSpacingPx,
+        });
+        if (expectedCx < 0 || expectedCx > f.viewportWidthPx) {
+          return undefined;
+        }
+        return plan.items.find(
+          (i) => i.kind === "text" && i.text === marker.currentHourLabel && Math.abs(i.x - expectedCx) < 0.001,
+        );
+      })
       .filter((item): item is Extract<(typeof plan.items)[number], { kind: "text" }> => item?.kind === "text")
       .map((item) => estimateTextSpan(item));
     expect(coreSpans.length).toBeGreaterThan(0);
@@ -622,22 +718,35 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
     const utcH = new Date(refMs).getUTCHours();
     const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcH))!.centerX;
+    const hourSpacingPx = f.viewportWidthPx / 24;
+    const utcHourFloat = utcFractionalHourOfDayMs(refMs);
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
       topBandMode: "utc24",
       readPointX,
+      nowMs: refMs,
     });
     const coreIndices = [utcH - 1, utcH, utcH + 1]
       .map((h) => f.markers.findIndex((m) => m.currentHourLabel === pad2HourLabel(h)))
       .filter((idx) => idx >= 0);
     for (const idx of coreIndices) {
       const marker = f.markers[idx]!;
-      if (marker.centerX < 0 || marker.centerX > f.viewportWidthPx) {
+      const lh = hour0To23FromPad2TapeLabel(marker.currentHourLabel);
+      if (Number.isNaN(lh)) {
+        continue;
+      }
+      const expectedCx = utcFocusLabelCenterXFromUtcHourFloat({
+        readPointX,
+        labelHour0To23: lh,
+        utcHourFloat,
+        hourSpacingPx,
+      });
+      if (expectedCx < 0 || expectedCx > f.viewportWidthPx) {
         continue;
       }
       const textItem = plan.items.find(
-        (i) => i.kind === "text" && i.text === marker.currentHourLabel && Math.abs(i.x - marker.centerX) < 0.001,
+        (i) => i.kind === "text" && i.text === marker.currentHourLabel && Math.abs(i.x - expectedCx) < 0.001,
       );
       expect(textItem?.kind).toBe("text");
       if (textItem?.kind === "text") {
