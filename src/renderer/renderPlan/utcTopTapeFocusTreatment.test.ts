@@ -15,7 +15,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
+  placeUtcFocusAnnotationXWithGap,
   utcFocusAnnotationCenterY,
+  utcFocusAnnotationMinGapPx,
   utcFocusAnnotationPreferredX,
   UTC_FOCUS_ANNOTATION_HOUR_OFFSET,
   UTC_FOCUS_HALF_WINDOW_HOURS,
@@ -87,5 +89,36 @@ describe("utcTopTapeFocusTreatment", () => {
         annotationSide: "left",
       }),
     ).toBe(400 - 30 * UTC_FOCUS_ANNOTATION_HOUR_OFFSET);
+  });
+
+  it("derives a concrete minimum annotation gap from spacing/label size", () => {
+    expect(utcFocusAnnotationMinGapPx({ hourSpacingPx: 0, labelSizePx: 0 })).toBeGreaterThan(0);
+    expect(utcFocusAnnotationMinGapPx({ hourSpacingPx: 60, labelSizePx: 10 })).toBeGreaterThan(
+      utcFocusAnnotationMinGapPx({ hourSpacingPx: 20, labelSizePx: 10 }),
+    );
+  });
+
+  it("places annotation with enforced separation from focused-hour cluster", () => {
+    const right = placeUtcFocusAnnotationXWithGap({
+      preferredX: 520,
+      annotationSide: "right",
+      annotationWidthPx: 120,
+      viewportWidthPx: 960,
+      marginPx: 12,
+      minGapPx: 24,
+      focusedHourClusterSpan: { minX: 440, maxX: 500 },
+    });
+    expect(right).toBeGreaterThanOrEqual(500 + 24 + 60);
+
+    const left = placeUtcFocusAnnotationXWithGap({
+      preferredX: 420,
+      annotationSide: "left",
+      annotationWidthPx: 120,
+      viewportWidthPx: 960,
+      marginPx: 12,
+      minGapPx: 24,
+      focusedHourClusterSpan: { minX: 440, maxX: 500 },
+    });
+    expect(left).toBeLessThanOrEqual(440 - 24 - 60);
   });
 });

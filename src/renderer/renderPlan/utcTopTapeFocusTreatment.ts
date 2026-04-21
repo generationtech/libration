@@ -17,8 +17,12 @@ export const UTC_FOCUS_FULL_VISIBILITY_HALF_HOURS = 1;
 export const UTC_FOCUS_ANNOTATION_TEXT = "UTC Global Time";
 export const UTC_FOCUS_DEFAULT_CENTERED_ANNOTATION_SIDE = "right" as const;
 export const UTC_FOCUS_ANNOTATION_HOUR_OFFSET = 2;
+export const UTC_FOCUS_ANNOTATION_MIN_GAP_HOUR_SPACING_FRAC = 0.42;
+export const UTC_FOCUS_ANNOTATION_MIN_GAP_LABEL_SIZE_FRAC = 0.72;
+export const UTC_FOCUS_ANNOTATION_MIN_GAP_PX_FLOOR = 14;
 
 export type UtcFocusAnnotationSide = "left" | "right";
+export type HorizontalSpan = { minX: number; maxX: number };
 
 export interface UtcFocusWindow {
   readPointX: number;
@@ -87,6 +91,39 @@ export function clampUtcFocusAnnotationX(options: {
     return Math.min(maxCenter, Math.max(preferred, minCenter));
   }
   return Math.max(minCenter, Math.min(preferred, maxCenter));
+}
+
+export function utcFocusAnnotationMinGapPx(options: {
+  hourSpacingPx: number;
+  labelSizePx: number;
+}): number {
+  const spacingGap = Math.max(0, options.hourSpacingPx) * UTC_FOCUS_ANNOTATION_MIN_GAP_HOUR_SPACING_FRAC;
+  const labelGap = Math.max(0, options.labelSizePx) * UTC_FOCUS_ANNOTATION_MIN_GAP_LABEL_SIZE_FRAC;
+  return Math.max(UTC_FOCUS_ANNOTATION_MIN_GAP_PX_FLOOR, spacingGap, labelGap);
+}
+
+export function placeUtcFocusAnnotationXWithGap(options: {
+  preferredX: number;
+  annotationSide: UtcFocusAnnotationSide;
+  annotationWidthPx: number;
+  viewportWidthPx: number;
+  marginPx: number;
+  minGapPx: number;
+  focusedHourClusterSpan: HorizontalSpan;
+}): number {
+  const half = Math.max(0, options.annotationWidthPx) * 0.5;
+  const margin = Math.max(0, options.marginPx);
+  const vw = Math.max(0, options.viewportWidthPx);
+  const minCenter = margin + half;
+  const maxCenter = Math.max(minCenter, vw - margin - half);
+  const cluster = options.focusedHourClusterSpan;
+  const minGap = Math.max(0, options.minGapPx);
+  if (options.annotationSide === "right") {
+    const minClearCenter = cluster.maxX + minGap + half;
+    return Math.min(maxCenter, Math.max(options.preferredX, minCenter, minClearCenter));
+  }
+  const maxClearCenter = cluster.minX - minGap - half;
+  return Math.max(minCenter, Math.min(options.preferredX, maxCenter, maxClearCenter));
 }
 
 export function utcFocusAnnotationCenterY(yDiskRow0: number, diskBandH: number): number {
