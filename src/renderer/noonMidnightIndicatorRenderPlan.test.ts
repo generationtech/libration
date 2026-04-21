@@ -196,6 +196,41 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(items).toHaveLength(0);
   });
 
+  it("forcedTwentyFourHourAnchor uses strip-scale noon swash geometry for non-00/12 tape labels (UTC parity)", () => {
+    const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+    const eff = resolveEffectiveTopBandHourMarkers(layout);
+    const sel = effectiveTopBandHourMarkerSelection(layout);
+    const items: PlanItem[] = [];
+    const sizePx = 22;
+    const handled = tryEmitNoonMidnightIndicatorDiskContent(
+      {
+        realizationKind: "text",
+        customization: { enabled: false },
+        forcedTwentyFourHourAnchor: { boxedNumberBoxColor: "#808080" },
+        structuralHour0To23: 15,
+        tapeHourLabel: "15",
+        displayLabel: "15",
+        layout: { cx: 100, cy: 50, size: sizePx },
+        markerColor: "#ffffff",
+        hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(sel),
+        effectiveTopBandHourMarkerSelection: sel,
+        effectiveTopBandHourMarkers: eff,
+      },
+      { fontRegistry: defaultFontAssetRegistry },
+      items,
+    );
+    expect(handled).toBe(true);
+    const highlight = items.find((i) => i.kind === "rect");
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(sizePx);
+    expect(highlight?.kind).toBe("rect");
+    if (highlight?.kind === "rect") {
+      expect(highlight.width).toBeCloseTo(g.halfW * 2, 5);
+      expect(highlight.height).toBeCloseTo(g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor, 5);
+    }
+    const narrow = boxedNumberHighlightHalfExtentsFromMarkerContentBox(sizePx, "15");
+    expect(g.halfW * 2).toBeGreaterThan(narrow.halfW * 2);
+  });
+
   it("textWords + text realization emits only strip NOON/MID (not resolver MIDNIGHT); no duplicate label path", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({

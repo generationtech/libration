@@ -77,15 +77,12 @@ describe("topBandVisualPolicy", () => {
     );
   });
 
-  it("resolveTimezoneStripUtcOffsetPolicy uses subordinate zone text fill and resolved font", () => {
+  it("resolveTimezoneStripUtcOffsetPolicy inherits NATO letter typography with subordinate offset fill", () => {
+    const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
     const p = resolveTimezoneStripUtcOffsetPolicy(TOP_CHROME_STYLE, "computer");
-    expect(p.role).toBe("chromeZoneLabel");
+    expect(p.role).toBe(letter.role);
     expect(p.fill).toBe(TOP_CHROME_STYLE.zoneText.utcOffsetSubrow);
-    expect(p.typographyOverrides).toEqual({
-      fontWeight: 650,
-      letterSpacingPx: 0,
-      fontAssetId: "computer",
-    });
+    expect(p.typographyOverrides).toEqual(letter.typographyOverrides);
     expect(p.textBaseline).toBe("middle");
   });
 

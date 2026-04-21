@@ -26,6 +26,7 @@ import {
   TOP_CHROME_STYLE,
 } from "../../config/topChromeStyle.ts";
 import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcOffsetHours.ts";
+import { resolveTimezoneStripLetterPolicy, resolveTimezoneStripUtcOffsetPolicy } from "../../config/topBandVisualPolicy.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
@@ -144,7 +145,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(rects.length).toBeGreaterThanOrEqual(24);
   });
 
-  it("uses authored timezoneLetterRowFontAssetId for NATO letters only", () => {
+  it("uses authored timezoneLetterRowFontAssetId for NATO letters and offset subrow (shared typography source)", () => {
     const vw = 960;
     const now = Date.UTC(2026, 3, 7, 15, 30, 0);
     const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
@@ -167,6 +168,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       0,
       Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
     );
+    const fillH = Math.max(0, zoneH - zonePadY * 2);
     const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
 
     const plan = buildTimezoneLetterRowRenderPlan({
@@ -195,6 +197,24 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(tzLetter?.kind).toBe("text");
     if (tzLetter?.kind === "text") {
       expect(tzLetter.font.assetId).toBe("computer");
+    }
+    const letterPolicy = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
+    const offsetPolicy = resolveTimezoneStripUtcOffsetPolicy(TOP_CHROME_STYLE, "computer");
+    expect(offsetPolicy.typographyOverrides).toEqual(letterPolicy.typographyOverrides);
+    expect(offsetPolicy.role).toBe(letterPolicy.role);
+
+    const seg0 = layout.segments[0]!;
+    const offsetLabel = formatNatoUtcOffsetHoursLabel(seg0.nominalUtcOffsetHours);
+    const offsetText = plan.items.find((i) => i.kind === "text" && i.text === offsetLabel);
+    expect(offsetText?.kind).toBe("text");
+    if (offsetText?.kind === "text" && tzLetter?.kind === "text") {
+      expect(offsetText.font.assetId).toBe("computer");
+      expect(offsetText.font.sizePx).toBeLessThan(tzLetter.font.sizePx);
+      expect(offsetText.font.sizePx).toBeGreaterThanOrEqual(9);
+      const zoneLetterSize = computeTimezoneLetterSizePx(diskLabelSizePx, fillH);
+      const legacyOffsetCap = Math.max(6, Math.min(Math.round(zoneLetterSize * 0.36), 9));
+      expect(offsetText.font.sizePx).toBeGreaterThanOrEqual(legacyOffsetCap);
+      expect(Math.abs(offsetText.y - tzLetter.y)).toBeGreaterThan(tzLetter.font.sizePx * 0.35);
     }
   });
 });

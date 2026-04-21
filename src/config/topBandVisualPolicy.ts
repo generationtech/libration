@@ -127,14 +127,11 @@ export function resolveTimezoneStripUtcOffsetPolicy(
   chrome: TopChromeStyle,
   letterFontAssetId: FontAssetId,
 ): TopBandTextVisualPolicy {
+  const letter = resolveTimezoneStripLetterPolicy(chrome, letterFontAssetId);
   return {
-    role: "chromeZoneLabel",
+    role: letter.role,
     fill: chrome.zoneText.utcOffsetSubrow,
-    typographyOverrides: {
-      fontWeight: 650,
-      letterSpacingPx: 0,
-      fontAssetId: letterFontAssetId,
-    },
+    typographyOverrides: letter.typographyOverrides,
     textBaseline: "middle",
   };
 }

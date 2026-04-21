@@ -33,7 +33,6 @@ import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMark
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
 import { computeHourDiskLabelSizePx, TOP_CHROME_STYLE } from "../../config/topChromeStyle.ts";
-import { hourMarkerRepresentationSpecForTopBandEffectiveSelection } from "../../config/topBandVisualPolicy.ts";
 import { topBandDiskWrapHalfExtentPx } from "../topBandHourDiskWrapExtents";
 import {
   buildTopBandCircleBandHourStackRenderPlan,
@@ -45,7 +44,7 @@ import {
   utcFocusAnnotationMinGapPx,
 } from "./utcTopTapeFocusTreatment.ts";
 import { buildFullUtcTopBandHourDiskFixture, effectiveTopBandHourMarkersForLayout } from "./topBandInDiskHourMarkers.test-utils.ts";
-import { tryEmitNoonMidnightIndicatorDiskContent } from "../noonMidnightIndicatorRenderPlan.ts";
+import { noonHighlighted12SwashGeometryFromMarkerContentBox } from "../noonMidnightIndicatorRenderPlan.ts";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
 
@@ -423,7 +422,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     }
   });
 
-  it("highlights only the current UTC hour using the literal native highlight emission path", () => {
+  it("highlights only the current UTC hour with native 24hr strip-scale anchor geometry (00/12 swash footprint)", () => {
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
     const readPointX = 480;
     const plan = buildStackFromFixture(f, {
@@ -444,44 +443,18 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     if (highlight?.kind === "rect") {
       const highlightCenterX = highlight.x + highlight.width * 0.5;
       expect(Math.abs(highlightCenterX - readPointX)).toBeLessThanOrEqual(960 / 24);
+      const swash = noonHighlighted12SwashGeometryFromMarkerContentBox(f.diskLabelSizePx);
+      expect(highlight.width).toBeCloseTo(swash.halfW * 2, 5);
+      expect(highlight.height).toBeCloseTo(swash.extentAboveNumeralAnchor + swash.extentBelowNumeralAnchor, 5);
       const focusedMarker = f.markers.reduce((best, m) => {
         const d = Math.abs(m.centerX - readPointX);
         return d < best.dist ? { marker: m, dist: d } : best;
       }, { marker: f.markers[0]!, dist: Number.POSITIVE_INFINITY }).marker;
-      const nativeItems: ReturnType<typeof buildTopBandCircleBandHourStackRenderPlan>["items"] = [];
-      const handled = tryEmitNoonMidnightIndicatorDiskContent(
-        {
-          realizationKind: "text",
-          customization: { enabled: false },
-          forcedTwentyFourHourAnchor: { boxedNumberBoxColor: "#808080" },
-          structuralHour0To23: focusedMarker.structuralHour0To23,
-          tapeHourLabel: focusedMarker.currentHourLabel,
-          displayLabel: focusedMarker.currentHourLabel,
-          layout: {
-            cx: highlightCenterX,
-            cy: highlight.y + highlight.height * 0.5,
-            size: f.diskLabelSizePx,
-          },
-          markerColor: "#ffffff",
-          hourSpec: hourMarkerRepresentationSpecForTopBandEffectiveSelection(SEL_TEXT_DEFAULT),
-          effectiveTopBandHourMarkerSelection: SEL_TEXT_DEFAULT,
-          effectiveTopBandHourMarkers: EFF_TEXT_DEFAULT,
-        },
-        GLYPH_CTX,
-        nativeItems,
-      );
-      expect(handled).toBe(true);
-      const nativeHighlight = nativeItems.find((i) => i.kind === "rect");
-      expect(nativeHighlight?.kind).toBe("rect");
-      if (nativeHighlight?.kind === "rect") {
-        expect(highlight.width).toBeCloseTo(nativeHighlight.width, 5);
-        expect(highlight.height).toBeCloseTo(nativeHighlight.height, 5);
-      }
       const highlightedText = plan.items.find(
         (i) =>
           i.kind === "text" &&
-          Math.abs(i.x - highlightCenterX) < 0.001 &&
-          Math.abs(i.y - (highlight.y + highlight.height * 0.5)) < 0.001,
+          i.text === focusedMarker.currentHourLabel &&
+          Math.abs(i.x - highlightCenterX) < 0.001,
       );
       expect(highlightedText?.kind).toBe("text");
     }

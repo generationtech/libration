@@ -266,8 +266,11 @@ function pushHighlightBehindTapeNumeral(
   markerContentBoxSizePx: number,
   treatmentColor: string,
   out: RenderPlanBuilder,
+  options?: { useNoonStripScaleGeometry: boolean },
 ): void {
-  if (tapeNumeralUsesNoonStyleStripHighlight(text)) {
+  const useNoonStripScale =
+    options?.useNoonStripScaleGeometry === true || tapeNumeralUsesNoonStyleStripHighlight(text);
+  if (useNoonStripScale) {
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
     out.push({
       kind: "rect",
@@ -311,7 +314,9 @@ export type NoonMidnightEmitArgs = {
   };
   /**
    * Optional explicit 24-hour anchor emphasis intent for non-civil focused cases (for example UTC-focused current-hour emphasis).
-   * When present and noon/midnight intent is inactive, this uses the same native 24-hour anchor highlight path.
+   * When present and noon/midnight intent is inactive, uses the same boxed numeral + scaled layout path as native anchors,
+   * with highlight geometry matching the strip-scale `00`/`12` swash ({@link noonHighlighted12SwashGeometryFromMarkerContentBox})
+   * so the footprint matches native 24hr anchor emphasis rather than the narrower generic two-character highlight.
    */
   forcedTwentyFourHourAnchor?: {
     boxedNumberBoxColor: string;
@@ -397,7 +402,11 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
     }
     const { cx, cy, size } = args.layout;
     const tape = args.tapeHourLabel;
-    pushHighlightBehindTapeNumeral(cx, cy, tape, size, anchor24.boxedNumberBoxColor, out);
+    /** UTC focused current hour: same strip-scale swash as native 24hr `00`/`12` anchor highlights (not generic two-char fit). */
+    const useNoonStripScaleGeometry = args.forcedTwentyFourHourAnchor !== undefined;
+    pushHighlightBehindTapeNumeral(cx, cy, tape, size, anchor24.boxedNumberBoxColor, out, {
+      useNoonStripScaleGeometry,
+    });
     pushGlyphContent(
       args,
       { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },

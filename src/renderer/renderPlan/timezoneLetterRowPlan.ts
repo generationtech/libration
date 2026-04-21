@@ -167,10 +167,17 @@ export function buildTimezoneLetterRowRenderPlan(options: {
         continue;
       }
       const cxLetter = (x0 + x1) * 0.5;
-      /** NATO letter upper; offset subrow lower — keeps letters readable with structural UTC offset metadata. */
-      const letterY = fillTop + fillH * 0.38;
-      const offsetSize = Math.max(6, Math.min(Math.round(zoneLetterSize * 0.36), 9));
-      const offsetY = fillTop + fillH * 0.66;
+      /** NATO letter upper; offset subrow lower — two-line cell with breathing room vs a cramped subrow. */
+      const letterY = fillTop + fillH * 0.33;
+      const offsetSize = Math.max(
+        9,
+        Math.min(
+          Math.round(zoneLetterSize * 0.56),
+          Math.round(fillH * 0.4),
+          Math.round(zoneLetterSize * 0.92),
+        ),
+      );
+      const offsetY = fillTop + fillH * 0.725;
 
       const isActiveCol = seg.hour === activeStructuralHour;
       const letterPolicy =
@@ -193,7 +200,7 @@ export function buildTimezoneLetterRowRenderPlan(options: {
 
       if (geoCaption && seg.hour === activeStructuralHour) {
         const capSize = Math.max(7, Math.min(Math.round(zoneLetterSize * 0.34), 10));
-        const capYTop = offsetY + offsetSize * 0.52;
+        const capYTop = offsetY + offsetSize * 0.58;
         const capGlyph = createTopBandTextGlyph(
           truncateTimezoneStripCaption(geoCaption, 26),
           resolveTimezoneStripCaptionPolicy(st),
