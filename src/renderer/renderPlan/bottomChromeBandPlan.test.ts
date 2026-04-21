@@ -27,7 +27,7 @@ const PRODUCT_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 function sampleInformationBar(vw: number): BottomInformationBarState {
   const layout = computeBottomChromeLayout(vw);
   return {
-    leftTimeStackLines: [
+    bottomHudReadoutLines: [
       { role: "date", text: "Monday, April 7, 2026" },
       { role: "time", text: "3:45:00 PM" },
     ],
@@ -39,7 +39,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
   it("emits band plate then left-aligned date then time (same x, no labels)", () => {
     const vw = 960;
     const ib = sampleInformationBar(vw);
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const bottomBand = { x: 0, y: 900, width: vw, height: 56 };
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
@@ -78,10 +78,10 @@ describe("buildBottomChromeBandRenderPlan", () => {
     const vw = 640;
     const layout = computeBottomChromeLayout(vw);
     const ib: BottomInformationBarState = {
-      leftTimeStackLines: [{ role: "date", text: "" }],
+      bottomHudReadoutLines: [{ role: "date", text: "" }],
       bottomChromeLayout: layout,
     };
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
       bottomBand: { x: 0, y: 0, width: vw, height: 48 },
@@ -100,7 +100,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
   it("positions stack lines with increasing y downward in the band", () => {
     const vw = 800;
     const ib = sampleInformationBar(vw);
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const bottomBand = { x: 0, y: 400, width: vw, height: 72 };
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
@@ -122,7 +122,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
   it("tightens vertical spacing between date and time rows (~half legacy band span) while keeping date above time", () => {
     const vw = 800;
     const ib = sampleInformationBar(vw);
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const bh = 72;
     const bottomBand = { x: 0, y: 400, width: vw, height: bh };
     const plan = buildBottomChromeBandRenderPlan({
@@ -153,7 +153,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
   it("allows overriding band plate fill without affecting text items", () => {
     const vw = 480;
     const ib = sampleInformationBar(vw);
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const bottomBand = { x: 2, y: 100, width: vw - 4, height: 40 };
     const customFill = "rgba(2, 14, 38, 0.12)";
     const plan = buildBottomChromeBandRenderPlan({
@@ -175,7 +175,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
   it("uses the same font size for date and time rows", () => {
     const vw = 700;
     const ib = sampleInformationBar(vw);
-    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const typo = resolveBottomChromeTypography(vw);
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
       bottomBand: { x: 0, y: 0, width: vw, height: 64 },

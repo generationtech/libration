@@ -84,7 +84,7 @@ export function createCityPinsLayer(
     id: CITY_PINS_LAYER_ID,
     name: "Reference cities",
     enabled: true,
-    /** Above map, shading, and grid; below clock text overlays. */
+    /** Above map, shading, and grid. */
     zIndex: 12,
     type: "points",
     updatePolicy,

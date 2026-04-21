@@ -332,7 +332,7 @@ export interface DisplayChromeLayoutConfig {
   /** Lower-left HUD time row only: include seconds in the wall-clock string. Does not affect top band or pins. */
   bottomTimeShowSeconds?: boolean;
   /**
-   * Scales lower-left stack font sizes (date + clock rows) after viewport token resolution.
+   * Scales lower-left HUD readout font sizes (date + time rows) after viewport token resolution.
    * Same inclusive bounds as top-band hour-marker size multiplier; default 1 when omitted.
    */
   bottomTimeStackSizeMultiplier?: number;

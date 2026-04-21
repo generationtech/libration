@@ -13,17 +13,17 @@
 
 import type { BottomInformationBarState } from "../renderer/bottomChromeTypes.ts";
 
-/** Semantic payload for one canvas line in the lower-left HUD (legacy single-label bridge). */
-export type BottomChromeStackLineContent = {
+/** Semantic payload for one canvas line in the lower-left HUD (test bridge for label emission). */
+export type BottomHudReadoutLineContent = {
   label: string;
 };
 
 /** Builds readout content from bar state without changing copy rules. */
 export function bottomChromeReadoutContentFromInformationBar(
   ib: BottomInformationBarState,
-): { stackLines: BottomChromeStackLineContent[] } {
+): { readoutLines: BottomHudReadoutLineContent[] } {
   return {
-    stackLines: ib.leftTimeStackLines.map((row) => ({
+    readoutLines: ib.bottomHudReadoutLines.map((row) => ({
       label: row.text.length > 0 ? row.text : "\u00a0",
     })),
   };

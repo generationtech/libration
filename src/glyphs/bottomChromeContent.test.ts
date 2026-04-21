@@ -19,7 +19,7 @@ import { bottomChromeReadoutContentFromInformationBar } from "./bottomChromeCont
 function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInformationBarState {
   const layout = computeBottomChromeLayout(800);
   return {
-    leftTimeStackLines: [
+    bottomHudReadoutLines: [
       { role: "date", text: "April 7 2026" },
       { role: "time", text: "3:45:00 PM" },
     ],
@@ -29,17 +29,17 @@ function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInf
 }
 
 describe("bottomChromeReadoutContentFromInformationBar", () => {
-  it("maps each stack line to a label payload (no row labels)", () => {
+  it("maps each HUD row to a label payload (no row labels)", () => {
     const c = bottomChromeReadoutContentFromInformationBar(ibSample());
-    expect(c.stackLines).toHaveLength(2);
-    expect(c.stackLines[0]!.label).toBe("April 7 2026");
-    expect(c.stackLines[1]!.label).toBe("3:45:00 PM");
+    expect(c.readoutLines).toHaveLength(2);
+    expect(c.readoutLines[0]!.label).toBe("April 7 2026");
+    expect(c.readoutLines[1]!.label).toBe("3:45:00 PM");
   });
 
   it("uses nbsp for an empty line", () => {
     const c = bottomChromeReadoutContentFromInformationBar(
-      ibSample({ leftTimeStackLines: [{ role: "date", text: "" }] }),
+      ibSample({ bottomHudReadoutLines: [{ role: "date", text: "" }] }),
     );
-    expect(c.stackLines[0]!.label).toBe("\u00a0");
+    expect(c.readoutLines[0]!.label).toBe("\u00a0");
   });
 });

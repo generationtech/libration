@@ -12,15 +12,15 @@
  */
 
 /**
- * Lower-left bottom HUD: optional reference-city civil date and/or time (single zone, no labels).
- * The date row always uses the reference IANA zone; the time row follows global hour-label mode (12/24/UTC).
+ * Lower-left bottom HUD: optional reference-city civil date and/or time (single zone, no per-row labels).
+ * The date row uses the reference IANA zone; the time row follows global hour-label mode (12/24/UTC).
  */
 
 import type { DisplayChromeLayoutConfig } from "../config/appConfig.ts";
 import type { TopBandTimeMode } from "../config/appConfig.ts";
 import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat.ts";
-import type { BottomTimeStackLine } from "./bottomChromeTypes.ts";
+import type { BottomHudReadoutLine } from "./bottomChromeTypes.ts";
 
 /** Calendar row: resolved reference IANA zone’s civil date (reference city). */
 export function formatBottomHudDateLine(nowMs: number, referenceTimeZone: string): string {
@@ -37,7 +37,7 @@ export function formatBottomHudDateLine(nowMs: number, referenceTimeZone: string
   return `${month} ${day} ${year}`.trim();
 }
 
-export function buildBottomTimeStackLines(options: {
+export function buildBottomHudReadoutLines(options: {
   nowMs: number;
   referenceTimeZone: string;
   topBandMode: TopBandTimeMode;
@@ -45,7 +45,7 @@ export function buildBottomTimeStackLines(options: {
     DisplayChromeLayoutConfig,
     "bottomTimeStackShowDate" | "bottomTimeStackShowTime" | "bottomTimeShowSeconds"
   >;
-}): BottomTimeStackLine[] {
+}): BottomHudReadoutLine[] {
   const lay = options.bottomTimeStack ?? {};
   const showDate = lay.bottomTimeStackShowDate !== false;
   const showTime = lay.bottomTimeStackShowTime !== false;
@@ -53,7 +53,7 @@ export function buildBottomTimeStackLines(options: {
   const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
   const hour12 = dm === "12hr";
   const timeZoneForTimeRow = dm === "utc" ? "UTC" : options.referenceTimeZone;
-  const lines: BottomTimeStackLine[] = [];
+  const lines: BottomHudReadoutLine[] = [];
   if (showDate) {
     lines.push({
       role: "date",

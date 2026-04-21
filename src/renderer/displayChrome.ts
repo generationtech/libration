@@ -67,7 +67,7 @@ export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
 import { renderBottomChrome } from "./bottomChrome";
 import type { BottomInformationBarState } from "./bottomChromeTypes";
-import { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
+import { buildBottomHudReadoutLines } from "./bottomHudReadoutPlan";
 import { alignCrispLineX } from "./crispLines";
 import { BOTTOM_CHROME_STYLE } from "../config/bottomChromeStyle";
 import {
@@ -109,9 +109,8 @@ import {
 import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransitionPlan";
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
 import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
-export type { BottomBarDayCell, BottomInformationBarState, BottomTimeStackLine } from "./bottomChromeTypes";
-export { countBottomHudReadoutLines } from "./bottomChromeTypes";
-export { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
+export type { BottomBarDayCell, BottomHudReadoutLine, BottomInformationBarState } from "./bottomChromeTypes";
+export { buildBottomHudReadoutLines } from "./bottomHudReadoutPlan";
 
 export {
   TOP_BAND_DISK_WRAP_HALO_PAD_PX,
@@ -561,7 +560,7 @@ export function buildBottomInformationBarState(options: {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
   const mode = options.topBandMode ?? DEFAULT_DISPLAY_TIME_CONFIG.topBandMode;
   return {
-    leftTimeStackLines: buildBottomTimeStackLines({
+    bottomHudReadoutLines: buildBottomHudReadoutLines({
       nowMs: options.nowMs,
       referenceTimeZone: tz,
       topBandMode: mode,
@@ -1386,13 +1385,7 @@ export function buildUtcTopScaleLayout(
 
 function computeBandHeights(
   heightPx: number,
-  layout: Pick<
-    DisplayChromeLayoutConfig,
-    | "bottomInformationBarVisible"
-    | "bottomTimeStackShowDate"
-    | "bottomTimeStackShowTime"
-  >,
-  stackContext: { nowMs: number; referenceTimeZone: string; topBandMode: TopBandTimeMode },
+  layout: Pick<DisplayChromeLayoutConfig, "bottomInformationBarVisible">,
 ): { top: number; bottom: number } {
   const h = heightPx > 0 ? heightPx : 1;
   /** Taller top strip so the enlarged hour stack + denser tick rail fit without crowding the map. */
@@ -1400,14 +1393,7 @@ function computeBandHeights(
   if (layout.bottomInformationBarVisible === false) {
     return { top, bottom: 0 };
   }
-  const merged = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, ...layout };
-  const stackLines = buildBottomTimeStackLines({
-    nowMs: stackContext.nowMs,
-    referenceTimeZone: stackContext.referenceTimeZone,
-    topBandMode: stackContext.topBandMode,
-    bottomTimeStack: merged,
-  }).length;
-  const bottom = computeBottomChromeBandHeightPx(h, { timeStackLineCount: stackLines });
+  const bottom = computeBottomChromeBandHeightPx(h);
   return { top, bottom };
 }
 
@@ -1430,11 +1416,7 @@ export function buildDisplayChromeState(options: {
   };
   const w = Math.max(0, viewport.width);
   const h = Math.max(0, viewport.height);
-  const { top: baseTop, bottom } = computeBandHeights(h, layout, {
-    nowMs: time.now,
-    referenceTimeZone: resolved.referenceTimeZone,
-    topBandMode: resolved.topBandMode,
-  });
+  const { top: baseTop, bottom } = computeBandHeights(h, layout);
   const bottomOverlayMarginPx =
     layout.bottomInformationBarVisible === false
       ? 0
@@ -1875,7 +1857,7 @@ export function renderDisplayChrome(
       bottomBand,
       chrome.informationBar,
       resolveBottomReadoutTextFontAssetId(chrome.displayChromeLayout),
-      { timeStackSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(chrome.displayChromeLayout) },
+      { hudReadoutSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(chrome.displayChromeLayout) },
     );
   }
 

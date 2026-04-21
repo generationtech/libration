@@ -12,20 +12,12 @@
  */
 
 /**
- * Simple fixed-format time strings for overlay layers (readable, locale-agnostic for UTC).
+ * Fixed-format wall-clock strings for chrome, pins, and other readouts (locale-agnostic rules for explicit modes).
  *
  * Hour padding (user-facing clock strings):
  * - 12-hour: hour is **not** left-padded (`7:07:59 PM`, not `07:07:59 PM`); minutes/seconds stay two digits.
  * - 24-hour and UTC-style: hour is two digits (`07:07:59`, `22:04:05`).
  */
-
-const UTC_FMT = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "UTC",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
-});
 
 let localeHour12Preference: boolean | undefined;
 
@@ -47,21 +39,6 @@ export function localePrefersHour12(): boolean {
 /** {@link Intl.DateTimeFormat} `hour` option: unpadded hour in 12-hour mode, two-digit hour in 24-hour mode. */
 export function intlHourOptionForClock(hour12: boolean): "numeric" | "2-digit" {
   return hour12 ? "numeric" : "2-digit";
-}
-
-let localClockFormatter: Intl.DateTimeFormat | undefined;
-
-function getLocalClockFormatter(): Intl.DateTimeFormat {
-  if (localClockFormatter === undefined) {
-    const h12 = localePrefersHour12();
-    localClockFormatter = new Intl.DateTimeFormat(undefined, {
-      hour: intlHourOptionForClock(h12),
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: h12,
-    });
-  }
-  return localClockFormatter;
 }
 
 /** One formatter per (IANA zone, implicit locale clock); DST handled by the engine via {@link Intl.DateTimeFormat}. */
@@ -114,15 +91,6 @@ function wallClockInTimeZoneFormatterExplicit(
     ZONE_FMT_CACHE_EXPLICIT.set(key, fmt);
   }
   return fmt;
-}
-
-export function formatUtcClock(nowMs: number): string {
-  return `${UTC_FMT.format(new Date(nowMs))} UTC`;
-}
-
-/** Local wall clock for overlay layers: follows runtime locale 12/24 preference and hour-padding rules above. */
-export function formatLocalClock(nowMs: number): string {
-  return getLocalClockFormatter().format(new Date(nowMs));
 }
 
 /**

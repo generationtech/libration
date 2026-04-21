@@ -104,7 +104,7 @@ export function buildBottomChromeBandRenderPlan(options: {
     },
   ];
 
-  const n = options.ib.leftTimeStackLines.length;
+  const n = options.ib.bottomHudReadoutLines.length;
   const topFrac = 0.12;
   const botFrac = 0.9;
   const span = Math.max(0.05, botFrac - topFrac);
@@ -121,7 +121,7 @@ export function buildBottomChromeBandRenderPlan(options: {
   }
 
   for (let i = 0; i < n; i += 1) {
-    const row = options.ib.leftTimeStackLines[i]!;
+    const row = options.ib.bottomHudReadoutLines[i]!;
     const t = n === 1 ? 0.5 : i / Math.max(1, n - 1);
     const yFrac = topFrac + t * stackSpanFrac;
     const cy = by + bh * yFrac - sideLift;

@@ -29,7 +29,7 @@ export function createSublunarMarkerLayer(): Layer {
     id: SUBLUNAR_MARKER_ID,
     name: "Sub-lunar point",
     enabled: true,
-    /** Above subsolar (15) so both stay readable; below UTC/local clock overlays (20+). */
+    /** Above subsolar (15) so both stay readable. */
     zIndex: 16,
     type: "points",
     updatePolicy,

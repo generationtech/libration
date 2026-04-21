@@ -12,12 +12,12 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { buildBottomTimeStackLines, formatBottomHudDateLine } from "./bottomTimeStackPlan.ts";
+import { buildBottomHudReadoutLines, formatBottomHudDateLine } from "./bottomHudReadoutPlan.ts";
 
-describe("buildBottomTimeStackLines", () => {
+describe("buildBottomHudReadoutLines", () => {
   it("places reference-city date above reference-city time with no labels", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local24",
@@ -32,7 +32,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("omits date when bottomTimeStackShowDate is false", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local24",
@@ -44,7 +44,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("omits time when bottomTimeStackShowTime is false", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local24",
@@ -56,7 +56,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("uses reference IANA zone for date; utc24 formats the time row in UTC", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "America/New_York",
       topBandMode: "utc24",
@@ -71,7 +71,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("follows top-band 12-hour mode for the time row", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local12",
@@ -85,7 +85,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("includes seconds in the time string when bottomTimeShowSeconds is true", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local24",
@@ -100,7 +100,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("omits seconds from the time string when bottomTimeShowSeconds is false", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "UTC",
       topBandMode: "local24",
@@ -116,7 +116,7 @@ describe("buildBottomTimeStackLines", () => {
 
   it("utc24 still omits seconds when bottomTimeShowSeconds is false", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "America/New_York",
       topBandMode: "utc24",
@@ -128,34 +128,34 @@ describe("buildBottomTimeStackLines", () => {
   });
 });
 
-describe("buildBottomTimeStackLines hour-label mode (America/New_York)", () => {
+describe("buildBottomHudReadoutLines hour-label mode (America/New_York)", () => {
   const referenceTimeZone = "America/New_York";
   /** July 15 2024 07:35:30 UTC → 03:35:30 in New York (EDT). */
   const nowMs = Date.UTC(2024, 6, 15, 7, 35, 30);
 
   it("local12: time row is reference-city 12-hour wall clock", () => {
-    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "local12" });
+    const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "local12" });
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.text).toMatch(/\b(AM|PM)\b/i);
     expect(timeLine?.text).toMatch(/3:35:30/);
   });
 
   it("local24: time row is reference-city 24-hour wall clock", () => {
-    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "local24" });
+    const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "local24" });
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.text).toMatch(/03:35:30/);
     expect(timeLine?.text).not.toMatch(/\b(AM|PM)\b/i);
   });
 
   it("utc24: time row is UTC 24-hour for the same instant", () => {
-    const lines = buildBottomTimeStackLines({ nowMs, referenceTimeZone, topBandMode: "utc24" });
+    const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "utc24" });
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.text).toMatch(/07:35:30/);
   });
 
   it("utc24: date row stays on the reference-zone calendar when UTC calendar date differs", () => {
     const edgeMs = Date.UTC(2024, 0, 1, 4, 30, 0);
-    const lines = buildBottomTimeStackLines({
+    const lines = buildBottomHudReadoutLines({
       nowMs: edgeMs,
       referenceTimeZone,
       topBandMode: "utc24",

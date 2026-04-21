@@ -11,7 +11,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { DisplayChromeLayoutConfig } from "../config/appConfig.ts";
 import type { BottomChromeLayout } from "./bottomChromeLayout";
 
 /** Calendar cell fields for `formatDayLineSideReadout` in `dayLineBoundary.ts`. */
@@ -22,7 +21,7 @@ export interface BottomBarDayCell {
 }
 
 /** One row in the lower-left reference-city HUD (date above time when both are enabled). */
-export type BottomTimeStackLine =
+export type BottomHudReadoutLine =
   | { role: "date"; text: string }
   | { role: "time"; text: string };
 
@@ -32,20 +31,6 @@ export type BottomTimeStackLine =
  */
 export interface BottomInformationBarState {
   /** Top-to-bottom: optional date (reference zone), then optional time (mode-aware: reference wall clock or UTC). */
-  leftTimeStackLines: BottomTimeStackLine[];
+  bottomHudReadoutLines: BottomHudReadoutLine[];
   bottomChromeLayout: BottomChromeLayout;
-}
-
-/** Line count from visibility toggles only (matches {@link buildBottomTimeStackLines} when the bar is visible). */
-export function countBottomHudReadoutLines(
-  layout: Pick<DisplayChromeLayoutConfig, "bottomTimeStackShowDate" | "bottomTimeStackShowTime">,
-): number {
-  let n = 0;
-  if (layout.bottomTimeStackShowDate !== false) {
-    n += 1;
-  }
-  if (layout.bottomTimeStackShowTime !== false) {
-    n += 1;
-  }
-  return n;
 }

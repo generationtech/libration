@@ -258,7 +258,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(baseline);
   });
 
-  it("normalizeDisplayChromeLayout ignores legacy lower-left stack row keys (Local/Refer/UTC/seconds)", () => {
+  it("normalizeDisplayChromeLayout ignores legacy lower-left HUD row keys (Local/Refer/UTC/seconds)", () => {
     const baseline = normalizeDisplayChromeLayout({});
     expect(
       normalizeDisplayChromeLayout({

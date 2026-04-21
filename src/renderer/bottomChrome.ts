@@ -12,7 +12,7 @@
  */
 
 /**
- * Bottom instrument chrome render pass: resolved band plate plus lower-left stacked time readouts (floating overlay).
+ * Bottom instrument chrome render pass: resolved band plate plus lower-left reference-city date/time readouts (floating overlay).
  * Consumes only pre-derived {@link BottomInformationBarState}.
  */
 
@@ -31,9 +31,8 @@ type BottomChromeBandRect = { x: number; y: number; width: number; height: numbe
 /** Computes resolved typography sizes from viewport width (token-driven). */
 export function resolveBottomChromeTypography(
   viewportWidthPx: number,
-  _stackLineCount?: number,
-  /** Applied to all stack roles after token resolution (config-driven bottom stack size). */
-  timeStackSizeMultiplier: number = 1,
+  /** Applied after token resolution (config `bottomTimeStackSizeMultiplier`). */
+  hudReadoutSizeMultiplier: number = 1,
 ): {
   microLabelPx: number;
   primaryTimePx: number;
@@ -41,7 +40,7 @@ export function resolveBottomChromeTypography(
 } {
   const T = BOTTOM_CHROME_STYLE.typography;
   const vw = Math.max(0, viewportWidthPx);
-  const m = Number.isFinite(timeStackSizeMultiplier) && timeStackSizeMultiplier > 0 ? timeStackSizeMultiplier : 1;
+  const m = Number.isFinite(hudReadoutSizeMultiplier) && hudReadoutSizeMultiplier > 0 ? hudReadoutSizeMultiplier : 1;
   const stackPx =
     m * bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth);
   return {
@@ -49,26 +48,22 @@ export function resolveBottomChromeTypography(
       m *
       bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
     primaryTimePx: stackPx,
-    /** Kept for API compatibility; lower-left stack uses {@link primaryTimePx} for every row. */
+    /** Kept for API compatibility; lower-left HUD uses {@link primaryTimePx} for every row. */
     secondaryReadoutPx: stackPx,
   };
 }
 
-/** Full bottom chrome draw: band extent rect (default transparent plate) then floating lower-left stack readouts. */
+/** Full bottom chrome draw: band extent rect (default transparent plate) then floating lower-left readouts. */
 export function renderBottomChrome(
   ctx: CanvasRenderingContext2D,
   viewport: Viewport,
   bottomBand: BottomChromeBandRect,
   ib: BottomInformationBarState,
   productDefaultFontAssetId: FontAssetId,
-  options?: { timeStackSizeMultiplier?: number },
+  options?: { hudReadoutSizeMultiplier?: number },
 ): void {
   const vw = viewport.width;
-  const typo = resolveBottomChromeTypography(
-    vw,
-    ib.leftTimeStackLines.length,
-    options?.timeStackSizeMultiplier ?? 1,
-  );
+  const typo = resolveBottomChromeTypography(vw, options?.hudReadoutSizeMultiplier ?? 1);
   const plan = buildBottomChromeBandRenderPlan({
     viewportWidthPx: vw,
     bottomBand,

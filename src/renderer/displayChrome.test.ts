@@ -36,7 +36,6 @@ import { TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "../config/topChromeS
 import {
   buildBottomInformationBarState,
   buildDisplayChromeState,
-  countBottomHudReadoutLines,
   buildUtcTopScaleLayout,
   computeUtcCircleMarkerRadius,
   computeUtcTopScaleRowMetrics,
@@ -1026,11 +1025,11 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
     });
-    expect(ib.leftTimeStackLines).toHaveLength(2);
-    expect(ib.leftTimeStackLines[0]!).toEqual({ role: "date", text: "January 1 2024" });
-    expect(ib.leftTimeStackLines[1]!.role).toBe("time");
-    if (ib.leftTimeStackLines[1]!.role === "time") {
-      expect(ib.leftTimeStackLines[1]!.text).toMatch(/00:00:00/);
+    expect(ib.bottomHudReadoutLines).toHaveLength(2);
+    expect(ib.bottomHudReadoutLines[0]!).toEqual({ role: "date", text: "January 1 2024" });
+    expect(ib.bottomHudReadoutLines[1]!.role).toBe("time");
+    if (ib.bottomHudReadoutLines[1]!.role === "time") {
+      expect(ib.bottomHudReadoutLines[1]!.text).toMatch(/00:00:00/);
     }
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
   });
@@ -1047,8 +1046,8 @@ describe("buildBottomInformationBarState", () => {
         bottomTimeStackShowTime: true,
       },
     });
-    expect(ib.leftTimeStackLines).toHaveLength(1);
-    expect(ib.leftTimeStackLines[0]!.role).toBe("time");
+    expect(ib.bottomHudReadoutLines).toHaveLength(1);
+    expect(ib.bottomHudReadoutLines[0]!.role).toBe("time");
   });
 
   it("omits time when disabled and keeps a single date row", () => {
@@ -1063,8 +1062,8 @@ describe("buildBottomInformationBarState", () => {
         bottomTimeStackShowTime: false,
       },
     });
-    expect(ib.leftTimeStackLines).toHaveLength(1);
-    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
+    expect(ib.bottomHudReadoutLines).toHaveLength(1);
+    expect(ib.bottomHudReadoutLines[0]!.role).toBe("date");
   });
 
   it("uses 24-hour style when top band is local24 or utc24", () => {
@@ -1076,7 +1075,7 @@ describe("buildBottomInformationBarState", () => {
         chromeTimeZone: "UTC",
         topBandMode,
       });
-      const timeRow = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+      const timeRow = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
       expect(timeRow.role).toBe("time");
       const wall = timeRow.role === "time" ? timeRow.text : "";
       expect(wall).toMatch(/14:05:06/);
@@ -1092,12 +1091,12 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    const timeRow = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    const timeRow = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
     expect(timeRow.role).toBe("time");
     if (timeRow.role === "time") {
       expect(timeRow.text).toMatch(/14:05:06/);
     }
-    expect(ib.leftTimeStackLines.filter((l) => l.role === "time")).toHaveLength(1);
+    expect(ib.bottomHudReadoutLines.filter((l) => l.role === "time")).toHaveLength(1);
   });
 
   it("uses 12-hour wall clock when top band is local12", () => {
@@ -1108,7 +1107,7 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    const wall = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    const wall = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
     expect(wall.role).toBe("time");
     if (wall.role === "time") {
       expect(wall.text).toMatch(/\b(AM|PM)\b/i);
@@ -1124,7 +1123,7 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    const row = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    const row = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
     expect(row.role).toBe("time");
     if (row.role === "time") {
       expect(row.text).not.toMatch(/^0\d:/);
@@ -1140,9 +1139,9 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
-    if (ib.leftTimeStackLines[0]!.role === "date") {
-      expect(ib.leftTimeStackLines[0]!.text).toMatch(/December 31 2023/);
+    expect(ib.bottomHudReadoutLines[0]!.role).toBe("date");
+    if (ib.bottomHudReadoutLines[0]!.role === "date") {
+      expect(ib.bottomHudReadoutLines[0]!.text).toMatch(/December 31 2023/);
     }
   });
 
@@ -1154,7 +1153,7 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
     });
-    const timeLine = ib.leftTimeStackLines.find((l) => l.role === "time");
+    const timeLine = ib.bottomHudReadoutLines.find((l) => l.role === "time");
     expect(timeLine?.role).toBe("time");
     if (timeLine?.role === "time") {
       expect(timeLine.text).toMatch(/\d{1,2}:\d{2}:\d{2}/);
@@ -1170,29 +1169,12 @@ describe("buildBottomInformationBarState", () => {
       topBandMode: "local24",
       bottomTimeStack: { bottomTimeShowSeconds: false },
     });
-    const timeLine = ib.leftTimeStackLines.find((l) => l.role === "time");
+    const timeLine = ib.bottomHudReadoutLines.find((l) => l.role === "time");
     expect(timeLine?.role).toBe("time");
     if (timeLine?.role === "time") {
       expect(timeLine.text).toMatch(/14:05\b/);
       expect(timeLine.text).not.toMatch(/14:05:06/);
     }
-  });
-});
-
-describe("countBottomHudReadoutLines", () => {
-  it("matches visibility toggles", () => {
-    expect(
-      countBottomHudReadoutLines({
-        bottomTimeStackShowDate: true,
-        bottomTimeStackShowTime: true,
-      }),
-    ).toBe(2);
-    expect(
-      countBottomHudReadoutLines({
-        bottomTimeStackShowDate: false,
-        bottomTimeStackShowTime: true,
-      }),
-    ).toBe(1);
   });
 });
 
@@ -1220,11 +1202,7 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.bottomBand.width).toBe(1920);
     expect(chrome.bottomBand.y + chrome.bottomBand.height).toBe(1080 - margin);
     expect(margin).toBeGreaterThanOrEqual(36);
-    expect(chrome.bottomBand.height).toBe(
-      computeBottomChromeBandHeightPx(1080, {
-        timeStackLineCount: chrome.informationBar.leftTimeStackLines.length,
-      }),
-    );
+    expect(chrome.bottomBand.height).toBe(computeBottomChromeBandHeightPx(1080));
   });
 
   it("omits circle-band height for hour-marker entries when the indicator entries area is disabled", () => {
@@ -1273,7 +1251,7 @@ describe("buildDisplayChromeState", () => {
         chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
-    expect(chrome.informationBar.leftTimeStackLines[0]?.text).toBe("January 1 2024");
+    expect(chrome.informationBar.bottomHudReadoutLines[0]?.text).toBe("January 1 2024");
     expect(chrome.informationBar.bottomChromeLayout.viewportWidthPx).toBe(800);
     expect(chrome.frameNumber).toBe(1);
   });
@@ -1298,7 +1276,7 @@ describe("buildDisplayChromeState", () => {
       topBandMode: dt.topBandMode,
       bottomTimeStack: chrome.displayChromeLayout,
     });
-    expect(chrome.informationBar.leftTimeStackLines).toEqual(ib.leftTimeStackLines);
+    expect(chrome.informationBar.bottomHudReadoutLines).toEqual(ib.bottomHudReadoutLines);
   });
 
   it("aligns bottom reference readout and tape civil projection when system civil + fixedCity Cairo", () => {
@@ -1327,7 +1305,7 @@ describe("buildDisplayChromeState", () => {
       topBandMode: displayTime.topBandMode,
       bottomTimeStack: chrome.displayChromeLayout,
     });
-    expect(chrome.informationBar.leftTimeStackLines).toEqual(ib.leftTimeStackLines);
+    expect(chrome.informationBar.bottomHudReadoutLines).toEqual(ib.bottomHudReadoutLines);
     expect(chrome.utcTopScale.referenceFractionalHour).toBeCloseTo(
       referenceFractionalHourOfDay(t, "Africa/Cairo"),
       10,

@@ -28,7 +28,7 @@ export function createSubsolarMarkerLayer(): Layer {
     id: SUBSOLAR_MARKER_ID,
     name: "Subsolar point",
     enabled: true,
-    /** Above base map, shading, grid, and city pins; below UTC/local overlays. */
+    /** Above base map, shading, grid, and city pins. */
     zIndex: 15,
     type: "points",
     updatePolicy,

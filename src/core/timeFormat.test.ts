@@ -12,12 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import {
-  formatUtcClock,
-  formatWallClockInTimeZone,
-  intlHourOptionForClock,
-  localePrefersHour12,
-} from "./timeFormat";
+import { formatWallClockInTimeZone, intlHourOptionForClock, localePrefersHour12 } from "./timeFormat";
 
 describe("intlHourOptionForClock", () => {
   it("uses numeric hours for 12-hour mode and two-digit hours for 24-hour mode", () => {
@@ -63,9 +58,3 @@ describe("formatWallClockInTimeZone hour padding", () => {
   });
 });
 
-describe("formatUtcClock (UTC / 24-hour-style padding)", () => {
-  it("pads the hour like 24-hour clock (e.g. 22:04:05 UTC)", () => {
-    const t = Date.UTC(2026, 6, 10, 22, 4, 5);
-    expect(formatUtcClock(t)).toMatch(/^22:04:05\b/);
-  });
-});
