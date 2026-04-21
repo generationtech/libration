@@ -309,6 +309,13 @@ export type NoonMidnightEmitArgs = {
     role: "noon" | "midnight";
     expressionMode: HourMarkersNoonMidnightExpressionMode;
   };
+  /**
+   * Optional explicit 24-hour anchor emphasis intent for non-civil focused cases (for example UTC-focused current-hour emphasis).
+   * When present and noon/midnight intent is inactive, this uses the same native 24-hour anchor highlight path.
+   */
+  forcedTwentyFourHourAnchor?: {
+    boxedNumberBoxColor: string;
+  };
 };
 
 function typographyOverridesFor(args: NoonMidnightEmitArgs) {
@@ -376,10 +383,15 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
       }
     : noonMidnightActiveIntent(args.customization, args.structuralHour0To23);
   if (!intent.active) {
-    const anchor24 = twentyFourHourAnchorActiveIntent(
-      args.effectiveTopBandHourMarkers.twentyFourHourAnchorCustomization,
-      args.structuralHour0To23,
-    );
+    const anchor24 = args.forcedTwentyFourHourAnchor !== undefined
+      ? {
+          active: true as const,
+          boxedNumberBoxColor: args.forcedTwentyFourHourAnchor.boxedNumberBoxColor,
+        }
+      : twentyFourHourAnchorActiveIntent(
+          args.effectiveTopBandHourMarkers.twentyFourHourAnchorCustomization,
+          args.structuralHour0To23,
+        );
     if (!anchor24.active || args.realizationKind !== "text") {
       return false;
     }

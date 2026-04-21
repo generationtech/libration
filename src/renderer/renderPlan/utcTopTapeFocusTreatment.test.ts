@@ -16,6 +16,8 @@ import {
   buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
   utcFocusAnnotationCenterY,
+  utcFocusAnnotationPreferredX,
+  UTC_FOCUS_ANNOTATION_HOUR_OFFSET,
   UTC_FOCUS_HALF_WINDOW_HOURS,
   UTC_FOCUS_WINDOW_HOURS,
   utcFocusAnnotationSide,
@@ -68,5 +70,22 @@ describe("utcTopTapeFocusTreatment", () => {
 
   it("centers annotation vertically on the focused tape numeral band", () => {
     expect(utcFocusAnnotationCenterY(30, 40)).toBe(50);
+  });
+
+  it("anchors annotation near +/-2 hour markers from focused hour", () => {
+    expect(
+      utcFocusAnnotationPreferredX({
+        focusedHourX: 400,
+        hourSpacingPx: 30,
+        annotationSide: "right",
+      }),
+    ).toBe(400 + 30 * UTC_FOCUS_ANNOTATION_HOUR_OFFSET);
+    expect(
+      utcFocusAnnotationPreferredX({
+        focusedHourX: 400,
+        hourSpacingPx: 30,
+        annotationSide: "left",
+      }),
+    ).toBe(400 - 30 * UTC_FOCUS_ANNOTATION_HOUR_OFFSET);
   });
 });

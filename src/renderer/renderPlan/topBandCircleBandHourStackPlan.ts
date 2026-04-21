@@ -25,7 +25,6 @@
 import type { EffectiveTopBandHourMarkerSelection, TopBandTimeMode } from "../../config/appConfig.ts";
 import { buildSemanticTopBandHourMarkers } from "../../config/topBandHourMarkersSemanticPlan.ts";
 import type { EffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersTypes.ts";
-import type { HourMarkersNoonMidnightExpressionMode } from "../../config/topBandHourMarkersTypes.ts";
 import {
   layoutSemanticTopBandAnalogClockMarkers,
   layoutSemanticTopBandHourMarkers,
@@ -60,8 +59,8 @@ import {
   buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
   utcFocusAnnotationCenterY,
+  utcFocusAnnotationPreferredX,
   UTC_FOCUS_ANNOTATION_TEXT,
-  UTC_FOCUS_HALF_WINDOW_HOURS,
   utcFocusAnnotationSide,
   utcFocusOpacityAtX,
 } from "./utcTopTapeFocusTreatment.ts";
@@ -121,13 +120,17 @@ function utcFocusCoreMarkerIndices(
   return out;
 }
 
-function utcFocusForcedEmphasisExpressionMode(
-  effectiveMarkers: EffectiveTopBandHourMarkers,
-): HourMarkersNoonMidnightExpressionMode {
-  if (effectiveMarkers.noonMidnightCustomization.enabled) {
-    return effectiveMarkers.noonMidnightCustomization.expressionMode;
+function utcFocusForcedAnchorColor(effectiveMarkers: EffectiveTopBandHourMarkers, markerColor: string): string {
+  if (effectiveMarkers.twentyFourHourAnchorCustomization.enabled) {
+    return effectiveMarkers.twentyFourHourAnchorCustomization.boxedNumberBoxColor;
   }
-  return "boxedNumber";
+  if (
+    effectiveMarkers.noonMidnightCustomization.enabled &&
+    effectiveMarkers.noonMidnightCustomization.expressionMode === "boxedNumber"
+  ) {
+    return effectiveMarkers.noonMidnightCustomization.boxedNumberBoxColor;
+  }
+  return markerColor;
 }
 
 /**
@@ -462,24 +465,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const hourSpec = hourMarkerRepresentationSpecForTopBandEffectiveSelection(topBandSel);
     const typographyOverrides =
       resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection(topBandSel);
-    const forcedExpressionMode = utcFocusForcedEmphasisExpressionMode(effectiveMarkers);
-    const forcedCustomization =
-      forcedExpressionMode === "boxedNumber"
-        ? {
-            enabled: true as const,
-            expressionMode: "boxedNumber" as const,
-            boxedNumberBoxColor:
-              effectiveMarkers.noonMidnightCustomization.enabled &&
-                effectiveMarkers.noonMidnightCustomization.expressionMode === "boxedNumber"
-                ? effectiveMarkers.noonMidnightCustomization.boxedNumberBoxColor
-                : effectiveMarkers.twentyFourHourAnchorCustomization.enabled
-                ? effectiveMarkers.twentyFourHourAnchorCustomization.boxedNumberBoxColor
-                : markerColor,
-          }
-        : {
-            enabled: true as const,
-            expressionMode: forcedExpressionMode,
-          };
+    const forcedAnchorColor = utcFocusForcedAnchorColor(effectiveMarkers, markerColor);
     for (let i = 0; i < markers.length; i += 1) {
       const m = markers[i]!;
       const cx = m.centerX;
@@ -500,8 +486,8 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
         const handled = tryEmitNoonMidnightIndicatorDiskContent(
           {
             realizationKind: "text",
-            customization: forcedCustomization,
-            forcedIntent: { role: "noon", expressionMode: forcedExpressionMode },
+            customization: { enabled: false },
+            forcedTwentyFourHourAnchor: { boxedNumberBoxColor: forcedAnchorColor },
             structuralHour0To23: m.structuralHour0To23,
             tapeHourLabel: m.currentHourLabel,
             displayLabel: m.currentHourLabel,
@@ -548,10 +534,12 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const annotationSizePx = markerContentSizePx;
     const marginPx = Math.max(8, annotationSizePx * 0.5);
     const estimatedTextWidthPx = UTC_FOCUS_ANNOTATION_TEXT.length * annotationSizePx * 0.56;
-    const preferredX =
-      annotationSide === "right"
-        ? utcFocusWindow.readPointX + hourSpacingPx * (UTC_FOCUS_HALF_WINDOW_HOURS + 0.7)
-        : utcFocusWindow.readPointX - hourSpacingPx * (UTC_FOCUS_HALF_WINDOW_HOURS + 0.7);
+    const focusedHourX = focusedIndex >= 0 ? markers[focusedIndex]!.centerX : utcFocusWindow.readPointX;
+    const preferredX = utcFocusAnnotationPreferredX({
+      focusedHourX,
+      hourSpacingPx,
+      annotationSide,
+    });
     const annotationX = clampUtcFocusAnnotationX({
       preferredX,
       annotationSide,

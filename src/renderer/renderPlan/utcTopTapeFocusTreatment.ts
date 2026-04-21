@@ -16,6 +16,7 @@ export const UTC_FOCUS_HALF_WINDOW_HOURS = UTC_FOCUS_WINDOW_HOURS * 0.5;
 export const UTC_FOCUS_FULL_VISIBILITY_HALF_HOURS = 1;
 export const UTC_FOCUS_ANNOTATION_TEXT = "UTC Global Time";
 export const UTC_FOCUS_DEFAULT_CENTERED_ANNOTATION_SIDE = "right" as const;
+export const UTC_FOCUS_ANNOTATION_HOUR_OFFSET = 2;
 
 export type UtcFocusAnnotationSide = "left" | "right";
 
@@ -90,4 +91,17 @@ export function clampUtcFocusAnnotationX(options: {
 
 export function utcFocusAnnotationCenterY(yDiskRow0: number, diskBandH: number): number {
   return yDiskRow0 + diskBandH * 0.5;
+}
+
+export function utcFocusAnnotationPreferredX(options: {
+  focusedHourX: number;
+  hourSpacingPx: number;
+  annotationSide: UtcFocusAnnotationSide;
+}): number {
+  const spacing = Math.max(0, options.hourSpacingPx);
+  const offsetPx = spacing * UTC_FOCUS_ANNOTATION_HOUR_OFFSET;
+  if (options.annotationSide === "right") {
+    return options.focusedHourX + offsetPx;
+  }
+  return options.focusedHourX - offsetPx;
 }

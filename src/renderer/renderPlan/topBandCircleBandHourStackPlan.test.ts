@@ -40,13 +40,16 @@ import {
   type TopBandInDiskHourMarkerSemanticRenderPath,
 } from "./topBandCircleBandHourStackPlan";
 import {
-  utcFocusAnnotationCenterY,
-  UTC_FOCUS_HALF_WINDOW_HOURS,
-} from "./utcTopTapeFocusTreatment.ts";
+  boxedNumberHighlightHalfExtentsFromMarkerContentBox,
+  noonHighlighted12SwashGeometryFromMarkerContentBox,
+  tapeNumeralUsesNoonStyleStripHighlight,
+} from "../noonMidnightIndicatorRenderPlan.ts";
 import {
-  buildFullUtcTopBandHourDiskFixture,
-  effectiveTopBandHourMarkersForLayout,
-} from "./topBandInDiskHourMarkers.test-utils.ts";
+  utcFocusAnnotationCenterY,
+  utcFocusAnnotationPreferredX,
+  clampUtcFocusAnnotationX,
+} from "./utcTopTapeFocusTreatment.ts";
+import { buildFullUtcTopBandHourDiskFixture, effectiveTopBandHourMarkersForLayout } from "./topBandInDiskHourMarkers.test-utils.ts";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
 
@@ -413,14 +416,46 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     expect(rightAnno?.kind).toBe("text");
     expect(centerAnno?.kind).toBe("text");
     if (leftAnno?.kind === "text" && rightAnno?.kind === "text" && centerAnno?.kind === "text") {
-      const hourSpacing = 960 / 24;
-      expect(leftAnno.x).toBeGreaterThan(200 + hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
-      expect(rightAnno.x).toBeLessThan(760 - hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
+      const hourSpacing = f.viewportWidthPx / 24;
+      const estimatedTextWidthPx = "UTC Global Time".length * f.diskLabelSizePx * 0.56;
+      const marginPx = Math.max(8, f.diskLabelSizePx * 0.5);
+      const focusedLeftMarkerX = f.markers.reduce((best, m) => {
+        const d = Math.abs(m.centerX - 200);
+        return d < best.dist ? { x: m.centerX, dist: d } : best;
+      }, { x: f.markers[0]!.centerX, dist: Number.POSITIVE_INFINITY }).x;
+      const focusedRightMarkerX = f.markers.reduce((best, m) => {
+        const d = Math.abs(m.centerX - 760);
+        return d < best.dist ? { x: m.centerX, dist: d } : best;
+      }, { x: f.markers[0]!.centerX, dist: Number.POSITIVE_INFINITY }).x;
+      const expectedLeft = clampUtcFocusAnnotationX({
+        preferredX: utcFocusAnnotationPreferredX({
+          focusedHourX: focusedLeftMarkerX,
+          hourSpacingPx: hourSpacing,
+          annotationSide: "right",
+        }),
+        annotationSide: "right",
+        estimatedTextWidthPx,
+        viewportWidthPx: f.viewportWidthPx,
+        marginPx,
+      });
+      const expectedRight = clampUtcFocusAnnotationX({
+        preferredX: utcFocusAnnotationPreferredX({
+          focusedHourX: focusedRightMarkerX,
+          hourSpacingPx: hourSpacing,
+          annotationSide: "left",
+        }),
+        annotationSide: "left",
+        estimatedTextWidthPx,
+        viewportWidthPx: f.viewportWidthPx,
+        marginPx,
+      });
+      expect(leftAnno.x).toBeCloseTo(expectedLeft, 4);
+      expect(rightAnno.x).toBeCloseTo(expectedRight, 4);
       expect(centerAnno.x).toBeGreaterThan(480);
     }
   });
 
-  it("highlights only the current UTC hour at the read-point anchor via native emphasized-marker path", () => {
+  it("highlights only the current UTC hour using native emphasized-marker footprint geometry", () => {
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
     const readPointX = 480;
     const plan = buildStackFromFixture(f, {
@@ -441,6 +476,24 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     if (highlight?.kind === "rect") {
       const highlightCenterX = highlight.x + highlight.width * 0.5;
       expect(Math.abs(highlightCenterX - readPointX)).toBeLessThanOrEqual(960 / 24);
+      const focusedMarker = f.markers.reduce((best, m) => {
+        const d = Math.abs(m.centerX - readPointX);
+        return d < best.dist ? { marker: m, dist: d } : best;
+      }, { marker: f.markers[0]!, dist: Number.POSITIVE_INFINITY }).marker;
+      const expected = tapeNumeralUsesNoonStyleStripHighlight(focusedMarker.currentHourLabel)
+        ? (() => {
+            const g = noonHighlighted12SwashGeometryFromMarkerContentBox(f.diskLabelSizePx);
+            return { width: g.halfW * 2, height: g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor };
+          })()
+        : (() => {
+            const g = boxedNumberHighlightHalfExtentsFromMarkerContentBox(
+              f.diskLabelSizePx,
+              focusedMarker.currentHourLabel,
+            );
+            return { width: g.halfW * 2, height: g.halfH * 2 };
+          })();
+      expect(highlight.width).toBeCloseTo(expected.width, 5);
+      expect(highlight.height).toBeCloseTo(expected.height, 5);
       const highlightedText = plan.items.find(
         (i) =>
           i.kind === "text" &&
@@ -470,7 +523,8 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(annotation.font.assetId).toBe(hourText.font.assetId);
       expect(annotation.font.sizePx).toBeCloseTo(hourText.font.sizePx, 5);
       expect(annotation.y).toBeCloseTo(utcFocusAnnotationCenterY(10 + f.circleStack.padTopPx + f.circleStack.upperNumeralH + f.circleStack.gapNumeralToDiskPx, f.circleStack.diskBandH), 5);
-      expect(annotation.x).toBeLessThan(readPointX - (960 / 24) * UTC_FOCUS_HALF_WINDOW_HOURS);
+      expect(annotation.x).toBeLessThan(readPointX);
+      expect(annotation.x).toBeGreaterThan(0);
     }
   });
 
