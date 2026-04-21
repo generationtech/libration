@@ -16,6 +16,10 @@ export const UTC_FOCUS_HALF_WINDOW_HOURS = UTC_FOCUS_WINDOW_HOURS * 0.5;
 export const UTC_FOCUS_FULL_VISIBILITY_HALF_HOURS = 1;
 export const UTC_FOCUS_ANNOTATION_TEXT = "UTC Global Time";
 export const UTC_FOCUS_DEFAULT_CENTERED_ANNOTATION_SIDE = "right" as const;
+export const UTC_FOCUS_ANNOTATION_SIZE_MUL_OF_MARKER_ANNOTATION = 0.8;
+export const UTC_FOCUS_ANNOTATION_MIN_SIZE_PX = 9;
+export const UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_WIDTH_HOURS = 0.78;
+export const UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND = 0.8;
 
 export type UtcFocusAnnotationSide = "left" | "right";
 
@@ -86,4 +90,13 @@ export function clampUtcFocusAnnotationX(options: {
     return Math.min(maxCenter, Math.max(preferred, minCenter));
   }
   return Math.max(minCenter, Math.min(preferred, maxCenter));
+}
+
+export function utcFocusAnnotationSizePx(labelSizePx: number, markerAnnotationSizeFracOfDiskLabel: number): number {
+  const base = Math.max(0, labelSizePx) * Math.max(0, markerAnnotationSizeFracOfDiskLabel);
+  return Math.max(UTC_FOCUS_ANNOTATION_MIN_SIZE_PX, base * UTC_FOCUS_ANNOTATION_SIZE_MUL_OF_MARKER_ANNOTATION);
+}
+
+export function utcFocusAnnotationCenterY(yDiskRow0: number, diskBandH: number): number {
+  return yDiskRow0 + diskBandH * 0.5;
 }

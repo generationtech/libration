@@ -15,6 +15,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
+  utcFocusAnnotationCenterY,
+  utcFocusAnnotationSizePx,
+  UTC_FOCUS_ANNOTATION_MIN_SIZE_PX,
+  UTC_FOCUS_ANNOTATION_SIZE_MUL_OF_MARKER_ANNOTATION,
+  UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND,
+  UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_WIDTH_HOURS,
   UTC_FOCUS_HALF_WINDOW_HOURS,
   UTC_FOCUS_WINDOW_HOURS,
   utcFocusAnnotationSide,
@@ -63,5 +69,21 @@ describe("utcTopTapeFocusTreatment", () => {
         marginPx: 12,
       }),
     ).toBeGreaterThan(0);
+  });
+
+  it("scales annotation size down from marker annotation baseline with a floor", () => {
+    const scaled = utcFocusAnnotationSizePx(20, 0.6);
+    expect(scaled).toBeCloseTo(20 * 0.6 * UTC_FOCUS_ANNOTATION_SIZE_MUL_OF_MARKER_ANNOTATION, 5);
+    expect(utcFocusAnnotationSizePx(1, 0.1)).toBe(UTC_FOCUS_ANNOTATION_MIN_SIZE_PX);
+  });
+
+  it("centers annotation vertically on the focused tape numeral band", () => {
+    expect(utcFocusAnnotationCenterY(30, 40)).toBe(50);
+  });
+
+  it("defines a sub-hour-width highlight plate with in-band height", () => {
+    expect(UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_WIDTH_HOURS).toBeLessThan(1);
+    expect(UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND).toBeLessThan(1);
+    expect(UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND).toBeGreaterThan(0.5);
   });
 });

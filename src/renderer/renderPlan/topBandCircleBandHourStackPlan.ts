@@ -52,7 +52,11 @@ import { resolveTopBandTextDiskRowIntrinsicContentHeightPxForProductPath } from 
 import {
   buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
+  utcFocusAnnotationCenterY,
+  utcFocusAnnotationSizePx,
   UTC_FOCUS_ANNOTATION_TEXT,
+  UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND,
+  UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_WIDTH_HOURS,
   UTC_FOCUS_HALF_WINDOW_HOURS,
   utcFocusAnnotationSide,
   utcFocusOpacityAtX,
@@ -396,6 +400,23 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   }
 
   if (inDiskPath.kind === "semanticTextHourDisks" && utcFocusedTextMode) {
+    let focusedMarker: (typeof markers)[number] | undefined;
+    let focusedMarkerDistance = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < markers.length; i += 1) {
+      const m = markers[i]!;
+      const cx = m.centerX;
+      if (cx < 0 || cx > vw) {
+        continue;
+      }
+      if (utcFocusOpacityAtX(utcFocusWindow, cx) <= 0.001) {
+        continue;
+      }
+      const distance = Math.abs(cx - utcFocusWindow.readPointX);
+      if (distance < focusedMarkerDistance) {
+        focusedMarkerDistance = distance;
+        focusedMarker = m;
+      }
+    }
     for (let i = 0; i < markers.length; i += 1) {
       const m = markers[i]!;
       const cx = m.centerX;
@@ -405,6 +426,23 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       const opacity = utcFocusOpacityAtX(utcFocusWindow, cx);
       if (opacity <= 0.001) {
         continue;
+      }
+      if (focusedMarker !== undefined && m === focusedMarker) {
+        const highlightW = hourSpacingPx * UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_WIDTH_HOURS;
+        const highlightH = Math.max(
+          markerContentSizePx * 1.3,
+          diskBandH * UTC_FOCUS_CURRENT_HOUR_HIGHLIGHT_HEIGHT_FRAC_OF_DISK_BAND,
+        );
+        items.push({
+          kind: "rect",
+          x: cx - highlightW * 0.5,
+          y: yDiskRow0 + (diskBandH - highlightH) * 0.5,
+          width: highlightW,
+          height: highlightH,
+          fill: "rgba(235, 246, 255, 0.2)",
+          stroke: st.ticks.presentTimeStroke,
+          strokeWidthPx: 1,
+        });
       }
       items.push({
         kind: "text",
@@ -427,7 +465,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     }
     const viewportCenterX = vw * 0.5;
     const annotationSide = utcFocusAnnotationSide(utcFocusWindow.readPointX, viewportCenterX);
-    const annotationSizePx = Math.max(10, labelSize * st.markerAnnotation.sizeFracOfDiskLabel);
+    const annotationSizePx = utcFocusAnnotationSizePx(labelSize, st.markerAnnotation.sizeFracOfDiskLabel);
     const marginPx = Math.max(8, annotationSizePx * 0.5);
     const estimatedTextWidthPx = UTC_FOCUS_ANNOTATION_TEXT.length * annotationSizePx * 0.56;
     const preferredX =
@@ -444,7 +482,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     items.push({
       kind: "text",
       x: annotationX,
-      y: yUpperRow0 + Math.max(circleStack.upperNumeralH * 0.5, annotationSizePx * 0.65),
+      y: utcFocusAnnotationCenterY(yDiskRow0, diskBandH),
       text: UTC_FOCUS_ANNOTATION_TEXT,
       fill: st.markerAnnotation.color,
       font: {

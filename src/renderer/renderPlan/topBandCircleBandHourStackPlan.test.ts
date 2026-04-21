@@ -39,7 +39,11 @@ import {
   resolveTopBandInDiskHourMarkerSemanticPath,
   type TopBandInDiskHourMarkerSemanticRenderPath,
 } from "./topBandCircleBandHourStackPlan";
-import { UTC_FOCUS_HALF_WINDOW_HOURS } from "./utcTopTapeFocusTreatment.ts";
+import {
+  utcFocusAnnotationCenterY,
+  utcFocusAnnotationSizePx,
+  UTC_FOCUS_HALF_WINDOW_HOURS,
+} from "./utcTopTapeFocusTreatment.ts";
 import {
   buildFullUtcTopBandHourDiskFixture,
   effectiveTopBandHourMarkersForLayout,
@@ -410,6 +414,64 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       expect(leftAnno.x).toBeGreaterThan(200 + hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
       expect(rightAnno.x).toBeLessThan(760 - hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
       expect(centerAnno.x).toBeGreaterThan(480);
+    }
+  });
+
+  it("highlights only the current UTC hour at the read-point anchor", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const readPointX = 480;
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX,
+    });
+    const highlightRects = plan.items.filter(
+      (i) =>
+        i.kind === "rect" &&
+        i.stroke === TOP_CHROME_STYLE.ticks.presentTimeStroke &&
+        i.strokeWidthPx === 1 &&
+        i.fill === "rgba(235, 246, 255, 0.2)",
+    );
+    expect(highlightRects).toHaveLength(1);
+    const highlight = highlightRects[0];
+    expect(highlight?.kind).toBe("rect");
+    if (highlight?.kind === "rect") {
+      const highlightCenterX = highlight.x + highlight.width * 0.5;
+      expect(Math.abs(highlightCenterX - readPointX)).toBeLessThanOrEqual(960 / 24);
+      const highlightedText = plan.items.find(
+        (i) =>
+          i.kind === "text" &&
+          Math.abs(i.x - highlightCenterX) < 0.001 &&
+          Math.abs(i.y - (highlight.y + highlight.height * 0.5)) < 0.001,
+      );
+      expect(highlightedText?.kind).toBe("text");
+    }
+  });
+
+  it("uses a smaller centered UTC annotation style while preserving side-selection", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const readPointX = 760;
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX,
+    });
+    const annotation = plan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
+    const hourText = plan.items.find(
+      (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.font.assetId === SEL_TEXT_DEFAULT.fontAssetId,
+    );
+    expect(annotation?.kind).toBe("text");
+    expect(hourText?.kind).toBe("text");
+    if (annotation?.kind === "text" && hourText?.kind === "text") {
+      expect(annotation.font.sizePx).toBeLessThan(hourText.font.sizePx);
+      expect(annotation.font.sizePx).toBeCloseTo(
+        utcFocusAnnotationSizePx(f.diskLabelSizePx, TOP_CHROME_STYLE.markerAnnotation.sizeFracOfDiskLabel),
+        5,
+      );
+      expect(annotation.y).toBeCloseTo(utcFocusAnnotationCenterY(10 + f.circleStack.padTopPx + f.circleStack.upperNumeralH + f.circleStack.gapNumeralToDiskPx, f.circleStack.diskBandH), 5);
+      expect(annotation.x).toBeLessThan(readPointX - (960 / 24) * UTC_FOCUS_HALF_WINDOW_HOURS);
     }
   });
 
