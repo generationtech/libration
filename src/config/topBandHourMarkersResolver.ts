@@ -41,8 +41,9 @@ import type {
 } from "./topBandHourMarkersTypes.ts";
 
 /**
- * When display formatting is UTC (`utc24` → {@link DisplayTimeMode} `"utc"`), the top hour tape is text-only;
- * non-text authored realizations are not used at runtime (authored shape is preserved on disk).
+ * When display formatting is UTC (`utc24` → {@link DisplayTimeMode} `"utc"`), the top hour tape is text-only.
+ * Authoring should already be text ({@link coerceHourMarkersForUtc24IfProcedural} on UTC entry); this remains a
+ * defensive fallback if invalid procedural + UTC slips through.
  */
 function effectiveHourMarkersRealizationForDisplayMode(
   hm: HourMarkersConfig,
@@ -277,7 +278,7 @@ function resolveEffectiveTwentyFourHourAnchorCustomization(
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
  * Content follows effective realization kind; placement behavior follows {@link defaultBehaviorFor}(effective kind).
- * In UTC display mode, non-text authored kinds are coerced to text at resolve time only.
+ * In UTC display mode, non-text authored kinds are coerced to text at resolve time if still present (defensive).
  *
  * `areaVisible` on the effective model mirrors `hourMarkers.indicatorEntriesAreaVisible` (default true):
  * it controls structural presence of the indicator entries band, not behavior or realization.

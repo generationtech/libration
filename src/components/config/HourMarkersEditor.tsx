@@ -36,6 +36,7 @@ import {
   HOUR_MARKER_CONTENT_ROW_PADDING_MAX_PX,
   HOUR_MARKER_CONTENT_ROW_PADDING_MIN_PX,
 } from "../../config/topBandHourMarkerContentRowVerticalMetrics";
+import { hourMarkersRealizationConfigForKind } from "../../config/topBandUtcRealizationCoercion";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 const HOUR_MARKER_REALIZATION_KINDS = [
@@ -45,14 +46,14 @@ const HOUR_MARKER_REALIZATION_KINDS = [
   "radialWedge",
 ] as const satisfies readonly HourMarkersRealizationConfig["kind"][];
 
-/** Persisted realization kind from config — never overwritten by UTC display mode. */
+/** Persisted realization kind from config (entering UTC rewrites procedural kinds to text in the commit path). */
 function authoredHourMarkerRealizationKind(hm: HourMarkersConfig): HourMarkersRealizationConfig["kind"] {
   return hm.realization.kind;
 }
 
 /**
  * `utc24` hour-label mode forces text-only tape at resolve time
- * ({@link resolveEffectiveTopBandHourMarkers}); the editor mirrors that with Text-only UI affordances.
+ * ({@link resolveEffectiveTopBandHourMarkers}); the editor offers Text-only kind options in UTC.
  */
 function utcLabelModeForcesTextOnlyHourTape(topBandMode: TopBandTimeMode): boolean {
   return topBandMode === "utc24";
@@ -62,25 +63,6 @@ function hourMarkerRealizationKindOptions(
   topBandMode: TopBandTimeMode,
 ): readonly HourMarkersRealizationConfig["kind"][] {
   return utcLabelModeForcesTextOnlyHourTape(topBandMode) ? (["text"] as const) : HOUR_MARKER_REALIZATION_KINDS;
-}
-
-/**
- * What the realization kind control displays: in UTC, non-text authored kinds show a Text-only proxy (effective
- * runtime is text; authored procedural subtree stays on disk). In non-UTC modes, the selector reflects authored kind.
- */
-function displayedHourMarkerRealizationKindInEditor(
-  authoredKind: HourMarkersRealizationConfig["kind"],
-  topBandMode: TopBandTimeMode,
-): HourMarkersRealizationConfig["kind"] {
-  return utcLabelModeForcesTextOnlyHourTape(topBandMode) && authoredKind !== "text" ? "text" : authoredKind;
-}
-
-/** True when UTC UI must not offer a live kind commit for procedural authoring (strict read-only Text proxy). */
-function utcProceduralRealizationUsesReadOnlyTextProxy(
-  authoredKind: HourMarkersRealizationConfig["kind"],
-  topBandMode: TopBandTimeMode,
-): boolean {
-  return utcLabelModeForcesTextOnlyHourTape(topBandMode) && authoredKind !== "text";
 }
 
 const NOON_MIDNIGHT_EXPRESSION_MODES = [
@@ -151,32 +133,6 @@ function commitHourMarkers(
   });
 }
 
-function realizationConfigForKind(
-  kind: HourMarkersRealizationConfig["kind"],
-  hm: HourMarkersConfig,
-): HourMarkersRealizationConfig {
-  switch (kind) {
-    case "text":
-      return {
-        kind: "text",
-        ...(hm.realization.kind === "text" && hm.realization.fontAssetId !== undefined
-          ? { fontAssetId: hm.realization.fontAssetId }
-          : {}),
-        appearance: {},
-      };
-    case "analogClock":
-      return { kind: "analogClock", appearance: {} };
-    case "radialLine":
-      return { kind: "radialLine", appearance: {} };
-    case "radialWedge":
-      return { kind: "radialWedge", appearance: {} };
-    default: {
-      const _exhaustive: never = kind;
-      return _exhaustive;
-    }
-  }
-}
-
 function hourMarkersAfterRealizationKindChange(
   nextKind: HourMarkersRealizationConfig["kind"],
   hm: HourMarkersConfig,
@@ -187,7 +143,7 @@ function hourMarkersAfterRealizationKindChange(
   }
   return {
     ...hm,
-    realization: realizationConfigForKind(nextKind, hm),
+    realization: hourMarkersRealizationConfigForKind(nextKind, hm),
   };
 }
 
@@ -236,31 +192,20 @@ function RealizationSection({
 }: HourMarkerEditorBaseProps) {
   const authoredRealizationKind = authoredHourMarkerRealizationKind(hourMarkers);
   const utcTapeTextOnly = utcLabelModeForcesTextOnlyHourTape(topBandMode);
-  const utcReadOnlyTextProxy = utcProceduralRealizationUsesReadOnlyTextProxy(
-    authoredRealizationKind,
-    topBandMode,
-  );
-  const displayedSelectorKind = displayedHourMarkerRealizationKindInEditor(authoredRealizationKind, topBandMode);
   const kindOptions = hourMarkerRealizationKindOptions(topBandMode);
   const authoringOff = !wired || !entriesAreaEnabled;
-  const realizationSelectDisabled = authoringOff || utcReadOnlyTextProxy;
+  const realizationSelectDisabled = authoringOff;
   return (
     <>
       <ConfigControlRow label="Realization kind">
         <select
           className="config-input"
           data-testid="chrome-hour-marker-realization-kind-select"
-          data-utc-procedural-proxy={utcReadOnlyTextProxy ? "true" : undefined}
-          value={displayedSelectorKind}
+          value={authoredRealizationKind}
           disabled={realizationSelectDisabled}
           aria-label="Top-band hour marker realization kind"
-          title={
-            utcReadOnlyTextProxy
-              ? "UTC shows text-only hour tape; your original realization kind is kept and returns when you leave UTC."
-              : undefined
-          }
           onChange={
-            wired && entriesAreaEnabled && updateConfig && !utcReadOnlyTextProxy
+            wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
                   commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
@@ -293,29 +238,13 @@ function AppearanceSection({
   wired,
   updateConfig,
   entriesAreaEnabled,
-  topBandMode,
+  topBandMode: _topBandMode,
   hourMarkerFontOptions,
 }: AppearanceSectionProps) {
-  const authoredRealizationKind = authoredHourMarkerRealizationKind(hourMarkers);
-  const utcReadOnlyTextProxy = utcProceduralRealizationUsesReadOnlyTextProxy(
-    authoredRealizationKind,
-    topBandMode,
-  );
+  const rk = hourMarkers.realization.kind;
   const authoringOff = !wired || !entriesAreaEnabled;
 
-  if (utcReadOnlyTextProxy) {
-    return (
-      <p
-        className="config-section__hint"
-        data-testid="chrome-hour-marker-utc-procedural-preserved-hint"
-      >
-        Your {labelForRealizationKind(authoredRealizationKind)} settings are preserved; they are not editable in UTC
-        mode and are not replaced by text authoring. Switch back to 12-hour or 24-hour labels to edit them again.
-      </p>
-    );
-  }
-
-  if (authoredRealizationKind === "text") {
+  if (rk === "text") {
     const r = hourMarkers.realization;
     const fontId = r.fontAssetId;
     const textColor = r.appearance.color;
@@ -437,7 +366,7 @@ function AppearanceSection({
     );
   }
 
-  if (authoredRealizationKind === "analogClock") {
+  if (rk === "analogClock") {
     const r = hourMarkers.realization;
     const hand = r.appearance.handColor;
     const face = r.appearance.faceColor;
@@ -565,7 +494,7 @@ function AppearanceSection({
     );
   }
 
-  if (authoredRealizationKind === "radialLine") {
+  if (rk === "radialLine") {
     const r = hourMarkers.realization;
     const line = r.appearance.lineColor;
     const face = r.appearance.faceColor;
@@ -693,7 +622,7 @@ function AppearanceSection({
     );
   }
 
-  if (authoredRealizationKind === "radialWedge") {
+  if (rk === "radialWedge") {
     const r = hourMarkers.realization;
     const edge = r.appearance.edgeColor;
     const face = r.appearance.faceColor;
@@ -881,7 +810,7 @@ function AppearanceSection({
     );
   }
 
-  throw new Error(`Unhandled hour marker realization kind: ${String(authoredRealizationKind)}`);
+  throw new Error(`Unhandled hour marker realization kind: ${String(rk)}`);
 }
 
 function hourMarkersLayoutOmitPadding(

@@ -32,6 +32,7 @@ import {
   type TopBandAnchorConfig,
   type TopBandTimeMode,
 } from "../../config/appConfig";
+import { applyTopBandModeToLibrationDraft } from "../../config/chromeDisplayTimeCommit";
 import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { clampLongitudeDegForAnchor } from "./topBandAnchorClamp";
@@ -160,7 +161,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
                 ? (e) => {
                     const mode = e.currentTarget.value as TopBandTimeMode;
                     updateConfig((draft) => {
-                      draft.chrome.displayTime.topBandMode = mode;
+                      applyTopBandModeToLibrationDraft(draft, mode);
                     });
                   }
                 : undefined

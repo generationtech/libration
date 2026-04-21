@@ -55,6 +55,7 @@ import {
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
 } from "../productFontConstants.ts";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
+import { coerceHourMarkersForUtc24IfProcedural } from "../topBandUtcRealizationCoercion.ts";
 
 /** v2 document identity; numeric `2` matches Phase 0 contract. */
 export type LibrationConfigV2Meta = {
@@ -578,8 +579,32 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
   };
 }
 
-export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationConfigV2 {
+/**
+ * `utc24` hour labels require text hour-marker realization; coerce legacy or invalid procedural authoring.
+ */
+function coerceUtcHourMarkersInNormalizedConfig(config: LibrationConfigV2): LibrationConfigV2 {
+  if (config.chrome.displayTime.topBandMode !== "utc24") {
+    return config;
+  }
+  const hm = config.chrome.layout.hourMarkers;
+  const nextHm = coerceHourMarkersForUtc24IfProcedural(hm);
+  if (nextHm === hm) {
+    return config;
+  }
   return {
+    ...config,
+    chrome: {
+      ...config.chrome,
+      layout: {
+        ...config.chrome.layout,
+        hourMarkers: nextHm,
+      },
+    },
+  };
+}
+
+export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationConfigV2 {
+  const n: LibrationConfigV2 = {
     meta: {
       ...config.meta,
       schemaVersion: 2,
@@ -599,6 +624,7 @@ export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationCo
     geography: normalizeGeography(config.geography),
     data: normalizeData(config.data),
   };
+  return coerceUtcHourMarkersInNormalizedConfig(n);
 }
 
 /**

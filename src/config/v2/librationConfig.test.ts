@@ -675,6 +675,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       "../appConfig",
       "../productFontConstants.ts",
       "../topBandHourMarkersPersistenceAdapter.ts",
+      "../topBandUtcRealizationCoercion.ts",
     ]);
     for (const spec of specifiers) {
       expect(allowed.has(spec), `unexpected import ${spec}`).toBe(true);
