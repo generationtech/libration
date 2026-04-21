@@ -78,10 +78,8 @@ function cloneConfig(config: AppConfig): AppConfig {
     },
     displayChromeLayout: {
       bottomInformationBarVisible: dcl.bottomInformationBarVisible,
-      bottomTimeStackShowLocal: dcl.bottomTimeStackShowLocal !== false,
-      bottomTimeStackShowRefer: dcl.bottomTimeStackShowRefer !== false,
-      bottomTimeStackShowUtc: dcl.bottomTimeStackShowUtc !== false,
-      bottomTimeStackShowSeconds: dcl.bottomTimeStackShowSeconds !== false,
+      bottomTimeStackShowDate: dcl.bottomTimeStackShowDate !== false,
+      bottomTimeStackShowTime: dcl.bottomTimeStackShowTime !== false,
       bottomTimeStackSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(dcl),
       tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,

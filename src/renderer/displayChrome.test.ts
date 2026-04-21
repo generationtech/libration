@@ -36,6 +36,7 @@ import { TOP_CHROME_STYLE, TOP_TAPE_TICK_LINE_WIDTH } from "../config/topChromeS
 import {
   buildBottomInformationBarState,
   buildDisplayChromeState,
+  countBottomHudReadoutLines,
   buildUtcTopScaleLayout,
   computeUtcCircleMarkerRadius,
   computeUtcTopScaleRowMetrics,
@@ -1017,7 +1018,7 @@ describe("computeBottomChromeLayout", () => {
 });
 
 describe("buildBottomInformationBarState", () => {
-  it("stacks date then Refer, UTC, Local when all clock rows are enabled", () => {
+  it("shows reference-city date above reference-city time with no labels", () => {
     const t0 = 1_704_067_200_000;
     const ib = buildBottomInformationBarState({
       nowMs: t0,
@@ -1025,26 +1026,16 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
     });
-    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
-    expect(ib.leftTimeStackLines[0]!.text).toBe("January 1 2024");
-    expect(ib.leftTimeStackLines[1]!.role).toBe("clock");
-    expect(ib.leftTimeStackLines[2]!.role).toBe("clock");
-    const rowRefer = ib.leftTimeStackLines[1]!;
-    const rowUtc = ib.leftTimeStackLines[2]!;
-    if (rowRefer.role === "clock" && rowUtc.role === "clock") {
-      expect(rowRefer.label).toBe("Refer");
-      expect(rowUtc.label).toBe("UTC");
-    }
-    expect(ib.leftTimeStackLines[3]!.role).toBe("spacer");
-    const rowLocal = ib.leftTimeStackLines[4]!;
-    expect(rowLocal.role).toBe("clock");
-    if (rowLocal.role === "clock") {
-      expect(rowLocal.label).toBe("Local");
+    expect(ib.leftTimeStackLines).toHaveLength(2);
+    expect(ib.leftTimeStackLines[0]!).toEqual({ role: "date", text: "January 1 2024" });
+    expect(ib.leftTimeStackLines[1]!.role).toBe("time");
+    if (ib.leftTimeStackLines[1]!.role === "time") {
+      expect(ib.leftTimeStackLines[1]!.text).toMatch(/00:00:00/);
     }
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
   });
 
-  it("omits disabled clock rows while keeping date on top", () => {
+  it("omits date when disabled and keeps a single time row without phantom spacer rows", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1052,22 +1043,31 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
       bottomTimeStack: {
-        bottomTimeStackShowLocal: false,
-        bottomTimeStackShowRefer: true,
-        bottomTimeStackShowUtc: false,
+        bottomTimeStackShowDate: false,
+        bottomTimeStackShowTime: true,
       },
     });
-    expect(ib.leftTimeStackLines).toHaveLength(2);
-    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
-    expect(ib.leftTimeStackLines[1]!.role).toBe("clock");
-    const onlyClock = ib.leftTimeStackLines[1]!;
-    expect(onlyClock.role).toBe("clock");
-    if (onlyClock.role === "clock") {
-      expect(onlyClock.timeText).toMatch(/14:05:06/);
-    }
+    expect(ib.leftTimeStackLines).toHaveLength(1);
+    expect(ib.leftTimeStackLines[0]!.role).toBe("time");
   });
 
-  it("uses 24-hour style for Refer when top band is local24 or utc24", () => {
+  it("omits time when disabled and keeps a single date row", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const ib = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: {
+        bottomTimeStackShowDate: true,
+        bottomTimeStackShowTime: false,
+      },
+    });
+    expect(ib.leftTimeStackLines).toHaveLength(1);
+    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
+  });
+
+  it("uses 24-hour style when top band is local24 or utc24", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     for (const topBandMode of ["local24", "utc24"] as const) {
       const ib = buildBottomInformationBarState({
@@ -1076,15 +1076,15 @@ describe("buildBottomInformationBarState", () => {
         chromeTimeZone: "UTC",
         topBandMode,
       });
-      const referRow = ib.leftTimeStackLines.find((l) => l.role === "clock")!;
-      expect(referRow.role).toBe("clock");
-      const refer = referRow.role === "clock" ? referRow.timeText : "";
-      expect(refer).toMatch(/14:05:06/);
-      expect(refer).not.toMatch(/\b(AM|PM)\b/i);
+      const timeRow = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+      expect(timeRow.role).toBe("time");
+      const wall = timeRow.role === "time" ? timeRow.text : "";
+      expect(wall).toMatch(/14:05:06/);
+      expect(wall).not.toMatch(/\b(AM|PM)\b/i);
     }
   });
 
-  it("Refer row uses reference IANA civil time; UTC row shows the same instant in UTC", () => {
+  it("single time row uses reference IANA civil wall time only (no UTC row)", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1092,35 +1092,15 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    const clocks = ib.leftTimeStackLines.filter((l): l is Extract<typeof l, { role: "clock" }> => l.role === "clock");
-    const refer = clocks[0]!.timeText;
-    expect(refer).toMatch(/09:05:06/);
-    const utcLine = clocks[1]!.timeText;
-    expect(utcLine).toMatch(/14:05:06/);
+    const timeRow = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    expect(timeRow.role).toBe("time");
+    if (timeRow.role === "time") {
+      expect(timeRow.text).toMatch(/09:05:06/);
+    }
+    expect(ib.leftTimeStackLines.filter((l) => l.role === "time")).toHaveLength(1);
   });
 
-  it("Knoxville frame: local24 refer line matches Eastern; utc24 refer still Eastern; UTC row is 22:04:05", () => {
-    const t = Date.UTC(2026, 6, 10, 22, 4, 5);
-    const ib24 = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "America/New_York",
-      topBandMode: "local24",
-    });
-    const ibUtc = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "America/New_York",
-      topBandMode: "utc24",
-    });
-    const c24 = ib24.leftTimeStackLines.filter((l): l is Extract<typeof l, { role: "clock" }> => l.role === "clock");
-    const cUtc = ibUtc.leftTimeStackLines.filter((l): l is Extract<typeof l, { role: "clock" }> => l.role === "clock");
-    expect(c24[0]!.timeText).toMatch(/18:04:05/);
-    expect(cUtc[0]!.timeText).toMatch(/18:04:05/);
-    expect(cUtc[1]!.timeText).toMatch(/22:04:05/);
-  });
-
-  it("uses 12-hour wall clock for Refer when top band is local12", () => {
+  it("uses 12-hour wall clock when top band is local12", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1128,34 +1108,15 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    const refer = ib.leftTimeStackLines.filter((l): l is Extract<typeof l, { role: "clock" }> => l.role === "clock")[0]!
-      .timeText;
-    expect(refer).toMatch(/\b(AM|PM)\b/i);
-    expect(refer).not.toMatch(/^14:/);
-  });
-
-  it("local12 does not use semantic leading-zero hours when only one clock row is shown", () => {
-    const t = Date.UTC(2024, 0, 1, 19, 7, 59);
-    const ib = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "UTC",
-      topBandMode: "local12",
-      bottomTimeStack: {
-        bottomTimeStackShowRefer: true,
-        bottomTimeStackShowUtc: false,
-        bottomTimeStackShowLocal: false,
-      },
-    });
-    const row = ib.leftTimeStackLines.find((l) => l.role === "clock")!;
-    expect(row.role).toBe("clock");
-    if (row.role === "clock") {
-      expect(row.timeText).not.toMatch(/^0\d:/);
-      expect(row.timeText).toMatch(/\b7:07:59/);
+    const wall = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    expect(wall.role).toBe("time");
+    if (wall.role === "time") {
+      expect(wall.text).toMatch(/\b(AM|PM)\b/i);
+      expect(wall.text).not.toMatch(/^14:/);
     }
   });
 
-  it("local12 adds display-only leading space before single-digit hours when multiple clock rows use labels", () => {
+  it("local12 does not use semantic leading-zero hours on the single time row", () => {
     const t = Date.UTC(2024, 0, 1, 19, 7, 59);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1163,26 +1124,11 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    const referRow = ib.leftTimeStackLines.find((l) => l.role === "clock" && l.label === "Refer")!;
-    expect(referRow.role).toBe("clock");
-    if (referRow.role === "clock") {
-      expect(referRow.timeText).toMatch(/^\s*7:07:59/);
-    }
-  });
-
-  it("UTC stack row stays 24-hour even when the global hour-label mode is 12-hour", () => {
-    const t = Date.UTC(2024, 0, 1, 19, 7, 59);
-    const ib = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "UTC",
-      topBandMode: "local12",
-    });
-    const utcRow = ib.leftTimeStackLines.find((l) => l.role === "clock" && l.label === "UTC")!;
-    expect(utcRow.role).toBe("clock");
-    if (utcRow.role === "clock") {
-      expect(utcRow.timeText).toMatch(/19:07:59/);
-      expect(utcRow.timeText).not.toMatch(/\b(AM|PM)\b/i);
+    const row = ib.leftTimeStackLines.find((l) => l.role === "time")!;
+    expect(row.role).toBe("time");
+    if (row.role === "time") {
+      expect(row.text).not.toMatch(/^0\d:/);
+      expect(row.text).toMatch(/\b7:07:59/);
     }
   });
 
@@ -1194,10 +1140,13 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib.leftTimeStackLines[0]!.text).toMatch(/December 31 2023/);
+    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
+    if (ib.leftTimeStackLines[0]!.role === "date") {
+      expect(ib.leftTimeStackLines[0]!.text).toMatch(/December 31 2023/);
+    }
   });
 
-  it("hides the local row when device-local wall time equals reference wall time (e.g. UTC reference in UTC environment)", () => {
+  it("includes seconds in the time string (global wall-clock formatting, no separate HUD seconds toggle)", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1205,52 +1154,28 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
     });
-    if (Intl.DateTimeFormat().resolvedOptions().timeZone === "UTC") {
-      expect(ib.leftTimeStackLines.some((l) => l.role === "clock" && l.label === "Local")).toBe(false);
-      expect(ib.leftTimeStackLines.some((l) => l.role === "spacer")).toBe(false);
+    const timeLine = ib.leftTimeStackLines.find((l) => l.role === "time");
+    expect(timeLine?.role).toBe("time");
+    if (timeLine?.role === "time") {
+      expect(timeLine.text).toMatch(/\d{1,2}:\d{2}:\d{2}/);
     }
   });
+});
 
-  it("inserts a spacer row only before local when local is shown below reference and/or UTC", () => {
-    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const ib = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "America/New_York",
-      topBandMode: "local24",
-      bottomTimeStack: {
-        bottomTimeStackShowRefer: true,
-        bottomTimeStackShowUtc: true,
-        bottomTimeStackShowLocal: true,
-      },
-    });
-    const sys = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (sys !== "America/New_York") {
-      const idxSp = ib.leftTimeStackLines.findIndex((l) => l.role === "spacer");
-      expect(idxSp).toBeGreaterThan(-1);
-      const after = ib.leftTimeStackLines[idxSp + 1];
-      expect(after?.role).toBe("clock");
-      if (after?.role === "clock") {
-        expect(after.label).toBe("Local");
-      }
-    }
-  });
-
-  it("omits seconds on every clock row when bottomTimeStackShowSeconds is false", () => {
-    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const ib = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: "UTC",
-      topBandMode: "local24",
-      bottomTimeStack: { bottomTimeStackShowSeconds: false },
-    });
-    for (const line of ib.leftTimeStackLines) {
-      if (line.role !== "clock") {
-        continue;
-      }
-      expect(line.timeText).not.toMatch(/\d{1,2}:\d{2}:\d{2}/);
-    }
+describe("countBottomHudReadoutLines", () => {
+  it("matches visibility toggles", () => {
+    expect(
+      countBottomHudReadoutLines({
+        bottomTimeStackShowDate: true,
+        bottomTimeStackShowTime: true,
+      }),
+    ).toBe(2);
+    expect(
+      countBottomHudReadoutLines({
+        bottomTimeStackShowDate: false,
+        bottomTimeStackShowTime: true,
+      }),
+    ).toBe(1);
   });
 });
 

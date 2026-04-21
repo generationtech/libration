@@ -98,6 +98,11 @@ Top-band visibility that sits alongside this model is also structured in chrome 
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
 
+Lower-left bottom HUD (reference-city civil date/time only, not map layers) uses:
+- `chrome.layout.bottomInformationBarVisible`
+- `chrome.layout.bottomTimeStackShowDate` / `chrome.layout.bottomTimeStackShowTime`
+- `chrome.layout.bottomTimeStackSizeMultiplier` and optional `chrome.layout.bottomReadoutFontAssetId`
+
 Additional strip-scoped structure now lives under `chrome.layout.hourMarkers` as part of the same authoritative model, including:
 - indicator entries area background color intent
 - resolver-derived effective foreground usage downstream of that background

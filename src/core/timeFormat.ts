@@ -129,7 +129,7 @@ export function formatLocalClock(nowMs: number): string {
  * Wall time in a specific IANA zone for {@code nowMs} (same instant as top clocks).
  * When {@code hour12} is omitted, uses the runtime locale’s default 12/24-hour preference (e.g. city pin labels).
  * When set, forces 12- or 24-hour display explicitly (e.g. bottom bar matching the configured top-band mode).
- * Optional {@link WallClockFormatOptions} applies when {@code hour12} is provided (bottom HUD stack); seconds default on.
+ * Optional {@link WallClockFormatOptions} applies when {@code hour12} is provided (e.g. bottom HUD readout); seconds default on.
  */
 export function formatWallClockInTimeZone(
   nowMs: number,

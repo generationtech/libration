@@ -653,7 +653,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       screen.getByRole("combobox", { name: "Reference city for read point meridian" }),
     ).not.toBeDisabled();
     expect(
-      screen.getByRole("checkbox", { name: "Show bottom HUD date and time readout stack" }),
+      screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" }),
     ).not.toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
     await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
@@ -675,7 +675,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     expect(screen.getByRole("combobox", { name: "Hour label format for top band hour markers" })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Civil time zone source for reference frame" })).toBeDisabled();
     expect(
-      screen.getByRole("checkbox", { name: "Show bottom HUD date and time readout stack" }),
+      screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" }),
     ).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
     await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
@@ -702,7 +702,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
-    const bottomCb = screen.getByRole("checkbox", { name: "Show bottom HUD date and time readout stack" });
+    const bottomCb = screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" });
     await user.click(bottomCb);
     expect(ref.current!.chrome.layout.bottomInformationBarVisible).toBe(false);
     expect(derivedAppConfigRef.current.displayChromeLayout.bottomInformationBarVisible).toBe(false);

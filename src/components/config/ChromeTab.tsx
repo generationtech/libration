@@ -349,7 +349,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           Fixed instrument chrome around the map. Choose an area to edit; settings are grouped by where
           they apply on the strip (does not change civil-time or anchor semantics).
         </p>
-        <ConfigControlRow label="Bottom HUD time &amp; date stack">
+        <ConfigControlRow label="Bottom HUD (reference city)">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
@@ -357,7 +357,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             readOnly={!wired}
             disabled={!wired}
             tabIndex={wired ? 0 : -1}
-            aria-label="Show bottom HUD date and time readout stack"
+            aria-label="Show bottom HUD reference-city date and time"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -371,95 +371,54 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           />
         </ConfigControlRow>
         <p className="config-section__hint">
-          Bottom readouts are instrument HUD text (not map layers). With the bar visible, the stack shows the reference
-          city&apos;s date first, then reference time, UTC for the same instant, and local time when it differs — in that
-          order. Clock rows are optional; seconds and text size apply to the whole stack.
+          Lower-left instrument text (not map layers): civil date and wall time in the resolved reference-city timezone.
+          Hour/minute/second formatting follows the global hour-label mode; size and font apply to this readout.
         </p>
-        <ConfigControlRow label="Bottom stack: Local">
+        <ConfigControlRow label="Show date">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
-            checked={lay.bottomTimeStackShowLocal !== false}
+            data-testid="chrome-bottom-hud-show-date"
+            checked={lay.bottomTimeStackShowDate !== false}
             readOnly={!wired}
             disabled={!wired}
             tabIndex={wired ? 0 : -1}
-            aria-label="Show Local time row in bottom HUD stack"
+            aria-label="Show reference-city date on bottom HUD"
             onChange={
               wired && updateConfig
                 ? (e) => {
                     const checked = e.currentTarget.checked;
                     updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowLocal = checked;
+                      draft.chrome.layout.bottomTimeStackShowDate = checked;
                     });
                   }
                 : undefined
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="Bottom stack: Refer">
+        <ConfigControlRow label="Show time">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
-            checked={lay.bottomTimeStackShowRefer !== false}
+            data-testid="chrome-bottom-hud-show-time"
+            checked={lay.bottomTimeStackShowTime !== false}
             readOnly={!wired}
             disabled={!wired}
             tabIndex={wired ? 0 : -1}
-            aria-label="Show reference-frame time row in bottom HUD stack"
+            aria-label="Show reference-city time on bottom HUD"
             onChange={
               wired && updateConfig
                 ? (e) => {
                     const checked = e.currentTarget.checked;
                     updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowRefer = checked;
+                      draft.chrome.layout.bottomTimeStackShowTime = checked;
                     });
                   }
                 : undefined
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="Bottom stack: UTC">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lay.bottomTimeStackShowUtc !== false}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show UTC time row in bottom HUD stack"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowUtc = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Bottom stack: show seconds">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lay.bottomTimeStackShowSeconds !== false}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show seconds on bottom HUD clock rows"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowSeconds = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Bottom stack text size">
+        <ConfigControlRow label="Bottom HUD text size">
           <input
             type="range"
             className="config-input"

@@ -322,17 +322,13 @@ export function effectiveTopBandHourMarkerSelection(
  * Independent of civil-time semantics in {@link DisplayTimeConfig}.
  */
 export interface DisplayChromeLayoutConfig {
-  /** Lower floating reference civil time + date readouts (optional subordinate system-local line when zones differ). */
+  /** Lower-left reference-city civil date/time HUD (not map layers). */
   bottomInformationBarVisible: boolean;
   /**
-   * Bottom HUD time stack: clock rows below the date line (not map layers). The date line stays visible when the bar is on.
-   * Omitted keys normalize to true.
+   * Lower-left HUD: optional reference-city civil date and/or time (not map layers). Omitted keys normalize to true.
    */
-  bottomTimeStackShowLocal?: boolean;
-  bottomTimeStackShowRefer?: boolean;
-  bottomTimeStackShowUtc?: boolean;
-  /** When false, bottom HUD clock rows omit seconds (reference, UTC, local together). Defaults to true when omitted. */
-  bottomTimeStackShowSeconds?: boolean;
+  bottomTimeStackShowDate?: boolean;
+  bottomTimeStackShowTime?: boolean;
   /**
    * Scales lower-left stack font sizes (date + clock rows) after viewport token resolution.
    * Same inclusive bounds as top-band hour-marker size multiplier; default 1 when omitted.
@@ -403,10 +399,8 @@ export interface DisplayChromeLayoutConfig {
 
 export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
-  bottomTimeStackShowLocal: true,
-  bottomTimeStackShowRefer: true,
-  bottomTimeStackShowUtc: true,
-  bottomTimeStackShowSeconds: true,
+  bottomTimeStackShowDate: true,
+  bottomTimeStackShowTime: true,
   bottomTimeStackSizeMultiplier: 1,
   tickTapeVisible: true,
   timezoneLetterRowVisible: true,

@@ -21,7 +21,7 @@ function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInf
   return {
     leftTimeStackLines: [
       { role: "date", text: "April 7 2026" },
-      { role: "clock", label: "Local", timeText: "3:45 PM" },
+      { role: "time", text: "3:45:00 PM" },
     ],
     bottomChromeLayout: layout,
     ...overrides,
@@ -29,11 +29,11 @@ function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInf
 }
 
 describe("bottomChromeReadoutContentFromInformationBar", () => {
-  it("maps each stack line to a label payload", () => {
+  it("maps each stack line to a label payload (no row labels)", () => {
     const c = bottomChromeReadoutContentFromInformationBar(ibSample());
     expect(c.stackLines).toHaveLength(2);
     expect(c.stackLines[0]!.label).toBe("April 7 2026");
-    expect(c.stackLines[1]!.label).toBe("Local  3:45 PM");
+    expect(c.stackLines[1]!.label).toBe("3:45:00 PM");
   });
 
   it("uses nbsp for an empty line", () => {

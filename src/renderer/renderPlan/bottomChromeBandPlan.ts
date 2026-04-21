@@ -12,22 +12,17 @@
  */
 
 /**
- * Render-plan builder: bottom instrument layout band (plate) plus lower-left stacked date/time readouts.
+ * Render-plan builder: bottom instrument layout band (plate) plus lower-left reference-city date/time readouts.
  * Layout matches legacy {@link ../bottomChrome} math; product strings come from {@link BottomInformationBarState}.
  */
 
 import {
   resolveBottomChromeDatePolicy,
-  resolveBottomChromeSecondaryReadoutPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
 import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
 import { createBottomChromeTextGlyph } from "../../glyphs/bottomChromeTextGlyphFromPolicy.ts";
 import { BOTTOM_CHROME_STYLE, type BottomChromeColorTokens } from "../../config/bottomChromeStyle";
-import {
-  bottomStackLabelToTimeGapPx,
-  maxBottomStackLabelColumnInkWidthPx,
-} from "../bottomStackTimeColumnLayout.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
 import type { BottomChromeTextVisualPolicy } from "../../config/bottomChromeVisualPolicy.ts";
 import type { BottomInformationBarState } from "../bottomChromeTypes";
@@ -65,7 +60,7 @@ function withInheritedProductFontFace(
 }
 
 /**
- * Full bottom-band overlay: resolved band plate (structural rect) then lower-left stacked readouts.
+ * Full bottom-band overlay: resolved band plate (structural rect) then lower-left readouts.
  * Band fill defaults to transparent so the map-backed appearance matches the pre–Phase 2 text-only path.
  */
 export function buildBottomChromeBandRenderPlan(options: {
@@ -96,15 +91,7 @@ export function buildBottomChromeBandRenderPlan(options: {
   const pid = options.productDefaultFontAssetId;
   const timePolicy = withInheritedProductFontFace(resolveBottomChromeTimePolicy(colors), pid);
   const datePolicy = withInheritedProductFontFace(resolveBottomChromeDatePolicy(colors), pid);
-  const labelPolicy = withInheritedProductFontFace(resolveBottomChromeSecondaryReadoutPolicy(colors), pid);
   const stackPx = options.typography.primaryTimePx;
-
-  const clockLabels = options.ib.leftTimeStackLines.flatMap((row) =>
-    row.role === "clock" ? [row.label] : [],
-  );
-  const labelColInkPx = maxBottomStackLabelColumnInkWidthPx(clockLabels, stackPx);
-  const labelGapPx = labelColInkPx > 0 ? bottomStackLabelToTimeGapPx(stackPx) : 0;
-  const timeColumnLeftX = padX + labelColInkPx + labelGapPx;
 
   const items: RenderPlan["items"] = [
     {
@@ -139,28 +126,10 @@ export function buildBottomChromeBandRenderPlan(options: {
       continue;
     }
 
-    if (row.role === "spacer") {
-      emitGlyphToRenderPlan(
-        createBottomChromeTextGlyph("\u00a0", timePolicy, { textAlign: "left", shadow }),
-        { cx: padX, cy, size: stackPx },
-        gctx,
-        items,
-      );
-      continue;
-    }
-
-    const timeText = row.timeText.length > 0 ? row.timeText : "\u00a0";
-    if (row.label !== null && row.label.length > 0) {
-      emitGlyphToRenderPlan(
-        createBottomChromeTextGlyph(row.label, labelPolicy, { textAlign: "left", shadow }),
-        { cx: padX, cy, size: stackPx },
-        gctx,
-        items,
-      );
-    }
+    const text = row.text.length > 0 ? row.text : "\u00a0";
     emitGlyphToRenderPlan(
-      createBottomChromeTextGlyph(timeText, timePolicy, { textAlign: "left", shadow }),
-      { cx: timeColumnLeftX, cy, size: stackPx },
+      createBottomChromeTextGlyph(text, timePolicy, { textAlign: "left", shadow }),
+      { cx: padX, cy, size: stackPx },
       gctx,
       items,
     );

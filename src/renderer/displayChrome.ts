@@ -110,8 +110,7 @@ import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransi
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
 import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
 export type { BottomBarDayCell, BottomInformationBarState, BottomTimeStackLine } from "./bottomChromeTypes";
-export { formatBottomTimeStackClockLine } from "./bottomChromeTypes";
-export { countBottomTimeStackMaxLines } from "./bottomChromeTypes";
+export { countBottomHudReadoutLines } from "./bottomChromeTypes";
 export { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
 
 export {
@@ -553,13 +552,10 @@ export function buildBottomInformationBarState(options: {
   chromeTimeZone?: string;
   /** When omitted, {@link DEFAULT_DISPLAY_TIME_CONFIG} `topBandMode` is used. */
   topBandMode?: TopBandTimeMode;
-  /** Bottom HUD clock row visibility; defaults to all on when omitted. */
+  /** Lower-left HUD date/time visibility; defaults to both on when omitted. */
   bottomTimeStack?: Pick<
     DisplayChromeLayoutConfig,
-    | "bottomTimeStackShowLocal"
-    | "bottomTimeStackShowRefer"
-    | "bottomTimeStackShowUtc"
-    | "bottomTimeStackShowSeconds"
+    "bottomTimeStackShowDate" | "bottomTimeStackShowTime"
   >;
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
@@ -1393,10 +1389,8 @@ function computeBandHeights(
   layout: Pick<
     DisplayChromeLayoutConfig,
     | "bottomInformationBarVisible"
-    | "bottomTimeStackShowLocal"
-    | "bottomTimeStackShowRefer"
-    | "bottomTimeStackShowUtc"
-    | "bottomTimeStackShowSeconds"
+    | "bottomTimeStackShowDate"
+    | "bottomTimeStackShowTime"
   >,
   stackContext: { nowMs: number; referenceTimeZone: string; topBandMode: TopBandTimeMode },
 ): { top: number; bottom: number } {

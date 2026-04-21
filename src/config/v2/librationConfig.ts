@@ -264,22 +264,14 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   }
 
   const defStack = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
-  const showLocal =
-    typeof (input as { bottomTimeStackShowLocal?: unknown }).bottomTimeStackShowLocal === "boolean"
-      ? (input as { bottomTimeStackShowLocal: boolean }).bottomTimeStackShowLocal
-      : defStack.bottomTimeStackShowLocal !== false;
-  const showRefer =
-    typeof (input as { bottomTimeStackShowRefer?: unknown }).bottomTimeStackShowRefer === "boolean"
-      ? (input as { bottomTimeStackShowRefer: boolean }).bottomTimeStackShowRefer
-      : defStack.bottomTimeStackShowRefer !== false;
-  const showUtc =
-    typeof (input as { bottomTimeStackShowUtc?: unknown }).bottomTimeStackShowUtc === "boolean"
-      ? (input as { bottomTimeStackShowUtc: boolean }).bottomTimeStackShowUtc
-      : defStack.bottomTimeStackShowUtc !== false;
-  const showSeconds =
-    typeof (input as { bottomTimeStackShowSeconds?: unknown }).bottomTimeStackShowSeconds === "boolean"
-      ? (input as { bottomTimeStackShowSeconds: boolean }).bottomTimeStackShowSeconds
-      : defStack.bottomTimeStackShowSeconds !== false;
+  const showDate =
+    typeof (input as { bottomTimeStackShowDate?: unknown }).bottomTimeStackShowDate === "boolean"
+      ? (input as { bottomTimeStackShowDate: boolean }).bottomTimeStackShowDate
+      : defStack.bottomTimeStackShowDate !== false;
+  const showTime =
+    typeof (input as { bottomTimeStackShowTime?: unknown }).bottomTimeStackShowTime === "boolean"
+      ? (input as { bottomTimeStackShowTime: boolean }).bottomTimeStackShowTime
+      : defStack.bottomTimeStackShowTime !== false;
 
   const smRaw = (input as { bottomTimeStackSizeMultiplier?: unknown }).bottomTimeStackSizeMultiplier;
   const bottomTimeStackSizeMultiplier = clampTopBandHourMarkerSizeMultiplier(
@@ -290,10 +282,8 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
 
   return {
     bottomInformationBarVisible: bottom,
-    bottomTimeStackShowLocal: showLocal,
-    bottomTimeStackShowRefer: showRefer,
-    bottomTimeStackShowUtc: showUtc,
-    bottomTimeStackShowSeconds: showSeconds,
+    bottomTimeStackShowDate: showDate,
+    bottomTimeStackShowTime: showTime,
     bottomTimeStackSizeMultiplier,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
@@ -522,10 +512,8 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
       : defM;
   return {
     bottomInformationBarVisible: l.bottomInformationBarVisible,
-    bottomTimeStackShowLocal: l.bottomTimeStackShowLocal !== false,
-    bottomTimeStackShowRefer: l.bottomTimeStackShowRefer !== false,
-    bottomTimeStackShowUtc: l.bottomTimeStackShowUtc !== false,
-    bottomTimeStackShowSeconds: l.bottomTimeStackShowSeconds !== false,
+    bottomTimeStackShowDate: l.bottomTimeStackShowDate !== false,
+    bottomTimeStackShowTime: l.bottomTimeStackShowTime !== false,
     bottomTimeStackSizeMultiplier: m,
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
@@ -705,6 +693,8 @@ export function assertIsNormalizedLibrationConfig(
     typeof lay !== "object" ||
     lay === null ||
     typeof lay.bottomInformationBarVisible !== "boolean" ||
+    typeof (lay as { bottomTimeStackShowDate?: unknown }).bottomTimeStackShowDate !== "boolean" ||
+    typeof (lay as { bottomTimeStackShowTime?: unknown }).bottomTimeStackShowTime !== "boolean" ||
     typeof lay.tickTapeVisible !== "boolean" ||
     typeof lay.timezoneLetterRowVisible !== "boolean"
   ) {

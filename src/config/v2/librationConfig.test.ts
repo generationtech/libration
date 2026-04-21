@@ -237,6 +237,18 @@ describe("librationConfig v2 (Phase 1)", () => {
     ).toEqual(baseline);
   });
 
+  it("normalizeDisplayChromeLayout ignores legacy lower-left stack row keys (Local/Refer/UTC/seconds)", () => {
+    const baseline = normalizeDisplayChromeLayout({});
+    expect(
+      normalizeDisplayChromeLayout({
+        bottomTimeStackShowLocal: false,
+        bottomTimeStackShowRefer: false,
+        bottomTimeStackShowUtc: true,
+        bottomTimeStackShowSeconds: false,
+      }),
+    ).toEqual(baseline);
+  });
+
   it("normalizeDisplayChromeLayout normalizes only structured hourMarkers", () => {
     expect(
       normalizeDisplayChromeLayout({

@@ -13,11 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
-import {
-  resolveBottomChromeDatePolicy,
-  resolveBottomChromeSecondaryReadoutPolicy,
-  resolveBottomChromeTimePolicy,
-} from "../../config/bottomChromeVisualPolicy";
+import { resolveBottomChromeDatePolicy, resolveBottomChromeTimePolicy } from "../../config/bottomChromeVisualPolicy";
 import { BOTTOM_CHROME_STYLE } from "../../config/bottomChromeStyle";
 import { computeBottomChromeLayout } from "../bottomChromeLayout";
 import { resolveBottomChromeTypography } from "../bottomChrome";
@@ -33,16 +29,14 @@ function sampleInformationBar(vw: number): BottomInformationBarState {
   return {
     leftTimeStackLines: [
       { role: "date", text: "Monday, April 7, 2026" },
-      { role: "clock", label: "Local", timeText: "3:45 PM" },
-      { role: "clock", label: "Refer", timeText: "3:45 PM" },
-      { role: "clock", label: "UTC", timeText: "19:45:00" },
+      { role: "time", text: "3:45:00 PM" },
     ],
     bottomChromeLayout: layout,
   };
 }
 
 describe("buildBottomChromeBandRenderPlan", () => {
-  it("emits band plate then left-aligned stack lines in order (date then clocks)", () => {
+  it("emits band plate then left-aligned date then time (same x, no labels)", () => {
     const vw = 960;
     const ib = sampleInformationBar(vw);
     const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
@@ -56,7 +50,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
       productDefaultFontAssetId: PRODUCT_FONT,
     });
 
-    expect(plan.items.length).toBeGreaterThanOrEqual(5);
+    expect(plan.items.length).toBeGreaterThanOrEqual(3);
     const [plate, ...texts] = plan.items;
     expect(plate.kind).toBe("rect");
     if (plate.kind === "rect") {
@@ -75,12 +69,9 @@ describe("buildBottomChromeBandRenderPlan", () => {
     const colors = BOTTOM_CHROME_STYLE.colors;
     const timePolicy = resolveBottomChromeTimePolicy(colors);
     const datePolicy = resolveBottomChromeDatePolicy(colors);
-    const labelPolicy = resolveBottomChromeSecondaryReadoutPolicy(colors);
     expect(textItems[0]!.fill).toBe(datePolicy.fill);
-    expect(textItems[1]!.fill).toBe(labelPolicy.fill);
-    expect(textItems[2]!.fill).toBe(timePolicy.fill);
+    expect(textItems[1]!.fill).toBe(timePolicy.fill);
     expect(textItems[1]!.x).toBe(ib.bottomChromeLayout.horizontalPaddingPx);
-    expect(textItems[2]!.x).toBeGreaterThan(textItems[1]!.x);
   });
 
   it("uses nbsp when a stack line is empty", () => {
@@ -150,7 +141,7 @@ describe("buildBottomChromeBandRenderPlan", () => {
     }
   });
 
-  it("uses the same font size for date and clock rows", () => {
+  it("uses the same font size for date and time rows", () => {
     const vw = 700;
     const ib = sampleInformationBar(vw);
     const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
