@@ -100,7 +100,7 @@ Top chrome is now treated as real application layout:
 - hiding top-band areas reclaims that space instead of leaving map content hidden underneath chrome
 
 Chrome editing is now organized by major area rather than one long mixed panel. Current major areas include:
-- 24-hour indicator entries (civil-phased at the read point)
+- 24-hour indicator entries (civil-phased at the read point in local modes)
 - 24-hour tickmarks tape (same phased band; format changes do not move ticks)
 - NATO / structural zone row (15° grid — not the reference civil clock)
 
@@ -122,6 +122,7 @@ The 24-hour indicator entries area now also supports its own focused feature set
 Recent simplification:
 - one resolver-owned instant and reference frame: phased tape follows civil time in the IANA zone; the read-point meridian fixes horizontal registration only
 - the read-point tick is drawn in the tickmark tape only; it is not duplicated in the upper indicator entries area
+- UTC label mode now uses a focused **UTC Global Time** treatment: text-only realization, a highlighted current UTC hour at the read point, and only the previous / current / next UTC hours visible with no wrap
 
 ![Accelerated map demo](docs/images/libration-map-demo.gif)
 ---
@@ -171,6 +172,8 @@ Implemented realizations:
   - analog clock markers
   - radial wedge
   - radial line
+
+When the top-band Hour label format is `utc24`, the indicator entries realization is constrained to **Text**. Switching into UTC mode now commits `Text` before the mode change so the runtime never enters UTC with a procedural realization.
 
 Clock-like appearance controls are now leveled across the procedural modes:
 - analog clock → hand color + face color
@@ -246,6 +249,13 @@ Current defaults for the upper indicator entries strip include:
 - bundled text font defaulting to **Zeroes Two**
 
 Empty values use Auto where supported; numeric values are exact px overrides.
+
+The lower-left bottom HUD is now intentionally minimal and reference-city-only:
+- optional reference-city date line
+- optional time line
+- time rendered in the selected global display mode
+- optional seconds toggle for that HUD only
+- font and size controls scoped to the HUD readout
 
 ---
 

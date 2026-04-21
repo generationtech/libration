@@ -37,6 +37,7 @@ Focus:
 Current truthful top-band model:
 - **Realization** → `text`, `analogClock`, `radialLine`, `radialWedge`
 - **Derived effective behavior** → `text` resolves to `civilPhased` (read-point–registered phased tape); procedural realizations resolve to `civilColumnAnchored` (structural column centers when anchored)
+- **UTC constraint** → `utc24` uses a focused text-only top-band presentation; entering UTC coerces authored procedural realizations to `text` before the mode switch completes
 - **Layout** → size / placement semantics, including content-row padding
 - **Appearance** → realization-scoped styling controls
 - **Content** → derived semantic runtime concern (`hour24`, `localWallClock`), not a persisted editor axis
@@ -86,6 +87,9 @@ Recent completed work:
   - semantic diamond glyphs
 - removed boxed hour numerals on the tick tape for clock/procedural modes
 - anchored static procedural clocks to the same reference-city / band-frame present-time basis as the map clock at the present-time tick
+- simplified the lower-left HUD to a reference-city-only date/time readout with independent date/time visibility, HUD-local seconds, size, and font controls
+- added the focused UTC top-tape treatment: previous / current / next UTC hours only, highlighted current UTC hour at the read point, no wrap, and `UTC Global Time` annotation placement by screen-side balance
+- removed the experimental NATO UTC-offset subrow and returned the structural strip to letters only
 - finalized the indicator-band vertical model so visible band height follows intrinsic content height plus resolved padding
 - corrected top chrome so it reserves layout space above the scene instead of overlaying map content
 - removed the remaining bundled top-strip palette selector and collapsed top chrome to one built-in appearance

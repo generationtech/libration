@@ -98,16 +98,20 @@ Top-band visibility that sits alongside this model is also structured in chrome 
 - `chrome.layout.tickTapeVisible`
 - `chrome.layout.timezoneLetterRowVisible`
 
-Lower-left bottom HUD (reference-city civil date/time only, not map layers) uses:
+Lower-left bottom HUD (reference-city date/time only, not map layers) uses:
 - `chrome.layout.bottomInformationBarVisible`
 - `chrome.layout.bottomTimeStackShowDate` / `chrome.layout.bottomTimeStackShowTime`
+- `chrome.layout.bottomTimeShowSeconds`
 - `chrome.layout.bottomTimeStackSizeMultiplier` and optional `chrome.layout.bottomReadoutFontAssetId`
+
+The HUD is no longer a multi-clock stack. It renders only the reference-city date and one time line; in `utc24`, the date remains reference-city civil while the time line is formatted in UTC.
 
 Additional strip-scoped structure now lives under `chrome.layout.hourMarkers` as part of the same authoritative model, including:
 - indicator entries area background color intent
 - resolver-derived effective foreground usage downstream of that background
 - optional `noonMidnightCustomization` with bounded expression modes for the upper strip only
 - leveled procedural appearance overrides for analog, radial line, and radial wedge surface layers
+- UTC runtime coercion to text-only realization when `chrome.displayTime.topBandMode === "utc24"`
 
 ---
 

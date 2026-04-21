@@ -70,6 +70,7 @@ flowchart TB
 - preserve the truthful top-band hour-marker model:
   - realization
   - derived effective behavior (text → civilPhased; procedural → civilColumnAnchored)
+  - UTC text-only coercion for the top-band hour indicators when `topBandMode === "utc24"`
   - layout
   - appearance
   - derived semantic content where required at runtime

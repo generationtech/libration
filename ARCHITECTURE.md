@@ -175,9 +175,9 @@ Display chrome time is **resolver-owned**, not fragmented in config:
 - **One instant** — `TimeBasis.nowUtcInstant` (from live wall clock or demo playback).
 - **One reference frame** — IANA zone for civil wall time plus the anchor meridian that sets the horizontal **read point** on the phased top band (city / auto / geography policy — not two competing “times”).
 - **One civil projection** — wall clock in the reference zone derived from that instant.
-- **One read point** — horizontal registration for the phased hour row; **display mode** (`local12` / `local24` / `utc24`) changes numerals and bottom-bar clock style only.
+- **One read point** — horizontal registration for the phased hour row; **display mode** (`local12` / `local24` / `utc24`) changes presentation only.
 
-The bottom bar shows **reference civil time** as primary; when the device’s system zone differs from the reference zone, an optional **subordinate** “this device” line shows local wall time for orientation only (no semantic effect).
+The lower-left bottom HUD is now a simple **reference-city date/time readout**: date in the reference-city civil calendar and one time line rendered in the selected display mode. In `utc24`, the date remains the reference-city date while the time line is rendered in UTC; date/time visibility, seconds, size, and font remain independently configurable.
 
 The fixed **structural** 15° / NATO letter row is geometric (equirectangular sectors); it is not “UTC as the user’s civil clock” and does not replace the reference-frame civil zone.
 
@@ -208,7 +208,7 @@ flowchart TB
 The scene viewport is resolved upstream and handed to the backend as concrete layout data.
 
 Top-band major areas now expose independent visibility controls for:
-- 24-hour indicator entries (civil-phased at the read point)
+- 24-hour indicator entries (civil-phased at the read point in local modes)
 - 24-hour tickmark tape (same phased band)
 - NATO / structural zone row (geometric overlay — not the reference civil clock)
 
@@ -225,7 +225,8 @@ The 24-hour indicator entries area now has its own structured strip-scoped prese
 Recent chrome simplification:
 - hour-marker circle backgrounds have been removed from the top-band render plan
 - broad tape-level `NOON` / `MIDNIGHT` annotations are no longer emitted as a separate legacy pass
-- phased tape and read-point registration follow the resolver-owned instant and reference zone; display mode changes labels only
+- phased tape and read-point registration follow the resolver-owned instant and reference zone in local modes
+- `utc24` now uses a focused **UTC Global Time** presentation: text-only hour markers, a highlighted current UTC hour at the read point, and only the previous / current / next UTC hours visible with no wrap
 
 Chrome is:
 - visually integrated
@@ -382,6 +383,8 @@ Implemented semantic realizations:
 - analogClock
 - radialLine
 - radialWedge
+
+UTC label mode constrains the effective top-band realization to **text**. Entering `utc24` now coerces authored procedural hour-marker realizations to text before the mode switch completes so the runtime never observes an invalid UTC + procedural combination.
 
 Strip-scoped noon/midnight customization is modeled as an additional semantic presentation overlay on top of these realizations rather than as a backend concern.
 
