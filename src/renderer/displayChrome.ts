@@ -1789,6 +1789,8 @@ export function renderDisplayChrome(
         scale.segments.length === 24
           ? structuralHourIndexFromReferenceLongitudeDeg(scale.topBandAnchor.referenceLongitudeDeg)
           : undefined,
+      topBandMode: scale.topBandMode,
+      readPointX: scale.readPoint.x,
     }),
   );
 

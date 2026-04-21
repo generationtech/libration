@@ -26,6 +26,7 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
+  type TopBandTimeMode,
   type DisplayChromeLayoutConfig,
 } from "../../config/appConfig";
 import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
@@ -38,6 +39,7 @@ import {
   resolveTopBandInDiskHourMarkerSemanticPath,
   type TopBandInDiskHourMarkerSemanticRenderPath,
 } from "./topBandCircleBandHourStackPlan";
+import { UTC_FOCUS_HALF_WINDOW_HOURS } from "./utcTopTapeFocusTreatment.ts";
 import {
   buildFullUtcTopBandHourDiskFixture,
   effectiveTopBandHourMarkersForLayout,
@@ -82,6 +84,8 @@ function buildStackFromFixture(
     eff: EffectiveTopBandHourMarkers;
     topBandYPx?: number;
     structuralZoneCenterXPx?: readonly number[];
+    topBandMode?: TopBandTimeMode;
+    readPointX?: number;
   },
 ) {
   return buildTopBandCircleBandHourStackRenderPlan({
@@ -99,6 +103,8 @@ function buildStackFromFixture(
     referenceFractionalHour: f.referenceFractionalHour,
     presentTimeStructuralHour0To23: f.presentTimeStructuralHour0To23,
     structuralZoneCenterXPx: args.structuralZoneCenterXPx ?? f.structuralZoneCenterXPx,
+    topBandMode: args.topBandMode,
+    readPointX: args.readPointX,
   });
 }
 
@@ -343,6 +349,86 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       eff: effHidden,
     });
     expect(plan.items).toHaveLength(0);
+  });
+
+  it("utc focus near left edge clips without wrap-around to the right", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: 18,
+    });
+    const utcTexts = plan.items.filter((i) => i.kind === "text");
+    expect(utcTexts.length).toBeGreaterThan(0);
+    const rightMost = Math.max(...utcTexts.map((t) => (t.kind === "text" ? t.x : 0)));
+    expect(rightMost).toBeLessThan(250);
+  });
+
+  it("utc focus near right edge clips without wrap-around to the left", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: 942,
+    });
+    const utcTexts = plan.items.filter((i) => i.kind === "text");
+    expect(utcTexts.length).toBeGreaterThan(0);
+    const leftMost = Math.min(...utcTexts.map((t) => (t.kind === "text" ? t.x : 0)));
+    expect(leftMost).toBeGreaterThan(700);
+  });
+
+  it("places UTC Global Time opposite the centerline side of the read point", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const leftPlan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: 200,
+    });
+    const rightPlan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: 760,
+    });
+    const centerPlan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: 480,
+    });
+    const leftAnno = leftPlan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
+    const rightAnno = rightPlan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
+    const centerAnno = centerPlan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
+    expect(leftAnno?.kind).toBe("text");
+    expect(rightAnno?.kind).toBe("text");
+    expect(centerAnno?.kind).toBe("text");
+    if (leftAnno?.kind === "text" && rightAnno?.kind === "text" && centerAnno?.kind === "text") {
+      const hourSpacing = 960 / 24;
+      expect(leftAnno.x).toBeGreaterThan(200 + hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
+      expect(rightAnno.x).toBeLessThan(760 - hourSpacing * UTC_FOCUS_HALF_WINDOW_HOURS);
+      expect(centerAnno.x).toBeGreaterThan(480);
+    }
+  });
+
+  it("keeps civil-mode rendering path unchanged", () => {
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const control = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: undefined,
+      readPointX: undefined,
+    });
+    const local24 = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "local24",
+      readPointX: 480,
+    });
+    expect(local24.items.length).toBe(control.items.length);
+    expect(local24.items.some((i) => i.kind === "text" && i.text === "UTC Global Time")).toBe(false);
   });
 
   it("emits bed then lines then hour-disk text in order (full semantic tape; no disk circles or crown annotations)", () => {
