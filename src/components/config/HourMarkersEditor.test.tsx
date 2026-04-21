@@ -527,4 +527,231 @@ describe("HourMarkersEditor UTC vs authored realization", () => {
     expect(last!.chrome.displayTime.topBandMode).toBe("local24");
     expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialWedge");
   });
+
+  it("UTC + authored non-text: realization kind select is read-only Text proxy (no commits from interaction)", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers(
+          { realization: { kind: "analogClock", appearance: { handColor: "#112233" } } },
+          "utc24",
+        )}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    const sel = screen.getByTestId("chrome-hour-marker-realization-kind-select");
+    expect(sel).toBeDisabled();
+    expect(sel).toHaveAttribute("data-utc-procedural-proxy", "true");
+    fireEvent.change(sel, { target: { value: "text" } });
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("analogClock");
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      kind: "analogClock",
+      appearance: { handColor: "#112233" },
+    });
+  });
+
+  it.each([
+    {
+      kind: "analogClock" as const,
+      appearance: { handColor: "#aabbcc" },
+      subLabel: /Top-band analog hour marker hand color/i,
+    },
+    {
+      kind: "radialLine" as const,
+      appearance: { lineColor: "#ccddee" },
+      subLabel: /Top-band radial line hour marker line color/i,
+    },
+    {
+      kind: "radialWedge" as const,
+      appearance: { edgeColor: "#eeff00" },
+      subLabel: /Top-band radial wedge hour marker edge color/i,
+    },
+  ])(
+    "round-trip UTC preserves $kind appearance and restores sub-editor after leaving UTC",
+    ({ kind, appearance, subLabel }) => {
+      let last: LibrationConfigV2 | null = null;
+      render(
+        <HourMarkersHarness
+          initial={baseCustomHourMarkers({ realization: { kind, appearance } }, "utc24")}
+        >
+          {({ config, updateConfig }) => {
+            last = config;
+            return (
+              <button
+                type="button"
+                data-testid="to-local24"
+                onClick={() =>
+                  updateConfig((draft) => {
+                    draft.chrome.displayTime.topBandMode = "local24";
+                  })
+                }
+              />
+            );
+          }}
+        </HourMarkersHarness>,
+      );
+      expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toBeDisabled();
+      fireEvent.click(screen.getByTestId("to-local24"));
+      expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind, appearance });
+      expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(kind);
+      expect(screen.getByLabelText(subLabel)).toBeInTheDocument();
+    },
+  );
+
+  it("multi-step mode switches: non-text → UTC → 24hr → UTC → 12hr stays coherent", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "radialLine", appearance: { lineColor: "#010203", faceColor: "#040506" } },
+        })}
+      >
+        {({ config, updateConfig }) => {
+          last = config;
+          return (
+            <>
+              <button
+                type="button"
+                data-testid="set-utc"
+                onClick={() => {
+                  updateConfig((d) => {
+                    d.chrome.displayTime.topBandMode = "utc24";
+                  });
+                }}
+              />
+              <button
+                type="button"
+                data-testid="set-local24"
+                onClick={() => {
+                  updateConfig((d) => {
+                    d.chrome.displayTime.topBandMode = "local24";
+                  });
+                }}
+              />
+              <button
+                type="button"
+                data-testid="set-local12"
+                onClick={() => {
+                  updateConfig((d) => {
+                    d.chrome.displayTime.topBandMode = "local12";
+                  });
+                }}
+              />
+            </>
+          );
+        }}
+      </HourMarkersHarness>,
+    );
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
+    fireEvent.click(screen.getByTestId("set-utc"));
+    expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
+    expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toBeDisabled();
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "radialLine",
+      appearance: { lineColor: "#010203", faceColor: "#040506" },
+    });
+
+    fireEvent.click(screen.getByTestId("set-local24"));
+    expect(last!.chrome.displayTime.topBandMode).toBe("local24");
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
+    expect(screen.getByLabelText(/Top-band radial line hour marker line color/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("set-utc"));
+    expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toBeDisabled();
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialLine");
+
+    fireEvent.click(screen.getByTestId("set-local12"));
+    expect(last!.chrome.displayTime.topBandMode).toBe("local12");
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
+    expect(screen.getByLabelText(/Top-band radial line hour marker line color/i)).toBeInTheDocument();
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "radialLine",
+      appearance: { lineColor: "#010203", faceColor: "#040506" },
+    });
+  });
+
+  it("text-authored UTC mode: realization select stays enabled and edits persist across leaving UTC", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers(
+          {
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#c0ffee" } },
+          },
+          "utc24",
+        )}
+      >
+        {({ config, updateConfig }) => {
+          last = config;
+          return (
+            <button
+              type="button"
+              data-testid="set-local12"
+              onClick={() => {
+                updateConfig((d) => {
+                  d.chrome.displayTime.topBandMode = "local12";
+                });
+              }}
+            />
+          );
+        }}
+      </HourMarkersHarness>,
+    );
+    const sel = screen.getByTestId("chrome-hour-marker-realization-kind-select");
+    expect(sel).not.toBeDisabled();
+    expect(sel).not.toHaveAttribute("data-utc-procedural-proxy");
+    fireEvent.change(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i }), {
+      target: { value: "computer" },
+    });
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      kind: "text",
+      fontAssetId: "computer",
+      appearance: { color: "#c0ffee" },
+    });
+    fireEvent.click(screen.getByTestId("set-local12"));
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "text",
+      fontAssetId: "computer",
+      appearance: { color: "#c0ffee" },
+    });
+    expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toHaveValue("computer");
+  });
+
+  it("in UTC with procedural proxy, changing indicator entries area background does not touch realization", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers(
+          {
+            realization: { kind: "radialWedge", appearance: { fillColor: "#abcdef" } },
+            indicatorEntriesAreaBackgroundColor: "#111111",
+          },
+          "utc24",
+        )}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    fireEvent.change(screen.getByLabelText(/24-hour indicator entries area background color/i), {
+      target: { value: "#222222" },
+    });
+    expect(last!.chrome.layout.hourMarkers.indicatorEntriesAreaBackgroundColor).toBe("#222222");
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "radialWedge",
+      appearance: { fillColor: "#abcdef" },
+    });
+  });
 });

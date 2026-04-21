@@ -336,6 +336,8 @@ describe("ChromeTab top-band hour markers", () => {
     const sel = screen.getByTestId("chrome-hour-marker-realization-kind-select");
     expect(sel.querySelectorAll("option")).toHaveLength(1);
     expect(sel).toHaveValue("text");
+    expect(sel).toBeDisabled();
+    expect(sel).toHaveAttribute("data-utc-procedural-proxy", "true");
     expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("analogClock");
     expect(screen.getByTestId("chrome-hour-marker-utc-text-only-hint")).toBeInTheDocument();
     expect(screen.getByTestId("chrome-hour-marker-utc-procedural-preserved-hint")).toBeInTheDocument();
@@ -435,6 +437,73 @@ describe("ChromeTab top-band hour markers", () => {
     expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialWedge");
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select").querySelectorAll("option")).toHaveLength(4);
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toHaveValue("radialWedge");
+  });
+
+  it("hour label format: non-text realization survives UTC and repeated mode switches in the full Chrome tab", () => {
+    let last: LibrationConfigV2 | null = null;
+    const d = defaultLibrationConfigV2();
+    const initial = normalizeLibrationConfig({
+      ...d,
+      chrome: {
+        ...d.chrome,
+        displayTime: { ...d.chrome.displayTime, topBandMode: "local12" },
+        layout: {
+          ...d.chrome.layout,
+          hourMarkers: {
+            ...d.chrome.layout.hourMarkers,
+            realization: {
+              kind: "radialLine",
+              appearance: { lineColor: "#334455", faceColor: "#667788" },
+            },
+            layout: { sizeMultiplier: 1 },
+          },
+        },
+      },
+    });
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
+    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+      target: { value: "utc24" },
+    });
+    expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
+    expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toBeDisabled();
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "radialLine",
+      appearance: { lineColor: "#334455", faceColor: "#667788" },
+    });
+
+    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+      target: { value: "local24" },
+    });
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
+    expect(screen.getByLabelText(/Top-band radial line hour marker line color/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+      target: { value: "utc24" },
+    });
+    expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+      target: { value: "local12" },
+    });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "radialLine",
+      appearance: { lineColor: "#334455", faceColor: "#667788" },
+    });
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
+      "radialLine",
+    );
   });
 
   it("structured hour markers: controls stay wired; font change updates realization", () => {
