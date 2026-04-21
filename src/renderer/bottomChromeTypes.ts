@@ -21,12 +21,19 @@ export interface BottomBarDayCell {
   dayOfMonth: number;
 }
 
-/** One row in the lower-left HUD time stack (date, optional spacer, clock rows). */
-export type BottomTimeStackLine = {
-  role: "date" | "clock" | "spacer";
-  /** Full line for canvas emission (smart labels only when multiple clock rows are visible). */
-  text: string;
-};
+/** One row in the lower-left HUD time stack (date, optional spacer, clock rows with optional label + time column). */
+export type BottomTimeStackLine =
+  | { role: "date"; text: string }
+  | { role: "spacer" }
+  | { role: "clock"; label: string | null; timeText: string };
+
+/** Single-line preview for tests and logging (not used for canvas layout). */
+export function formatBottomTimeStackClockLine(line: Extract<BottomTimeStackLine, { role: "clock" }>): string {
+  if (line.label !== null && line.label.length > 0) {
+    return `${line.label}  ${line.timeText}`;
+  }
+  return line.timeText;
+}
 
 /**
  * Bottom instrument overlay: unified lower-left date + clock readouts — not map layers.
@@ -42,8 +49,8 @@ export interface BottomInformationBarState {
 }
 
 /**
- * Maximum stack lines for layout height: date + configured clock rows + optional spacer before local
- * (when local is enabled together with reference and/or UTC).
+ * Legacy upper bound on stack lines from toggles only (ignores redundant-local suppression).
+ * Prefer {@link buildBottomTimeStackLines} line count for layout height.
  */
 export function countBottomTimeStackMaxLines(
   layout: Pick<

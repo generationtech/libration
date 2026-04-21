@@ -31,7 +31,7 @@ type BottomChromeBandRect = { x: number; y: number; width: number; height: numbe
 /** Computes resolved typography sizes from viewport width (token-driven). */
 export function resolveBottomChromeTypography(
   viewportWidthPx: number,
-  stackLineCount?: number,
+  _stackLineCount?: number,
   /** Applied to all stack roles after token resolution (config-driven bottom stack size). */
   timeStackSizeMultiplier: number = 1,
 ): {
@@ -41,28 +41,16 @@ export function resolveBottomChromeTypography(
 } {
   const T = BOTTOM_CHROME_STYLE.typography;
   const vw = Math.max(0, viewportWidthPx);
-  const n = stackLineCount ?? 0;
-  const dense = n > 4;
-  const primaryScale = dense ? 0.88 : 1;
-  const secondaryScale = n > 3 ? 0.92 : 1;
   const m = Number.isFinite(timeStackSizeMultiplier) && timeStackSizeMultiplier > 0 ? timeStackSizeMultiplier : 1;
+  const stackPx =
+    m * bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth);
   return {
     microLabelPx:
       m *
       bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
-    primaryTimePx:
-      m *
-      primaryScale *
-      bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth),
-    secondaryReadoutPx:
-      m *
-      secondaryScale *
-      bottomChromeFontPx(
-        vw,
-        T.dayCellDateSecondaryMinPx,
-        T.dayCellDateSecondaryMaxPx,
-        T.dayCellDateSecondaryFracOfViewportWidth,
-      ),
+    primaryTimePx: stackPx,
+    /** Kept for API compatibility; lower-left stack uses {@link primaryTimePx} for every row. */
+    secondaryReadoutPx: stackPx,
   };
 }
 

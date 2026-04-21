@@ -13,7 +13,7 @@
 
 /**
  * Lower-left bottom HUD time stack: ordered lines (date → reference → UTC → local), smart labels,
- * optional spacer, and 12-hour colon alignment — reference-city–centric semantics.
+ * optional spacer, colon-aligned time column — reference-city–centric semantics.
  */
 
 import type { DisplayChromeLayoutConfig } from "../config/appConfig.ts";
@@ -21,6 +21,9 @@ import type { TopBandTimeMode } from "../config/appConfig.ts";
 import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode.ts";
 import { formatWallClockInTimeZone } from "../core/timeFormat.ts";
 import type { BottomTimeStackLine } from "./bottomChromeTypes.ts";
+import {
+  alignBottomStackTimeBodiesToColonColumn,
+} from "./bottomStackTimeColumnLayout.ts";
 
 export type BottomTimeStackClockKind = "refer" | "utc" | "local";
 
@@ -69,9 +72,24 @@ function shortLabel(kind: BottomTimeStackClockKind): string {
 
 /**
  * Smart labels (deterministic):
- * - If exactly one clock row is visible: omit labels (time strings only).
- * - If two or more clock rows are visible: prefix each line with `Refer` / `UTC` / `Local` (minimal short labels).
+ * - If exactly one clock row is visible: no labels (time strings only).
+ * - If two or more clock rows: label each row except suppress "Refer" when local was omitted only because it matched reference.
  */
+function resolveClockLabel(
+  kind: BottomTimeStackClockKind,
+  options: { visibleClockRows: number; localSuppressedBecauseMatchesReference: boolean },
+): string | null {
+  if (options.visibleClockRows <= 1) {
+    return null;
+  }
+  if (kind === "refer" && options.localSuppressedBecauseMatchesReference) {
+    return null;
+  }
+  return shortLabel(kind);
+}
+
+const STACK_FONT_SIZE_FOR_ALIGNMENT_PX = 16;
+
 export function buildBottomTimeStackLines(options: {
   nowMs: number;
   referenceTimeZone: string;
@@ -94,59 +112,58 @@ export function buildBottomTimeStackLines(options: {
   const fmt = (timeZone: string, h12: boolean) =>
     formatWallClockInTimeZone(options.nowMs, timeZone, h12, { includeSeconds });
 
-  const referBody = fmt(refTz, hour12);
-  const utcBody = fmt("UTC", false);
-  const localBody = fmt(systemTz, hour12);
+  const referBodyRaw = fmt(refTz, hour12);
+  const utcBodyRaw = fmt("UTC", false);
+  const localBodyRaw = fmt(systemTz, hour12);
 
   const showRefer = lay.bottomTimeStackShowRefer !== false;
   const showUtc = lay.bottomTimeStackShowUtc !== false;
   const showLocal = lay.bottomTimeStackShowLocal !== false;
 
-  /** Same instant, same formatting options — hide redundant local when it matches reference wall time. */
-  const localDistinct = localBody !== referBody;
-  const showLocalRow = showLocal && localDistinct;
+  const localSuppressedBecauseMatchesReference = showLocal && localBodyRaw === referBodyRaw;
+  const showLocalRow = showLocal && !localSuppressedBecauseMatchesReference;
 
   type Planned = { kind: BottomTimeStackClockKind; body: string };
   const planned: Planned[] = [];
   if (showRefer) {
-    planned.push({ kind: "refer", body: referBody });
+    planned.push({ kind: "refer", body: referBodyRaw });
   }
   if (showUtc) {
-    planned.push({ kind: "utc", body: utcBody });
+    planned.push({ kind: "utc", body: utcBodyRaw });
   }
   if (showLocalRow) {
-    planned.push({ kind: "local", body: localBody });
+    planned.push({ kind: "local", body: localBodyRaw });
   }
 
-  const clockRows = planned.length;
-  const useLabels = clockRows >= 2;
-  const align12hr =
-    hour12 && clockRows >= 2;
+  const nClock = planned.length;
+  const align12hrMulti = hour12 && nClock >= 2;
 
-  const formatClockLine = (p: Planned): string => {
+  const bodiesForAlignment = planned.map((p) => {
     let body = p.body;
-    if (align12hr && p.kind !== "utc") {
+    if (align12hrMulti && p.kind !== "utc") {
       body = applyBottomStack12hrColonAlignment(body, true);
     }
-    if (!useLabels) {
-      return body;
-    }
-    return `${shortLabel(p.kind)}  ${body}`;
-  };
+    return body;
+  });
+
+  const alignedBodies =
+    nClock >= 2
+      ? alignBottomStackTimeBodiesToColonColumn(bodiesForAlignment, STACK_FONT_SIZE_FOR_ALIGNMENT_PX)
+      : bodiesForAlignment;
 
   const lines: BottomTimeStackLine[] = [];
   lines.push({ role: "date", text: formatBottomHudDateLine(options.nowMs, refTz) });
 
   for (let i = 0; i < planned.length; i += 1) {
     const p = planned[i]!;
-    if (
-      p.kind === "local" &&
-      showLocalRow &&
-      (showRefer || showUtc)
-    ) {
-      lines.push({ role: "spacer", text: "" });
+    if (p.kind === "local" && showLocalRow && (showRefer || showUtc)) {
+      lines.push({ role: "spacer" });
     }
-    lines.push({ role: "clock", text: formatClockLine(p) });
+    const label = resolveClockLabel(p.kind, {
+      visibleClockRows: nClock,
+      localSuppressedBecauseMatchesReference,
+    });
+    lines.push({ role: "clock", label, timeText: alignedBodies[i]! });
   }
 
   return lines;

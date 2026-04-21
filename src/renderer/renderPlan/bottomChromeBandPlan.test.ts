@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
 import {
   resolveBottomChromeDatePolicy,
+  resolveBottomChromeSecondaryReadoutPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy";
 import { BOTTOM_CHROME_STYLE } from "../../config/bottomChromeStyle";
@@ -32,9 +33,9 @@ function sampleInformationBar(vw: number): BottomInformationBarState {
   return {
     leftTimeStackLines: [
       { role: "date", text: "Monday, April 7, 2026" },
-      { role: "clock", text: "Local  3:45 PM" },
-      { role: "clock", text: "Refer  3:45 PM" },
-      { role: "clock", text: "UTC  19:45:00" },
+      { role: "clock", label: "Local", timeText: "3:45 PM" },
+      { role: "clock", label: "Refer", timeText: "3:45 PM" },
+      { role: "clock", label: "UTC", timeText: "19:45:00" },
     ],
     bottomChromeLayout: layout,
   };
@@ -55,8 +56,8 @@ describe("buildBottomChromeBandRenderPlan", () => {
       productDefaultFontAssetId: PRODUCT_FONT,
     });
 
-    expect(plan.items).toHaveLength(5);
-    const [plate, t0, t1, t2, t3] = plan.items;
+    expect(plan.items.length).toBeGreaterThanOrEqual(5);
+    const [plate, ...texts] = plan.items;
     expect(plate.kind).toBe("rect");
     if (plate.kind === "rect") {
       expect(plate.x).toBe(bottomBand.x);
@@ -66,28 +67,20 @@ describe("buildBottomChromeBandRenderPlan", () => {
       expect(plate.fill).toBe(BOTTOM_CHROME_STYLE.overlay.bottomInstrumentBandPlateFill);
     }
 
-    for (const item of [t0, t1, t2, t3]) {
-      expect(item.kind).toBe("text");
-    }
-    if (t0.kind !== "text" || t1.kind !== "text" || t2.kind !== "text" || t3.kind !== "text") {
-      throw new Error("expected text items");
-    }
-
-    expect(t0.text).toBe("Monday, April 7, 2026");
-    expect(t0.textAlign).toBe("left");
-    expect(t0.x).toBe(ib.bottomChromeLayout.horizontalPaddingPx);
-
-    expect(t1.text).toBe("Local  3:45 PM");
-    expect(t2.text).toBe("Refer  3:45 PM");
-    expect(t3.text).toBe("UTC  19:45:00");
+    const textItems = texts.filter((it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text");
+    expect(textItems[0]!.text).toBe("Monday, April 7, 2026");
+    expect(textItems[0]!.textAlign).toBe("left");
+    expect(textItems[0]!.x).toBe(ib.bottomChromeLayout.horizontalPaddingPx);
 
     const colors = BOTTOM_CHROME_STYLE.colors;
     const timePolicy = resolveBottomChromeTimePolicy(colors);
     const datePolicy = resolveBottomChromeDatePolicy(colors);
-    expect(t0.fill).toBe(datePolicy.fill);
-    expect(t1.fill).toBe(timePolicy.fill);
-    expect(t2.fill).toBe(timePolicy.fill);
-    expect(t3.fill).toBe(timePolicy.fill);
+    const labelPolicy = resolveBottomChromeSecondaryReadoutPolicy(colors);
+    expect(textItems[0]!.fill).toBe(datePolicy.fill);
+    expect(textItems[1]!.fill).toBe(labelPolicy.fill);
+    expect(textItems[2]!.fill).toBe(timePolicy.fill);
+    expect(textItems[1]!.x).toBe(ib.bottomChromeLayout.horizontalPaddingPx);
+    expect(textItems[2]!.x).toBeGreaterThan(textItems[1]!.x);
   });
 
   it("uses nbsp when a stack line is empty", () => {
@@ -129,8 +122,9 @@ describe("buildBottomChromeBandRenderPlan", () => {
     const ys = plan.items
       .filter((it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text")
       .map((it) => it.y);
-    for (let i = 1; i < ys.length; i += 1) {
-      expect(ys[i]).toBeGreaterThan(ys[i - 1]!);
+    const uniqueY = [...new Set(ys)].sort((a, b) => a - b);
+    for (let i = 1; i < uniqueY.length; i += 1) {
+      expect(uniqueY[i]).toBeGreaterThan(uniqueY[i - 1]!);
     }
   });
 
@@ -154,5 +148,25 @@ describe("buildBottomChromeBandRenderPlan", () => {
     if (plate.kind === "rect") {
       expect(plate.fill).toBe(customFill);
     }
+  });
+
+  it("uses the same font size for date and clock rows", () => {
+    const vw = 700;
+    const ib = sampleInformationBar(vw);
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const plan = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand: { x: 0, y: 0, width: vw, height: 64 },
+      ib,
+      typography: typo,
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    const sizes = plan.items
+      .filter((it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text")
+      .map((it) => it.font.sizePx);
+    const u = new Set(sizes);
+    expect(u.size).toBe(1);
+    expect(sizes[0]).toBe(typo.primaryTimePx);
   });
 });

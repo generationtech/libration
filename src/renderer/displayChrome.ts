@@ -66,7 +66,7 @@ export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
 import { renderBottomChrome } from "./bottomChrome";
-import { countBottomTimeStackMaxLines, type BottomInformationBarState } from "./bottomChromeTypes";
+import type { BottomInformationBarState } from "./bottomChromeTypes";
 import { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
 import { alignCrispLineX } from "./crispLines";
 import { BOTTOM_CHROME_STYLE } from "../config/bottomChromeStyle";
@@ -110,6 +110,7 @@ import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransi
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
 import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
 export type { BottomBarDayCell, BottomInformationBarState, BottomTimeStackLine } from "./bottomChromeTypes";
+export { formatBottomTimeStackClockLine } from "./bottomChromeTypes";
 export { countBottomTimeStackMaxLines } from "./bottomChromeTypes";
 export { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
 
@@ -1389,22 +1390,29 @@ export function buildUtcTopScaleLayout(
 
 function computeBandHeights(
   heightPx: number,
-  layout?: Pick<
+  layout: Pick<
     DisplayChromeLayoutConfig,
     | "bottomInformationBarVisible"
     | "bottomTimeStackShowLocal"
     | "bottomTimeStackShowRefer"
     | "bottomTimeStackShowUtc"
+    | "bottomTimeStackShowSeconds"
   >,
+  stackContext: { nowMs: number; referenceTimeZone: string; topBandMode: TopBandTimeMode },
 ): { top: number; bottom: number } {
   const h = heightPx > 0 ? heightPx : 1;
   /** Taller top strip so the enlarged hour stack + denser tick rail fit without crowding the map. */
   const top = Math.max(56, Math.min(118, Math.round(h * 0.102)));
-  if (layout?.bottomInformationBarVisible === false) {
+  if (layout.bottomInformationBarVisible === false) {
     return { top, bottom: 0 };
   }
   const merged = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, ...layout };
-  const stackLines = countBottomTimeStackMaxLines(merged);
+  const stackLines = buildBottomTimeStackLines({
+    nowMs: stackContext.nowMs,
+    referenceTimeZone: stackContext.referenceTimeZone,
+    topBandMode: stackContext.topBandMode,
+    bottomTimeStack: merged,
+  }).length;
   const bottom = computeBottomChromeBandHeightPx(h, { timeStackLineCount: stackLines });
   return { top, bottom };
 }
@@ -1428,7 +1436,11 @@ export function buildDisplayChromeState(options: {
   };
   const w = Math.max(0, viewport.width);
   const h = Math.max(0, viewport.height);
-  const { top: baseTop, bottom } = computeBandHeights(h, layout);
+  const { top: baseTop, bottom } = computeBandHeights(h, layout, {
+    nowMs: time.now,
+    referenceTimeZone: resolved.referenceTimeZone,
+    topBandMode: resolved.topBandMode,
+  });
   const bottomOverlayMarginPx =
     layout.bottomInformationBarVisible === false
       ? 0

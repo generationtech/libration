@@ -11,9 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { formatBottomTimeStackClockLine } from "../renderer/bottomChromeTypes.ts";
 import type { BottomInformationBarState } from "../renderer/bottomChromeTypes.ts";
 
-/** Semantic payload for one canvas line in the lower-left time stack. */
+/** Semantic payload for one canvas line in the lower-left time stack (legacy single-label bridge). */
 export type BottomChromeStackLineContent = {
   label: string;
 };
@@ -23,8 +24,14 @@ export function bottomChromeReadoutContentFromInformationBar(
   ib: BottomInformationBarState,
 ): { stackLines: BottomChromeStackLineContent[] } {
   return {
-    stackLines: ib.leftTimeStackLines.map((row) => ({
-      label: row.text.length > 0 ? row.text : "\u00a0",
-    })),
+    stackLines: ib.leftTimeStackLines.map((row) => {
+      if (row.role === "date") {
+        return { label: row.text.length > 0 ? row.text : "\u00a0" };
+      }
+      if (row.role === "spacer") {
+        return { label: "\u00a0" };
+      }
+      return { label: formatBottomTimeStackClockLine(row) };
+    }),
   };
 }

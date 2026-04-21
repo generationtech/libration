@@ -21,7 +21,7 @@ function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInf
   return {
     leftTimeStackLines: [
       { role: "date", text: "April 7 2026" },
-      { role: "clock", text: "Local  3:45 PM" },
+      { role: "clock", label: "Local", timeText: "3:45 PM" },
     ],
     bottomChromeLayout: layout,
     ...overrides,

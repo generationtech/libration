@@ -18,12 +18,16 @@
 
 import {
   resolveBottomChromeDatePolicy,
+  resolveBottomChromeSecondaryReadoutPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
 import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
 import { createBottomChromeTextGlyph } from "../../glyphs/bottomChromeTextGlyphFromPolicy.ts";
 import { BOTTOM_CHROME_STYLE, type BottomChromeColorTokens } from "../../config/bottomChromeStyle";
-import { bottomChromeReadoutContentFromInformationBar } from "../../glyphs/bottomChromeContent.ts";
+import {
+  bottomStackLabelToTimeGapPx,
+  maxBottomStackLabelColumnInkWidthPx,
+} from "../bottomStackTimeColumnLayout.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
 import type { BottomChromeTextVisualPolicy } from "../../config/bottomChromeVisualPolicy.ts";
 import type { BottomInformationBarState } from "../bottomChromeTypes";
@@ -84,16 +88,23 @@ export function buildBottomChromeBandRenderPlan(options: {
   const bh = options.bottomBand.height;
   const by = options.bottomBand.y;
   const sideLift = bh * L.sideReadoutVerticalLiftFracOfBandHeight;
-  const vw = Math.max(0, options.viewportWidthPx);
   const shadow = sideReadoutShadowFromStyle();
   const band = options.bottomBand;
   const plateFill = options.bandPlateFill ?? O.bottomInstrumentBandPlateFill;
   const gctx = options.glyphRenderContext;
 
-  const content = bottomChromeReadoutContentFromInformationBar(options.ib);
   const pid = options.productDefaultFontAssetId;
   const timePolicy = withInheritedProductFontFace(resolveBottomChromeTimePolicy(colors), pid);
   const datePolicy = withInheritedProductFontFace(resolveBottomChromeDatePolicy(colors), pid);
+  const labelPolicy = withInheritedProductFontFace(resolveBottomChromeSecondaryReadoutPolicy(colors), pid);
+  const stackPx = options.typography.primaryTimePx;
+
+  const clockLabels = options.ib.leftTimeStackLines.flatMap((row) =>
+    row.role === "clock" ? [row.label] : [],
+  );
+  const labelColInkPx = maxBottomStackLabelColumnInkWidthPx(clockLabels, stackPx);
+  const labelGapPx = labelColInkPx > 0 ? bottomStackLabelToTimeGapPx(stackPx) : 0;
+  const timeColumnLeftX = padX + labelColInkPx + labelGapPx;
 
   const items: RenderPlan["items"] = [
     {
@@ -106,22 +117,50 @@ export function buildBottomChromeBandRenderPlan(options: {
     },
   ];
 
-  const n = content.stackLines.length;
+  const n = options.ib.leftTimeStackLines.length;
   const topFrac = 0.12;
   const botFrac = 0.9;
   const span = Math.max(0.05, botFrac - topFrac);
 
   for (let i = 0; i < n; i += 1) {
     const row = options.ib.leftTimeStackLines[i]!;
-    const line = content.stackLines[i]!;
     const t = n === 1 ? 0.5 : i / Math.max(1, n - 1);
     const yFrac = topFrac + t * span;
     const cy = by + bh * yFrac - sideLift;
-    const policy = row.role === "date" ? datePolicy : timePolicy;
-    const sizePx = row.role === "date" ? options.typography.secondaryReadoutPx : options.typography.primaryTimePx;
+
+    if (row.role === "date") {
+      const text = row.text.length > 0 ? row.text : "\u00a0";
+      emitGlyphToRenderPlan(
+        createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),
+        { cx: padX, cy, size: stackPx },
+        gctx,
+        items,
+      );
+      continue;
+    }
+
+    if (row.role === "spacer") {
+      emitGlyphToRenderPlan(
+        createBottomChromeTextGlyph("\u00a0", timePolicy, { textAlign: "left", shadow }),
+        { cx: padX, cy, size: stackPx },
+        gctx,
+        items,
+      );
+      continue;
+    }
+
+    const timeText = row.timeText.length > 0 ? row.timeText : "\u00a0";
+    if (row.label !== null && row.label.length > 0) {
+      emitGlyphToRenderPlan(
+        createBottomChromeTextGlyph(row.label, labelPolicy, { textAlign: "left", shadow }),
+        { cx: padX, cy, size: stackPx },
+        gctx,
+        items,
+      );
+    }
     emitGlyphToRenderPlan(
-      createBottomChromeTextGlyph(line.label, policy, { textAlign: "left", shadow }),
-      { cx: padX, cy, size: sizePx },
+      createBottomChromeTextGlyph(timeText, timePolicy, { textAlign: "left", shadow }),
+      { cx: timeColumnLeftX, cy, size: stackPx },
       gctx,
       items,
     );
