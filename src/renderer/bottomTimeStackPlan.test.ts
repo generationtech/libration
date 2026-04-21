@@ -82,6 +82,37 @@ describe("buildBottomTimeStackLines", () => {
       expect(timeLine.text).toMatch(/\b(AM|PM)\b/i);
     }
   });
+
+  it("includes seconds in the time string when bottomTimeShowSeconds is true", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const lines = buildBottomTimeStackLines({
+      nowMs: t,
+      referenceTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: { bottomTimeShowSeconds: true },
+    });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.role).toBe("time");
+    if (timeLine?.role === "time") {
+      expect(timeLine.text).toMatch(/14:05:06/);
+    }
+  });
+
+  it("omits seconds from the time string when bottomTimeShowSeconds is false", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const lines = buildBottomTimeStackLines({
+      nowMs: t,
+      referenceTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: { bottomTimeShowSeconds: false },
+    });
+    const timeLine = lines.find((l) => l.role === "time");
+    expect(timeLine?.role).toBe("time");
+    if (timeLine?.role === "time") {
+      expect(timeLine.text).toMatch(/14:05\b/);
+      expect(timeLine.text).not.toMatch(/14:05:06/);
+    }
+  });
 });
 
 describe("formatBottomHudDateLine", () => {

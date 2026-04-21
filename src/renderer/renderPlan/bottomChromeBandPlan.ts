@@ -108,11 +108,22 @@ export function buildBottomChromeBandRenderPlan(options: {
   const topFrac = 0.12;
   const botFrac = 0.9;
   const span = Math.max(0.05, botFrac - topFrac);
+  /** Inter-row advance within the date/time pair: ~half legacy spacing, with a px floor for large stack fonts. */
+  const minRowGapPx = Math.max(4, stackPx * 0.06);
+  let stackSpanFrac = span;
+  if (n > 1) {
+    const originalStepFrac = span / (n - 1);
+    const newStepFrac = Math.max(
+      minRowGapPx / Math.max(1, bh),
+      originalStepFrac * 0.5,
+    );
+    stackSpanFrac = newStepFrac * (n - 1);
+  }
 
   for (let i = 0; i < n; i += 1) {
     const row = options.ib.leftTimeStackLines[i]!;
     const t = n === 1 ? 0.5 : i / Math.max(1, n - 1);
-    const yFrac = topFrac + t * span;
+    const yFrac = topFrac + t * stackSpanFrac;
     const cy = by + bh * yFrac - sideLift;
 
     if (row.role === "date") {

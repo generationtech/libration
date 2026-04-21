@@ -104,6 +104,27 @@ describe("librationConfig v2 (Phase 1)", () => {
     });
   });
 
+  it("normalizeDisplayChromeLayout defaults bottomTimeShowSeconds to true and accepts false", () => {
+    expect(normalizeDisplayChromeLayout({}).bottomTimeShowSeconds).toBe(true);
+    expect(
+      normalizeDisplayChromeLayout({ bottomTimeShowSeconds: false }).bottomTimeShowSeconds,
+    ).toBe(false);
+  });
+
+  it("cloneV2 and v2ToAppConfig preserve bottomTimeShowSeconds", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const withOff = normalizeLibrationConfig({
+      ...base,
+      chrome: {
+        ...base.chrome,
+        layout: { ...base.chrome.layout, bottomTimeShowSeconds: false },
+      },
+    });
+    expect(withOff.chrome.layout.bottomTimeShowSeconds).toBe(false);
+    expect(cloneV2(withOff).chrome.layout.bottomTimeShowSeconds).toBe(false);
+    expect(v2ToAppConfig(withOff).displayChromeLayout.bottomTimeShowSeconds).toBe(false);
+  });
+
   it("normalizeDisplayChromeLayout keeps valid defaultTextFontAssetId, migrates legacy key, and drops unknown font ids", () => {
     expect(
       normalizeDisplayChromeLayout({

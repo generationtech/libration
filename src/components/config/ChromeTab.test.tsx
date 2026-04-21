@@ -65,14 +65,14 @@ describe("ChromeTab major areas", () => {
     expect(screen.getByRole("combobox", { name: /Chrome major area/i })).toHaveValue("hourIndicators");
   });
 
-  it("exposes only reference-city date/time toggles for the lower-left HUD (no Local/Refer/UTC/seconds rows)", () => {
+  it("exposes reference-city date/time/seconds toggles for the lower-left HUD (no Local/Refer/UTC rows)", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);
     expect(screen.getByTestId("chrome-bottom-hud-show-date")).toBeInTheDocument();
     expect(screen.getByTestId("chrome-bottom-hud-show-time")).toBeInTheDocument();
+    expect(screen.getByTestId("chrome-bottom-hud-show-seconds")).toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: /Show Local time row/i })).toBeNull();
     expect(screen.queryByRole("checkbox", { name: /Show UTC time row/i })).toBeNull();
-    expect(screen.queryByRole("checkbox", { name: /Show seconds on bottom HUD/i })).toBeNull();
   });
 
   it("bottom readout font stores override and clears on Default (typography role)", () => {

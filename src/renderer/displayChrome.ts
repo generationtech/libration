@@ -555,7 +555,7 @@ export function buildBottomInformationBarState(options: {
   /** Lower-left HUD date/time visibility; defaults to both on when omitted. */
   bottomTimeStack?: Pick<
     DisplayChromeLayoutConfig,
-    "bottomTimeStackShowDate" | "bottomTimeStackShowTime"
+    "bottomTimeStackShowDate" | "bottomTimeStackShowTime" | "bottomTimeShowSeconds"
   >;
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);

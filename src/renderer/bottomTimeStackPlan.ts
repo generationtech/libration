@@ -42,12 +42,13 @@ export function buildBottomTimeStackLines(options: {
   topBandMode: TopBandTimeMode;
   bottomTimeStack?: Pick<
     DisplayChromeLayoutConfig,
-    "bottomTimeStackShowDate" | "bottomTimeStackShowTime"
+    "bottomTimeStackShowDate" | "bottomTimeStackShowTime" | "bottomTimeShowSeconds"
   >;
 }): BottomTimeStackLine[] {
   const lay = options.bottomTimeStack ?? {};
   const showDate = lay.bottomTimeStackShowDate !== false;
   const showTime = lay.bottomTimeStackShowTime !== false;
+  const bottomTimeShowSeconds = lay.bottomTimeShowSeconds !== false;
   const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
   const hour12 = dm === "12hr";
   const lines: BottomTimeStackLine[] = [];
@@ -59,7 +60,7 @@ export function buildBottomTimeStackLines(options: {
   }
   if (showTime) {
     const timeText = formatWallClockInTimeZone(options.nowMs, options.referenceTimeZone, hour12, {
-      includeSeconds: true,
+      includeSeconds: bottomTimeShowSeconds,
     });
     lines.push({ role: "time", text: timeText });
   }

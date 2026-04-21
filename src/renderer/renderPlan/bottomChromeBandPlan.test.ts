@@ -119,6 +119,37 @@ describe("buildBottomChromeBandRenderPlan", () => {
     }
   });
 
+  it("tightens vertical spacing between date and time rows (~half legacy band span) while keeping date above time", () => {
+    const vw = 800;
+    const ib = sampleInformationBar(vw);
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+    const bh = 72;
+    const bottomBand = { x: 0, y: 400, width: vw, height: bh };
+    const plan = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand,
+      ib,
+      typography: typo,
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    const texts = plan.items.filter(
+      (it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text",
+    );
+    expect(texts[0]!.text).toBe("Monday, April 7, 2026");
+    expect(texts[1]!.text).toBe("3:45:00 PM");
+    const topFrac = 0.12;
+    const botFrac = 0.9;
+    const span = Math.max(0.05, botFrac - topFrac);
+    const legacyCenterGapPx = span * bh;
+    const gapY = texts[1]!.y - texts[0]!.y;
+    expect(gapY).toBeGreaterThan(0);
+    expect(gapY).toBeLessThan(legacyCenterGapPx * 0.55);
+    const stackPx = typo.primaryTimePx;
+    const minRowGapPx = Math.max(4, stackPx * 0.06);
+    expect(gapY).toBeGreaterThanOrEqual(minRowGapPx * 0.85);
+  });
+
   it("allows overriding band plate fill without affecting text items", () => {
     const vw = 480;
     const ib = sampleInformationBar(vw);

@@ -418,6 +418,28 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           />
         </ConfigControlRow>
+        <ConfigControlRow label="Show seconds">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            data-testid="chrome-bottom-hud-show-seconds"
+            checked={lay.bottomTimeShowSeconds !== false}
+            readOnly={!wired}
+            disabled={!wired}
+            tabIndex={wired ? 0 : -1}
+            aria-label="Show seconds on lower-left reference time"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const checked = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeShowSeconds = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
         <ConfigControlRow label="Bottom HUD text size">
           <input
             type="range"

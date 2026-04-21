@@ -272,6 +272,10 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof (input as { bottomTimeStackShowTime?: unknown }).bottomTimeStackShowTime === "boolean"
       ? (input as { bottomTimeStackShowTime: boolean }).bottomTimeStackShowTime
       : defStack.bottomTimeStackShowTime !== false;
+  const showSeconds =
+    typeof (input as { bottomTimeShowSeconds?: unknown }).bottomTimeShowSeconds === "boolean"
+      ? (input as { bottomTimeShowSeconds: boolean }).bottomTimeShowSeconds
+      : defStack.bottomTimeShowSeconds !== false;
 
   const smRaw = (input as { bottomTimeStackSizeMultiplier?: unknown }).bottomTimeStackSizeMultiplier;
   const bottomTimeStackSizeMultiplier = clampTopBandHourMarkerSizeMultiplier(
@@ -284,6 +288,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     bottomInformationBarVisible: bottom,
     bottomTimeStackShowDate: showDate,
     bottomTimeStackShowTime: showTime,
+    bottomTimeShowSeconds: showSeconds,
     bottomTimeStackSizeMultiplier,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
@@ -514,6 +519,7 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     bottomInformationBarVisible: l.bottomInformationBarVisible,
     bottomTimeStackShowDate: l.bottomTimeStackShowDate !== false,
     bottomTimeStackShowTime: l.bottomTimeStackShowTime !== false,
+    bottomTimeShowSeconds: l.bottomTimeShowSeconds !== false,
     bottomTimeStackSizeMultiplier: m,
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
@@ -695,6 +701,7 @@ export function assertIsNormalizedLibrationConfig(
     typeof lay.bottomInformationBarVisible !== "boolean" ||
     typeof (lay as { bottomTimeStackShowDate?: unknown }).bottomTimeStackShowDate !== "boolean" ||
     typeof (lay as { bottomTimeStackShowTime?: unknown }).bottomTimeStackShowTime !== "boolean" ||
+    typeof (lay as { bottomTimeShowSeconds?: unknown }).bottomTimeShowSeconds !== "boolean" ||
     typeof lay.tickTapeVisible !== "boolean" ||
     typeof lay.timezoneLetterRowVisible !== "boolean"
   ) {

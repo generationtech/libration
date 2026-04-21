@@ -1146,7 +1146,7 @@ describe("buildBottomInformationBarState", () => {
     }
   });
 
-  it("includes seconds in the time string (global wall-clock formatting, no separate HUD seconds toggle)", () => {
+  it("includes seconds in the time string by default (lower-left HUD only; controlled by bottomTimeShowSeconds)", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1158,6 +1158,23 @@ describe("buildBottomInformationBarState", () => {
     expect(timeLine?.role).toBe("time");
     if (timeLine?.role === "time") {
       expect(timeLine.text).toMatch(/\d{1,2}:\d{2}:\d{2}/);
+    }
+  });
+
+  it("omits seconds from the lower-left time row when bottomTimeShowSeconds is false", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const ib = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: { bottomTimeShowSeconds: false },
+    });
+    const timeLine = ib.leftTimeStackLines.find((l) => l.role === "time");
+    expect(timeLine?.role).toBe("time");
+    if (timeLine?.role === "time") {
+      expect(timeLine.text).toMatch(/14:05\b/);
+      expect(timeLine.text).not.toMatch(/14:05:06/);
     }
   });
 });
