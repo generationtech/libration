@@ -122,20 +122,6 @@ export function resolveTimezoneStripCaptionPolicy(chrome: TopChromeStyle): TopBa
   };
 }
 
-/** Second line in each NATO cell: nominal UTC offset from the structural 15° grid (metadata only). */
-export function resolveTimezoneStripUtcOffsetPolicy(
-  chrome: TopChromeStyle,
-  letterFontAssetId: FontAssetId,
-): TopBandTextVisualPolicy {
-  const letter = resolveTimezoneStripLetterPolicy(chrome, letterFontAssetId);
-  return {
-    role: letter.role,
-    fill: chrome.zoneText.utcOffsetSubrow,
-    typographyOverrides: letter.typographyOverrides,
-    textBaseline: "middle",
-  };
-}
-
 /**
  * Canonical hour-marker representation for top-band disk interiors: text uses one typography role +
  * style token; font and size come from {@link EffectiveTopBandHourMarkerSelection}. Glyph uses

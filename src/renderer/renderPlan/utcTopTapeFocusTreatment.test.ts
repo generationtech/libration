@@ -13,34 +13,19 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  buildUtcFocusWindow,
   clampUtcFocusAnnotationX,
   placeUtcFocusAnnotationXWithGap,
   utcFocusAnnotationCenterY,
   utcFocusAnnotationMinGapPx,
   utcFocusAnnotationPreferredX,
   UTC_FOCUS_ANNOTATION_HOUR_OFFSET,
-  UTC_FOCUS_HALF_WINDOW_HOURS,
   UTC_FOCUS_WINDOW_HOURS,
   utcFocusAnnotationSide,
-  utcFocusOpacityAtX,
 } from "./utcTopTapeFocusTreatment";
 
 describe("utcTopTapeFocusTreatment", () => {
-  it("builds a 3-hour window in pixel space from hour spacing", () => {
-    const window = buildUtcFocusWindow(300, 40);
+  it("documents the focused UTC hour-marker window as three civil UTC hours", () => {
     expect(UTC_FOCUS_WINDOW_HOURS).toBe(3);
-    expect(window.halfWindowPx).toBe(40 * UTC_FOCUS_HALF_WINDOW_HOURS);
-    expect(window.minX).toBe(240);
-    expect(window.maxX).toBe(360);
-  });
-
-  it("uses full opacity near read point and fades to zero at ±1.5h", () => {
-    const window = buildUtcFocusWindow(300, 40);
-    expect(utcFocusOpacityAtX(window, 300)).toBe(1);
-    expect(utcFocusOpacityAtX(window, 340)).toBe(1);
-    expect(utcFocusOpacityAtX(window, 350)).toBeGreaterThan(0);
-    expect(utcFocusOpacityAtX(window, 360)).toBe(0);
   });
 
   it("places annotation opposite the viewport centerline with stable centered default", () => {

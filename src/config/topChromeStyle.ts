@@ -371,8 +371,6 @@ export const TOP_CHROME_STYLE = {
   },
   zoneText: {
     letter: "rgba(235, 246, 255, 0.98)",
-    /** Subordinate NATO cell line: structural UTC offset (not civil-clock authority). */
-    utcOffsetSubrow: "rgba(190, 218, 238, 0.58)",
     geographyCaption: "rgba(255, 255, 255, 0.82)",
   },
   seams: {

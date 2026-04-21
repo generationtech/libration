@@ -188,8 +188,6 @@ export interface UtcTopScaleHourSegment {
    * not civil TZ. Independent of the top-band longitude anchor (tape alignment).
    */
   timezoneLetter: string;
-  /** Meridian nominal UTC offset in hours ∈ [−12, 12] for {@link centerLongitudeDeg} (structural 15° grid, not civil IANA). */
-  nominalUtcOffsetHours: number;
   /** Compact longitude label at column center, e.g. `172°W`. */
   longitudeLabel: string;
 }
@@ -1251,7 +1249,6 @@ export function buildUtcTopScaleLayout(
     const x1 = mapXFromLongitudeDeg(lon1, w);
     const centerX = mapXFromLongitudeDeg(lonCenter, w);
     const structuralMeridianHour0To23 = structuralMeridianHour0To23FromUtcMsOfDay(utcMsOfDay, lonCenter);
-    const nominalUtcOffsetHours = roundedStructuralMeridianUtcOffsetHours(lonCenter);
     segments.push({
       hour: h,
       x0,
@@ -1261,7 +1258,6 @@ export function buildUtcTopScaleLayout(
       structuralMeridianHour0To23,
       label: structuralMeridianHour0To23.toString().padStart(2, "0"),
       timezoneLetter: militaryTimeZoneLetterFromStructuralColumnIndex(h),
-      nominalUtcOffsetHours,
       longitudeLabel: formatLongitudeLabelAtCenter(lonCenter),
     });
   }

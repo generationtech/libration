@@ -56,14 +56,12 @@ import { emitLaidOutSemanticTopBandHourTextMarkersToRenderPlan } from "../semant
 import { topBandWrapOffsetsForCenteredExtent } from "../topBandWrapOffsets";
 import { resolveTopBandTextDiskRowIntrinsicContentHeightPxForProductPath } from "../topBandTextDiskRowIntrinsicProductPath.ts";
 import {
-  buildUtcFocusWindow,
   placeUtcFocusAnnotationXWithGap,
   utcFocusAnnotationCenterY,
   utcFocusAnnotationMinGapPx,
   utcFocusAnnotationPreferredX,
   UTC_FOCUS_ANNOTATION_TEXT,
   utcFocusAnnotationSide,
-  utcFocusOpacityAtX,
 } from "./utcTopTapeFocusTreatment.ts";
 import { tryEmitNoonMidnightIndicatorDiskContent } from "../noonMidnightIndicatorRenderPlan.ts";
 import type { RenderPlan } from "./renderPlanTypes";
@@ -169,7 +167,10 @@ function utcFocusForcedAnchorColor(effectiveMarkers: EffectiveTopBandHourMarkers
     effectiveMarkers.noonMidnightCustomization.enabled &&
     effectiveMarkers.noonMidnightCustomization.expressionMode === "boxedNumber"
   ) {
-    return effectiveMarkers.noonMidnightCustomization.boxedNumberBoxColor;
+    const boxed = effectiveMarkers.noonMidnightCustomization.boxedNumberBoxColor;
+    if (boxed !== undefined) {
+      return boxed;
+    }
   }
   return halfwayRgbStringBetweenCssColors(
     effectiveMarkers.indicatorEntriesArea.effectiveBackgroundColor,
@@ -477,11 +478,27 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   const isUtcFocusMode =
     options.topBandMode !== undefined && displayTimeModeFromTopBandTimeMode(options.topBandMode) === "utc";
   const hourSpacingPx = vw / 24;
-  const utcFocusWindow =
-    isUtcFocusMode && options.readPointX !== undefined
-      ? buildUtcFocusWindow(options.readPointX, hourSpacingPx)
-      : undefined;
-  const utcFocusedTextMode = utcFocusWindow !== undefined && topBandSel.kind === "text";
+  const utcFocusReadPointX =
+    isUtcFocusMode && options.readPointX !== undefined ? options.readPointX : undefined;
+  const utcFocusedTextMode = utcFocusReadPointX !== undefined && topBandSel.kind === "text";
+  const utcFocusPlanning = (() => {
+    if (!utcFocusedTextMode || utcFocusReadPointX === undefined) {
+      return undefined;
+    }
+    const utcHour0To23 = new Date(options.nowMs ?? Date.now()).getUTCHours();
+    let focusedIndex = utcFocusFocusedMarkerIndexFromUtcHour(markers, utcHour0To23);
+    let coreVisibleIndices = utcFocusCoreMarkerIndicesFromUtcHour(markers, utcHour0To23);
+    if (focusedIndex < 0) {
+      focusedIndex = markerIndexClosestToReadPoint(markers, utcFocusReadPointX);
+      coreVisibleIndices = utcFocusCoreMarkerIndicesByReadPoint(markers, utcFocusReadPointX);
+    }
+    const allowedHourLabels = new Set([
+      pad2Hour(utcHour0To23 - 1),
+      pad2Hour(utcHour0To23),
+      pad2Hour(utcHour0To23 + 1),
+    ]);
+    return { focusedIndex, coreVisibleIndices, allowedHourLabels };
+  })();
 
   if (
     shouldRenderTopBandUpperNumerals({
@@ -492,13 +509,15 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     const yUpperCy = yUpperRow0 + circleStack.upperNumeralH * 0.5;
     for (let i = 0; i < markers.length; i += 1) {
       const m = markers[i]!;
-      if (utcFocusWindow !== undefined) {
-        const cx = m.centerX;
-        if (cx < 0 || cx > vw) {
+      if (utcFocusPlanning !== undefined) {
+        if (!utcFocusPlanning.coreVisibleIndices.has(i)) {
           continue;
         }
-        const opacity = utcFocusOpacityAtX(utcFocusWindow, cx);
-        if (opacity <= 0.001) {
+        if (!utcFocusPlanning.allowedHourLabels.has(m.nextHourLabel)) {
+          continue;
+        }
+        const cx = m.centerX;
+        if (cx < 0 || cx > vw) {
           continue;
         }
         const content: TopBandHourNumeralContent = {
@@ -506,12 +525,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
           label: m.nextHourLabel,
         };
         const glyph = createTopBandHourNumeralGlyph(content, st);
-        const before = items.length;
         emitGlyphToRenderPlan(glyph, { cx, cy: yUpperCy, size: upperNumeralSizePx }, gctx, items);
-        const emitted = items[items.length - 1];
-        if (items.length > before && emitted?.kind === "text") {
-          emitted.opacity = opacity;
-        }
         continue;
       }
       const r = m.radiusPx;
@@ -529,14 +543,8 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     }
   }
 
-  if (inDiskPath.kind === "semanticTextHourDisks" && utcFocusedTextMode) {
-    const utcHour0To23 = new Date(options.nowMs ?? Date.now()).getUTCHours();
-    let focusedIndex = utcFocusFocusedMarkerIndexFromUtcHour(markers, utcHour0To23);
-    let coreVisibleIndices = utcFocusCoreMarkerIndicesFromUtcHour(markers, utcHour0To23);
-    if (focusedIndex < 0) {
-      focusedIndex = markerIndexClosestToReadPoint(markers, utcFocusWindow.readPointX);
-      coreVisibleIndices = utcFocusCoreMarkerIndicesByReadPoint(markers, utcFocusWindow.readPointX);
-    }
+  if (inDiskPath.kind === "semanticTextHourDisks" && utcFocusPlanning !== undefined) {
+    const { focusedIndex, coreVisibleIndices } = utcFocusPlanning;
     const markerColor = effectiveMarkers.realization.kind === "text"
       ? effectiveMarkers.realization.resolvedAppearance.color
       : st.hourIndicatorEntries.defaultForeground;
@@ -550,9 +558,7 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
       if (cx < 0 || cx > vw) {
         continue;
       }
-      const isCoreMarker = coreVisibleIndices.has(i);
-      const opacity = isCoreMarker ? 1 : utcFocusOpacityAtX(utcFocusWindow, cx);
-      if (opacity <= 0.001) {
+      if (!coreVisibleIndices.has(i)) {
         continue;
       }
       const layout = {
@@ -579,19 +585,6 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
           items,
         );
         if (handled) {
-          const beforeHighlight = items.length;
-          for (let j = beforeHighlight - 1; j >= 0; j -= 1) {
-            const emitted = items[j]!;
-            if (
-              emitted.kind === "text" &&
-              emitted.text === m.currentHourLabel &&
-              Math.abs(emitted.x - layout.cx) <= 0.001 &&
-              Math.abs(emitted.y - layout.cy) <= 0.001
-            ) {
-              emitted.opacity = opacity;
-              break;
-            }
-          }
           continue;
         }
       }
@@ -600,18 +593,13 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
         displayLabel: m.currentHourLabel,
       };
       const glyph = createHourMarkerGlyph(hourContent, hourSpec, typographyOverrides, markerColor);
-      const before = items.length;
       emitGlyphToRenderPlan(glyph, layout, gctx, items);
-      const emitted = items[items.length - 1];
-      if (items.length > before && emitted?.kind === "text") {
-        emitted.opacity = opacity;
-      }
     }
     const viewportCenterX = vw * 0.5;
-    const annotationSide = utcFocusAnnotationSide(utcFocusWindow.readPointX, viewportCenterX);
+    const annotationSide = utcFocusAnnotationSide(utcFocusReadPointX!, viewportCenterX);
     const annotationSizePx = markerContentSizePx;
     const marginPx = Math.max(8, annotationSizePx * 0.5);
-    const focusedHourX = focusedIndex >= 0 ? markers[focusedIndex]!.centerX : utcFocusWindow.readPointX;
+    const focusedHourX = focusedIndex >= 0 ? markers[focusedIndex]!.centerX : utcFocusReadPointX!;
     const preferredX = utcFocusAnnotationPreferredX({
       focusedHourX,
       hourSpacingPx,

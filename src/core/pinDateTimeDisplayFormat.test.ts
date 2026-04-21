@@ -14,17 +14,6 @@
 import { describe, expect, it } from "vitest";
 import { formatWallClockInTimeZone } from "./timeFormat";
 import { formatPinDateTimeLabel } from "./pinDateTimeDisplayFormat";
-import { formatNatoUtcOffsetHoursLabel } from "./structuralMeridianUtcOffsetHours";
-
-describe("formatNatoUtcOffsetHoursLabel", () => {
-  it("uses compact signed integer hours", () => {
-    expect(formatNatoUtcOffsetHoursLabel(0)).toBe("0");
-    expect(formatNatoUtcOffsetHoursLabel(3)).toBe("+3");
-    expect(formatNatoUtcOffsetHoursLabel(-2)).toBe("-2");
-    expect(formatNatoUtcOffsetHoursLabel(12)).toBe("+12");
-    expect(formatNatoUtcOffsetHoursLabel(-12)).toBe("-12");
-  });
-});
 
 describe("formatPinDateTimeLabel", () => {
   const instant = Date.parse("2030-06-15T12:00:00.000Z");

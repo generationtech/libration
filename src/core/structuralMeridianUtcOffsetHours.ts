@@ -12,8 +12,8 @@
  */
 
 /**
- * Nominal UTC offset hours derived from meridian longitude for the fixed 15° structural grid (NATO strip metadata,
- * column labels). Uses lon/15 rounded to integer hours — not IANA civil chrome wall time
+ * Nominal UTC offset hours derived from meridian longitude for the fixed 15° structural grid (NATO column indexing,
+ * zone-letter mapping). Uses lon/15 rounded to integer hours — not IANA civil chrome wall time
  * (`deriveCivilProjection` / `CivilProjection`).
  */
 
@@ -30,15 +30,4 @@ export function roundedStructuralMeridianUtcOffsetHours(lonDeg: number): number 
 /** Nominal UTC offset hours ∈ [−12, 12] for {@code lonDeg} on the structural meridian grid (alias of {@link roundedStructuralMeridianUtcOffsetHours}). */
 export function nominalUtcOffsetHoursFromLongitudeDeg(lonDeg: number): number {
   return roundedStructuralMeridianUtcOffsetHours(lonDeg);
-}
-
-/**
- * Compact label for NATO / structural 15° grid cells: signed integer hours, no leading zero on magnitude
- * (`+3`, `-2`, `0`).
- */
-export function formatNatoUtcOffsetHoursLabel(nominalUtcOffsetHours: number): string {
-  if (nominalUtcOffsetHours === 0) {
-    return "0";
-  }
-  return nominalUtcOffsetHours > 0 ? `+${nominalUtcOffsetHours}` : String(nominalUtcOffsetHours);
 }

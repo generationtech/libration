@@ -21,7 +21,6 @@ import {
   resolveTopBandUpperNumeralPolicy,
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
-  resolveTimezoneStripUtcOffsetPolicy,
   shouldRenderTopBandUpperNumerals,
 } from "./topBandVisualPolicy.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
@@ -75,15 +74,6 @@ describe("topBandVisualPolicy", () => {
     expect(resolveTimezoneStripCaptionPolicy(TOP_CHROME_STYLE).fill).toBe(
       TOP_CHROME_STYLE.zoneText.geographyCaption,
     );
-  });
-
-  it("resolveTimezoneStripUtcOffsetPolicy inherits NATO letter typography with subordinate offset fill", () => {
-    const letter = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
-    const p = resolveTimezoneStripUtcOffsetPolicy(TOP_CHROME_STYLE, "computer");
-    expect(p.role).toBe(letter.role);
-    expect(p.fill).toBe(TOP_CHROME_STYLE.zoneText.utcOffsetSubrow);
-    expect(p.typographyOverrides).toEqual(letter.typographyOverrides);
-    expect(p.textBaseline).toBe("middle");
   });
 
   it("shouldRenderTopBandUpperNumerals matches current gate (positive height, meets floor)", () => {

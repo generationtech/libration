@@ -25,7 +25,6 @@ import {
   computeTimezoneLetterSizePx,
   TOP_CHROME_STYLE,
 } from "../../config/topChromeStyle.ts";
-import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcOffsetHours.ts";
 import { resolveTimezoneStripLetterPolicy } from "../../config/topBandVisualPolicy.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
@@ -67,7 +66,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(plan.items).toHaveLength(0);
   });
 
-  it("emits phased boundary lines first, then rect segment fills, then 24 letter texts in hour order", () => {
+  it("emits phased boundary lines first, then rect segment fills, then 24 letter texts in hour order (letters only)", () => {
     const vw = 960;
     const now = Date.UTC(2026, 3, 7, 15, 30, 0);
     const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
@@ -127,12 +126,16 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     );
     expect(letterTexts.length).toBeGreaterThanOrEqual(24);
     expect(new Set(letterTexts.map((t) => (t.kind === "text" ? t.text : ""))).size).toBe(24);
-    expect(letterTexts[0]!.kind === "text" && letterTexts[0]!.text).toBe(layout.segments[0]!.timezoneLetter);
-
-    for (let h = 0; h < 24; h += 1) {
-      const expected = formatNatoUtcOffsetHoursLabel(layout.segments[h]!.nominalUtcOffsetHours);
-      expect(plan.items.some((i) => i.kind === "text" && i.text === expected)).toBe(true);
+    expect(letterTexts[0]?.kind).toBe("text");
+    if (letterTexts[0]?.kind === "text") {
+      expect(letterTexts[0].text).toBe(layout.segments[0]!.timezoneLetter);
     }
+
+    const signedOffsetNumerals = plan.items.filter(
+      (i) => i.kind === "text" && (/^[+-]\d{1,2}$/.test(i.text) || i.text === "0"),
+    );
+    expect(signedOffsetNumerals).toHaveLength(0);
+
     const tzLetter = letterTexts[0];
     expect(tzLetter?.kind).toBe("text");
     if (tzLetter?.kind === "text") {
@@ -145,7 +148,7 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(rects.length).toBeGreaterThanOrEqual(24);
   });
 
-  it("uses authored timezoneLetterRowFontAssetId for NATO letters and offset subrow (shared typography source)", () => {
+  it("uses authored timezoneLetterRowFontAssetId for NATO letters", () => {
     const vw = 960;
     const now = Date.UTC(2026, 3, 7, 15, 30, 0);
     const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
@@ -168,7 +171,6 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       0,
       Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
     );
-    const fillH = Math.max(0, zoneH - zonePadY * 2);
     const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
 
     const plan = buildTimezoneLetterRowRenderPlan({
@@ -199,77 +201,9 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       expect(tzLetter.font.assetId).toBe("computer");
     }
     const letterPolicy = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
-
-    const seg0 = layout.segments[0]!;
-    const offsetLabel = formatNatoUtcOffsetHoursLabel(seg0.nominalUtcOffsetHours);
-    const offsetText = plan.items.find((i) => i.kind === "text" && i.text === offsetLabel);
-    expect(offsetText?.kind).toBe("text");
-    if (offsetText?.kind === "text" && tzLetter?.kind === "text") {
-      expect(offsetText.font.assetId).toBe("computer");
-      expect(offsetText.font.sizePx).toBe(tzLetter.font.sizePx);
-      expect(offsetText.font.weight).toBe(tzLetter.font.weight);
-      expect(offsetText.fill).toBe(TOP_CHROME_STYLE.zoneText.utcOffsetSubrow);
-      expect(offsetText.fill).not.toBe(letterPolicy.fill);
-      expect(Math.abs(offsetText.y - tzLetter.y)).toBeGreaterThan(tzLetter.font.sizePx * 0.25);
-    }
-  });
-
-  it("NATO offset uses same font size as letter", () => {
-    const vw = 960;
-    const now = Date.UTC(2026, 3, 7, 15, 30, 0);
-    const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
-      timezoneLetterRowVisible: true,
-    });
-    const rows = layout.rows ?? computeUtcTopScaleRowMetrics(80);
-    const circleStack = computeTopBandCircleStackMetrics(rows.circleBandH);
-    const sw = vw / 24;
-    const r = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
-    const diskLabelSizePx = computeHourDiskLabelSizePx(r, vw);
-
-    const y0 = 0;
-    const circleH = rows.circleBandH;
-    const tickH = rows.tickBandH;
-    const yTickBottom = y0 + circleH + tickH;
-    const bandBottom = y0 + 80;
-    const zoneH = bandBottom - yTickBottom;
-    const tzTab = TOP_CHROME_STYLE.timezoneTab;
-    const zonePadY = Math.max(
-      0,
-      Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
-    );
-    const fillH = Math.max(0, zoneH - zonePadY * 2);
-    const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
-
-    const plan = buildTimezoneLetterRowRenderPlan({
-      viewportWidthPx: vw,
-      segments: layout.segments,
-      majorBoundaryXs: layout.majorBoundaryXs,
-      zoneTop: yTickBottom,
-      zoneH,
-      bandBottom,
-      segGapX: 0.4,
-      zonePadY,
-      tabBottomR,
-      diskLabelSizePx,
-      referenceLongitudeDeg: layout.topBandAnchor.referenceLongitudeDeg,
-      geography: undefined,
-      anchorSource: layout.topBandAnchor.anchorSource,
-      timezoneLetterRowVisible: true,
-      glyphRenderContext: GLYPH_CTX,
-      resolvedTimezoneLetterFontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
-    });
-
-    const seg0 = layout.segments[0]!;
-    const letter = plan.items.find(
-      (i) => i.kind === "text" && i.text === seg0.timezoneLetter && i.textBaseline === "middle",
-    );
-    const offset = plan.items.find(
-      (i) => i.kind === "text" && i.text === formatNatoUtcOffsetHoursLabel(seg0.nominalUtcOffsetHours),
-    );
-    expect(letter?.kind).toBe("text");
-    expect(offset?.kind).toBe("text");
-    if (letter?.kind === "text" && offset?.kind === "text") {
-      expect(offset.font.sizePx).toBe(letter.font.sizePx);
+    expect(tzLetter?.kind).toBe("text");
+    if (tzLetter?.kind === "text") {
+      expect(tzLetter.fill).toBe(letterPolicy.fill);
     }
   });
 });

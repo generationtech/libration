@@ -126,7 +126,6 @@ function highlightedUtcHourDiskLabelFromPlan(
   plan: ReturnType<typeof buildTopBandCircleBandHourStackRenderPlan>,
   viewportWidthPx: number,
   diskBandH: number,
-  diskLabelSizePx: number,
 ): string | undefined {
   const highlightRects = plan.items.filter(
     (i) =>
@@ -400,14 +399,17 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       topBandMode: "utc24",
       readPointX,
     });
-    const utcTexts = plan.items.filter(
-      (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.opacity !== undefined,
+    const utcH = new Date(f.referenceNowMs).getUTCHours();
+    const allowed = new Set([pad2HourLabel(utcH - 1), pad2HourLabel(utcH), pad2HourLabel(utcH + 1)]);
+    const utcTapeHourLabels = plan.items.filter(
+      (i) => i.kind === "text" && /^\d{2}$/.test(i.text),
     );
-    expect(utcTexts.length).toBeGreaterThan(0);
+    expect(utcTapeHourLabels.length).toBeGreaterThan(0);
     expect(readPointX).toBeLessThan(40);
-    for (const t of utcTexts) {
+    for (const t of utcTapeHourLabels) {
       expect(t.kind).toBe("text");
       if (t.kind === "text") {
+        expect(allowed.has(t.text)).toBe(true);
         expect(t.x).toBeGreaterThanOrEqual(0);
         expect(t.x).toBeLessThanOrEqual(f.viewportWidthPx);
       }
@@ -423,14 +425,17 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       topBandMode: "utc24",
       readPointX,
     });
-    const utcTexts = plan.items.filter(
-      (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.opacity !== undefined,
+    const utcH = new Date(f.referenceNowMs).getUTCHours();
+    const allowed = new Set([pad2HourLabel(utcH - 1), pad2HourLabel(utcH), pad2HourLabel(utcH + 1)]);
+    const utcTapeHourLabels = plan.items.filter(
+      (i) => i.kind === "text" && /^\d{2}$/.test(i.text),
     );
-    expect(utcTexts.length).toBeGreaterThan(0);
+    expect(utcTapeHourLabels.length).toBeGreaterThan(0);
     expect(readPointX).toBeGreaterThan(f.viewportWidthPx - 40);
-    for (const t of utcTexts) {
+    for (const t of utcTapeHourLabels) {
       expect(t.kind).toBe("text");
       if (t.kind === "text") {
+        expect(allowed.has(t.text)).toBe(true);
         expect(t.x).toBeGreaterThanOrEqual(0);
         expect(t.x).toBeLessThanOrEqual(f.viewportWidthPx);
       }
@@ -481,7 +486,7 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       readPointX: centerXForHour16,
     });
     expect(
-      highlightedUtcHourDiskLabelFromPlan(plan, f.viewportWidthPx, f.circleStack.diskBandH, f.diskLabelSizePx),
+      highlightedUtcHourDiskLabelFromPlan(plan, f.viewportWidthPx, f.circleStack.diskBandH),
     ).toBe("15");
   });
 
@@ -533,7 +538,10 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     });
     const annotation = plan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
     const hourText = plan.items.find(
-      (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.font.assetId === SEL_TEXT_DEFAULT.fontAssetId,
+      (i) =>
+        i.kind === "text" &&
+        /^\d{2}$/.test(i.text) &&
+        i.font.assetId === SEL_TEXT_DEFAULT.fontAssetId,
     );
     expect(annotation?.kind).toBe("text");
     expect(hourText?.kind).toBe("text");
@@ -587,6 +595,26 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     expect(gap).toBeGreaterThanOrEqual(minGap - 1);
     expect(annotationSpan.minX).toBeGreaterThanOrEqual(0);
     expect(annotationSpan.maxX).toBeLessThanOrEqual(f.viewportWidthPx);
+  });
+
+  it("UTC focus emits at most three distinct two-digit hour labels on the tape (prev / current / next only)", () => {
+    const refMs = Date.UTC(2024, 5, 10, 16, 20, 0);
+    const utcH = new Date(refMs).getUTCHours();
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
+    const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcH))!.centerX;
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX,
+    });
+    const allowed = new Set([pad2HourLabel(utcH - 1), pad2HourLabel(utcH), pad2HourLabel(utcH + 1)]);
+    const tapeHourTexts = plan.items.filter((i) => i.kind === "text" && /^\d{2}$/.test(i.text));
+    const distinct = new Set(tapeHourTexts.map((i) => (i.kind === "text" ? i.text : "")));
+    expect(distinct.size).toBeLessThanOrEqual(3);
+    for (const label of distinct) {
+      expect(allowed.has(label)).toBe(true);
+    }
   });
 
   it("keeps prev/current/next UTC hour markers fully visible when on-screen", () => {

@@ -285,7 +285,7 @@ describe("buildUtcTopScaleLayout", () => {
     expect(layout.segments[0]!.structuralMeridianHour0To23).toBe(12);
     expect(layout.segments[0]!.label).toBe("12");
     expect(layout.segments[0]!.timezoneLetter).toBe("M");
-    expect(layout.segments[0]!.nominalUtcOffsetHours).toBe(-12);
+    expect(nominalUtcOffsetHoursFromLongitudeDeg(layout.segments[0]!.centerLongitudeDeg)).toBe(-12);
     expect(layout.segments[12]!.timezoneLetter).toBe("Z");
     expect(layout.segments[23]!.structuralMeridianHour0To23).toBe(11);
     expect(layout.segments[23]!.label).toBe("11");
