@@ -23,6 +23,7 @@ import {
   boxedNumberHighlightHalfExtentsFromMarkerContentBox,
   noonHighlighted12SwashGeometryFromMarkerContentBox,
   noonHighlighted12SwashHalfExtentsFromMarkerContentBox,
+  tapeNumeralUsesNoonStyleStripHighlight,
   tryEmitNoonMidnightIndicatorDiskContent,
 } from "./noonMidnightIndicatorRenderPlan.ts";
 import type { RenderPlan } from "./renderPlan/renderPlanTypes.ts";
@@ -685,7 +686,7 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     expect(items.some((i) => i.kind === "path2d" || i.kind === "line")).toBe(true);
   });
 
-  it("boxedNumber midnight 00 highlight rect stays centered on layout cy (not noon-12 asymmetric swash)", () => {
+  it("boxedNumber tape 00 uses the same noon-style strip swash as 12 (symmetric 24hr anchor + consistent midnight numeral)", () => {
     const layout = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
     const eff = resolveEffectiveTopBandHourMarkers({
       ...layout,
@@ -725,12 +726,12 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
     );
     const r = items.find((i): i is Extract<PlanItem, { kind: "rect" }> => i.kind === "rect");
     expect(r?.kind === "rect").toBe(true);
-    const { halfW, halfH } = boxedNumberHighlightHalfExtentsFromMarkerContentBox(size, "00");
+    const g = noonHighlighted12SwashGeometryFromMarkerContentBox(size);
     if (r?.kind === "rect") {
-      expect(r.x).toBeCloseTo(cx - halfW, 8);
-      expect(r.y).toBeCloseTo(cy - halfH, 8);
-      expect(r.width).toBeCloseTo(halfW * 2, 8);
-      expect(r.height).toBeCloseTo(halfH * 2, 8);
+      expect(r.x).toBeCloseTo(cx - g.halfW, 8);
+      expect(r.y).toBeCloseTo(cy - g.extentAboveNumeralAnchor, 8);
+      expect(r.width).toBeCloseTo(g.halfW * 2, 8);
+      expect(r.height).toBeCloseTo(g.extentAboveNumeralAnchor + g.extentBelowNumeralAnchor, 8);
     }
   });
 
@@ -836,5 +837,13 @@ describe("tryEmitNoonMidnightIndicatorDiskContent", () => {
       const am = Number(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\s*\)$/.exec(main.fill ?? "")?.[1]);
       expect(am).toBeCloseTo(0.72, 5);
     }
+  });
+});
+
+describe("tapeNumeralUsesNoonStyleStripHighlight", () => {
+  it("includes 00 and 12 for the shared strip-scale highlight path", () => {
+    expect(tapeNumeralUsesNoonStyleStripHighlight("00")).toBe(true);
+    expect(tapeNumeralUsesNoonStyleStripHighlight("12")).toBe(true);
+    expect(tapeNumeralUsesNoonStyleStripHighlight("06")).toBe(false);
   });
 });

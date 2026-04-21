@@ -245,6 +245,16 @@ function cssColorToRgbaFill(cssColor: string, alpha: number): string {
   return s;
 }
 
+/**
+ * Shared strip-scale highlight for tape numerals `"12"` and `"00"`. In 24-hour civil mode both anchors use the same
+ * boxed treatment as noon’s `"12"`; generic two-char highlights (`boxedNumberHighlightHalfExtentsFromMarkerContentBox`)
+ * were visibly mismatched for `"00"` (narrower / different vertical balance).
+ */
+/** Exported for tests: 24hr civil `00`/`12` tape numerals share the same strip highlight treatment as noon `12`. */
+export function tapeNumeralUsesNoonStyleStripHighlight(text: string): boolean {
+  return text === "12" || text === "00";
+}
+
 function pushHighlightBehindTapeNumeral(
   cx: number,
   cy: number,
@@ -253,7 +263,7 @@ function pushHighlightBehindTapeNumeral(
   treatmentColor: string,
   out: RenderPlanBuilder,
 ): void {
-  if (text === "12") {
+  if (tapeNumeralUsesNoonStyleStripHighlight(text)) {
     const g = noonHighlighted12SwashGeometryFromMarkerContentBox(markerContentBoxSizePx);
     out.push({
       kind: "rect",

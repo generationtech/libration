@@ -33,6 +33,7 @@ import type {
   PinDateTimeDisplayMode,
 } from "../appConfig";
 import {
+  clampTopBandHourMarkerSizeMultiplier,
   cloneHourMarkersConfig,
   DEFAULT_APP_CONFIG,
   DEFAULT_DATA_CONFIG,
@@ -275,12 +276,25 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     typeof (input as { bottomTimeStackShowUtc?: unknown }).bottomTimeStackShowUtc === "boolean"
       ? (input as { bottomTimeStackShowUtc: boolean }).bottomTimeStackShowUtc
       : defStack.bottomTimeStackShowUtc !== false;
+  const showSeconds =
+    typeof (input as { bottomTimeStackShowSeconds?: unknown }).bottomTimeStackShowSeconds === "boolean"
+      ? (input as { bottomTimeStackShowSeconds: boolean }).bottomTimeStackShowSeconds
+      : defStack.bottomTimeStackShowSeconds !== false;
+
+  const smRaw = (input as { bottomTimeStackSizeMultiplier?: unknown }).bottomTimeStackSizeMultiplier;
+  const bottomTimeStackSizeMultiplier = clampTopBandHourMarkerSizeMultiplier(
+    typeof smRaw === "number" && Number.isFinite(smRaw)
+      ? smRaw
+      : (DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.bottomTimeStackSizeMultiplier ?? 1),
+  );
 
   return {
     bottomInformationBarVisible: bottom,
     bottomTimeStackShowLocal: showLocal,
     bottomTimeStackShowRefer: showRefer,
     bottomTimeStackShowUtc: showUtc,
+    bottomTimeStackShowSeconds: showSeconds,
+    bottomTimeStackSizeMultiplier,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
     hourMarkers,
@@ -501,11 +515,18 @@ function cloneDisplayTime(dt: DisplayTimeConfig): DisplayTimeConfig {
 }
 
 function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLayoutConfig {
+  const defM = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.bottomTimeStackSizeMultiplier ?? 1;
+  const m =
+    typeof l.bottomTimeStackSizeMultiplier === "number" && Number.isFinite(l.bottomTimeStackSizeMultiplier)
+      ? clampTopBandHourMarkerSizeMultiplier(l.bottomTimeStackSizeMultiplier)
+      : defM;
   return {
     bottomInformationBarVisible: l.bottomInformationBarVisible,
     bottomTimeStackShowLocal: l.bottomTimeStackShowLocal !== false,
     bottomTimeStackShowRefer: l.bottomTimeStackShowRefer !== false,
     bottomTimeStackShowUtc: l.bottomTimeStackShowUtc !== false,
+    bottomTimeStackShowSeconds: l.bottomTimeStackShowSeconds !== false,
+    bottomTimeStackSizeMultiplier: m,
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
@@ -741,6 +762,16 @@ export function assertIsNormalizedLibrationConfig(
     (typeof bottomReadoutFont !== "string" || !PRODUCT_TEXT_FONT_VALID_ID_SET.has(bottomReadoutFont))
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.bottomReadoutFontAssetId");
+  }
+  const btm = (lay as { bottomTimeStackSizeMultiplier?: unknown }).bottomTimeStackSizeMultiplier;
+  if (
+    btm !== undefined &&
+    (typeof btm !== "number" ||
+      !Number.isFinite(btm) ||
+      btm < TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN ||
+      btm > TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid chrome.layout.bottomTimeStackSizeMultiplier");
   }
   const configUiFont = (lay as { configUiFontAssetId?: unknown }).configUiFontAssetId;
   if (

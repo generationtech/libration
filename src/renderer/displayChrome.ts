@@ -15,6 +15,7 @@ import {
   DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG,
   DEFAULT_DISPLAY_TIME_CONFIG,
   effectiveTopBandHourMarkerSelection,
+  resolvedBottomTimeStackSizeMultiplier,
   resolvedHourMarkerLayoutSizeMultiplier,
   type DisplayChromeLayoutConfig,
   type DisplayTimeConfig,
@@ -56,7 +57,6 @@ import { resolveReferenceFrameCivilTimeZone } from "../core/displayTimeReference
 import { readPointXFromReferenceLongitudeDeg } from "../core/readPointLongitude.ts";
 import { instantAtBandCivilHour } from "../core/tapeInstant.ts";
 import { tapeHourToX, wrapFraction01 } from "../core/tapeRegistration.ts";
-import { formatWallClockInTimeZone } from "../core/timeFormat";
 export {
   resolveDisplayTimeReferenceZone,
   resolveReferenceFrameCivilTimeZone,
@@ -66,11 +66,8 @@ export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
 import { renderBottomChrome } from "./bottomChrome";
-import {
-  countBottomTimeStackClockRows,
-  type BottomInformationBarState,
-  type BottomTimeStackLine,
-} from "./bottomChromeTypes";
+import { countBottomTimeStackMaxLines, type BottomInformationBarState } from "./bottomChromeTypes";
+import { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
 import { alignCrispLineX } from "./crispLines";
 import { BOTTOM_CHROME_STYLE } from "../config/bottomChromeStyle";
 import {
@@ -113,7 +110,8 @@ import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransi
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
 import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
 export type { BottomBarDayCell, BottomInformationBarState, BottomTimeStackLine } from "./bottomChromeTypes";
-export { countBottomTimeStackClockRows } from "./bottomChromeTypes";
+export { countBottomTimeStackMaxLines } from "./bottomChromeTypes";
+export { buildBottomTimeStackLines } from "./bottomTimeStackPlan";
 
 export {
   TOP_BAND_DISK_WRAP_HALO_PAD_PX,
@@ -547,59 +545,6 @@ export function topBandMarkerAnnotationLabel(kind: TopBandMarkerAnnotationKind):
   return undefined;
 }
 
-/** Compact calendar line for the bottom HUD date row (reference frame; UTC calendar when the band is in UTC-style mode). */
-function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
-  const d = new Date(nowMs);
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).formatToParts(d);
-  const month = parts.find((p) => p.type === "month")?.value ?? "";
-  const day = parts.find((p) => p.type === "day")?.value ?? "";
-  const year = parts.find((p) => p.type === "year")?.value ?? "";
-  return `${month} ${day} ${year}`.trim();
-}
-
-function buildBottomTimeStackLines(options: {
-  nowMs: number;
-  referenceTimeZone: string;
-  topBandMode: TopBandTimeMode;
-  bottomTimeStack?: Pick<
-    DisplayChromeLayoutConfig,
-    "bottomTimeStackShowLocal" | "bottomTimeStackShowRefer" | "bottomTimeStackShowUtc"
-  >;
-}): BottomTimeStackLine[] {
-  const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
-  const hour12 = dm === "12hr";
-  const calendarZone = dm === "utc" ? "UTC" : options.referenceTimeZone;
-  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const lay = options.bottomTimeStack ?? {};
-
-  const lines: BottomTimeStackLine[] = [];
-  lines.push({ role: "date", text: formatRightPanelDateLine(options.nowMs, calendarZone) });
-  if (lay.bottomTimeStackShowLocal !== false) {
-    lines.push({
-      role: "clock",
-      text: `Local  ${formatWallClockInTimeZone(options.nowMs, systemTz, hour12)}`,
-    });
-  }
-  if (lay.bottomTimeStackShowRefer !== false) {
-    lines.push({
-      role: "clock",
-      text: `Refer  ${formatWallClockInTimeZone(options.nowMs, options.referenceTimeZone, hour12)}`,
-    });
-  }
-  if (lay.bottomTimeStackShowUtc !== false) {
-    lines.push({
-      role: "clock",
-      text: `UTC  ${formatWallClockInTimeZone(options.nowMs, "UTC", false)}`,
-    });
-  }
-  return lines;
-}
-
 export function buildBottomInformationBarState(options: {
   nowMs: number;
   bottomBandWidthPx: number;
@@ -610,7 +555,10 @@ export function buildBottomInformationBarState(options: {
   /** Bottom HUD clock row visibility; defaults to all on when omitted. */
   bottomTimeStack?: Pick<
     DisplayChromeLayoutConfig,
-    "bottomTimeStackShowLocal" | "bottomTimeStackShowRefer" | "bottomTimeStackShowUtc"
+    | "bottomTimeStackShowLocal"
+    | "bottomTimeStackShowRefer"
+    | "bottomTimeStackShowUtc"
+    | "bottomTimeStackShowSeconds"
   >;
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
@@ -1456,7 +1404,7 @@ function computeBandHeights(
     return { top, bottom: 0 };
   }
   const merged = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, ...layout };
-  const stackLines = 1 + countBottomTimeStackClockRows(merged);
+  const stackLines = countBottomTimeStackMaxLines(merged);
   const bottom = computeBottomChromeBandHeightPx(h, { timeStackLineCount: stackLines });
   return { top, bottom };
 }
@@ -1921,6 +1869,7 @@ export function renderDisplayChrome(
       bottomBand,
       chrome.informationBar,
       resolveBottomReadoutTextFontAssetId(chrome.displayChromeLayout),
+      { timeStackSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(chrome.displayChromeLayout) },
     );
   }
 

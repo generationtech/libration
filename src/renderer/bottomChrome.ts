@@ -32,6 +32,8 @@ type BottomChromeBandRect = { x: number; y: number; width: number; height: numbe
 export function resolveBottomChromeTypography(
   viewportWidthPx: number,
   stackLineCount?: number,
+  /** Applied to all stack roles after token resolution (config-driven bottom stack size). */
+  timeStackSizeMultiplier: number = 1,
 ): {
   microLabelPx: number;
   primaryTimePx: number;
@@ -43,12 +45,17 @@ export function resolveBottomChromeTypography(
   const dense = n > 4;
   const primaryScale = dense ? 0.88 : 1;
   const secondaryScale = n > 3 ? 0.92 : 1;
+  const m = Number.isFinite(timeStackSizeMultiplier) && timeStackSizeMultiplier > 0 ? timeStackSizeMultiplier : 1;
   return {
-    microLabelPx: bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
+    microLabelPx:
+      m *
+      bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
     primaryTimePx:
+      m *
       primaryScale *
       bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth),
     secondaryReadoutPx:
+      m *
       secondaryScale *
       bottomChromeFontPx(
         vw,
@@ -66,9 +73,14 @@ export function renderBottomChrome(
   bottomBand: BottomChromeBandRect,
   ib: BottomInformationBarState,
   productDefaultFontAssetId: FontAssetId,
+  options?: { timeStackSizeMultiplier?: number },
 ): void {
   const vw = viewport.width;
-  const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
+  const typo = resolveBottomChromeTypography(
+    vw,
+    ib.leftTimeStackLines.length,
+    options?.timeStackSizeMultiplier ?? 1,
+  );
   const plan = buildBottomChromeBandRenderPlan({
     viewportWidthPx: vw,
     bottomBand,

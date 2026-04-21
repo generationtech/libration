@@ -25,7 +25,10 @@ import {
 import {
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
   PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
+  resolvedBottomTimeStackSizeMultiplier,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
+  TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
   type TopBandAnchorConfig,
   type TopBandTimeMode,
 } from "../../config/appConfig";
@@ -368,8 +371,9 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           />
         </ConfigControlRow>
         <p className="config-section__hint">
-          Bottom readouts are instrument HUD text (not map layers). Date stays on when the stack is visible; clock rows
-          are optional.
+          Bottom readouts are instrument HUD text (not map layers). With the bar visible, the stack shows the reference
+          city&apos;s date first, then reference time, UTC for the same instant, and local time when it differs — in that
+          order. Clock rows are optional; seconds and text size apply to the whole stack.
         </p>
         <ConfigControlRow label="Bottom stack: Local">
           <input
@@ -428,6 +432,53 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
                     const checked = e.currentTarget.checked;
                     updateConfig((draft) => {
                       draft.chrome.layout.bottomTimeStackShowUtc = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Bottom stack: show seconds">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lay.bottomTimeStackShowSeconds !== false}
+            readOnly={!wired}
+            disabled={!wired}
+            tabIndex={wired ? 0 : -1}
+            aria-label="Show seconds on bottom HUD clock rows"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const checked = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeStackShowSeconds = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Bottom stack text size">
+          <input
+            type="range"
+            className="config-input"
+            data-testid="chrome-bottom-stack-size-range"
+            min={TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN}
+            max={TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX}
+            step={0.05}
+            value={resolvedBottomTimeStackSizeMultiplier(lay)}
+            disabled={!wired}
+            aria-label="Scale factor for bottom HUD date and time stack text"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const v = Number(e.currentTarget.value);
+                    if (!Number.isFinite(v)) {
+                      return;
+                    }
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeStackSizeMultiplier = v;
                     });
                   }
                 : undefined

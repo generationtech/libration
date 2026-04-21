@@ -12,7 +12,12 @@
  */
 
 import type { AppConfig } from "./appConfig";
-import { ALL_REFERENCE_CITY_IDS, cloneHourMarkersConfig, DEFAULT_APP_CONFIG } from "./appConfig";
+import {
+  ALL_REFERENCE_CITY_IDS,
+  cloneHourMarkersConfig,
+  DEFAULT_APP_CONFIG,
+  resolvedBottomTimeStackSizeMultiplier,
+} from "./appConfig";
 
 /**
  * Named display presets are code-defined {@link AppConfig} compositions.
@@ -76,6 +81,8 @@ function cloneConfig(config: AppConfig): AppConfig {
       bottomTimeStackShowLocal: dcl.bottomTimeStackShowLocal !== false,
       bottomTimeStackShowRefer: dcl.bottomTimeStackShowRefer !== false,
       bottomTimeStackShowUtc: dcl.bottomTimeStackShowUtc !== false,
+      bottomTimeStackShowSeconds: dcl.bottomTimeStackShowSeconds !== false,
+      bottomTimeStackSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(dcl),
       tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,
       hourMarkers: cloneHourMarkersConfig(dcl.hourMarkers),

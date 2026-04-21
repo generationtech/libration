@@ -331,6 +331,13 @@ export interface DisplayChromeLayoutConfig {
   bottomTimeStackShowLocal?: boolean;
   bottomTimeStackShowRefer?: boolean;
   bottomTimeStackShowUtc?: boolean;
+  /** When false, bottom HUD clock rows omit seconds (reference, UTC, local together). Defaults to true when omitted. */
+  bottomTimeStackShowSeconds?: boolean;
+  /**
+   * Scales lower-left stack font sizes (date + clock rows) after viewport token resolution.
+   * Same inclusive bounds as top-band hour-marker size multiplier; default 1 when omitted.
+   */
+  bottomTimeStackSizeMultiplier?: number;
   /** Center tickmark tape (baseline + ticks) between the circle band and NATO row. */
   tickTapeVisible: boolean;
   /**
@@ -399,6 +406,8 @@ export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomTimeStackShowLocal: true,
   bottomTimeStackShowRefer: true,
   bottomTimeStackShowUtc: true,
+  bottomTimeStackShowSeconds: true,
+  bottomTimeStackSizeMultiplier: 1,
   tickTapeVisible: true,
   timezoneLetterRowVisible: true,
   hourMarkers: cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG),
@@ -414,6 +423,15 @@ export function resolvedHourMarkerLayoutSizeMultiplier(layout: DisplayChromeLayo
     return (
       DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.hourMarkers.layout.sizeMultiplier ?? 1.0
     );
+  }
+  return clampTopBandHourMarkerSizeMultiplier(raw);
+}
+
+/** Same numeric bounds as {@link clampTopBandHourMarkerSizeMultiplier} — bottom stack text scales with viewport tokens. */
+export function resolvedBottomTimeStackSizeMultiplier(layout: DisplayChromeLayoutConfig): number {
+  const raw = layout.bottomTimeStackSizeMultiplier;
+  if (typeof raw !== "number" || !Number.isFinite(raw)) {
+    return DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG.bottomTimeStackSizeMultiplier ?? 1;
   }
   return clampTopBandHourMarkerSizeMultiplier(raw);
 }

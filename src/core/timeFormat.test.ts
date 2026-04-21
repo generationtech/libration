@@ -26,6 +26,17 @@ describe("intlHourOptionForClock", () => {
   });
 });
 
+describe("formatWallClockInTimeZone seconds toggle", () => {
+  it("omits seconds when includeSeconds is false", () => {
+    const sevenPm = Date.UTC(2024, 5, 10, 19, 7, 59);
+    const withSec = formatWallClockInTimeZone(sevenPm, "UTC", false, { includeSeconds: true });
+    const noSec = formatWallClockInTimeZone(sevenPm, "UTC", false, { includeSeconds: false });
+    expect(withSec).toMatch(/19:07:59/);
+    expect(noSec).toMatch(/19:07\b/);
+    expect(noSec).not.toMatch(/19:07:59/);
+  });
+});
+
 describe("formatWallClockInTimeZone hour padding", () => {
   const sevenPm = Date.UTC(2024, 0, 1, 19, 7, 59);
   const sevenAm = Date.UTC(2024, 0, 1, 7, 7, 59);

@@ -70,6 +70,11 @@ const ZONE_FMT_CACHE = new Map<string, Intl.DateTimeFormat>();
 /** Same as {@link ZONE_FMT_CACHE} but with explicit 12- vs 24-hour clock (bottom bar, mode-aware). */
 const ZONE_FMT_CACHE_EXPLICIT = new Map<string, Intl.DateTimeFormat>();
 
+export type WallClockFormatOptions = {
+  /** When false, omit seconds (hours and minutes only). Defaults to true. */
+  includeSeconds?: boolean;
+};
+
 function implicitWallClockCacheKey(timeZone: string): string {
   return `${timeZone}\0${localePrefersHour12() ? "12" : "24"}`;
 }
@@ -91,15 +96,19 @@ function wallClockInTimeZoneFormatter(timeZone: string): Intl.DateTimeFormat {
   return fmt;
 }
 
-function wallClockInTimeZoneFormatterExplicit(timeZone: string, hour12: boolean): Intl.DateTimeFormat {
-  const key = `${timeZone}\0${hour12 ? "12" : "24"}`;
+function wallClockInTimeZoneFormatterExplicit(
+  timeZone: string,
+  hour12: boolean,
+  includeSeconds: boolean,
+): Intl.DateTimeFormat {
+  const key = `${timeZone}\0${hour12 ? "12" : "24"}\0${includeSeconds ? "s" : "ns"}`;
   let fmt = ZONE_FMT_CACHE_EXPLICIT.get(key);
   if (!fmt) {
     fmt = new Intl.DateTimeFormat(undefined, {
       timeZone,
       hour: intlHourOptionForClock(hour12),
       minute: "2-digit",
-      second: "2-digit",
+      ...(includeSeconds ? { second: "2-digit" as const } : {}),
       hour12,
     });
     ZONE_FMT_CACHE_EXPLICIT.set(key, fmt);
@@ -120,11 +129,18 @@ export function formatLocalClock(nowMs: number): string {
  * Wall time in a specific IANA zone for {@code nowMs} (same instant as top clocks).
  * When {@code hour12} is omitted, uses the runtime locale’s default 12/24-hour preference (e.g. city pin labels).
  * When set, forces 12- or 24-hour display explicitly (e.g. bottom bar matching the configured top-band mode).
+ * Optional {@link WallClockFormatOptions} applies when {@code hour12} is provided (bottom HUD stack); seconds default on.
  */
-export function formatWallClockInTimeZone(nowMs: number, timeZone: string, hour12?: boolean): string {
+export function formatWallClockInTimeZone(
+  nowMs: number,
+  timeZone: string,
+  hour12?: boolean,
+  options?: WallClockFormatOptions,
+): string {
+  const includeSeconds = options?.includeSeconds !== false;
   const fmt =
     hour12 === undefined
       ? wallClockInTimeZoneFormatter(timeZone)
-      : wallClockInTimeZoneFormatterExplicit(timeZone, hour12);
+      : wallClockInTimeZoneFormatterExplicit(timeZone, hour12, includeSeconds);
   return fmt.format(new Date(nowMs));
 }
