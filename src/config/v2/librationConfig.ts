@@ -262,8 +262,25 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
     }
   }
 
+  const defStack = DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG;
+  const showLocal =
+    typeof (input as { bottomTimeStackShowLocal?: unknown }).bottomTimeStackShowLocal === "boolean"
+      ? (input as { bottomTimeStackShowLocal: boolean }).bottomTimeStackShowLocal
+      : defStack.bottomTimeStackShowLocal !== false;
+  const showRefer =
+    typeof (input as { bottomTimeStackShowRefer?: unknown }).bottomTimeStackShowRefer === "boolean"
+      ? (input as { bottomTimeStackShowRefer: boolean }).bottomTimeStackShowRefer
+      : defStack.bottomTimeStackShowRefer !== false;
+  const showUtc =
+    typeof (input as { bottomTimeStackShowUtc?: unknown }).bottomTimeStackShowUtc === "boolean"
+      ? (input as { bottomTimeStackShowUtc: boolean }).bottomTimeStackShowUtc
+      : defStack.bottomTimeStackShowUtc !== false;
+
   return {
     bottomInformationBarVisible: bottom,
+    bottomTimeStackShowLocal: showLocal,
+    bottomTimeStackShowRefer: showRefer,
+    bottomTimeStackShowUtc: showUtc,
     tickTapeVisible: tickTape,
     timezoneLetterRowVisible: tz,
     hourMarkers,
@@ -486,6 +503,9 @@ function cloneDisplayTime(dt: DisplayTimeConfig): DisplayTimeConfig {
 function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLayoutConfig {
   return {
     bottomInformationBarVisible: l.bottomInformationBarVisible,
+    bottomTimeStackShowLocal: l.bottomTimeStackShowLocal !== false,
+    bottomTimeStackShowRefer: l.bottomTimeStackShowRefer !== false,
+    bottomTimeStackShowUtc: l.bottomTimeStackShowUtc !== false,
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,
     hourMarkers: cloneHourMarkersConfig(l.hourMarkers),
@@ -527,13 +547,29 @@ export function cloneV2(config: LibrationConfigV2): LibrationConfigV2 {
  * Returns a canonical deep clone with every Phase 0 domain populated and `meta.schemaVersion === 2`.
  * Safe to call on outputs of {@link appConfigToV2}; idempotent for normalized documents.
  */
+function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
+  const d = DEFAULT_APP_CONFIG.layers;
+  if (!isPlainObject(raw)) {
+    return { ...d };
+  }
+  const r = raw as Record<string, unknown>;
+  return {
+    baseMap: typeof r.baseMap === "boolean" ? r.baseMap : d.baseMap,
+    solarShading: typeof r.solarShading === "boolean" ? r.solarShading : d.solarShading,
+    grid: typeof r.grid === "boolean" ? r.grid : d.grid,
+    cityPins: typeof r.cityPins === "boolean" ? r.cityPins : d.cityPins,
+    subsolarMarker: typeof r.subsolarMarker === "boolean" ? r.subsolarMarker : d.subsolarMarker,
+    sublunarMarker: typeof r.sublunarMarker === "boolean" ? r.sublunarMarker : d.sublunarMarker,
+  };
+}
+
 export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationConfigV2 {
   return {
     meta: {
       ...config.meta,
       schemaVersion: 2,
     },
-    layers: { ...config.layers },
+    layers: normalizeLayerEnableFlags(config.layers),
     pins: {
       reference: {
         visibleCityIds: [...config.pins.reference.visibleCityIds],

@@ -39,7 +39,6 @@ describe("createLayerRegistryFromConfig", () => {
       [
         "layer.baseMap.world",
         "layer.grid.latLon",
-        "layer.overlay.local",
         "layer.points.referenceCities",
         "layer.points.sublunar",
         "layer.points.subsolar",

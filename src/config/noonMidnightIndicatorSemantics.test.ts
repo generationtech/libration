@@ -16,6 +16,7 @@ import {
   indicatorEntryNoonMidnightRole,
   noonMidnightActiveIntent,
   resolveIndicatorEntryDiskDisplayLabel,
+  twentyFourHourAnchorActiveIntent,
 } from "./noonMidnightIndicatorSemantics.ts";
 
 describe("indicatorEntryNoonMidnightRole", () => {
@@ -44,6 +45,21 @@ describe("noonMidnightActiveIntent", () => {
       role: "noon",
       expressionMode: "boxedNumber",
     });
+  });
+});
+
+describe("twentyFourHourAnchorActiveIntent", () => {
+  it("activates only for structural 0 and 12 when enabled", () => {
+    expect(twentyFourHourAnchorActiveIntent({ enabled: false }, 0)).toEqual({ active: false });
+    expect(
+      twentyFourHourAnchorActiveIntent({ enabled: true, boxedNumberBoxColor: "#808080" }, 7),
+    ).toEqual({ active: false });
+    expect(
+      twentyFourHourAnchorActiveIntent({ enabled: true, boxedNumberBoxColor: "#808080" }, 0),
+    ).toEqual({ active: true, boxedNumberBoxColor: "#808080" });
+    expect(
+      twentyFourHourAnchorActiveIntent({ enabled: true, boxedNumberBoxColor: "#808080" }, 12),
+    ).toEqual({ active: true, boxedNumberBoxColor: "#808080" });
   });
 });
 

@@ -18,6 +18,7 @@
 
 import type {
   EffectiveNoonMidnightCustomization,
+  EffectiveTwentyFourHourAnchorCustomization,
   HourMarkersNoonMidnightExpressionMode,
 } from "./topBandHourMarkersTypes.ts";
 
@@ -55,6 +56,26 @@ export function noonMidnightActiveIntent(
     role,
     expressionMode: customization.expressionMode,
   };
+}
+
+export type TwentyFourHourAnchorActiveIntent =
+  | { active: false }
+  | { active: true; boxedNumberBoxColor: string };
+
+/**
+ * Structural hours 0 and 12 only: boxed tape numerals for 24-hour mode (no civil wording).
+ */
+export function twentyFourHourAnchorActiveIntent(
+  customization: EffectiveTwentyFourHourAnchorCustomization,
+  structuralHour0To23: number,
+): TwentyFourHourAnchorActiveIntent {
+  if (!customization.enabled) {
+    return { active: false };
+  }
+  if (structuralHour0To23 !== 0 && structuralHour0To23 !== 12) {
+    return { active: false };
+  }
+  return { active: true, boxedNumberBoxColor: customization.boxedNumberBoxColor };
 }
 
 const WORDS: Record<"noon" | "midnight", string> = {

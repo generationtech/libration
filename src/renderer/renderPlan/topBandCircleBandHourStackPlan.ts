@@ -195,8 +195,8 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
     radiusPx: number;
     nextHourLabel: string;
     currentHourLabel: string;
-    annotationKind: "none" | "noon" | "midnight";
-    /** From planner when {@link annotationKind} is noon/midnight. */
+    annotationKind: "none" | "noon" | "midnight" | "hour00" | "hour12";
+    /** From planner when {@link annotationKind} is non-none. */
     annotationLabel?: string;
     /** Structural hour 0–23 (top-band column); used for analog clock glyphs. */
     structuralHour0To23: number;

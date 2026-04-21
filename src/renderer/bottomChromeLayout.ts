@@ -31,10 +31,18 @@ function horizontalPaddingPx(viewportWidthPx: number): number {
  * Logical row height for bottom chrome from viewport height — token-driven;
  * matches the `computeBandHeights` bottom term in {@link displayChrome}.
  */
-export function computeBottomChromeBandHeightPx(viewportHeightPx: number): number {
+export function computeBottomChromeBandHeightPx(
+  viewportHeightPx: number,
+  options?: { timeStackLineCount?: number },
+): number {
   const h = viewportHeightPx > 0 ? viewportHeightPx : 1;
   const { heightFracOfViewport, minHeightPx, maxHeightPx } = BOTTOM_CHROME_STYLE.bandHeight;
-  return Math.max(minHeightPx, Math.min(maxHeightPx, Math.round(h * heightFracOfViewport)));
+  let px = Math.max(minHeightPx, Math.min(maxHeightPx, Math.round(h * heightFracOfViewport)));
+  const n = options?.timeStackLineCount;
+  if (n !== undefined && n > 3) {
+    px = Math.min(maxHeightPx, px + (n - 3) * 12);
+  }
+  return px;
 }
 
 /** Inset of the bottom chrome cluster from the physical viewport bottom (floating overlay). */

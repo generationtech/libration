@@ -34,7 +34,6 @@ const PRESET_EXPECTED_REGISTERED_LAYER_IDS: Record<
   full: [
     "layer.baseMap.world",
     "layer.grid.latLon",
-    "layer.overlay.local",
     "layer.points.referenceCities",
     "layer.points.sublunar",
     "layer.points.subsolar",

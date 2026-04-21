@@ -40,7 +40,10 @@ const INDICATOR_ENTRIES_AREA_DEFAULT = {
   ),
 } as const;
 
-const NOON_MIDNIGHT_DISABLED = { noonMidnightCustomization: { enabled: false as const } };
+const NOON_MIDNIGHT_DISABLED = {
+  noonMidnightCustomization: { enabled: false as const },
+  twentyFourHourAnchorCustomization: { enabled: false as const },
+};
 
 /** Default radial wedge fill: foreground-heavy blend (resolver t = 0.62), not noon/midnight midpoint. */
 function defaultRadialWedgeFillFromIndicatorRow(): string {
@@ -269,9 +272,10 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
         INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
       ),
     });
+    expect(eff.twentyFourHourAnchorCustomization).toEqual({ enabled: false });
   });
 
-  it("disables noon/midnight customization for 24-hour and UTC-style display modes", () => {
+  it("splits 12hr noon/midnight vs 24hr numeric anchor emphasis vs UTC (no emphasis)", () => {
     const layout = normalizeDisplayChromeLayout({
       hourMarkers: {
         realization: { kind: "text", appearance: {} },
@@ -285,6 +289,18 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     expect(resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode: "utc" }).noonMidnightCustomization).toEqual({
       enabled: false,
     });
+    expect(
+      resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode: "24hr" }).twentyFourHourAnchorCustomization,
+    ).toEqual({
+      enabled: true,
+      boxedNumberBoxColor: halfwayRgbStringBetweenCssColors(
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveBackgroundColor,
+        INDICATOR_ENTRIES_AREA_DEFAULT.effectiveForegroundColor,
+      ),
+    });
+    expect(
+      resolveEffectiveTopBandHourMarkers(layout, { displayTimeMode: "utc" }).twentyFourHourAnchorCustomization,
+    ).toEqual({ enabled: false });
   });
 
   it("radial wedge mapping", () => {

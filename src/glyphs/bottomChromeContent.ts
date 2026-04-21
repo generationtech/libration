@@ -13,38 +13,18 @@
 
 import type { BottomInformationBarState } from "../renderer/bottomChromeTypes.ts";
 
-/** Semantic payload for the left primary clock string (already formatted for display). */
-export type BottomChromeTimeContent = {
+/** Semantic payload for one canvas line in the lower-left time stack. */
+export type BottomChromeStackLineContent = {
   label: string;
 };
 
-/** Semantic payload for the micro label above the primary clock (e.g. reference-frame caption). */
-export type BottomChromeLabelContent = {
-  label: string;
-};
-
-/** Semantic payload for the right-edge date line. */
-export type BottomChromeDateContent = {
-  label: string;
-};
-
-/** Builds readout content from bar state without changing layout or copy rules. */
+/** Builds readout content from bar state without changing copy rules. */
 export function bottomChromeReadoutContentFromInformationBar(
   ib: BottomInformationBarState,
-): {
-  label: BottomChromeLabelContent;
-  time: BottomChromeTimeContent;
-  date: BottomChromeDateContent;
-  systemLocal?: BottomChromeTimeContent;
-} {
+): { stackLines: BottomChromeStackLineContent[] } {
   return {
-    label: { label: ib.referenceMicroLabel },
-    time: { label: ib.referenceTimeLine },
-    date: {
-      label: ib.rightPanelDateLine.length > 0 ? ib.rightPanelDateLine : "\u00a0",
-    },
-    ...(ib.systemLocalLine !== undefined && ib.systemLocalLine.length > 0
-      ? { systemLocal: { label: ib.systemLocalLine } }
-      : {}),
+    stackLines: ib.leftTimeStackLines.map((row) => ({
+      label: row.text.length > 0 ? row.text : "\u00a0",
+    })),
   };
 }

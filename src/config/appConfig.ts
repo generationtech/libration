@@ -33,8 +33,6 @@ export interface LayerEnableFlags {
   baseMap: boolean;
   solarShading: boolean;
   grid: boolean;
-  utcClock: boolean;
-  localClock: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -326,6 +324,13 @@ export function effectiveTopBandHourMarkerSelection(
 export interface DisplayChromeLayoutConfig {
   /** Lower floating reference civil time + date readouts (optional subordinate system-local line when zones differ). */
   bottomInformationBarVisible: boolean;
+  /**
+   * Bottom HUD time stack: clock rows below the date line (not map layers). The date line stays visible when the bar is on.
+   * Omitted keys normalize to true.
+   */
+  bottomTimeStackShowLocal?: boolean;
+  bottomTimeStackShowRefer?: boolean;
+  bottomTimeStackShowUtc?: boolean;
   /** Center tickmark tape (baseline + ticks) between the circle band and NATO row. */
   tickTapeVisible: boolean;
   /**
@@ -391,6 +396,9 @@ export interface DisplayChromeLayoutConfig {
 
 export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
+  bottomTimeStackShowLocal: true,
+  bottomTimeStackShowRefer: true,
+  bottomTimeStackShowUtc: true,
   tickTapeVisible: true,
   timezoneLetterRowVisible: true,
   hourMarkers: cloneHourMarkersConfig(DEFAULT_HOUR_MARKERS_CONFIG),
@@ -585,8 +593,6 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
     baseMap: true,
     solarShading: true,
     grid: true,
-    utcClock: false,
-    localClock: true,
     cityPins: true,
     subsolarMarker: true,
     sublunarMarker: true,

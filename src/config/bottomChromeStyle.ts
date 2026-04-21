@@ -123,8 +123,8 @@ export interface BottomChromeLayoutTokens {
   /** Primary clock Y as a fraction of band height. */
   leftPrimaryTimeYFracOfBandHeight: number;
   /**
-   * Optional subordinate left readout (system-local informational line), baseline Y as a fraction of band height.
-   * Placed below {@link leftPrimaryTimeYFracOfBandHeight} when {@link BottomInformationBarState.systemLocalLine} is set.
+   * Legacy token: previously used for a subordinate left readout row; the bottom HUD now uses a vertical time stack
+   * with row Y computed in {@link buildBottomChromeBandRenderPlan}.
    */
   leftSecondaryReadoutYFracOfBandHeight: number;
   /** Vertical center for boundary glyphs / day-line midline reference. */

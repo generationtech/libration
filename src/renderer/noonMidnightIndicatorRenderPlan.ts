@@ -39,7 +39,10 @@
  */
 
 import type { EffectiveTopBandHourMarkerSelection } from "../config/appConfig.ts";
-import { noonMidnightActiveIntent } from "../config/noonMidnightIndicatorSemantics.ts";
+import {
+  noonMidnightActiveIntent,
+  twentyFourHourAnchorActiveIntent,
+} from "../config/noonMidnightIndicatorSemantics.ts";
 import type { HourMarkerRepresentationSpec } from "../config/types/hourMarkerRepresentationSpec.ts";
 import type { EffectiveNoonMidnightCustomization, EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
 import { resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection } from "../config/topBandVisualPolicy.ts";
@@ -345,7 +348,25 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
 ): boolean {
   const intent = noonMidnightActiveIntent(args.customization, args.structuralHour0To23);
   if (!intent.active) {
-    return false;
+    const anchor24 = twentyFourHourAnchorActiveIntent(
+      args.effectiveTopBandHourMarkers.twentyFourHourAnchorCustomization,
+      args.structuralHour0To23,
+    );
+    if (!anchor24.active || args.realizationKind !== "text") {
+      return false;
+    }
+    const { cx, cy, size } = args.layout;
+    const tape = args.tapeHourLabel;
+    pushHighlightBehindTapeNumeral(cx, cy, tape, size, anchor24.boxedNumberBoxColor, out);
+    pushGlyphContent(
+      args,
+      { structuralHour0To23: args.structuralHour0To23, displayLabel: tape },
+      args.hourSpec,
+      gctx,
+      out,
+      boxedNumberTapeNumeralLayout(args.layout),
+    );
+    return true;
   }
   if (args.realizationKind !== "text") {
     return false;

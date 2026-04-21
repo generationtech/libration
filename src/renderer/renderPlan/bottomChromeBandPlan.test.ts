@@ -15,7 +15,6 @@ import { describe, expect, it } from "vitest";
 import { loadBundledFontAssetRegistry } from "../../config/chromeTypography";
 import {
   resolveBottomChromeDatePolicy,
-  resolveBottomChromeLabelPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy";
 import { BOTTOM_CHROME_STYLE } from "../../config/bottomChromeStyle";
@@ -31,19 +30,21 @@ const PRODUCT_FONT = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
 function sampleInformationBar(vw: number): BottomInformationBarState {
   const layout = computeBottomChromeLayout(vw);
   return {
-    referenceMicroLabel: "REFERENCE TIME",
-    referenceTimeLine: "3:45 PM",
-    referenceDateLine: "Apr 7, 2026",
-    rightPanelDateLine: "Monday, April 7, 2026",
+    leftTimeStackLines: [
+      { role: "date", text: "Monday, April 7, 2026" },
+      { role: "clock", text: "Local  3:45 PM" },
+      { role: "clock", text: "Refer  3:45 PM" },
+      { role: "clock", text: "UTC  19:45:00" },
+    ],
     bottomChromeLayout: layout,
   };
 }
 
 describe("buildBottomChromeBandRenderPlan", () => {
-  it("emits band plate rect then three text items in left micro → left time → right date order", () => {
+  it("emits band plate then left-aligned stack lines in order (date then clocks)", () => {
     const vw = 960;
-    const typo = resolveBottomChromeTypography(vw);
     const ib = sampleInformationBar(vw);
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
     const bottomBand = { x: 0, y: 900, width: vw, height: 56 };
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
@@ -54,8 +55,8 @@ describe("buildBottomChromeBandRenderPlan", () => {
       productDefaultFontAssetId: PRODUCT_FONT,
     });
 
-    expect(plan.items).toHaveLength(4);
-    const [plate, a, b, c] = plan.items;
+    expect(plan.items).toHaveLength(5);
+    const [plate, t0, t1, t2, t3] = plan.items;
     expect(plate.kind).toBe("rect");
     if (plate.kind === "rect") {
       expect(plate.x).toBe(bottomBand.x);
@@ -65,96 +66,57 @@ describe("buildBottomChromeBandRenderPlan", () => {
       expect(plate.fill).toBe(BOTTOM_CHROME_STYLE.overlay.bottomInstrumentBandPlateFill);
     }
 
-    expect(a.kind).toBe("text");
-    expect(b.kind).toBe("text");
-    expect(c.kind).toBe("text");
-    if (a.kind !== "text" || b.kind !== "text" || c.kind !== "text") {
+    for (const item of [t0, t1, t2, t3]) {
+      expect(item.kind).toBe("text");
+    }
+    if (t0.kind !== "text" || t1.kind !== "text" || t2.kind !== "text" || t3.kind !== "text") {
       throw new Error("expected text items");
     }
 
-    expect(a.text).toBe("REFERENCE TIME");
-    expect(a.textAlign).toBe("left");
-    expect(a.letterSpacingEm).toBe(BOTTOM_CHROME_STYLE.layout.leftMicroLabelLetterSpacingEm);
-    expect(a.shadow).toBeDefined();
-    expect(a.font.assetId).toBe(PRODUCT_FONT);
-    expect(a.font.displayName.length).toBeGreaterThan(0);
+    expect(t0.text).toBe("Monday, April 7, 2026");
+    expect(t0.textAlign).toBe("left");
+    expect(t0.x).toBe(ib.bottomChromeLayout.horizontalPaddingPx);
 
-    expect(b.text).toBe("3:45 PM");
-    expect(b.textAlign).toBe("left");
-    expect(b.letterSpacingEm).toBe(0);
-    expect(b.y).not.toBe(a.y);
-
-    expect(c.text).toBe("Monday, April 7, 2026");
-    expect(c.textAlign).toBe("right");
-    expect(c.letterSpacingEm).toBe(0);
-    expect(c.x).toBe(vw - ib.bottomChromeLayout.horizontalPaddingPx);
-    expect(c.y).toBe(b.y);
+    expect(t1.text).toBe("Local  3:45 PM");
+    expect(t2.text).toBe("Refer  3:45 PM");
+    expect(t3.text).toBe("UTC  19:45:00");
 
     const colors = BOTTOM_CHROME_STYLE.colors;
-    const labelPolicy = resolveBottomChromeLabelPolicy(colors);
     const timePolicy = resolveBottomChromeTimePolicy(colors);
     const datePolicy = resolveBottomChromeDatePolicy(colors);
-    expect(a.fill).toBe(labelPolicy.fill);
-    expect(a.font.weight).toBe(labelPolicy.typographyOverrides?.fontWeight);
-    expect(b.fill).toBe(timePolicy.fill);
-    expect(b.font.weight).toBe(timePolicy.typographyOverrides?.fontWeight);
-    expect(c.fill).toBe(datePolicy.fill);
-    expect(c.font.weight).toBe(datePolicy.typographyOverrides?.fontWeight);
+    expect(t0.fill).toBe(datePolicy.fill);
+    expect(t1.fill).toBe(timePolicy.fill);
+    expect(t2.fill).toBe(timePolicy.fill);
+    expect(t3.fill).toBe(timePolicy.fill);
   });
 
-  it("emits a fifth text glyph when systemLocalLine is present", () => {
-    const vw = 960;
-    const typo = resolveBottomChromeTypography(vw);
+  it("uses nbsp when a stack line is empty", () => {
+    const vw = 640;
+    const layout = computeBottomChromeLayout(vw);
     const ib: BottomInformationBarState = {
-      ...sampleInformationBar(vw),
-      systemLocalLine: "THIS DEVICE · 10:30:45",
+      leftTimeStackLines: [{ role: "date", text: "" }],
+      bottomChromeLayout: layout,
     };
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
-      bottomBand: { x: 0, y: 900, width: vw, height: 56 },
+      bottomBand: { x: 0, y: 0, width: vw, height: 48 },
       ib,
       typography: typo,
       glyphRenderContext: GLYPH_CTX,
       productDefaultFontAssetId: PRODUCT_FONT,
     });
-    expect(plan.items).toHaveLength(5);
-    const [, , time, sys, date] = plan.items;
-    expect(time.kind).toBe("text");
-    expect(sys.kind).toBe("text");
-    expect(date.kind).toBe("text");
-    if (sys.kind === "text") {
-      expect(sys.text).toBe("THIS DEVICE · 10:30:45");
-      expect(sys.y).toBeGreaterThan((time as { y: number }).y);
+    const text = plan.items[1];
+    expect(text.kind).toBe("text");
+    if (text.kind === "text") {
+      expect(text.text).toBe("\u00a0");
     }
   });
 
-  it("uses nbsp when right panel date is empty", () => {
-    const vw = 640;
-    const typo = resolveBottomChromeTypography(vw);
-    const ib = sampleInformationBar(vw);
-    const empty: BottomInformationBarState = {
-      ...ib,
-      rightPanelDateLine: "",
-    };
-    const plan = buildBottomChromeBandRenderPlan({
-      viewportWidthPx: vw,
-      bottomBand: { x: 0, y: 0, width: vw, height: 48 },
-      ib: empty,
-      typography: typo,
-      glyphRenderContext: GLYPH_CTX,
-      productDefaultFontAssetId: PRODUCT_FONT,
-    });
-    const right = plan.items[plan.items.length - 1];
-    expect(right.kind).toBe("text");
-    if (right.kind === "text") {
-      expect(right.text).toBe("\u00a0");
-    }
-  });
-
-  it("positions readouts using band geometry (label above primary time)", () => {
+  it("positions stack lines with increasing y downward in the band", () => {
     const vw = 800;
-    const typo = resolveBottomChromeTypography(vw);
     const ib = sampleInformationBar(vw);
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
     const bottomBand = { x: 0, y: 400, width: vw, height: 72 };
     const plan = buildBottomChromeBandRenderPlan({
       viewportWidthPx: vw,
@@ -164,18 +126,18 @@ describe("buildBottomChromeBandRenderPlan", () => {
       glyphRenderContext: GLYPH_CTX,
       productDefaultFontAssetId: PRODUCT_FONT,
     });
-    const [, label, time] = plan.items;
-    if (label.kind !== "text" || time.kind !== "text") {
-      throw new Error("expected text");
+    const ys = plan.items
+      .filter((it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text")
+      .map((it) => it.y);
+    for (let i = 1; i < ys.length; i += 1) {
+      expect(ys[i]).toBeGreaterThan(ys[i - 1]!);
     }
-    expect(label.y).toBeLessThan(time.y);
-    expect(label.font.sizePx).toBeLessThan(time.font.sizePx);
   });
 
   it("allows overriding band plate fill without affecting text items", () => {
     const vw = 480;
-    const typo = resolveBottomChromeTypography(vw);
     const ib = sampleInformationBar(vw);
+    const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
     const bottomBand = { x: 2, y: 100, width: vw - 4, height: 40 };
     const customFill = "rgba(2, 14, 38, 0.12)";
     const plan = buildBottomChromeBandRenderPlan({

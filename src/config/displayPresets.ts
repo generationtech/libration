@@ -73,6 +73,9 @@ function cloneConfig(config: AppConfig): AppConfig {
     },
     displayChromeLayout: {
       bottomInformationBarVisible: dcl.bottomInformationBarVisible,
+      bottomTimeStackShowLocal: dcl.bottomTimeStackShowLocal !== false,
+      bottomTimeStackShowRefer: dcl.bottomTimeStackShowRefer !== false,
+      bottomTimeStackShowUtc: dcl.bottomTimeStackShowUtc !== false,
       tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,
       hourMarkers: cloneHourMarkersConfig(dcl.hourMarkers),
@@ -133,8 +136,8 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
   full: cloneConfig(DEFAULT_APP_CONFIG),
 
   /**
-   * Minimal chrome: base map, solar shading — no grid, local clock, pins, or sun/moon markers.
-   * UTC time-of-day is shown only in the fixed top display-chrome hour scale (not as a map overlay).
+   * Minimal chrome: base map, solar shading — no grid, pins, or sun/moon markers.
+   * Time-of-day is shown in display chrome (top strip and bottom HUD), not as map overlay clocks.
    * {@link AppConfig.visibleCityIds} is empty because city pins are off.
    */
   minimal: {
@@ -143,8 +146,6 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       baseMap: true,
       solarShading: true,
       grid: false,
-      utcClock: false,
-      localClock: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -153,8 +154,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
   },
 
   /**
-   * Celestial emphasis: base map, shading, grid, subsolar and sublunar markers; no local clock or city pins.
-   * UTC hour scale is in display chrome (not a map text overlay).
+   * Celestial emphasis: base map, shading, grid, subsolar and sublunar markers; no city pins.
    * {@link AppConfig.visibleCityIds} is empty because city pins are off.
    */
   celestial: {
@@ -163,8 +163,6 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       baseMap: true,
       solarShading: true,
       grid: true,
-      utcClock: false,
-      localClock: false,
       cityPins: false,
       subsolarMarker: true,
       sublunarMarker: true,
@@ -173,7 +171,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
   },
 
   /**
-   * Map plus a small curated set of reference-city pins only: no day/night shading, grid, clocks, or celestial markers.
+   * Map plus a small curated set of reference-city pins only: no day/night shading, grid, or celestial markers.
    * Uses {@link FEATURED_REFERENCE_CITY_IDS} (not the full reference list).
    */
   featuredCities: {
@@ -182,8 +180,6 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       baseMap: true,
       solarShading: false,
       grid: false,
-      utcClock: false,
-      localClock: false,
       cityPins: true,
       subsolarMarker: false,
       sublunarMarker: false,

@@ -59,8 +59,6 @@ const GRID_LAYER_ID = "layer.grid.latLon";
 const SOLAR_SHADING_LAYER_ID = "layer.solarShading.dayNight";
 const CITY_PINS_LAYER_ID = "layer.points.referenceCities";
 const BASE_MAP_LAYER_ID = "layer.baseMap.world";
-const UTC_OVERLAY_LAYER_ID = "layer.overlay.utc";
-const LOCAL_OVERLAY_LAYER_ID = "layer.overlay.local";
 const SUBSOLAR_MARKER_LAYER_ID = "layer.points.subsolar";
 const SUBLUNAR_MARKER_LAYER_ID = "layer.points.sublunar";
 
@@ -307,8 +305,7 @@ describe("commitWorkingV2Update", () => {
   it.each(
     [
       ["baseMap", BASE_MAP_LAYER_ID],
-      ["utcClock", UTC_OVERLAY_LAYER_ID],
-      ["localClock", LOCAL_OVERLAY_LAYER_ID],
+      ["grid", GRID_LAYER_ID],
       ["subsolarMarker", SUBSOLAR_MARKER_LAYER_ID],
       ["sublunarMarker", SUBLUNAR_MARKER_LAYER_ID],
     ] as const,

@@ -22,11 +22,9 @@ import { getActiveAppConfig } from "../config/displayPresets";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createCityPinsLayer } from "../layers/cityPinsLayer";
 import { createLatLonGridLayer } from "../layers/latLonGridLayer";
-import { createLocalTimeOverlayLayer } from "../layers/localTimeOverlayLayer";
 import { createSolarShadingLayer } from "../layers/solarShadingLayer";
 import { createSublunarMarkerLayer } from "../layers/sublunarMarkerLayer";
 import { createSubsolarMarkerLayer } from "../layers/subsolarMarkerLayer";
-import { createUtcTimeOverlayLayer } from "../layers/utcTimeOverlayLayer";
 import { LayerRegistry } from "../layers/LayerRegistry";
 
 /**
@@ -68,12 +66,5 @@ export function createLayerRegistryFromConfig(
   if (layers.sublunarMarker) {
     registry.register(createSublunarMarkerLayer());
   }
-  if (layers.utcClock) {
-    registry.register(createUtcTimeOverlayLayer());
-  }
-  if (layers.localClock) {
-    registry.register(createLocalTimeOverlayLayer());
-  }
-
   return registry;
 }

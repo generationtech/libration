@@ -32,8 +32,6 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
   "solarShading",
   "grid",
-  "utcClock",
-  "localClock",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",

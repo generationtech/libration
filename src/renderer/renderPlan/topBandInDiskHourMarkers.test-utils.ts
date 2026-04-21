@@ -46,7 +46,7 @@ export type TopBandHourDiskStackMarkerInput = {
   radiusPx: number;
   nextHourLabel: string;
   currentHourLabel: string;
-  annotationKind: "none" | "noon" | "midnight";
+  annotationKind: "none" | "noon" | "midnight" | "hour00" | "hour12";
   annotationLabel?: string;
   structuralHour0To23: number;
 };

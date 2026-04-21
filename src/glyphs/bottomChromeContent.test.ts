@@ -19,31 +19,27 @@ import { bottomChromeReadoutContentFromInformationBar } from "./bottomChromeCont
 function ibSample(overrides: Partial<BottomInformationBarState> = {}): BottomInformationBarState {
   const layout = computeBottomChromeLayout(800);
   return {
-    referenceMicroLabel: "REFERENCE TIME",
-    referenceTimeLine: "3:45 PM",
-    referenceDateLine: "Apr 7, 2026",
-    rightPanelDateLine: "Mon",
+    leftTimeStackLines: [
+      { role: "date", text: "April 7 2026" },
+      { role: "clock", text: "Local  3:45 PM" },
+    ],
     bottomChromeLayout: layout,
     ...overrides,
   };
 }
 
 describe("bottomChromeReadoutContentFromInformationBar", () => {
-  it("passes micro label and time strings through unchanged", () => {
+  it("maps each stack line to a label payload", () => {
     const c = bottomChromeReadoutContentFromInformationBar(ibSample());
-    expect(c.label.label).toBe("REFERENCE TIME");
-    expect(c.time.label).toBe("3:45 PM");
+    expect(c.stackLines).toHaveLength(2);
+    expect(c.stackLines[0]!.label).toBe("April 7 2026");
+    expect(c.stackLines[1]!.label).toBe("Local  3:45 PM");
   });
 
-  it("uses nbsp for empty right panel date", () => {
-    const c = bottomChromeReadoutContentFromInformationBar(ibSample({ rightPanelDateLine: "" }));
-    expect(c.date.label).toBe("\u00a0");
-  });
-
-  it("includes optional system-local payload when systemLocalLine is set", () => {
+  it("uses nbsp for an empty line", () => {
     const c = bottomChromeReadoutContentFromInformationBar(
-      ibSample({ systemLocalLine: "THIS DEVICE · 1:00 PM" }),
+      ibSample({ leftTimeStackLines: [{ role: "date", text: "" }] }),
     );
-    expect(c.systemLocal?.label).toBe("THIS DEVICE · 1:00 PM");
+    expect(c.stackLines[0]!.label).toBe("\u00a0");
   });
 });

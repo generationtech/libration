@@ -29,6 +29,7 @@ import { resolveEffectiveProductTextFontAssetId } from "./productTextFont.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
   EffectiveNoonMidnightCustomization,
+  EffectiveTwentyFourHourAnchorCustomization,
   EffectiveTopBandHourMarkerBehavior,
   EffectiveTopBandHourMarkers,
   EffectiveTopBandHourMarkerRealization,
@@ -231,6 +232,34 @@ function resolveEffectiveNoonMidnightCustomization(
   return { enabled: true, expressionMode };
 }
 
+function resolveEffectiveTwentyFourHourAnchorCustomization(
+  hm: HourMarkersConfig,
+  indicatorEntriesArea: {
+    effectiveBackgroundColor: string;
+    effectiveForegroundColor: "#000000" | "#ffffff";
+  },
+  displayTimeMode: DisplayTimeMode,
+): EffectiveTwentyFourHourAnchorCustomization {
+  /** Numeric `00` / `12` emphasis applies only in 24-hour civil presentation (not UTC-style mode). */
+  if (displayTimeMode !== "24hr") {
+    return { enabled: false };
+  }
+  if (hm.realization.kind !== "text") {
+    return { enabled: false };
+  }
+  const raw = hm.noonMidnightCustomization;
+  if (raw?.enabled !== true) {
+    return { enabled: false };
+  }
+  return {
+    enabled: true,
+    boxedNumberBoxColor: halfwayRgbStringBetweenCssColors(
+      indicatorEntriesArea.effectiveBackgroundColor,
+      indicatorEntriesArea.effectiveForegroundColor,
+    ),
+  };
+}
+
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
  * Content follows realization kind; behavior follows {@link resolveEffectiveHourMarkerBehavior} (derived from kind).
@@ -247,6 +276,11 @@ export function resolveEffectiveTopBandHourMarkers(
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
   const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
   const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(
+    hm,
+    indicatorEntriesArea,
+    displayTimeMode,
+  );
+  const twentyFourHourAnchorCustomization = resolveEffectiveTwentyFourHourAnchorCustomization(
     hm,
     indicatorEntriesArea,
     displayTimeMode,
@@ -284,6 +318,7 @@ export function resolveEffectiveTopBandHourMarkers(
       realization,
       layout: layoutOut,
       noonMidnightCustomization,
+      twentyFourHourAnchorCustomization,
     };
   }
 
@@ -300,6 +335,7 @@ export function resolveEffectiveTopBandHourMarkers(
       },
       layout: layoutOut,
       noonMidnightCustomization,
+      twentyFourHourAnchorCustomization: { enabled: false },
     };
   }
 
@@ -316,6 +352,7 @@ export function resolveEffectiveTopBandHourMarkers(
       },
       layout: layoutOut,
       noonMidnightCustomization,
+      twentyFourHourAnchorCustomization: { enabled: false },
     };
   }
 
@@ -331,5 +368,6 @@ export function resolveEffectiveTopBandHourMarkers(
     },
     layout: layoutOut,
     noonMidnightCustomization,
+    twentyFourHourAnchorCustomization: { enabled: false },
   };
 }

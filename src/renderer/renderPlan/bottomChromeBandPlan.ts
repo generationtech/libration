@@ -12,14 +12,12 @@
  */
 
 /**
- * Render-plan builder: bottom instrument layout band (plate) plus left/right floating readouts.
+ * Render-plan builder: bottom instrument layout band (plate) plus lower-left stacked date/time readouts.
  * Layout matches legacy {@link ../bottomChrome} math; product strings come from {@link BottomInformationBarState}.
  */
 
 import {
   resolveBottomChromeDatePolicy,
-  resolveBottomChromeLabelPolicy,
-  resolveBottomChromeSecondaryReadoutPolicy,
   resolveBottomChromeTimePolicy,
 } from "../../config/bottomChromeVisualPolicy.ts";
 import type { FontAssetId } from "../../typography/fontAssetTypes.ts";
@@ -63,8 +61,7 @@ function withInheritedProductFontFace(
 }
 
 /**
- * Full bottom-band overlay: resolved band plate (structural rect) then micro label, primary time, optional
- * subordinate system-local line, and right date readouts.
+ * Full bottom-band overlay: resolved band plate (structural rect) then lower-left stacked readouts.
  * Band fill defaults to transparent so the map-backed appearance matches the pre–Phase 2 text-only path.
  */
 export function buildBottomChromeBandRenderPlan(options: {
@@ -87,11 +84,7 @@ export function buildBottomChromeBandRenderPlan(options: {
   const bh = options.bottomBand.height;
   const by = options.bottomBand.y;
   const sideLift = bh * L.sideReadoutVerticalLiftFracOfBandHeight;
-  const timeY = by + bh * L.leftPrimaryTimeYFracOfBandHeight - sideLift;
-  const labelY = by + bh * L.leftMicroLabelYFracOfBandHeight - sideLift;
-  const secondaryY = by + bh * L.leftSecondaryReadoutYFracOfBandHeight - sideLift;
   const vw = Math.max(0, options.viewportWidthPx);
-  const rx = vw - padX;
   const shadow = sideReadoutShadowFromStyle();
   const band = options.bottomBand;
   const plateFill = options.bandPlateFill ?? O.bottomInstrumentBandPlateFill;
@@ -99,9 +92,7 @@ export function buildBottomChromeBandRenderPlan(options: {
 
   const content = bottomChromeReadoutContentFromInformationBar(options.ib);
   const pid = options.productDefaultFontAssetId;
-  const labelPolicy = withInheritedProductFontFace(resolveBottomChromeLabelPolicy(colors), pid);
   const timePolicy = withInheritedProductFontFace(resolveBottomChromeTimePolicy(colors), pid);
-  const secondaryPolicy = withInheritedProductFontFace(resolveBottomChromeSecondaryReadoutPolicy(colors), pid);
   const datePolicy = withInheritedProductFontFace(resolveBottomChromeDatePolicy(colors), pid);
 
   const items: RenderPlan["items"] = [
@@ -115,32 +106,26 @@ export function buildBottomChromeBandRenderPlan(options: {
     },
   ];
 
-  emitGlyphToRenderPlan(
-    createBottomChromeTextGlyph(content.label.label, labelPolicy, { textAlign: "left", shadow }),
-    { cx: padX, cy: labelY, size: options.typography.microLabelPx },
-    gctx,
-    items,
-  );
-  emitGlyphToRenderPlan(
-    createBottomChromeTextGlyph(content.time.label, timePolicy, { textAlign: "left", shadow }),
-    { cx: padX, cy: timeY, size: options.typography.primaryTimePx },
-    gctx,
-    items,
-  );
-  if (content.systemLocal !== undefined) {
+  const n = content.stackLines.length;
+  const topFrac = 0.12;
+  const botFrac = 0.9;
+  const span = Math.max(0.05, botFrac - topFrac);
+
+  for (let i = 0; i < n; i += 1) {
+    const row = options.ib.leftTimeStackLines[i]!;
+    const line = content.stackLines[i]!;
+    const t = n === 1 ? 0.5 : i / Math.max(1, n - 1);
+    const yFrac = topFrac + t * span;
+    const cy = by + bh * yFrac - sideLift;
+    const policy = row.role === "date" ? datePolicy : timePolicy;
+    const sizePx = row.role === "date" ? options.typography.secondaryReadoutPx : options.typography.primaryTimePx;
     emitGlyphToRenderPlan(
-      createBottomChromeTextGlyph(content.systemLocal.label, secondaryPolicy, { textAlign: "left", shadow }),
-      { cx: padX, cy: secondaryY, size: options.typography.secondaryReadoutPx },
+      createBottomChromeTextGlyph(line.label, policy, { textAlign: "left", shadow }),
+      { cx: padX, cy, size: sizePx },
       gctx,
       items,
     );
   }
-  emitGlyphToRenderPlan(
-    createBottomChromeTextGlyph(content.date.label, datePolicy, { textAlign: "right", shadow }),
-    { cx: rx, cy: timeY, size: options.typography.primaryTimePx },
-    gctx,
-    items,
-  );
 
   return { items };
 }

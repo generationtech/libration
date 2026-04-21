@@ -346,7 +346,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
           Fixed instrument chrome around the map. Choose an area to edit; settings are grouped by where
           they apply on the strip (does not change civil-time or anchor semantics).
         </p>
-        <ConfigControlRow label="Bottom reference time &amp; date readout">
+        <ConfigControlRow label="Bottom HUD time &amp; date stack">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
@@ -354,7 +354,7 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             readOnly={!wired}
             disabled={!wired}
             tabIndex={wired ? 0 : -1}
-            aria-label="Show bottom reference time and date readout"
+            aria-label="Show bottom HUD date and time readout stack"
             onChange={
               wired && updateConfig
                 ? (e) => {
@@ -367,13 +367,80 @@ export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
             }
           />
         </ConfigControlRow>
+        <p className="config-section__hint">
+          Bottom readouts are instrument HUD text (not map layers). Date stays on when the stack is visible; clock rows
+          are optional.
+        </p>
+        <ConfigControlRow label="Bottom stack: Local">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lay.bottomTimeStackShowLocal !== false}
+            readOnly={!wired}
+            disabled={!wired}
+            tabIndex={wired ? 0 : -1}
+            aria-label="Show Local time row in bottom HUD stack"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const checked = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeStackShowLocal = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Bottom stack: Refer">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lay.bottomTimeStackShowRefer !== false}
+            readOnly={!wired}
+            disabled={!wired}
+            tabIndex={wired ? 0 : -1}
+            aria-label="Show reference-frame time row in bottom HUD stack"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const checked = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeStackShowRefer = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Bottom stack: UTC">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lay.bottomTimeStackShowUtc !== false}
+            readOnly={!wired}
+            disabled={!wired}
+            tabIndex={wired ? 0 : -1}
+            aria-label="Show UTC time row in bottom HUD stack"
+            onChange={
+              wired && updateConfig
+                ? (e) => {
+                    const checked = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      draft.chrome.layout.bottomTimeStackShowUtc = checked;
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
         <ConfigControlRow label="Bottom readout font">
           <select
             className="config-input"
             data-testid="chrome-bottom-readout-font-select"
             value={lay.bottomReadoutFontAssetId ?? ""}
             disabled={!wired}
-            aria-label="Font for lower-left bottom reference time and date readout"
+            aria-label="Font for lower-left bottom HUD time stack"
             onChange={
               wired && updateConfig
                 ? (e) => {

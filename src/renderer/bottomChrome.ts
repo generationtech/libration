@@ -12,7 +12,7 @@
  */
 
 /**
- * Bottom instrument chrome render pass: resolved band plate plus left clock and right date (floating overlay).
+ * Bottom instrument chrome render pass: resolved band plate plus lower-left stacked time readouts (floating overlay).
  * Consumes only pre-derived {@link BottomInformationBarState}.
  */
 
@@ -29,26 +29,37 @@ import type { Viewport } from "./types";
 type BottomChromeBandRect = { x: number; y: number; width: number; height: number };
 
 /** Computes resolved typography sizes from viewport width (token-driven). */
-export function resolveBottomChromeTypography(viewportWidthPx: number): {
+export function resolveBottomChromeTypography(
+  viewportWidthPx: number,
+  stackLineCount?: number,
+): {
   microLabelPx: number;
   primaryTimePx: number;
   secondaryReadoutPx: number;
 } {
   const T = BOTTOM_CHROME_STYLE.typography;
   const vw = Math.max(0, viewportWidthPx);
+  const n = stackLineCount ?? 0;
+  const dense = n > 4;
+  const primaryScale = dense ? 0.88 : 1;
+  const secondaryScale = n > 3 ? 0.92 : 1;
   return {
     microLabelPx: bottomChromeFontPx(vw, T.microLabelMinPx, T.microLabelMaxPx, T.microLabelFracOfViewportWidth),
-    primaryTimePx: bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth),
-    secondaryReadoutPx: bottomChromeFontPx(
-      vw,
-      T.dayCellDateSecondaryMinPx,
-      T.dayCellDateSecondaryMaxPx,
-      T.dayCellDateSecondaryFracOfViewportWidth,
-    ),
+    primaryTimePx:
+      primaryScale *
+      bottomChromeFontPx(vw, T.primaryTimeMinPx, T.primaryTimeMaxPx, T.primaryTimeFracOfViewportWidth),
+    secondaryReadoutPx:
+      secondaryScale *
+      bottomChromeFontPx(
+        vw,
+        T.dayCellDateSecondaryMinPx,
+        T.dayCellDateSecondaryMaxPx,
+        T.dayCellDateSecondaryFracOfViewportWidth,
+      ),
   };
 }
 
-/** Full bottom chrome draw: band extent rect (default transparent plate) then floating left/right readouts. */
+/** Full bottom chrome draw: band extent rect (default transparent plate) then floating lower-left stack readouts. */
 export function renderBottomChrome(
   ctx: CanvasRenderingContext2D,
   viewport: Viewport,
@@ -57,7 +68,7 @@ export function renderBottomChrome(
   productDefaultFontAssetId: FontAssetId,
 ): void {
   const vw = viewport.width;
-  const typo = resolveBottomChromeTypography(vw);
+  const typo = resolveBottomChromeTypography(vw, ib.leftTimeStackLines.length);
   const plan = buildBottomChromeBandRenderPlan({
     viewportWidthPx: vw,
     bottomBand,

@@ -200,6 +200,14 @@ export type EffectiveNoonMidnightCustomization =
     };
 
 /**
+ * 24-hour mode only: numeric emphasis for structural hours `00` and `12` (boxed tape numerals), not civil noon/midnight wording.
+ * Resolved from the same authored {@link HourMarkersConfig.noonMidnightCustomization} enable flag as 12hr emphasis.
+ */
+export type EffectiveTwentyFourHourAnchorCustomization =
+  | { enabled: false }
+  | { enabled: true; boxedNumberBoxColor: string };
+
+/**
  * Authoritative resolved model for top-band hour markers: semantic planning and UI consume this shape
  * alongside {@link DisplayChromeLayoutConfig.hourMarkers}.
  */
@@ -223,4 +231,6 @@ export type EffectiveTopBandHourMarkers = {
   layout: EffectiveTopBandHourMarkerLayout;
   /** Noon/midnight indicator-entry customization (semantic + layout consume; renderer adapts per realization). */
   noonMidnightCustomization: EffectiveNoonMidnightCustomization;
+  /** 24-hour anchor emphasis (`00` / `12` boxed numerals) for text realization when the band is in 24-hour civil mode. */
+  twentyFourHourAnchorCustomization: EffectiveTwentyFourHourAnchorCustomization;
 };

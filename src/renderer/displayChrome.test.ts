@@ -650,11 +650,15 @@ describe("topBandMarkerAnnotationKind", () => {
     expect(topBandMarkerAnnotationKind(11, "local12")).toBe("none");
   });
 
-  it("local24 and utc24 never apply noon/midnight crown roles", () => {
-    for (const mode of ["local24", "utc24"] as const) {
-      expect(topBandMarkerAnnotationKind(0, mode)).toBe("none");
-      expect(topBandMarkerAnnotationKind(12, mode)).toBe("none");
-    }
+  it("local24 uses numeric crown anchors for 00 and 12 (not civil noon/midnight wording)", () => {
+    expect(topBandMarkerAnnotationKind(0, "local24")).toBe("hour00");
+    expect(topBandMarkerAnnotationKind(12, "local24")).toBe("hour12");
+    expect(topBandMarkerAnnotationKind(11, "local24")).toBe("none");
+  });
+
+  it("utc24 has no special crown emphasis (technical numeric mode)", () => {
+    expect(topBandMarkerAnnotationKind(0, "utc24")).toBe("none");
+    expect(topBandMarkerAnnotationKind(12, "utc24")).toBe("none");
   });
 });
 
@@ -1012,7 +1016,7 @@ describe("computeBottomChromeLayout", () => {
 });
 
 describe("buildBottomInformationBarState", () => {
-  it("produces deterministic day and date strings when chromeTimeZone is UTC", () => {
+  it("stacks date then Local, Refer, UTC when all clock rows are enabled", () => {
     const t0 = 1_704_067_200_000;
     const ib = buildBottomInformationBarState({
       nowMs: t0,
@@ -1020,15 +1024,33 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local24",
     });
-
-    expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
-    expect(ib.referenceDateLine).toBe("Monday, January 1, 2024");
+    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
+    expect(ib.leftTimeStackLines[0]!.text).toBe("January 1 2024");
+    expect(ib.leftTimeStackLines[1]!.text.startsWith("Local")).toBe(true);
+    expect(ib.leftTimeStackLines[2]!.text.startsWith("Refer")).toBe(true);
+    expect(ib.leftTimeStackLines[3]!.text.startsWith("UTC")).toBe(true);
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
-    expect(ib.rightPanelDateLine).toBe("January 1 2024");
-    expect(ib.referenceTimeLine.length).toBeGreaterThan(4);
   });
 
-  it("uses 24-hour wall clock for local24 and utc24 (no AM/PM)", () => {
+  it("omits disabled clock rows while keeping date on top", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const ib = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: {
+        bottomTimeStackShowLocal: false,
+        bottomTimeStackShowRefer: true,
+        bottomTimeStackShowUtc: false,
+      },
+    });
+    expect(ib.leftTimeStackLines).toHaveLength(2);
+    expect(ib.leftTimeStackLines[0]!.role).toBe("date");
+    expect(ib.leftTimeStackLines[1]!.text.startsWith("Refer")).toBe(true);
+  });
+
+  it("uses 24-hour style for Refer when top band is local24 or utc24", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     for (const topBandMode of ["local24", "utc24"] as const) {
       const ib = buildBottomInformationBarState({
@@ -1037,14 +1059,13 @@ describe("buildBottomInformationBarState", () => {
         chromeTimeZone: "UTC",
         topBandMode,
       });
-      expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
-      expect(ib.referenceTimeLine).toMatch(/^\d{2}:\d{2}:\d{2}$/);
-      expect(ib.referenceTimeLine).not.toMatch(/\b(AM|PM)\b/i);
-      expect(ib.referenceTimeLine.startsWith("14:")).toBe(true);
+      const refer = ib.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text;
+      expect(refer).toMatch(/14:05:06/);
+      expect(refer).not.toMatch(/\b(AM|PM)\b/i);
     }
   });
 
-  it("utc24 formats the reference instant in UTC, not reference-zone civil 24-hour time", () => {
+  it("Refer row uses reference IANA civil time; UTC row shows the same instant in UTC", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1052,12 +1073,13 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib.referenceMicroLabel).toBe("REFERENCE TIME");
-    expect(ib.referenceTimeLine.startsWith("14:")).toBe(true);
+    const refer = ib.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text;
+    expect(refer).toMatch(/09:05:06/);
+    const utcLine = ib.leftTimeStackLines.find((l) => l.text.startsWith("UTC"))!.text;
+    expect(utcLine).toMatch(/14:05:06/);
   });
 
-  it("Knoxville frame (America/New_York): local civil 18:04 EDT reads as ~22:04 UTC in utc24; local24 unchanged", () => {
-    // July 10 2026 22:04:05 UTC = 18:04:05 Eastern (EDT, UTC−4).
+  it("Knoxville frame: local24 refer line matches Eastern; utc24 refer still Eastern; UTC row is 22:04:05", () => {
     const t = Date.UTC(2026, 6, 10, 22, 4, 5);
     const ib24 = buildBottomInformationBarState({
       nowMs: t,
@@ -1071,11 +1093,12 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "America/New_York",
       topBandMode: "utc24",
     });
-    expect(ib24.referenceTimeLine.startsWith("18:")).toBe(true);
-    expect(ibUtc.referenceTimeLine).toBe("22:04:05");
+    expect(ib24.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text).toMatch(/18:04:05/);
+    expect(ibUtc.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text).toMatch(/18:04:05/);
+    expect(ibUtc.leftTimeStackLines.find((l) => l.text.startsWith("UTC"))!.text).toMatch(/22:04:05/);
   });
 
-  it("uses 12-hour wall clock with AM/PM for local12", () => {
+  it("uses 12-hour wall clock for Refer when top band is local12", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1083,11 +1106,12 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    expect(ib.referenceTimeLine).toMatch(/\b(AM|PM)\b/i);
-    expect(ib.referenceTimeLine.startsWith("14:")).toBe(false);
+    const refer = ib.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text;
+    expect(refer).toMatch(/\b(AM|PM)\b/i);
+    expect(refer).not.toMatch(/^Refer\s+14:/);
   });
 
-  it("local12 does not left-pad single-digit hours (e.g. 7:07:59 PM, not 07:07:59 PM)", () => {
+  it("local12 does not left-pad single-digit hours on Refer", () => {
     const t = Date.UTC(2024, 0, 1, 19, 7, 59);
     const ib = buildBottomInformationBarState({
       nowMs: t,
@@ -1095,28 +1119,22 @@ describe("buildBottomInformationBarState", () => {
       chromeTimeZone: "UTC",
       topBandMode: "local12",
     });
-    expect(ib.referenceTimeLine).not.toMatch(/^0\d:/);
-    expect(ib.referenceTimeLine).toMatch(/\b7:07:59/);
+    const refer = ib.leftTimeStackLines.find((l) => l.text.startsWith("Refer"))!.text;
+    expect(refer).not.toMatch(/^Refer\s+0\d:/);
+    expect(refer).toMatch(/\b7:07:59/);
   });
 
-  it("adds a subdued system-local line only when the device zone differs from the reference zone", () => {
-    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
-    const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const otherZone = systemTz === "UTC" ? "America/New_York" : "UTC";
-    const ibOther = buildBottomInformationBarState({
+  it("UTC stack row stays 24-hour even when the global hour-label mode is 12-hour", () => {
+    const t = Date.UTC(2024, 0, 1, 19, 7, 59);
+    const ib = buildBottomInformationBarState({
       nowMs: t,
       bottomBandWidthPx: 800,
-      chromeTimeZone: otherZone,
-      topBandMode: "local24",
+      chromeTimeZone: "UTC",
+      topBandMode: "local12",
     });
-    expect(ibOther.systemLocalLine).toMatch(/^THIS DEVICE · /);
-    const ibSame = buildBottomInformationBarState({
-      nowMs: t,
-      bottomBandWidthPx: 800,
-      chromeTimeZone: systemTz,
-      topBandMode: "local24",
-    });
-    expect(ibSame.systemLocalLine).toBeUndefined();
+    const utcLine = ib.leftTimeStackLines.find((l) => l.text.startsWith("UTC"))!.text;
+    expect(utcLine).toMatch(/UTC\s+19:07:59/);
+    expect(utcLine).not.toMatch(/\b(AM|PM)\b/i);
   });
 });
 
@@ -1144,7 +1162,7 @@ describe("buildDisplayChromeState", () => {
     expect(chrome.bottomBand.width).toBe(1920);
     expect(chrome.bottomBand.y + chrome.bottomBand.height).toBe(1080 - margin);
     expect(margin).toBeGreaterThanOrEqual(36);
-    expect(chrome.bottomBand.height).toBe(78);
+    expect(chrome.bottomBand.height).toBe(88);
   });
 
   it("omits circle-band height for hour-marker entries when the indicator entries area is disabled", () => {
@@ -1193,7 +1211,7 @@ describe("buildDisplayChromeState", () => {
         chrome.utcTopScale.hourMarkerDiskRowIntrinsicContentHeightPx,
       ),
     ).toEqual(chrome.utcTopScale);
-    expect(chrome.informationBar.referenceDateLine).toBe("Monday, January 1, 2024");
+    expect(chrome.informationBar.leftTimeStackLines[0]?.text).toBe("January 1 2024");
     expect(chrome.informationBar.bottomChromeLayout.viewportWidthPx).toBe(800);
     expect(chrome.frameNumber).toBe(1);
   });
@@ -1216,9 +1234,9 @@ describe("buildDisplayChromeState", () => {
       bottomBandWidthPx: 400,
       chromeTimeZone: resolveReferenceFrameCivilTimeZone(dt),
       topBandMode: dt.topBandMode,
+      bottomTimeStack: chrome.displayChromeLayout,
     });
-    expect(chrome.informationBar.referenceDateLine).toBe(ib.referenceDateLine);
-    expect(chrome.informationBar.referenceTimeLine).toBe(ib.referenceTimeLine);
+    expect(chrome.informationBar.leftTimeStackLines).toEqual(ib.leftTimeStackLines);
   });
 
   it("aligns bottom reference readout and tape civil projection when system civil + fixedCity Cairo", () => {
@@ -1245,8 +1263,9 @@ describe("buildDisplayChromeState", () => {
       bottomBandWidthPx: 800,
       chromeTimeZone: resolved.referenceTimeZone,
       topBandMode: displayTime.topBandMode,
+      bottomTimeStack: chrome.displayChromeLayout,
     });
-    expect(chrome.informationBar.referenceTimeLine).toBe(ib.referenceTimeLine);
+    expect(chrome.informationBar.leftTimeStackLines).toEqual(ib.leftTimeStackLines);
     expect(chrome.utcTopScale.referenceFractionalHour).toBeCloseTo(
       referenceFractionalHourOfDay(t, "Africa/Cairo"),
       10,

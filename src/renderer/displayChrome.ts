@@ -66,7 +66,11 @@ export { zonedCalendarDayStartMs } from "../core/wallTimeInZone";
 
 export { longitudeDegFromMapX, mapXFromLongitudeDeg };
 import { renderBottomChrome } from "./bottomChrome";
-import type { BottomInformationBarState } from "./bottomChromeTypes";
+import {
+  countBottomTimeStackClockRows,
+  type BottomInformationBarState,
+  type BottomTimeStackLine,
+} from "./bottomChromeTypes";
 import { alignCrispLineX } from "./crispLines";
 import { BOTTOM_CHROME_STYLE } from "../config/bottomChromeStyle";
 import {
@@ -108,7 +112,8 @@ import {
 import { buildChromeMapTransitionRenderPlan } from "./renderPlan/chromeMapTransitionPlan";
 import { buildBottomHudMapFadeRenderPlan } from "./renderPlan/bottomHudMapFadePlan";
 import { LON_PER_UTC_STRUCTURAL_HOUR, structuralHourIndexFromReferenceLongitudeDeg } from "./structuralLongitudeGrid";
-export type { BottomBarDayCell, BottomInformationBarState } from "./bottomChromeTypes";
+export type { BottomBarDayCell, BottomInformationBarState, BottomTimeStackLine } from "./bottomChromeTypes";
+export { countBottomTimeStackClockRows } from "./bottomChromeTypes";
 
 export {
   TOP_BAND_DISK_WRAP_HALO_PAD_PX,
@@ -254,8 +259,11 @@ export interface UtcTopScaleRowMetrics {
   timezoneBandH: number;
 }
 
-/** Noon/midnight label beneath a 12-hour–interpretable “12” / “00” disk when applicable. */
-export type TopBandMarkerAnnotationKind = "none" | "noon" | "midnight";
+/**
+ * Optional crown label beneath the disk row: civil noon/midnight wording in 12hr mode; numeric `00` / `12` in 24hr civil
+ * mode; none in UTC-style mode.
+ */
+export type TopBandMarkerAnnotationKind = "none" | "noon" | "midnight" | "hour00" | "hour12";
 
 /**
  * One circular hour marker. {@link centerX} is **not** tied to {@link UtcTopScaleHourSegment.centerX};
@@ -492,22 +500,32 @@ export function topBandNextHourLabel(
 }
 
 /**
- * Noon/midnight annotation for structural hour `utcHour` in the band’s civil frame.
- * Only {@link TopBandTimeMode} `local12` is allowed to show noon/midnight semantics; 24-hour and UTC-style labels are
- * numeric only (no crown emphasis).
+ * Crown annotation for structural hour `utcHour`: 12hr → noon/midnight wording; 24hr civil → numeric `00`/`12` anchors;
+ * UTC-style mode → none (technical numeric presentation only).
  */
 export function topBandMarkerAnnotationKind(
   utcHour: number,
   mode: TopBandTimeMode,
 ): TopBandMarkerAnnotationKind {
-  if (displayTimeModeFromTopBandTimeMode(mode) !== "12hr") {
+  const dm = displayTimeModeFromTopBandTimeMode(mode);
+  if (dm === "utc") {
     return "none";
   }
+  if (dm === "12hr") {
+    if (utcHour === 0) {
+      return "midnight";
+    }
+    if (utcHour === 12) {
+      return "noon";
+    }
+    return "none";
+  }
+  /** `24hr` — numeric emphasis only, not civil noon/midnight labels. */
   if (utcHour === 0) {
-    return "midnight";
+    return "hour00";
   }
   if (utcHour === 12) {
-    return "noon";
+    return "hour12";
   }
   return "none";
 }
@@ -520,23 +538,16 @@ export function topBandMarkerAnnotationLabel(kind: TopBandMarkerAnnotationKind):
   if (kind === "midnight") {
     return "MIDNIGHT";
   }
+  if (kind === "hour00") {
+    return "00";
+  }
+  if (kind === "hour12") {
+    return "12";
+  }
   return undefined;
 }
 
-function formatLocalDateLine(nowMs: number, timeZone?: string): string {
-  const opts: Intl.DateTimeFormatOptions = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  if (timeZone !== undefined) {
-    return new Intl.DateTimeFormat("en-US", { ...opts, timeZone }).format(new Date(nowMs));
-  }
-  return new Intl.DateTimeFormat("en-US", opts).format(new Date(nowMs));
-}
-
-/** Right panel: one line, e.g. `April 4 2026` — same zone as {@link formatLocalDateLine}. */
+/** Compact calendar line for the bottom HUD date row (reference frame; UTC calendar when the band is in UTC-style mode). */
 function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
   const d = new Date(nowMs);
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -551,22 +562,42 @@ function formatRightPanelDateLine(nowMs: number, timeZone: string): string {
   return `${month} ${day} ${year}`.trim();
 }
 
-/**
- * Bottom-left clock: reference-frame civil wall time for `local12` / `local24`; for `utc24`, the same instant formatted
- * in UTC (true UTC clock, not reference civil time with 24-hour numerals). Tape geometry is unchanged across modes.
- */
-function bottomTimeReadoutPresentation(
-  nowMs: number,
-  referenceWallClockZone: string,
-  mode: TopBandTimeMode,
-): { microLabel: string; timeLine: string } {
-  const dm = displayTimeModeFromTopBandTimeMode(mode);
+function buildBottomTimeStackLines(options: {
+  nowMs: number;
+  referenceTimeZone: string;
+  topBandMode: TopBandTimeMode;
+  bottomTimeStack?: Pick<
+    DisplayChromeLayoutConfig,
+    "bottomTimeStackShowLocal" | "bottomTimeStackShowRefer" | "bottomTimeStackShowUtc"
+  >;
+}): BottomTimeStackLine[] {
+  const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
   const hour12 = dm === "12hr";
-  const wallZone = dm === "utc" ? "UTC" : referenceWallClockZone;
-  return {
-    microLabel: "REFERENCE TIME",
-    timeLine: formatWallClockInTimeZone(nowMs, wallZone, hour12),
-  };
+  const calendarZone = dm === "utc" ? "UTC" : options.referenceTimeZone;
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const lay = options.bottomTimeStack ?? {};
+
+  const lines: BottomTimeStackLine[] = [];
+  lines.push({ role: "date", text: formatRightPanelDateLine(options.nowMs, calendarZone) });
+  if (lay.bottomTimeStackShowLocal !== false) {
+    lines.push({
+      role: "clock",
+      text: `Local  ${formatWallClockInTimeZone(options.nowMs, systemTz, hour12)}`,
+    });
+  }
+  if (lay.bottomTimeStackShowRefer !== false) {
+    lines.push({
+      role: "clock",
+      text: `Refer  ${formatWallClockInTimeZone(options.nowMs, options.referenceTimeZone, hour12)}`,
+    });
+  }
+  if (lay.bottomTimeStackShowUtc !== false) {
+    lines.push({
+      role: "clock",
+      text: `UTC  ${formatWallClockInTimeZone(options.nowMs, "UTC", false)}`,
+    });
+  }
+  return lines;
 }
 
 export function buildBottomInformationBarState(options: {
@@ -576,25 +607,21 @@ export function buildBottomInformationBarState(options: {
   chromeTimeZone?: string;
   /** When omitted, {@link DEFAULT_DISPLAY_TIME_CONFIG} `topBandMode` is used. */
   topBandMode?: TopBandTimeMode;
+  /** Bottom HUD clock row visibility; defaults to all on when omitted. */
+  bottomTimeStack?: Pick<
+    DisplayChromeLayoutConfig,
+    "bottomTimeStackShowLocal" | "bottomTimeStackShowRefer" | "bottomTimeStackShowUtc"
+  >;
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
   const mode = options.topBandMode ?? DEFAULT_DISPLAY_TIME_CONFIG.topBandMode;
-  const dm = displayTimeModeFromTopBandTimeMode(mode);
-  const calendarZone = dm === "utc" ? "UTC" : tz;
-  const { microLabel, timeLine: referenceTimeLine } = bottomTimeReadoutPresentation(options.nowMs, tz, mode);
-  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  let systemLocalLine: string | undefined;
-  if (systemTz !== tz) {
-    const hour12 = dm === "12hr";
-    systemLocalLine = `THIS DEVICE · ${formatWallClockInTimeZone(options.nowMs, systemTz, hour12)}`;
-  }
-
   return {
-    referenceMicroLabel: microLabel,
-    referenceTimeLine,
-    referenceDateLine: formatLocalDateLine(options.nowMs, calendarZone),
-    rightPanelDateLine: formatRightPanelDateLine(options.nowMs, calendarZone),
-    systemLocalLine,
+    leftTimeStackLines: buildBottomTimeStackLines({
+      nowMs: options.nowMs,
+      referenceTimeZone: tz,
+      topBandMode: mode,
+      bottomTimeStack: options.bottomTimeStack,
+    }),
     bottomChromeLayout: computeBottomChromeLayout(options.bottomBandWidthPx),
   };
 }
@@ -1414,13 +1441,23 @@ export function buildUtcTopScaleLayout(
 
 function computeBandHeights(
   heightPx: number,
-  layout?: Pick<DisplayChromeLayoutConfig, "bottomInformationBarVisible">,
+  layout?: Pick<
+    DisplayChromeLayoutConfig,
+    | "bottomInformationBarVisible"
+    | "bottomTimeStackShowLocal"
+    | "bottomTimeStackShowRefer"
+    | "bottomTimeStackShowUtc"
+  >,
 ): { top: number; bottom: number } {
   const h = heightPx > 0 ? heightPx : 1;
   /** Taller top strip so the enlarged hour stack + denser tick rail fit without crowding the map. */
   const top = Math.max(56, Math.min(118, Math.round(h * 0.102)));
-  const bottom =
-    layout?.bottomInformationBarVisible === false ? 0 : computeBottomChromeBandHeightPx(h);
+  if (layout?.bottomInformationBarVisible === false) {
+    return { top, bottom: 0 };
+  }
+  const merged = { ...DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, ...layout };
+  const stackLines = 1 + countBottomTimeStackClockRows(merged);
+  const bottom = computeBottomChromeBandHeightPx(h, { timeStackLineCount: stackLines });
   return { top, bottom };
 }
 
@@ -1512,6 +1549,7 @@ export function buildDisplayChromeState(options: {
       bottomBandWidthPx: bottomBand.width,
       chromeTimeZone: resolved.referenceTimeZone,
       topBandMode: resolved.topBandMode,
+      bottomTimeStack: layout,
     }),
     displayChromeLayout: layout,
     effectiveTopBandHourMarkers,
