@@ -92,6 +92,8 @@ function buildStackFromFixture(
     structuralZoneCenterXPx?: readonly number[];
     topBandMode?: TopBandTimeMode;
     readPointX?: number;
+    /** Defaults to {@link FullUtcTopBandHourDiskFixture.referenceNowMs} so UTC focus matches tape labels. */
+    nowMs?: number;
   },
 ) {
   return buildTopBandCircleBandHourStackRenderPlan({
@@ -111,7 +113,39 @@ function buildStackFromFixture(
     structuralZoneCenterXPx: args.structuralZoneCenterXPx ?? f.structuralZoneCenterXPx,
     topBandMode: args.topBandMode,
     readPointX: args.readPointX,
+    nowMs: args.nowMs ?? f.referenceNowMs,
   });
+}
+
+function pad2HourLabel(h: number): string {
+  const n = ((h % 24) + 24) % 24;
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function highlightedUtcHourDiskLabelFromPlan(
+  plan: ReturnType<typeof buildTopBandCircleBandHourStackRenderPlan>,
+  viewportWidthPx: number,
+  diskBandH: number,
+  diskLabelSizePx: number,
+): string | undefined {
+  const highlightRects = plan.items.filter(
+    (i) =>
+      i.kind === "rect" &&
+      i.width < viewportWidthPx * 0.5 &&
+      i.height < diskBandH * 2,
+  );
+  const highlight = highlightRects[0];
+  if (highlight?.kind !== "rect") {
+    return undefined;
+  }
+  const highlightCenterX = highlight.x + highlight.width * 0.5;
+  const highlightedText = plan.items.find(
+    (i) =>
+      i.kind === "text" &&
+      i.text !== "UTC Global Time" &&
+      Math.abs(i.x - highlightCenterX) < 0.001,
+  );
+  return highlightedText?.kind === "text" ? highlightedText.text : undefined;
 }
 
 describe("resolveTopBandInDiskHourMarkerSemanticPath", () => {
@@ -358,35 +392,49 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
   });
 
   it("utc focus near left edge clips without wrap-around to the right", () => {
+    const readPointX = 18;
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
       topBandMode: "utc24",
-      readPointX: 18,
+      readPointX,
     });
     const utcTexts = plan.items.filter(
       (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.opacity !== undefined,
     );
     expect(utcTexts.length).toBeGreaterThan(0);
-    const rightMost = Math.max(...utcTexts.map((t) => (t.kind === "text" ? t.x : 0)));
-    expect(rightMost).toBeLessThan(250);
+    expect(readPointX).toBeLessThan(40);
+    for (const t of utcTexts) {
+      expect(t.kind).toBe("text");
+      if (t.kind === "text") {
+        expect(t.x).toBeGreaterThanOrEqual(0);
+        expect(t.x).toBeLessThanOrEqual(f.viewportWidthPx);
+      }
+    }
   });
 
   it("utc focus near right edge clips without wrap-around to the left", () => {
+    const readPointX = 942;
     const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
       topBandMode: "utc24",
-      readPointX: 942,
+      readPointX,
     });
     const utcTexts = plan.items.filter(
       (i) => i.kind === "text" && i.text !== "UTC Global Time" && i.opacity !== undefined,
     );
     expect(utcTexts.length).toBeGreaterThan(0);
-    const leftMost = Math.min(...utcTexts.map((t) => (t.kind === "text" ? t.x : 0)));
-    expect(leftMost).toBeGreaterThan(700);
+    expect(readPointX).toBeGreaterThan(f.viewportWidthPx - 40);
+    for (const t of utcTexts) {
+      expect(t.kind).toBe("text");
+      if (t.kind === "text") {
+        expect(t.x).toBeGreaterThanOrEqual(0);
+        expect(t.x).toBeLessThanOrEqual(f.viewportWidthPx);
+      }
+    }
   });
 
   it("places UTC Global Time opposite the centerline side of the read point", () => {
@@ -422,9 +470,26 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     }
   });
 
+  it("UTC focus centers on actual UTC hour, not nearest geometry", () => {
+    const now = Date.UTC(2026, 3, 21, 15, 35, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: now });
+    const centerXForHour16 = f.markers.find((m) => m.currentHourLabel === "16")!.centerX;
+    const plan = buildStackFromFixture(f, {
+      sel: SEL_TEXT_DEFAULT,
+      eff: EFF_TEXT_DEFAULT,
+      topBandMode: "utc24",
+      readPointX: centerXForHour16,
+    });
+    expect(
+      highlightedUtcHourDiskLabelFromPlan(plan, f.viewportWidthPx, f.circleStack.diskBandH, f.diskLabelSizePx),
+    ).toBe("15");
+  });
+
   it("highlights only the current UTC hour with native 24hr strip-scale anchor geometry (00/12 swash footprint)", () => {
-    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
-    const readPointX = 480;
+    const refMs = Date.UTC(2024, 0, 15, 14, 12, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
+    const utcHour = new Date(refMs).getUTCHours();
+    const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!.centerX;
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
@@ -442,14 +507,11 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     expect(highlight?.kind).toBe("rect");
     if (highlight?.kind === "rect") {
       const highlightCenterX = highlight.x + highlight.width * 0.5;
-      expect(Math.abs(highlightCenterX - readPointX)).toBeLessThanOrEqual(960 / 24);
+      const focusedMarker = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcHour))!;
+      expect(Math.abs(highlightCenterX - focusedMarker.centerX)).toBeLessThanOrEqual(960 / 24);
       const swash = noonHighlighted12SwashGeometryFromMarkerContentBox(f.diskLabelSizePx);
       expect(highlight.width).toBeCloseTo(swash.halfW * 2, 5);
       expect(highlight.height).toBeCloseTo(swash.extentAboveNumeralAnchor + swash.extentBelowNumeralAnchor, 5);
-      const focusedMarker = f.markers.reduce((best, m) => {
-        const d = Math.abs(m.centerX - readPointX);
-        return d < best.dist ? { marker: m, dist: d } : best;
-      }, { marker: f.markers[0]!, dist: Number.POSITIVE_INFINITY }).marker;
       const highlightedText = plan.items.find(
         (i) =>
           i.kind === "text" &&
@@ -485,7 +547,8 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
   });
 
   it("enforces visible horizontal separation between UTC annotation and focused-hour cluster", () => {
-    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
+    const refMs = Date.UTC(2024, 5, 10, 16, 20, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
     const readPointX = 760;
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
@@ -498,13 +561,10 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
     if (annotation?.kind !== "text") {
       return;
     }
-    const focusedIndex = f.markers.reduce((best, m, i) => {
-      const d = Math.abs(m.centerX - readPointX);
-      return d < best.dist ? { idx: i, dist: d } : best;
-    }, { idx: 0, dist: Number.POSITIVE_INFINITY }).idx;
-    const coreMarkers = [focusedIndex - 1, focusedIndex, focusedIndex + 1]
-      .filter((idx) => idx >= 0 && idx < f.markers.length)
-      .map((idx) => f.markers[idx]!)
+    const utcH = new Date(refMs).getUTCHours();
+    const coreMarkers = [utcH - 1, utcH, utcH + 1]
+      .map((h) => f.markers.find((m) => m.currentHourLabel === pad2HourLabel(h)))
+      .filter((m): m is (typeof f.markers)[number] => m !== undefined)
       .filter((m) => m.centerX >= 0 && m.centerX <= f.viewportWidthPx);
     const coreSpans = coreMarkers
       .map((marker) =>
@@ -530,21 +590,19 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
   });
 
   it("keeps prev/current/next UTC hour markers fully visible when on-screen", () => {
-    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88 });
-    const readPointX = 480;
+    const refMs = Date.UTC(2024, 2, 5, 11, 0, 0);
+    const f = buildFullUtcTopBandHourDiskFixture({ widthPx: 960, topBandHeightPx: 88, nowMs: refMs });
+    const utcH = new Date(refMs).getUTCHours();
+    const readPointX = f.markers.find((m) => m.currentHourLabel === pad2HourLabel(utcH))!.centerX;
     const plan = buildStackFromFixture(f, {
       sel: SEL_TEXT_DEFAULT,
       eff: EFF_TEXT_DEFAULT,
       topBandMode: "utc24",
       readPointX,
     });
-    const focusedIndex = f.markers.reduce((best, m, i) => {
-      const d = Math.abs(m.centerX - readPointX);
-      return d < best.dist ? { idx: i, dist: d } : best;
-    }, { idx: 0, dist: Number.POSITIVE_INFINITY }).idx;
-    const coreIndices = [focusedIndex - 1, focusedIndex, focusedIndex + 1].filter(
-      (idx) => idx >= 0 && idx < f.markers.length,
-    );
+    const coreIndices = [utcH - 1, utcH, utcH + 1]
+      .map((h) => f.markers.findIndex((m) => m.currentHourLabel === pad2HourLabel(h)))
+      .filter((idx) => idx >= 0);
     for (const idx of coreIndices) {
       const marker = f.markers[idx]!;
       if (marker.centerX < 0 || marker.centerX > f.viewportWidthPx) {

@@ -21,7 +21,6 @@ import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcO
 import {
   resolveTimezoneStripCaptionPolicy,
   resolveTimezoneStripLetterPolicy,
-  resolveTimezoneStripUtcOffsetPolicy,
 } from "../../config/topBandVisualPolicy.ts";
 import { createTopBandTextGlyph } from "../../glyphs/topBandTextGlyphFromPolicy.ts";
 import { emitGlyphToRenderPlan, type GlyphRenderContext } from "../../glyphs/glyphToRenderPlan.ts";
@@ -154,7 +153,6 @@ export function buildTimezoneLetterRowRenderPlan(options: {
   }
 
   const baseLetterPolicy = resolveTimezoneStripLetterPolicy(st, options.resolvedTimezoneLetterFontAssetId);
-  const offsetPolicy = resolveTimezoneStripUtcOffsetPolicy(st, options.resolvedTimezoneLetterFontAssetId);
   const activeLetterFill = options.activeCellLetterForeground;
 
   for (const seg of options.segments) {
@@ -167,17 +165,10 @@ export function buildTimezoneLetterRowRenderPlan(options: {
         continue;
       }
       const cxLetter = (x0 + x1) * 0.5;
-      /** NATO letter upper; offset subrow lower — two-line cell with breathing room vs a cramped subrow. */
-      const letterY = fillTop + fillH * 0.33;
-      const offsetSize = Math.max(
-        9,
-        Math.min(
-          Math.round(zoneLetterSize * 0.56),
-          Math.round(fillH * 0.4),
-          Math.round(zoneLetterSize * 0.92),
-        ),
-      );
-      const offsetY = fillTop + fillH * 0.725;
+      /** NATO letter upper; offset row lower — same typographic size as the letter; fill differs only. */
+      const letterY = fillTop + fillH * 0.38;
+      const offsetSize = zoneLetterSize;
+      const offsetY = fillTop + fillH * 0.7;
 
       const isActiveCol = seg.hour === activeStructuralHour;
       const letterPolicy =
@@ -194,7 +185,7 @@ export function buildTimezoneLetterRowRenderPlan(options: {
 
       const offsetGlyph = createTopBandTextGlyph(
         formatNatoUtcOffsetHoursLabel(seg.nominalUtcOffsetHours),
-        offsetPolicy,
+        { ...baseLetterPolicy, fill: st.zoneText.utcOffsetSubrow },
       );
       emitGlyphToRenderPlan(offsetGlyph, { cx: cxLetter, cy: offsetY, size: offsetSize }, gctx, items);
 

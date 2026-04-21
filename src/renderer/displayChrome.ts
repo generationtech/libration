@@ -1791,6 +1791,7 @@ export function renderDisplayChrome(
           : undefined,
       topBandMode: scale.topBandMode,
       readPointX: scale.readPoint.x,
+      nowMs: scale.referenceNowMs,
     }),
   );
 

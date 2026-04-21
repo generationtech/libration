@@ -101,7 +101,43 @@ function markerIndexClosestToReadPoint(markers: readonly { centerX: number }[], 
   return bestIdx;
 }
 
-function utcFocusCoreMarkerIndices(
+function pad2Hour(hour0To23: number): string {
+  const h = ((hour0To23 % 24) + 24) % 24;
+  return h < 10 ? `0${h}` : `${h}`;
+}
+
+/**
+ * UTC24 text focus: the three on-tape UTC hour labels (prev / current / next civil UTC hour), keyed by
+ * {@link Date#getUTCHours} — not nearest marker geometry to the present-time read point.
+ */
+function utcFocusCoreMarkerIndicesFromUtcHour(
+  markers: readonly { currentHourLabel: string }[],
+  utcHour0To23: number,
+): Set<number> {
+  const out = new Set<number>();
+  const labels = [
+    pad2Hour(utcHour0To23 - 1),
+    pad2Hour(utcHour0To23),
+    pad2Hour(utcHour0To23 + 1),
+  ];
+  for (const label of labels) {
+    const idx = markers.findIndex((m) => m.currentHourLabel === label);
+    if (idx >= 0) {
+      out.add(idx);
+    }
+  }
+  return out;
+}
+
+function utcFocusFocusedMarkerIndexFromUtcHour(
+  markers: readonly { currentHourLabel: string }[],
+  utcHour0To23: number,
+): number {
+  return markers.findIndex((m) => m.currentHourLabel === pad2Hour(utcHour0To23));
+}
+
+/** Fallback when tape labels are missing expected UTC hour strings (nonstandard tape). */
+function utcFocusCoreMarkerIndicesByReadPoint(
   markers: readonly { centerX: number }[],
   readPointX: number,
 ): Set<number> {
@@ -337,6 +373,11 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   topBandMode?: TopBandTimeMode;
   /** Authoritative read-point x (present-time tick x). Required for utc24 focused window treatment. */
   readPointX?: number;
+  /**
+   * Instant for UTC24 focused text mode: {@link Date#getUTCHours} selects the highlighted hour and its ±1 label window.
+   * Should match pins / scale ({@link UtcTopScaleLayout.referenceNowMs}). Defaults to `Date.now()` when omitted.
+   */
+  nowMs?: number;
 }): RenderPlan {
   const vw = options.viewportWidthPx;
   const items: RenderPlan["items"] = [];
@@ -489,8 +530,13 @@ export function buildTopBandCircleBandHourStackRenderPlan(options: {
   }
 
   if (inDiskPath.kind === "semanticTextHourDisks" && utcFocusedTextMode) {
-    const focusedIndex = markerIndexClosestToReadPoint(markers, utcFocusWindow.readPointX);
-    const coreVisibleIndices = utcFocusCoreMarkerIndices(markers, utcFocusWindow.readPointX);
+    const utcHour0To23 = new Date(options.nowMs ?? Date.now()).getUTCHours();
+    let focusedIndex = utcFocusFocusedMarkerIndexFromUtcHour(markers, utcHour0To23);
+    let coreVisibleIndices = utcFocusCoreMarkerIndicesFromUtcHour(markers, utcHour0To23);
+    if (focusedIndex < 0) {
+      focusedIndex = markerIndexClosestToReadPoint(markers, utcFocusWindow.readPointX);
+      coreVisibleIndices = utcFocusCoreMarkerIndicesByReadPoint(markers, utcFocusWindow.readPointX);
+    }
     const markerColor = effectiveMarkers.realization.kind === "text"
       ? effectiveMarkers.realization.resolvedAppearance.color
       : st.hourIndicatorEntries.defaultForeground;

@@ -26,7 +26,7 @@ import {
   TOP_CHROME_STYLE,
 } from "../../config/topChromeStyle.ts";
 import { formatNatoUtcOffsetHoursLabel } from "../../core/structuralMeridianUtcOffsetHours.ts";
-import { resolveTimezoneStripLetterPolicy, resolveTimezoneStripUtcOffsetPolicy } from "../../config/topBandVisualPolicy.ts";
+import { resolveTimezoneStripLetterPolicy } from "../../config/topBandVisualPolicy.ts";
 import { buildTimezoneLetterRowRenderPlan } from "./timezoneLetterRowPlan";
 
 const GLYPH_CTX = { fontRegistry: loadBundledFontAssetRegistry() };
@@ -199,9 +199,6 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
       expect(tzLetter.font.assetId).toBe("computer");
     }
     const letterPolicy = resolveTimezoneStripLetterPolicy(TOP_CHROME_STYLE, "computer");
-    const offsetPolicy = resolveTimezoneStripUtcOffsetPolicy(TOP_CHROME_STYLE, "computer");
-    expect(offsetPolicy.typographyOverrides).toEqual(letterPolicy.typographyOverrides);
-    expect(offsetPolicy.role).toBe(letterPolicy.role);
 
     const seg0 = layout.segments[0]!;
     const offsetLabel = formatNatoUtcOffsetHoursLabel(seg0.nominalUtcOffsetHours);
@@ -209,12 +206,70 @@ describe("buildTimezoneLetterRowRenderPlan", () => {
     expect(offsetText?.kind).toBe("text");
     if (offsetText?.kind === "text" && tzLetter?.kind === "text") {
       expect(offsetText.font.assetId).toBe("computer");
-      expect(offsetText.font.sizePx).toBeLessThan(tzLetter.font.sizePx);
-      expect(offsetText.font.sizePx).toBeGreaterThanOrEqual(9);
-      const zoneLetterSize = computeTimezoneLetterSizePx(diskLabelSizePx, fillH);
-      const legacyOffsetCap = Math.max(6, Math.min(Math.round(zoneLetterSize * 0.36), 9));
-      expect(offsetText.font.sizePx).toBeGreaterThanOrEqual(legacyOffsetCap);
-      expect(Math.abs(offsetText.y - tzLetter.y)).toBeGreaterThan(tzLetter.font.sizePx * 0.35);
+      expect(offsetText.font.sizePx).toBe(tzLetter.font.sizePx);
+      expect(offsetText.font.weight).toBe(tzLetter.font.weight);
+      expect(offsetText.fill).toBe(TOP_CHROME_STYLE.zoneText.utcOffsetSubrow);
+      expect(offsetText.fill).not.toBe(letterPolicy.fill);
+      expect(Math.abs(offsetText.y - tzLetter.y)).toBeGreaterThan(tzLetter.font.sizePx * 0.25);
+    }
+  });
+
+  it("NATO offset uses same font size as letter", () => {
+    const vw = 960;
+    const now = Date.UTC(2026, 3, 7, 15, 30, 0);
+    const layout = buildUtcTopScaleLayout(now, vw, 80, undefined, undefined, {
+      timezoneLetterRowVisible: true,
+    });
+    const rows = layout.rows ?? computeUtcTopScaleRowMetrics(80);
+    const circleStack = computeTopBandCircleStackMetrics(rows.circleBandH);
+    const sw = vw / 24;
+    const r = computeUtcCircleMarkerRadius(circleStack.diskBandH, sw);
+    const diskLabelSizePx = computeHourDiskLabelSizePx(r, vw);
+
+    const y0 = 0;
+    const circleH = rows.circleBandH;
+    const tickH = rows.tickBandH;
+    const yTickBottom = y0 + circleH + tickH;
+    const bandBottom = y0 + 80;
+    const zoneH = bandBottom - yTickBottom;
+    const tzTab = TOP_CHROME_STYLE.timezoneTab;
+    const zonePadY = Math.max(
+      0,
+      Math.min(tzTab.zoneFillPadMaxPx, Math.round(zoneH * tzTab.zoneFillPadFracOfZone)),
+    );
+    const fillH = Math.max(0, zoneH - zonePadY * 2);
+    const tabBottomR = Math.min(8, Math.max(4, Math.round(Math.min(zoneH * 0.32, 7))));
+
+    const plan = buildTimezoneLetterRowRenderPlan({
+      viewportWidthPx: vw,
+      segments: layout.segments,
+      majorBoundaryXs: layout.majorBoundaryXs,
+      zoneTop: yTickBottom,
+      zoneH,
+      bandBottom,
+      segGapX: 0.4,
+      zonePadY,
+      tabBottomR,
+      diskLabelSizePx,
+      referenceLongitudeDeg: layout.topBandAnchor.referenceLongitudeDeg,
+      geography: undefined,
+      anchorSource: layout.topBandAnchor.anchorSource,
+      timezoneLetterRowVisible: true,
+      glyphRenderContext: GLYPH_CTX,
+      resolvedTimezoneLetterFontAssetId: DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID,
+    });
+
+    const seg0 = layout.segments[0]!;
+    const letter = plan.items.find(
+      (i) => i.kind === "text" && i.text === seg0.timezoneLetter && i.textBaseline === "middle",
+    );
+    const offset = plan.items.find(
+      (i) => i.kind === "text" && i.text === formatNatoUtcOffsetHoursLabel(seg0.nominalUtcOffsetHours),
+    );
+    expect(letter?.kind).toBe("text");
+    expect(offset?.kind).toBe("text");
+    if (letter?.kind === "text" && offset?.kind === "text") {
+      expect(offset.font.sizePx).toBe(letter.font.sizePx);
     }
   });
 });
