@@ -202,6 +202,57 @@ describe("resolveEffectiveTopBandHourMarkers", () => {
     });
   });
 
+  it("UTC display mode coerces analogClock authored layout to the same effective text model as explicit text", () => {
+    const layoutAnalog = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "analogClock", appearance: { handColor: "#ff00ff" } },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    const layoutText = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "text", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    const expectedUtcText = resolveEffectiveTopBandHourMarkers(layoutText, { displayTimeMode: "utc" });
+    const eff = resolveEffectiveTopBandHourMarkers(layoutAnalog, { displayTimeMode: "utc" });
+    expect(eff.realization).toEqual(expectedUtcText.realization);
+    expect(eff.behavior).toBe("civilPhased");
+    expect(eff.content).toEqual({ kind: "hour24" });
+    expect(layoutAnalog.hourMarkers.realization.kind).toBe("analogClock");
+    expect(resolveEffectiveTopBandHourMarkers(layoutAnalog, { displayTimeMode: "24hr" }).realization.kind).toBe(
+      "analogClock",
+    );
+  });
+
+  it("UTC display mode coerces radialLine and radialWedge to effective text", () => {
+    const lineLayout = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "radialLine", appearance: { lineColor: "#00ff00" } },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    const wedgeLayout = normalizeDisplayChromeLayout({
+      hourMarkers: {
+        realization: { kind: "radialWedge", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+      },
+    });
+    const refText = resolveEffectiveTopBandHourMarkers(
+      normalizeDisplayChromeLayout({
+        hourMarkers: { realization: { kind: "text", appearance: {} }, layout: { sizeMultiplier: 1 } },
+      }),
+      { displayTimeMode: "utc" },
+    );
+    expect(resolveEffectiveTopBandHourMarkers(lineLayout, { displayTimeMode: "utc" }).realization).toEqual(
+      refText.realization,
+    );
+    expect(resolveEffectiveTopBandHourMarkers(wedgeLayout, { displayTimeMode: "utc" }).realization).toEqual(
+      refText.realization,
+    );
+  });
+
   it("radial line mapping", () => {
     expect(
       resolveEffectiveTopBandHourMarkers(

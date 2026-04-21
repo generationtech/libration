@@ -18,6 +18,7 @@ import {
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
   PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
+  type TopBandTimeMode,
 } from "../../config/appConfig";
 import type {
   HourMarkersAnalogClockAppearance,
@@ -43,6 +44,16 @@ const HOUR_MARKER_REALIZATION_KINDS = [
   "radialLine",
   "radialWedge",
 ] as const satisfies readonly HourMarkersRealizationConfig["kind"][];
+
+function hourMarkerRealizationKindOptions(
+  topBandMode: TopBandTimeMode,
+): readonly HourMarkersRealizationConfig["kind"][] {
+  return topBandMode === "utc24" ? (["text"] as const) : HOUR_MARKER_REALIZATION_KINDS;
+}
+
+function utcForcesTextOnlyHourTape(topBandMode: TopBandTimeMode): boolean {
+  return topBandMode === "utc24";
+}
 
 const NOON_MIDNIGHT_EXPRESSION_MODES = [
   "textWords",
@@ -76,6 +87,8 @@ type HourMarkerEditorBaseProps = {
   wired: boolean;
   /** When false, subordinate realization/appearance/layout controls are disabled. */
   entriesAreaEnabled: boolean;
+  /** Global hour label mode; `utc24` restricts hour-marker realization UI to text-only. */
+  topBandMode: TopBandTimeMode;
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
 };
 
@@ -182,32 +195,49 @@ function compactRadialWedgeAppearance(a: HourMarkersRadialWedgeAppearance): Hour
   return out;
 }
 
-function RealizationSection({ hourMarkers, wired, updateConfig, entriesAreaEnabled }: HourMarkerEditorBaseProps) {
+function RealizationSection({
+  hourMarkers,
+  wired,
+  updateConfig,
+  entriesAreaEnabled,
+  topBandMode,
+}: HourMarkerEditorBaseProps) {
   const kind = hourMarkers.realization.kind;
+  const utcTapeTextOnly = utcForcesTextOnlyHourTape(topBandMode);
+  const kindOptions = hourMarkerRealizationKindOptions(topBandMode);
+  const selectValue = utcTapeTextOnly ? "text" : kind;
   const authoringOff = !wired || !entriesAreaEnabled;
   return (
-    <ConfigControlRow label="Realization kind">
-      <select
-        className="config-input"
-        value={kind}
-        disabled={authoringOff}
-        aria-label="Top-band hour marker realization kind"
-        onChange={
-          wired && entriesAreaEnabled && updateConfig
-            ? (e) => {
-                const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
-                commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
-              }
-            : undefined
-        }
-      >
-        {HOUR_MARKER_REALIZATION_KINDS.map((k) => (
-          <option key={k} value={k}>
-            {labelForRealizationKind(k)}
-          </option>
-        ))}
-      </select>
-    </ConfigControlRow>
+    <>
+      <ConfigControlRow label="Realization kind">
+        <select
+          className="config-input"
+          data-testid="chrome-hour-marker-realization-kind-select"
+          value={selectValue}
+          disabled={authoringOff}
+          aria-label="Top-band hour marker realization kind"
+          onChange={
+            wired && entriesAreaEnabled && updateConfig
+              ? (e) => {
+                  const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
+                  commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
+                }
+              : undefined
+          }
+        >
+          {kindOptions.map((k) => (
+            <option key={k} value={k}>
+              {labelForRealizationKind(k)}
+            </option>
+          ))}
+        </select>
+      </ConfigControlRow>
+      {utcTapeTextOnly ? (
+        <p className="config-section__hint" data-testid="chrome-hour-marker-utc-text-only-hint">
+          UTC mode uses text-only hour indicators.
+        </p>
+      ) : null}
+    </>
   );
 }
 
@@ -220,10 +250,19 @@ function AppearanceSection({
   wired,
   updateConfig,
   entriesAreaEnabled,
+  topBandMode,
   hourMarkerFontOptions,
 }: AppearanceSectionProps) {
   const rk = hourMarkers.realization.kind;
   const authoringOff = !wired || !entriesAreaEnabled;
+
+  if (utcForcesTextOnlyHourTape(topBandMode) && rk !== "text") {
+    return (
+      <p className="config-section__hint" data-testid="chrome-hour-marker-utc-procedural-preserved-hint">
+        Procedural settings stay on file for other label modes; UTC uses text-only tape styling.
+      </p>
+    );
+  }
 
   if (rk === "text") {
     const r = hourMarkers.realization;
@@ -1025,6 +1064,7 @@ export type HourMarkersEditorProps = {
 export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorProps) {
   const lay = config.chrome.layout;
   const hourMarkers = lay.hourMarkers;
+  const topBandMode = config.chrome.displayTime.topBandMode;
   const wired = Boolean(updateConfig);
   const entriesAreaEnabled = hourMarkers.indicatorEntriesAreaVisible !== false;
   const hourMarkerFontOptions: readonly { id: FontAssetId; label: string }[] =
@@ -1033,7 +1073,13 @@ export function HourMarkersEditor({ config, updateConfig }: HourMarkersEditorPro
       return rec ? { id: rec.id as FontAssetId, label: rec.displayName } : null;
     }).filter((x): x is { id: FontAssetId; label: string } => x !== null);
 
-  const baseProps: HourMarkerEditorBaseProps = { hourMarkers, wired, entriesAreaEnabled, updateConfig };
+  const baseProps: HourMarkerEditorBaseProps = {
+    hourMarkers,
+    wired,
+    entriesAreaEnabled,
+    topBandMode,
+    updateConfig,
+  };
 
   return (
     <>

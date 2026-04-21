@@ -51,6 +51,7 @@ export type HourMarkersRadialWedgeAppearance = {
 /**
  * Persisted authoring intent for top-band hour markers (`chrome.layout.hourMarkers` only).
  * Placement behavior is not authored — see {@link resolveEffectiveHourMarkerBehavior}.
+ * UTC label mode (`utc24`) resolves to text-only hour markers at runtime; other kinds may remain stored for non-UTC modes.
  */
 export type HourMarkersRealizationConfig =
   | { kind: "text"; fontAssetId?: FontAssetId; appearance: HourMarkersTextAppearance }

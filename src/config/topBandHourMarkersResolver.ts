@@ -21,6 +21,20 @@ import {
 } from "../color/halfwayRgbBetweenCssColors.ts";
 import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
 import type { DisplayTimeMode } from "../core/chromeTimeDomain.ts";
+
+/**
+ * When display formatting is UTC (`utc24` → {@link DisplayTimeMode} `"utc"`), the top hour tape is text-only;
+ * non-text authored realizations are not used at runtime (authored shape is preserved on disk).
+ */
+function effectiveHourMarkersRealizationForDisplayMode(
+  hm: HourMarkersConfig,
+  displayTimeMode: DisplayTimeMode,
+): HourMarkersRealizationConfig {
+  if (displayTimeMode === "utc" && hm.realization.kind !== "text") {
+    return { kind: "text", appearance: {}, fontAssetId: undefined };
+  }
+  return hm.realization;
+}
 import {
   resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
@@ -262,7 +276,8 @@ function resolveEffectiveTwentyFourHourAnchorCustomization(
 
 /**
  * Resolves {@link EffectiveTopBandHourMarkers} from {@link DisplayChromeLayoutConfig.hourMarkers}.
- * Content follows realization kind; behavior follows {@link resolveEffectiveHourMarkerBehavior} (derived from kind).
+ * Content follows effective realization kind; placement behavior follows {@link defaultBehaviorFor}(effective kind).
+ * In UTC display mode, non-text authored kinds are coerced to text at resolve time only.
  *
  * `areaVisible` on the effective model mirrors `hourMarkers.indicatorEntriesAreaVisible` (default true):
  * it controls structural presence of the indicator entries band, not behavior or realization.
@@ -273,6 +288,7 @@ export function resolveEffectiveTopBandHourMarkers(
 ): EffectiveTopBandHourMarkers {
   const displayTimeMode: DisplayTimeMode = options?.displayTimeMode ?? "12hr";
   const hm = layout.hourMarkers;
+  const realizationConfig = effectiveHourMarkersRealizationForDisplayMode(hm, displayTimeMode);
   const areaVisible = hm.indicatorEntriesAreaVisible !== false;
   const indicatorEntriesArea = resolveIndicatorEntriesAreaEffective(layout);
   const noonMidnightCustomization = resolveEffectiveNoonMidnightCustomization(
@@ -297,13 +313,13 @@ export function resolveEffectiveTopBandHourMarkers(
     layoutOut.contentPaddingBottomPx = ly.contentPaddingBottomPx;
   }
 
-  const rk = hm.realization.kind;
-  const behavior = resolveEffectiveHourMarkerBehavior(hm);
+  const rk = realizationConfig.kind;
+  const behavior = defaultBehaviorFor(rk);
 
   if (rk === "text") {
-    const textColor = normalizeMarkerColor(hm.realization.appearance.color);
-    const fontAssetId = resolveEffectiveProductTextFontAssetId(layout, hm.realization.fontAssetId);
-    const realization: EffectiveTopBandHourMarkerRealization = {
+    const textColor = normalizeMarkerColor(realizationConfig.appearance.color);
+    const fontAssetId = resolveEffectiveProductTextFontAssetId(layout, realizationConfig.fontAssetId);
+    const textRealization: EffectiveTopBandHourMarkerRealization = {
       kind: "text",
       fontAssetId,
       resolvedAppearance: {
@@ -315,7 +331,7 @@ export function resolveEffectiveTopBandHourMarkers(
       indicatorEntriesArea,
       behavior,
       content: { kind: "hour24" },
-      realization,
+      realization: textRealization,
       layout: layoutOut,
       noonMidnightCustomization,
       twentyFourHourAnchorCustomization,
@@ -323,7 +339,7 @@ export function resolveEffectiveTopBandHourMarkers(
   }
 
   if (rk === "analogClock") {
-    const r = hm.realization;
+    const r = realizationConfig;
     return {
       areaVisible,
       indicatorEntriesArea,
@@ -340,7 +356,7 @@ export function resolveEffectiveTopBandHourMarkers(
   }
 
   if (rk === "radialLine") {
-    const r = hm.realization;
+    const r = realizationConfig;
     return {
       areaVisible,
       indicatorEntriesArea,
@@ -356,7 +372,7 @@ export function resolveEffectiveTopBandHourMarkers(
     };
   }
 
-  const r = hm.realization;
+  const r = realizationConfig;
   return {
     areaVisible,
     indicatorEntriesArea,

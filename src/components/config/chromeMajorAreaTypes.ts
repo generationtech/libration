@@ -42,7 +42,7 @@ export function labelForChromeMajorArea(id: ChromeMajorAreaId): string {
 export function descriptionForChromeMajorArea(id: ChromeMajorAreaId): string {
   switch (id) {
     case "hourIndicators":
-      return "Hour disks and entries row — civil-phased at the read point; display mode changes labels only, not tape registration.";
+      return "Hour disks and entries row — civil-phased at the read point; display mode changes labels only, not tape registration. UTC label mode uses text-only hour-marker realization.";
     case "tickTape":
       return "Tick rail — same phased band as the hour row; ticks do not shift when you change hour label format.";
     case "natoTimezone":
