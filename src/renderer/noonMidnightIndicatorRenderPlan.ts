@@ -44,7 +44,11 @@ import {
   twentyFourHourAnchorActiveIntent,
 } from "../config/noonMidnightIndicatorSemantics.ts";
 import type { HourMarkerRepresentationSpec } from "../config/types/hourMarkerRepresentationSpec.ts";
-import type { EffectiveNoonMidnightCustomization, EffectiveTopBandHourMarkers } from "../config/topBandHourMarkersTypes.ts";
+import type {
+  EffectiveNoonMidnightCustomization,
+  EffectiveTopBandHourMarkers,
+  HourMarkersNoonMidnightExpressionMode,
+} from "../config/topBandHourMarkersTypes.ts";
 import { resolveTopBandHourMarkerTextTypographyOverridesFromEffectiveSelection } from "../config/topBandVisualPolicy.ts";
 import { createHourMarkerGlyph } from "../glyphs/glyphFactory.ts";
 import type { HourMarkerContent } from "../glyphs/hourMarkerContent.ts";
@@ -297,6 +301,14 @@ export type NoonMidnightEmitArgs = {
   hourSpec: HourMarkerRepresentationSpec;
   effectiveTopBandHourMarkerSelection: EffectiveTopBandHourMarkerSelection;
   effectiveTopBandHourMarkers: EffectiveTopBandHourMarkers;
+  /**
+   * Optional explicit emphasis intent for non-noon/midnight use-cases (for example UTC-focused current-hour emphasis).
+   * When present, this bypasses structural noon/midnight trigger checks and directly uses the shared emphasis renderer.
+   */
+  forcedIntent?: {
+    role: "noon" | "midnight";
+    expressionMode: HourMarkersNoonMidnightExpressionMode;
+  };
 };
 
 function typographyOverridesFor(args: NoonMidnightEmitArgs) {
@@ -356,7 +368,13 @@ export function tryEmitNoonMidnightIndicatorDiskContent(
   gctx: GlyphRenderContext,
   out: RenderPlanBuilder,
 ): boolean {
-  const intent = noonMidnightActiveIntent(args.customization, args.structuralHour0To23);
+  const intent = args.forcedIntent !== undefined
+    ? {
+        active: true as const,
+        role: args.forcedIntent.role,
+        expressionMode: args.forcedIntent.expressionMode,
+      }
+    : noonMidnightActiveIntent(args.customization, args.structuralHour0To23);
   if (!intent.active) {
     const anchor24 = twentyFourHourAnchorActiveIntent(
       args.effectiveTopBandHourMarkers.twentyFourHourAnchorCustomization,
