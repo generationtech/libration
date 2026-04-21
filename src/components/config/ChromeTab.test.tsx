@@ -357,6 +357,50 @@ describe("ChromeTab top-band hour markers", () => {
     expect(screen.queryByTestId("chrome-hour-marker-utc-text-only-hint")).toBeNull();
   });
 
+  it("UTC then civil label mode does not strip text hour-marker appearance when realization select re-selects Text", () => {
+    let last: LibrationConfigV2 | null = null;
+    const d = defaultLibrationConfigV2();
+    const initial = normalizeLibrationConfig({
+      ...d,
+      chrome: {
+        ...d.chrome,
+        displayTime: { ...d.chrome.displayTime, topBandMode: "utc24" },
+        layout: {
+          ...d.chrome.layout,
+          hourMarkers: {
+            ...d.chrome.layout.hourMarkers,
+            realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#c0ffee" } },
+            layout: { sizeMultiplier: 1 },
+          },
+        },
+      },
+    });
+    render(
+      <ChromeTabTestHarness initial={initial}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    fireEvent.change(screen.getByTestId("chrome-hour-marker-realization-kind-select"), {
+      target: { value: "text" },
+    });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "text",
+      fontAssetId: "zeroes-one",
+      appearance: { color: "#c0ffee" },
+    });
+    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+      target: { value: "local12" },
+    });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "text",
+      fontAssetId: "zeroes-one",
+      appearance: { color: "#c0ffee" },
+    });
+  });
+
   it("leaving UTC label mode restores full realization options and the stored procedural kind", () => {
     let last: LibrationConfigV2 | null = null;
     const d = defaultLibrationConfigV2();

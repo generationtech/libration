@@ -153,6 +153,10 @@ function hourMarkersAfterRealizationKindChange(
   nextKind: HourMarkersRealizationConfig["kind"],
   hm: HourMarkersConfig,
 ): HourMarkersConfig {
+  /** Redundant same-kind commits must not rebuild realization (would wipe text appearance, font defaults, etc.). */
+  if (nextKind === hm.realization.kind) {
+    return hm;
+  }
   return {
     ...hm,
     realization: realizationConfigForKind(nextKind, hm),
@@ -202,10 +206,13 @@ function RealizationSection({
   entriesAreaEnabled,
   topBandMode,
 }: HourMarkerEditorBaseProps) {
-  const kind = hourMarkers.realization.kind;
+  /** Persisted config kind; unchanged while UTC display mode forces text-only tape. */
+  const authoredRealizationKind = hourMarkers.realization.kind;
   const utcTapeTextOnly = utcForcesTextOnlyHourTape(topBandMode);
+  /** Select shows Text whenever UTC tape is text-only, even when authored procedural kind is preserved on disk. */
+  const displayedSelectorKind =
+    utcTapeTextOnly && authoredRealizationKind !== "text" ? "text" : authoredRealizationKind;
   const kindOptions = hourMarkerRealizationKindOptions(topBandMode);
-  const selectValue = utcTapeTextOnly ? "text" : kind;
   const authoringOff = !wired || !entriesAreaEnabled;
   return (
     <>
@@ -213,13 +220,20 @@ function RealizationSection({
         <select
           className="config-input"
           data-testid="chrome-hour-marker-realization-kind-select"
-          value={selectValue}
+          value={displayedSelectorKind}
           disabled={authoringOff}
           aria-label="Top-band hour marker realization kind"
           onChange={
             wired && entriesAreaEnabled && updateConfig
               ? (e) => {
                   const next = e.currentTarget.value as HourMarkersRealizationConfig["kind"];
+                  /**
+                   * UTC UI shows only Text; authored procedural kinds must not be overwritten by that display-only
+                   * value (same-kind guard above does not apply when authored is analog/radial and `next` is `text`).
+                   */
+                  if (utcTapeTextOnly && authoredRealizationKind !== "text") {
+                    return;
+                  }
                   commitHourMarkers(updateConfig, (hm) => hourMarkersAfterRealizationKindChange(next, hm));
                 }
               : undefined
@@ -253,18 +267,23 @@ function AppearanceSection({
   topBandMode,
   hourMarkerFontOptions,
 }: AppearanceSectionProps) {
-  const rk = hourMarkers.realization.kind;
+  const authoredRealizationKind = hourMarkers.realization.kind;
+  const utcTapeTextOnly = utcForcesTextOnlyHourTape(topBandMode);
   const authoringOff = !wired || !entriesAreaEnabled;
 
-  if (utcForcesTextOnlyHourTape(topBandMode) && rk !== "text") {
+  if (utcTapeTextOnly && authoredRealizationKind !== "text") {
     return (
-      <p className="config-section__hint" data-testid="chrome-hour-marker-utc-procedural-preserved-hint">
+      <p
+        key="utc-procedural-preserved"
+        className="config-section__hint"
+        data-testid="chrome-hour-marker-utc-procedural-preserved-hint"
+      >
         Procedural settings stay on file for other label modes; UTC uses text-only tape styling.
       </p>
     );
   }
 
-  if (rk === "text") {
+  if (authoredRealizationKind === "text") {
     const r = hourMarkers.realization;
     const fontId = r.fontAssetId;
     const textColor = r.appearance.color;
@@ -386,7 +405,7 @@ function AppearanceSection({
     );
   }
 
-  if (rk === "analogClock") {
+  if (authoredRealizationKind === "analogClock") {
     const r = hourMarkers.realization;
     const hand = r.appearance.handColor;
     const face = r.appearance.faceColor;
@@ -514,7 +533,7 @@ function AppearanceSection({
     );
   }
 
-  if (rk === "radialLine") {
+  if (authoredRealizationKind === "radialLine") {
     const r = hourMarkers.realization;
     const line = r.appearance.lineColor;
     const face = r.appearance.faceColor;
@@ -642,7 +661,7 @@ function AppearanceSection({
     );
   }
 
-  if (rk === "radialWedge") {
+  if (authoredRealizationKind === "radialWedge") {
     const r = hourMarkers.realization;
     const edge = r.appearance.edgeColor;
     const face = r.appearance.faceColor;
@@ -830,7 +849,7 @@ function AppearanceSection({
     );
   }
 
-  throw new Error(`Unhandled hour marker realization kind: ${String(rk)}`);
+  throw new Error(`Unhandled hour marker realization kind: ${String(authoredRealizationKind)}`);
 }
 
 function hourMarkersLayoutOmitPadding(

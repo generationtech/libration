@@ -15,6 +15,9 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { displayTimeModeFromTopBandTimeMode } from "../../core/displayTimeMode.ts";
+import { resolveEffectiveTopBandHourMarkers } from "../../config/topBandHourMarkersResolver.ts";
+import type { TopBandTimeMode } from "../../config/appConfig";
 import {
   defaultLibrationConfigV2,
   normalizeLibrationConfig,
@@ -27,7 +30,10 @@ function HourMarkersHarness({
   children,
 }: {
   initial: LibrationConfigV2;
-  children?: (ctx: { config: LibrationConfigV2 }) => ReactNode;
+  children?: (ctx: {
+    config: LibrationConfigV2;
+    updateConfig: (updater: (draft: LibrationConfigV2) => void) => void;
+  }) => ReactNode;
 }) {
   const [config, setConfig] = useState(() => normalizeLibrationConfig(initial));
   const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
@@ -40,30 +46,36 @@ function HourMarkersHarness({
   return (
     <>
       <HourMarkersEditor config={config} updateConfig={updateConfig} />
-      {children?.({ config })}
+      {children?.({ config, updateConfig })}
     </>
   );
 }
 
 function baseCustomHourMarkers(
   overrides: Partial<LibrationConfigV2["chrome"]["layout"]["hourMarkers"]> = {},
+  topBandMode?: TopBandTimeMode,
 ): LibrationConfigV2 {
   const d = defaultLibrationConfigV2();
   const hm = d.chrome.layout.hourMarkers;
-  return normalizeLibrationConfig({
-    ...d,
-    chrome: {
-      ...d.chrome,
-      layout: {
-        ...d.chrome.layout,
-        hourMarkers: {
-          ...hm,
-          realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
-          layout: { sizeMultiplier: 1 },
-          ...overrides,
-        },
+  const chromeBase = {
+    ...d.chrome,
+    layout: {
+      ...d.chrome.layout,
+      hourMarkers: {
+        ...hm,
+        realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
+        layout: { sizeMultiplier: 1 },
+        ...overrides,
       },
     },
+  };
+  const chrome =
+    topBandMode !== undefined
+      ? { ...chromeBase, displayTime: { ...d.chrome.displayTime, topBandMode } }
+      : chromeBase;
+  return normalizeLibrationConfig({
+    ...d,
+    chrome,
   });
 }
 
@@ -383,5 +395,136 @@ describe("HourMarkersEditor structured authoring", () => {
       enabled: true,
       expressionMode: "semanticGlyph",
     });
+  });
+});
+
+describe("HourMarkersEditor UTC vs authored realization", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("does not rewrite authored procedural realization to text when the UTC-only selector fires Text", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers(
+          { realization: { kind: "analogClock", appearance: { handColor: "#112233" } } },
+          "utc24",
+        )}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    const sel = screen.getByTestId("chrome-hour-marker-realization-kind-select");
+    expect(sel.querySelectorAll("option")).toHaveLength(1);
+    fireEvent.change(sel, { target: { value: "text" } });
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("analogClock");
+    expect(last!.chrome.layout.hourMarkers.realization).toMatchObject({
+      kind: "analogClock",
+      appearance: { handColor: "#112233" },
+    });
+  });
+
+  it("round-trip UTC then 12hr restores procedural appearance sub-editor and selector options", () => {
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers(
+          { realization: { kind: "radialLine", appearance: { lineColor: "#445566" } } },
+          "utc24",
+        )}
+      >
+        {({ updateConfig }) => (
+          <button
+            type="button"
+            data-testid="to-local12"
+            onClick={() =>
+              updateConfig((draft) => {
+                draft.chrome.displayTime.topBandMode = "local12";
+              })
+            }
+          />
+        )}
+      </HourMarkersHarness>,
+    );
+    expect(screen.getByTestId("chrome-hour-marker-utc-procedural-preserved-hint")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("to-local12"));
+    expect(screen.queryByTestId("chrome-hour-marker-utc-procedural-preserved-hint")).toBeNull();
+    expect(screen.getByTestId("chrome-hour-marker-realization-kind-select").querySelectorAll("option")).toHaveLength(4);
+    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue("radialLine");
+    expect(screen.getByLabelText(/Top-band radial line hour marker line color/i)).toBeInTheDocument();
+  });
+
+  it("redundant same-kind realization select change does not wipe text appearance", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({
+          realization: { kind: "text", fontAssetId: "zeroes-one", appearance: { color: "#aabbcc" } },
+        })}
+      >
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </HourMarkersHarness>,
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
+      target: { value: "text" },
+    });
+    expect(last!.chrome.layout.hourMarkers.realization).toEqual({
+      kind: "text",
+      fontAssetId: "zeroes-one",
+      appearance: { color: "#aabbcc" },
+    });
+  });
+
+  it("repeated UTC / non-UTC toggles preserve authored wedge; resolver stays text-only only under UTC", () => {
+    let last: LibrationConfigV2 | null = null;
+    render(
+      <HourMarkersHarness
+        initial={baseCustomHourMarkers({ realization: { kind: "radialWedge", appearance: {} } }, "local24")}
+      >
+        {({ config, updateConfig }) => {
+          last = config;
+          return (
+            <button
+              type="button"
+              data-testid="flip-utc-24"
+              onClick={() =>
+                updateConfig((draft) => {
+                  draft.chrome.displayTime.topBandMode =
+                    draft.chrome.displayTime.topBandMode === "utc24" ? "local24" : "utc24";
+                })
+              }
+            />
+          );
+        }}
+      </HourMarkersHarness>,
+    );
+    const flip = screen.getByTestId("flip-utc-24");
+    fireEvent.click(flip);
+    expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialWedge");
+    expect(
+      resolveEffectiveTopBandHourMarkers(last!.chrome.layout, {
+        displayTimeMode: displayTimeModeFromTopBandTimeMode(last!.chrome.displayTime.topBandMode),
+      }).realization.kind,
+    ).toBe("text");
+
+    fireEvent.click(flip);
+    expect(last!.chrome.displayTime.topBandMode).toBe("local24");
+    expect(
+      resolveEffectiveTopBandHourMarkers(last!.chrome.layout, {
+        displayTimeMode: displayTimeModeFromTopBandTimeMode(last!.chrome.displayTime.topBandMode),
+      }).realization.kind,
+    ).toBe("radialWedge");
+
+    fireEvent.click(flip);
+    fireEvent.click(flip);
+    expect(last!.chrome.displayTime.topBandMode).toBe("local24");
+    expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("radialWedge");
   });
 });

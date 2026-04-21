@@ -19,26 +19,12 @@ import {
   halfwayRgbStringBetweenCssColors,
   interpolateRgbStringBetweenCssColors,
 } from "../color/halfwayRgbBetweenCssColors.ts";
-import type { DisplayChromeLayoutConfig } from "./appConfig.ts";
-import type { DisplayTimeMode } from "../core/chromeTimeDomain.ts";
-
-/**
- * When display formatting is UTC (`utc24` → {@link DisplayTimeMode} `"utc"`), the top hour tape is text-only;
- * non-text authored realizations are not used at runtime (authored shape is preserved on disk).
- */
-function effectiveHourMarkersRealizationForDisplayMode(
-  hm: HourMarkersConfig,
-  displayTimeMode: DisplayTimeMode,
-): HourMarkersRealizationConfig {
-  if (displayTimeMode === "utc" && hm.realization.kind !== "text") {
-    return { kind: "text", appearance: {}, fontAssetId: undefined };
-  }
-  return hm.realization;
-}
 import {
+  type DisplayChromeLayoutConfig,
   resolvedAuthoredIndicatorEntriesAreaBackgroundColor,
   resolvedHourMarkerLayoutSizeMultiplier,
 } from "./appConfig.ts";
+import type { DisplayTimeMode } from "../core/chromeTimeDomain.ts";
 import { resolveEffectiveProductTextFontAssetId } from "./productTextFont.ts";
 import type {
   EffectiveAnalogClockResolvedAppearance,
@@ -53,6 +39,20 @@ import type {
   HourMarkersNoonMidnightExpressionMode,
   HourMarkersRealizationConfig,
 } from "./topBandHourMarkersTypes.ts";
+
+/**
+ * When display formatting is UTC (`utc24` → {@link DisplayTimeMode} `"utc"`), the top hour tape is text-only;
+ * non-text authored realizations are not used at runtime (authored shape is preserved on disk).
+ */
+function effectiveHourMarkersRealizationForDisplayMode(
+  hm: HourMarkersConfig,
+  displayTimeMode: DisplayTimeMode,
+): HourMarkersRealizationConfig {
+  if (displayTimeMode === "utc" && hm.realization.kind !== "text") {
+    return { kind: "text", appearance: {}, fontAssetId: undefined };
+  }
+  return hm.realization;
+}
 
 /** Same trim/empty semantics as hour-marker selection color normalization in appConfig (invalid → no override). */
 function normalizeMarkerColor(raw: unknown): string | undefined {
