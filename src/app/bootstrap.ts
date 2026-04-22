@@ -20,7 +20,7 @@ import {
 } from "../config/productTextFont";
 import { getActiveAppConfig } from "../config/displayPresets";
 import { resolveEquirectBaseMapImageSrc } from "../config/baseMapAssetResolve";
-import { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../config/sceneLayerOrder";
+import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createCityPinsLayer } from "../layers/cityPinsLayer";
 import { createLatLonGridLayer } from "../layers/latLonGridLayer";
@@ -30,38 +30,30 @@ import { createSubsolarMarkerLayer } from "../layers/subsolarMarkerLayer";
 import { LayerRegistry } from "../layers/LayerRegistry";
 
 /**
- * Builds a {@link LayerRegistry} from the authoritative {@link AppConfig.scene} (layer enablement,
- * z-order, base map, opacity). {@link AppConfig.layers} is kept in sync and may be used elsewhere.
- * Only active participants are registered; the renderer only sees layer state, not the config document.
+ * Builds a {@link LayerRegistry} from the authoritative {@link AppConfig.scene}.
+ * `AppConfig.layers` is kept in sync; only layer state reaches the renderer.
+ * Composition order, opacity, and the foundational base map follow
+ * {@link planSceneStackComposition} (see layer-composition-rules). Each overlay `zIndex` is
+ * the scene model’s; layers do not define stacking policy.
  */
 export function createLayerRegistryFromConfig(
   config: AppConfig = getActiveAppConfig(),
 ): LayerRegistry {
   const registry = new LayerRegistry();
-  const { scene } = config;
-  const baseOp = scene.baseMap.opacity ?? 1;
-  if (scene.baseMap.visible && baseOp > 0) {
+  const { baseMap: basePart, overlays } = planSceneStackComposition(config.scene);
+  if (basePart) {
     registry.register(
       createBaseMapLayer({
-        src: resolveEquirectBaseMapImageSrc(scene.baseMap.id),
-        opacity: baseOp,
-        zIndex: 0,
+        src: resolveEquirectBaseMapImageSrc(config.scene.baseMap.id),
+        opacity: basePart.opacity,
+        zIndex: basePart.zIndex,
       }),
     );
   }
-  const ordered = sortSceneLayersForRender([...scene.layers]);
-  let stack = 0;
-  for (const inst of ordered) {
-    if (!inst.enabled) {
-      continue;
-    }
-    const op = inst.opacity ?? 1;
-    if (op <= 0) {
-      continue;
-    }
-    const z = zIndexForSceneStackIndex(stack);
-    stack++;
-    switch (inst.id) {
+  for (const part of overlays) {
+    const z = part.zIndex;
+    const op = part.opacity;
+    switch (part.layerId) {
       case "solarShading":
         registry.register(createSolarShadingLayer({ zIndex: z, opacity: op }));
         break;
@@ -89,8 +81,6 @@ export function createLayerRegistryFromConfig(
         break;
       case "sublunarMarker":
         registry.register(createSublunarMarkerLayer({ zIndex: z, opacity: op }));
-        break;
-      default:
         break;
     }
   }

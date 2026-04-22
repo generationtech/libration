@@ -18,6 +18,8 @@ import type { RenderableLayerState } from "./types";
 /**
  * Merges a layer definition with its evaluated state into the renderer-facing shape.
  * This is the single conversion step from layer registry output to scene render input layers.
+ * `zIndex` and `state.opacity` come from the scene composition plan; the backend draws in
+ * z-order and applies per-layer alpha (see `CanvasRenderBackend.render`).
  */
 export function toRenderableLayerState(
   layer: Layer,

@@ -12,6 +12,7 @@
  */
 
 import { subsolarPoint } from "../core/subsolarPoint";
+import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBSOLAR_MARKER_KIND, type SubsolarMarkerPayload } from "./subsolarMarkerPayload";
 
@@ -26,7 +27,7 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
 export function createSubsolarMarkerLayer(
   options: { zIndex?: number; opacity?: number } = {},
 ): Layer {
-  const zIndex = options.zIndex ?? 15;
+  const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   return {
     id: SUBSOLAR_MARKER_ID,

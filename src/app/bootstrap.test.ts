@@ -17,7 +17,10 @@ import {
   resolveCitiesForPins,
   type AppConfig,
 } from "../config/appConfig";
-import { buildDefaultSceneConfigFromLayerFlags } from "../config/v2/sceneConfig";
+import {
+  buildDefaultSceneConfigFromLayerFlags,
+  deriveLayerEnableFlagsFromScene,
+} from "../config/v2/sceneConfig";
 import { createTimeContext } from "../core/time";
 import { CITY_PINS_KIND } from "../layers/cityPinsPayload";
 import { createLayerRegistryFromConfig } from "./bootstrap";
@@ -131,5 +134,48 @@ describe("createLayerRegistryFromConfig", () => {
     expect(data.cities.map((c) => c.id)).toEqual(["city.london", "custom.a"]);
     const custom = data.cities.find((c) => c.id === "custom.a");
     expect(custom?.name).toBe("Alpha");
+  });
+
+  it("applies scene per-layer opacity on layer state (renderer composition path)", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      layers: base.layers.map((L) =>
+        L.id === "grid" ? { ...L, opacity: 0.35 } : L,
+      ),
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const grid = registry.getLayers().find((l) => l.id === GRID_ID);
+    const time = createTimeContext(Date.now(), 0, false);
+    expect(grid?.getState(time).opacity).toBeCloseTo(0.35, 5);
+  });
+
+  it("registry z-order matches plan when `order` is swapped (solar draws above grid)", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      layers: base.layers.map((L) => {
+        if (L.id === "grid") {
+          return { ...L, order: 0 };
+        }
+        if (L.id === "solarShading") {
+          return { ...L, order: 1 };
+        }
+        return L;
+      }),
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const r = createLayerRegistryFromConfig(config);
+    const z = (id: string) => r.getLayers().find((l) => l.id === id)!.zIndex;
+    expect(z("layer.grid.latLon")).toBeLessThan(z("layer.solarShading.dayNight"));
   });
 });

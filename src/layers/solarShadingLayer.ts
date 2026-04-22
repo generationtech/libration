@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import { subsolarPoint } from "../core/subsolarPoint";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SOLAR_SHADING_KIND, type SolarShadingPayload } from "./solarShadingPayload";
@@ -26,7 +27,7 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
 export function createSolarShadingLayer(
   options: { zIndex?: number; opacity?: number } = {},
 ): Layer {
-  const zIndex = options.zIndex ?? 5;
+  const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   return {
     id: SOLAR_SHADING_ID,

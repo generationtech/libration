@@ -13,6 +13,7 @@
 
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
+import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBLUNAR_MARKER_KIND, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
 
@@ -27,7 +28,7 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
 export function createSublunarMarkerLayer(
   options: { zIndex?: number; opacity?: number } = {},
 ): Layer {
-  const zIndex = options.zIndex ?? 16;
+  const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   return {
     id: SUBLUNAR_MARKER_ID,

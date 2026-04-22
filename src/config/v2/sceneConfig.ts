@@ -19,6 +19,13 @@ import type { LayerEnableFlags } from "../appConfig";
 
 export { resolveEquirectBaseMapImageSrc } from "../baseMapAssetResolve";
 export { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../sceneLayerOrder";
+export {
+  planSceneStackComposition,
+  SCENE_STACK_COMPOSITION_OVERLAY_IDS,
+  type SceneBaseMapCompositePart,
+  type SceneOverlayCompositePart,
+  type SceneStackCompositionPlan,
+} from "../sceneStackComposition";
 
 export const DEFAULT_SCENE_PROJECTION_ID = "equirectangular";
 export const DEFAULT_SCENE_VIEW_MODE = "fullWorldFixed" as const;

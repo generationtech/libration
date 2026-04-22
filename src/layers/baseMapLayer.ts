@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { SCENE_BASE_MAP_Z_INDEX } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   EQUIRECTANGULAR_RASTER_KIND,
@@ -38,7 +39,7 @@ export type CreateBaseMapLayerOptions = {
 export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Layer {
   const src = options.src ?? WORLD_EQUIRECTANGULAR_SRC;
   const opacity = options.opacity ?? 1;
-  const z = options.zIndex ?? 0;
+  const z = options.zIndex ?? SCENE_BASE_MAP_Z_INDEX;
   return {
     id: BASE_MAP_ID,
     name: "World map (base)",

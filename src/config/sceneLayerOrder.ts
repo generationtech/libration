@@ -17,7 +17,21 @@ export type OrderableSceneLayer = {
   order: number;
 };
 
-const SCENE_Z_BASE = 5;
+/**
+ * Z slot for the foundational equirectangular base map. All overlay z-indices are strictly
+ * above this (see layer-composition-rules: base map beneath overlays).
+ */
+export const SCENE_BASE_MAP_Z_INDEX = 0;
+
+/**
+ * Z-index of the first overlay in stack order, after sort + visibility filtering.
+ * The scene system assigns consecutive integers from here so ordering is a scene-level
+ * contract, not a per-layer-type product rule.
+ */
+export const SCENE_OVERLAY_Z_BASE = 5;
+
+/** Unambiguous marker when a layer is constructed outside the scene path (e.g. tests, demos). */
+export const SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED = SCENE_OVERLAY_Z_BASE;
 
 /**
  * Runtime sort: lower `order` first. When `order` is equal, entries keep their order in
@@ -36,8 +50,10 @@ export function sortSceneLayersForRender<T extends OrderableSceneLayer>(layers: 
 }
 
 /**
- * z-index for a scene layer after sorting: first stack entry above the base map uses this base.
+ * Z-index for the n-th *participating* overlay after `sortSceneLayersForRender` (0-based).
+ * Skipped (disabled or zero-opacity) stack entries are not assigned indices; the next
+ * visible overlay reuses a consecutive slot so composition stays dense and order-stable.
  */
-export function zIndexForSceneStackIndex(sortedIndex: number): number {
-  return SCENE_Z_BASE + sortedIndex;
+export function zIndexForSceneStackIndex(overlayIndexAfterSort: number): number {
+  return SCENE_OVERLAY_Z_BASE + overlayIndexAfterSort;
 }

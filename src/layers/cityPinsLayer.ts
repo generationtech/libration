@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import { formatPinDateTimeLabel } from "../core/pinDateTimeDisplayFormat";
 import type { ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes";
@@ -81,13 +82,13 @@ export function createCityPinsLayer(
   options: { zIndex?: number; opacity?: number } = {},
 ): Layer {
   const pinDefinitions = resolvePinDefinitions(cities, customPins);
-  const zIndex = options.zIndex ?? 12;
+  const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   return {
     id: CITY_PINS_LAYER_ID,
     name: "Reference cities",
     enabled: true,
-    /** Above map, shading, and grid. */
+    /** Layer z comes from the scene stack in app/bootstrap; this default is for non-scene callers. */
     zIndex,
     type: "points",
     updatePolicy,
