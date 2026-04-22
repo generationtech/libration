@@ -78,14 +78,17 @@ export function createCityPinsLayer(
   presentation: CityPinsPresentationOptions,
   cityNameFontAssetId: FontAssetId,
   dateTimeFontAssetId: FontAssetId,
+  options: { zIndex?: number; opacity?: number } = {},
 ): Layer {
   const pinDefinitions = resolvePinDefinitions(cities, customPins);
+  const zIndex = options.zIndex ?? 12;
+  const op = options.opacity ?? 1;
   return {
     id: CITY_PINS_LAYER_ID,
     name: "Reference cities",
     enabled: true,
     /** Above map, shading, and grid. */
-    zIndex: 12,
+    zIndex,
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
@@ -115,7 +118,7 @@ export function createCityPinsLayer(
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity: op,
         data,
       };
     },

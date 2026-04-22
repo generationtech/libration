@@ -23,13 +23,17 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Current subsolar point as a single equirectangular marker (no live data).
  * Uses the same {@link subsolarPoint} model as solar shading.
  */
-export function createSubsolarMarkerLayer(): Layer {
+export function createSubsolarMarkerLayer(
+  options: { zIndex?: number; opacity?: number } = {},
+): Layer {
+  const zIndex = options.zIndex ?? 15;
+  const op = options.opacity ?? 1;
   return {
     id: SUBSOLAR_MARKER_ID,
     name: "Subsolar point",
     enabled: true,
     /** Above base map, shading, grid, and city pins. */
-    zIndex: 15,
+    zIndex,
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
@@ -41,7 +45,7 @@ export function createSubsolarMarkerLayer(): Layer {
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity: op,
         data,
       };
     },

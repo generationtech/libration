@@ -24,12 +24,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
 /**
  * Subtle latitude/longitude grid in equirectangular space (no live data).
  */
-export function createLatLonGridLayer(): Layer {
+export function createLatLonGridLayer(
+  options: { zIndex?: number; opacity?: number } = {},
+): Layer {
+  const zIndex = options.zIndex ?? 7;
+  const op = options.opacity ?? 1;
   return {
     id: GRID_ID,
     name: "Latitude / longitude grid",
     enabled: true,
-    zIndex: 7,
+    zIndex,
     type: "vector",
     updatePolicy,
     getState(_time: TimeContext): LayerState {
@@ -40,7 +44,7 @@ export function createLatLonGridLayer(): Layer {
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity: op,
         data,
       };
     },

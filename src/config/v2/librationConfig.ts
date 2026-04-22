@@ -56,6 +56,14 @@ import {
 } from "../productFontConstants.ts";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
 import { coerceHourMarkersForUtc24IfProcedural } from "../topBandUtcRealizationCoercion.ts";
+import {
+  applyLayerEnableFlagsToScene,
+  buildDefaultSceneConfigFromLayerFlags,
+  cloneSceneConfig,
+  deriveLayerEnableFlagsFromScene,
+  normalizeSceneConfig,
+  type SceneConfig,
+} from "./sceneConfig";
 
 /** v2 document identity; numeric `2` matches Phase 0 contract. */
 export type LibrationConfigV2Meta = {
@@ -69,6 +77,11 @@ export type LibrationConfigV2Meta = {
 export interface LibrationConfigV2 {
   meta: LibrationConfigV2Meta;
   layers: LayerEnableFlags;
+  /**
+   * Authoritative scene: projection, base map, ordered layer stack.
+   * Optional on partial inputs; always set on documents returned from {@link normalizeLibrationConfig}.
+   */
+  scene?: SceneConfig;
   pins: {
     reference: { visibleCityIds: readonly string[] };
     /** User-defined pins; normalized to stable {@link CustomPinConfig} records. */
@@ -579,6 +592,36 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
   };
 }
 
+function layerFlagsEqualShallow(a: LayerEnableFlags, b: LayerEnableFlags): boolean {
+  return (
+    a.baseMap === b.baseMap &&
+    a.solarShading === b.solarShading &&
+    a.grid === b.grid &&
+    a.cityPins === b.cityPins &&
+    a.subsolarMarker === b.subsolarMarker &&
+    a.sublunarMarker === b.sublunarMarker
+  );
+}
+
+/**
+ * Reconciles legacy `layers` with `scene`: when only one side was updated (e.g. older persistence),
+ * layer flags win for enablement so the stack stays consistent.
+ */
+function normalizeSceneForV2(
+  rawScene: unknown,
+  layerFlags: LayerEnableFlags,
+): SceneConfig {
+  const L0 = layerFlags;
+  const S0 = isPlainObject(rawScene) && rawScene !== null && (rawScene as { version?: unknown }).version === 1
+    ? normalizeSceneConfig(rawScene, L0)
+    : buildDefaultSceneConfigFromLayerFlags(L0);
+  const fromS = deriveLayerEnableFlagsFromScene(S0);
+  if (!layerFlagsEqualShallow(fromS, L0)) {
+    return applyLayerEnableFlagsToScene(S0, L0);
+  }
+  return S0;
+}
+
 /**
  * `utc24` hour labels require text hour-marker realization; coerce legacy or invalid procedural authoring.
  */
@@ -604,12 +647,18 @@ function coerceUtcHourMarkersInNormalizedConfig(config: LibrationConfigV2): Libr
 }
 
 export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationConfigV2 {
+  const L0 = normalizeLayerEnableFlags(config.layers);
+  const scene = cloneSceneConfig(
+    normalizeSceneForV2((config as { scene?: unknown }).scene, L0),
+  );
+  const layers = deriveLayerEnableFlagsFromScene(scene);
   const n: LibrationConfigV2 = {
     meta: {
       ...config.meta,
       schemaVersion: 2,
     },
-    layers: normalizeLayerEnableFlags(config.layers),
+    layers,
+    scene,
     pins: {
       reference: {
         visibleCityIds: [...config.pins.reference.visibleCityIds],
@@ -639,7 +688,7 @@ export function assertIsNormalizedLibrationConfig(
       `assertIsNormalizedLibrationConfig: expected meta.schemaVersion === 2, got ${String(c.meta.schemaVersion)}`,
     );
   }
-  const top = ["meta", "layers", "pins", "chrome", "geography", "data"] as const;
+  const top = ["meta", "layers", "scene", "pins", "chrome", "geography", "data"] as const;
   const asRecord = c as unknown as Record<string, unknown>;
   for (const k of top) {
     if (!(k in c) || asRecord[k] === undefined) {
@@ -944,6 +993,23 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid geography");
   }
+  const sc = c.scene;
+  if (
+    typeof sc !== "object" ||
+    sc === null ||
+    (sc as SceneConfig).version !== 1 ||
+    typeof (sc as SceneConfig).projectionId !== "string" ||
+    (sc as SceneConfig).projectionId.trim() === "" ||
+    (sc as SceneConfig).viewMode !== "fullWorldFixed" ||
+    typeof (sc as SceneConfig).baseMap !== "object" ||
+    (sc as SceneConfig).baseMap === null ||
+    typeof (sc as SceneConfig).baseMap.id !== "string" ||
+    typeof (sc as SceneConfig).baseMap.visible !== "boolean" ||
+    (sc as SceneConfig).orderingMode !== "user" ||
+    !Array.isArray((sc as SceneConfig).layers)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene");
+  }
 }
 
 /** Default v2 snapshot aligned with {@link DEFAULT_APP_CONFIG} (derived, not a divergent literal). */
@@ -956,6 +1022,7 @@ export function appConfigToV2(config: AppConfig): LibrationConfigV2 {
   return normalizeLibrationConfig({
     meta: { schemaVersion: 2 },
     layers: { ...config.layers },
+    scene: cloneSceneConfig(config.scene),
     pins: {
       reference: { visibleCityIds: [...config.visibleCityIds] },
       custom: normalizeCustomPinsArray(config.customPins),
@@ -975,6 +1042,7 @@ export function v2ToAppConfig(v2: LibrationConfigV2): AppConfig {
   const n = normalizeLibrationConfig(v2);
   return {
     layers: { ...n.layers },
+    scene: cloneSceneConfig(n.scene!),
     visibleCityIds: [...n.pins.reference.visibleCityIds],
     customPins: n.pins.custom.map((p) => ({ ...p })),
     pinPresentation: { ...n.pins.presentation },

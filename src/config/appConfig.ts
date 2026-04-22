@@ -18,12 +18,18 @@ export type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
 import { resolveEffectiveProductTextFontAssetId } from "./productTextFont.ts";
 import { TOP_CHROME_STYLE } from "./topChromeStyle.ts";
+import {
+  type SceneConfig,
+  buildDefaultSceneConfigFromLayerFlags,
+} from "./v2/sceneConfig";
 
 export {
   PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
   PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
   TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
 } from "./productFontConstants.ts";
+
+export type { SceneConfig } from "./v2/sceneConfig";
 
 /**
  * Explicit enable flags for composable scene layers. This module is the application
@@ -574,6 +580,11 @@ export const DEFAULT_DATA_CONFIG: DataConfig = {
 export interface AppConfig {
   layers: LayerEnableFlags;
   /**
+   * Authoritative scene model (projection, base map, ordered stack). {@link layers} is always
+   * derived from this in normalized v2 documents; kept on AppConfig for the runtime registry path.
+   */
+  scene: SceneConfig;
+  /**
    * Subset of {@link REFERENCE_CITIES} to show when city pins are enabled.
    * Order in payloads follows the reference dataset order, not this array's order.
    */
@@ -603,15 +614,18 @@ export const DEFAULT_DISPLAY_TIME_CONFIG: DisplayTimeConfig = {
   topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
 };
 
+const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
+  baseMap: true,
+  solarShading: true,
+  grid: true,
+  cityPins: true,
+  subsolarMarker: true,
+  sublunarMarker: true,
+};
+
 export const DEFAULT_APP_CONFIG: AppConfig = {
-  layers: {
-    baseMap: true,
-    solarShading: true,
-    grid: true,
-    cityPins: true,
-    subsolarMarker: true,
-    sublunarMarker: true,
-  },
+  layers: { ...DEFAULT_LAYER_ENABLE_FLAGS },
+  scene: buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYER_ENABLE_FLAGS),
   visibleCityIds: ALL_REFERENCE_CITY_IDS,
   customPins: [],
   pinPresentation: DEFAULT_PIN_PRESENTATION,

@@ -13,6 +13,11 @@
 
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
+import {
+  applyLayerEnableFlagsToScene,
+  buildDefaultSceneConfigFromLayerFlags,
+  deriveLayerEnableFlagsFromScene,
+} from "../../config/v2/sceneConfig";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
@@ -73,7 +78,12 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                     ? (e) => {
                         const checked = e.currentTarget.checked;
                         updateConfig((draft) => {
-                          draft.layers = { ...draft.layers, [key]: checked };
+                          const next: LayerEnableFlags = { ...draft.layers, [key]: checked };
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          const scene = applyLayerEnableFlagsToScene(baseScene, next);
+                          draft.scene = scene;
+                          draft.layers = deriveLayerEnableFlagsFromScene(scene);
                         });
                       }
                     : undefined

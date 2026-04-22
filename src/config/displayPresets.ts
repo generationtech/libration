@@ -18,6 +18,7 @@ import {
   DEFAULT_APP_CONFIG,
   resolvedBottomTimeStackSizeMultiplier,
 } from "./appConfig";
+import { buildDefaultSceneConfigFromLayerFlags, cloneSceneConfig } from "./v2/sceneConfig";
 
 /**
  * Named display presets are code-defined {@link AppConfig} compositions.
@@ -62,6 +63,7 @@ function cloneConfig(config: AppConfig): AppConfig {
   const dcl = config.displayChromeLayout;
   return {
     layers: { ...config.layers },
+    scene: cloneSceneConfig(config.scene),
     visibleCityIds: [...config.visibleCityIds],
     customPins: config.customPins.map((p) => ({ ...p })),
     pinPresentation: { ...config.pinPresentation },
@@ -146,52 +148,64 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
    * Time-of-day is shown in display chrome (top strip and bottom HUD), not as map overlay clocks.
    * {@link AppConfig.visibleCityIds} is empty because city pins are off.
    */
-  minimal: {
-    ...cloneConfig(DEFAULT_APP_CONFIG),
-    layers: {
+  minimal: (() => {
+    const layers = {
       baseMap: true,
       solarShading: true,
       grid: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
-    },
-    visibleCityIds: [],
-  },
+    } as const;
+    return {
+      ...cloneConfig(DEFAULT_APP_CONFIG),
+      layers: { ...layers },
+      scene: buildDefaultSceneConfigFromLayerFlags({ ...layers }),
+      visibleCityIds: [],
+    };
+  })(),
 
   /**
    * Celestial emphasis: base map, shading, grid, subsolar and sublunar markers; no city pins.
    * {@link AppConfig.visibleCityIds} is empty because city pins are off.
    */
-  celestial: {
-    ...cloneConfig(DEFAULT_APP_CONFIG),
-    layers: {
+  celestial: (() => {
+    const layers = {
       baseMap: true,
       solarShading: true,
       grid: true,
       cityPins: false,
       subsolarMarker: true,
       sublunarMarker: true,
-    },
-    visibleCityIds: [],
-  },
+    } as const;
+    return {
+      ...cloneConfig(DEFAULT_APP_CONFIG),
+      layers: { ...layers },
+      scene: buildDefaultSceneConfigFromLayerFlags({ ...layers }),
+      visibleCityIds: [],
+    };
+  })(),
 
   /**
    * Map plus a small curated set of reference-city pins only: no day/night shading, grid, or celestial markers.
    * Uses {@link FEATURED_REFERENCE_CITY_IDS} (not the full reference list).
    */
-  featuredCities: {
-    ...cloneConfig(DEFAULT_APP_CONFIG),
-    layers: {
+  featuredCities: (() => {
+    const layers = {
       baseMap: true,
       solarShading: false,
       grid: false,
       cityPins: true,
       subsolarMarker: false,
       sublunarMarker: false,
-    },
-    visibleCityIds: [...FEATURED_REFERENCE_CITY_IDS],
-  },
+    } as const;
+    return {
+      ...cloneConfig(DEFAULT_APP_CONFIG),
+      layers: { ...layers },
+      scene: buildDefaultSceneConfigFromLayerFlags({ ...layers }),
+      visibleCityIds: [...FEATURED_REFERENCE_CITY_IDS],
+    };
+  })(),
 };
 
 /**

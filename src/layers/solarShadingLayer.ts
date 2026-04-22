@@ -23,12 +23,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Solar day/night shading over the equirectangular base map (no live data).
  * State uses current time from {@link TimeContext}.
  */
-export function createSolarShadingLayer(): Layer {
+export function createSolarShadingLayer(
+  options: { zIndex?: number; opacity?: number } = {},
+): Layer {
+  const zIndex = options.zIndex ?? 5;
+  const op = options.opacity ?? 1;
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
     enabled: true,
-    zIndex: 5,
+    zIndex,
     type: "illumination",
     updatePolicy,
     getState(time: TimeContext): LayerState {
@@ -40,7 +44,7 @@ export function createSolarShadingLayer(): Layer {
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity: op,
         data,
       };
     },

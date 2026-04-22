@@ -24,25 +24,36 @@ export const WORLD_EQUIRECTANGULAR_SRC = "/maps/world-equirectangular.jpg";
 
 const updatePolicy: UpdatePolicy = { type: "onDemand" };
 
+export type CreateBaseMapLayerOptions = {
+  src?: string;
+  opacity?: number;
+  zIndex?: number;
+};
+
 /**
  * Static equirectangular world map base layer (no live data).
+ * `src` defaults to the legacy bundled asset; callers should pass
+ * `resolveEquirectBaseMapImageSrc(scene.baseMap.id)` for config-driven selection.
  */
-export function createBaseMapLayer(): Layer {
+export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Layer {
+  const src = options.src ?? WORLD_EQUIRECTANGULAR_SRC;
+  const opacity = options.opacity ?? 1;
+  const z = options.zIndex ?? 0;
   return {
     id: BASE_MAP_ID,
     name: "World map (base)",
     enabled: true,
-    zIndex: 0,
+    zIndex: z,
     type: "raster",
     updatePolicy,
     getState(_time: TimeContext): LayerState {
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
-        src: WORLD_EQUIRECTANGULAR_SRC,
+        src,
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity,
         data,
       };
     },

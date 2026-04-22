@@ -71,7 +71,7 @@ function assertSourceImportsNoRenderer(source: string, label: string): void {
   }
 }
 
-const ALLOWED_PERSISTED_TOP_KEYS = ["chrome", "data", "geography", "layers", "meta", "pins"];
+const ALLOWED_PERSISTED_TOP_KEYS = ["chrome", "data", "geography", "layers", "meta", "pins", "scene"];
 
 describe("workingV2Persistence", () => {
   describe("startup / load", () => {

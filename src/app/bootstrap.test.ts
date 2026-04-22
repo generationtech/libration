@@ -17,6 +17,7 @@ import {
   resolveCitiesForPins,
   type AppConfig,
 } from "../config/appConfig";
+import { buildDefaultSceneConfigFromLayerFlags } from "../config/v2/sceneConfig";
 import { createTimeContext } from "../core/time";
 import { CITY_PINS_KIND } from "../layers/cityPinsPayload";
 import { createLayerRegistryFromConfig } from "./bootstrap";
@@ -48,18 +49,22 @@ describe("createLayerRegistryFromConfig", () => {
   });
 
   it("omits the grid layer when grid is disabled in config", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, grid: false };
     const config: AppConfig = {
       ...DEFAULT_APP_CONFIG,
-      layers: { ...DEFAULT_APP_CONFIG.layers, grid: false },
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
     };
     const registry = createLayerRegistryFromConfig(config);
     expect(registry.getLayers().some((l) => l.id === GRID_ID)).toBe(false);
   });
 
   it("omits solar shading when solarShading is disabled in config", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, solarShading: false };
     const config: AppConfig = {
       ...DEFAULT_APP_CONFIG,
-      layers: { ...DEFAULT_APP_CONFIG.layers, solarShading: false },
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
     };
     const registry = createLayerRegistryFromConfig(config);
     expect(registry.getLayers().some((l) => l.id === "layer.solarShading.dayNight")).toBe(

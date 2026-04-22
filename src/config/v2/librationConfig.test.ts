@@ -673,6 +673,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     }
     const allowed = new Set([
       "../appConfig",
+      "./sceneConfig",
       "../productFontConstants.ts",
       "../topBandHourMarkersPersistenceAdapter.ts",
       "../topBandUtcRealizationCoercion.ts",

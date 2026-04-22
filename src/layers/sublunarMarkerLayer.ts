@@ -24,13 +24,17 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Current sub-lunar point as a single equirectangular marker (no live data).
  * Uses {@link sublunarPoint} in core; shading remains solar-only.
  */
-export function createSublunarMarkerLayer(): Layer {
+export function createSublunarMarkerLayer(
+  options: { zIndex?: number; opacity?: number } = {},
+): Layer {
+  const zIndex = options.zIndex ?? 16;
+  const op = options.opacity ?? 1;
   return {
     id: SUBLUNAR_MARKER_ID,
     name: "Sub-lunar point",
     enabled: true,
     /** Above subsolar (15) so both stay readable. */
-    zIndex: 16,
+    zIndex,
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
@@ -46,7 +50,7 @@ export function createSublunarMarkerLayer(): Layer {
       };
       return {
         visible: true,
-        opacity: 1,
+        opacity: op,
         data,
       };
     },

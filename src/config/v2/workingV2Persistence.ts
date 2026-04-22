@@ -17,6 +17,7 @@
  */
 import type { DisplayTimeConfig, LayerEnableFlags } from "../appConfig";
 import type { LibrationConfigV2 } from "./librationConfig";
+import type { SceneConfig } from "./sceneConfig";
 import {
   normalizeData,
   normalizeDisplayChromeLayout,
@@ -142,9 +143,15 @@ export function reviveLibrationConfigV2FromUnknown(parsed: unknown): LibrationCo
   }
 
   try {
+    const rawScene: SceneConfig | undefined = isPlainObject(
+      (parsed as { scene?: unknown }).scene,
+    )
+      ? ((parsed as { scene: unknown }).scene as SceneConfig)
+      : undefined;
     const candidate: LibrationConfigV2 = {
       meta: { ...meta, schemaVersion: 2 },
       layers: parsed.layers,
+      scene: rawScene,
       pins: {
         reference: {
           visibleCityIds: [...ref.visibleCityIds],
