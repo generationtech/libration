@@ -46,11 +46,23 @@ function sceneWith(
 describe("planSceneStackComposition", () => {
   it("places base map at the foundational z with opacity from config", () => {
     const s = sceneWith(
-      { visible: true, opacity: 0.7 },
+      { id: "equirect-world-geology-v1", visible: true, opacity: 0.7 },
       (L) => L,
     );
     const p = planSceneStackComposition(s);
     expect(p.baseMap).toEqual({ zIndex: SCENE_BASE_MAP_Z_INDEX, opacity: 0.7 });
+  });
+
+  it("overlay composition stays stable when only baseMap.id changes", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(ALL);
+    const switched: SceneConfig = {
+      ...base,
+      baseMap: { ...base.baseMap, id: "equirect-world-topography-v1" },
+    };
+    const p0 = planSceneStackComposition(base);
+    const p1 = planSceneStackComposition(switched);
+    expect(p1.baseMap).toEqual(p0.baseMap);
+    expect(p1.overlays).toEqual(p0.overlays);
   });
 
   it("omits base map when not visible (no accidental draw slot)", () => {

@@ -16,8 +16,18 @@
  * See `docs/specs/scene/scene-config-v1.md` — this module implements the minimal runtime subset.
  */
 import type { LayerEnableFlags } from "../appConfig";
+import {
+  DEFAULT_EQUIRECT_BASE_MAP_ID as DEFAULT_EQUIRECT_BASE_MAP_ID_VALUE,
+  resolveEquirectBaseMapAsset,
+  resolveEquirectBaseMapImageSrc,
+  SUPPORTED_EQUIRECT_BASE_MAP_IDS,
+} from "../baseMapAssetResolve";
 
-export { resolveEquirectBaseMapImageSrc } from "../baseMapAssetResolve";
+export {
+  resolveEquirectBaseMapImageSrc,
+  resolveEquirectBaseMapAsset,
+  SUPPORTED_EQUIRECT_BASE_MAP_IDS,
+};
 export { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../sceneLayerOrder";
 export {
   planSceneStackComposition,
@@ -30,9 +40,8 @@ export const DEFAULT_SCENE_PROJECTION_ID = "equirectangular";
 export const DEFAULT_SCENE_VIEW_MODE = "fullWorldFixed" as const;
 export const DEFAULT_SCENE_ORDERING_MODE = "user" as const;
 export const SCENE_CONFIG_VERSION = 1 as const;
-
 /** Default base map id: maps to the shipped equirectangular world raster. */
-export const DEFAULT_EQUIRECT_BASE_MAP_ID = "equirect-world-legacy-v1";
+export const DEFAULT_EQUIRECT_BASE_MAP_ID = DEFAULT_EQUIRECT_BASE_MAP_ID_VALUE;
 
 export type SceneViewMode = "fullWorldFixed";
 export type SceneOrderingMode = "user";

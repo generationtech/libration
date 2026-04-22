@@ -22,11 +22,14 @@ import {
   v2ToAppConfig,
 } from "./librationConfig";
 import {
+  DEFAULT_EQUIRECT_BASE_MAP_ID,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
   normalizeSceneConfig,
+  resolveEquirectBaseMapAsset,
   resolveEquirectBaseMapImageSrc,
   sortSceneLayersForRender,
+  SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 } from "./sceneConfig";
 
 const DEFAULT_LAYERS: LayerEnableFlags = {
@@ -73,11 +76,40 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.layers).toHaveLength(7);
   });
 
-  it("base map id drives resolved raster path (single legacy asset for unknown ids)", () => {
-    expect(resolveEquirectBaseMapImageSrc("equirect-world-legacy-v1")).toBe(
+  it("base map registry exposes multiple supported ids", () => {
+    expect(SUPPORTED_EQUIRECT_BASE_MAP_IDS).toEqual([
+      "equirect-world-legacy-v1",
+      "equirect-world-political-v1",
+      "equirect-world-topography-v1",
+      "equirect-world-geology-v1",
+    ]);
+  });
+
+  it("base map id drives resolved raster path via explicit registry entries", () => {
+    expect(resolveEquirectBaseMapImageSrc(DEFAULT_EQUIRECT_BASE_MAP_ID)).toBe(
       "/maps/world-equirectangular.jpg",
     );
-    expect(resolveEquirectBaseMapImageSrc("unknown-map")).toBe("/maps/world-equirectangular.jpg");
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-political-v1")).toBe(
+      "/maps/world-equirectangular-political.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1")).toBe(
+      "/maps/world-equirectangular-topography.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-geology-v1")).toBe(
+      "/maps/world-equirectangular-geology.jpg",
+    );
+  });
+
+  it("unknown base map ids safely fall back to the default registry entry", () => {
+    const fallback = resolveEquirectBaseMapAsset("unknown-map");
+    expect(fallback.id).toBe(DEFAULT_EQUIRECT_BASE_MAP_ID);
+    expect(fallback.src).toBe("/maps/world-equirectangular.jpg");
+  });
+
+  it("legacy alias ids map to explicit canonical registry ids", () => {
+    expect(resolveEquirectBaseMapAsset("equirect-world-topo-v1").id).toBe(
+      "equirect-world-topography-v1",
+    );
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {

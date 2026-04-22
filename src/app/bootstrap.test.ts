@@ -18,6 +18,7 @@ import {
   type AppConfig,
 } from "../config/appConfig";
 import {
+  DEFAULT_EQUIRECT_BASE_MAP_ID,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
@@ -225,6 +226,49 @@ describe("createLayerRegistryFromConfig", () => {
     const grid = registry.getLayers().find((l) => l.id === GRID_ID);
     const time = createTimeContext(Date.now(), 0, false);
     expect(grid?.getState(time).opacity).toBeCloseTo(0.35, 5);
+  });
+
+  it("resolves base map raster src from scene.baseMap.id", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "equirect-world-geology-v1",
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const state = layer?.getState(createTimeContext(Date.now(), 0, false));
+    const data = state?.data as { kind: string; src: string } | undefined;
+    expect(data?.src).toBe("/maps/world-equirectangular-geology.jpg");
+  });
+
+  it("falls back to default base map raster src for unknown scene.baseMap.id", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "does-not-exist",
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const state = layer?.getState(createTimeContext(Date.now(), 0, false));
+    const data = state?.data as { kind: string; src: string } | undefined;
+    expect(data?.src).toBe("/maps/world-equirectangular.jpg");
+    expect(scene.baseMap.id).not.toBe(DEFAULT_EQUIRECT_BASE_MAP_ID);
   });
 
   it("registry z-order matches plan when `order` is swapped (solar draws above grid)", () => {
