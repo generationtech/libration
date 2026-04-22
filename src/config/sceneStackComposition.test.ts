@@ -16,10 +16,8 @@ import { SCENE_BASE_MAP_Z_INDEX, zIndexForSceneStackIndex } from "./sceneLayerOr
 import { planSceneStackComposition } from "./sceneStackComposition";
 import {
   buildDefaultSceneConfigFromLayerFlags,
-  SCENE_STACK_LAYER_IDS,
   type SceneConfig,
 } from "./v2/sceneConfig";
-import { SCENE_STACK_COMPOSITION_OVERLAY_IDS } from "./sceneStackComposition";
 import type { LayerEnableFlags } from "./appConfig";
 
 const ALL: LayerEnableFlags = {
@@ -46,12 +44,6 @@ function sceneWith(
 }
 
 describe("planSceneStackComposition", () => {
-  it("overlay id list matches v2 sceneConfig SCENE_STACK_LAYER_IDS", () => {
-    expect([...SCENE_STACK_COMPOSITION_OVERLAY_IDS].sort()).toEqual(
-      [...SCENE_STACK_LAYER_IDS].sort(),
-    );
-  });
-
   it("places base map at the foundational z with opacity from config", () => {
     const s = sceneWith(
       { visible: true, opacity: 0.7 },
@@ -218,5 +210,47 @@ describe("planSceneStackComposition", () => {
     const zA = p.overlays.find((o) => o.layerId === "solarAnalemma")!.zIndex;
     const zS = p.overlays.find((o) => o.layerId === "staticEquirectOverlay")!.zIndex;
     expect(zA).toBeLessThan(zS);
+  });
+
+  it("includes a non-default static raster row when source semantics are eligible", () => {
+    const s0 = sceneWith(undefined, (rows) => rows);
+    const s1 = {
+      ...s0,
+      layers: [
+        ...s0.layers,
+        {
+          id: "customStaticOverlay",
+          family: "environment",
+          type: "staticRaster",
+          enabled: true,
+          opacity: 0.8,
+          order: 999,
+          source: { kind: "staticRaster" as const, src: "/maps/world-equirectangular.jpg" },
+        },
+      ],
+    };
+    const p = planSceneStackComposition(s1);
+    expect(p.overlays.some((o) => o.layerId === "customStaticOverlay")).toBe(true);
+  });
+
+  it("excludes derived rows with unknown products from composition participation", () => {
+    const s0 = sceneWith(undefined, (rows) => rows);
+    const s1 = {
+      ...s0,
+      layers: [
+        ...s0.layers,
+        {
+          id: "unknownDerivedOverlay",
+          family: "custom",
+          type: "custom",
+          enabled: true,
+          opacity: 1,
+          order: 998,
+          source: { kind: "derived" as const, product: "unknownDerivedProduct" },
+        },
+      ],
+    };
+    const p = planSceneStackComposition(s1);
+    expect(p.overlays.some((o) => o.layerId === "unknownDerivedOverlay")).toBe(false);
   });
 });

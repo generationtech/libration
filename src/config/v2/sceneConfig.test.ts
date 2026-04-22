@@ -24,6 +24,7 @@ import {
 import {
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
+  normalizeSceneConfig,
   resolveEquirectBaseMapImageSrc,
   sortSceneLayersForRender,
 } from "./sceneConfig";
@@ -107,5 +108,31 @@ describe("SceneConfig (Phase 1)", () => {
   it("v2 round-trip: layers are derived from scene, not a separate source of truth", () => {
     const app = v2ToAppConfig(appConfigToV2(DEFAULT_APP_CONFIG));
     expect(app.layers).toEqual(deriveLayerEnableFlagsFromScene(app.scene));
+  });
+
+  it("normalization preserves additional non-default scene rows", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: "equirect-world-legacy-v1", visible: true },
+        layers: [
+          {
+            id: "customStaticOverlay",
+            family: "environment",
+            type: "staticRaster",
+            enabled: true,
+            order: 999,
+            opacity: 0.5,
+            source: { kind: "staticRaster", src: "/maps/world-equirectangular.jpg" },
+          },
+        ],
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.layers.some((l) => l.id === "customStaticOverlay")).toBe(true);
+    expect(scene.layers.length).toBeGreaterThan(7);
   });
 });

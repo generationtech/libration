@@ -21,7 +21,6 @@ export { resolveEquirectBaseMapImageSrc } from "../baseMapAssetResolve";
 export { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../sceneLayerOrder";
 export {
   planSceneStackComposition,
-  SCENE_STACK_COMPOSITION_OVERLAY_IDS,
   type SceneBaseMapCompositePart,
   type SceneOverlayCompositePart,
   type SceneStackCompositionPlan,
@@ -468,7 +467,6 @@ export function normalizeSceneConfig(
   const orderingMode: SceneOrderingMode = om === "user" ? "user" : DEFAULT_SCENE_ORDERING_MODE;
   const baseMap = normalizeBaseMap(input.baseMap, layerFallbacks);
   const layersRaw = input.layers;
-  const expectedIds = new Set<string>(SCENE_STACK_LAYER_IDS);
   const parsed: SceneLayerInstance[] = [];
   if (Array.isArray(layersRaw)) {
     for (const item of layersRaw) {
@@ -489,18 +487,18 @@ export function normalizeSceneConfig(
       byId.set(id, d);
     }
   }
-  for (const id of byId.keys()) {
-    if (!expectedIds.has(id as SceneStackLayerId)) {
-      byId.delete(id);
-    }
-  }
-  const merged: SceneLayerInstance[] = SCENE_STACK_LAYER_IDS.map((id) => {
+  const mergedKnownRows: SceneLayerInstance[] = SCENE_STACK_LAYER_IDS.map((id) => {
     const got = byId.get(id);
     if (got) {
       return { ...got, opacity: got.opacity ?? 1 };
     }
     return defaultForLayerId(id, DEFAULT_STACK.find((s) => s.id === id)!.order, layerFallbacks);
   });
+  const knownIds = new Set<string>(SCENE_STACK_LAYER_IDS);
+  const mergedAdditionalRows: SceneLayerInstance[] = parsed
+    .filter((row) => !knownIds.has(row.id))
+    .map((row) => ({ ...row, opacity: row.opacity ?? 1 }));
+  const merged: SceneLayerInstance[] = [...mergedKnownRows, ...mergedAdditionalRows];
   const metadata = isPlainObject(input.metadata) ? { ...input.metadata } : undefined;
   return {
     version: 1,

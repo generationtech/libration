@@ -21,23 +21,7 @@ import {
   sortSceneLayersForRender,
   zIndexForSceneStackIndex,
 } from "./sceneLayerOrder";
-import type { SceneConfig, SceneStackLayerId } from "./v2/sceneConfig";
-
-/**
- * Runtime allowlist of stack row ids (must match {@link SCENE_STACK_LAYER_IDS} in sceneConfig;
- * tests assert equality to catch drift). Declared here so this module does not import scene
- * values from v2/sceneConfig (avoids circular init with re-exports in that file).
- */
-export const SCENE_STACK_COMPOSITION_OVERLAY_IDS: readonly SceneStackLayerId[] = [
-  "solarShading",
-  "grid",
-  "staticEquirectOverlay",
-  "cityPins",
-  "subsolarMarker",
-  "sublunarMarker",
-  "solarAnalemma",
-];
-const expectedSceneIds: ReadonlySet<string> = new Set(SCENE_STACK_COMPOSITION_OVERLAY_IDS);
+import type { SceneConfig, SceneLayerInstance } from "./v2/sceneConfig";
 
 export type SceneBaseMapCompositePart = {
   zIndex: typeof SCENE_BASE_MAP_Z_INDEX;
@@ -46,7 +30,7 @@ export type SceneBaseMapCompositePart = {
 };
 
 export type SceneOverlayCompositePart = {
-  layerId: SceneStackLayerId;
+  layerId: string;
   zIndex: number;
   /** Alpha used during canvas composition (0–1). */
   opacity: number;
@@ -64,11 +48,42 @@ export type SceneStackCompositionPlan = {
   overlays: readonly SceneOverlayCompositePart[];
 };
 
+const COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS = new Set<string>([
+  "solarDayNightShading",
+  "latLonGrid",
+  "referenceAndCustomCityPins",
+  "subsolarPoint",
+  "sublunarPoint",
+  "solarAnalemmaGroundTrack",
+]);
+
+/**
+ * Scene-authoritative overlay participation predicate.
+ * Rows participate only when they are enabled, visible (opacity > 0), and source-eligible for
+ * composition in the current runtime (static raster or known derived overlay product).
+ */
+export function isSceneLayerCompositionEligible(inst: SceneLayerInstance): boolean {
+  if (!inst.enabled) {
+    return false;
+  }
+  const op = inst.opacity ?? 1;
+  if (op <= 0) {
+    return false;
+  }
+  if (inst.source.kind === "staticRaster") {
+    return true;
+  }
+  if (inst.source.kind === "derived") {
+    return COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS.has(inst.source.product);
+  }
+  return false;
+}
+
 /**
  * Produces a deterministic z-order and opacity list from {@link SceneConfig} alone.
  * Base map is explicit at {@link SCENE_BASE_MAP_Z_INDEX}; overlays are consecutive
- * from {@link SCENE_OVERLAY_Z_BASE} in stack order. Stack row ids that are not in
- * the scene allowlist are skipped (defensive; normalized config only emits known rows).
+ * from {@link SCENE_OVERLAY_Z_BASE} in stack order. Participation is determined from
+ * each row's semantics (enabled/opacity/source), not by row-id allowlists.
  */
 export function planSceneStackComposition(scene: SceneConfig): SceneStackCompositionPlan {
   const baseOp = scene.baseMap.opacity ?? 1;
@@ -81,17 +96,11 @@ export function planSceneStackComposition(scene: SceneConfig): SceneStackComposi
   const overlays: SceneOverlayCompositePart[] = [];
   let i = 0;
   for (const inst of ordered) {
-    if (!inst.enabled) {
+    if (!isSceneLayerCompositionEligible(inst)) {
       continue;
     }
-    if (!expectedSceneIds.has(inst.id)) {
-      continue;
-    }
+    const layerId = inst.id;
     const op = inst.opacity ?? 1;
-    if (op <= 0) {
-      continue;
-    }
-    const layerId = inst.id as SceneStackLayerId;
     overlays.push({
       layerId,
       zIndex: zIndexForSceneStackIndex(i),
