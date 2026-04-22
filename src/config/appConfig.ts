@@ -578,6 +578,13 @@ export const DEFAULT_DATA_CONFIG: DataConfig = {
  * `config/v2/librationConfig.ts`; production code does not load v2 yet.
  */
 export interface AppConfig {
+  /**
+   * Legacy layer enablement flags (Phase 0 / migration and derived-runtime convenience).
+   *
+   * **Authoritative model:** {@link AppConfig.scene} is the source of truth for the stack. This
+   * field is populated for compatibility; {@link normalizeLibrationConfig} and v2↔app mapping
+   * reconcile it with `scene` so they stay aligned.
+   */
   layers: LayerEnableFlags;
   /**
    * Authoritative scene model (projection, base map, ordered stack). {@link layers} is always

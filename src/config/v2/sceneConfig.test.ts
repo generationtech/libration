@@ -83,17 +83,23 @@ describe("SceneConfig (Phase 1)", () => {
     expect(r.getLayers().some((l) => l.id === "layer.grid.latLon")).toBe(false);
   });
 
-  it("stack ordering is deterministic by order then id", () => {
+  it("equal `order` keeps SceneConfig.layers array order (stable, not id order)", () => {
     const scene = buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYERS);
     const g = scene.layers.find((l) => l.id === "grid")!;
     const s = scene.layers.find((l) => l.id === "solarShading")!;
-    const a = [
+    const forward = [
       { ...g, order: 0 },
       { ...s, order: 0 },
     ];
-    const sorted = sortSceneLayersForRender(a);
-    expect(sorted[0]!.id).toBe("grid");
-    expect(sorted[1]!.id).toBe("solarShading");
+    expect(sortSceneLayersForRender(forward).map((l) => l.id)).toEqual(["grid", "solarShading"]);
+    const reversed = [
+      { ...s, order: 0 },
+      { ...g, order: 0 },
+    ];
+    expect(sortSceneLayersForRender(reversed).map((l) => l.id)).toEqual([
+      "solarShading",
+      "grid",
+    ]);
   });
 
   it("v2 round-trip: layers are derived from scene, not a separate source of truth", () => {

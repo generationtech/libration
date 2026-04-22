@@ -76,6 +76,14 @@ export type LibrationConfigV2Meta = {
  */
 export interface LibrationConfigV2 {
   meta: LibrationConfigV2Meta;
+  /**
+   * Legacy layer enablement flags (Phase 0 / migration).
+   *
+   * **Authoritative model:** {@link LibrationConfigV2.scene} is the source of truth for which
+   * layers exist, their order, and visibility. This field is kept for backward compatibility
+   * and round-trips; {@link normalizeLibrationConfig} reconciles it with `scene` so they stay
+   * aligned.
+   */
   layers: LayerEnableFlags;
   /**
    * Authoritative scene: projection, base map, ordered layer stack.

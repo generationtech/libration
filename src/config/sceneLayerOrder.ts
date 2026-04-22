@@ -20,15 +20,19 @@ export type OrderableSceneLayer = {
 const SCENE_Z_BASE = 5;
 
 /**
- * Runtime sort: lower `order` first; tie-break by `id` for stable ordering.
+ * Runtime sort: lower `order` first. When `order` is equal, entries keep their order in
+ * `layers` (the SceneConfig stack array order), not id order.
  */
 export function sortSceneLayersForRender<T extends OrderableSceneLayer>(layers: readonly T[]): T[] {
-  return [...layers].sort((a, b) => {
-    if (a.order !== b.order) {
-      return a.order - b.order;
-    }
-    return a.id.localeCompare(b.id);
-  });
+  return layers
+    .map((layer, index) => ({ layer, index }))
+    .sort((a, b) => {
+      if (a.layer.order !== b.layer.order) {
+        return a.layer.order - b.layer.order;
+      }
+      return a.index - b.index;
+    })
+    .map(({ layer }) => layer);
 }
 
 /**
