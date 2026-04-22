@@ -232,8 +232,8 @@ describe("planSceneStackComposition", () => {
         ...s0.layers,
         {
           id: "customStaticOverlay",
-          family: "environment",
-          type: "staticRaster",
+          family: "environment" as const,
+          type: "staticRaster" as const,
           enabled: true,
           opacity: 0.8,
           order: 999,
@@ -253,8 +253,8 @@ describe("planSceneStackComposition", () => {
         ...s0.layers,
         {
           id: "unknownDerivedOverlay",
-          family: "custom",
-          type: "custom",
+          family: "custom" as const,
+          type: "custom" as const,
           enabled: true,
           opacity: 1,
           order: 998,

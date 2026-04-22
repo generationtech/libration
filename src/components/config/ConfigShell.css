@@ -635,3 +635,63 @@ select.config-input option:disabled {
   flex-wrap: wrap;
   gap: var(--config-shell-space-xs, 0.25rem);
 }
+
+/* Base map style selector (Scene layers — multi-base-map UI) */
+.config-base-map-style {
+  margin-bottom: var(--config-shell-space-md, 0.75rem);
+}
+
+.config-base-map-style__detail {
+  margin: 0 0 var(--config-shell-space-md, 0.75rem);
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--config-control-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-space-sm, 0.5rem);
+}
+
+.config-base-map-style__preview {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.config-base-map-style__preview-img {
+  width: 160px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--config-shell-radius, 6px);
+  border: 1px solid var(--config-control-border);
+  background: var(--config-control-disabled-surface, #f0f0f0);
+}
+
+.config-base-map-style__caption {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 16rem;
+  color: var(--config-control-fg);
+}
+
+.config-base-map-style__badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.config-base-map-style__desc,
+.config-base-map-style__attr {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.9;
+}
+
+.config-base-map-style__attr {
+  font-style: italic;
+  opacity: 0.85;
+}

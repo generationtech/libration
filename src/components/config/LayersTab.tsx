@@ -16,8 +16,10 @@ import type { LayerEnableFlags } from "../../config/appConfig";
 import {
   applyLayerEnableFlagsToScene,
   buildDefaultSceneConfigFromLayerFlags,
+  canonicalEquirectBaseMapIdForPersistence,
   deriveLayerEnableFlagsFromScene,
 } from "../../config/v2/sceneConfig";
+import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
@@ -53,6 +55,7 @@ export type LayersTabProps = {
 
 export function LayersTab({ config, updateConfig }: LayersTabProps) {
   const mutable = Boolean(updateConfig);
+  const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   return (
     <div className="config-tab-stack">
       <section
@@ -63,9 +66,28 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
           Scene layers
         </h2>
         <p className="config-section__hint">
-          Toggle which map and overlay layers are shown. Layers are read-only when the panel has no
-          live update handler.
+          Choose the basemap style, then toggle which map and overlay layers are shown. Read-only
+          when the panel has no live update handler.
         </p>
+        <BaseMapStyleControl
+          baseMapId={scene.baseMap.id}
+          mutable={mutable}
+          onSelectId={
+            mutable && updateConfig
+              ? (canonicalId) => {
+                  const id = canonicalEquirectBaseMapIdForPersistence(canonicalId);
+                  updateConfig((draft) => {
+                    const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                    draft.scene = {
+                      ...baseScene,
+                      baseMap: { ...baseScene.baseMap, id },
+                    };
+                    draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                  });
+                }
+              : undefined
+          }
+        />
         {LAYER_KEYS.map((key) => {
           return (
             <ConfigControlRow key={key} label={labelForLayer(key)}>

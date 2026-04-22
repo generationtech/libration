@@ -437,6 +437,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     for (const name of layerLabels) {
       expect(screen.getByRole("checkbox", { name })).not.toBeDisabled();
     }
+    expect(screen.getByRole("combobox", { name: "Map style" })).not.toBeDisabled();
   });
 
   it("Layers tab: layer checkboxes are read-only when updateConfig is omitted", () => {
@@ -458,7 +459,36 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     ]) {
       expect(screen.getByRole("checkbox", { name })).toBeDisabled();
     }
+    expect(screen.getByRole("combobox", { name: "Map style" })).toBeDisabled();
     expect(ref.current).toEqual(working);
+  });
+
+  it("Layers tab: map style combobox shows human labels and updates scene base map id", async () => {
+    const user = userEvent.setup();
+    const working = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const ref: { current: LibrationConfigV2 | null } = { current: working };
+    const derivedAppConfigRef = {
+      current: deriveAppConfigFromV2(working),
+    };
+    const registryRef = {
+      current: createLayerRegistryFromConfig(derivedAppConfigRef.current),
+    };
+
+    render(
+      <ConfigShellWithCommitRerender
+        workingV2Ref={ref}
+        derivedAppConfigRef={derivedAppConfigRef}
+        registryRef={registryRef}
+      />,
+    );
+
+    const style = screen.getByRole("combobox", { name: "Map style" });
+    expect(screen.getByRole("option", { name: "World geology" })).toBeInTheDocument();
+    await user.selectOptions(style, "equirect-world-geology-v1");
+
+    expect(style).toHaveValue("equirect-world-geology-v1");
+    expect(ref.current!.scene?.baseMap.id).toBe("equirect-world-geology-v1");
+    expect(derivedAppConfigRef.current.scene.baseMap.id).toBe("equirect-world-geology-v1");
   });
 
   it.each(

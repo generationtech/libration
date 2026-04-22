@@ -17,13 +17,23 @@
  */
 import type { LayerEnableFlags } from "../appConfig";
 import {
+  BASE_MAP_OPTION_CATEGORY_ORDER,
   DEFAULT_EQUIRECT_BASE_MAP_ID as DEFAULT_EQUIRECT_BASE_MAP_ID_VALUE,
+  EQUIRECT_BASE_MAP_OPTIONS,
+  canonicalEquirectBaseMapIdForPersistence,
+  getEquirectBaseMapOptionForId,
   resolveEquirectBaseMapAsset,
   resolveEquirectBaseMapImageSrc,
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 } from "../baseMapAssetResolve";
+import type { BaseMapOption } from "../baseMapAssetResolve";
 
+export type { BaseMapOption };
 export {
+  BASE_MAP_OPTION_CATEGORY_ORDER,
+  EQUIRECT_BASE_MAP_OPTIONS,
+  canonicalEquirectBaseMapIdForPersistence,
+  getEquirectBaseMapOptionForId,
   resolveEquirectBaseMapImageSrc,
   resolveEquirectBaseMapAsset,
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,

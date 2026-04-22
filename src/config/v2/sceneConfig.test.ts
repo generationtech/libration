@@ -23,8 +23,10 @@ import {
 } from "./librationConfig";
 import {
   DEFAULT_EQUIRECT_BASE_MAP_ID,
+  EQUIRECT_BASE_MAP_OPTIONS,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
+  getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
   resolveEquirectBaseMapAsset,
   resolveEquirectBaseMapImageSrc,
@@ -110,6 +112,20 @@ describe("SceneConfig (Phase 1)", () => {
     expect(resolveEquirectBaseMapAsset("equirect-world-topo-v1").id).toBe(
       "equirect-world-topography-v1",
     );
+  });
+
+  it("exposes BaseMapOption metadata in lockstep with the asset registry", () => {
+    expect(EQUIRECT_BASE_MAP_OPTIONS).toHaveLength(SUPPORTED_EQUIRECT_BASE_MAP_IDS.length);
+    expect(EQUIRECT_BASE_MAP_OPTIONS.map((o) => o.id)).toEqual(SUPPORTED_EQUIRECT_BASE_MAP_IDS);
+    for (const o of EQUIRECT_BASE_MAP_OPTIONS) {
+      expect(getEquirectBaseMapOptionForId(o.id).label).toBe(o.label);
+    }
+  });
+
+  it("getEquirectBaseMapOptionForId uses canonical ids for labels (legacy storage)", () => {
+    const o = getEquirectBaseMapOptionForId("equirect-world-topo-v1");
+    expect(o.id).toBe("equirect-world-topography-v1");
+    expect(o.label).toBe("World topography");
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {
