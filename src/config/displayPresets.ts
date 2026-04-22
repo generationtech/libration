@@ -157,6 +157,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
+      solarAnalemma: false,
     } as const;
     return {
       ...cloneConfig(DEFAULT_APP_CONFIG),
@@ -179,6 +180,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       cityPins: false,
       subsolarMarker: true,
       sublunarMarker: true,
+      solarAnalemma: false,
     } as const;
     return {
       ...cloneConfig(DEFAULT_APP_CONFIG),
@@ -201,6 +203,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       cityPins: true,
       subsolarMarker: false,
       sublunarMarker: false,
+      solarAnalemma: false,
     } as const;
     return {
       ...cloneConfig(DEFAULT_APP_CONFIG),

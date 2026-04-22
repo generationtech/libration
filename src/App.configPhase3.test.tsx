@@ -454,6 +454,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       "City pins",
       "Subsolar marker",
       "Sublunar marker",
+      "Solar analemma (ground track)",
     ]) {
       expect(screen.getByRole("checkbox", { name })).toBeDisabled();
     }
@@ -467,6 +468,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       ["Static equirect overlay", "staticEquirectOverlay"],
       ["Subsolar marker", "subsolarMarker"],
       ["Sublunar marker", "sublunarMarker"],
+      ["Solar analemma (ground track)", "solarAnalemma"],
     ] as const satisfies ReadonlyArray<readonly [string, keyof LayerEnableFlags]>,
   )(
     "Layers tab: toggling %s updates working v2 and derived AppConfig",

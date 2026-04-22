@@ -28,6 +28,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "solarAnalemma",
 ];
 
 function labelForLayer(key: keyof LayerEnableFlags): string {
@@ -39,6 +40,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     cityPins: "City pins",
     subsolarMarker: "Subsolar marker",
     sublunarMarker: "Sublunar marker",
+    solarAnalemma: "Solar analemma (ground track)",
   };
   return map[key];
 }

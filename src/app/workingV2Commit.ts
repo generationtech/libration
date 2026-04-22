@@ -34,6 +34,7 @@ const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "solarAnalemma",
 ];
 
 function layerEnableFlagsEqual(a: LayerEnableFlags, b: LayerEnableFlags): boolean {

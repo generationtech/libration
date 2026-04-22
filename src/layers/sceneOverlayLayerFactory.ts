@@ -24,6 +24,7 @@ import {
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
+import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
 import { createSolarShadingLayer } from "./solarShadingLayer";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
 import { createSubsolarMarkerLayer } from "./subsolarMarkerLayer";
@@ -53,19 +54,32 @@ export function createLayerForSceneOverlayInstance(
     });
   }
   if (s.kind === "derived") {
-    return createDerivedOverlayByProduct(s.product, { zIndex, opacity }, inst, config);
+    return createDerivedOverlayByProduct(s, { zIndex, opacity }, config);
   }
   return null;
 }
 
+function utcHourFromOptionalParameters(
+  parameters: Readonly<Record<string, unknown>> | undefined,
+): number | undefined {
+  if (!parameters) {
+    return undefined;
+  }
+  const h = parameters.utcHour;
+  if (typeof h === "number" && Number.isFinite(h)) {
+    return h;
+  }
+  return undefined;
+}
+
 function createDerivedOverlayByProduct(
-  product: string,
+  source: Extract<SceneLayerInstance["source"], { kind: "derived" }>,
   part: OverlayPart,
-  _inst: SceneLayerInstance,
   config: AppConfig,
 ): Layer | null {
   const { zIndex, opacity } = part;
-  switch (product) {
+  const utcH = utcHourFromOptionalParameters(source.parameters);
+  switch (source.product) {
     case "solarDayNightShading":
       return createSolarShadingLayer({ zIndex, opacity });
     case "latLonGrid":
@@ -86,6 +100,8 @@ function createDerivedOverlayByProduct(
       return createSubsolarMarkerLayer({ zIndex, opacity });
     case "sublunarPoint":
       return createSublunarMarkerLayer({ zIndex, opacity });
+    case "solarAnalemmaGroundTrack":
+      return createSolarAnalemmaLayer({ zIndex, opacity, ...(utcH !== undefined ? { utcHour: utcH } : {}) });
     default:
       return null;
   }

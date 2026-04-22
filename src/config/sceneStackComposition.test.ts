@@ -30,6 +30,7 @@ const ALL: LayerEnableFlags = {
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
+  solarAnalemma: true,
 };
 
 function sceneWith(
@@ -80,6 +81,7 @@ describe("planSceneStackComposition", () => {
       "cityPins",
       "subsolarMarker",
       "sublunarMarker",
+      "solarAnalemma",
     ]);
     p.overlays.forEach((o, i) => {
       expect(o.zIndex).toBe(zIndexForSceneStackIndex(i));
@@ -158,11 +160,63 @@ describe("planSceneStackComposition", () => {
 
   it("skips disabled stack rows without creating z-index gaps in the plan", () => {
     const s = sceneWith(undefined, (rows) =>
-      rows.map((L) => (L.id === "grid" ? { ...L, enabled: false } : L)),
+      rows.map((L) => {
+        if (L.id === "grid") {
+          return { ...L, enabled: false };
+        }
+        if (L.id === "solarAnalemma") {
+          return { ...L, enabled: false };
+        }
+        return L;
+      }),
     );
     const p = planSceneStackComposition(s);
     const idx = p.overlays.findIndex((o) => o.layerId === "sublunarMarker");
     expect(p.overlays[idx]?.stackIndex).toBe(p.overlays.length - 1);
     expect(p.overlays[idx]?.zIndex).toBe(zIndexForSceneStackIndex(p.overlays.length - 1));
+  });
+
+  it("omits solar analemma from the plan when its scene row is disabled (Phase 4 derived)", () => {
+    const s = sceneWith(undefined, (rows) =>
+      rows.map((L) => (L.id === "solarAnalemma" ? { ...L, enabled: false, opacity: 1 } : L)),
+    );
+    expect(
+      planSceneStackComposition(s).overlays.some((o) => o.layerId === "solarAnalemma"),
+    ).toBe(false);
+  });
+
+  it("applies per-layer opacity for solar analemma in the composition plan (derived path)", () => {
+    const s = sceneWith(undefined, (rows) =>
+      rows.map((L) =>
+        L.id === "solarAnalemma" ? { ...L, enabled: true, opacity: 0.37 } : L,
+      ),
+    );
+    const o = planSceneStackComposition(s).overlays.find(
+      (x) => x.layerId === "solarAnalemma",
+    );
+    expect(o?.opacity).toBe(0.37);
+  });
+
+  it("z-order: solar analemma above static equirect when scene order values say so", () => {
+    const s0 = sceneWith(undefined, (L) => L);
+    const a0 = s0.layers.find((l) => l.id === "solarAnalemma")!.order;
+    const p0 = s0.layers.find((l) => l.id === "staticEquirectOverlay")!.order;
+    expect(p0).toBeLessThan(a0);
+    const s1 = {
+      ...s0,
+      layers: s0.layers.map((row) => {
+        if (row.id === "staticEquirectOverlay") {
+          return { ...row, order: 7 };
+        }
+        if (row.id === "solarAnalemma") {
+          return { ...row, order: 1 };
+        }
+        return row;
+      }),
+    };
+    const p = planSceneStackComposition(s1);
+    const zA = p.overlays.find((o) => o.layerId === "solarAnalemma")!.zIndex;
+    const zS = p.overlays.find((o) => o.layerId === "staticEquirectOverlay")!.zIndex;
+    expect(zA).toBeLessThan(zS);
   });
 });

@@ -35,6 +35,7 @@ export const SCENE_STACK_COMPOSITION_OVERLAY_IDS: readonly SceneStackLayerId[] =
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "solarAnalemma",
 ];
 const expectedSceneIds: ReadonlySet<string> = new Set(SCENE_STACK_COMPOSITION_OVERLAY_IDS);
 

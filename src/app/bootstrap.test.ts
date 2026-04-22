@@ -123,6 +123,17 @@ describe("createLayerRegistryFromConfig", () => {
     );
   });
 
+  it("registers solar analemma when enabled in scene (Phase 4 derived)", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, solarAnalemma: true };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    expect(registry.getLayers().some((l) => l.id === "layer.solarAnalemma.groundTrack")).toBe(true);
+  });
+
   it("omits solar shading when solarShading is disabled in config", () => {
     const layers = { ...DEFAULT_APP_CONFIG.layers, solarShading: false };
     const config: AppConfig = {

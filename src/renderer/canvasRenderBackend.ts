@@ -15,12 +15,14 @@ import { isCityPinsPayload } from "../layers/cityPinsPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
+import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import { isTextOverlayPayload } from "../layers/textOverlayPayload";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
 import { buildBaseRasterMapRenderPlan } from "./renderPlan/sceneBaseRasterMapPlan";
 import { buildEquirectangularGridOverlayRenderPlan } from "./renderPlan/equirectGridOverlayPlan";
+import { buildEquirectangularPolylineOverlayRenderPlan } from "./renderPlan/equirectPolylineOverlayPlan";
 import { buildSolarShadingIlluminationRenderPlan } from "./renderPlan/sceneSolarShadingIlluminationPlan";
 import {
   buildSubsolarMarkerRenderPlan,
@@ -235,27 +237,39 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
   ): void {
-    if (!isEquirectangularGridPayload(layer.data)) {
-      return;
-    }
     const w = viewport.width;
     const h = viewport.height;
     if (w <= 0 || h <= 0) {
       return;
     }
-
-    const { meridianStepDeg, parallelStepDeg } = layer.data;
     ctx.setLineDash([]);
-    executeRenderPlanOnCanvas(
-      ctx,
-      buildEquirectangularGridOverlayRenderPlan({
-        viewportWidthPx: w,
-        viewportHeightPx: h,
-        meridianStepDeg,
-        parallelStepDeg,
-        layerOpacity: layer.opacity,
-      }),
-    );
+    if (isEquirectangularGridPayload(layer.data)) {
+      const { meridianStepDeg, parallelStepDeg } = layer.data;
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildEquirectangularGridOverlayRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          meridianStepDeg,
+          parallelStepDeg,
+          layerOpacity: layer.opacity,
+        }),
+      );
+      return;
+    }
+    if (isEquirectangularPolylinePayload(layer.data)) {
+      const { points, closed } = layer.data;
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildEquirectangularPolylineOverlayRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          points,
+          closed,
+          layerOpacity: layer.opacity,
+        }),
+      );
+    }
   }
 
   /**

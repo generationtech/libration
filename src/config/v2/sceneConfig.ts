@@ -101,6 +101,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "solarAnalemma",
 ] as const;
 
 export type SceneStackLayerId = (typeof SCENE_STACK_LAYER_IDS)[number];
@@ -176,7 +177,25 @@ const SUBLUNAR: SceneLayerInstance = {
   source: { kind: "derived", product: "sublunarPoint" },
 };
 
-const DEFAULT_STACK: readonly SceneLayerInstance[] = [SOLAR, GRID, STATIC_EQUIRECT, CITY, SUBSOLAR, SUBLUNAR];
+/** Phase 4: equation-of-time ground track; default off so the legacy stack is visually unchanged. */
+const SOLAR_ANALEMMA_ROW: SceneLayerInstance = {
+  id: "solarAnalemma",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 6,
+  source: { kind: "derived", product: "solarAnalemmaGroundTrack" },
+};
+
+const DEFAULT_STACK: readonly SceneLayerInstance[] = [
+  SOLAR,
+  GRID,
+  STATIC_EQUIRECT,
+  CITY,
+  SUBSOLAR,
+  SUBLUNAR,
+  SOLAR_ANALEMMA_ROW,
+];
 
 function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
   switch (id) {
@@ -192,6 +211,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "sublunarMarker";
     case "staticEquirectOverlay":
       return "staticEquirectOverlay";
+    case "solarAnalemma":
+      return "solarAnalemma";
     default:
       return null;
   }
@@ -233,6 +254,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     cityPins: false,
     subsolarMarker: false,
     sublunarMarker: false,
+    solarAnalemma: false,
   };
   for (const inst of scene.layers) {
     const k = mapLayerIdToKey(inst.id);
@@ -388,9 +410,11 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   let source: LayerSourceConfig;
   const sRaw = raw.source;
   if (isPlainObject(sRaw) && sRaw.kind === "derived" && typeof sRaw.product === "string") {
+    const params = isPlainObject(sRaw.parameters) ? { ...sRaw.parameters } : undefined;
     source = {
       kind: "derived",
       product: sRaw.product,
+      ...(params ? { parameters: params } : {}),
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "staticRaster" && typeof sRaw.src === "string") {
     const srcT = sRaw.src.trim();

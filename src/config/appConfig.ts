@@ -44,6 +44,8 @@ export interface LayerEnableFlags {
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
+  /** Phase 4: year-long subsolar locus at fixed UTC hour (scene product `solarAnalemmaGroundTrack`). */
+  solarAnalemma: boolean;
 }
 
 /** Where the display chrome resolves its reference IANA timezone from. */
@@ -631,6 +633,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
+  solarAnalemma: false,
 };
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
