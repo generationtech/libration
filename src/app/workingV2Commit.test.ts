@@ -335,6 +335,111 @@ describe("commitWorkingV2Update", () => {
       }
     },
   );
+
+  it("scene-only layer reordering rebuilds the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+    const [first, second] = workingV2Ref.current!.scene!.layers;
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const layers = [...draft.scene!.layers];
+      layers[0] = { ...layers[0]!, order: 10 };
+      layers[1] = { ...layers[1]!, order: 0 };
+      draft.scene = { ...draft.scene!, layers };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(derivedAppConfigRef.current.scene.layers[0]!.order).toBe(10);
+    expect(derivedAppConfigRef.current.scene.layers[1]!.order).toBe(0);
+  });
+
+  it("scene-only layer opacity updates rebuild the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const layers = draft.scene!.layers.map((layer) =>
+        layer.id === "grid" ? { ...layer, opacity: 0.25 } : layer,
+      );
+      draft.scene = { ...draft.scene!, layers };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(derivedAppConfigRef.current.scene.layers.find((layer) => layer.id === "grid")?.opacity).toBe(0.25);
+  });
+
+  it("scene-only base map id changes rebuild the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      draft.scene = {
+        ...draft.scene!,
+        baseMap: {
+          ...draft.scene!.baseMap,
+          id: "equirect-world-topo-v1",
+        },
+      };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(derivedAppConfigRef.current.scene.baseMap.id).toBe("equirect-world-topo-v1");
+  });
+
+  it("scene-only derived-source parameters changes rebuild the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const layers = draft.scene!.layers.map((layer) =>
+        layer.id === "solarAnalemma" && layer.source.kind === "derived"
+          ? {
+              ...layer,
+              source: {
+                ...layer.source,
+                parameters: { ...(layer.source.parameters ?? {}), utcHour: 14 },
+              },
+            }
+          : layer,
+      );
+      draft.scene = { ...draft.scene!, layers };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    const analemma = derivedAppConfigRef.current.scene.layers.find((layer) => layer.id === "solarAnalemma");
+    expect(analemma?.source.kind).toBe("derived");
+    expect((analemma?.source.kind === "derived" ? analemma.source.parameters?.utcHour : undefined)).toBe(14);
+  });
+
+  it("scene-only static source changes rebuild the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const layers = draft.scene!.layers.map((layer) =>
+        layer.id === "staticEquirectOverlay" && layer.source.kind === "staticRaster"
+          ? { ...layer, source: { ...layer.source, src: "/maps/world-equirectangular-night.jpg" } }
+          : layer,
+      );
+      draft.scene = { ...draft.scene!, layers };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    const staticOverlay = derivedAppConfigRef.current.scene.layers.find(
+      (layer) => layer.id === "staticEquirectOverlay",
+    );
+    expect(staticOverlay?.source.kind).toBe("staticRaster");
+    expect(
+      staticOverlay?.source.kind === "staticRaster" ? staticOverlay.source.src : undefined,
+    ).toBe("/maps/world-equirectangular-night.jpg");
+  });
 });
 
 describe("replaceWorkingV2FromSnapshot", () => {

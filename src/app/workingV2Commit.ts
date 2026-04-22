@@ -16,6 +16,7 @@ import { createLayerRegistryFromConfig } from "./bootstrap";
 import type { AppConfig, CustomPinConfig, LayerEnableFlags } from "../config/appConfig";
 import { resolveDefaultProductTextFontAssetId } from "../config/productTextFont";
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
+import type { SceneConfig, SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
   normalizeLibrationConfig,
   v2ToAppConfig,
@@ -85,6 +86,78 @@ function pinPresentationEqual(
   );
 }
 
+function shallowRecordEqual(a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined): boolean {
+  const aKeys = Object.keys(a ?? {});
+  const bKeys = Object.keys(b ?? {});
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  for (const key of aKeys) {
+    if (!Object.is(a?.[key], b?.[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function sceneLayerSourceEqual(a: SceneLayerInstance["source"], b: SceneLayerInstance["source"]): boolean {
+  if (a.kind !== b.kind) {
+    return false;
+  }
+  if (a.kind === "derived" && b.kind === "derived") {
+    return (
+      a.product === b.product &&
+      shallowRecordEqual(a.parameters, b.parameters) &&
+      shallowRecordEqual(a.metadata, b.metadata)
+    );
+  }
+  if (a.kind === "staticRaster" && b.kind === "staticRaster") {
+    return a.src === b.src && shallowRecordEqual(a.metadata, b.metadata);
+  }
+  if (a.kind === "custom" && b.kind === "custom") {
+    return shallowRecordEqual(a.config, b.config);
+  }
+  return false;
+}
+
+function sceneLayersRuntimeEqual(a: readonly SceneLayerInstance[], b: readonly SceneLayerInstance[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i]!;
+    const y = b[i]!;
+    if (
+      x.id !== y.id ||
+      x.enabled !== y.enabled ||
+      x.order !== y.order ||
+      (x.opacity ?? 1) !== (y.opacity ?? 1) ||
+      !sceneLayerSourceEqual(x.source, y.source)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Scene is authoritative for runtime composition and overlay construction.
+ * Legacy `layers` flags remain as transitional compatibility, but scene deltas
+ * are the primary trigger surface for registry rebuilds.
+ */
+function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
+  return (
+    a.projectionId === b.projectionId &&
+    a.viewMode === b.viewMode &&
+    a.orderingMode === b.orderingMode &&
+    a.baseMap.id === b.baseMap.id &&
+    a.baseMap.visible === b.baseMap.visible &&
+    (a.baseMap.opacity ?? 1) === (b.baseMap.opacity ?? 1) &&
+    a.baseMap.styleVariant === b.baseMap.styleVariant &&
+    sceneLayersRuntimeEqual(a.layers, b.layers)
+  );
+}
+
 /** Derives runtime {@link AppConfig} from a normalized v2 document. */
 export function deriveAppConfigFromV2(v2: LibrationConfigV2): AppConfig {
   return v2ToAppConfig(v2);
@@ -121,8 +194,10 @@ function applyCommittedWorkingV2(
     prevDerived.displayTime.topBandMode !== nextDerived.displayTime.topBandMode;
   const cityPinsHourLabelRequiresRegistry =
     cityPinsHourLabelPolicyChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
+  const sceneRuntimeChanged = !sceneRuntimeAffectingEqual(prevDerived.scene, nextDerived.scene);
 
   if (
+    sceneRuntimeChanged ||
     !layerEnableFlagsEqual(prevDerived.layers, nextDerived.layers) ||
     !visibleCityIdsSetEqual(prevDerived.visibleCityIds, nextDerived.visibleCityIds) ||
     !customPinsEqual(prevDerived.customPins, nextDerived.customPins) ||
@@ -138,8 +213,9 @@ function applyCommittedWorkingV2(
 
 /**
  * Applies an in-place-style updater to a clone of the working v2 ref, re-normalizes,
- * updates derived AppConfig, and rebuilds the layer registry when layer flags,
- * reference-city visibility (derived `visibleCityIds`), custom pins, or pin presentation change.
+ * updates derived AppConfig, and rebuilds the layer registry when scene runtime composition
+ * changes (authoritative), or when transitional compatibility predicates (legacy flags/pins)
+ * indicate constructor-level layer input changes.
  */
 export function commitWorkingV2Update(
   workingV2Ref: RefObject<LibrationConfigV2 | null>,
