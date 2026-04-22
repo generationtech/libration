@@ -30,6 +30,7 @@ const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
   "solarShading",
   "grid",
+  "staticEquirectOverlay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",

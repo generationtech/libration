@@ -53,6 +53,7 @@ export type LayerSourceConfig =
       parameters?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     }
+  | { kind: "staticRaster"; src: string; metadata?: Record<string, unknown> }
   | { kind: "custom"; config: Record<string, unknown> };
 
 export type SceneLayerFamily =
@@ -68,6 +69,7 @@ export type SceneLayerType =
   | "astronomyVector"
   | "referenceGrid"
   | "annotationPoints"
+  | "staticRaster"
   | "custom";
 
 export type SceneLayerInstance = {
@@ -95,6 +97,7 @@ export type SceneConfig = {
 export const SCENE_STACK_LAYER_IDS = [
   "solarShading",
   "grid",
+  "staticEquirectOverlay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -131,12 +134,27 @@ const GRID: SceneLayerInstance = {
   source: { kind: "derived", product: "latLonGrid" },
 };
 
+/** Phase 3: data-driven static raster; default off so legacy views are unchanged. */
+const STATIC_EQUIRECT: SceneLayerInstance = {
+  id: "staticEquirectOverlay",
+  family: "environment",
+  type: "staticRaster",
+  enabled: false,
+  order: 2,
+  opacity: 0.4,
+  source: {
+    kind: "staticRaster",
+    // Placeholder: same shipped equirect as base map; enable + opacity in scene for visible blend tests.
+    src: "/maps/world-equirectangular.jpg",
+  },
+};
+
 const CITY: SceneLayerInstance = {
   id: "cityPins",
   family: "annotation",
   type: "annotationPoints",
   enabled: true,
-  order: 2,
+  order: 3,
   source: { kind: "derived", product: "referenceAndCustomCityPins" },
 };
 
@@ -145,7 +163,7 @@ const SUBSOLAR: SceneLayerInstance = {
   family: "astronomy",
   type: "astronomyVector",
   enabled: true,
-  order: 3,
+  order: 4,
   source: { kind: "derived", product: "subsolarPoint" },
 };
 
@@ -154,11 +172,11 @@ const SUBLUNAR: SceneLayerInstance = {
   family: "astronomy",
   type: "astronomyVector",
   enabled: true,
-  order: 4,
+  order: 5,
   source: { kind: "derived", product: "sublunarPoint" },
 };
 
-const DEFAULT_STACK: readonly SceneLayerInstance[] = [SOLAR, GRID, CITY, SUBSOLAR, SUBLUNAR];
+const DEFAULT_STACK: readonly SceneLayerInstance[] = [SOLAR, GRID, STATIC_EQUIRECT, CITY, SUBSOLAR, SUBLUNAR];
 
 function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
   switch (id) {
@@ -172,6 +190,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "subsolarMarker";
     case "sublunarMarker":
       return "sublunarMarker";
+    case "staticEquirectOverlay":
+      return "staticEquirectOverlay";
     default:
       return null;
   }
@@ -209,6 +229,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     baseMap: scene.baseMap.visible,
     solarShading: false,
     grid: false,
+    staticEquirectOverlay: false,
     cityPins: false,
     subsolarMarker: false,
     sublunarMarker: false,
@@ -360,6 +381,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     typ === "astronomyVector" ||
     typ === "referenceGrid" ||
     typ === "annotationPoints" ||
+    typ === "staticRaster" ||
     typ === "custom"
       ? typ
       : (DEFAULT_STACK.find((d) => d.id === idNorm)?.type ?? "custom");
@@ -369,6 +391,15 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = {
       kind: "derived",
       product: sRaw.product,
+    };
+  } else if (isPlainObject(sRaw) && sRaw.kind === "staticRaster" && typeof sRaw.src === "string") {
+    const srcT = sRaw.src.trim();
+    const defSrc = DEFAULT_STACK.find((d) => d.id === idNorm);
+    const fallback =
+      defSrc?.source.kind === "staticRaster" ? defSrc.source.src : "/maps/world-equirectangular.jpg";
+    source = {
+      kind: "staticRaster",
+      src: srcT !== "" ? srcT : fallback,
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "custom") {
     source = { kind: "custom", config: isPlainObject(sRaw.config) ? { ...sRaw.config } : {} };

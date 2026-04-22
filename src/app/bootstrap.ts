@@ -12,21 +12,11 @@
  */
 
 import type { AppConfig } from "../config/appConfig";
-import { displayTimeModeFromTopBandTimeMode } from "../core/displayTimeMode";
-import { resolveCitiesForPins, resolveEnabledCustomPinsForMap } from "../config/appConfig";
-import {
-  resolvePinCityNameTextFontAssetId,
-  resolvePinDateTimeTextFontAssetId,
-} from "../config/productTextFont";
 import { getActiveAppConfig } from "../config/displayPresets";
 import { resolveEquirectBaseMapImageSrc } from "../config/baseMapAssetResolve";
 import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
-import { createCityPinsLayer } from "../layers/cityPinsLayer";
-import { createLatLonGridLayer } from "../layers/latLonGridLayer";
-import { createSolarShadingLayer } from "../layers/solarShadingLayer";
-import { createSublunarMarkerLayer } from "../layers/sublunarMarkerLayer";
-import { createSubsolarMarkerLayer } from "../layers/subsolarMarkerLayer";
+import { createLayerForSceneOverlayInstance } from "../layers/sceneOverlayLayerFactory";
 import { LayerRegistry } from "../layers/LayerRegistry";
 
 /**
@@ -51,37 +41,17 @@ export function createLayerRegistryFromConfig(
     );
   }
   for (const part of overlays) {
-    const z = part.zIndex;
-    const op = part.opacity;
-    switch (part.layerId) {
-      case "solarShading":
-        registry.register(createSolarShadingLayer({ zIndex: z, opacity: op }));
-        break;
-      case "grid":
-        registry.register(createLatLonGridLayer({ zIndex: z, opacity: op }));
-        break;
-      case "cityPins": {
-        registry.register(
-          createCityPinsLayer(
-            resolveCitiesForPins(config),
-            resolveEnabledCustomPinsForMap(config),
-            {
-              ...config.pinPresentation,
-              displayTimeMode: displayTimeModeFromTopBandTimeMode(config.displayTime.topBandMode),
-            },
-            resolvePinCityNameTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
-            resolvePinDateTimeTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
-            { zIndex: z, opacity: op },
-          ),
-        );
-        break;
-      }
-      case "subsolarMarker":
-        registry.register(createSubsolarMarkerLayer({ zIndex: z, opacity: op }));
-        break;
-      case "sublunarMarker":
-        registry.register(createSublunarMarkerLayer({ zIndex: z, opacity: op }));
-        break;
+    const inst = config.scene.layers.find((L) => L.id === part.layerId);
+    if (!inst) {
+      continue;
+    }
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: part.zIndex, opacity: part.opacity },
+      config,
+    );
+    if (layer) {
+      registry.register(layer);
     }
   }
   return registry;

@@ -15,7 +15,7 @@
  * Local persistence for the working LibrationConfigV2 document (Phase 4).
  * Render-engine agnostic: only the durable v2 JSON shape is stored.
  */
-import type { DisplayTimeConfig, LayerEnableFlags } from "../appConfig";
+import { DEFAULT_APP_CONFIG, type DisplayTimeConfig, type LayerEnableFlags } from "../appConfig";
 import type { LibrationConfigV2 } from "./librationConfig";
 import type { SceneConfig } from "./sceneConfig";
 import {
@@ -33,6 +33,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
   "solarShading",
   "grid",
+  "staticEquirectOverlay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -46,7 +47,9 @@ function isValidLayerEnableFlags(x: unknown): x is LayerEnableFlags {
   if (!isPlainObject(x)) {
     return false;
   }
-  return LAYER_KEYS.every((k) => typeof x[k] === "boolean");
+  return LAYER_KEYS.every(
+    (k) => x[k] === undefined || typeof x[k] === "boolean",
+  );
 }
 
 function validateDisplayTime(dt: unknown): DisplayTimeConfig | null {
@@ -150,7 +153,7 @@ export function reviveLibrationConfigV2FromUnknown(parsed: unknown): LibrationCo
       : undefined;
     const candidate: LibrationConfigV2 = {
       meta: { ...meta, schemaVersion: 2 },
-      layers: parsed.layers,
+      layers: { ...DEFAULT_APP_CONFIG.layers, ...parsed.layers },
       scene: rawScene,
       pins: {
         reference: {

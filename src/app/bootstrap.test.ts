@@ -23,9 +23,11 @@ import {
 } from "../config/v2/sceneConfig";
 import { createTimeContext } from "../core/time";
 import { CITY_PINS_KIND } from "../layers/cityPinsPayload";
+import { runtimeIdForStaticRasterSceneLayer } from "../layers/staticEquirectRasterOverlayLayer";
 import { createLayerRegistryFromConfig } from "./bootstrap";
 
 const GRID_ID = "layer.grid.latLon";
+const STATIC_EQUIRECT_OVERLAY_ID = runtimeIdForStaticRasterSceneLayer("staticEquirectOverlay");
 
 describe("createLayerRegistryFromConfig", () => {
   it("when called with no args, matches an explicit DEFAULT_APP_CONFIG registry (active preset is full)", () => {
@@ -60,6 +62,65 @@ describe("createLayerRegistryFromConfig", () => {
     };
     const registry = createLayerRegistryFromConfig(config);
     expect(registry.getLayers().some((l) => l.id === GRID_ID)).toBe(false);
+  });
+
+  it("registers static equirect overlay when enabled in scene", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, staticEquirectOverlay: true };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    expect(registry.getLayers().some((l) => l.id === STATIC_EQUIRECT_OVERLAY_ID)).toBe(true);
+  });
+
+  it("omits static equirect overlay when disabled in scene", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, staticEquirectOverlay: false };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    expect(registry.getLayers().some((l) => l.id === STATIC_EQUIRECT_OVERLAY_ID)).toBe(false);
+  });
+
+  it("applies scene opacity to static equirect overlay state", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      ...DEFAULT_APP_CONFIG.layers,
+      staticEquirectOverlay: true,
+    });
+    const scene = {
+      ...base,
+      layers: base.layers.map((L) =>
+        L.id === "staticEquirectOverlay" ? { ...L, opacity: 0.22 } : L,
+      ),
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === STATIC_EQUIRECT_OVERLAY_ID);
+    const time = createTimeContext(Date.now(), 0, false);
+    expect(layer?.getState(time).opacity).toBeCloseTo(0.22, 5);
+  });
+
+  it("static equirect overlay draws above grid and below city pins with default order", () => {
+    const layers = { ...DEFAULT_APP_CONFIG.layers, staticEquirectOverlay: true };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      layers,
+      scene: buildDefaultSceneConfigFromLayerFlags(layers),
+    };
+    const r = createLayerRegistryFromConfig(config);
+    const z = (id: string) => r.getLayers().find((l) => l.id === id)!.zIndex;
+    expect(z(GRID_ID)).toBeLessThan(z(STATIC_EQUIRECT_OVERLAY_ID));
+    expect(z(STATIC_EQUIRECT_OVERLAY_ID)).toBeLessThan(
+      r.getLayers().find((l) => l.id === "layer.points.referenceCities")!.zIndex,
+    );
   });
 
   it("omits solar shading when solarShading is disabled in config", () => {

@@ -26,6 +26,7 @@ const ALL: LayerEnableFlags = {
   baseMap: true,
   solarShading: true,
   grid: true,
+  staticEquirectOverlay: true,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
@@ -75,6 +76,7 @@ describe("planSceneStackComposition", () => {
     expect(p.overlays.map((o) => o.layerId)).toEqual([
       "solarShading",
       "grid",
+      "staticEquirectOverlay",
       "cityPins",
       "subsolarMarker",
       "sublunarMarker",
@@ -129,6 +131,29 @@ describe("planSceneStackComposition", () => {
     );
     const grid = planSceneStackComposition(s).overlays.find((o) => o.layerId === "grid");
     expect(grid?.opacity).toBe(0.25);
+  });
+
+  it("propagates static equirect overlay opacity when that row participates", () => {
+    const s = sceneWith(undefined, (rows) =>
+      rows.map((L) =>
+        L.id === "staticEquirectOverlay" ? { ...L, enabled: true, opacity: 0.31 } : L,
+      ),
+    );
+    const p = planSceneStackComposition(s).overlays.find(
+      (o) => o.layerId === "staticEquirectOverlay",
+    );
+    expect(p?.opacity).toBe(0.31);
+  });
+
+  it("omits static equirect overlay when its scene row is disabled", () => {
+    const s = sceneWith(undefined, (rows) =>
+      rows.map((L) =>
+        L.id === "staticEquirectOverlay" ? { ...L, enabled: false } : L,
+      ),
+    );
+    expect(
+      planSceneStackComposition(s).overlays.some((o) => o.layerId === "staticEquirectOverlay"),
+    ).toBe(false);
   });
 
   it("skips disabled stack rows without creating z-index gaps in the plan", () => {

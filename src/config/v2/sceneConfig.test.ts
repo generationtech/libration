@@ -32,6 +32,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   baseMap: true,
   solarShading: true,
   grid: true,
+  staticEquirectOverlay: true,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
@@ -67,7 +68,7 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(5);
+    expect(v2.scene?.layers).toHaveLength(6);
   });
 
   it("base map id drives resolved raster path (single legacy asset for unknown ids)", () => {

@@ -429,6 +429,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       "Base map",
       "Solar shading",
       "Grid",
+      "Static equirect overlay",
       "City pins",
       "Subsolar marker",
       "Sublunar marker",
@@ -449,6 +450,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       "Base map",
       "Solar shading",
       "Grid",
+      "Static equirect overlay",
       "City pins",
       "Subsolar marker",
       "Sublunar marker",
@@ -462,6 +464,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     [
       ["Base map", "baseMap"],
       ["Grid", "grid"],
+      ["Static equirect overlay", "staticEquirectOverlay"],
       ["Subsolar marker", "subsolarMarker"],
       ["Sublunar marker", "sublunarMarker"],
     ] as const satisfies ReadonlyArray<readonly [string, keyof LayerEnableFlags]>,

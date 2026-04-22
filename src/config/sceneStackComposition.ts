@@ -31,6 +31,7 @@ import type { SceneConfig, SceneStackLayerId } from "./v2/sceneConfig";
 export const SCENE_STACK_COMPOSITION_OVERLAY_IDS: readonly SceneStackLayerId[] = [
   "solarShading",
   "grid",
+  "staticEquirectOverlay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -65,8 +66,8 @@ export type SceneStackCompositionPlan = {
 /**
  * Produces a deterministic z-order and opacity list from {@link SceneConfig} alone.
  * Base map is explicit at {@link SCENE_BASE_MAP_Z_INDEX}; overlays are consecutive
- * from {@link SCENE_OVERLAY_Z_BASE} in stack order. Unknown stack ids are skipped
- * to match the bootstrap `switch` behavior.
+ * from {@link SCENE_OVERLAY_Z_BASE} in stack order. Stack row ids that are not in
+ * the scene allowlist are skipped (defensive; normalized config only emits known rows).
  */
 export function planSceneStackComposition(scene: SceneConfig): SceneStackCompositionPlan {
   const baseOp = scene.baseMap.opacity ?? 1;

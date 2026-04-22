@@ -39,6 +39,8 @@ export interface LayerEnableFlags {
   baseMap: boolean;
   solarShading: boolean;
   grid: boolean;
+  /** Phase 3: scene stack row for {@link SceneLayerInstance} `staticEquirectOverlay` (static raster URL in scene). */
+  staticEquirectOverlay: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -625,6 +627,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   baseMap: true,
   solarShading: true,
   grid: true,
+  staticEquirectOverlay: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

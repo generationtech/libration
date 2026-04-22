@@ -61,6 +61,7 @@ const CITY_PINS_LAYER_ID = "layer.points.referenceCities";
 const BASE_MAP_LAYER_ID = "layer.baseMap.world";
 const SUBSOLAR_MARKER_LAYER_ID = "layer.points.subsolar";
 const SUBLUNAR_MARKER_LAYER_ID = "layer.points.sublunar";
+const STATIC_EQUIRECT_OVERLAY_LAYER_ID = "layer.staticRaster.staticEquirectOverlay";
 
 function setupRefs(initial: LibrationConfigV2) {
   const workingV2Ref: { current: LibrationConfigV2 | null } = {
@@ -306,6 +307,7 @@ describe("commitWorkingV2Update", () => {
     [
       ["baseMap", BASE_MAP_LAYER_ID],
       ["grid", GRID_LAYER_ID],
+      ["staticEquirectOverlay", STATIC_EQUIRECT_OVERLAY_LAYER_ID],
       ["subsolarMarker", SUBSOLAR_MARKER_LAYER_ID],
       ["sublunarMarker", SUBLUNAR_MARKER_LAYER_ID],
     ] as const,
