@@ -1,4 +1,4 @@
-# Projection System Specification (Refined)
+# Projection System Specification
 
 ## Purpose
 

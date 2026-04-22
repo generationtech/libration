@@ -1,4 +1,4 @@
-# Map Asset Contract (Refined)
+# Map Asset Contract
 
 ## Purpose
 

@@ -1,4 +1,4 @@
-# Scene System Specification (Refined v2)
+# Scene System Specification
 
 ## Purpose
 

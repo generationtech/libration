@@ -1,4 +1,4 @@
-# SceneConfig v1 (Refined v2.1 Specification)
+# SceneConfig v1
 
 ## Purpose
 

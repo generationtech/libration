@@ -1,4 +1,4 @@
-# Layer Data Lifecycle Specification (Refined)
+# Layer Data Lifecycle Specification
 
 ## Purpose
 
