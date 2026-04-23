@@ -88,13 +88,13 @@ const DEFINITIONS: readonly EquirectMapDefinition[] = [
   {
     id: "equirect-world-topography-v1",
     src: "/maps/world-equirectangular-topography.jpg",
-    transitionalPlaceholder: true,
     option: {
       id: "equirect-world-topography-v1",
       label: "World topography",
       shortDescription: "Terrain and relief, useful for landforms and elevation context.",
       category: "terrain",
-      transitionalPlaceholder: true,
+      previewThumbnailSrc: "/maps/previews/world-equirectangular-topography-thumb.jpg",
+      attribution: "Based on NASA Blue Marble Next Generation topography / bathymetry.",
     },
   },
   {

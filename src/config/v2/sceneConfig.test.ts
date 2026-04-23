@@ -128,6 +128,22 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.label).toBe("World topography");
   });
 
+  it("topography uses the real runtime asset, preview thumbnail, and is not a transitional placeholder", () => {
+    const asset = resolveEquirectBaseMapAsset("equirect-world-topography-v1");
+    expect(asset.src).toBe("/maps/world-equirectangular-topography.jpg");
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    const o = getEquirectBaseMapOptionForId("equirect-world-topography-v1");
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-topography-thumb.jpg");
+    expect(o.transitionalPlaceholder).toBeUndefined();
+  });
+
+  it("non-topography placeholder base maps remain marked transitional in registry and options", () => {
+    for (const id of ["equirect-world-political-v1", "equirect-world-geology-v1"] as const) {
+      expect(resolveEquirectBaseMapAsset(id).transitionalPlaceholder).toBe(true);
+      expect(getEquirectBaseMapOptionForId(id).transitionalPlaceholder).toBe(true);
+    }
+  });
+
   it("disabling a scene layer drops it from the layer registry", () => {
     const layers: LayerEnableFlags = { ...DEFAULT_LAYERS, grid: false };
     const r = createLayerRegistryFromConfig(appConfigWithLayerMask(layers));
