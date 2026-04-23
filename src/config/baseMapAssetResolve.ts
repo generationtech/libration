@@ -71,6 +71,10 @@ type EquirectMapDefinition = {
    */
   src: string;
   variantMode?: BaseMapVariantMode;
+  /**
+   * When `variantMode` is `monthOfYear`, lists concrete paths; `onboardedMonths` must
+   * list only months that are actually shipped (see {@link MonthOfYearFamilyPaths}).
+   */
   monthOfYear?: MonthOfYearFamilyPaths;
   /** Product UI — kept alongside the asset to avoid id / label drift. */
   option: BaseMapOption;
@@ -89,6 +93,11 @@ const FULL_WORLD_EXTENT = {
 } as const;
 
 const EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR = "/maps/variants/equirect-world-topography-v1";
+
+/** Shipped `01.jpg`…`12.jpg` in the variant directory; keep in sync with static assets. */
+const EQUIRECT_WORLD_TOPOGRAPHY_V1_ONBOARDED_MONTHS: readonly [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+];
 
 const EQUIRECT_WORLD_TOPOGRAPHY_V1_MONTH_SRCS = [
   `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/01.jpg`,
@@ -136,6 +145,7 @@ const DEFINITIONS: readonly EquirectMapDefinition[] = [
     monthOfYear: {
       familyBaseSrc: `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/base.jpg`,
       monthAssetSrcs: EQUIRECT_WORLD_TOPOGRAPHY_V1_MONTH_SRCS,
+      onboardedMonths: EQUIRECT_WORLD_TOPOGRAPHY_V1_ONBOARDED_MONTHS,
     },
     option: {
       id: "equirect-world-topography-v1",

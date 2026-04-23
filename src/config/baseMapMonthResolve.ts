@@ -21,8 +21,16 @@ export type MonthOfYearFamilyPaths = Readonly<{
   /** January = index 0 … December = index 11 — full public URL paths */
   monthAssetSrcs: readonly string[] & { length: 12 };
   /**
-   * Subset of months 1–12 that have distinct assets in `monthAssetSrcs`.
-   * Omitted ⇒ all twelve are available. Empty ⇒ no monthly assets (use family base only).
+   * Which months 1–12 are actually present as shipped static files (must match
+   * `monthAssetSrcs` indices). This is registry metadata only — not filesystem
+   * probing and not image-load fallbacks; keep it aligned with the repo.
+   *
+   * - **Omitted** — only valid when the family contract is a **full** 12-file
+   *   set (treated as 1…12 are onboarded). Prefer listing `1…12` explicitly in
+   *   production for clarity and to avoid false URLs when a subset is present.
+   * - **Empty `[]`** — no monthly rasters; use `familyBaseSrc` only.
+   * - **Partial list** — e.g. `[1, 2, 6]`; missing months are skipped by the
+   *   backward walk until an onboarded month is found, then `familyBaseSrc` as needed.
    */
   onboardedMonths?: readonly number[];
 }>;
@@ -49,6 +57,8 @@ export function monthNumbersToTryBackwardsCivil(startMonth1To12: number): readon
 /**
  * Resolves the raster URL for a month-aware family.
  * - Tries monthly assets in backward civil order until an onboarded month matches.
+ * - If `onboardedMonths` is omitted, all twelve indices are considered onboarded
+ *   (use only for a complete shipped family, or set explicit `onboardedMonths`).
  * - If there are no monthly assets (`onboardedMonths` is empty), uses `familyBaseSrc`.
  * - If `familyBaseSrc` is empty, returns `""` so the caller can apply legacy / global fallbacks.
  */

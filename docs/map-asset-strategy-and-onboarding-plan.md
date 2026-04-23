@@ -128,7 +128,7 @@ Some families ship **month-of-year** rasters (e.g. seasonal imagery). This is **
 
   * `public/maps/variants/<family-id>/base.jpg` — family default when no monthly asset applies.
   * `public/maps/variants/<family-id>/01.jpg` … `12.jpg` — explicit month rasters (paths listed in the registry).
-* **Missing month**: try the current UTC month first, then walk **backward** month-by-month with natural year wrap (January → December). The first **onboarded** month in that order wins. Optional registry field `onboardedMonths` lists which of 1–12 exist; an **empty** array means “no monthly assets — use `base.jpg` only.”
+* **Missing month**: try the current UTC month first, then walk **backward** month-by-month with natural year wrap (January → December). The first **onboarded** month in that order wins. Registry field `onboardedMonths` lists which of 1–12 are actually shipped (must match static files; **not** a runtime probe). A **non-empty** list is required for **partial** onboarding. **Omitting** `onboardedMonths` means the contract is “all twelve `01`…`12` files are present” (resolver treats 1…12 as onboarded); in production, listing `1…12` explicitly is recommended for clarity. An **empty** `[]` means no monthly rasters — use `base.jpg` only.
 * **Further fallback**: if variant resolution yields nothing usable, the family’s legacy flat `src` URL is used, then the global default base map.
 
 Future work: a **fixed-month override** (e.g. always show July for comparisons) would be a separate SceneConfig or product-setting extension; it is intentionally out of scope here.

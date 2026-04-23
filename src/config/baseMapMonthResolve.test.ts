@@ -74,4 +74,28 @@ describe("baseMapMonthResolve", () => {
     const f = family({ familyBaseSrc: "", onboardedMonths: [] });
     expect(resolveMonthOfYearRasterSrc(f, 3)).toBe("");
   });
+
+  it("partial onboarded [1, 2, 10] resolves March to February (backward walk, first hit)", () => {
+    const f = family({ onboardedMonths: [1, 2, 10] });
+    expect(resolveMonthOfYearRasterSrc(f, 3)).toBe("/m/02.jpg");
+  });
+
+  it("partial onboarded [10, 12] resolves January to December (try order 1, 12, 11, … first match)", () => {
+    const f = family({ onboardedMonths: [10, 12] });
+    expect(resolveMonthOfYearRasterSrc(f, 1)).toBe("/m/12.jpg");
+  });
+
+  it("single onboarded month [4] resolves any target month to April (last try in 12-step backward pass)", () => {
+    // Backward from March: 3,2,1,12,11,10,9,8,7,6,5,4 — only April is onboarded.
+    const f = family({ onboardedMonths: [4] });
+    expect(resolveMonthOfYearRasterSrc(f, 3)).toBe("/m/04.jpg");
+  });
+
+  it("treats omitted onboardedMonths as a full 12-onboard contract (all month slots are used)", () => {
+    const f = family();
+    expect(f.onboardedMonths).toBeUndefined();
+    for (let m = 1; m <= 12; m += 1) {
+      expect(resolveMonthOfYearRasterSrc(f, m)).toBe(f.monthAssetSrcs[m - 1]!);
+    }
+  });
 });
