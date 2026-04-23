@@ -61,11 +61,16 @@ export function monthNumbersToTryBackwardsCivil(startMonth1To12: number): readon
  *   (use only for a complete shipped family, or set explicit `onboardedMonths`).
  * - If there are no monthly assets (`onboardedMonths` is empty), uses `familyBaseSrc`.
  * - If `familyBaseSrc` is empty, returns `""` so the caller can apply legacy / global fallbacks.
+ * @param excludedImageSrcs — optional set of concrete month or family URLs to skip (e.g. failed loads).
  */
 export function resolveMonthOfYearRasterSrc(
   family: MonthOfYearFamilyPaths,
   targetMonth1To12: number,
+  excludedImageSrcs?: ReadonlySet<string>,
 ): string {
+  const ex = excludedImageSrcs ?? new Set();
+  const isExcluded = (url: string): boolean => ex.has(url.trim());
+
   const explicit = family.onboardedMonths;
   const hasMonthly = explicit === undefined || explicit.length > 0;
   const onboarded =
@@ -76,13 +81,16 @@ export function resolveMonthOfYearRasterSrc(
   if (hasMonthly && onboarded.size > 0) {
     for (const m of monthNumbersToTryBackwardsCivil(targetMonth1To12)) {
       if (onboarded.has(m)) {
-        return family.monthAssetSrcs[m - 1]!;
+        const monthSrc = family.monthAssetSrcs[m - 1]!;
+        if (!isExcluded(monthSrc)) {
+          return monthSrc;
+        }
       }
     }
   }
 
   const base = family.familyBaseSrc.trim();
-  if (base !== "") {
+  if (base !== "" && !isExcluded(family.familyBaseSrc)) {
     return family.familyBaseSrc;
   }
   return "";

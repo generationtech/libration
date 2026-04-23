@@ -98,4 +98,28 @@ describe("baseMapMonthResolve", () => {
       expect(resolveMonthOfYearRasterSrc(f, m)).toBe(f.monthAssetSrcs[m - 1]!);
     }
   });
+
+  it("skips an excluded current month and uses the previous onboarded month (backward lookback)", () => {
+    const f = family();
+    const ex = new Set<string>(["/m/07.jpg"]);
+    expect(resolveMonthOfYearRasterSrc(f, 7, ex)).toBe("/m/06.jpg");
+  });
+
+  it("when January is excluded, walks back to December", () => {
+    const f = family();
+    const ex = new Set<string>(["/m/01.jpg"]);
+    expect(resolveMonthOfYearRasterSrc(f, 1, ex)).toBe("/m/12.jpg");
+  });
+
+  it("skips multiple consecutive excluded months and uses the first non-excluded in walk order", () => {
+    const f = family();
+    const ex = new Set<string>(["/m/07.jpg", "/m/06.jpg", "/m/05.jpg"]);
+    expect(resolveMonthOfYearRasterSrc(f, 7, ex)).toBe("/m/04.jpg");
+  });
+
+  it("uses family base when all monthly rasters are excluded for the walk", () => {
+    const f = family();
+    const ex = new Set(f.monthAssetSrcs);
+    expect(resolveMonthOfYearRasterSrc(f, 3, ex)).toBe("/maps/variants/test/base.jpg");
+  });
 });

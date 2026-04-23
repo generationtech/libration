@@ -53,6 +53,7 @@ import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
 import { createTimeContext } from "./core/time";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
+import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -323,9 +324,15 @@ export default function App() {
       }
     };
 
-    const backend = new CanvasRenderBackend(canvas, () => {
-      if (!cancelled) renderFrame();
-    });
+    const backend = new CanvasRenderBackend(
+      canvas,
+      () => {
+        if (!cancelled) renderFrame();
+      },
+      (src) => {
+        addEquirectBaseMapImageLoadFailure(src);
+      },
+    );
 
     const onResize = (): void => {
       if (cancelled) return;

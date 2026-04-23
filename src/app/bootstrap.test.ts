@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   DEFAULT_APP_CONFIG,
   resolveCitiesForPins,
@@ -25,12 +25,17 @@ import {
 import { createTimeContext } from "../core/time";
 import { CITY_PINS_KIND } from "../layers/cityPinsPayload";
 import { runtimeIdForStaticRasterSceneLayer } from "../layers/staticEquirectRasterOverlayLayer";
+import { __clearEquirectBaseMapImageExclusionsForTests, addEquirectBaseMapImageLoadFailure } from "../layers/baseMapEquirectImageExclusions";
 import { createLayerRegistryFromConfig } from "./bootstrap";
 
 const GRID_ID = "layer.grid.latLon";
 const STATIC_EQUIRECT_OVERLAY_ID = runtimeIdForStaticRasterSceneLayer("staticEquirectOverlay");
 
 describe("createLayerRegistryFromConfig", () => {
+  beforeEach(() => {
+    __clearEquirectBaseMapImageExclusionsForTests();
+  });
+
   it("when called with no args, matches an explicit DEFAULT_APP_CONFIG registry (active preset is full)", () => {
     const implicit = createLayerRegistryFromConfig();
     const explicit = createLayerRegistryFromConfig(DEFAULT_APP_CONFIG);
@@ -269,6 +274,29 @@ describe("createLayerRegistryFromConfig", () => {
     const state = layer?.getState(createTimeContext(juneUtc, 0, false));
     const data = state?.data as { kind: string; src: string } | undefined;
     expect(data?.src).toBe("/maps/variants/equirect-world-topography-v1/06.jpg");
+  });
+
+  it("moves the base map layer to a non-failed month src when the resolved month is excluded", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "equirect-world-topography-v1",
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const juneUtc = Date.UTC(2022, 5, 1);
+    addEquirectBaseMapImageLoadFailure("/maps/variants/equirect-world-topography-v1/06.jpg");
+    const state = layer?.getState(createTimeContext(juneUtc, 0, false));
+    const data = state?.data as { kind: string; src: string } | undefined;
+    expect(data?.src).toBe("/maps/variants/equirect-world-topography-v1/05.jpg");
   });
 
   it("falls back to default base map raster src for unknown scene.baseMap.id", () => {

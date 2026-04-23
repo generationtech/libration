@@ -20,6 +20,11 @@ export const EQUIRECTANGULAR_RASTER_KIND = "equirectangularRaster" as const;
 export interface EquirectangularRasterPayload {
   kind: typeof EQUIRECTANGULAR_RASTER_KIND;
   src: string;
+  /**
+   * When true, the canvas backend reports a failed decode/network for `src` so the app can
+   * exclude that URL from base map resolution (see `baseMapEquirectImageExclusions`).
+   */
+  emitLoadFailure?: true;
 }
 
 export function isEquirectangularRasterPayload(

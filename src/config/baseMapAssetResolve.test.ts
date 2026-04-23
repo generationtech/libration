@@ -55,4 +55,55 @@ describe("baseMapAssetResolve month-aware integration", () => {
       "/maps/variants/equirect-world-topography-v1/09.jpg",
     );
   });
+
+  it("excluded month rasters for topography roll back to the first non-excluded month", () => {
+    const july = Date.UTC(2024, 6, 10);
+    const ex = new Set<string>(["/maps/variants/equirect-world-topography-v1/07.jpg"]);
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+        productInstantMs: july,
+        excludedImageSrcs: ex,
+      }),
+    ).toBe("/maps/variants/equirect-world-topography-v1/06.jpg");
+  });
+
+  it("January with January excluded chooses December for topography when December is not excluded", () => {
+    const jan = Date.UTC(2024, 0, 10);
+    const ex = new Set<string>(["/maps/variants/equirect-world-topography-v1/01.jpg"]);
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+        productInstantMs: jan,
+        excludedImageSrcs: ex,
+      }),
+    ).toBe("/maps/variants/equirect-world-topography-v1/12.jpg");
+  });
+
+  it("excluded family base falls back to the legacy then global default", () => {
+    const july = Date.UTC(2024, 6, 10);
+    const monthPaths = [...Array(12).keys()].map(
+      (i) => `/maps/variants/equirect-world-topography-v1/${String(i + 1).padStart(2, "0")}.jpg`,
+    );
+    const ex = new Set<string>([...monthPaths, "/maps/variants/equirect-world-topography-v1/base.jpg"]);
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+        productInstantMs: july,
+        excludedImageSrcs: ex,
+      }),
+    ).toBe("/maps/world-equirectangular-topography.jpg");
+    ex.add("/maps/world-equirectangular-topography.jpg");
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+        productInstantMs: july,
+        excludedImageSrcs: ex,
+      }),
+    ).toBe("/maps/world-equirectangular.jpg");
+  });
+
+  it("static families fall back to the global default when the primary src is excluded", () => {
+    const ms = Date.UTC(2030, 0, 1);
+    const ex = new Set<string>(["/maps/world-equirectangular-political.jpg"]);
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-political-v1", { productInstantMs: ms, excludedImageSrcs: ex }),
+    ).toBe("/maps/world-equirectangular.jpg");
+  });
 });

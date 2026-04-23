@@ -11,7 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { resolveEquirectBaseMapImageSrc } from "../config/baseMapAssetResolve";
+import {
+  resolveEquirectBaseMapImageSrc,
+  resolveEquirectBaseMapImageSrcForFixedWorldSrc,
+} from "../config/baseMapAssetResolve";
+import { getEquirectBaseMapImageSrcExclusionSetForResolve } from "./baseMapEquirectImageExclusions";
 import { SCENE_BASE_MAP_Z_INDEX } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -56,13 +60,16 @@ export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Lay
     type: "raster",
     updatePolicy,
     getState(time: TimeContext): LayerState {
+      const ex = getEquirectBaseMapImageSrcExclusionSetForResolve();
+      const ctx = { productInstantMs: time.now, excludedImageSrcs: ex };
       const src =
         sceneBaseMapId !== undefined
-          ? resolveEquirectBaseMapImageSrc(sceneBaseMapId, { productInstantMs: time.now })
-          : staticSrc;
+          ? resolveEquirectBaseMapImageSrc(sceneBaseMapId, ctx)
+          : resolveEquirectBaseMapImageSrcForFixedWorldSrc(staticSrc, ctx);
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,
+        emitLoadFailure: true,
       };
       return {
         visible: true,

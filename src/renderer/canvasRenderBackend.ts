@@ -45,6 +45,11 @@ export class CanvasRenderBackend implements RenderBackend {
     private readonly canvas: HTMLCanvasElement,
     /** Called when a raster image finishes loading so the shell can repaint. */
     private readonly onRasterReady?: () => void,
+    /**
+     * Product-agnostic: image `src` failed to decode. Base map layers set `emitLoadFailure` on
+     * the payload; the app maps this to base map exclusion only.
+     */
+    private readonly onRasterImageLoadFailed?: (src: string) => void,
   ) {}
 
   async initialize(viewport: Viewport): Promise<void> {
@@ -154,15 +159,23 @@ export class CanvasRenderBackend implements RenderBackend {
   /**
    * Ensures an image is loading; returns it only once decoded. Triggers {@link onRasterReady} on first successful load.
    */
-  private ensureRasterImage(src: string): HTMLImageElement | null {
+  private ensureRasterImage(
+    src: string,
+    options?: { reportLoadFailure?: boolean },
+  ): HTMLImageElement | null {
     let img = this.rasterImages.get(src);
     if (!img) {
       img = new Image();
+      const report = options?.reportLoadFailure === true;
       img.onload = () => {
         this.onRasterReady?.();
       };
       img.onerror = () => {
         console.error(`[libration:canvas] failed to load raster image: ${src}`);
+        this.rasterImages.delete(src);
+        if (report) {
+          this.onRasterImageLoadFailed?.(src);
+        }
       };
       img.src = src;
       this.rasterImages.set(src, img);
@@ -187,6 +200,7 @@ export class CanvasRenderBackend implements RenderBackend {
     if (w <= 0 || h <= 0) {
       return;
     }
+    const reportLoadFailure = layer.data.emitLoadFailure === true;
     executeRenderPlanOnCanvas(
       ctx,
       buildBaseRasterMapRenderPlan({
@@ -194,7 +208,9 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportWidthPx: w,
         viewportHeightPx: h,
       }),
-      { resolveRasterImage: (src) => this.ensureRasterImage(src) },
+      {
+        resolveRasterImage: (s) => this.ensureRasterImage(s, { reportLoadFailure }),
+      },
     );
   }
 

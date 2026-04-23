@@ -61,6 +61,11 @@ export type EquirectBaseMapAsset = {
 export type BaseMapResolveContext = Readonly<{
   /** Effective product instant (`TimeContext.now`) in Unix milliseconds. */
   productInstantMs: number;
+  /**
+   * Concrete raster URLs to skip (e.g. from runtime image load failure). The registry
+   * remains authoritative; this only steers which declared path is used.
+   */
+  excludedImageSrcs?: ReadonlySet<string>;
 }>;
 
 type EquirectMapDefinition = {
@@ -274,21 +279,39 @@ const DEFINITION_BY_ID = new Map<string, EquirectMapDefinition>(DEFINITIONS.map(
 
 const DEFAULT_DEFINITION = DEFINITION_BY_ID.get(DEFAULT_EQUIRECT_BASE_MAP_ID)!;
 
-function resolveDefinitionRasterSrc(def: EquirectMapDefinition, productInstantMs: number): string {
+function isExcludedFromResolve(url: string, ex: ReadonlySet<string>): boolean {
+  return ex.has(url.trim());
+}
+
+/** Final rung: always the legacy world ID’s bundled raster, even if also listed in `ex` (catastrophic). */
+function globalDefaultFallbackSrcLastResort(_ex: ReadonlySet<string>): string {
+  return DEFAULT_DEFINITION.src;
+}
+
+function resolveDefinitionRasterSrc(
+  def: EquirectMapDefinition,
+  productInstantMs: number,
+  excludedImageSrcs: ReadonlySet<string> = new Set(),
+): string {
+  const ex = excludedImageSrcs;
   const variantMode: BaseMapVariantMode = def.variantMode ?? "static";
   if (variantMode !== "monthOfYear" || !def.monthOfYear) {
-    return def.src;
+    const s = def.src.trim();
+    if (s !== "" && !isExcludedFromResolve(s, ex)) {
+      return def.src;
+    }
+    return globalDefaultFallbackSrcLastResort(ex);
   }
   const month = calendarMonthUtc1To12FromUnixMs(productInstantMs);
-  const fromFamily = resolveMonthOfYearRasterSrc(def.monthOfYear, month).trim();
+  const fromFamily = resolveMonthOfYearRasterSrc(def.monthOfYear, month, ex).trim();
   if (fromFamily !== "") {
     return fromFamily;
   }
   const legacy = def.src.trim();
-  if (legacy !== "") {
+  if (legacy !== "" && !isExcludedFromResolve(legacy, ex)) {
     return def.src;
   }
-  return DEFAULT_DEFINITION.src;
+  return globalDefaultFallbackSrcLastResort(ex);
 }
 
 /**
@@ -342,17 +365,32 @@ export function canonicalEquirectBaseMapIdForPersistence(id: string): string {
  * Resolves the public raster URL for a base map family id.
  * Static families ignore `context`. Month-aware families use {@link BaseMapResolveContext.productInstantMs}
  * (UTC civil month). When `context` is omitted, wall-clock `Date.now()` is used (e.g. editor previews).
+ * When `excludedImageSrcs` is set, month-aware families walk backward from the product month
+ * skipping failed URLs, then `familyBaseSrc`, then the global default.
  */
 export function resolveEquirectBaseMapImageSrc(id: string, context?: BaseMapResolveContext): string {
+  const ex = context?.excludedImageSrcs ?? new Set();
   const canonicalId = canonicalBaseMapId(id.trim());
   const def = DEFINITION_BY_ID.get(canonicalId);
   const ms = context?.productInstantMs ?? Date.now();
   if (!def) {
-    return resolveDefinitionRasterSrc(DEFAULT_DEFINITION, ms);
+    return resolveDefinitionRasterSrc(DEFAULT_DEFINITION, ms, ex);
   }
-  const resolved = resolveDefinitionRasterSrc(def, ms).trim();
-  if (resolved === "") {
-    return resolveDefinitionRasterSrc(DEFAULT_DEFINITION, ms);
+  return resolveDefinitionRasterSrc(def, ms, ex);
+}
+
+/**
+ * For a fixed world raster URL (no registry id), used by legacy static base map layers.
+ * If that URL is excluded, applies the same global default resolution as an unknown id.
+ */
+export function resolveEquirectBaseMapImageSrcForFixedWorldSrc(
+  fixedSrc: string,
+  context?: BaseMapResolveContext,
+): string {
+  const ex = context?.excludedImageSrcs ?? new Set();
+  const t = fixedSrc.trim();
+  if (t !== "" && !isExcludedFromResolve(t, ex)) {
+    return fixedSrc;
   }
-  return resolved;
+  return resolveEquirectBaseMapImageSrc(DEFAULT_EQUIRECT_BASE_MAP_ID, context);
 }
