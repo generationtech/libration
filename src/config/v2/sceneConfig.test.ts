@@ -94,8 +94,9 @@ describe("SceneConfig (Phase 1)", () => {
     expect(resolveEquirectBaseMapImageSrc("equirect-world-political-v1")).toBe(
       "/maps/world-equirectangular-political.jpg",
     );
-    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1")).toBe(
-      "/maps/world-equirectangular-topography.jpg",
+    const fixedWall = Date.UTC(2019, 3, 1);
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", { productInstantMs: fixedWall })).toBe(
+      "/maps/variants/equirect-world-topography-v1/04.jpg",
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-geology-v1")).toBe(
       "/maps/world-equirectangular-geology.jpg",
@@ -116,6 +117,7 @@ describe("SceneConfig (Phase 1)", () => {
 
   it("exposes BaseMapOption metadata in lockstep with the asset registry", () => {
     expect(EQUIRECT_BASE_MAP_OPTIONS).toHaveLength(SUPPORTED_EQUIRECT_BASE_MAP_IDS.length);
+    expect(EQUIRECT_BASE_MAP_OPTIONS).toHaveLength(4);
     expect(EQUIRECT_BASE_MAP_OPTIONS.map((o) => o.id)).toEqual(SUPPORTED_EQUIRECT_BASE_MAP_IDS);
     for (const o of EQUIRECT_BASE_MAP_OPTIONS) {
       expect(getEquirectBaseMapOptionForId(o.id).label).toBe(o.label);
@@ -130,7 +132,8 @@ describe("SceneConfig (Phase 1)", () => {
 
   it("topography uses the real runtime asset, preview thumbnail, and is not a transitional placeholder", () => {
     const asset = resolveEquirectBaseMapAsset("equirect-world-topography-v1");
-    expect(asset.src).toBe("/maps/world-equirectangular-topography.jpg");
+    expect(asset.src).toBe("/maps/variants/equirect-world-topography-v1/base.jpg");
+    expect(asset.variantMode).toBe("monthOfYear");
     expect(asset.transitionalPlaceholder).toBeUndefined();
     const o = getEquirectBaseMapOptionForId("equirect-world-topography-v1");
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-topography-thumb.jpg");

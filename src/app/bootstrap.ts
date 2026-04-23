@@ -13,7 +13,6 @@
 
 import type { AppConfig } from "../config/appConfig";
 import { getActiveAppConfig } from "../config/displayPresets";
-import { resolveEquirectBaseMapImageSrc } from "../config/baseMapAssetResolve";
 import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createLayerForSceneOverlayInstance } from "../layers/sceneOverlayLayerFactory";
@@ -34,7 +33,7 @@ export function createLayerRegistryFromConfig(
   if (basePart) {
     registry.register(
       createBaseMapLayer({
-        src: resolveEquirectBaseMapImageSrc(config.scene.baseMap.id),
+        sceneBaseMapId: config.scene.baseMap.id,
         opacity: basePart.opacity,
         zIndex: basePart.zIndex,
       }),

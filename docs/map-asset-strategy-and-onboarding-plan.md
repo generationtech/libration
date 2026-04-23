@@ -118,6 +118,23 @@ Libration should evolve toward curated map families rather than a random collect
 
 ---
 
+## 3.0 Month-aware base map families (registry + resolver)
+
+Some families ship **month-of-year** rasters (e.g. seasonal imagery). This is **explicit** in the base-map registry (`variantMode: "monthOfYear"`), not inferred from filenames at runtime.
+
+* **Persistence** stays `scene.baseMap.id` only (one selector row per family). No month-specific paths are stored.
+* **Runtime** resolves the concrete URL from the **effective product instant** (`TimeContext.now`, UTC civil month 1–12), via `resolveEquirectBaseMapImageSrc(id, { productInstantMs })` and the base map layer’s per-frame `getState`.
+* **On-disk layout** (example `equirect-world-topography-v1`):
+
+  * `public/maps/variants/<family-id>/base.jpg` — family default when no monthly asset applies.
+  * `public/maps/variants/<family-id>/01.jpg` … `12.jpg` — explicit month rasters (paths listed in the registry).
+* **Missing month**: try the current UTC month first, then walk **backward** month-by-month with natural year wrap (January → December). The first **onboarded** month in that order wins. Optional registry field `onboardedMonths` lists which of 1–12 exist; an **empty** array means “no monthly assets — use `base.jpg` only.”
+* **Further fallback**: if variant resolution yields nothing usable, the family’s legacy flat `src` URL is used, then the global default base map.
+
+Future work: a **fixed-month override** (e.g. always show July for comparisons) would be a separate SceneConfig or product-setting extension; it is intentionally out of scope here.
+
+---
+
 ## 3.1 Reference Maps
 
 Purpose:

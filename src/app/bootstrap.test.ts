@@ -249,6 +249,28 @@ describe("createLayerRegistryFromConfig", () => {
     expect(data?.src).toBe("/maps/world-equirectangular-geology.jpg");
   });
 
+  it("resolves month-aware topography from the effective product instant on the layer clock", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "equirect-world-topography-v1",
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const juneUtc = Date.UTC(2022, 5, 1);
+    const state = layer?.getState(createTimeContext(juneUtc, 0, false));
+    const data = state?.data as { kind: string; src: string } | undefined;
+    expect(data?.src).toBe("/maps/variants/equirect-world-topography-v1/06.jpg");
+  });
+
   it("falls back to default base map raster src for unknown scene.baseMap.id", () => {
     const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
     const scene = {

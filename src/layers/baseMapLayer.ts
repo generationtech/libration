@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { resolveEquirectBaseMapImageSrc } from "../config/baseMapAssetResolve";
 import { SCENE_BASE_MAP_Z_INDEX } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -26,6 +27,12 @@ export const WORLD_EQUIRECTANGULAR_SRC = "/maps/world-equirectangular.jpg";
 const updatePolicy: UpdatePolicy = { type: "onDemand" };
 
 export type CreateBaseMapLayerOptions = {
+  /**
+   * Persisted `SceneConfig.baseMap.id` (canonical or legacy alias). When set, raster `src` is
+   * resolved each frame from the effective product instant (`TimeContext.now`).
+   */
+  sceneBaseMapId?: string;
+  /** Fixed raster URL; used when `sceneBaseMapId` is omitted. */
   src?: string;
   opacity?: number;
   zIndex?: number;
@@ -33,11 +40,12 @@ export type CreateBaseMapLayerOptions = {
 
 /**
  * Static equirectangular world map base layer (no live data).
- * `src` defaults to the legacy bundled asset; callers should pass
- * `resolveEquirectBaseMapImageSrc(scene.baseMap.id)` for config-driven selection.
+ * Pass `sceneBaseMapId` so month-aware families track {@link TimeContext.now}; otherwise `src`
+ * defaults to the legacy bundled asset.
  */
 export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Layer {
-  const src = options.src ?? WORLD_EQUIRECTANGULAR_SRC;
+  const sceneBaseMapId = options.sceneBaseMapId;
+  const staticSrc = options.src ?? WORLD_EQUIRECTANGULAR_SRC;
   const opacity = options.opacity ?? 1;
   const z = options.zIndex ?? SCENE_BASE_MAP_Z_INDEX;
   return {
@@ -47,7 +55,11 @@ export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Lay
     zIndex: z,
     type: "raster",
     updatePolicy,
-    getState(_time: TimeContext): LayerState {
+    getState(time: TimeContext): LayerState {
+      const src =
+        sceneBaseMapId !== undefined
+          ? resolveEquirectBaseMapImageSrc(sceneBaseMapId, { productInstantMs: time.now })
+          : staticSrc;
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,
