@@ -11,9 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { useEffect, useState } from "react";
 import {
   type BaseMapPresentationConfig,
   DEFAULT_BASE_MAP_PRESENTATION,
+  normalizeBaseMapPresentation,
 } from "../../config/baseMapPresentation";
 import type { BaseMapOption } from "../../config/v2/sceneConfig";
 import {
@@ -63,6 +65,126 @@ const PRESENTATION_SLIDERS: {
   { key: "gamma", label: "Gamma", min: 0.5, max: 2.5, step: 0.01 },
   { key: "saturation", label: "Saturation", min: 0, max: 2, step: 0.01 },
 ];
+
+type SliderSpec = (typeof PRESENTATION_SLIDERS)[number];
+
+function formatBaseMapDisplayNumber(n: number): string {
+  return n.toFixed(2);
+}
+
+type BaseMapPresentationSliderRowProps = {
+  spec: SliderSpec;
+  presentation: BaseMapPresentationConfig;
+  value: number;
+  mutable: boolean;
+  onPresentationChange?: (next: BaseMapPresentationConfig) => void;
+};
+
+function BaseMapPresentationSliderRow({
+  spec,
+  presentation,
+  value,
+  mutable,
+  onPresentationChange,
+}: BaseMapPresentationSliderRowProps) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const rangeId = `config-bm-pres-${spec.key}`;
+
+  useEffect(() => {
+    setDraft(null);
+  }, [value]);
+
+  const displayText = draft !== null ? draft : formatBaseMapDisplayNumber(value);
+
+  const commitForKey = (n: number) => {
+    onPresentationChange?.(normalizeBaseMapPresentation({ ...presentation, [spec.key]: n }));
+  };
+
+  return (
+    <div className="config-base-map-style__pres-row">
+      <label className="config-base-map-style__pres-label" htmlFor={rangeId}>
+        {spec.label}
+        {spec.key === "gamma" ? (
+          <span
+            className="config-base-map-style__pres-note"
+            title="sRGB per-channel power curve on the base map; alpha is preserved."
+          >
+            (sRGB power curve; α preserved)
+          </span>
+        ) : null}
+      </label>
+      <input
+        id={rangeId}
+        className="config-input config-base-map-style__pres-range"
+        type="range"
+        min={spec.min}
+        max={spec.max}
+        step={spec.step}
+        value={value}
+        disabled={!mutable}
+        tabIndex={mutable ? 0 : -1}
+        aria-label={spec.label}
+        onChange={
+          mutable && onPresentationChange
+            ? (e) => {
+                const v = parseFloat(e.currentTarget.value);
+                if (Number.isFinite(v)) {
+                  commitForKey(v);
+                }
+              }
+            : undefined
+        }
+      />
+      <input
+        data-testid={`config-bm-pres-${spec.key}-number`}
+        className="config-input config-base-map-style__pres-number"
+        type="number"
+        min={spec.min}
+        max={spec.max}
+        step="0.01"
+        value={displayText}
+        disabled={!mutable}
+        tabIndex={mutable ? 0 : -1}
+        aria-label={`${spec.label} (numeric)`}
+        onFocus={
+          mutable
+            ? () => {
+                setDraft(formatBaseMapDisplayNumber(value));
+              }
+            : undefined
+        }
+        onChange={
+          mutable
+            ? (e) => {
+                setDraft(e.currentTarget.value);
+              }
+            : undefined
+        }
+        onKeyDown={
+          mutable
+            ? (e) => {
+                if (e.key === "Enter") {
+                  (e.currentTarget as HTMLInputElement).blur();
+                }
+              }
+            : undefined
+        }
+        onBlur={
+          mutable
+            ? (e) => {
+                const raw = e.currentTarget.value.trim();
+                setDraft(null);
+                if (raw === "" || !Number.isFinite(parseFloat(raw))) {
+                  return;
+                }
+                commitForKey(parseFloat(raw));
+              }
+            : undefined
+        }
+      />
+    </div>
+  );
+}
 
 export function BaseMapStyleControl({
   baseMapId,
@@ -114,45 +236,14 @@ export function BaseMapStyleControl({
           follows layer visibility; these controls adjust brightness, contrast, and color only.
         </p>
         {PRESENTATION_SLIDERS.map((spec) => (
-          <div key={spec.key} className="config-base-map-style__pres-row">
-            <label className="config-base-map-style__pres-label" htmlFor={`config-bm-pres-${spec.key}`}>
-              {spec.label}
-              {spec.key === "gamma" ? (
-                <span
-                  className="config-base-map-style__pres-note"
-                  title="Per-channel γ curve on the base map. Values below 1 lift midtones; above 1 deepen (see applyBaseMapGammaToRgba8)."
-                >
-                  (sRGB power curve; α preserved)
-                </span>
-              ) : null}
-            </label>
-            <input
-              id={`config-bm-pres-${spec.key}`}
-              className="config-input config-base-map-style__pres-range"
-              type="range"
-              min={spec.min}
-              max={spec.max}
-              step={spec.step}
-              value={presentation[spec.key]}
-              disabled={!mutable}
-              tabIndex={mutable ? 0 : -1}
-              aria-label={spec.label}
-              onChange={
-                mutable && onPresentationChange
-                  ? (e) => {
-                      const v = parseFloat(e.currentTarget.value);
-                      onPresentationChange({
-                        ...presentation,
-                        [spec.key]: Number.isFinite(v) ? v : presentation[spec.key],
-                      });
-                    }
-                  : undefined
-              }
-            />
-            <output className="config-base-map-style__pres-value" htmlFor={`config-bm-pres-${spec.key}`}>
-              {presentation[spec.key].toFixed(2)}
-            </output>
-          </div>
+          <BaseMapPresentationSliderRow
+            key={spec.key}
+            spec={spec}
+            presentation={presentation}
+            value={presentation[spec.key]}
+            mutable={mutable}
+            onPresentationChange={onPresentationChange}
+          />
         ))}
         <div className="config-base-map-style__pres-actions">
           <button

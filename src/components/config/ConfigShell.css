@@ -667,7 +667,7 @@ select.config-input option:disabled {
 
 .config-base-map-style__pres-row {
   display: grid;
-  grid-template-columns: minmax(5.5rem, 7.5rem) 1fr 3.25rem;
+  grid-template-columns: minmax(5.5rem, 7.5rem) 1fr 4.75rem;
   align-items: center;
   gap: 0.4rem 0.5rem;
 }
@@ -690,11 +690,16 @@ select.config-input option:disabled {
   min-width: 0;
 }
 
-.config-base-map-style__pres-value {
+.config-base-map-style__pres-number {
+  min-width: 0;
+  width: 100%;
+  max-width: 4.75rem;
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  color: var(--config-control-fg-muted, var(--config-control-fg));
+  color: var(--config-control-fg, var(--config-fg, inherit));
+  padding: 0.2rem 0.35rem;
+  box-sizing: border-box;
 }
 
 .config-base-map-style__pres-actions {
