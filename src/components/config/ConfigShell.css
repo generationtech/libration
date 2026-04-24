@@ -641,6 +641,70 @@ select.config-input option:disabled {
   margin-bottom: var(--config-shell-space-md, 0.75rem);
 }
 
+.config-base-map-style__presentation {
+  margin: 0 0 var(--config-shell-space-md, 0.75rem);
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--config-control-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--config-shell-space-sm, 0.5rem);
+}
+
+.config-base-map-style__presentation-heading {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--config-control-fg);
+}
+
+.config-base-map-style__presentation-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.9;
+}
+
+.config-base-map-style__pres-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7.5rem) 1fr 3.25rem;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
+.config-base-map-style__pres-label {
+  font-size: 0.8125rem;
+  color: var(--config-control-fg);
+}
+
+.config-base-map-style__pres-note {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  opacity: 0.8;
+  margin-top: 0.1rem;
+}
+
+.config-base-map-style__pres-range {
+  width: 100%;
+  min-width: 0;
+}
+
+.config-base-map-style__pres-value {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+}
+
+.config-base-map-style__pres-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
 .config-base-map-style__detail {
   margin: 0 0 var(--config-shell-space-md, 0.75rem);
   padding: 0.5rem 0 0;

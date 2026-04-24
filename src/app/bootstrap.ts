@@ -13,6 +13,7 @@
 
 import type { AppConfig } from "../config/appConfig";
 import { getActiveAppConfig } from "../config/displayPresets";
+import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createLayerForSceneOverlayInstance } from "../layers/sceneOverlayLayerFactory";
@@ -36,6 +37,7 @@ export function createLayerRegistryFromConfig(
         sceneBaseMapId: config.scene.baseMap.id,
         opacity: basePart.opacity,
         zIndex: basePart.zIndex,
+        presentation: config.scene.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
       }),
     );
   }

@@ -33,6 +33,7 @@ function createMockCanvas2DContext(): CanvasRenderingContext2D {
     save: vi.fn(),
     restore: vi.fn(),
     globalAlpha: 1,
+    filter: "none",
     shadowColor: "",
     shadowBlur: 0,
     shadowOffsetX: 0,
@@ -521,6 +522,35 @@ describe("executeRenderPlanOnCanvas", () => {
 
     expect(resolveRasterImage).toHaveBeenCalledWith("/maps/world.jpg");
     expect(ctx.drawImage).toHaveBeenCalledWith(fakeImg, 0, 0, 640, 360);
+  });
+
+  it("applies cssFilter on the context for imageBlit, then restores previous filter", () => {
+    const ctx = createMockCanvas2DContext();
+    (ctx as unknown as { filter: string }).filter = "blur(1px)";
+    const fakeImg = {} as HTMLImageElement;
+    const filterWhenDrawImageRuns: string[] = [];
+    (ctx.drawImage as Mock).mockImplementation(() => {
+      filterWhenDrawImageRuns.push((ctx as unknown as { filter: string }).filter);
+    });
+
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "imageBlit",
+          src: "/maps/world.jpg",
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          cssFilter: "brightness(1.1) contrast(0.95)",
+        },
+      ],
+    };
+
+    executeRenderPlanOnCanvas(ctx, plan, { resolveRasterImage: () => fakeImg });
+
+    expect(filterWhenDrawImageRuns).toEqual(["brightness(1.1) contrast(0.95)"]);
+    expect((ctx as unknown as { filter: string }).filter).toBe("blur(1px)");
   });
 
   it("skips imageBlit when resolveRasterImage returns null", () => {

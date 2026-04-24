@@ -14,13 +14,16 @@ Current implemented examples include:
 
 Base-map families may be static or month-aware. For month-aware families, the persisted config still stores only `baseMap.id`; concrete month-specific raster URLs are resolved at runtime from the base-map registry using product time.
 
-Current base-map persistence remains:
+Current base-map persistence includes:
 
 ```ts
 scene.baseMap.id
 scene.baseMap.visible
 scene.baseMap.opacity
+scene.baseMap.presentation? // optional in saved JSON; normalized to defaults at load
 ```
+
+`presentation` holds **visual-only** display tuning for the selected base-map family (brightness, contrast, gamma, saturation). It applies to the family as a whole, including every monthly raster in a `monthOfYear` family, and does not change map assets, projection, or the map asset contract.
 
 No month-specific file path is persisted in SceneConfig.
 

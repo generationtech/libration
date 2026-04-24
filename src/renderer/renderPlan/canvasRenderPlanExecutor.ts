@@ -211,11 +211,16 @@ function drawImageBlit(
   if (!img) {
     return;
   }
-  const { x, y, width: w, height: h } = item;
+  const { x, y, width: w, height: h, cssFilter } = item;
   if (w <= 0 || h <= 0) {
     return;
   }
+  const prev = ctx.filter;
+  if (cssFilter !== undefined && cssFilter !== "") {
+    ctx.filter = cssFilter;
+  }
   ctx.drawImage(img, x, y, w, h);
+  ctx.filter = prev;
 }
 
 /** Optional hooks for plan execution; image lifecycle stays with the caller when used. */

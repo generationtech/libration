@@ -16,6 +16,7 @@ import {
   resolveEquirectBaseMapImageSrcForFixedWorldSrc,
 } from "../config/baseMapAssetResolve";
 import { getEquirectBaseMapImageSrcExclusionSetForResolve } from "./baseMapEquirectImageExclusions";
+import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";
 import { SCENE_BASE_MAP_Z_INDEX } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -40,6 +41,8 @@ export type CreateBaseMapLayerOptions = {
   src?: string;
   opacity?: number;
   zIndex?: number;
+  /** From `SceneConfig.baseMap.presentation` (family-level, not per month file). */
+  presentation?: BaseMapPresentationConfig;
 };
 
 /**
@@ -51,6 +54,7 @@ export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Lay
   const sceneBaseMapId = options.sceneBaseMapId;
   const staticSrc = options.src ?? WORLD_EQUIRECTANGULAR_SRC;
   const opacity = options.opacity ?? 1;
+  const presentation = options.presentation;
   const z = options.zIndex ?? SCENE_BASE_MAP_Z_INDEX;
   return {
     id: BASE_MAP_ID,
@@ -69,6 +73,7 @@ export function createBaseMapLayer(options: CreateBaseMapLayerOptions = {}): Lay
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,
+        ...(presentation !== undefined ? { presentation } : {}),
         emitLoadFailure: true,
       };
       return {

@@ -248,6 +248,11 @@ export interface RenderImageBlitItem {
   y: number;
   width: number;
   height: number;
+  /**
+   * Canvas `filter` string (CSS filter syntax), when set. Encoded upstream from
+   * scene `baseMap` presentation; the executor applies it and restores state.
+   */
+  cssFilter?: string;
 }
 
 export type RenderPlanItem =

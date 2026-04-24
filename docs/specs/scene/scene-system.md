@@ -17,6 +17,7 @@ Current capabilities include:
 - Scene-authoritative runtime rebuild behavior for scene-only changes.
 - Month-aware base-map families resolved from product time.
 - Runtime base-map image-load failure fallback without moving map policy into the backend.
+- Optional per-family **base map presentation** (`scene.baseMap.presentation`): user-tunable brightness, contrast, gamma (stored; gamma application may follow in the renderer), and saturation — visual-only, not persisted per month file.
 
 These additions preserve the current projection and scene-view assumptions: equirectangular, full-world fixed view.
 

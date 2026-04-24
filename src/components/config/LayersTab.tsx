@@ -14,10 +14,12 @@
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
+  DEFAULT_BASE_MAP_PRESENTATION,
   applyLayerEnableFlagsToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
   deriveLayerEnableFlagsFromScene,
+  normalizeBaseMapPresentation,
 } from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -71,6 +73,7 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
         </p>
         <BaseMapStyleControl
           baseMapId={scene.baseMap.id}
+          presentation={scene.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION }}
           mutable={mutable}
           onSelectId={
             mutable && updateConfig
@@ -81,6 +84,21 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                     draft.scene = {
                       ...baseScene,
                       baseMap: { ...baseScene.baseMap, id },
+                    };
+                    draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                  });
+                }
+              : undefined
+          }
+          onPresentationChange={
+            mutable && updateConfig
+              ? (next) => {
+                  const normalized = normalizeBaseMapPresentation(next);
+                  updateConfig((draft) => {
+                    const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                    draft.scene = {
+                      ...baseScene,
+                      baseMap: { ...baseScene.baseMap, presentation: normalized },
                     };
                     draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
                   });

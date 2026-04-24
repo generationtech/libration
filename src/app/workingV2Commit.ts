@@ -16,6 +16,10 @@ import { createLayerRegistryFromConfig } from "./bootstrap";
 import type { AppConfig, CustomPinConfig, LayerEnableFlags } from "../config/appConfig";
 import { resolveDefaultProductTextFontAssetId } from "../config/productTextFont";
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
+import {
+  DEFAULT_BASE_MAP_PRESENTATION,
+  baseMapPresentationEqual,
+} from "../config/baseMapPresentation";
 import type { SceneConfig, SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
   normalizeLibrationConfig,
@@ -154,6 +158,10 @@ function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
     a.baseMap.visible === b.baseMap.visible &&
     (a.baseMap.opacity ?? 1) === (b.baseMap.opacity ?? 1) &&
     a.baseMap.styleVariant === b.baseMap.styleVariant &&
+    baseMapPresentationEqual(
+      a.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
+      b.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
+    ) &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

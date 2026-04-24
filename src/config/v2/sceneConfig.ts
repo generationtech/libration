@@ -28,6 +28,11 @@ import {
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 } from "../baseMapAssetResolve";
 import type { BaseMapOption, BaseMapResolveContext } from "../baseMapAssetResolve";
+import {
+  type BaseMapPresentationConfig,
+  DEFAULT_BASE_MAP_PRESENTATION,
+  normalizeBaseMapPresentation,
+} from "../baseMapPresentation";
 
 export type { BaseMapOption, BaseMapResolveContext };
 export {
@@ -41,6 +46,13 @@ export {
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 };
 export { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../sceneLayerOrder";
+export {
+  type BaseMapPresentationConfig,
+  DEFAULT_BASE_MAP_PRESENTATION,
+  baseMapPresentationEqual,
+  baseMapPresentationToCssFilterString,
+  normalizeBaseMapPresentation,
+} from "../baseMapPresentation";
 export {
   planSceneStackComposition,
   type SceneBaseMapCompositePart,
@@ -62,6 +74,11 @@ export type BaseMapConfig = {
   id: string;
   visible: boolean;
   opacity?: number;
+  /**
+   * Visual-only tuning for the active base-map family (not per month file).
+   * Omitted in partial input; always clamped in {@link normalizeSceneConfig}.
+   */
+  presentation?: BaseMapPresentationConfig;
   styleVariant?: string;
   metadata?: Record<string, unknown>;
 };
@@ -260,6 +277,7 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       id: DEFAULT_EQUIRECT_BASE_MAP_ID,
       visible: layers.baseMap,
       opacity: 1,
+      presentation: { ...DEFAULT_BASE_MAP_PRESENTATION },
     },
     layers: withFlags,
   };
@@ -319,7 +337,13 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     projectionId: scene.projectionId,
     viewMode: scene.viewMode,
     orderingMode: scene.orderingMode,
-    baseMap: { ...scene.baseMap, metadata: scene.baseMap.metadata ? { ...scene.baseMap.metadata } : undefined },
+    baseMap: {
+      ...scene.baseMap,
+      metadata: scene.baseMap.metadata ? { ...scene.baseMap.metadata } : undefined,
+      presentation: scene.baseMap.presentation
+        ? { ...scene.baseMap.presentation }
+        : { ...DEFAULT_BASE_MAP_PRESENTATION },
+    },
     layers: scene.layers.map((L) => ({
       ...L,
       opacity: L.opacity,
@@ -348,9 +372,13 @@ function normalizeBaseMap(input: unknown, fallbacks: LayerEnableFlags): BaseMapC
     typeof input.styleVariant === "string" && input.styleVariant.trim() !== ""
       ? input.styleVariant.trim()
       : undefined;
+  const presentation = normalizeBaseMapPresentation(
+    isPlainObject(input) ? input.presentation : undefined,
+  );
   return {
     id,
     visible: vis,
+    presentation,
     ...(opacity !== undefined ? { opacity } : { opacity: 1 }),
     ...(styleVariant !== undefined ? { styleVariant } : {}),
   };

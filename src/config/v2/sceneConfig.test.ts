@@ -202,4 +202,62 @@ describe("SceneConfig (Phase 1)", () => {
     expect(scene.layers.some((l) => l.id === "customStaticOverlay")).toBe(true);
     expect(scene.layers.length).toBeGreaterThan(7);
   });
+
+  it("normalizes baseMap.presentation with defaults and clamps out-of-range values", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        baseMap: {
+          id: DEFAULT_EQUIRECT_BASE_MAP_ID,
+          visible: true,
+          presentation: { brightness: 0.1, contrast: 10, gamma: 0, saturation: 99 } as never,
+        },
+        layers: [],
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.baseMap.presentation?.brightness).toBe(0.5);
+    expect(scene.baseMap.presentation?.contrast).toBe(2);
+    expect(scene.baseMap.presentation?.gamma).toBe(0.5);
+    expect(scene.baseMap.presentation?.saturation).toBe(2);
+  });
+
+  it("month-aware family id is persisted; presentation is under baseMap only (no URL fields on baseMap)", () => {
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: {
+          id: "equirect-world-topography-v1",
+          visible: true,
+          opacity: 1,
+          presentation: { brightness: 1.25, contrast: 1, gamma: 1.1, saturation: 1.05 },
+        },
+        layers: [],
+      },
+    });
+    expect(v2.scene?.baseMap.id).toBe("equirect-world-topography-v1");
+    expect(v2.scene?.baseMap.presentation?.gamma).toBe(1.1);
+    expect(v2.scene?.baseMap).not.toHaveProperty("src");
+  });
+
+  it("defaults only: normalized scene matches buildDefault with respect to base map display", () => {
+    const def = buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYERS);
+    const norm = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        baseMap: { id: def.baseMap.id, visible: def.baseMap.visible, opacity: 1 },
+        layers: def.layers,
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(norm.baseMap.presentation).toEqual(def.baseMap.presentation);
+  });
 });

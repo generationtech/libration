@@ -13,6 +13,8 @@
 
 export const EQUIRECTANGULAR_RASTER_KIND = "equirectangularRaster" as const;
 
+import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";
+
 /**
  * Renderer-facing payload for a full-viewport equirectangular raster (static URL).
  * Loaded and drawn by the canvas backend; layers only describe the reference.
@@ -20,6 +22,11 @@ export const EQUIRECTANGULAR_RASTER_KIND = "equirectangularRaster" as const;
 export interface EquirectangularRasterPayload {
   kind: typeof EQUIRECTANGULAR_RASTER_KIND;
   src: string;
+  /**
+   * Normalized per-family display tuning (same for all month rasters in a month-aware family).
+   * The canvas backend maps this to a filter string; it does not affect asset resolution.
+   */
+  presentation?: BaseMapPresentationConfig;
   /**
    * When true, the canvas backend reports a failed decode/network for `src` so the app can
    * exclude that URL from base map resolution (see `baseMapEquirectImageExclusions`).

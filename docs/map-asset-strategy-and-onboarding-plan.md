@@ -78,6 +78,7 @@ Base map selection must flow through:
 * `scene.baseMap.id`
 * `scene.baseMap.visible`
 * `scene.baseMap.opacity`
+* optional `scene.baseMap.presentation` — client-side display adjustments (brightness, contrast, gamma, saturation) for the active family; does not change onboarded files or geometry validation
 
 Map selection must never bypass SceneConfig.
 

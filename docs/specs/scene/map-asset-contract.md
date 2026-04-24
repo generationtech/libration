@@ -38,6 +38,8 @@ This contract ensures that all base maps and raster overlays align perfectly wit
 > Map assets must conform to the projection system.  
 > They must never define spatial truth.
 
+**Scene `baseMap.presentation` adjustments** (brightness, contrast, etc.) are **not** part of this contract. They are visual-only client tuning and do not alter whether an asset is valid, its resolution, or its geometry.
+
 All spatial correctness comes from:
 - geographic coordinates
 - projection math

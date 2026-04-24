@@ -1023,6 +1023,22 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene");
   }
+  const baseMapPres = (sc as SceneConfig).baseMap.presentation;
+  if (
+    baseMapPres !== undefined &&
+    (typeof baseMapPres !== "object" ||
+      baseMapPres === null ||
+      typeof baseMapPres.brightness !== "number" ||
+      !Number.isFinite(baseMapPres.brightness) ||
+      typeof baseMapPres.contrast !== "number" ||
+      !Number.isFinite(baseMapPres.contrast) ||
+      typeof baseMapPres.gamma !== "number" ||
+      !Number.isFinite(baseMapPres.gamma) ||
+      typeof baseMapPres.saturation !== "number" ||
+      !Number.isFinite(baseMapPres.saturation))
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.baseMap.presentation");
+  }
 }
 
 /** Default v2 snapshot aligned with {@link DEFAULT_APP_CONFIG} (derived, not a divergent literal). */

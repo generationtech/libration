@@ -16,6 +16,7 @@ import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
 import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
+import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import { isTextOverlayPayload } from "../layers/textOverlayPayload";
@@ -207,6 +208,7 @@ export class CanvasRenderBackend implements RenderBackend {
         src: layer.data.src,
         viewportWidthPx: w,
         viewportHeightPx: h,
+        presentation: layer.data.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
       }),
       {
         resolveRasterImage: (s) => this.ensureRasterImage(s, { reportLoadFailure }),

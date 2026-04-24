@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { normalizeBaseMapPresentation } from "../../config/baseMapPresentation";
 import { WORLD_EQUIRECTANGULAR_SRC } from "../../layers/baseMapLayer";
 import { buildBaseRasterMapRenderPlan } from "./sceneBaseRasterMapPlan";
 
@@ -33,6 +34,22 @@ describe("buildBaseRasterMapRenderPlan", () => {
     expect(item.y).toBe(0);
     expect(item.width).toBe(800);
     expect(item.height).toBe(400);
+    expect("cssFilter" in item).toBe(false);
+  });
+
+  it("adds cssFilter to imageBlit when presentation is non-default for B/C/S", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({ brightness: 1.1, contrast: 1, gamma: 1, saturation: 1 }),
+    });
+    const item = plan.items[0]!;
+    expect(item.kind).toBe("imageBlit");
+    if (item.kind !== "imageBlit") {
+      return;
+    }
+    expect(item.cssFilter).toBe("brightness(1.1)");
   });
 
   it("returns an empty plan when viewport dimensions are non-positive", () => {
