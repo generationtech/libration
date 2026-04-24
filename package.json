@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "fonts:prep": "tsx tools/fonts/prepareFonts.ts",
+    "maps:prep": "tsx tools/maps/prepareBaseMapFamily.ts",
     "preview": "vite preview",
     "tauri": "tauri"
   },
