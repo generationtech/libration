@@ -93,11 +93,12 @@ describe("buildRegistrySnippet", () => {
       category: "terrain",
       attribution: "Credit \"Us\"",
       previewThumbnailSrc: "/maps/previews/equirect-test-v1-thumb.jpg",
-      legacyFlatSrc: "/maps/equirect-test-v1-legacy-equirect.jpg",
       constPrefix: "EQUIRECT_TEST_V1",
     });
     expect(s).toContain("id: \"equirect-test-v1\"");
     expect(s).toContain("EQUIRECT_TEST_V1_ONBOARDED_MONTHS: readonly number[] = [1, 6, 12]");
+    expect(s).toMatch(/^\s*src: `\$\{EQUIRECT_TEST_V1_DIR\}\/base\.jpg`/m);
+    expect(s).not.toMatch(/legacy-equirect|legacy.*\.jpg/);
     expect(s).toContain("/maps/variants/equirect-test-v1/01.jpg");
     expect(s).toContain("/maps/variants/equirect-test-v1/12.jpg");
     expect(s).toContain('attribution: "Credit \\"Us\\"",');
@@ -113,7 +114,6 @@ describe("buildRegistrySnippet", () => {
       category: "reference",
       attribution: "A",
       previewThumbnailSrc: "/p.jpg",
-      legacyFlatSrc: "/l.jpg",
       constPrefix: "EQUIRECT_TEST_V1",
       shortDescription: "One line for the UI.",
     });
@@ -130,7 +130,6 @@ describe("buildRegistrySnippet", () => {
       category: "reference",
       attribution: "A",
       previewThumbnailSrc: "/p.jpg",
-      legacyFlatSrc: "/l.jpg",
       constPrefix: "EQUIRECT_TEST_V1",
     });
     expect(s).toContain("shortDescription: \"<edit: one line for the base map selector>\"");

@@ -115,8 +115,6 @@ export type RegistrySnippetInput = Readonly<{
   category: BaseMapPrepareCategory;
   attribution: string;
   previewThumbnailSrc: string;
-  /** Legacy flat catalog / fallback raster URL in the registry `src` field. */
-  legacyFlatSrc: string;
   constPrefix: string;
   /** When set to a non-empty string after trim, used as the `shortDescription` literal; otherwise the edit placeholder. */
   shortDescription?: string | null;
@@ -163,7 +161,7 @@ export function buildRegistrySnippet(input: RegistrySnippetInput): string {
   lines.push(`{`);
   lines.push(`  id: ${tsStringLiteral(input.familyId)},`);
   lines.push(`  variantMode: "monthOfYear",`);
-  lines.push(`  src: ${tsStringLiteral(input.legacyFlatSrc)},`);
+  lines.push(`  src: \`\${${p}_DIR}/base.jpg\`,`);
   lines.push(`  monthOfYear: {`);
   lines.push(`    familyBaseSrc: \`\${${p}_DIR}/base.jpg\`,`);
   lines.push(`    monthAssetSrcs: ${p}_MONTH_SRCS,`);

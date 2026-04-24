@@ -363,7 +363,6 @@ async function runMonthOfYearMapFamily(
   const previewFs = join(previewsDirFs, `${opts.familyId}-thumb.jpg`);
   const constPrefix = toConstPrefixFromFamilyId(opts.familyId);
   const onboardedMonths = assigned.assignments.map((a) => a.month1To12);
-  const legacyFlatSrc = `/maps/${opts.familyId}-legacy-equirect.jpg`;
   const previewJpegFs = join(variantDirFs, `${String(effectivePreviewMonth).padStart(2, "0")}.jpg`);
 
   console.log("\n## Detected months\n");
@@ -433,7 +432,6 @@ async function runMonthOfYearMapFamily(
       category: opts.category,
       attribution: opts.attribution,
       previewThumbnailSrc: previewUrl,
-      legacyFlatSrc,
       constPrefix,
       shortDescription: opts.shortDescription,
     }),
