@@ -15,6 +15,9 @@
  * Per base-map-family visual tuning. Applies to the whole family (including all month rasters
  * for month-aware maps); does not change assets, projection, or layer semantics.
  */
+
+import type { BaseMapCatalogEntry } from "./baseMapCatalog";
+
 export type BaseMapPresentationConfig = {
   brightness: number;
   contrast: number;
@@ -41,6 +44,8 @@ const G_MIN = 0.5;
 const G_MAX = 2.5;
 const S_MIN = 0.0;
 const S_MAX = 2.0;
+const O_MIN = 0;
+const O_MAX = 1;
 
 function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
@@ -51,6 +56,20 @@ function clamp(p: number, lo: number, hi: number): number {
     return lo;
   }
   return Math.max(lo, Math.min(hi, p));
+}
+
+/**
+ * Clamps `scene.baseMap.opacity` / catalog default to [0, 1].
+ * Exported for tests and {@link resolveEffectiveBaseMapPresentation}.
+ */
+export function clampBaseMapOpacity(n: unknown, fallback: number = 1): number {
+  if (typeof n !== "number" || !Number.isFinite(n)) {
+    if (typeof fallback === "number" && Number.isFinite(fallback)) {
+      return Math.max(O_MIN, Math.min(O_MAX, fallback));
+    }
+    return 1;
+  }
+  return Math.max(O_MIN, Math.min(O_MAX, n));
 }
 
 function numOr(
@@ -104,6 +123,33 @@ export function baseMapPresentationEqual(
  * **Gamma is omitted** here: it is applied in the base-map `imageBlit` path via
  * `getGammaAdjustedCanvasForImage` (pixel pass), not as a CSS filter.
  */
+/**
+ * Merges {@link BaseMapCatalogEntry.defaultPresentation} with `scene.baseMap` (opacity and presentation),
+ * then clamps with {@link normalizeBaseMapPresentation} so catalog and SceneConfig both contribute deterministically.
+ */
+export function resolveEffectiveBaseMapPresentation(
+  catalogEntry: BaseMapCatalogEntry | null | undefined,
+  sceneBaseMap: { opacity?: number; presentation?: BaseMapPresentationConfig | unknown },
+): { opacity: number } & BaseMapPresentationConfig {
+  const d = catalogEntry?.defaultPresentation;
+  const catalogSeed = {
+    ...DEFAULT_BASE_MAP_PRESENTATION,
+    brightness: d?.brightness ?? DEFAULT_BASE_MAP_PRESENTATION.brightness,
+    contrast: d?.contrast ?? DEFAULT_BASE_MAP_PRESENTATION.contrast,
+    gamma: d?.gamma ?? DEFAULT_BASE_MAP_PRESENTATION.gamma,
+    saturation: d?.saturation ?? DEFAULT_BASE_MAP_PRESENTATION.saturation,
+  };
+  const pRaw = sceneBaseMap.presentation;
+  const scenePart = isPlainObject(pRaw)
+    ? (Object.fromEntries(
+        Object.entries(pRaw).filter(([, v]) => v !== undefined),
+      ) as Record<string, unknown>)
+    : {};
+  const presentation = normalizeBaseMapPresentation({ ...catalogSeed, ...scenePart });
+  const opacity = clampBaseMapOpacity(sceneBaseMap.opacity, d?.opacity ?? 1);
+  return { ...presentation, opacity };
+}
+
 export function baseMapPresentationToCssFilterString(
   p: BaseMapPresentationConfig,
 ): string | undefined {

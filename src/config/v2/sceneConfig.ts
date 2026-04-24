@@ -22,6 +22,7 @@ import {
   EQUIRECT_BASE_MAP_OPTIONS,
   calendarMonthUtc1To12FromUnixMs,
   canonicalEquirectBaseMapIdForPersistence,
+  getEquirectBaseMapCatalogEntry,
   getEquirectBaseMapOptionForId,
   resolveEquirectBaseMapAsset,
   resolveEquirectBaseMapImageSrc,
@@ -40,6 +41,7 @@ export {
   EQUIRECT_BASE_MAP_OPTIONS,
   calendarMonthUtc1To12FromUnixMs,
   canonicalEquirectBaseMapIdForPersistence,
+  getEquirectBaseMapCatalogEntry,
   getEquirectBaseMapOptionForId,
   resolveEquirectBaseMapImageSrc,
   resolveEquirectBaseMapAsset,
@@ -51,7 +53,9 @@ export {
   DEFAULT_BASE_MAP_PRESENTATION,
   baseMapPresentationEqual,
   baseMapPresentationToCssFilterString,
+  clampBaseMapOpacity,
   normalizeBaseMapPresentation,
+  resolveEffectiveBaseMapPresentation,
 } from "../baseMapPresentation";
 export {
   planSceneStackComposition,

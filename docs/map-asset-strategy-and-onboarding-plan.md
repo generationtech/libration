@@ -119,18 +119,20 @@ Libration should evolve toward curated map families rather than a random collect
 
 ---
 
-## 3.0 Month-aware base map families (registry + resolver)
+## 3.0 Month-aware base map families (file catalog + resolver)
 
-Some families ship **month-of-year** rasters (e.g. seasonal imagery). This is **explicit** in the base-map registry (`variantMode: "monthOfYear"`), not inferred from filenames at runtime.
+**Authoritative map inventory** lives in the JSON catalog `src/assets/maps/base-map-catalog.json` (imported at build time). TypeScript does not keep a hardcoded list of every family; it validates the catalog, exposes resolver APIs, and preserves legacy id aliases. No runtime folder scan and no network fetch of the catalog.
+
+Some families ship **month-of-year** rasters (e.g. seasonal imagery). This is **explicit** in the catalog (`variantMode: "monthOfYear"`), not inferred from filenames at runtime.
 
 * **Persistence** stays `scene.baseMap.id` only (one selector row per family). No month-specific paths are stored.
 * **Runtime** resolves the concrete URL from the **effective product instant** (`TimeContext.now`, UTC civil month 1–12), via `resolveEquirectBaseMapImageSrc(id, { productInstantMs })` and the base map layer’s per-frame `getState`.
 * **On-disk layout** (example `equirect-world-topography-v1`):
 
   * `public/maps/variants/<family-id>/base.jpg` — family default when no monthly asset applies.
-  * `public/maps/variants/<family-id>/01.jpg` … `12.jpg` — explicit month rasters (paths listed in the registry).
-* **Missing month**: try the current UTC month first, then walk **backward** month-by-month with natural year wrap (January → December). The first **onboarded** month in that order wins. Registry field `onboardedMonths` lists which of 1–12 are actually shipped (must match static files; **not** a runtime probe). A **non-empty** list is required for **partial** onboarding. **Omitting** `onboardedMonths` means the contract is “all twelve `01`…`12` files are present” (resolver treats 1…12 as onboarded); in production, listing `1…12` explicitly is recommended for clarity. An **empty** `[]` means no monthly rasters — use `base.jpg` only.
-* **Further fallback**: if variant resolution yields nothing usable, the family’s legacy flat `src` URL is used, then the global default base map.
+  * `public/maps/variants/<family-id>/01.jpg` … `12.jpg` — explicit month rasters (paths listed in the **catalog**).
+* **Missing month**: try the current UTC month first, then walk **backward** month-by-month with natural year wrap (January → December). The first **onboarded** month in that order wins. Catalog field `onboardedMonths` lists which of 1–12 are actually shipped (must match static files; **not** a runtime probe). A **non-empty** list is required for **partial** onboarding. **Omitting** `onboardedMonths` means the contract is “all twelve `01`…`12` files are present” (resolver treats 1…12 as onboarded); in production, listing `1…12` explicitly is recommended for clarity. An **empty** `[]` means no monthly rasters — use `base.jpg` only.
+* **Further fallback**: if variant resolution yields nothing usable, the family’s **legacy** flat `legacyStaticSrc` URL (when set for month families), then the global default base map.
 
 Future work: a **fixed-month override** (e.g. always show July for comparisons) would be a separate SceneConfig or product-setting extension; it is intentionally out of scope here.
 
@@ -139,7 +141,7 @@ Future work: a **fixed-month override** (e.g. always show July for comparisons) 
 
 ## 3.0.1 Runtime image-load failure fallback
 
-Registry metadata is the static contract, but deployed files may still be absent during development, packaging, or manual testing.
+Catalog metadata is the static contract, but deployed files may still be absent during development, packaging, or manual testing.
 
 For base-map rasters, Libration supports narrow runtime failure recovery:
 
@@ -151,6 +153,11 @@ For base-map rasters, Libration supports narrow runtime failure recovery:
 
 This is not a general lifecycle/data-feed system. It is static asset resilience for base maps only.
 
+## 3.0.2 Formal onboarding (`npm run maps:prep`)
+
+* Prepares rasters under `public/maps/` and prints a **complete JSON object** to paste into (or merge into) `base-map-catalog.json`.
+* Optional `--update-catalog` writes/merges that object by `id` into the catalog file for git review. **No TypeScript change** is required to add a supported family once assets and the catalog entry exist.
+* Runtime remains **deterministic**: the catalog is bundled, not read from the filesystem in the browser.
 
 ---
 

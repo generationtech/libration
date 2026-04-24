@@ -12,10 +12,12 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { getEquirectBaseMapCatalogEntry } from "./baseMapAssetResolve";
 import {
   DEFAULT_BASE_MAP_PRESENTATION,
   baseMapPresentationToCssFilterString,
   normalizeBaseMapPresentation,
+  resolveEffectiveBaseMapPresentation,
 } from "./baseMapPresentation";
 
 describe("baseMapPresentation", () => {
@@ -42,6 +44,17 @@ describe("baseMapPresentation", () => {
     const onlyGamma = normalizeBaseMapPresentation({ gamma: 1.4 });
     expect(onlyGamma.gamma).toBe(1.4);
     expect(baseMapPresentationToCssFilterString(onlyGamma)).toBeUndefined();
+  });
+
+  it("resolveEffectiveBaseMapPresentation uses catalog defaults then scene overrides", () => {
+    const entry = getEquirectBaseMapCatalogEntry("equirect-world-legacy-v1");
+    const a = resolveEffectiveBaseMapPresentation(entry, {});
+    expect(a.opacity).toBe(1);
+    expect(a.brightness).toBe(1);
+
+    const b = resolveEffectiveBaseMapPresentation(entry, { opacity: 0.5, presentation: { contrast: 1.5 } });
+    expect(b.opacity).toBe(0.5);
+    expect(b.contrast).toBe(1.5);
   });
 
   it("emits filter parts for non-default brightness, contrast, and saturation", () => {

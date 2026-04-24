@@ -12,16 +12,23 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import {
   assignMonthsFromTiffBasenames,
   basenameMatchesGlob,
+  buildMonthOfYearCatalogEntryObject,
   buildProvenanceMarkdown,
   buildRegistrySnippet,
+  buildStaticCatalogEntryObject,
   buildStaticRegistrySnippet,
   detectMonthFromTiffBasename,
+  formatCatalogEntryJsonBlock,
   formatMonthTable,
   planMonthOfYearPreview,
   toConstPrefixFromFamilyId,
+  upsertBaseMapCatalogEntryInFile,
 } from "./baseMapPrepareLib.ts";
 
 describe("detectMonthFromTiffBasename", () => {
@@ -233,5 +240,55 @@ describe("formatMonthTable", () => {
     ]);
     expect(t).toContain("| 01 | a.tif |");
     expect(t).toContain("| 12 | b.tiff |");
+  });
+});
+
+describe("catalog JSON helpers", () => {
+  it("buildMonthOfYearCatalogEntryObject lists 12 month URLs and base", () => {
+    const o = buildMonthOfYearCatalogEntryObject({
+      familyId: "equirect-test-v1",
+      variantDirUrl: "/maps/variants/equirect-test-v1",
+      onboardedMonths: [1, 3, 6],
+      label: "T",
+      category: "terrain",
+      attribution: "X",
+      previewThumbnailSrc: "/maps/previews/equirect-test-v1-thumb.jpg",
+    });
+    expect(o.variantMode).toBe("monthOfYear");
+    expect((o.monthOfYear as { monthAssetSrcs: string[] }).monthAssetSrcs).toHaveLength(12);
+    expect((o.monthOfYear as { familyBaseSrc: string }).familyBaseSrc).toBe(
+      "/maps/variants/equirect-test-v1/base.jpg",
+    );
+    expect(formatCatalogEntryJsonBlock(o)).toContain('"id": "equirect-test-v1"');
+  });
+
+  it("buildStaticCatalogEntryObject is static-only", () => {
+    const o = buildStaticCatalogEntryObject({
+      familyId: "equirect-static-v1",
+      mainSrc: "/maps/equirect-static-v1.jpg",
+      label: "S",
+      category: "political",
+      attribution: "U",
+      previewThumbnailSrc: "/maps/previews/x-thumb.jpg",
+    });
+    expect(o.variantMode).toBe("static");
+    expect(o).not.toHaveProperty("monthOfYear");
+  });
+
+  it("upsertBaseMapCatalogEntryInFile replaces by id", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "libration-map-"));
+    const path = join(dir, "base-map-catalog.json");
+    const initial = {
+      version: 1,
+      defaultEquirectBaseMapId: "a",
+      entries: [{ id: "a", label: "A", extra: 1 }],
+    };
+    await writeFile(path, JSON.stringify(initial, null, 2), "utf8");
+    await upsertBaseMapCatalogEntryInFile(path, { id: "a", label: "A2", newField: true });
+    const out = JSON.parse(await readFile(path, "utf8")) as { entries: { id: string }[] };
+    expect(out.entries).toHaveLength(1);
+    expect(out.entries[0]!.label).toBe("A2");
+    expect(out.entries[0]!.id).toBe("a");
+    await rm(dir, { recursive: true, force: true });
   });
 });

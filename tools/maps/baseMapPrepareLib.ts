@@ -16,6 +16,8 @@
  * Kept deterministic and free of filesystem / ImageMagick side effects for tests.
  */
 
+import { readFile, writeFile } from "node:fs/promises";
+
 export type BaseMapPrepareCategory = "reference" | "political" | "terrain" | "scientific";
 
 export type MonthAssignment = Readonly<{
@@ -302,4 +304,179 @@ export function formatMonthTable(assignments: readonly MonthAssignment[]): strin
     (a) => `| ${String(a.month1To12).padStart(2, "0")} | ${a.sourceBasename} |`,
   );
   return [header, sep, ...rows].join("\n");
+}
+
+// --- Base map catalog JSON (for `src/assets/maps/base-map-catalog.json`) ---
+
+export type CatalogJsonEntry = Readonly<Record<string, unknown>>;
+
+export type CatalogFileOnDisk = Readonly<{
+  version: number;
+  defaultEquirectBaseMapId: string;
+  entries: Record<string, unknown>[];
+}>;
+
+export type CatalogDefaultPresentationInput = {
+  opacity?: number;
+  brightness?: number;
+  contrast?: number;
+  saturation?: number;
+  gamma?: number;
+};
+
+const DEFAULT_PRES: Required<CatalogDefaultPresentationInput> = {
+  opacity: 1,
+  brightness: 1,
+  contrast: 1,
+  saturation: 1,
+  gamma: 1,
+};
+
+function monthSrcsFromVariantDir(variantDirUrl: string): string[] {
+  return Array.from({ length: 12 }, (_, i) => `${variantDirUrl}/${String(i + 1).padStart(2, "0")}.jpg`);
+}
+
+export type MonthOfYearCatalogEntryInput = Readonly<{
+  familyId: string;
+  variantDirUrl: string;
+  onboardedMonths: readonly number[];
+  label: string;
+  category: BaseMapPrepareCategory;
+  attribution: string;
+  shortDescription?: string | null;
+  previewThumbnailSrc: string;
+  /** Optional flat legacy URL after month walk fails; omit if same as using only `base.jpg` chain. */
+  legacyStaticSrc?: string | null;
+  recommendedRoles?: readonly string[];
+  defaultPresentation?: CatalogDefaultPresentationInput;
+  capabilities?: Readonly<{
+    temporal?: boolean;
+    overlayOptimized?: boolean;
+    emissiveCompatible?: boolean;
+    darkFriendly?: boolean;
+    seasonal?: boolean;
+  }>;
+}>;
+
+/**
+ * One catalog row for a `variantMode: "monthOfYear"` family (suitable for JSON.stringify under `entries`).
+ */
+export function buildMonthOfYearCatalogEntryObject(input: MonthOfYearCatalogEntryInput): CatalogJsonEntry {
+  const base = `${input.variantDirUrl}/base.jpg`;
+  const desc =
+    input.shortDescription?.trim() && input.shortDescription.trim() !== ""
+      ? input.shortDescription.trim()
+      : "Natural-color or terrain imagery with seasonal variation (edit in catalog as needed).";
+  const ob = [...input.onboardedMonths].sort((a, b) => a - b);
+  const cap = {
+    temporal: true,
+    overlayOptimized: input.capabilities?.overlayOptimized ?? false,
+    emissiveCompatible: input.capabilities?.emissiveCompatible ?? false,
+    darkFriendly: input.capabilities?.darkFriendly ?? false,
+    seasonal: input.capabilities?.seasonal ?? true,
+    ...input.capabilities,
+  };
+  const pres = { ...DEFAULT_PRES, ...input.defaultPresentation };
+  return {
+    id: input.familyId,
+    label: input.label,
+    shortDescription: desc,
+    category: input.category,
+    attribution: input.attribution,
+    variantMode: "monthOfYear",
+    src: base,
+    ...(input.legacyStaticSrc?.trim() ? { legacyStaticSrc: input.legacyStaticSrc.trim() } : {}),
+    previewThumbnailSrc: input.previewThumbnailSrc,
+    monthOfYear: {
+      familyBaseSrc: base,
+      monthAssetSrcs: monthSrcsFromVariantDir(input.variantDirUrl),
+      onboardedMonths: ob,
+    },
+    defaultPresentation: pres,
+    capabilities: cap,
+    recommendedRoles: input.recommendedRoles?.length
+      ? [...input.recommendedRoles]
+      : ["general"],
+  };
+}
+
+export type StaticCatalogEntryInput = Readonly<{
+  familyId: string;
+  mainSrc: string;
+  label: string;
+  category: BaseMapPrepareCategory;
+  attribution: string;
+  shortDescription?: string | null;
+  previewThumbnailSrc: string;
+  transitionalPlaceholder?: true;
+  recommendedRoles?: readonly string[];
+  defaultPresentation?: CatalogDefaultPresentationInput;
+  capabilities?: Readonly<{
+    temporal?: boolean;
+    overlayOptimized?: boolean;
+    emissiveCompatible?: boolean;
+    darkFriendly?: boolean;
+    seasonal?: boolean;
+  }>;
+}>;
+
+export function buildStaticCatalogEntryObject(input: StaticCatalogEntryInput): CatalogJsonEntry {
+  const desc =
+    input.shortDescription?.trim() && input.shortDescription.trim() !== ""
+      ? input.shortDescription.trim()
+      : "Static equirectangular map (edit short description in catalog as needed).";
+  const cap = {
+    temporal: false,
+    overlayOptimized: input.capabilities?.overlayOptimized ?? true,
+    emissiveCompatible: input.capabilities?.emissiveCompatible ?? false,
+    darkFriendly: input.capabilities?.darkFriendly ?? true,
+    seasonal: input.capabilities?.seasonal ?? false,
+    ...input.capabilities,
+  };
+  return {
+    id: input.familyId,
+    label: input.label,
+    shortDescription: desc,
+    category: input.category,
+    variantMode: "static",
+    src: input.mainSrc,
+    previewThumbnailSrc: input.previewThumbnailSrc,
+    attribution: input.attribution,
+    ...(input.transitionalPlaceholder ? { transitionalPlaceholder: true } : {}),
+    defaultPresentation: { ...DEFAULT_PRES, ...input.defaultPresentation },
+    capabilities: cap,
+    recommendedRoles: input.recommendedRoles?.length
+      ? [...input.recommendedRoles]
+      : ["general"],
+  };
+}
+
+export function formatCatalogEntryJsonBlock(entry: CatalogJsonEntry): string {
+  return JSON.stringify(entry, null, 2);
+}
+
+/**
+ * Inserts or replaces one `entries` item in `base-map-catalog.json` by `id` (2-space indent, trailing newline).
+ * Does not validate beyond JSON parse/serialize; app-level validation is in the runtime loader tests.
+ */
+export async function upsertBaseMapCatalogEntryInFile(
+  catalogPath: string,
+  entry: CatalogJsonEntry,
+): Promise<void> {
+  const text = await readFile(catalogPath, "utf8");
+  const data = JSON.parse(text) as CatalogFileOnDisk;
+  if (!data.entries || !Array.isArray(data.entries)) {
+    throw new Error(`Invalid catalog (missing entries): ${catalogPath}`);
+  }
+  const id = entry["id"];
+  if (typeof id !== "string" || id.trim() === "") {
+    throw new Error("Catalog entry must have a non-empty string `id`");
+  }
+  const idx = data.entries.findIndex((e) => e["id"] === id);
+  if (idx >= 0) {
+    data.entries[idx] = { ...entry } as Record<string, unknown>;
+  } else {
+    (data.entries as Record<string, unknown>[]).push({ ...entry } as Record<string, unknown>);
+  }
+  await writeFile(catalogPath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }

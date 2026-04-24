@@ -90,23 +90,25 @@ Status:
 
 ---
 
-## 2. Base Map Registry and Selector System
+## 2. Base map catalog and selector
 
 Implemented:
 
-* multiple curated base maps
-* selector/editor integration
-* preview support
-* attribution support
+* file-backed **catalog** (`src/assets/maps/base-map-catalog.json`) for supported family ids, labels, paths, and presentation defaults (validated in TypeScript; bundled, not loaded over HTTP)
+* `npm run maps:prep` to generate assets and a **JSON catalog entry** (optional `--update-catalog` to merge into the file)
+* selector/editor integration (options derived from the catalog)
+* preview and attribution on options
 * category support
 * persistence
 * runtime resolution
 
-Implemented curated families:
+Implemented curated families (see the JSON catalog for the exact list):
 
 * legacy/reference
 * political
-* topography
+* topography (month-aware)
+* geology (transitional placeholder)
+* Blue Marble / similar (month-aware when onboarded)
 
 The selector now operates on:
 

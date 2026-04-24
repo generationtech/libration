@@ -11,84 +11,45 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import baseMapCatalogJson from "../assets/maps/base-map-catalog.json";
+import {
+  parseAndValidateBaseMapCatalog,
+  type BaseMapCatalogEntry,
+  type EquirectMapDefinition,
+} from "./baseMapCatalog";
 import {
   calendarMonthUtc1To12FromUnixMs,
   resolveMonthOfYearRasterSrc,
   type MonthOfYearFamilyPaths,
 } from "./baseMapMonthResolve";
+import type {
+  BaseMapOption,
+  BaseMapVariantMode,
+  EquirectBaseMapAsset,
+  BaseMapResolveContext,
+} from "./baseMapTypes";
 
 export { calendarMonthUtc1To12FromUnixMs } from "./baseMapMonthResolve";
+export type {
+  BaseMapOption,
+  BaseMapVariantMode,
+  EquirectBaseMapAsset,
+  BaseMapResolveContext,
+} from "./baseMapTypes";
+export type { BaseMapCatalogEntry, BaseMapDefaultPresentation, BaseMapCapabilities } from "./baseMapCatalog";
+export type { EquirectMapDefinition };
 
-/**
- * User-facing option model for the base map selector (editor and scene-facing UI).
- * Paired 1:1 with {@link EquirectBaseMapAsset} entries in the static registry.
- */
-export type BaseMapOption = {
-  id: string;
-  label: string;
-  shortDescription?: string;
-  category: "reference" | "scientific" | "terrain" | "political";
-  attribution?: string;
-  previewThumbnailSrc?: string;
-  transitionalPlaceholder?: boolean;
-};
+const CATALOG = parseAndValidateBaseMapCatalog(
+  baseMapCatalogJson as unknown as import("./baseMapCatalog").BaseMapCatalogFile,
+);
 
-/**
- * Explicit variant contract for a base map family (registry metadata, not filename guessing).
- */
-export type BaseMapVariantMode = "static" | "monthOfYear";
+const DEFINITIONS: readonly EquirectMapDefinition[] = CATALOG.definitions;
 
-/**
- * Static equirectangular base-map registry for SceneConfig.baseMap.id resolution.
- * This is intentionally small and explicit for the current phase (no dynamic catalog/lifecycle).
- */
-export type EquirectBaseMapAsset = {
-  id: string;
-  src: string;
-  projectionId: "equirectangular";
-  extent: { minLat: -90; maxLat: 90; minLon: -180; maxLon: 180 };
-  orientation: "north-up";
-  hasPadding: false;
-  /**
-   * Transitional: id is real and supported, but currently points at a placeholder
-   * raster until a distinct production asset is onboarded.
-   */
-  transitionalPlaceholder?: true;
-  /** When `"monthOfYear"`, {@link resolveEquirectBaseMapImageSrc} uses product month + explicit paths. */
-  variantMode?: BaseMapVariantMode;
-};
-
-export type BaseMapResolveContext = Readonly<{
-  /** Effective product instant (`TimeContext.now`) in Unix milliseconds. */
-  productInstantMs: number;
-  /**
-   * Concrete raster URLs to skip (e.g. from runtime image load failure). The registry
-   * remains authoritative; this only steers which declared path is used.
-   */
-  excludedImageSrcs?: ReadonlySet<string>;
-}>;
-
-type EquirectMapDefinition = {
-  id: string;
-  /**
-   * Static raster URL, or legacy flat fallback for a `"monthOfYear"` family when
-   * variant paths are unavailable.
-   */
-  src: string;
-  variantMode?: BaseMapVariantMode;
-  /**
-   * When `variantMode` is `monthOfYear`, lists concrete paths; `onboardedMonths` must
-   * list only months that are actually shipped (see {@link MonthOfYearFamilyPaths}).
-   */
-  monthOfYear?: MonthOfYearFamilyPaths;
-  /** Product UI — kept alongside the asset to avoid id / label drift. */
-  option: BaseMapOption;
-} & Pick<EquirectBaseMapAsset, "transitionalPlaceholder">;
-
-export const DEFAULT_EQUIRECT_BASE_MAP_ID = "equirect-world-legacy-v1";
-
-/** Must match {@link WORLD_EQUIRECTANGULAR_SRC} in `baseMapLayer.ts`. */
-const WORLD_EQUIRECTANGULAR_JPG = "/maps/world-equirectangular.jpg";
+const LEGACY_ID_ALIASES = new Map<string, string>([
+  ["political-v1", "equirect-world-political-v1"],
+  ["world-equirectangular-v1", CATALOG.defaultEquirectBaseMapId],
+  ["equirect-world-topo-v1", "equirect-world-topography-v1"],
+]);
 
 const FULL_WORLD_EXTENT = {
   minLat: -90,
@@ -97,96 +58,10 @@ const FULL_WORLD_EXTENT = {
   maxLon: 180,
 } as const;
 
-const EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR = "/maps/variants/equirect-world-topography-v1";
-
-/** Shipped `01.jpg`…`12.jpg` in the variant directory; keep in sync with static assets. */
-const EQUIRECT_WORLD_TOPOGRAPHY_V1_ONBOARDED_MONTHS: readonly [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-];
-
-const EQUIRECT_WORLD_TOPOGRAPHY_V1_MONTH_SRCS = [
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/01.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/02.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/03.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/04.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/05.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/06.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/07.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/08.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/09.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/10.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/11.jpg`,
-  `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/12.jpg`,
-] as const satisfies MonthOfYearFamilyPaths["monthAssetSrcs"];
-
-const DEFINITIONS: readonly EquirectMapDefinition[] = [
-  {
-    id: DEFAULT_EQUIRECT_BASE_MAP_ID,
-    src: WORLD_EQUIRECTANGULAR_JPG,
-    transitionalPlaceholder: undefined,
-    option: {
-      id: DEFAULT_EQUIRECT_BASE_MAP_ID,
-      label: "World (legacy, shaded)",
-      shortDescription: "The original default equirectangular world basemap in Libration.",
-      category: "reference",
-    },
-  },
-  {
-    id: "equirect-world-political-v1",
-    src: "/maps/world-equirectangular-political.jpg",
-    transitionalPlaceholder: true,
-    option: {
-      id: "equirect-world-political-v1",
-      label: "World political",
-      shortDescription: "Country and boundary emphasis for orientation and place names.",
-      category: "political",
-      transitionalPlaceholder: true,
-    },
-  },
-  {
-    id: "equirect-world-topography-v1",
-    variantMode: "monthOfYear",
-    src: "/maps/world-equirectangular-topography.jpg",
-    monthOfYear: {
-      familyBaseSrc: `${EQUIRECT_WORLD_TOPOGRAPHY_V1_DIR}/base.jpg`,
-      monthAssetSrcs: EQUIRECT_WORLD_TOPOGRAPHY_V1_MONTH_SRCS,
-      onboardedMonths: EQUIRECT_WORLD_TOPOGRAPHY_V1_ONBOARDED_MONTHS,
-    },
-    option: {
-      id: "equirect-world-topography-v1",
-      label: "World topography",
-      shortDescription: "Terrain and relief, useful for landforms and elevation context.",
-      category: "terrain",
-      previewThumbnailSrc: "/maps/previews/world-equirectangular-topography-thumb.jpg",
-      attribution: "Based on NASA Blue Marble Next Generation topography / bathymetry.",
-    },
-  },
-  {
-    id: "equirect-world-geology-v1",
-    src: "/maps/world-equirectangular-geology.jpg",
-    transitionalPlaceholder: true,
-    option: {
-      id: "equirect-world-geology-v1",
-      label: "World geology",
-      shortDescription: "Geological provinces and related features (scientific use).",
-      category: "scientific",
-      transitionalPlaceholder: true,
-    },
-  },
-] as const;
-
-const LEGACY_ID_ALIASES = new Map<string, string>([
-  ["political-v1", "equirect-world-political-v1"],
-  ["world-equirectangular-v1", DEFAULT_EQUIRECT_BASE_MAP_ID],
-  ["equirect-world-topo-v1", "equirect-world-topography-v1"],
-]);
-
 function toAsset(d: EquirectMapDefinition): EquirectBaseMapAsset {
   const variantMode: BaseMapVariantMode = d.variantMode ?? "static";
   const catalogSrc =
-    variantMode === "monthOfYear" && d.monthOfYear
-      ? d.monthOfYear.familyBaseSrc
-      : d.src;
+    variantMode === "monthOfYear" && d.monthOfYear ? d.monthOfYear.familyBaseSrc : d.src;
   return {
     id: d.id,
     src: catalogSrc,
@@ -199,50 +74,12 @@ function toAsset(d: EquirectMapDefinition): EquirectBaseMapAsset {
   };
 }
 
-function assertRegistry(entries: readonly EquirectMapDefinition[]): void {
-  const seen = new Set<string>();
+function assertDefinitionRuntime(entries: readonly EquirectMapDefinition[]): void {
   for (const def of entries) {
     if (def.id !== def.option.id) {
       throw new Error(
         `Base-map definition id and option.id must match: ${def.id} vs ${def.option.id}`,
       );
-    }
-    if (def.id.trim() === "") {
-      throw new Error("Base-map asset registry entry has an empty id.");
-    }
-    if (seen.has(def.id)) {
-      throw new Error(`Duplicate base-map asset id in registry: ${def.id}`);
-    }
-    seen.add(def.id);
-    const defTrans = def.transitionalPlaceholder === true;
-    const optTrans = def.option.transitionalPlaceholder === true;
-    if (defTrans !== optTrans) {
-      throw new Error(
-        `Transitional flag mismatch for ${def.id}: align definition and BaseMapOption.`,
-      );
-    }
-    const variantMode: BaseMapVariantMode = def.variantMode ?? "static";
-    if (variantMode === "monthOfYear") {
-      if (!def.monthOfYear) {
-        throw new Error(`Base-map ${def.id}: monthOfYear metadata is required when variantMode is monthOfYear.`);
-      }
-      const { familyBaseSrc, monthAssetSrcs } = def.monthOfYear;
-      if (familyBaseSrc.trim() === "") {
-        throw new Error(`Base-map ${def.id}: familyBaseSrc must be non-empty for monthOfYear.`);
-      }
-      if (monthAssetSrcs.length !== 12) {
-        throw new Error(`Base-map ${def.id}: monthAssetSrcs must have exactly 12 entries.`);
-      }
-      const onboarded = def.monthOfYear.onboardedMonths;
-      if (onboarded) {
-        for (const m of onboarded) {
-          if (!Number.isInteger(m) || m < 1 || m > 12) {
-            throw new Error(`Base-map ${def.id}: onboardedMonths must use integers 1–12.`);
-          }
-        }
-      }
-    } else if (def.monthOfYear) {
-      throw new Error(`Base-map ${def.id}: monthOfYear must not be set unless variantMode is monthOfYear.`);
     }
   }
   const assets: EquirectBaseMapAsset[] = entries.map(toAsset);
@@ -267,15 +104,25 @@ function assertRegistry(entries: readonly EquirectMapDefinition[]): void {
   }
 }
 
-assertRegistry(DEFINITIONS);
+assertDefinitionRuntime(DEFINITIONS);
 
 const REGISTRY: readonly EquirectBaseMapAsset[] = DEFINITIONS.map((d) => toAsset(d));
 
 const BASE_MAP_REGISTRY = new Map<string, EquirectBaseMapAsset>(REGISTRY.map((entry) => [entry.id, entry]));
 
-const OPTION_BY_ID = new Map<string, BaseMapOption>(DEFINITIONS.map((d) => [d.id, d.option]));
+const OPTION_BY_ID = new Map(
+  DEFINITIONS.map((d) => [d.id, d.option] as const),
+);
 
-const DEFINITION_BY_ID = new Map<string, EquirectMapDefinition>(DEFINITIONS.map((d) => [d.id, d]));
+const DEFINITION_BY_ID = new Map(
+  DEFINITIONS.map((d) => [d.id, d] as const),
+);
+
+const CATALOG_ENTRY_BY_ID = new Map(
+  DEFINITIONS.map((d) => [d.id, d.catalogEntry] as const),
+);
+
+export const DEFAULT_EQUIRECT_BASE_MAP_ID: string = CATALOG.defaultEquirectBaseMapId;
 
 const DEFAULT_DEFINITION = DEFINITION_BY_ID.get(DEFAULT_EQUIRECT_BASE_MAP_ID)!;
 
@@ -283,9 +130,13 @@ function isExcludedFromResolve(url: string, ex: ReadonlySet<string>): boolean {
   return ex.has(url.trim());
 }
 
-/** Final rung: always the legacy world ID’s bundled raster, even if also listed in `ex` (catastrophic). */
+/** Last resort: the default map family’s primary static raster, even if in `ex`. */
 function globalDefaultFallbackSrcLastResort(_ex: ReadonlySet<string>): string {
-  return DEFAULT_DEFINITION.src;
+  const d = DEFAULT_DEFINITION;
+  if ((d.variantMode ?? "static") === "static") {
+    return d.src;
+  }
+  return d.monthOfYear!.familyBaseSrc;
 }
 
 function resolveDefinitionRasterSrc(
@@ -303,7 +154,11 @@ function resolveDefinitionRasterSrc(
     return globalDefaultFallbackSrcLastResort(ex);
   }
   const month = calendarMonthUtc1To12FromUnixMs(productInstantMs);
-  const fromFamily = resolveMonthOfYearRasterSrc(def.monthOfYear, month, ex).trim();
+  const fromFamily = resolveMonthOfYearRasterSrc(
+    def.monthOfYear as MonthOfYearFamilyPaths,
+    month,
+    ex,
+  ).trim();
   if (fromFamily !== "") {
     return fromFamily;
   }
@@ -316,7 +171,7 @@ function resolveDefinitionRasterSrc(
 
 /**
  * All supported equirectangular base map choices for UI (labels, not raw id lists).
- * Order matches the static {@link SUPPORTED_EQUIRECT_BASE_MAP_IDS} registry.
+ * Order is the `entries` order in `base-map-catalog.json`.
  */
 export const EQUIRECT_BASE_MAP_OPTIONS: readonly BaseMapOption[] = DEFINITIONS.map((d) => d.option);
 
@@ -336,7 +191,17 @@ export const BASE_MAP_OPTION_CATEGORY_ORDER: readonly BaseMapOption["category"][
  */
 export function getEquirectBaseMapOptionForId(sceneBaseMapId: string): BaseMapOption {
   const asset = resolveEquirectBaseMapAsset(sceneBaseMapId);
-  return OPTION_BY_ID.get(asset.id) ?? { id: asset.id, label: asset.id, category: "reference" };
+  return (
+    OPTION_BY_ID.get(asset.id) ?? { id: asset.id, label: asset.id, category: "reference" as const }
+  );
+}
+
+/**
+ * Returns the materialized catalog row for the family {@link resolveEquirectBaseMapAsset} would select.
+ */
+export function getEquirectBaseMapCatalogEntry(id: string): BaseMapCatalogEntry {
+  const asset = resolveEquirectBaseMapAsset(id);
+  return CATALOG_ENTRY_BY_ID.get(asset.id)!;
 }
 
 function canonicalBaseMapId(id: string): string {

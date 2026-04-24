@@ -1,5 +1,7 @@
 # Map Asset Sources
 
+**Inventory** for the base map selector: `src/assets/maps/base-map-catalog.json` (bundled at build time; do not add families only under `public/maps/` without a catalog entry).
+
 ## equirect-world-topography-v1
 - Variant mode: monthOfYear
 - Family runtime directory: `public/maps/variants/equirect-world-topography-v1/`
@@ -21,7 +23,7 @@
 - Notes: Generated as an overlay-friendly political/reference substrate: muted ocean, calm land fill, restrained borders, stronger coastline, no labels, full-world equirectangular export.
 
 ## Base map failure fallback behavior
-- Month-aware families are registry-declared, but runtime may encounter missing files in local/dev/build outputs.
+- Month-aware families are catalog-declared, but runtime may encounter missing files in local/dev/build outputs.
 - Base-map raster payloads opt into image-load failure reporting.
 - Failed concrete URLs are recorded and excluded from later base-map resolution.
 - Month-aware families then continue the backward calendar lookback chain, followed by family base and global default fallback.

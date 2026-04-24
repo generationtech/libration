@@ -84,6 +84,7 @@ describe("SceneConfig (Phase 1)", () => {
       "equirect-world-political-v1",
       "equirect-world-topography-v1",
       "equirect-world-geology-v1",
+      "equirect-world-blue-marble-v1",
     ]);
   });
 
@@ -101,6 +102,10 @@ describe("SceneConfig (Phase 1)", () => {
     expect(resolveEquirectBaseMapImageSrc("equirect-world-geology-v1")).toBe(
       "/maps/world-equirectangular-geology.jpg",
     );
+    const july = Date.UTC(2019, 6, 15);
+    expect(
+      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-v1", { productInstantMs: july }),
+    ).toBe("/maps/variants/equirect-world-blue-marble-v1/07.jpg");
   });
 
   it("unknown base map ids safely fall back to the default registry entry", () => {
@@ -117,7 +122,6 @@ describe("SceneConfig (Phase 1)", () => {
 
   it("exposes BaseMapOption metadata in lockstep with the asset registry", () => {
     expect(EQUIRECT_BASE_MAP_OPTIONS).toHaveLength(SUPPORTED_EQUIRECT_BASE_MAP_IDS.length);
-    expect(EQUIRECT_BASE_MAP_OPTIONS).toHaveLength(4);
     expect(EQUIRECT_BASE_MAP_OPTIONS.map((o) => o.id)).toEqual(SUPPORTED_EQUIRECT_BASE_MAP_IDS);
     for (const o of EQUIRECT_BASE_MAP_OPTIONS) {
       expect(getEquirectBaseMapOptionForId(o.id).label).toBe(o.label);

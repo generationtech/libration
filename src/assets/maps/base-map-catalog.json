@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "defaultEquirectBaseMapId": "equirect-world-legacy-v1",
+  "entries": [
+    {
+      "id": "equirect-world-legacy-v1",
+      "label": "World (legacy, shaded)",
+      "shortDescription": "The original default equirectangular world basemap in Libration.",
+      "category": "reference",
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": true,
+        "seasonal": false
+      },
+      "recommendedRoles": ["general", "default"]
+    },
+    {
+      "id": "equirect-world-political-v1",
+      "label": "World political",
+      "shortDescription": "Country and boundary emphasis for orientation and place names.",
+      "category": "political",
+      "transitionalPlaceholder": true,
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-political.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": true,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false
+      },
+      "recommendedRoles": ["political", "place-names"]
+    },
+    {
+      "id": "equirect-world-topography-v1",
+      "label": "World topography",
+      "shortDescription": "Terrain and relief, useful for landforms and elevation context.",
+      "category": "terrain",
+      "attribution": "Based on NASA Blue Marble Next Generation topography / bathymetry.",
+      "variantMode": "monthOfYear",
+      "src": "/maps/variants/equirect-world-topography-v1/base.jpg",
+      "legacyStaticSrc": "/maps/world-equirectangular-topography.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-topography-thumb.jpg",
+      "monthOfYear": {
+        "familyBaseSrc": "/maps/variants/equirect-world-topography-v1/base.jpg",
+        "monthAssetSrcs": [
+          "/maps/variants/equirect-world-topography-v1/01.jpg",
+          "/maps/variants/equirect-world-topography-v1/02.jpg",
+          "/maps/variants/equirect-world-topography-v1/03.jpg",
+          "/maps/variants/equirect-world-topography-v1/04.jpg",
+          "/maps/variants/equirect-world-topography-v1/05.jpg",
+          "/maps/variants/equirect-world-topography-v1/06.jpg",
+          "/maps/variants/equirect-world-topography-v1/07.jpg",
+          "/maps/variants/equirect-world-topography-v1/08.jpg",
+          "/maps/variants/equirect-world-topography-v1/09.jpg",
+          "/maps/variants/equirect-world-topography-v1/10.jpg",
+          "/maps/variants/equirect-world-topography-v1/11.jpg",
+          "/maps/variants/equirect-world-topography-v1/12.jpg"
+        ],
+        "onboardedMonths": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      },
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": true,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": true,
+        "seasonal": true
+      },
+      "recommendedRoles": ["terrain", "landforms", "elevation"]
+    },
+    {
+      "id": "equirect-world-geology-v1",
+      "label": "World geology",
+      "shortDescription": "Geological provinces and related features (scientific use).",
+      "category": "scientific",
+      "transitionalPlaceholder": true,
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-geology.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false
+      },
+      "recommendedRoles": ["geology", "science"]
+    },
+    {
+      "id": "equirect-world-blue-marble-v1",
+      "label": "Blue Marble",
+      "shortDescription": "Natural-color Earth imagery with seasonal surface variation.",
+      "category": "scientific",
+      "attribution": "NASA Blue Marble Next Generation",
+      "variantMode": "monthOfYear",
+      "src": "/maps/variants/equirect-world-blue-marble-v1/base.jpg",
+      "previewThumbnailSrc": "/maps/previews/equirect-world-blue-marble-v1-thumb.jpg",
+      "monthOfYear": {
+        "familyBaseSrc": "/maps/variants/equirect-world-blue-marble-v1/base.jpg",
+        "monthAssetSrcs": [
+          "/maps/variants/equirect-world-blue-marble-v1/01.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/02.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/03.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/04.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/05.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/06.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/07.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/08.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/09.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/10.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/11.jpg",
+          "/maps/variants/equirect-world-blue-marble-v1/12.jpg"
+        ],
+        "onboardedMonths": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      },
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": true,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": true
+      },
+      "recommendedRoles": ["general", "atmospheric"]
+    }
+  ]
+}

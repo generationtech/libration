@@ -14,7 +14,8 @@
 /**
  * Curated TIFF ingestion: month-aware families into `public/maps/variants/<family-id>/`, or
  * a single static TIFF into `public/maps/<family-id>.jpg`. Prints registry and provenance
- * snippets for manual review (does not edit the registry or docs).
+ * snippets for manual review. Optional \`--update-catalog\` writes one row into
+ * \`src/assets/maps/base-map-catalog.json\` (no TypeScript edits).
  */
 
 import { execFileSync } from "node:child_process";
@@ -24,15 +25,20 @@ import { fileURLToPath } from "node:url";
 import {
   assignMonthsFromTiffBasenames,
   basenameMatchesGlob,
+  buildMonthOfYearCatalogEntryObject,
   buildProvenanceMarkdown,
   buildRegistrySnippet,
+  buildStaticCatalogEntryObject,
   buildStaticRegistrySnippet,
   defaultGlobMatcher,
+  formatCatalogEntryJsonBlock,
   formatMonthTable,
   type BaseMapPrepareCategory,
   type MonthAssignment,
   planMonthOfYearPreview,
   toConstPrefixFromFamilyId,
+  upsertBaseMapCatalogEntryInFile,
+  type CatalogJsonEntry,
 } from "./baseMapPrepareLib.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,7 +64,26 @@ type CliOptions = {
   thumbWidth: number;
   thumbHeight: number;
   dryRun: boolean;
+  updateCatalog: boolean;
+  catalogPath: string;
+  /** Comma/space split or repeated --role in argv (see collectRoles). */
+  roles: readonly string[];
+  capabilities: {
+    overlayOptimized?: true;
+    emissiveCompatible?: true;
+    darkFriendly?: true;
+    seasonal?: true;
+  };
+  defaultPresentation: {
+    opacity?: number;
+    brightness?: number;
+    contrast?: number;
+    saturation?: number;
+    gamma?: number;
+  };
 };
+
+const DEFAULT_CATALOG_REL = "src/assets/maps/base-map-catalog.json";
 
 function hasCliLongFlag(argv: string[], name: string): boolean {
   return argv.includes(`--${name}`);
@@ -84,6 +109,18 @@ Optional:
   --thumb-width <n>          Preview width (default: 800)
   --thumb-height <n>         Preview height (default: 400)
   --dry-run                  Print plan and snippets only (no writes, no ImageMagick)
+  --update-catalog           After processing, insert/replace the entry in the JSON catalog
+  --catalog-path <file>      Catalog file (default: src/assets/maps/base-map-catalog.json)
+  --role <r>                 Repeatable, or comma-separated: recommendedRoles in the catalog entry
+  --overlay-optimized        Set capabilities.overlayOptimized = true
+  --emissive-compatible     Set capabilities.emissiveCompatible = true
+  --dark-friendly            Set capabilities.darkFriendly = true
+  --seasonal                 Set capabilities.seasonal = true (monthOfYear; default in generator is true)
+  --default-opacity <0-1>    defaultPresentation (catalog)
+  --default-brightness <n>   defaultPresentation
+  --default-contrast <n>     defaultPresentation
+  --default-saturation <n>  defaultPresentation
+  --default-gamma <n>        defaultPresentation
 
 Examples:
   npm run maps:prep -- --family-id equirect-world-topography-v1 --source-dir ./in \\
@@ -99,11 +136,39 @@ Examples:
 
 Notes:
   - Uses ImageMagick \`convert\` (not \`magick\`) for JPEG output.
-  - Does not modify src/config/baseMapAssetResolve.ts or docs automatically.
+  - Onboarding: copy the printed **JSON catalog entry** into \`base-map-catalog.json\`, or use \`--update-catalog\` (review in git).
 `);
 }
 
-function parseArgs(argv: string[]): CliOptions {
+const BOOL_FLAGS = new Set([
+  "dry-run",
+  "update-catalog",
+  "overlay-optimized",
+  "emissive-compatible",
+  "dark-friendly",
+  "seasonal",
+]);
+
+function collectRoleFlags(argv: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--role") {
+      const next = argv[i + 1];
+      if (next && !next.startsWith("--")) {
+        for (const part of next.split(/[,\s]+/)) {
+          const t = part.trim();
+          if (t) {
+            out.push(t);
+          }
+        }
+        i += 1;
+      }
+    }
+  }
+  return out;
+}
+
+function parseArgs(argv: string[], defaultCatalogPath: string): CliOptions {
   const raw: Record<string, string | boolean> = {};
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -111,12 +176,12 @@ function parseArgs(argv: string[]): CliOptions {
       printHelp();
       process.exit(0);
     }
-    if (a === "--dry-run") {
-      raw.dryRun = true;
-      continue;
-    }
     if (a.startsWith("--")) {
       const key = a.slice(2);
+      if (BOOL_FLAGS.has(key)) {
+        raw[key.replace(/-/g, "")] = true;
+        continue;
+      }
       const next = argv[i + 1];
       if (next === undefined || next.startsWith("--")) {
         console.error(`Missing value for --${key}`);
@@ -196,6 +261,43 @@ function parseArgs(argv: string[]): CliOptions {
     process.exit(1);
   }
 
+  const catalogPath =
+    raw.catalogpath !== undefined && String(raw.catalogpath).trim() !== ""
+      ? resolve(String(raw.catalogpath).trim())
+      : defaultCatalogPath;
+
+  const defaultPresentation: CliOptions["defaultPresentation"] = {};
+  for (const [k, key] of [
+    ["defaultopacity", "opacity"],
+    ["defaultbrightness", "brightness"],
+    ["defaultcontrast", "contrast"],
+    ["defaultsaturation", "saturation"],
+    ["defaultgamma", "gamma"],
+  ] as const) {
+    if (raw[k] !== undefined) {
+      const n = Number.parseFloat(String(raw[k]));
+      if (Number.isFinite(n)) {
+        (defaultPresentation as Record<string, number>)[key] = n;
+      }
+    }
+  }
+
+  const capabilities: CliOptions["capabilities"] = {};
+  if (raw.overlayoptimized === true) {
+    capabilities.overlayOptimized = true;
+  }
+  if (raw.emissivecompatible === true) {
+    capabilities.emissiveCompatible = true;
+  }
+  if (raw.darkfriendly === true) {
+    capabilities.darkFriendly = true;
+  }
+  if (raw.seasonal === true) {
+    capabilities.seasonal = true;
+  }
+
+  const roles = collectRoleFlags(argv);
+
   return {
     familyId,
     sourceDir,
@@ -211,6 +313,11 @@ function parseArgs(argv: string[]): CliOptions {
     thumbWidth,
     thumbHeight,
     dryRun: raw.dryRun === true,
+    updateCatalog: raw.updatecatalog === true,
+    catalogPath,
+    roles,
+    capabilities,
+    defaultPresentation,
   };
 }
 
@@ -242,6 +349,22 @@ function formatStaticTiffList(basenames: readonly string[]): string {
     return "(none)";
   }
   return basenames.map((b) => `"${b}"`).join(", ");
+}
+
+async function printCatalogOnboarding(opts: CliOptions, entry: CatalogJsonEntry): Promise<void> {
+  console.log("\n## JSON base map catalog entry (`base-map-catalog.json`)\n");
+  console.log("Add this object to the `entries` array, or re-run with `--update-catalog`.\n");
+  console.log(formatCatalogEntryJsonBlock(entry));
+  if (opts.updateCatalog) {
+    if (opts.dryRun) {
+      console.log(
+        `\n[--dry-run] would upsert id "${String(entry["id"] ?? "")}" in:\n  ${opts.catalogPath}\n`,
+      );
+    } else {
+      await upsertBaseMapCatalogEntryInFile(opts.catalogPath, entry);
+      console.log(`\nCatalog file updated: ${opts.catalogPath}\n`);
+    }
+  }
 }
 
 async function runStaticMapFamily(opts: CliOptions, absSource: string, tiffBasenames: readonly string[]): Promise<void> {
@@ -309,6 +432,24 @@ async function runStaticMapFamily(opts: CliOptions, absSource: string, tiffBasen
       variantMode: "static",
     }),
   );
+
+  const hasDef = Object.keys(opts.defaultPresentation).length > 0;
+  const hasCap = Object.keys(opts.capabilities).length > 0;
+  await printCatalogOnboarding(
+    opts,
+    buildStaticCatalogEntryObject({
+      familyId: opts.familyId,
+      mainSrc: mainUrl,
+      label: opts.label,
+      category: opts.category,
+      attribution: opts.attribution,
+      shortDescription: opts.shortDescription,
+      previewThumbnailSrc: previewUrl,
+      defaultPresentation: hasDef ? opts.defaultPresentation : undefined,
+      capabilities: hasCap ? opts.capabilities : undefined,
+      recommendedRoles: opts.roles.length > 0 ? opts.roles : undefined,
+    }),
+  );
 }
 
 async function runMonthOfYearMapFamily(
@@ -350,7 +491,7 @@ async function runMonthOfYearMapFamily(
     previewMonth1To12: opts.previewMonth1To12,
     detectedMonths1To12: detectedMonthList,
   });
-  if (!previewPlan.ok) {
+  if (previewPlan.ok === false) {
     console.error(previewPlan.message);
     process.exit(1);
   }
@@ -390,7 +531,7 @@ async function runMonthOfYearMapFamily(
 
   if (onboardedMonths.length < 12) {
     console.warn(
-      `\nWarning: only ${onboardedMonths.length}/12 months were detected. Set onboardedMonths explicitly in the registry; add missing TIFFs before claiming a full year.`,
+      `\nWarning: only ${onboardedMonths.length}/12 months were detected. Set onboardedMonths explicitly in the JSON catalog; add missing TIFFs before claiming a full year.`,
     );
   }
 
@@ -448,11 +589,31 @@ async function runMonthOfYearMapFamily(
       variantMode: "monthOfYear",
     }),
   );
+
+  const hasDef = Object.keys(opts.defaultPresentation).length > 0;
+  const hasCap = Object.keys(opts.capabilities).length > 0;
+  await printCatalogOnboarding(
+    opts,
+    buildMonthOfYearCatalogEntryObject({
+      familyId: opts.familyId,
+      variantDirUrl,
+      onboardedMonths,
+      label: opts.label,
+      category: opts.category,
+      attribution: opts.attribution,
+      shortDescription: opts.shortDescription,
+      previewThumbnailSrc: previewUrl,
+      defaultPresentation: hasDef ? opts.defaultPresentation : undefined,
+      capabilities: hasCap ? opts.capabilities : undefined,
+      recommendedRoles: opts.roles.length > 0 ? opts.roles : undefined,
+    }),
+  );
 }
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
-  const opts = parseArgs(argv);
+  const defaultCatalog = join(repoRoot, DEFAULT_CATALOG_REL);
+  const opts = parseArgs(argv, defaultCatalog);
   if (opts.variantMode === "static" && (hasCliLongFlag(argv, "base-month") || hasCliLongFlag(argv, "preview-month"))) {
     console.error(
       "In --variant-mode static, do not use --base-month or --preview-month (those apply only to monthOfYear).",
