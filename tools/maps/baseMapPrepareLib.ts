@@ -118,6 +118,8 @@ export type RegistrySnippetInput = Readonly<{
   /** Legacy flat catalog / fallback raster URL in the registry `src` field. */
   legacyFlatSrc: string;
   constPrefix: string;
+  /** When set to a non-empty string after trim, used as the `shortDescription` literal; otherwise the edit placeholder. */
+  shortDescription?: string | null;
 }>;
 
 function tsStringLiteral(s: string): string {
@@ -129,6 +131,14 @@ export function toConstPrefixFromFamilyId(familyId: string): string {
   const cleaned = familyId.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_|_$/g, "");
   const upper = cleaned.toUpperCase();
   return upper !== "" ? upper : "BASE_MAP_FAMILY";
+}
+
+function shortDescriptionOptionLine(inputShort: string | null | undefined): string {
+  const t = inputShort?.trim();
+  if (t) {
+    return `    shortDescription: ${tsStringLiteral(t)},`;
+  }
+  return `    shortDescription: "<edit: one line for the base map selector>",`;
 }
 
 export function buildRegistrySnippet(input: RegistrySnippetInput): string {
@@ -162,7 +172,7 @@ export function buildRegistrySnippet(input: RegistrySnippetInput): string {
   lines.push(`  option: {`);
   lines.push(`    id: ${tsStringLiteral(input.familyId)},`);
   lines.push(`    label: ${tsStringLiteral(input.label)},`);
-  lines.push(`    shortDescription: "<edit: one line for the base map selector>",`);
+  lines.push(shortDescriptionOptionLine(input.shortDescription));
   lines.push(`    category: ${tsStringLiteral(input.category)},`);
   lines.push(`    previewThumbnailSrc: ${tsStringLiteral(input.previewThumbnailSrc)},`);
   lines.push(`    attribution: ${tsStringLiteral(input.attribution)},`);
@@ -171,29 +181,120 @@ export function buildRegistrySnippet(input: RegistrySnippetInput): string {
   return lines.join("\n");
 }
 
-export type ProvenanceSnippetInput = Readonly<{
+export type StaticRegistrySnippetInput = Readonly<{
   familyId: string;
   label: string;
   category: BaseMapPrepareCategory;
   attribution: string;
-  sourceDirLabel: string;
+  /** Primary raster, e.g. /maps/equirect-single-v1.jpg */
+  mainSrc: string;
+  previewThumbnailSrc: string;
+  shortDescription?: string | null;
 }>;
+
+/**
+ * Registry snippet for a `variantMode: "static"` family: single `src`, no `monthOfYear` block.
+ */
+export function buildStaticRegistrySnippet(input: StaticRegistrySnippetInput): string {
+  const lines: string[] = [];
+  lines.push(`// Add inside DEFINITIONS (manual review):`);
+  lines.push(`{`);
+  lines.push(`  id: ${tsStringLiteral(input.familyId)},`);
+  lines.push(`  variantMode: "static",`);
+  lines.push(`  src: ${tsStringLiteral(input.mainSrc)},`);
+  lines.push(`  option: {`);
+  lines.push(`    id: ${tsStringLiteral(input.familyId)},`);
+  lines.push(`    label: ${tsStringLiteral(input.label)},`);
+  lines.push(shortDescriptionOptionLine(input.shortDescription));
+  lines.push(`    category: ${tsStringLiteral(input.category)},`);
+  lines.push(`    previewThumbnailSrc: ${tsStringLiteral(input.previewThumbnailSrc)},`);
+  lines.push(`    attribution: ${tsStringLiteral(input.attribution)},`);
+  lines.push(`  },`);
+  lines.push(`},`);
+  return lines.join("\n");
+}
+
+export type ProvenanceSnippetInput =
+  | Readonly<{
+      familyId: string;
+      label: string;
+      category: BaseMapPrepareCategory;
+      attribution: string;
+      sourceDirLabel: string;
+      variantMode: "monthOfYear";
+    }>
+  | Readonly<{
+      familyId: string;
+      label: string;
+      category: BaseMapPrepareCategory;
+      attribution: string;
+      sourceDirLabel: string;
+      variantMode: "static";
+    }>;
 
 export function buildProvenanceMarkdown(input: ProvenanceSnippetInput): string {
   const lines: string[] = [];
   lines.push(`## ${input.familyId}`);
+  if (input.variantMode === "static") {
+    lines.push(`- Variant mode: static`);
+    lines.push(`- Label: ${input.label}`);
+    lines.push(`- Category: ${input.category}`);
+    lines.push(`- Main raster: \`public/maps/${input.familyId}.jpg\``);
+    lines.push(`- Preview: \`public/maps/previews/${input.familyId}-thumb.jpg\``);
+    lines.push(`- Source directory (tooling): \`${input.sourceDirLabel}\``);
+    lines.push(`- Attribution: ${input.attribution}`);
+    lines.push(
+      `- Notes: Prepared with \`npm run maps:prep -- --variant-mode static\`. One curated TIFF in \`--source-dir\` is converted to the public raster path above.`,
+    );
+    return lines.join("\n");
+  }
   lines.push(`- Variant mode: monthOfYear`);
   lines.push(`- Label: ${input.label}`);
   lines.push(`- Category: ${input.category}`);
   lines.push(`- Family runtime directory: \`public/maps/variants/${input.familyId}/\``);
   lines.push(`- Files:`);
   lines.push(`  - \`base.jpg\` (from the month chosen as \`--base-month\`)`);
-  lines.push(`  - \`01.jpg\` … \`12.jpg\` for onboarded months only; set \`onboardedMonths\` in the registry to match shipped files.`);
-  lines.push(`- Preview: \`public/maps/previews/${input.familyId}-thumb.jpg\``);
+  lines.push(
+    `  - \`01.jpg\` … \`12.jpg\` for onboarded months only; set \`onboardedMonths\` in the registry to match shipped files.`,
+  );
+  lines.push(
+    `- Preview: \`public/maps/previews/${input.familyId}-thumb.jpg\` (thumbnail from \`--preview-month\`, defaulting to \`--base-month\`)`,
+  );
   lines.push(`- Source directory (tooling): \`${input.sourceDirLabel}\``);
   lines.push(`- Attribution: ${input.attribution}`);
-  lines.push(`- Notes: Prepared with \`npm run maps:prep\`. Month filenames supported: \`YYYYMM\` (e.g. NASA Blue Marble \`200401\`…\`200412\`) or token-bound \`01\`…\`12\` in the basename.`);
+  lines.push(
+    `- Notes: Prepared with \`npm run maps:prep\`. Month filenames supported: \`YYYYMM\` (e.g. NASA Blue Marble \`200401\`…\`200412\`) or token-bound \`01\`…\`12\` in the basename.`,
+  );
   return lines.join("\n");
+}
+
+export type MonthOfYearPreviewPlanInput = Readonly<{
+  /** \`--base-month\` */
+  baseMonth1To12: number;
+  /** \`--preview-month\` when passed; if omitted, preview tracks base month. */
+  previewMonth1To12: number | undefined;
+  /** Months with a shipped source TIFF. */
+  detectedMonths1To12: readonly number[];
+}>;
+
+/**
+ * Picks the calendar month 1–12 used for the preview thumbnail under \`monthOfYear\` mode.
+ * Fails if the effective month is not in \`detectedMonths1To12\`.
+ */
+export function planMonthOfYearPreview(
+  input: MonthOfYearPreviewPlanInput,
+): { ok: true; effectivePreviewMonth1To12: number } | { ok: false; message: string; detectedMonths1To12: readonly number[] } {
+  const { baseMonth1To12, previewMonth1To12, detectedMonths1To12 } = input;
+  const effective = previewMonth1To12 !== undefined ? previewMonth1To12 : baseMonth1To12;
+  const sorted = [...detectedMonths1To12].sort((a, b) => a - b);
+  if (!detectedMonths1To12.includes(effective)) {
+    return {
+      ok: false,
+      message: `Preview month ${String(effective)} is not in detected months: ${sorted.join(", ")}`,
+      detectedMonths1To12: sorted,
+    };
+  }
+  return { ok: true, effectivePreviewMonth1To12: effective };
 }
 
 export function formatMonthTable(assignments: readonly MonthAssignment[]): string {

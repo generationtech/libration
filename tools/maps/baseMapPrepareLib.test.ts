@@ -17,8 +17,10 @@ import {
   basenameMatchesGlob,
   buildProvenanceMarkdown,
   buildRegistrySnippet,
+  buildStaticRegistrySnippet,
   detectMonthFromTiffBasename,
   formatMonthTable,
+  planMonthOfYearPreview,
   toConstPrefixFromFamilyId,
 } from "./baseMapPrepareLib.ts";
 
@@ -101,20 +103,126 @@ describe("buildRegistrySnippet", () => {
     expect(s).toContain('attribution: "Credit \\"Us\\"",');
     expect(s).toContain("category: \"terrain\"");
   });
+
+  it("uses provided shortDescription when given", () => {
+    const s = buildRegistrySnippet({
+      familyId: "equirect-test-v1",
+      variantDirUrl: "/maps/variants/equirect-test-v1",
+      onboardedMonths: [1],
+      label: "L",
+      category: "reference",
+      attribution: "A",
+      previewThumbnailSrc: "/p.jpg",
+      legacyFlatSrc: "/l.jpg",
+      constPrefix: "EQUIRECT_TEST_V1",
+      shortDescription: "One line for the UI.",
+    });
+    expect(s).toContain('shortDescription: "One line for the UI."');
+    expect(s).not.toContain("<edit: one line for the base map selector>");
+  });
+
+  it("retains the edit placeholder when shortDescription is omitted", () => {
+    const s = buildRegistrySnippet({
+      familyId: "equirect-test-v1",
+      variantDirUrl: "/maps/variants/equirect-test-v1",
+      onboardedMonths: [1],
+      label: "L",
+      category: "reference",
+      attribution: "A",
+      previewThumbnailSrc: "/p.jpg",
+      legacyFlatSrc: "/l.jpg",
+      constPrefix: "EQUIRECT_TEST_V1",
+    });
+    expect(s).toContain("shortDescription: \"<edit: one line for the base map selector>\"");
+  });
 });
 
 describe("buildProvenanceMarkdown", () => {
-  it("includes headings and paths", () => {
+  it("includes headings and paths for monthOfYear", () => {
     const m = buildProvenanceMarkdown({
       familyId: "equirect-test-v1",
       label: "Test",
       category: "scientific",
       attribution: "NASA",
       sourceDirLabel: "/tmp/source",
+      variantMode: "monthOfYear",
     });
     expect(m).toContain("## equirect-test-v1");
+    expect(m).toContain("- Variant mode: monthOfYear");
     expect(m).toContain("`public/maps/variants/equirect-test-v1/`");
     expect(m).toContain("`public/maps/previews/equirect-test-v1-thumb.jpg`");
+    expect(m).toContain("`--preview-month`");
+  });
+
+  it("includes static paths and no variant directory", () => {
+    const m = buildProvenanceMarkdown({
+      familyId: "equirect-static-v1",
+      label: "S",
+      category: "terrain",
+      attribution: "X",
+      sourceDirLabel: "/x",
+      variantMode: "static",
+    });
+    expect(m).toContain("- Variant mode: static");
+    expect(m).toContain("`public/maps/equirect-static-v1.jpg`");
+    expect(m).toContain("npm run maps:prep -- --variant-mode static");
+    expect(m).not.toContain("`public/maps/variants/");
+  });
+});
+
+describe("buildStaticRegistrySnippet", () => {
+  it("emits static variant, single src, and no monthOfYear", () => {
+    const s = buildStaticRegistrySnippet({
+      familyId: "equirect-static-v1",
+      label: "Snap",
+      category: "political",
+      attribution: "Us",
+      mainSrc: "/maps/equirect-static-v1.jpg",
+      previewThumbnailSrc: "/maps/previews/equirect-static-v1-thumb.jpg",
+    });
+    expect(s).toContain('variantMode: "static"');
+    expect(s).toContain('src: "/maps/equirect-static-v1.jpg"');
+    expect(s).not.toContain("monthOfYear");
+    expect(s).toContain('id: "equirect-static-v1"');
+  });
+
+  it("applies shortDescription when provided", () => {
+    const s = buildStaticRegistrySnippet({
+      familyId: "a-v1",
+      label: "L",
+      category: "reference",
+      attribution: "A",
+      mainSrc: "/maps/a-v1.jpg",
+      previewThumbnailSrc: "/t.jpg",
+      shortDescription: "Static one-liner",
+    });
+    expect(s).toContain('shortDescription: "Static one-liner"');
+  });
+});
+
+describe("planMonthOfYearPreview", () => {
+  it("defaults preview month to base month when --preview-month omitted", () => {
+    const p = planMonthOfYearPreview({
+      baseMonth1To12: 3,
+      previewMonth1To12: undefined,
+      detectedMonths1To12: [1, 2, 3, 4],
+    });
+    expect(p).toEqual({ ok: true, effectivePreviewMonth1To12: 3 });
+  });
+
+  it("fails with detected months when preview is not available", () => {
+    const p = planMonthOfYearPreview({
+      baseMonth1To12: 3,
+      previewMonth1To12: 8,
+      detectedMonths1To12: [1, 2, 3, 4],
+    });
+    expect(p.ok).toBe(false);
+    if (p.ok) {
+      return;
+    }
+    expect(p.message).toMatch(/Preview month 8/);
+    expect(p.message).toMatch(/1, 2, 3, 4/);
+    expect(p.detectedMonths1To12).toEqual([1, 2, 3, 4]);
   });
 });
 

@@ -12,8 +12,9 @@
  */
 
 /**
- * Converts curated source TIFF sets into `public/maps/variants/<family-id>/` layout
- * and prints registry / provenance snippets for manual review (does not edit them).
+ * Curated TIFF ingestion: month-aware families into `public/maps/variants/<family-id>/`, or
+ * a single static TIFF into `public/maps/<family-id>.jpg`. Prints registry and provenance
+ * snippets for manual review (does not edit the registry or docs).
  */
 
 import { execFileSync } from "node:child_process";
@@ -25,10 +26,12 @@ import {
   basenameMatchesGlob,
   buildProvenanceMarkdown,
   buildRegistrySnippet,
+  buildStaticRegistrySnippet,
   defaultGlobMatcher,
   formatMonthTable,
   type BaseMapPrepareCategory,
   type MonthAssignment,
+  planMonthOfYearPreview,
   toConstPrefixFromFamilyId,
 } from "./baseMapPrepareLib.ts";
 
@@ -37,19 +40,29 @@ const repoRoot = join(__dirname, "../..");
 
 const CATEGORIES: readonly BaseMapPrepareCategory[] = ["reference", "political", "terrain", "scientific"];
 
+type MapVariantMode = "static" | "monthOfYear";
+
 type CliOptions = {
   familyId: string;
   sourceDir: string;
   label: string;
   category: BaseMapPrepareCategory;
   attribution: string;
+  shortDescription: string | null;
   glob: string | null;
+  variantMode: MapVariantMode;
   baseMonth: number;
+  /** When set, overrides base month for the preview thumbnail (monthOfYear only). */
+  previewMonth1To12: number | undefined;
   quality: number;
   thumbWidth: number;
   thumbHeight: number;
   dryRun: boolean;
 };
+
+function hasCliLongFlag(argv: string[], name: string): boolean {
+  return argv.includes(`--${name}`);
+}
 
 function printHelp(): void {
   console.log(`Usage: npm run maps:prep -- [options]
@@ -62,12 +75,27 @@ Required:
   --attribution <text>       Attribution string for BaseMapOption
 
 Optional:
+  --short-description <t>    One line for the registry shortDescription (else edit placeholder in snippet)
+  --variant-mode <m>         "monthOfYear" (default) or "static" (single TIFF family)
   --glob <pattern>           Basename glob (only * and ? wildcards). Default: *.tif / *.tiff
-  --base-month <1-12>        Month for base.jpg (default: 10)
+  --base-month <1-12>        Month for base.jpg (monthOfYear only, default: 10)
+  --preview-month <1-12>     Thumbnail from this month's JPEG (monthOfYear only; default: --base-month)
   --quality <n>              JPEG quality for convert (default: 92)
   --thumb-width <n>          Preview width (default: 800)
   --thumb-height <n>         Preview height (default: 400)
   --dry-run                  Print plan and snippets only (no writes, no ImageMagick)
+
+Examples:
+  npm run maps:prep -- --family-id equirect-world-topography-v1 --source-dir ./in \\
+    --label "World topography" --category terrain --attribution "NASA" \\
+    --short-description "Terrain and relief for landforms and elevation context."
+
+  npm run maps:prep -- --variant-mode monthOfYear --family-id equirect-world-topography-v1 \\
+    --source-dir ./in --label "World topography" --category terrain --attribution "NASA" \\
+    --base-month 7 --preview-month 3
+
+  npm run maps:prep -- --variant-mode static --family-id equirect-terrain-snapshot-v1 \\
+    --source-dir ./one-tiff --label "Terrain snapshot" --category terrain --attribution "Us"
 
 Notes:
   - Uses ImageMagick \`convert\` (not \`magick\`) for JPEG output.
@@ -110,6 +138,22 @@ function parseArgs(argv: string[]): CliOptions {
   const categoryRaw = String(raw.category ?? "").trim() as BaseMapPrepareCategory;
   const attribution = String(raw.attribution ?? "").trim();
   const globRaw = raw.glob !== undefined ? String(raw.glob).trim() : null;
+  const shortDescriptionRaw = raw.shortdescription !== undefined ? String(raw.shortdescription).trim() : null;
+  const shortDescription = shortDescriptionRaw && shortDescriptionRaw !== "" ? shortDescriptionRaw : null;
+
+  const variantModeStr = (raw.variantmode !== undefined ? String(raw.variantmode).trim() : "monthOfYear") as
+    | "static"
+    | "monthOfYear"
+    | string;
+  let variantMode: MapVariantMode;
+  if (variantModeStr === "static" || variantModeStr === "monthOfYear") {
+    variantMode = variantModeStr;
+  } else {
+    console.error(
+      `Invalid --variant-mode "${variantModeStr}". Expected "static" or "monthOfYear" (default: monthOfYear).`,
+    );
+    process.exit(1);
+  }
 
   if (!familyId || !sourceDir || !label || !categoryRaw || !attribution) {
     console.error("Missing required options (--family-id, --source-dir, --label, --category, --attribution).");
@@ -127,6 +171,16 @@ function parseArgs(argv: string[]): CliOptions {
   if (!Number.isInteger(baseMonth) || baseMonth < 1 || baseMonth > 12) {
     console.error(`Invalid --base-month "${baseMonthStr}" (expected integer 1–12).`);
     process.exit(1);
+  }
+
+  let previewMonth1To12: number | undefined;
+  if (raw.previewmonth !== undefined) {
+    const pm = Number.parseInt(String(raw.previewmonth), 10);
+    if (!Number.isInteger(pm) || pm < 1 || pm > 12) {
+      console.error(`Invalid --preview-month (expected integer 1–12).`);
+      process.exit(1);
+    }
+    previewMonth1To12 = pm;
   }
 
   const quality = raw.quality !== undefined ? Number.parseInt(String(raw.quality), 10) : 92;
@@ -148,8 +202,11 @@ function parseArgs(argv: string[]): CliOptions {
     label,
     category: categoryRaw,
     attribution,
+    shortDescription,
     glob: globRaw && globRaw !== "" ? globRaw : null,
+    variantMode,
     baseMonth,
+    previewMonth1To12,
     quality,
     thumbWidth,
     thumbHeight,
@@ -180,29 +237,85 @@ function assignmentByMonth(assignments: readonly MonthAssignment[]): Map<number,
   return new Map(assignments.map((a) => [a.month1To12, a]));
 }
 
-async function main(): Promise<void> {
-  const opts = parseArgs(process.argv.slice(2));
-  if (!opts.dryRun) {
-    assertConvertAvailable();
+function formatStaticTiffList(basenames: readonly string[]): string {
+  if (basenames.length === 0) {
+    return "(none)";
   }
+  return basenames.map((b) => `"${b}"`).join(", ");
+}
 
-  const absSource = resolve(opts.sourceDir);
-  let entries: string[];
-  try {
-    entries = await readdir(absSource);
-  } catch (e) {
-    const err = e as NodeJS.ErrnoException;
-    console.error(`Cannot read --source-dir: ${absSource} (${err.code ?? err.message})`);
+async function runStaticMapFamily(opts: CliOptions, absSource: string, tiffBasenames: readonly string[]): Promise<void> {
+  if (tiffBasenames.length !== 1) {
+    console.error(
+      `--variant-mode static requires exactly one usable source TIFF in --source-dir (after --glob). Found ${String(tiffBasenames.length)}: ${formatStaticTiffList(tiffBasenames)}`,
+    );
     process.exit(1);
   }
 
-  const tiffBasenames = entries.filter((name) => {
-    if (opts.glob) {
-      return basenameMatchesGlob(name, opts.glob);
-    }
-    return defaultGlobMatcher(name);
-  });
+  const publicMapsDir = join(repoRoot, "public/maps");
+  const previewsDirFs = join(publicMapsDir, "previews");
+  const mainJpgFs = join(publicMapsDir, `${opts.familyId}.jpg`);
+  const previewUrl = `/maps/previews/${opts.familyId}-thumb.jpg`;
+  const previewFs = join(previewsDirFs, `${opts.familyId}-thumb.jpg`);
+  const mainUrl = `/maps/${opts.familyId}.jpg`;
+  const singleTiff = tiffBasenames[0]!;
+  const sourceFs = join(absSource, singleTiff);
 
+  console.log("\n## Static family (single TIFF)\n");
+  console.log(`- Source: ${singleTiff}`);
+
+  const outputFiles = [join("public/maps", `${opts.familyId}.jpg`), join("public/maps/previews", `${opts.familyId}-thumb.jpg`)];
+  console.log("\n## Planned output files\n");
+  for (const rel of outputFiles) {
+    console.log(`- ${rel}`);
+  }
+
+  if (!opts.dryRun) {
+    await mkdir(publicMapsDir, { recursive: true });
+    await mkdir(previewsDirFs, { recursive: true });
+  } else {
+    console.log(`\n[dry-run] mkdir -p ${publicMapsDir}`);
+    console.log(`[dry-run] mkdir -p ${previewsDirFs}`);
+  }
+
+  const q = String(opts.quality);
+  const tw = String(opts.thumbWidth);
+  const th = String(opts.thumbHeight);
+
+  runConvert([sourceFs, "-quality", q, mainJpgFs], opts.dryRun);
+  runConvert([mainJpgFs, "-thumbnail", `${tw}x${th}^`, "-gravity", "center", "-extent", `${tw}x${th}`, "-quality", q, previewFs], opts.dryRun);
+
+  console.log("\n## TypeScript registry snippet (paste into baseMapAssetResolve.ts after manual review)\n");
+  console.log(
+    buildStaticRegistrySnippet({
+      familyId: opts.familyId,
+      label: opts.label,
+      category: opts.category,
+      attribution: opts.attribution,
+      mainSrc: mainUrl,
+      previewThumbnailSrc: previewUrl,
+      shortDescription: opts.shortDescription,
+    }),
+  );
+
+  console.log("\n## Markdown provenance snippet (paste into docs/map-asset-sources.md after manual review)\n");
+  console.log(
+    buildProvenanceMarkdown({
+      familyId: opts.familyId,
+      label: opts.label,
+      category: opts.category,
+      attribution: opts.attribution,
+      sourceDirLabel: absSource,
+      variantMode: "static",
+    }),
+  );
+}
+
+async function runMonthOfYearMapFamily(
+  opts: CliOptions,
+  absSource: string,
+  tiffBasenames: readonly string[],
+): Promise<void> {
   const assigned = assignMonthsFromTiffBasenames(tiffBasenames);
   if (typeof assigned === "string") {
     console.error(assigned);
@@ -224,13 +337,24 @@ async function main(): Promise<void> {
 
   const byMonth = assignmentByMonth(assigned.assignments);
   if (!byMonth.has(opts.baseMonth)) {
+    const detected = assigned.assignments.map((a) => a.month1To12).join(", ");
     console.error(
-      `--base-month ${opts.baseMonth} has no matching source TIFF. Detected months: ${assigned.assignments
-        .map((a) => a.month1To12)
-        .join(", ")}`,
+      `--base-month ${opts.baseMonth} has no matching source TIFF. Detected months: ${detected}`,
     );
     process.exit(1);
   }
+
+  const detectedMonthList = assigned.assignments.map((a) => a.month1To12);
+  const previewPlan = planMonthOfYearPreview({
+    baseMonth1To12: opts.baseMonth,
+    previewMonth1To12: opts.previewMonth1To12,
+    detectedMonths1To12: detectedMonthList,
+  });
+  if (!previewPlan.ok) {
+    console.error(previewPlan.message);
+    process.exit(1);
+  }
+  const effectivePreviewMonth = previewPlan.effectivePreviewMonth1To12;
 
   const variantDirFs = join(repoRoot, "public/maps/variants", opts.familyId);
   const previewsDirFs = join(repoRoot, "public/maps/previews");
@@ -240,6 +364,7 @@ async function main(): Promise<void> {
   const constPrefix = toConstPrefixFromFamilyId(opts.familyId);
   const onboardedMonths = assigned.assignments.map((a) => a.month1To12);
   const legacyFlatSrc = `/maps/${opts.familyId}-legacy-equirect.jpg`;
+  const previewJpegFs = join(variantDirFs, `${String(effectivePreviewMonth).padStart(2, "0")}.jpg`);
 
   console.log("\n## Detected months\n");
   console.log(formatMonthTable(assigned.assignments));
@@ -249,6 +374,8 @@ async function main(): Promise<void> {
       console.log(`- ${s}`);
     }
   }
+
+  console.log(`\n## Preview thumbnail\n\nUsing month \`${String(effectivePreviewMonth).padStart(2, "0")}.jpg\` (preview month ${String(effectivePreviewMonth)}).\n`);
 
   const outputFiles: string[] = [];
   for (const a of assigned.assignments) {
@@ -291,7 +418,10 @@ async function main(): Promise<void> {
   const baseDestFs = join(variantDirFs, "base.jpg");
   runConvert([baseSrcFs, "-quality", q, baseDestFs], opts.dryRun);
 
-  runConvert([baseDestFs, "-thumbnail", `${tw}x${th}^`, "-gravity", "center", "-extent", `${tw}x${th}`, "-quality", q, previewFs], opts.dryRun);
+  runConvert(
+    [previewJpegFs, "-thumbnail", `${tw}x${th}^`, "-gravity", "center", "-extent", `${tw}x${th}`, "-quality", q, previewFs],
+    opts.dryRun,
+  );
 
   console.log("\n## TypeScript registry snippet (paste into baseMapAssetResolve.ts after manual review)\n");
   console.log(
@@ -305,6 +435,7 @@ async function main(): Promise<void> {
       previewThumbnailSrc: previewUrl,
       legacyFlatSrc,
       constPrefix,
+      shortDescription: opts.shortDescription,
     }),
   );
 
@@ -316,8 +447,47 @@ async function main(): Promise<void> {
       category: opts.category,
       attribution: opts.attribution,
       sourceDirLabel: absSource,
+      variantMode: "monthOfYear",
     }),
   );
+}
+
+async function main(): Promise<void> {
+  const argv = process.argv.slice(2);
+  const opts = parseArgs(argv);
+  if (opts.variantMode === "static" && (hasCliLongFlag(argv, "base-month") || hasCliLongFlag(argv, "preview-month"))) {
+    console.error(
+      "In --variant-mode static, do not use --base-month or --preview-month (those apply only to monthOfYear).",
+    );
+    process.exit(1);
+  }
+
+  if (!opts.dryRun) {
+    assertConvertAvailable();
+  }
+
+  const absSource = resolve(opts.sourceDir);
+  let entries: string[];
+  try {
+    entries = await readdir(absSource);
+  } catch (e) {
+    const err = e as NodeJS.ErrnoException;
+    console.error(`Cannot read --source-dir: ${absSource} (${err.code ?? err.message})`);
+    process.exit(1);
+  }
+
+  const tiffBasenames = entries.filter((name) => {
+    if (opts.glob) {
+      return basenameMatchesGlob(name, opts.glob);
+    }
+    return defaultGlobMatcher(name);
+  });
+
+  if (opts.variantMode === "static") {
+    await runStaticMapFamily(opts, absSource, tiffBasenames);
+  } else {
+    await runMonthOfYearMapFamily(opts, absSource, tiffBasenames);
+  }
 }
 
 main().catch((e) => {
