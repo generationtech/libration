@@ -19,9 +19,8 @@ export type BaseMapPresentationConfig = {
   brightness: number;
   contrast: number;
   /**
-   * Gamma is modeled in SceneConfig and normalized with the same defaults/clamps as other
-   * fields, but the Canvas 2D path has no single standard filter for gamma. Execution is
-   * deferred; see `baseMapPresentationToCssFilterString` and the canvas base-map blit path.
+   * Per-RGB power-curve display adjustment. Omitted from `baseMapPresentationToCssFilterString`;
+   * the canvas base-map `imageBlit` applies it when γ ≠ 1 (see `applyBaseMapGammaToRgba8`).
    */
   gamma: number;
   saturation: number;
@@ -100,10 +99,10 @@ export function baseMapPresentationEqual(
 }
 
 /**
- * Encodes non-gamma presentation as a Canvas/CSS `filter` string.
+ * Encodes brightness, contrast, and saturation as a Canvas/CSS `filter` string.
  *
- * **Gamma is intentionally omitted** until a small, test-backed pixel pass or standard filter
- * support is added — values are still stored and normalized in SceneConfig.
+ * **Gamma is omitted** here: it is applied in the base-map `imageBlit` path via
+ * `getGammaAdjustedCanvasForImage` (pixel pass), not as a CSS filter.
  */
 export function baseMapPresentationToCssFilterString(
   p: BaseMapPresentationConfig,

@@ -23,7 +23,7 @@ scene.baseMap.opacity
 scene.baseMap.presentation? // optional in saved JSON; normalized to defaults at load
 ```
 
-`presentation` holds **visual-only** display tuning for the selected base-map family (brightness, contrast, gamma, saturation). It applies to the family as a whole, including every monthly raster in a `monthOfYear` family, and does not change map assets, projection, or the map asset contract.
+`presentation` holds **visual-only** display tuning for the selected base-map family (brightness, contrast, gamma, saturation). It applies to the family as a whole, including every monthly raster in a `monthOfYear` family, and does not change map assets, projection, or the map asset contract. Brightness, contrast, and saturation are realized as a CSS `filter` on the base-map blit; gamma uses a per-RGB power curve in the canvas image pass when γ ≠ 1 (α preserved), not a CSS filter.
 
 No month-specific file path is persisted in SceneConfig.
 

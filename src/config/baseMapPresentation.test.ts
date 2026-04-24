@@ -38,7 +38,7 @@ describe("baseMapPresentation", () => {
     expect(n.saturation).toBe(2);
   });
 
-  it("omits gamma from the CSS filter string (execution deferred)", () => {
+  it("omits gamma from the CSS filter string (gamma uses the canvas imageBlit pixel pass instead)", () => {
     const onlyGamma = normalizeBaseMapPresentation({ gamma: 1.4 });
     expect(onlyGamma.gamma).toBe(1.4);
     expect(baseMapPresentationToCssFilterString(onlyGamma)).toBeUndefined();

@@ -34,10 +34,10 @@ export function buildBaseRasterMapRenderPlan(options: {
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
+  const pres = options.presentation;
   const cssFilter =
-    options.presentation !== undefined
-      ? baseMapPresentationToCssFilterString(options.presentation)
-      : undefined;
+    pres !== undefined ? baseMapPresentationToCssFilterString(pres) : undefined;
+  const gamma = pres !== undefined && pres.gamma !== 1 ? pres.gamma : undefined;
   return {
     items: [
       {
@@ -48,6 +48,7 @@ export function buildBaseRasterMapRenderPlan(options: {
         width: w,
         height: h,
         ...(cssFilter !== undefined ? { cssFilter } : {}),
+        ...(gamma !== undefined ? { gamma } : {}),
       },
     ],
   };

@@ -25,7 +25,9 @@
  * - **linearGradientRect** / **radialGradientFill** — gradient specs with plain stops (no gradient object in
  *   plan data). Canvas: {@link ../canvas/canvasPaintBridge.ts}.
  * - **rasterPatch** — generated RGBA8 buffer upscaled to a destination rect.
- * - **imageBlit** — URL-backed decoded image stretched to a destination rect.
+ * - **imageBlit** — URL-backed decoded image stretched to a destination rect. Optional
+ *   `gamma` (base map only) applies a per-RGB power curve in the canvas executor; other fields
+ *   are unchanged.
  *
  * Text pipeline (semantic → plan → backend):
  * TypographyRole → ResolvedTextStyle → TextGlyph → RenderPlan text item → backend font realization
@@ -250,9 +252,16 @@ export interface RenderImageBlitItem {
   height: number;
   /**
    * Canvas `filter` string (CSS filter syntax), when set. Encoded upstream from
-   * scene `baseMap` presentation; the executor applies it and restores state.
+   * scene `baseMap` presentation (brightness / contrast / saturation only); the executor
+   * applies it and restores state.
    */
   cssFilter?: string;
+  /**
+   * When set and not `1`, the executor applies a per-RGB power curve on decoded pixels before
+   * this blit; α is unchanged. Omitted for ordinary blits. The base-raster plan sets this from
+   * `scene.baseMap.presentation.gamma`.
+   */
+  gamma?: number;
 }
 
 export type RenderPlanItem =

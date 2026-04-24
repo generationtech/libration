@@ -11,9 +11,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { describe, expect, it, vi, type Mock } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { getGammaAdjustedCanvasForImage } from "../canvas/canvasGammaRasterCache.ts";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
 import type { RenderFontStyle, RenderPlan } from "./renderPlanTypes";
+
+vi.mock("../canvas/canvasGammaRasterCache.ts", () => ({
+  getGammaAdjustedCanvasForImage: vi.fn().mockReturnValue(null),
+}));
 
 /** Minimal valid font for executor tests — explicit `family` pins Canvas string (bridge bypasses displayName). */
 function testCanvasFont(overrides: Partial<RenderFontStyle> & Pick<RenderFontStyle, "sizePx" | "weight">): RenderFontStyle {
@@ -64,6 +69,10 @@ function createMockCanvas2DContext(): CanvasRenderingContext2D {
 }
 
 describe("executeRenderPlanOnCanvas", () => {
+  beforeEach(() => {
+    vi.mocked(getGammaAdjustedCanvasForImage).mockReturnValue(null);
+  });
+
   it("draws text items with shadow, font, and alignment applied", () => {
     const ctx = createMockCanvas2DContext();
 
@@ -633,5 +642,106 @@ describe("executeRenderPlanOnCanvas", () => {
     );
 
     expect(ctx.drawImage).not.toHaveBeenCalled();
+  });
+
+  it("imageBlit with default gamma does not call the gamma cache helper", () => {
+    const ctx = createMockCanvas2DContext();
+    const fakeImg = {} as HTMLImageElement;
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "imageBlit",
+          src: "/maps/world.jpg",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+        },
+      ],
+    };
+    executeRenderPlanOnCanvas(ctx, plan, { resolveRasterImage: () => fakeImg });
+    expect(getGammaAdjustedCanvasForImage).not.toHaveBeenCalled();
+  });
+
+  it("imageBlit with gamma 1 does not call the gamma cache helper", () => {
+    const ctx = createMockCanvas2DContext();
+    const fakeImg = {} as HTMLImageElement;
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "imageBlit",
+          src: "/maps/world.jpg",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          gamma: 1,
+        },
+      ],
+    };
+    executeRenderPlanOnCanvas(ctx, plan, { resolveRasterImage: () => fakeImg });
+    expect(getGammaAdjustedCanvasForImage).not.toHaveBeenCalled();
+    expect(ctx.drawImage).toHaveBeenCalledWith(fakeImg, 0, 0, 100, 100);
+  });
+
+  it("imageBlit with gamma != 1 uses processed surface from cache helper when provided", () => {
+    const ctx = createMockCanvas2DContext();
+    const fakeImg = {} as HTMLImageElement;
+    const processed = { tag: "gamma" } as unknown as HTMLCanvasElement;
+    vi.mocked(getGammaAdjustedCanvasForImage).mockReturnValue(processed);
+
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "imageBlit",
+          src: "/maps/world.jpg",
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 100,
+          gamma: 1.1,
+        },
+      ],
+    };
+
+    executeRenderPlanOnCanvas(ctx, plan, { resolveRasterImage: () => fakeImg });
+
+    expect(getGammaAdjustedCanvasForImage).toHaveBeenCalledWith(
+      fakeImg,
+      "/maps/world.jpg",
+      1.1,
+    );
+    expect(ctx.drawImage).toHaveBeenCalledWith(processed, 0, 0, 200, 100);
+  });
+
+  it("applies cssFilter to imageBlit after gamma (processed draw still gets B/C/S filter)", () => {
+    const ctx = createMockCanvas2DContext();
+    (ctx as unknown as { filter: string }).filter = "none";
+    const fakeImg = {} as HTMLImageElement;
+    const processed = { tag: "gamma" } as unknown as HTMLCanvasElement;
+    vi.mocked(getGammaAdjustedCanvasForImage).mockReturnValue(processed);
+    const filterWhenDrawImageRuns: string[] = [];
+    (ctx.drawImage as Mock).mockImplementation(() => {
+      filterWhenDrawImageRuns.push((ctx as unknown as { filter: string }).filter);
+    });
+
+    const plan: RenderPlan = {
+      items: [
+        {
+          kind: "imageBlit",
+          src: "/m.jpg",
+          x: 0,
+          y: 0,
+          width: 10,
+          height: 10,
+          gamma: 1.2,
+          cssFilter: "brightness(1.1) contrast(0.9)",
+        },
+      ],
+    };
+
+    executeRenderPlanOnCanvas(ctx, plan, { resolveRasterImage: () => fakeImg });
+
+    expect(filterWhenDrawImageRuns).toEqual(["brightness(1.1) contrast(0.9)"]);
   });
 });

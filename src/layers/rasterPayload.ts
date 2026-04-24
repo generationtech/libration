@@ -24,7 +24,8 @@ export interface EquirectangularRasterPayload {
   src: string;
   /**
    * Normalized per-family display tuning (same for all month rasters in a month-aware family).
-   * The canvas backend maps this to a filter string; it does not affect asset resolution.
+   * The canvas backend maps B/C/S to a CSS `filter` and applies γ in a pixel pass when γ ≠ 1;
+   * it does not affect asset resolution.
    */
   presentation?: BaseMapPresentationConfig;
   /**

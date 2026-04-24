@@ -120,9 +120,9 @@ export function BaseMapStyleControl({
               {spec.key === "gamma" ? (
                 <span
                   className="config-base-map-style__pres-note"
-                  title="Value is saved; the canvas does not yet apply a gamma operator (see product docs)."
+                  title="Per-channel γ curve on the base map. Values below 1 lift midtones; above 1 deepen (see applyBaseMapGammaToRgba8)."
                 >
-                  (saved; rendering pending)
+                  (sRGB power curve; α preserved)
                 </span>
               ) : null}
             </label>

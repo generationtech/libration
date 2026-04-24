@@ -16,6 +16,7 @@ import {
   fillCanvasWithRenderRadialGradientInCircleClip,
   applyCanvasStrokeStateForRenderLine,
 } from "../canvas/canvasPaintBridge.ts";
+import { getGammaAdjustedCanvasForImage } from "../canvas/canvasGammaRasterCache.ts";
 import { drawRenderPath2DItemOnCanvas } from "../canvas/canvasPathBridge.ts";
 import {
   canvasFontStringFromRenderTextFont,
@@ -211,15 +212,20 @@ function drawImageBlit(
   if (!img) {
     return;
   }
-  const { x, y, width: w, height: h, cssFilter } = item;
+  const { x, y, width: w, height: h, cssFilter, gamma: gammaSetting } = item;
   if (w <= 0 || h <= 0) {
     return;
   }
+  const useGamma =
+    gammaSetting !== undefined && gammaSetting !== 1 && Number.isFinite(gammaSetting);
+  const blitSource: CanvasImageSource = useGamma
+    ? (getGammaAdjustedCanvasForImage(img, item.src, gammaSetting) ?? img)
+    : img;
   const prev = ctx.filter;
   if (cssFilter !== undefined && cssFilter !== "") {
     ctx.filter = cssFilter;
   }
-  ctx.drawImage(img, x, y, w, h);
+  ctx.drawImage(blitSource, x, y, w, h);
   ctx.filter = prev;
 }
 

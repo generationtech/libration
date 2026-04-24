@@ -52,6 +52,42 @@ describe("buildBaseRasterMapRenderPlan", () => {
     expect(item.cssFilter).toBe("brightness(1.1)");
   });
 
+  it("adds gamma to imageBlit when presentation.gamma is not 1 (only-gamma is still no cssFilter)", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({
+        brightness: 1,
+        contrast: 1,
+        gamma: 1.2,
+        saturation: 1,
+      }),
+    });
+    const item = plan.items[0]!;
+    expect(item.kind).toBe("imageBlit");
+    if (item.kind !== "imageBlit") {
+      return;
+    }
+    expect(item.gamma).toBe(1.2);
+    expect("cssFilter" in item).toBe(false);
+  });
+
+  it("omits gamma on imageBlit when presentation.gamma is 1", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 10,
+      viewportHeightPx: 10,
+      presentation: normalizeBaseMapPresentation({ gamma: 1 }),
+    });
+    const item = plan.items[0]!;
+    expect(item.kind).toBe("imageBlit");
+    if (item.kind !== "imageBlit") {
+      return;
+    }
+    expect("gamma" in item).toBe(false);
+  });
+
   it("returns an empty plan when viewport dimensions are non-positive", () => {
     expect(
       buildBaseRasterMapRenderPlan({
