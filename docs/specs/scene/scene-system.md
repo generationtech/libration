@@ -1,5 +1,27 @@
 # Scene System Specification
 
+
+## Current Implemented Scene System Status
+
+The Scene System is now implemented beyond the initial specification baseline.
+
+Current capabilities include:
+
+- `SceneConfig` as authoritative persisted scene model.
+- Explicit base-map family selection through `scene.baseMap.id`.
+- Multi-base-map selector/editor integration.
+- Deterministic ordered scene-layer composition.
+- Static raster overlay support.
+- Derived overlay support, including solar analemma ground-track.
+- Generalized semantic participation for supported overlay sources.
+- Scene-authoritative runtime rebuild behavior for scene-only changes.
+- Month-aware base-map families resolved from product time.
+- Runtime base-map image-load failure fallback without moving map policy into the backend.
+
+These additions preserve the current projection and scene-view assumptions: equirectangular, full-world fixed view.
+
+---
+
 ## Purpose
 
 Define the architecture and behavior of the Libration Scene System.

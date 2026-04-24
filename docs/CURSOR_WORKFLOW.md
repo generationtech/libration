@@ -1,5 +1,24 @@
 # Cursor Workflow
 
+
+## Current Scene / Map Workflow Focus
+
+Recent work established the scene/map system as a second major implementation track alongside top-band chrome.
+
+When working on scene/map features, preserve these rules:
+
+- `SceneConfig` is authoritative for scene base map, projection id, view mode, and ordered layer stack.
+- Persist base-map family ids, not concrete raster file paths.
+- Month-aware base-map families are declared explicitly in the base-map registry; do not infer runtime behavior from filenames alone.
+- Product time drives month-aware base-map resolution.
+- Base-map image-load failure may be reported by the backend, but fallback policy belongs in base-map asset resolution.
+- Do not move map-selection, month-resolution, or product semantics into render backend execution.
+- Scene composition remains deterministic and upstream of rendering.
+
+Current safe Cursor work should continue to prefer narrow, phase-scoped improvements with explicit success criteria and tests.
+
+---
+
 ## Core Principle
 
 All rendering logic must be expressed via semantic resolvers, layout stages, realization adapters, and `RenderPlan` builders upstream of execution.

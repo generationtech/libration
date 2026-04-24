@@ -1,5 +1,33 @@
 # Project Plan
 
+
+## Current Scene / Map System Progress
+
+The scene-system foundation and first product-facing map work are now complete enough to serve as the active feature platform.
+
+Completed in the recent scene/map workstream:
+
+- SceneConfig integration and base-map migration.
+- Deterministic scene composition and ordered layer stack behavior.
+- Static raster overlay support.
+- Derived overlay support, including solar analemma ground-track.
+- Scene-authoritative runtime rebuild behavior for scene-only edits.
+- Generalized semantic overlay participation.
+- Multi-base-map registry and selector/editor integration.
+- Real topography and political map onboarding.
+- Month-aware base-map family support for `equirect-world-topography-v1`.
+- Product-time-driven month resolution with backward calendar lookback and runtime image-load failure fallback.
+
+Current recommended next direction:
+
+1. Continue validating the real base-map catalog in normal use.
+2. Consider adding subtle selector copy for seasonal/month-aware families.
+3. Decide whether to onboard another month-aware Blue Marble family or move next to either geology sourcing or future day/night/emissive composition planning.
+
+Dynamic feed/lifecycle work remains intentionally deferred until the static and temporal base-map system is stable in product use.
+
+---
+
 ## Current State
 
 Initial public release: COMPLETE (v1.0.0)  

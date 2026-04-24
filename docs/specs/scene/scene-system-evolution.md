@@ -1,5 +1,27 @@
 # Scene System Evolution Roadmap
 
+
+## Current Completion Status
+
+The roadmap has advanced beyond its initial Phase A/B/C foundation:
+
+- Phase A base-map selection: complete, including multi-base-map selector/editor integration.
+- Phase B structured SceneConfig and layer stacking: complete.
+- Phase C static overlay support: complete for first static raster overlay path.
+- Derived overlay support: complete for solar analemma ground-track.
+- Scene-authoritative runtime refresh: complete.
+- Generalized semantic scene-layer participation: complete.
+- Real base-map onboarding: complete for topography and political maps.
+- Month-aware base-map family support: complete for topography, including product-time month resolution and runtime image-load failure fallback.
+
+Remaining major future frontier:
+
+- full dynamic data lifecycle for feeds/gridded datasets
+- advanced composition such as masking/blending/day-night emissive maps
+- additional projections and scene view modes
+
+---
+
 ## Phase A
 - Base map selection
 

@@ -1,5 +1,20 @@
 # Projection System Specification
 
+
+## Base Map Families and Projection Compatibility
+
+Base-map families, including month-aware families, remain subject to the active projection contract.
+
+For the current implementation:
+
+- all static and month-aware base-map rasters must be equirectangular full-world assets
+- all monthly variants in a family must share the same projection, extent, dimensions, and alignment expectations
+- temporal variation changes visual content only; it must not alter spatial mapping
+
+Projection remains spatial truth. Month-aware map switching is asset selection within the same projection, not a projection or scene-view change.
+
+---
+
 ## Purpose
 
 Define the projection system for Libration as a first-class, explicit architectural component.

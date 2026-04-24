@@ -1,5 +1,20 @@
 # Render Backend Interface Specification
 
+
+## Raster Image Load Failure Reporting
+
+The backend remains product-semantics-free, but it may report resource lifecycle events such as raster image load failure.
+
+Current base-map fallback behavior uses this narrow boundary:
+
+- raster payloads may opt in to image-load failure reporting
+- the Canvas backend reports the failed image URL and removes the failed image from its cache
+- upstream base-map asset resolution records failed URLs and chooses the next valid fallback
+
+The backend must not decide which map to use, inspect SceneConfig, or implement month-aware fallback policy. It only reports that a concrete raster URL failed to load.
+
+---
+
 ## Purpose
 
 Define the contract between the Libration rendering pipeline and the rendering backend.

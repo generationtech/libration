@@ -1,5 +1,28 @@
 # Map Asset Contract
 
+
+## Current Variant Contract: Month-Aware Base Map Families
+
+Some base-map assets are families rather than single files.
+
+Current supported variant mode:
+
+```ts
+type BaseMapVariantMode = "static" | "monthOfYear"
+```
+
+For `monthOfYear` families:
+
+- the persisted map selection remains the family id
+- concrete monthly rasters live under `public/maps/variants/<family-id>/`
+- monthly files use `01.jpg` through `12.jpg`
+- `base.jpg` is the family fallback when no monthly raster applies
+- all monthly variants must share the same projection, extent, dimensions, orientation, and no-padding contract
+- missing-month fallback walks backward by calendar month with year rollover
+- runtime image-load failures may exclude a concrete URL and trigger fallback, but the map contract remains registry-declared rather than filesystem-probed
+
+---
+
 ## Purpose
 
 Define the requirements, validation rules, and normalization process for map assets used in Libration.

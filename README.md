@@ -1,5 +1,24 @@
 # Libration
 
+
+## Current Scene and Map Capabilities
+
+Libration now includes a scene-system foundation beneath the display chrome.
+
+Current scene capabilities include:
+
+- `SceneConfig`-driven base map selection, visibility, opacity, and ordered overlays.
+- Multiple curated equirectangular base maps selected through the configuration UI.
+- Real sourced topography and political map assets.
+- Static and derived overlays composed through the scene layer stack.
+- A solar analemma ground-track derived overlay.
+- Month-aware base-map families. The topography family can resolve month-specific Blue Marble imagery from product time while persisting only the selected family id.
+- Robust base-map image fallback. If a concrete month image fails to load, the resolver skips that failed URL and falls back through the month lookback chain rather than leaving the scene blank.
+
+The current month-aware behavior is intentionally limited to base-map asset resolution. It does not change projection, scene view, layer composition, or renderer semantics.
+
+---
+
 ## Overview
 
 ![Libration application screenshot](docs/images/libration-hero.png)

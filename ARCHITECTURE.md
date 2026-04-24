@@ -1,5 +1,25 @@
 # Architecture
 
+
+## Current Scene and Map Architecture Status
+
+The scene system is now a first-class runtime architecture alongside display chrome.
+
+Current implemented scene/map capabilities include:
+
+- `SceneConfig` as the authoritative persisted scene model for projection, view mode, base map, and ordered scene layers.
+- Scene-driven composition via a deterministic stack plan: base map foundational, overlays ordered by `SceneLayerInstance.order`, with equal-order ties preserving document array order.
+- Source-driven overlay construction for both static raster overlays and derived astronomical overlays, including the solar analemma ground-track product.
+- Generalized scene-layer participation based on layer semantics and supported source/product eligibility rather than a strict row-id allowlist.
+- Multi-base-map support through a curated equirectangular base-map registry and selector-facing metadata.
+- Real sourced map assets for topography and political base maps.
+- Optional month-aware base-map families (`variantMode: "monthOfYear"`) that resolve a concrete raster from product time while preserving `scene.baseMap.id` as the only persisted selection key.
+- Runtime image-load failure recovery for base-map rasters: failed concrete URLs are excluded from subsequent resolution so month-aware families can roll backward to the next valid asset instead of leaving the scene blank.
+
+This preserves the render-plan contract: backend execution may report raster load failure, but base-map fallback policy remains upstream in base-map asset resolution.
+
+---
+
 ## Architectural Intent
 
 Libration is a precision-rendered world time instrument built on a **render-plan-driven architecture**.

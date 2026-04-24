@@ -1,5 +1,21 @@
 # Scene View / Camera
 
+
+## Relationship to Month-Aware Base Maps
+
+Month-aware base-map switching does not change the Scene View / Camera model.
+
+The selected concrete raster may vary by product month, but:
+
+- the active view mode remains `fullWorldFixed`
+- projection-space bounds remain unchanged
+- no zoom, pan, clipping, or camera behavior is introduced
+- all monthly variants must occupy the same full-world equirectangular extent
+
+Temporal asset selection is a base-map resolver concern, not a scene-view concern.
+
+---
+
 ## Purpose
 Define how the scene is viewed.
 

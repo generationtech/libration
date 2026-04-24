@@ -1,5 +1,24 @@
 # Scene System Implementation Phase 1 — Execution Criteria
 
+
+## Completion Note
+
+Phase 1 is complete.
+
+The implementation now goes beyond the original Phase 1 foundation:
+
+- SceneConfig is authoritative.
+- Base map selection is config-driven.
+- Scene layers are ordered and composition-driven.
+- Static and derived overlays exist.
+- Multi-base-map support and selector integration exist.
+- Real topography and political maps have been onboarded.
+- The topography base-map family supports month-aware product-time-driven raster selection.
+
+This document should remain as the historical execution criteria for the foundation phase, not as the current roadmap.
+
+---
+
 ## Purpose
 
 Define the execution framework, scope boundaries, success criteria, and exit conditions for the first major implementation phase of the Scene System work.

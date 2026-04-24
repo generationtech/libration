@@ -1,5 +1,21 @@
 # Layer Data Lifecycle Specification
 
+
+## Current Relationship to Base Map Asset Loading
+
+Month-aware base-map resolution and base-map image-load failure recovery are not the full dynamic data lifecycle system.
+
+They are intentionally narrow static-asset resilience mechanisms:
+
+- registry declares available static/month-aware assets
+- resolver chooses a concrete raster from product time
+- backend may report concrete image-load failure
+- resolver excludes known-failed URLs and chooses the next fallback
+
+This does not introduce live feeds, polling, caching policy, lifecycle state machines, or external acquisition. Those remain future lifecycle work.
+
+---
+
 ## Purpose
 
 Define how scene layers acquire, update, cache, and expose data over time.

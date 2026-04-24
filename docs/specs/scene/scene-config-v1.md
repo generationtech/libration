@@ -1,5 +1,31 @@
 # SceneConfig v1
 
+
+## Current Base Map Semantics Update
+
+`baseMap.id` is a stable product-level **base-map family id**, not necessarily a direct image filename.
+
+Current implemented examples include:
+
+- `equirect-world-legacy-v1`
+- `equirect-world-political-v1`
+- `equirect-world-topography-v1`
+- `equirect-world-geology-v1`
+
+Base-map families may be static or month-aware. For month-aware families, the persisted config still stores only `baseMap.id`; concrete month-specific raster URLs are resolved at runtime from the base-map registry using product time.
+
+Current base-map persistence remains:
+
+```ts
+scene.baseMap.id
+scene.baseMap.visible
+scene.baseMap.opacity
+```
+
+No month-specific file path is persisted in SceneConfig.
+
+---
+
 ## Purpose
 
 SceneConfig defines the authoritative persisted structure for composing the user-facing scene in Libration.

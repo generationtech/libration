@@ -1,5 +1,29 @@
 # LibrationConfig v2 — Phase 0
 
+
+## SceneConfig / Base Map Update
+
+`LibrationConfigV2.scene` is now an authoritative scene domain in addition to the structured chrome model.
+
+The scene domain persists:
+
+- `projectionId`
+- `viewMode`
+- `baseMap`
+- ordered `layers[]`
+
+For base maps, the persisted config stores only the selected family id and presentation controls:
+
+```ts
+scene.baseMap.id
+scene.baseMap.visible
+scene.baseMap.opacity
+```
+
+Concrete raster URLs, including month-specific topography imagery, are resolved at runtime from the base-map registry and product time. Month-aware map families do not persist month file paths.
+
+---
+
 ## Update
 
 ### Chrome hour-marker reality today

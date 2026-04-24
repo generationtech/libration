@@ -1,5 +1,21 @@
 # Layer Composition Rules
 
+
+## Current Implemented Composition Status
+
+Current implementation status:
+
+- Scene composition is driven by `SceneConfig` and a centralized composition plan.
+- Base map remains foundational and below overlays.
+- Overlay ordering is deterministic and user-controlled via `SceneLayerInstance.order`.
+- Equal-order ties preserve array order.
+- Static and derived overlays participate through supported source semantics.
+- Base-map month-aware raster resolution is not a composition concern; composition receives the resolved layer state.
+
+The next composition frontier remains future blending/masking, especially for day/night emissive map composition.
+
+---
+
 ## Ordering
 - User-controlled stack
 - zIndex resolved at runtime

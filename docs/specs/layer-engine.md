@@ -1,5 +1,22 @@
 # Layer Engine Specification
 
+
+## Current Scene Layer Implementation Status
+
+The layer engine now supports the implemented SceneConfig-driven scene path:
+
+- base map as a foundational scene participant
+- ordered overlays from `SceneLayerInstance[]`
+- static raster overlays
+- derived overlays, including solar analemma ground-track
+- generalized semantic participation for supported static and derived scene rows
+
+Base-map raster resolution is family-aware. A base-map layer may resolve a concrete image from a static family or a month-aware family using product time. This remains upstream layer state behavior; renderers receive raster payloads and do not decide map family policy.
+
+Base-map raster payloads may request load-failure reporting. The backend reports failed image URLs, while the base-map resolver owns fallback selection.
+
+---
+
 ## Purpose
 
 Define a uniform model for map and globe **scene** content in Libration.

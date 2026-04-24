@@ -135,6 +135,24 @@ Future work: a **fixed-month override** (e.g. always show July for comparisons) 
 
 ---
 
+
+## 3.0.1 Runtime image-load failure fallback
+
+Registry metadata is the static contract, but deployed files may still be absent during development, packaging, or manual testing.
+
+For base-map rasters, Libration supports narrow runtime failure recovery:
+
+- base-map raster payloads may opt into load-failure reporting
+- the backend reports failed concrete image URLs without choosing product fallback behavior
+- base-map asset resolution records failed URLs and excludes them from later choices
+- month-aware families continue calendar lookback while skipping known-failed URLs
+- fallback then proceeds to family `base.jpg`, the family legacy/static `src`, and finally the global default map
+
+This is not a general lifecycle/data-feed system. It is static asset resilience for base maps only.
+
+
+---
+
 ## 3.1 Reference Maps
 
 Purpose:
@@ -272,7 +290,7 @@ Category:
 
 Initial status:
 
-* transitional placeholder until real asset sourced
+* real generated political cartography asset onboarded from Natural Earth + QGIS export
 
 ---
 
@@ -292,7 +310,7 @@ Category:
 
 Initial status:
 
-* transitional placeholder until real asset sourced
+* real NASA Blue Marble month-aware topography/bathymetry family onboarded
 
 ---
 

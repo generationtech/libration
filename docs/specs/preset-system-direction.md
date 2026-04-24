@@ -1,5 +1,22 @@
 # Preset System Direction — Composable Partial Configuration Presets
 
+
+## Scene / Map Preset Implications
+
+Future presets should be able to target scene configuration as structured partial patches.
+
+Useful future preset scopes include:
+
+- selected base-map family (`scene.baseMap.id`)
+- base-map visibility and opacity
+- ordered scene layer stack choices
+- overlay enablement/order/opacity
+- future map/layer combinations such as topography + astronomy overlays or political map + city pins
+
+Month-aware base-map behavior does not require special preset handling. Presets should store the family id only, not the resolved month-specific raster path.
+
+---
+
 ## Purpose
 
 Capture the current design direction for a future preset system in Libration so it can be revisited later without losing the architectural intent behind the idea.
