@@ -2,9 +2,9 @@
 
 ## Current phase
 
-Libration is in a post-foundation consolidation phase.
+Libration is in a post-foundation consolidation and feature-expansion phase.
 
-The major runtime foundations are implemented well enough to support feature-forward work:
+The major runtime foundations are implemented well enough to support disciplined feature-forward work:
 
 - renderer-agnostic RenderPlan pipeline.
 - structured chrome model.
@@ -15,81 +15,69 @@ The major runtime foundations are implemented well enough to support feature-for
 - static and month-aware base-map families.
 - static and derived overlays.
 - Canvas backend execution.
+- AI co-engineering rules and Cursor project rules.
 
-The immediate priority is to consolidate documentation, enforce AI co-engineering rules, and make the next development phases easier to execute without rediscovering project context.
+The current strategic objective is to expand the product without destabilizing the architectural boundaries that now exist.
 
 ## Current goals
 
-1. Refactor documentation into a smaller, clearer living system.
-2. Add Cursor project rules for future co-engineering consistency.
-3. Preserve the full future-feature inventory.
-4. Clarify completed phases and future phases.
-5. Keep implementation work phase-scoped, testable, and architecture-safe.
-6. Avoid reopening already-stabilized foundations unless a real architectural bug is found.
+1. Keep architecture and docs aligned with actual runtime behavior.
+2. Preserve AI co-engineering consistency through repo rules and implementation patterns.
+3. Continue disciplined map and scene expansion.
+4. Preserve future-feature inventory without prematurely implementing it.
+5. Avoid reopening settled foundations unless a real architectural mismatch exists.
+6. Prepare the project for more advanced scene, composition, and lifecycle work.
 
 ## Near-term execution slices
 
-### Slice 1: Documentation and rules consolidation
+### Slice 1: Documentation alignment with source reality
 
-Status: planned.
-
-Deliverables:
-
-- refreshed `README.md`.
-- refreshed `ARCHITECTURE.md`.
-- refreshed `PLAN.md`.
-- new `AGENTS.md`.
-- new `docs/PROJECT_STRATEGY.md`.
-- new `docs/DEVELOPMENT_STRATEGY.md`.
-- new `docs/ROADMAP.md`.
-- new `docs/FUTURE_FEATURES.md`.
-- new `docs/AI_COENGINEERING.md`.
-- reorganized map docs under `docs/maps/`.
-- historical execution docs moved under `docs/historical/`.
-- `.cursor/rules` project rules.
-
-Exit criteria:
-
-- a new chat session can understand the project from docs alone.
-- Cursor receives persistent architecture rules.
-- future feature backlog is explicit and retained.
-- current phase is not buried in stale historical notes.
-
-### Slice 2: Documentation alignment with source reality
-
-Status: next after Slice 1.
+Status: active.
 
 Deliverables:
 
-- verify all names, ids, config fields, scripts, and runtime claims against source.
-- update links and file references after doc moves.
-- remove stale duplicated sections.
-- preserve spec-level detail where still useful.
+- verify runtime claims against actual source.
+- remove stale references and duplicated guidance.
+- keep architecture docs concise and durable.
+- avoid rebuilding another sprawling documentation tree.
 
 Exit criteria:
 
-- docs do not claim unsupported features are implemented.
-- historical docs are clearly marked historical.
-- specs and roadmap do not contradict current source.
+- docs reflect actual runtime state.
+- docs do not reference removed structures.
+- future chat sessions can onboard quickly.
 
-### Slice 3: Scene and map polish
+### Slice 2: Map inventory and selector polish
 
 Status: planned.
 
 Candidate work:
 
-- normalize map family ids, labels, and categories while catalog is still young.
-- remove transitional placeholder flags only after assets are fully sourced and validated.
+- normalize family ids, labels, and categories while catalog is still young.
 - improve selector copy for month-aware map families.
-- add clearer attribution display.
-- validate base-map presentation controls across families.
-- decide geology onboarding versus day/night emissive composition.
+- strengthen attribution presentation.
+- finalize placeholder versus validated family states.
+- validate all preview thumbnails and metadata.
 
 Exit criteria:
 
-- curated map inventory feels intentional.
-- catalog metadata is stable enough to preserve ids.
-- map selector communicates family behavior clearly.
+- map inventory feels curated and intentional.
+- catalog semantics are stable enough for long-term persistence.
+
+### Slice 3: Scientific substrate expansion
+
+Status: planned.
+
+Candidate work:
+
+- geology onboarding.
+- terrain refinement.
+- climate or vegetation substrate exploration.
+- emissive-compatible substrate planning.
+
+Exit criteria:
+
+- at least one additional scientifically grounded substrate family is validated and integrated cleanly.
 
 ### Slice 4: Advanced composition planning
 
@@ -97,18 +85,16 @@ Status: planned.
 
 Candidate work:
 
-- day/night shading integration with base-map presentation.
-- emissive/night-lights composition strategy.
+- day/night composition.
+- emissive night-light blending.
+- masking and clipping rules.
 - blend modes.
-- masks.
-- clipping.
-- separate visual products from data lifecycle concerns.
+- overlay readability strategy.
 
 Exit criteria:
 
-- composition rules are specified before implementation.
+- composition rules are clearly defined before broad implementation.
 - backend remains product-semantics-free.
-- Canvas implementation does not block future GPU backend.
 
 ### Slice 5: Dynamic layer lifecycle foundation
 
@@ -116,8 +102,8 @@ Status: future.
 
 Candidate work:
 
-- layer data lifecycle manager.
-- static, derived, interval, and event-driven acquisition modes.
+- lifecycle manager.
+- acquisition modes.
 - cache policies.
 - versioned state snapshots.
 - stale/error/loading states.
@@ -125,9 +111,7 @@ Candidate work:
 
 Exit criteria:
 
-- live or forecast layers can be added without fetching during render.
-- scene layers remain deterministic from prepared state.
-- renderer remains side-effect free.
+- live or forecast layers can be integrated without fetching during render execution.
 
 ## Active architectural guardrails
 
@@ -159,7 +143,6 @@ Before editing, read:
 - docs/ROADMAP.md
 - docs/FUTURE_FEATURES.md
 - docs/DEVELOPMENT_STRATEGY.md
-- any relevant specs under docs/specs/
 
 Task:
 <single phase-scoped objective>
@@ -189,4 +172,4 @@ Do not start these until their phase is intentionally opened:
 - GPU backend.
 - broad preset UI.
 - total UI redesign.
-- map asset sourcing without provenance.
+- uncontrolled map ingestion pipelines.

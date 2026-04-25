@@ -73,9 +73,11 @@ Start here:
 - [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing and onboarding strategy.
 - [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - current map source inventory.
 
-Specification docs live under `docs/specs/`.
+Note:
 
-Historical execution notes live under `docs/historical/`.
+- The prior large spec archive was intentionally retired during documentation consolidation.
+- Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
+- New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development
 

@@ -21,18 +21,14 @@ Before making architectural or multi-file edits, read:
 - `PLAN.md`
 - `docs/DEVELOPMENT_STRATEGY.md`
 - `docs/ROADMAP.md`
-- relevant files under `docs/specs/`
+- `docs/PROJECT_STRATEGY.md`
+- `docs/FUTURE_FEATURES.md`
+- relevant source files in `src/`
 
 For map or scene work, also read:
 
 - `docs/maps/MAP_ASSET_STRATEGY.md`
 - `docs/maps/MAP_ASSET_SOURCES.md`
-- `docs/specs/scene/scene-system.md`
-- `docs/specs/scene/scene-config-v1.md`
-- `docs/specs/scene/map-asset-contract.md`
-- `docs/specs/scene/projection-system.md`
-- `docs/specs/scene/layer-composition-rules.md`
-- `docs/specs/scene/scene-view-camera.md`
 
 ## Non-negotiable architecture rules
 
@@ -111,7 +107,9 @@ Update:
 - `ARCHITECTURE.md` for durable architecture changes.
 - `docs/ROADMAP.md` for phase status.
 - `docs/FUTURE_FEATURES.md` when preserving or adding future ideas.
-- relevant specs under `docs/specs/` for contract changes.
+- map docs when onboarding or changing asset workflows.
+
+Do not create sprawling speculative spec files unless they provide durable architectural value.
 
 ## Output expectations for AI edits
 
