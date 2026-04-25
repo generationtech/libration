@@ -260,10 +260,10 @@ describe("createLayerRegistryFromConfig", () => {
       ...base,
       baseMap: {
         ...base.baseMap,
-        id: "equirect-world-topography-v1",
+        id: "equirect-world-blue-marble-t-v1",
         presentation: { brightness: 1.9, contrast: 1.9, gamma: 1.9, saturation: 1.9 },
         presentationByMapId: {
-          "equirect-world-topography-v1": { brightness: 1.1, contrast: 1.2, gamma: 1.3, saturation: 1.4 },
+          "equirect-world-blue-marble-t-v1": { brightness: 1.1, contrast: 1.2, gamma: 1.3, saturation: 1.4 },
         },
       },
     };
@@ -280,13 +280,13 @@ describe("createLayerRegistryFromConfig", () => {
     expect(data?.presentation?.brightness).toBe(1.1);
   });
 
-  it("resolves month-aware topography from the effective product instant on the layer clock", () => {
+  it("resolves month-aware family raster from the effective product instant on the layer clock", () => {
     const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
     const scene = {
       ...base,
       baseMap: {
         ...base.baseMap,
-        id: "equirect-world-topography-v1",
+        id: "equirect-world-blue-marble-t-v1",
       },
     };
     const config: AppConfig = {
@@ -299,7 +299,7 @@ describe("createLayerRegistryFromConfig", () => {
     const juneUtc = Date.UTC(2022, 5, 1);
     const state = layer?.getState(createTimeContext(juneUtc, 0, false));
     const data = state?.data as { kind: string; src: string } | undefined;
-    expect(data?.src).toBe("/maps/variants/equirect-world-topography-v1/06.jpg");
+    expect(data?.src).toBe("/maps/variants/equirect-world-blue-marble-t-v1/06.jpg");
   });
 
   it("moves the base map layer to a non-failed month src when the resolved month is excluded", () => {
@@ -308,7 +308,7 @@ describe("createLayerRegistryFromConfig", () => {
       ...base,
       baseMap: {
         ...base.baseMap,
-        id: "equirect-world-topography-v1",
+        id: "equirect-world-blue-marble-t-v1",
       },
     };
     const config: AppConfig = {
@@ -319,10 +319,10 @@ describe("createLayerRegistryFromConfig", () => {
     const registry = createLayerRegistryFromConfig(config);
     const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
     const juneUtc = Date.UTC(2022, 5, 1);
-    addEquirectBaseMapImageLoadFailure("/maps/variants/equirect-world-topography-v1/06.jpg");
+    addEquirectBaseMapImageLoadFailure("/maps/variants/equirect-world-blue-marble-t-v1/06.jpg");
     const state = layer?.getState(createTimeContext(juneUtc, 0, false));
     const data = state?.data as { kind: string; src: string } | undefined;
-    expect(data?.src).toBe("/maps/variants/equirect-world-topography-v1/05.jpg");
+    expect(data?.src).toBe("/maps/variants/equirect-world-blue-marble-t-v1/05.jpg");
   });
 
   it("falls back to default base map raster src for unknown scene.baseMap.id", () => {

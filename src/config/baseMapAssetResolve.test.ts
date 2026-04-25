@@ -29,10 +29,10 @@ describe("baseMapAssetResolve month-aware integration", () => {
     );
   });
 
-  it("month-aware topography resolves the month file from UTC civil month of product instant", () => {
+  it("month-aware terrain family resolves the month file from UTC civil month of product instant", () => {
     const july = Date.UTC(2024, 6, 15);
-    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", { productInstantMs: july })).toBe(
-      "/maps/variants/equirect-world-topography-v1/07.jpg",
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-t-v1", { productInstantMs: july })).toBe(
+      "/maps/variants/equirect-world-blue-marble-t-v1/07.jpg",
     );
   });
 
@@ -44,55 +44,51 @@ describe("baseMapAssetResolve month-aware integration", () => {
   });
 
   it("exposes catalog src as family base for month-aware assets", () => {
-    const asset = resolveEquirectBaseMapAsset("equirect-world-topography-v1");
-    expect(asset.src).toBe("/maps/variants/equirect-world-topography-v1/base.jpg");
+    const asset = resolveEquirectBaseMapAsset("equirect-world-blue-marble-t-v1");
+    expect(asset.src).toBe("/maps/variants/equirect-world-blue-marble-t-v1/base.jpg");
     expect(asset.variantMode).toBe("monthOfYear");
   });
 
-  it("aliases the same canonical topography family id for resolution", () => {
+  it("aliases historical topography ids to the canonical Blue Marble topography family id", () => {
     const ms = Date.UTC(2024, 8, 1);
     expect(resolveEquirectBaseMapImageSrc("equirect-world-topo-v1", { productInstantMs: ms })).toBe(
-      "/maps/variants/equirect-world-topography-v1/09.jpg",
+      "/maps/variants/equirect-world-blue-marble-t-v1/09.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", { productInstantMs: ms })).toBe(
+      "/maps/variants/equirect-world-blue-marble-t-v1/09.jpg",
     );
   });
 
-  it("excluded month rasters for topography roll back to the first non-excluded month", () => {
+  it("excluded month rasters for month-aware families roll back to the first non-excluded month", () => {
     const july = Date.UTC(2024, 6, 10);
-    const ex = new Set<string>(["/maps/variants/equirect-world-topography-v1/07.jpg"]);
+    const ex = new Set<string>(["/maps/variants/equirect-world-blue-marble-t-v1/07.jpg"]);
     expect(
-      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-t-v1", {
         productInstantMs: july,
         excludedImageSrcs: ex,
       }),
-    ).toBe("/maps/variants/equirect-world-topography-v1/06.jpg");
+    ).toBe("/maps/variants/equirect-world-blue-marble-t-v1/06.jpg");
   });
 
-  it("January with January excluded chooses December for topography when December is not excluded", () => {
+  it("January with January excluded chooses December when December is not excluded", () => {
     const jan = Date.UTC(2024, 0, 10);
-    const ex = new Set<string>(["/maps/variants/equirect-world-topography-v1/01.jpg"]);
+    const ex = new Set<string>(["/maps/variants/equirect-world-blue-marble-t-v1/01.jpg"]);
     expect(
-      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-t-v1", {
         productInstantMs: jan,
         excludedImageSrcs: ex,
       }),
-    ).toBe("/maps/variants/equirect-world-topography-v1/12.jpg");
+    ).toBe("/maps/variants/equirect-world-blue-marble-t-v1/12.jpg");
   });
 
-  it("excluded family base falls back to the legacy then global default", () => {
+  it("excluded family base falls back to the global default", () => {
     const july = Date.UTC(2024, 6, 10);
     const monthPaths = [...Array(12).keys()].map(
-      (i) => `/maps/variants/equirect-world-topography-v1/${String(i + 1).padStart(2, "0")}.jpg`,
+      (i) => `/maps/variants/equirect-world-blue-marble-t-v1/${String(i + 1).padStart(2, "0")}.jpg`,
     );
-    const ex = new Set<string>([...monthPaths, "/maps/variants/equirect-world-topography-v1/base.jpg"]);
+    const ex = new Set<string>([...monthPaths, "/maps/variants/equirect-world-blue-marble-t-v1/base.jpg"]);
     expect(
-      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
-        productInstantMs: july,
-        excludedImageSrcs: ex,
-      }),
-    ).toBe("/maps/world-equirectangular-topography.jpg");
-    ex.add("/maps/world-equirectangular-topography.jpg");
-    expect(
-      resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", {
+      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-t-v1", {
         productInstantMs: july,
         excludedImageSrcs: ex,
       }),

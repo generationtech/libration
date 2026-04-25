@@ -82,9 +82,10 @@ describe("SceneConfig (Phase 1)", () => {
     expect(SUPPORTED_EQUIRECT_BASE_MAP_IDS).toEqual([
       "equirect-world-legacy-v1",
       "equirect-world-political-v1",
-      "equirect-world-topography-v1",
       "equirect-world-geology-v1",
-      "equirect-world-blue-marble-v1",
+      "equirect-world-blue-marble-bm-v1",
+      "equirect-world-blue-marble-t-v1",
+      "equirect-world-blue-marble-tb-v1",
     ]);
   });
 
@@ -96,16 +97,16 @@ describe("SceneConfig (Phase 1)", () => {
       "/maps/world-equirectangular-political.jpg",
     );
     const fixedWall = Date.UTC(2019, 3, 1);
-    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-v1", { productInstantMs: fixedWall })).toBe(
-      "/maps/variants/equirect-world-topography-v1/04.jpg",
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-t-v1", { productInstantMs: fixedWall })).toBe(
+      "/maps/variants/equirect-world-blue-marble-t-v1/04.jpg",
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-geology-v1")).toBe(
       "/maps/world-equirectangular-geology.jpg",
     );
     const july = Date.UTC(2019, 6, 15);
     expect(
-      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-v1", { productInstantMs: july }),
-    ).toBe("/maps/variants/equirect-world-blue-marble-v1/07.jpg");
+      resolveEquirectBaseMapImageSrc("equirect-world-blue-marble-bm-v1", { productInstantMs: july }),
+    ).toBe("/maps/variants/equirect-world-blue-marble-bm-v1/07.jpg");
   });
 
   it("unknown base map ids safely fall back to the default registry entry", () => {
@@ -116,7 +117,7 @@ describe("SceneConfig (Phase 1)", () => {
 
   it("legacy alias ids map to explicit canonical registry ids", () => {
     expect(resolveEquirectBaseMapAsset("equirect-world-topo-v1").id).toBe(
-      "equirect-world-topography-v1",
+      "equirect-world-blue-marble-t-v1",
     );
   });
 
@@ -130,17 +131,17 @@ describe("SceneConfig (Phase 1)", () => {
 
   it("getEquirectBaseMapOptionForId uses canonical ids for labels (legacy storage)", () => {
     const o = getEquirectBaseMapOptionForId("equirect-world-topo-v1");
-    expect(o.id).toBe("equirect-world-topography-v1");
-    expect(o.label).toBe("World topography");
+    expect(o.id).toBe("equirect-world-blue-marble-t-v1");
+    expect(o.label).toBe("Blue Marble - T");
   });
 
-  it("topography uses the real runtime asset, preview thumbnail, and is not a transitional placeholder", () => {
-    const asset = resolveEquirectBaseMapAsset("equirect-world-topography-v1");
-    expect(asset.src).toBe("/maps/variants/equirect-world-topography-v1/base.jpg");
+  it("Blue Marble topography family uses month-aware runtime assets and is not transitional", () => {
+    const asset = resolveEquirectBaseMapAsset("equirect-world-blue-marble-t-v1");
+    expect(asset.src).toBe("/maps/variants/equirect-world-blue-marble-t-v1/base.jpg");
     expect(asset.variantMode).toBe("monthOfYear");
     expect(asset.transitionalPlaceholder).toBeUndefined();
-    const o = getEquirectBaseMapOptionForId("equirect-world-topography-v1");
-    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-topography-thumb.jpg");
+    const o = getEquirectBaseMapOptionForId("equirect-world-blue-marble-t-v1");
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/equirect-world-blue-marble-t-v1-thumb.jpg");
     expect(o.transitionalPlaceholder).toBeUndefined();
   });
 
@@ -241,7 +242,7 @@ describe("SceneConfig (Phase 1)", () => {
         projectionId: "equirectangular",
         viewMode: "fullWorldFixed",
         baseMap: {
-          id: "equirect-world-topography-v1",
+          id: "equirect-world-blue-marble-t-v1",
           visible: true,
           presentation: { brightness: 1.3, contrast: 1, gamma: 1.1, saturation: 0.9 },
         },
@@ -249,7 +250,7 @@ describe("SceneConfig (Phase 1)", () => {
       },
       DEFAULT_LAYERS,
     );
-    expect(scene.baseMap.presentationByMapId?.["equirect-world-topography-v1"]).toEqual({
+    expect(scene.baseMap.presentationByMapId?.["equirect-world-blue-marble-t-v1"]).toEqual({
       brightness: 1.3,
       contrast: 1,
       gamma: 1.1,
@@ -267,7 +268,7 @@ describe("SceneConfig (Phase 1)", () => {
         viewMode: "fullWorldFixed",
         orderingMode: "user",
         baseMap: {
-          id: "equirect-world-topography-v1",
+          id: "equirect-world-blue-marble-t-v1",
           visible: true,
           opacity: 1,
           presentation: { brightness: 1.25, contrast: 1, gamma: 1.1, saturation: 1.05 },
@@ -275,9 +276,9 @@ describe("SceneConfig (Phase 1)", () => {
         layers: [],
       },
     });
-    expect(v2.scene?.baseMap.id).toBe("equirect-world-topography-v1");
+    expect(v2.scene?.baseMap.id).toBe("equirect-world-blue-marble-t-v1");
     expect(v2.scene?.baseMap.presentation?.gamma).toBe(1.1);
-    expect(v2.scene?.baseMap.presentationByMapId?.["equirect-world-topography-v1"]?.gamma).toBe(1.1);
+    expect(v2.scene?.baseMap.presentationByMapId?.["equirect-world-blue-marble-t-v1"]?.gamma).toBe(1.1);
     expect(v2.scene?.baseMap).not.toHaveProperty("src");
   });
 

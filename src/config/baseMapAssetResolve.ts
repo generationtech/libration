@@ -48,7 +48,9 @@ const DEFINITIONS: readonly EquirectMapDefinition[] = CATALOG.definitions;
 const LEGACY_ID_ALIASES = new Map<string, string>([
   ["political-v1", "equirect-world-political-v1"],
   ["world-equirectangular-v1", CATALOG.defaultEquirectBaseMapId],
-  ["equirect-world-topo-v1", "equirect-world-topography-v1"],
+  // Backward compatibility for historical topography ids that predate Blue Marble family ids.
+  ["equirect-world-topo-v1", "equirect-world-blue-marble-t-v1"],
+  ["equirect-world-topography-v1", "equirect-world-blue-marble-t-v1"],
 ]);
 
 const FULL_WORLD_EXTENT = {
