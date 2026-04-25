@@ -5,14 +5,14 @@
 
 The roadmap has advanced beyond its initial Phase A/B/C foundation:
 
-- Phase A base-map selection: complete, including multi-base-map selector/editor integration.
+- Phase A base-map selection: complete, including multi-base-map selector/editor integration and file-backed catalog inventory.
 - Phase B structured SceneConfig and layer stacking: complete.
 - Phase C static overlay support: complete for first static raster overlay path.
 - Derived overlay support: complete for solar analemma ground-track.
 - Scene-authoritative runtime refresh: complete.
 - Generalized semantic scene-layer participation: complete.
-- Real base-map onboarding: complete for topography and political maps.
-- Month-aware base-map family support: complete for topography, including product-time month resolution and runtime image-load failure fallback.
+- Real base-map onboarding: complete for topography, political, and Blue Marble / natural-color maps.
+- Month-aware base-map family support: complete for topography and additional Blue Marble-style families, including product-time month resolution and runtime image-load failure fallback.
 
 Remaining major future frontier:
 

@@ -10,9 +10,10 @@ Current implemented examples include:
 - `equirect-world-legacy-v1`
 - `equirect-world-political-v1`
 - `equirect-world-topography-v1`
+- `equirect-world-blue-marble-v1`
 - `equirect-world-geology-v1`
 
-Base-map families may be static or month-aware. For month-aware families, the persisted config still stores only `baseMap.id`; concrete month-specific raster URLs are resolved at runtime from the base-map registry using product time.
+Base-map families may be static or month-aware. For month-aware families, the persisted config still stores only `baseMap.id`; concrete month-specific raster URLs are resolved at runtime from the bundled base-map catalog using product time.
 
 Current base-map persistence includes:
 
@@ -25,7 +26,7 @@ scene.baseMap.presentation? // optional in saved JSON; normalized to defaults at
 
 `presentation` holds **visual-only** display tuning for the selected base-map family (brightness, contrast, gamma, saturation). It applies to the family as a whole, including every monthly raster in a `monthOfYear` family, and does not change map assets, projection, or the map asset contract. Brightness, contrast, and saturation are realized as a CSS `filter` on the base-map blit; gamma uses a per-RGB power curve in the canvas image pass when γ ≠ 1 (α preserved), not a CSS filter.
 
-No month-specific file path is persisted in SceneConfig.
+No month-specific file path is persisted in SceneConfig. The catalog provides available map families and product defaults; SceneConfig remains the authority for the selected family id and user/preset overrides.
 
 ---
 

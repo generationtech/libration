@@ -8,12 +8,12 @@ Future presets should be able to target scene configuration as structured partia
 Useful future preset scopes include:
 
 - selected base-map family (`scene.baseMap.id`)
-- base-map visibility and opacity
+- base-map visibility, opacity, and visual presentation overrides
 - ordered scene layer stack choices
 - overlay enablement/order/opacity
 - future map/layer combinations such as topography + astronomy overlays or political map + city pins
 
-Month-aware base-map behavior does not require special preset handling. Presets should store the family id only, not the resolved month-specific raster path.
+Month-aware base-map behavior does not require special preset handling. Presets should store the family id only, not the resolved month-specific raster path. Catalog default presentation remains product data; presets should store only intentional overrides such as opacity, brightness, contrast, saturation, or gamma.
 
 ---
 

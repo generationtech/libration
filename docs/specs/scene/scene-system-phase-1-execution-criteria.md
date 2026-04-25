@@ -12,8 +12,9 @@ The implementation now goes beyond the original Phase 1 foundation:
 - Scene layers are ordered and composition-driven.
 - Static and derived overlays exist.
 - Multi-base-map support and selector integration exist.
-- Real topography and political maps have been onboarded.
-- The topography base-map family supports month-aware product-time-driven raster selection.
+- Base-map inventory has evolved to a bundled JSON catalog.
+- Real topography, political, and Blue Marble / natural-color maps have been onboarded.
+- Month-aware base-map families support product-time-driven raster selection.
 
 This document should remain as the historical execution criteria for the foundation phase, not as the current roadmap.
 

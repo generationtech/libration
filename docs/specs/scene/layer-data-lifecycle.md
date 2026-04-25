@@ -7,7 +7,7 @@ Month-aware base-map resolution and base-map image-load failure recovery are not
 
 They are intentionally narrow static-asset resilience mechanisms:
 
-- registry declares available static/month-aware assets
+- the bundled catalog declares available static/month-aware assets
 - resolver chooses a concrete raster from product time
 - backend may report concrete image-load failure
 - resolver excludes known-failed URLs and chooses the next fallback

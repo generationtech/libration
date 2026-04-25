@@ -9,10 +9,12 @@ Current scene capabilities include:
 
 - `SceneConfig`-driven base map selection, visibility, opacity, and ordered overlays.
 - Multiple curated equirectangular base maps selected through the configuration UI.
-- Real sourced topography and political map assets.
+- A bundled file-backed base-map catalog (`src/assets/maps/base-map-catalog.json`) that defines available families, metadata, assets, variant mode, presentation defaults, capabilities, and roles.
+- A formal `maps:prep` onboarding tool for converting source TIFF sets into runtime map assets and updating the catalog.
+- Real sourced topography, political, and Blue Marble / natural-color map assets.
 - Static and derived overlays composed through the scene layer stack.
 - A solar analemma ground-track derived overlay.
-- Month-aware base-map families. The topography family can resolve month-specific Blue Marble imagery from product time while persisting only the selected family id.
+- Month-aware base-map families. Topography and Blue Marble-style families can resolve month-specific imagery from product time while persisting only the selected family id.
 - Robust base-map image fallback. If a concrete month image fails to load, the resolver skips that failed URL and falls back through the month lookback chain rather than leaving the scene blank.
 
 The current month-aware behavior is intentionally limited to base-map asset resolution. It does not change projection, scene view, layer composition, or renderer semantics.

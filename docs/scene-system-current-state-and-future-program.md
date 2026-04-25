@@ -51,7 +51,8 @@ The architecture now supports:
 
 * explicit SceneConfig authority
 * projection-aware scene composition
-* curated base-map families
+* curated base-map families backed by `src/assets/maps/base-map-catalog.json`
+* formal `maps:prep` onboarding tooling for source TIFF map sets
 * ordered scene stacking
 * static raster overlays
 * derived overlays
@@ -107,8 +108,8 @@ Implemented curated families (see the JSON catalog for the exact list):
 * legacy/reference
 * political
 * topography (month-aware)
+* Blue Marble / natural-color (month-aware when onboarded)
 * geology (transitional placeholder)
-* Blue Marble / similar (month-aware when onboarded)
 
 The selector now operates on:
 
@@ -118,6 +119,20 @@ The selector now operates on:
 Status:
 
 * COMPLETE
+
+### Current onboarding process
+
+The intended onboarding path is now:
+
+```text
+source TIFF directory
+→ npm run maps:prep
+→ public map assets + preview
+→ base-map-catalog.json entry
+→ app selector/runtime availability
+```
+
+No TypeScript source edit is required for ordinary map-family onboarding.
 
 ---
 

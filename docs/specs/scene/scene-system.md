@@ -9,13 +9,14 @@ Current capabilities include:
 
 - `SceneConfig` as authoritative persisted scene model.
 - Explicit base-map family selection through `scene.baseMap.id`.
-- Multi-base-map selector/editor integration.
+- Available base-map inventory is data-backed; adding ordinary new families should update the catalog rather than TypeScript source definitions.
+- Multi-base-map selector/editor integration backed by `src/assets/maps/base-map-catalog.json`.
 - Deterministic ordered scene-layer composition.
 - Static raster overlay support.
 - Derived overlay support, including solar analemma ground-track.
 - Generalized semantic participation for supported overlay sources.
 - Scene-authoritative runtime rebuild behavior for scene-only changes.
-- Month-aware base-map families resolved from product time.
+- Month-aware base-map families resolved from product time through the catalog-backed resolver.
 - Runtime base-map image-load failure fallback without moving map policy into the backend.
 - Optional per-family **base map presentation** (`scene.baseMap.presentation`): user-tunable brightness, contrast, gamma, and saturation — visual-only, not persisted per month file. The canvas backend applies B/C/S via `filter` and applies γ in a full-resolution pixel pass when γ ≠ 1.
 

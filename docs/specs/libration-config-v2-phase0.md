@@ -18,9 +18,10 @@ For base maps, the persisted config stores only the selected family id and prese
 scene.baseMap.id
 scene.baseMap.visible
 scene.baseMap.opacity
+scene.baseMap.presentation?
 ```
 
-Concrete raster URLs, including month-specific topography imagery, are resolved at runtime from the base-map registry and product time. Month-aware map families do not persist month file paths.
+Concrete raster URLs, including month-specific imagery, are resolved at runtime from the bundled base-map catalog and product time. Month-aware map families do not persist month file paths. Catalog defaults may seed base-map presentation, while SceneConfig stores user/preset overrides.
 
 ---
 

@@ -159,6 +159,66 @@ This is not a general lifecycle/data-feed system. It is static asset resilience 
 * Optional `--update-catalog` writes/merges that object by `id` into the catalog file for git review. **No TypeScript change** is required to add a supported family once assets and the catalog entry exist.
 * Runtime remains **deterministic**: the catalog is bundled, not read from the filesystem in the browser.
 
+
+## 3.0a File-backed map catalog and onboarding tool
+
+Base-map inventory is now data-backed. The authoritative list of selectable base-map families lives in:
+
+```text
+src/assets/maps/base-map-catalog.json
+```
+
+The catalog is imported/bundled at build time and validated by TypeScript. Runtime does **not** scan `public/maps`, does **not** discover files dynamically, and does **not** fetch the catalog over HTTP.
+
+Catalog entries own:
+
+* stable family id
+* label and selector description
+* category
+* attribution
+* static or month-aware variant mode
+* asset paths
+* preview thumbnail path
+* default presentation values
+* capabilities
+* recommended roles
+
+TypeScript owns:
+
+* catalog validation
+* resolver APIs
+* legacy aliases
+* product-time month resolution
+* image-load failure fallback
+* effective presentation merge
+
+SceneConfig owns:
+
+* selected family id
+* visibility
+* opacity
+* user/preset presentation overrides
+
+New curated families should be prepared with:
+
+```bash
+npm run maps:prep -- --family-id <family-id> --source-dir <source-dir> --label <label> --category <category> --attribution <attribution> --update-catalog
+```
+
+The tool creates runtime assets, creates the preview thumbnail, emits provenance text, and can merge the catalog entry by id. Manual review happens through the resulting git diff, not by editing TypeScript definitions.
+
+### Family id convention
+
+Family ids should be durable semantic identifiers such as:
+
+```text
+equirect-world-blue-marble-v1
+equirect-world-topography-v1
+equirect-world-political-v1
+```
+
+The suffix `-v1` is semantic asset lineage, not app versioning. Change `label` for display naming. Rename ids only when intentionally changing the semantic identity or accepting that older configs/presets may fall back to defaults unless aliases are added.
+
 ---
 
 ## 3.1 Reference Maps

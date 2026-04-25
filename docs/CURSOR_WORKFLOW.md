@@ -9,11 +9,14 @@ When working on scene/map features, preserve these rules:
 
 - `SceneConfig` is authoritative for scene base map, projection id, view mode, and ordered layer stack.
 - Persist base-map family ids, not concrete raster file paths.
-- Month-aware base-map families are declared explicitly in the base-map registry; do not infer runtime behavior from filenames alone.
+- Base-map inventory is declared in the bundled JSON catalog (`src/assets/maps/base-map-catalog.json`); do not add families by TypeScript source edits or runtime folder scanning.
+- Month-aware base-map families are declared explicitly in the catalog; do not infer runtime behavior from filenames alone.
 - Product time drives month-aware base-map resolution.
 - Base-map image-load failure may be reported by the backend, but fallback policy belongs in base-map asset resolution.
 - Do not move map-selection, month-resolution, or product semantics into render backend execution.
 - Scene composition remains deterministic and upstream of rendering.
+- Use `npm run maps:prep -- --update-catalog` for curated base-map onboarding when adding prepared source TIFF sets.
+- Treat catalog `id` values as durable semantic identifiers. Change labels/categories freely during curation, but rename ids only when intentionally breaking old persisted references or when the semantic family lineage changes.
 
 Current safe Cursor work should continue to prefer narrow, phase-scoped improvements with explicit success criteria and tests.
 

@@ -11,12 +11,24 @@ Current implemented scene/map capabilities include:
 - Scene-driven composition via a deterministic stack plan: base map foundational, overlays ordered by `SceneLayerInstance.order`, with equal-order ties preserving document array order.
 - Source-driven overlay construction for both static raster overlays and derived astronomical overlays, including the solar analemma ground-track product.
 - Generalized scene-layer participation based on layer semantics and supported source/product eligibility rather than a strict row-id allowlist.
-- Multi-base-map support through a curated equirectangular base-map registry and selector-facing metadata.
-- Real sourced map assets for topography and political base maps.
+- Multi-base-map support through a bundled file-backed catalog: `src/assets/maps/base-map-catalog.json`. TypeScript validates and resolves the catalog, but the growing family inventory is data, not hardcoded source definitions.
+- `npm run maps:prep` is the formal onboarding tool for curated base-map families. It converts source TIFF sets into runtime assets, creates previews, and can update the catalog without TypeScript source edits.
+- Real sourced map assets for topography, political, and Blue Marble / natural-color base maps.
 - Optional month-aware base-map families (`variantMode: "monthOfYear"`) that resolve a concrete raster from product time while preserving `scene.baseMap.id` as the only persisted selection key.
 - Runtime image-load failure recovery for base-map rasters: failed concrete URLs are excluded from subsequent resolution so month-aware families can roll backward to the next valid asset instead of leaving the scene blank.
 
 This preserves the render-plan contract: backend execution may report raster load failure, but base-map fallback policy remains upstream in base-map asset resolution.
+
+### Base map catalog boundary
+
+Available base-map families are now inventory data, not per-family TypeScript source definitions.
+
+- The catalog file (`src/assets/maps/base-map-catalog.json`) owns family ids, labels, categories, attribution, preview paths, asset paths, variant mode, onboarded months, default presentation, capabilities, and recommended roles.
+- TypeScript owns validation, alias handling, fallback semantics, month-aware resolution, presentation merging, and public resolver APIs.
+- SceneConfig owns the selected family id and user/preset overrides.
+- `maps:prep --update-catalog` is the preferred onboarding path for new source-map directories.
+
+This keeps onboarding repeatable while preserving deterministic runtime behavior: the app imports a bundled catalog and never scans `public/maps` at runtime.
 
 ---
 

@@ -13,16 +13,19 @@ Completed in the recent scene/map workstream:
 - Derived overlay support, including solar analemma ground-track.
 - Scene-authoritative runtime rebuild behavior for scene-only edits.
 - Generalized semantic overlay participation.
-- Multi-base-map registry and selector/editor integration.
-- Real topography and political map onboarding.
-- Month-aware base-map family support for `equirect-world-topography-v1`.
+- File-backed multi-base-map catalog and selector/editor integration.
+- Formal `maps:prep` onboarding tooling for static and month-aware base-map families, including optional catalog update.
+- Real topography, political, and Blue Marble / natural-color map onboarding.
+- Month-aware base-map family support for topography and additional Blue Marble-style families.
 - Product-time-driven month resolution with backward calendar lookback and runtime image-load failure fallback.
 
 Current recommended next direction:
 
-1. Continue validating the real base-map catalog in normal use.
-2. Consider adding subtle selector copy for seasonal/month-aware families.
-3. Decide whether to onboard another month-aware Blue Marble family or move next to either geology sourcing or future day/night/emissive composition planning.
+1. Normalize curated map ids, labels, categories, and catalog metadata while the catalog is still young.
+2. Use `maps:prep --update-catalog` for additional Blue Marble-style families rather than editing TypeScript source.
+3. Continue validating the real base-map catalog in normal use.
+4. Consider adding subtle selector copy for seasonal/month-aware families.
+5. Decide whether to onboard geology next or move toward day/night/emissive composition planning.
 
 Dynamic feed/lifecycle work remains intentionally deferred until the static and temporal base-map system is stable in product use.
 
