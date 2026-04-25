@@ -19,6 +19,7 @@ import { createTimeContext } from "./core/time";
 import { getActiveAppConfig } from "./config/displayPresets";
 import {
   appConfigToV2,
+  normalizeLibrationConfig,
   v2ToAppConfig,
 } from "./config/v2/librationConfig";
 import { resolveStartupWorkingV2 } from "./config/v2/workingV2Persistence";
@@ -62,7 +63,12 @@ function assertNoV2ImportInSource(source: string, label: string): void {
 
 describe("LibrationConfig v2 Phase 2 (shell ownership)", () => {
   it("startup equivalence: derived AppConfig matches getActiveAppConfig()", () => {
-    expect(shellStartupDerivedAppConfig()).toEqual(getActiveAppConfig());
+    const derived = shellStartupDerivedAppConfig();
+    const active = getActiveAppConfig();
+    expect(appConfigToV2(derived)).toEqual(appConfigToV2(active));
+    expect(derived.scene.baseMap.presentationByMapId?.[derived.scene.baseMap.id]).toEqual(
+      normalizeLibrationConfig(appConfigToV2(derived)).scene?.baseMap.presentation,
+    );
   });
 
   it("registry equivalence: derived config yields same layer ids as active preset", () => {

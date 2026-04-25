@@ -1039,6 +1039,31 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.baseMap.presentation");
   }
+  const baseMapPresById = (sc as SceneConfig).baseMap.presentationByMapId;
+  if (baseMapPresById !== undefined) {
+    if (typeof baseMapPresById !== "object" || baseMapPresById === null || Array.isArray(baseMapPresById)) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid scene.baseMap.presentationByMapId");
+    }
+    for (const [mapId, presentation] of Object.entries(baseMapPresById as Record<string, unknown>)) {
+      if (typeof mapId !== "string" || mapId.trim() === "") {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.baseMap.presentationByMapId key");
+      }
+      if (
+        typeof presentation !== "object" ||
+        presentation === null ||
+        typeof (presentation as { brightness?: unknown }).brightness !== "number" ||
+        !Number.isFinite((presentation as { brightness: number }).brightness) ||
+        typeof (presentation as { contrast?: unknown }).contrast !== "number" ||
+        !Number.isFinite((presentation as { contrast: number }).contrast) ||
+        typeof (presentation as { gamma?: unknown }).gamma !== "number" ||
+        !Number.isFinite((presentation as { gamma: number }).gamma) ||
+        typeof (presentation as { saturation?: unknown }).saturation !== "number" ||
+        !Number.isFinite((presentation as { saturation: number }).saturation)
+      ) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.baseMap.presentationByMapId entry");
+      }
+    }
+  }
 }
 
 /** Default v2 snapshot aligned with {@link DEFAULT_APP_CONFIG} (derived, not a divergent literal). */

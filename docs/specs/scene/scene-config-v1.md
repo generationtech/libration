@@ -21,10 +21,11 @@ Current base-map persistence includes:
 scene.baseMap.id
 scene.baseMap.visible
 scene.baseMap.opacity
-scene.baseMap.presentation? // optional in saved JSON; normalized to defaults at load
+scene.baseMap.presentationByMapId?: Record<string, BaseMapPresentation> // authoritative per-family map
+scene.baseMap.presentation? // legacy fallback for migration/compatibility
 ```
 
-`presentation` holds **visual-only** display tuning for the selected base-map family (brightness, contrast, gamma, saturation). It applies to the family as a whole, including every monthly raster in a `monthOfYear` family, and does not change map assets, projection, or the map asset contract. Brightness, contrast, and saturation are realized as a CSS `filter` on the base-map blit; gamma uses a per-RGB power curve in the canvas image pass when γ ≠ 1 (α preserved), not a CSS filter.
+Display tuning (brightness, contrast, gamma, saturation) is persisted per **base-map family id** in `presentationByMapId` and restored when that id is selected. Month-aware families share one family-level setting across `01..12` and `base.jpg`; concrete month URLs are never persisted. `scene.baseMap.presentation` is retained only as a legacy fallback and is mirrored into `presentationByMapId[scene.baseMap.id]` during normalization.
 
 No month-specific file path is persisted in SceneConfig. The catalog provides available map families and product defaults; SceneConfig remains the authority for the selected family id and user/preset overrides.
 

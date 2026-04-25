@@ -16,8 +16,11 @@ import { getEquirectBaseMapCatalogEntry } from "./baseMapAssetResolve";
 import {
   DEFAULT_BASE_MAP_PRESENTATION,
   baseMapPresentationToCssFilterString,
+  getBaseMapPresentationForMapId,
   normalizeBaseMapPresentation,
+  normalizeBaseMapPresentationByMapId,
   resolveEffectiveBaseMapPresentation,
+  setBaseMapPresentationForMapId,
 } from "./baseMapPresentation";
 
 describe("baseMapPresentation", () => {
@@ -55,6 +58,43 @@ describe("baseMapPresentation", () => {
     const b = resolveEffectiveBaseMapPresentation(entry, { opacity: 0.5, presentation: { contrast: 1.5 } });
     expect(b.opacity).toBe(0.5);
     expect(b.contrast).toBe(1.5);
+  });
+
+  it("normalizes presentationByMapId records and drops invalid entries", () => {
+    const normalized = normalizeBaseMapPresentationByMapId({
+      "": { brightness: 1.4 },
+      "  ": { contrast: 0.3 },
+      "equirect-world-topography-v1": { brightness: 10, contrast: 0, gamma: 99, saturation: -1 },
+    });
+    expect(Object.keys(normalized)).toEqual(["equirect-world-topography-v1"]);
+    expect(normalized["equirect-world-topography-v1"]).toEqual({
+      brightness: 2,
+      contrast: 0.5,
+      gamma: 2.5,
+      saturation: 0,
+    });
+  });
+
+  it("migrates legacy presentation to active map id when no map-specific value exists", () => {
+    const migrated = setBaseMapPresentationForMapId(
+      {},
+      "equirect-world-topography-v1",
+      getBaseMapPresentationForMapId("equirect-world-topography-v1", {}, { gamma: 1.2 }),
+    );
+    expect(migrated["equirect-world-topography-v1"]?.gamma).toBe(1.2);
+  });
+
+  it("resolveEffectiveBaseMapPresentation prefers presentationByMapId over legacy presentation", () => {
+    const entry = getEquirectBaseMapCatalogEntry("equirect-world-topography-v1");
+    const effective = resolveEffectiveBaseMapPresentation(entry, {
+      id: "equirect-world-topography-v1",
+      presentation: { gamma: 1.6 },
+      presentationByMapId: {
+        "equirect-world-topography-v1": { brightness: 1.1, contrast: 1.2, gamma: 1.3, saturation: 1.4 },
+      },
+    });
+    expect(effective.gamma).toBe(1.3);
+    expect(effective.brightness).toBe(1.1);
   });
 
   it("emits filter parts for non-default brightness, contrast, and saturation", () => {

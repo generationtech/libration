@@ -19,7 +19,8 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
   deriveLayerEnableFlagsFromScene,
-  normalizeBaseMapPresentation,
+  getBaseMapPresentationForMapId,
+  setBaseMapPresentationForMapId,
 } from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -58,6 +59,11 @@ export type LayersTabProps = {
 export function LayersTab({ config, updateConfig }: LayersTabProps) {
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
+  const effectivePresentation = getBaseMapPresentationForMapId(
+    scene.baseMap.id,
+    scene.baseMap.presentationByMapId,
+    scene.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
+  );
   return (
     <div className="config-tab-stack">
       <section
@@ -73,7 +79,7 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
         </p>
         <BaseMapStyleControl
           baseMapId={scene.baseMap.id}
-          presentation={scene.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION }}
+          presentation={effectivePresentation}
           mutable={mutable}
           onSelectId={
             mutable && updateConfig
@@ -81,9 +87,32 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                   const id = canonicalEquirectBaseMapIdForPersistence(canonicalId);
                   updateConfig((draft) => {
                     const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                    const currentEffective = getBaseMapPresentationForMapId(
+                      baseScene.baseMap.id,
+                      baseScene.baseMap.presentationByMapId,
+                      baseScene.baseMap.presentation,
+                    );
+                    const nextByMapId = setBaseMapPresentationForMapId(
+                      baseScene.baseMap.presentationByMapId,
+                      id,
+                      getBaseMapPresentationForMapId(
+                        id,
+                        baseScene.baseMap.presentationByMapId,
+                        currentEffective,
+                      ),
+                    );
                     draft.scene = {
                       ...baseScene,
-                      baseMap: { ...baseScene.baseMap, id },
+                      baseMap: {
+                        ...baseScene.baseMap,
+                        id,
+                        presentationByMapId: nextByMapId,
+                        presentation: getBaseMapPresentationForMapId(
+                          id,
+                          nextByMapId,
+                          baseScene.baseMap.presentation,
+                        ),
+                      },
                     };
                     draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
                   });
@@ -93,12 +122,24 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
           onPresentationChange={
             mutable && updateConfig
               ? (next) => {
-                  const normalized = normalizeBaseMapPresentation(next);
                   updateConfig((draft) => {
                     const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                    const nextByMapId = setBaseMapPresentationForMapId(
+                      baseScene.baseMap.presentationByMapId,
+                      baseScene.baseMap.id,
+                      next,
+                    );
                     draft.scene = {
                       ...baseScene,
-                      baseMap: { ...baseScene.baseMap, presentation: normalized },
+                      baseMap: {
+                        ...baseScene.baseMap,
+                        presentationByMapId: nextByMapId,
+                        presentation: getBaseMapPresentationForMapId(
+                          baseScene.baseMap.id,
+                          nextByMapId,
+                          baseScene.baseMap.presentation,
+                        ),
+                      },
                     };
                     draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
                   });

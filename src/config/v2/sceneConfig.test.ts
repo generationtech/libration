@@ -226,6 +226,36 @@ describe("SceneConfig (Phase 1)", () => {
     expect(scene.baseMap.presentation?.contrast).toBe(2);
     expect(scene.baseMap.presentation?.gamma).toBe(0.5);
     expect(scene.baseMap.presentation?.saturation).toBe(2);
+    expect(scene.baseMap.presentationByMapId?.[DEFAULT_EQUIRECT_BASE_MAP_ID]).toEqual({
+      brightness: 0.5,
+      contrast: 2,
+      gamma: 0.5,
+      saturation: 2,
+    });
+  });
+
+  it("migrates legacy baseMap.presentation into presentationByMapId for the active id", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        baseMap: {
+          id: "equirect-world-topography-v1",
+          visible: true,
+          presentation: { brightness: 1.3, contrast: 1, gamma: 1.1, saturation: 0.9 },
+        },
+        layers: [],
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.baseMap.presentationByMapId?.["equirect-world-topography-v1"]).toEqual({
+      brightness: 1.3,
+      contrast: 1,
+      gamma: 1.1,
+      saturation: 0.9,
+    });
+    expect(scene.baseMap.presentation?.gamma).toBe(1.1);
   });
 
   it("month-aware family id is persisted; presentation is under baseMap only (no URL fields on baseMap)", () => {
@@ -247,6 +277,7 @@ describe("SceneConfig (Phase 1)", () => {
     });
     expect(v2.scene?.baseMap.id).toBe("equirect-world-topography-v1");
     expect(v2.scene?.baseMap.presentation?.gamma).toBe(1.1);
+    expect(v2.scene?.baseMap.presentationByMapId?.["equirect-world-topography-v1"]?.gamma).toBe(1.1);
     expect(v2.scene?.baseMap).not.toHaveProperty("src");
   });
 

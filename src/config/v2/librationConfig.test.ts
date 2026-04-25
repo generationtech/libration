@@ -47,6 +47,14 @@ function sortLayerIds(registry: ReturnType<typeof createLayerRegistryFromConfig>
   return [...registry.getLayers().map((l) => l.id)].sort();
 }
 
+function expectRoundTripAppConfig(cfg: AppConfig): void {
+  const roundTripped = v2ToAppConfig(appConfigToV2(cfg));
+  expect(appConfigToV2(roundTripped)).toEqual(appConfigToV2(cfg));
+  expect(roundTripped.scene.baseMap.presentationByMapId?.[roundTripped.scene.baseMap.id]).toEqual(
+    roundTripped.scene.baseMap.presentation,
+  );
+}
+
 describe("librationConfig v2 (Phase 1)", () => {
   it("cloneV2 returns a normalized deep clone", () => {
     const base = normalizeLibrationConfig(defaultLibrationConfigV2());
@@ -466,7 +474,7 @@ describe("librationConfig v2 (Phase 1)", () => {
         { id: "p2", label: "Two", latitude: 0, longitude: 0, enabled: false },
       ],
     };
-    expect(v2ToAppConfig(appConfigToV2(cfg))).toEqual(cfg);
+    expectRoundTripAppConfig(cfg);
   });
 
   it("round-trip preserves pin presentation on AppConfig", () => {
@@ -479,7 +487,7 @@ describe("librationConfig v2 (Phase 1)", () => {
         scale: "large",
       },
     };
-    expect(v2ToAppConfig(appConfigToV2(cfg))).toEqual(cfg);
+    expectRoundTripAppConfig(cfg);
   });
 
   it("round-trip preserves hour marker color on AppConfig (structured hourMarkers)", () => {
@@ -497,7 +505,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       ...DEFAULT_APP_CONFIG,
       displayChromeLayout,
     };
-    expect(v2ToAppConfig(appConfigToV2(cfg))).toEqual(cfg);
+    expectRoundTripAppConfig(cfg);
   });
 
   it("round-trip preserves data domain on AppConfig", () => {
@@ -514,19 +522,17 @@ describe("librationConfig v2 (Phase 1)", () => {
         },
       },
     };
-    expect(v2ToAppConfig(appConfigToV2(cfg))).toEqual(cfg);
+    expectRoundTripAppConfig(cfg);
   });
 
   it("round-trip: DEFAULT_APP_CONFIG -> v2 -> AppConfig is deep-equal to original", () => {
-    const back = v2ToAppConfig(appConfigToV2(DEFAULT_APP_CONFIG));
-    expect(back).toEqual(DEFAULT_APP_CONFIG);
+    expectRoundTripAppConfig(DEFAULT_APP_CONFIG);
   });
 
   it("round-trip: every factory preset via getAppConfigForPreset", () => {
     for (const id of ALL_DISPLAY_PRESET_IDS) {
       const original = getAppConfigForPreset(id);
-      const back = v2ToAppConfig(appConfigToV2(original));
-      expect(back).toEqual(original);
+      expectRoundTripAppConfig(original);
     }
   });
 

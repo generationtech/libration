@@ -29,6 +29,8 @@ export type BaseMapPresentationConfig = {
   saturation: number;
 };
 
+export type BaseMapPresentationByMapId = Record<string, BaseMapPresentationConfig>;
+
 export const DEFAULT_BASE_MAP_PRESENTATION: BaseMapPresentationConfig = {
   brightness: 1,
   contrast: 1,
@@ -49,6 +51,14 @@ const O_MAX = 1;
 
 function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
+}
+
+function normalizedMapIdOrNull(raw: unknown): string | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+  const id = raw.trim();
+  return id === "" ? null : id;
 }
 
 function clamp(p: number, lo: number, hi: number): number {
@@ -105,6 +115,62 @@ export function normalizeBaseMapPresentation(input: unknown): BaseMapPresentatio
   };
 }
 
+/**
+ * Normalizes persisted per-family presentation map.
+ * Invalid keys are dropped; each entry is clamped via {@link normalizeBaseMapPresentation}.
+ */
+export function normalizeBaseMapPresentationByMapId(input: unknown): BaseMapPresentationByMapId {
+  if (!isPlainObject(input)) {
+    return {};
+  }
+  const out: BaseMapPresentationByMapId = {};
+  for (const [rawId, rawPresentation] of Object.entries(input)) {
+    const id = normalizedMapIdOrNull(rawId);
+    if (id === null) {
+      continue;
+    }
+    out[id] = normalizeBaseMapPresentation(rawPresentation);
+  }
+  return out;
+}
+
+/**
+ * Returns normalized presentation for a base-map family id, preferring `presentationByMapId`.
+ * Falls back to legacy `scene.baseMap.presentation`, then defaults.
+ */
+export function getBaseMapPresentationForMapId(
+  mapId: string,
+  presentationByMapId: unknown,
+  legacyPresentation?: unknown,
+): BaseMapPresentationConfig {
+  const id = normalizedMapIdOrNull(mapId);
+  const byMapId = normalizeBaseMapPresentationByMapId(presentationByMapId);
+  if (id !== null && Object.prototype.hasOwnProperty.call(byMapId, id)) {
+    return byMapId[id]!;
+  }
+  if (legacyPresentation !== undefined) {
+    return normalizeBaseMapPresentation(legacyPresentation);
+  }
+  return { ...DEFAULT_BASE_MAP_PRESENTATION };
+}
+
+/**
+ * Returns a normalized map-id presentation record with the given family id updated.
+ */
+export function setBaseMapPresentationForMapId(
+  presentationByMapId: unknown,
+  mapId: string,
+  presentation: unknown,
+): BaseMapPresentationByMapId {
+  const next = normalizeBaseMapPresentationByMapId(presentationByMapId);
+  const id = normalizedMapIdOrNull(mapId);
+  if (id === null) {
+    return next;
+  }
+  next[id] = normalizeBaseMapPresentation(presentation);
+  return next;
+}
+
 export function baseMapPresentationEqual(
   a: BaseMapPresentationConfig,
   b: BaseMapPresentationConfig,
@@ -129,7 +195,12 @@ export function baseMapPresentationEqual(
  */
 export function resolveEffectiveBaseMapPresentation(
   catalogEntry: BaseMapCatalogEntry | null | undefined,
-  sceneBaseMap: { opacity?: number; presentation?: BaseMapPresentationConfig | unknown },
+  sceneBaseMap: {
+    id?: string;
+    opacity?: number;
+    presentation?: BaseMapPresentationConfig | unknown;
+    presentationByMapId?: BaseMapPresentationByMapId | unknown;
+  },
 ): { opacity: number } & BaseMapPresentationConfig {
   const d = catalogEntry?.defaultPresentation;
   const catalogSeed = {
@@ -139,7 +210,11 @@ export function resolveEffectiveBaseMapPresentation(
     gamma: d?.gamma ?? DEFAULT_BASE_MAP_PRESENTATION.gamma,
     saturation: d?.saturation ?? DEFAULT_BASE_MAP_PRESENTATION.saturation,
   };
-  const pRaw = sceneBaseMap.presentation;
+  const pRaw = getBaseMapPresentationForMapId(
+    sceneBaseMap.id ?? "",
+    sceneBaseMap.presentationByMapId,
+    sceneBaseMap.presentation,
+  );
   const scenePart = isPlainObject(pRaw)
     ? (Object.fromEntries(
         Object.entries(pRaw).filter(([, v]) => v !== undefined),

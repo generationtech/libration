@@ -254,6 +254,32 @@ describe("createLayerRegistryFromConfig", () => {
     expect(data?.src).toBe("/maps/world-equirectangular-geology.jpg");
   });
 
+  it("uses selected map-family effective presentation in base map layer payload", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "equirect-world-topography-v1",
+        presentation: { brightness: 1.9, contrast: 1.9, gamma: 1.9, saturation: 1.9 },
+        presentationByMapId: {
+          "equirect-world-topography-v1": { brightness: 1.1, contrast: 1.2, gamma: 1.3, saturation: 1.4 },
+        },
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const state = layer?.getState(createTimeContext(Date.now(), 0, false));
+    const data = state?.data as { kind: string; src: string; presentation?: { gamma: number; brightness: number } } | undefined;
+    expect(data?.presentation?.gamma).toBe(1.3);
+    expect(data?.presentation?.brightness).toBe(1.1);
+  });
+
   it("resolves month-aware topography from the effective product instant on the layer clock", () => {
     const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
     const scene = {

@@ -31,8 +31,12 @@ import {
 import type { BaseMapOption, BaseMapResolveContext } from "../baseMapAssetResolve";
 import {
   type BaseMapPresentationConfig,
+  type BaseMapPresentationByMapId,
   DEFAULT_BASE_MAP_PRESENTATION,
+  getBaseMapPresentationForMapId,
   normalizeBaseMapPresentation,
+  normalizeBaseMapPresentationByMapId,
+  setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
 
 export type { BaseMapOption, BaseMapResolveContext };
@@ -49,13 +53,17 @@ export {
 };
 export { sortSceneLayersForRender, zIndexForSceneStackIndex } from "../sceneLayerOrder";
 export {
+  type BaseMapPresentationByMapId,
   type BaseMapPresentationConfig,
   DEFAULT_BASE_MAP_PRESENTATION,
   baseMapPresentationEqual,
   baseMapPresentationToCssFilterString,
   clampBaseMapOpacity,
+  getBaseMapPresentationForMapId,
   normalizeBaseMapPresentation,
+  normalizeBaseMapPresentationByMapId,
   resolveEffectiveBaseMapPresentation,
+  setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
 export {
   planSceneStackComposition,
@@ -83,6 +91,11 @@ export type BaseMapConfig = {
    * Omitted in partial input; always clamped in {@link normalizeSceneConfig}.
    */
   presentation?: BaseMapPresentationConfig;
+  /**
+   * Authoritative per-base-map-family visual tuning keyed by `baseMap.id`.
+   * Month-aware families share one entry for the family id.
+   */
+  presentationByMapId?: BaseMapPresentationByMapId;
   styleVariant?: string;
   metadata?: Record<string, unknown>;
 };
@@ -347,6 +360,14 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
       presentation: scene.baseMap.presentation
         ? { ...scene.baseMap.presentation }
         : { ...DEFAULT_BASE_MAP_PRESENTATION },
+      presentationByMapId: scene.baseMap.presentationByMapId
+        ? Object.fromEntries(
+            Object.entries(scene.baseMap.presentationByMapId).map(([id, presentation]) => [
+              id,
+              { ...presentation },
+            ]),
+          )
+        : undefined,
     },
     layers: scene.layers.map((L) => ({
       ...L,
@@ -379,10 +400,24 @@ function normalizeBaseMap(input: unknown, fallbacks: LayerEnableFlags): BaseMapC
   const presentation = normalizeBaseMapPresentation(
     isPlainObject(input) ? input.presentation : undefined,
   );
+  const presentationByMapIdFromInput = normalizeBaseMapPresentationByMapId(
+    isPlainObject(input) ? input.presentationByMapId : undefined,
+  );
+  const effectivePresentation = getBaseMapPresentationForMapId(
+    id,
+    presentationByMapIdFromInput,
+    presentation,
+  );
+  const presentationByMapId = setBaseMapPresentationForMapId(
+    presentationByMapIdFromInput,
+    id,
+    effectivePresentation,
+  );
   return {
     id,
     visible: vis,
-    presentation,
+    presentation: effectivePresentation,
+    presentationByMapId,
     ...(opacity !== undefined ? { opacity } : { opacity: 1 }),
     ...(styleVariant !== undefined ? { styleVariant } : {}),
   };

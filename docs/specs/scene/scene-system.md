@@ -18,7 +18,7 @@ Current capabilities include:
 - Scene-authoritative runtime rebuild behavior for scene-only changes.
 - Month-aware base-map families resolved from product time through the catalog-backed resolver.
 - Runtime base-map image-load failure fallback without moving map policy into the backend.
-- Optional per-family **base map presentation** (`scene.baseMap.presentation`): user-tunable brightness, contrast, gamma, and saturation — visual-only, not persisted per month file. The canvas backend applies B/C/S via `filter` and applies γ in a full-resolution pixel pass when γ ≠ 1.
+- Per-family **base map presentation** (`scene.baseMap.presentationByMapId[scene.baseMap.id]`): user-tunable brightness, contrast, gamma, and saturation, persisted by top-level family id and restored on selection. Month-aware families share one setting across all month rasters; concrete month URLs are never persisted. `scene.baseMap.presentation` is legacy fallback only. The canvas backend applies B/C/S via `filter` and applies γ in a full-resolution pixel pass when γ ≠ 1.
 
 These additions preserve the current projection and scene-view assumptions: equirectangular, full-world fixed view.
 

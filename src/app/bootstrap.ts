@@ -13,7 +13,7 @@
 
 import type { AppConfig } from "../config/appConfig";
 import { getActiveAppConfig } from "../config/displayPresets";
-import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
+import { getBaseMapPresentationForMapId } from "../config/baseMapPresentation";
 import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createBaseMapLayer } from "../layers/baseMapLayer";
 import { createLayerForSceneOverlayInstance } from "../layers/sceneOverlayLayerFactory";
@@ -32,12 +32,17 @@ export function createLayerRegistryFromConfig(
   const registry = new LayerRegistry();
   const { baseMap: basePart, overlays } = planSceneStackComposition(config.scene);
   if (basePart) {
+    const effectiveBaseMapPresentation = getBaseMapPresentationForMapId(
+      config.scene.baseMap.id,
+      config.scene.baseMap.presentationByMapId,
+      config.scene.baseMap.presentation,
+    );
     registry.register(
       createBaseMapLayer({
         sceneBaseMapId: config.scene.baseMap.id,
         opacity: basePart.opacity,
         zIndex: basePart.zIndex,
-        presentation: config.scene.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
+        presentation: effectiveBaseMapPresentation,
       }),
     );
   }
