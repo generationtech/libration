@@ -142,9 +142,16 @@ Delivered:
 - generalized semantic participation for supported rows.
 - derived layer source model.
 - solar analemma ground-track overlay.
+- subsolar marker.
+- sublunar marker.
+- solar shading / dark-side visualization.
+- astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
+- twilight bands and atmospheric transition rendering.
+- emissive/night-light composition.
+- active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
 - overlay editor refinement.
 - opacity and ordering UX.
@@ -183,7 +190,7 @@ Candidate deliverables:
 - seasonal natural-color refinements.
 - map selector attribution and explanatory copy.
 
-## Phase 9: Advanced composition
+## Phase 9: Atmospheric composition and planetary illumination
 
 Status: planned.
 
@@ -192,9 +199,10 @@ Candidate deliverables:
 - blending modes.
 - masking.
 - clipping.
-- day/night composition.
+- composition-aware day/night illumination.
 - twilight bands.
 - emissive/night-light blend.
+- atmospheric glow and transition tuning.
 - overlay-compatible visual tuning.
 
 ## Phase 10: Dynamic data lifecycle

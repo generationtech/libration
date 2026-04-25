@@ -27,6 +27,18 @@ The current map configuration UI already includes:
 
 Future map and scene UX work should extend these foundations rather than replacing them.
 
+## Implemented astronomical and illumination foundations
+
+The current scene system already includes:
+
+- solar shading / dark-side visualization.
+- subsolar marker.
+- sublunar marker.
+- solar analemma overlay.
+- semantic astronomical scene participation through the layer system.
+
+Future work should extend these systems into a more coherent atmospheric and composition-aware rendering model.
+
 ## Maps and base-map families
 
 ### Candidate curated map families
@@ -89,8 +101,9 @@ Future map and scene UX work should extend these foundations rather than replaci
 
 ### Derived overlays
 
-- current solar terminator.
+- solar shading / dark-side visualization.
 - twilight bands.
+- civil / nautical / astronomical twilight visualization.
 - solar subpoint.
 - lunar subpoint.
 - moon phase and ground track.
@@ -137,10 +150,12 @@ Candidates:
 - alpha masks.
 - geometric clipping.
 - viewport clipping.
-- day/night base-map blending.
+- composition-aware day/night illumination.
 - emissive night-lights composition.
+- atmospheric glow transitions.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay readability tuning.
+- active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.
 

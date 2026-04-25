@@ -15,6 +15,8 @@ The major runtime foundations are implemented well enough to support disciplined
 - map onboarding tooling.
 - static and month-aware base-map families.
 - static and derived overlays.
+- astronomical scene overlays and markers.
+- solar shading / dark-side visualization.
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
@@ -27,7 +29,7 @@ The current strategic objective is to expand the product without destabilizing t
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Prepare the project for more advanced scene, composition, and lifecycle work.
+6. Prepare the project for more advanced atmospheric composition, planetary illumination, and lifecycle work.
 
 ## Near-term execution slices
 
@@ -48,24 +50,34 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-### Slice 2: Advanced composition planning and first day/night foundation
+### Slice 2: Atmospheric composition refinement and planetary illumination
 
 Status: planned.
 
+Current implemented foundation:
+
+- solar shading / dark-side visualization.
+- subsolar marker.
+- sublunar marker.
+- solar analemma overlay.
+- derived astronomical scene overlays.
+
 Candidate work:
 
-- solar terminator overlay.
 - twilight bands.
-- day/night composition strategy.
+- atmospheric transition rendering.
+- composition-aware day/night illumination.
 - emissive night-light blending strategy.
 - masking and clipping rules.
 - blend modes.
 - overlay readability strategy.
+- active solar-position synchronization along analemma trajectories.
 
 Exit criteria:
 
 - composition rules are clearly defined before broad implementation.
-- first day/night visual behavior can be implemented without backend product semantics.
+- atmospheric transitions feel coherent rather than binary.
+- astronomical overlays participate correctly in scene composition.
 - backend remains product-semantics-free.
 
 ### Slice 3: Scientific substrate expansion
