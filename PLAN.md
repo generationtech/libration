@@ -11,6 +11,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - top-band hour-marker semantic path.
 - SceneConfig authority.
 - curated base-map catalog.
+- categorized map selector and base-map presentation UI.
 - map onboarding tooling.
 - static and month-aware base-map families.
 - static and derived overlays.
@@ -47,22 +48,25 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-### Slice 2: Map inventory and selector polish
+### Slice 2: Advanced composition planning and first day/night foundation
 
 Status: planned.
 
 Candidate work:
 
-- normalize family ids, labels, and categories while catalog is still young.
-- improve selector copy for month-aware map families.
-- strengthen attribution presentation.
-- finalize placeholder versus validated family states.
-- validate all preview thumbnails and metadata.
+- solar terminator overlay.
+- twilight bands.
+- day/night composition strategy.
+- emissive night-light blending strategy.
+- masking and clipping rules.
+- blend modes.
+- overlay readability strategy.
 
 Exit criteria:
 
-- map inventory feels curated and intentional.
-- catalog semantics are stable enough for long-term persistence.
+- composition rules are clearly defined before broad implementation.
+- first day/night visual behavior can be implemented without backend product semantics.
+- backend remains product-semantics-free.
 
 ### Slice 3: Scientific substrate expansion
 
@@ -79,22 +83,24 @@ Exit criteria:
 
 - at least one additional scientifically grounded substrate family is validated and integrated cleanly.
 
-### Slice 4: Advanced composition planning
+### Slice 4: Map inventory and selector polish
 
 Status: planned.
 
 Candidate work:
 
-- day/night composition.
-- emissive night-light blending.
-- masking and clipping rules.
-- blend modes.
-- overlay readability strategy.
+- normalize family ids, labels, and categories while catalog is still young.
+- improve selector copy for month-aware map families.
+- strengthen attribution presentation.
+- consider active displayed-month indication for seasonal families.
+- finalize placeholder versus validated family states.
+- validate all preview thumbnails and metadata.
 
 Exit criteria:
 
-- composition rules are clearly defined before broad implementation.
-- backend remains product-semantics-free.
+- map inventory feels curated and intentional.
+- catalog semantics are stable enough for long-term persistence.
+- existing categorized selector and presentation controls scale cleanly as more families are added.
 
 ### Slice 5: Dynamic layer lifecycle foundation
 

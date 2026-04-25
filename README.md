@@ -37,8 +37,11 @@ Current implemented areas include:
 - Canvas backend execution through bridge modules.
 - SceneConfig-driven map scene.
 - File-backed curated base-map catalog.
+- Categorized base-map selector UI with grouped substrate families.
 - Static and month-aware base-map families.
-- Per-family base-map presentation controls.
+- Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
+- Shared family-level presentation persistence across seasonal/month-aware raster variants.
+- Map preview and attribution display for selected base-map families.
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
 - Runtime base-map image load failure fallback.

@@ -14,6 +14,19 @@ It is not a commitment to implement everything. It is a retention and planning d
 - Rejected: intentionally not desired.
 - Implemented: available in the product.
 
+## Implemented map UI foundations
+
+The current map configuration UI already includes:
+
+- categorized base-map selector groups.
+- curated substrate taxonomy.
+- map preview card for the selected base-map family.
+- attribution display for the selected base-map family.
+- per-family base-map presentation controls.
+- shared presentation persistence across seasonal/month-aware raster variants.
+
+Future map and scene UX work should extend these foundations rather than replacing them.
+
 ## Maps and base-map families
 
 ### Candidate curated map families
@@ -45,12 +58,13 @@ It is not a commitment to implement everything. It is a retention and planning d
 ### Map asset quality improvements
 
 - stronger source provenance in catalog.
-- selector attribution display.
+- richer attribution display.
 - preview thumbnails for all families.
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.
 - month-aware family explanation in UI.
+- active displayed-month indication for seasonal families.
 - fixed-month override for comparison or demonstration.
 - presentation presets per map role.
 
