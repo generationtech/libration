@@ -19,7 +19,8 @@ import type { RenderPlan } from "./renderPlanTypes";
 export const SOLAR_SHADING_PLAN_DOWNSAMPLE = 2;
 
 /**
- * Builds the solar illumination / night-side mask for the equirectangular scene strip.
+ * Builds the solar illumination / night-side mask for the equirectangular scene strip
+ * (day/night plus smooth civil, nautical, and astronomical twilight bands in {@link sampleIlluminationRgba8}).
  * Sampling and coverage are resolved here; the canvas executor only blits {@link rasterPatch}.
  */
 export function buildSolarShadingIlluminationRenderPlan(options: {

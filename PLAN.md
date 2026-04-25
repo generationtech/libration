@@ -64,7 +64,7 @@ Current implemented foundation:
 
 Candidate work:
 
-- twilight bands.
+- twilight bands (first slice: pure solar altitude classification + `RenderPlan` raster; done).
 - atmospheric transition rendering.
 - composition-aware day/night illumination.
 - emissive night-light blending strategy.

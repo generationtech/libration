@@ -44,6 +44,7 @@ Current implemented areas include:
 - Map preview and attribution display for selected base-map families.
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
+- Solar day/night shading with solar-altitude twilight band transitions (civil, nautical, astronomical) on the same “Solar shading” layer.
 - Runtime base-map image load failure fallback.
 
 ## Architecture in one sentence

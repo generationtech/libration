@@ -225,6 +225,7 @@ Stable enough for feature-forward work:
 - static and month-aware base maps.
 - static overlays.
 - derived solar analemma overlay.
+- solar shading with twilight band sampling in the upstream illumination raster.
 - map presentation controls.
 - map onboarding tooling.
 

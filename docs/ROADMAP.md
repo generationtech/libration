@@ -145,11 +145,12 @@ Delivered:
 - subsolar marker.
 - sublunar marker.
 - solar shading / dark-side visualization.
+- solar twilight band transitions (civil, nautical, astronomical) driven by surface solar altitude on the same shading pass.
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
-- twilight bands and atmospheric transition rendering.
+- further atmospheric transition tuning, composition-aware day/night, and emissive night-light blending.
 - emissive/night-light composition.
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
@@ -200,7 +201,7 @@ Candidate deliverables:
 - masking.
 - clipping.
 - composition-aware day/night illumination.
-- twilight bands.
+- further twilight and atmospheric transition tuning (basic bands are in the Phase 6 shading pass).
 - emissive/night-light blend.
 - atmospheric glow and transition tuning.
 - overlay-compatible visual tuning.

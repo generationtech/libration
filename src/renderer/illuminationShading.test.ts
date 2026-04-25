@@ -15,7 +15,6 @@ import { describe, expect, it } from "vitest";
 import {
   DAY_TWILIGHT_DOT,
   NIGHT_DARKEN,
-  NIGHT_RAMP_WIDTH,
   sampleIlluminationRgba8,
   smootherstep,
   smoothstep,
@@ -23,6 +22,7 @@ import {
   TWILIGHT_G,
   TWILIGHT_R,
 } from "./illuminationShading";
+import { classifyTwilightBand, solarAltitudeDegFromSurfaceSunDotProduct } from "../core/solarTwilight";
 
 describe("smootherstep", () => {
   it("matches endpoints and has zero slope at edges vs linear ramp", () => {
@@ -40,13 +40,14 @@ describe("smoothstep", () => {
   });
 });
 
-describe("sampleIlluminationRgba8", () => {
-  it("is fully transparent on the day side away from the terminator", () => {
+describe("sampleIlluminationRgba8 (twilight-aware)", () => {
+  it("is fully transparent on the high day side away from the low-sun band", () => {
     expect(sampleIlluminationRgba8(1, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
+    expect(sampleIlluminationRgba8(0.5, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
     expect(sampleIlluminationRgba8(DAY_TWILIGHT_DOT, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
   });
 
-  it("uses twilight tint on the day-side civil band", () => {
+  it("uses twilight tint on the day-side pre-horizon low-sun band", () => {
     const mid = sampleIlluminationRgba8(DAY_TWILIGHT_DOT * 0.5, 1);
     expect(mid.r).toBe(TWILIGHT_R);
     expect(mid.g).toBe(TWILIGHT_G);
@@ -55,11 +56,11 @@ describe("sampleIlluminationRgba8", () => {
     expect(mid.a).toBeLessThanOrEqual(255);
   });
 
-  it("has zero alpha exactly at the terminator from the night branch", () => {
+  it("has zero alpha exactly on the subsolar/terminator dot=0 (night branch at horizon)", () => {
     expect(sampleIlluminationRgba8(0, 1).a).toBe(0);
   });
 
-  it("ramps to full night darken deep on the night side", () => {
+  it("ramps to full night darken in deep night (arbitrary sub-horizon dot)", () => {
     const deep = sampleIlluminationRgba8(-1, 1);
     expect(deep.a).toBe(Math.round(NIGHT_DARKEN * 255));
     expect(deep.r).toBe(0);
@@ -72,9 +73,24 @@ describe("sampleIlluminationRgba8", () => {
     expect(deep.a).toBe(Math.round(NIGHT_DARKEN * 0.5 * 255));
   });
 
-  it("produces partial night alpha inside the ramp width", () => {
-    const t = sampleIlluminationRgba8(-NIGHT_RAMP_WIDTH * 0.5, 1);
+  it("produces partial night alpha in nautical twilight (classifier agrees)", () => {
+    const dot = -0.17;
+    const deg = solarAltitudeDegFromSurfaceSunDotProduct(dot);
+    expect(deg).toBeLessThan(-6);
+    expect(deg).toBeGreaterThan(-12);
+    expect(classifyTwilightBand(deg)).toBe("nauticalTwilight");
+    const t = sampleIlluminationRgba8(dot, 1);
     expect(t.a).toBeGreaterThan(0);
     expect(t.a).toBeLessThan(Math.round(NIGHT_DARKEN * 255));
+  });
+
+  it("uses distinct overlay RGB between civil and nautical for the same alpha depth", () => {
+    const civilDot = Math.sin((-4 * Math.PI) / 180);
+    const nautDot = Math.sin((-8 * Math.PI) / 180);
+    const c1 = sampleIlluminationRgba8(civilDot, 1);
+    const c2 = sampleIlluminationRgba8(nautDot, 1);
+    const sum1 = c1.r + c1.g + c1.b;
+    const sum2 = c2.r + c2.g + c2.b;
+    expect(sum1).not.toBe(sum2);
   });
 });
