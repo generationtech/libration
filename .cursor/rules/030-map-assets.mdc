@@ -1,0 +1,31 @@
+---
+description: Map catalog, map onboarding, and base-map resolver rules.
+globs: src/assets/maps/**,public/maps/**,tools/maps/**,src/config/**/*map*,src/**/*baseMap*
+alwaysApply: false
+---
+
+# Map asset rule
+
+The bundled map catalog is the source of truth for available base-map families:
+
+`src/assets/maps/base-map-catalog.json`
+
+Rules:
+
+1. Do not runtime-scan `public/maps`.
+2. Do not persist concrete raster paths in config.
+3. Persist base-map family ids.
+4. Month-aware behavior must be explicit in the catalog.
+5. Product time drives month-aware raster resolution.
+6. Missing-month fallback belongs in the resolver.
+7. Backend image failure reporting is allowed, but fallback policy belongs upstream.
+8. Ordinary curated family onboarding should use `npm run maps:prep -- --update-catalog`.
+9. All base-map rasters must satisfy the projection and map asset contract.
+10. Keep attribution and placeholder status accurate.
+
+Before adding or changing map families, read:
+
+- `docs/maps/MAP_ASSET_STRATEGY.md`
+- `docs/maps/MAP_ASSET_SOURCES.md`
+- `docs/specs/scene/map-asset-contract.md`
+- `docs/specs/scene/projection-system.md`

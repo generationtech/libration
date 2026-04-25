@@ -1,0 +1,29 @@
+---
+description: Documentation, roadmap, and future-feature preservation rules.
+globs: **/*.md,docs/**/*
+alwaysApply: false
+---
+
+# Documentation rule
+
+Docs are project memory.
+
+Use these roles:
+
+- `README.md`: public entry point.
+- `ARCHITECTURE.md`: durable architecture.
+- `PLAN.md`: current phase and next work.
+- `AGENTS.md`: compact AI agent context.
+- `docs/PROJECT_STRATEGY.md`: product strategy.
+- `docs/DEVELOPMENT_STRATEGY.md`: engineering strategy.
+- `docs/ROADMAP.md`: completed and future phases.
+- `docs/FUTURE_FEATURES.md`: retained backlog.
+- `docs/AI_COENGINEERING.md`: ChatGPT and Cursor workflow.
+- specs: contracts and invariants.
+- historical docs: completed execution criteria.
+
+When moving or renaming docs, update links.
+
+When a feature is deferred, preserve it in `docs/FUTURE_FEATURES.md` if it remains desirable.
+
+Mark historical execution docs clearly rather than letting them look like active plans.

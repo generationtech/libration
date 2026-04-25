@@ -1,464 +1,116 @@
 # Libration
 
+Libration is a local-first, renderer-agnostic world time instrument.
 
-## Current Scene and Map Capabilities
-
-Libration now includes a scene-system foundation beneath the display chrome.
-
-Current scene capabilities include:
-
-- `SceneConfig`-driven base map selection, visibility, opacity, and ordered overlays.
-- Multiple curated equirectangular base maps selected through the configuration UI.
-- A bundled file-backed base-map catalog (`src/assets/maps/base-map-catalog.json`) that defines available families, metadata, assets, variant mode, presentation defaults, capabilities, and roles.
-- A formal `maps:prep` onboarding tool for converting source TIFF sets into runtime map assets and updating the catalog.
-- Real sourced topography, political, and Blue Marble / natural-color map assets.
-- Static and derived overlays composed through the scene layer stack.
-- A solar analemma ground-track derived overlay.
-- Month-aware base-map families. Topography and Blue Marble-style families can resolve month-specific imagery from product time while persisting only the selected family id.
-- Robust base-map image fallback. If a concrete month image fails to load, the resolver skips that failed URL and falls back through the month lookback chain rather than leaving the scene blank.
-
-The current month-aware behavior is intentionally limited to base-map asset resolution. It does not change projection, scene view, layer composition, or renderer semantics.
-
----
-
-## Overview
+It is a canonical reference implementation of a longitude-first global time visualization system. The product treats the world as a continuous 360 degree spatial structure, resolves one authoritative UTC instant per frame, and presents civil time through a selected reference frame without making political time zones the structural basis of the display.
 
 ![Libration application screenshot](docs/images/libration-hero.png)
 
-Libration is a canonical reference implementation of a longitude-first world time visualization system.
+## What Libration is
 
-It uses:
-- a longitude-first map and structural 15° grid (independent of political time zones)
-- 24 fixed structural sectors (15° each)
-- one authoritative UTC instant per frame and a resolved **reference frame** (IANA civil zone + read-point meridian + civil projection)
-- top-band **display modes** (12h / 24h / UTC-style labels) as formatting only — they do not move tape geometry or the read point
-- a renderer-agnostic rendering pipeline
+Libration is a precision-rendered desktop application for visualizing world time, map context, and future global scene layers.
 
-It is a high-fidelity world time instrument built on a **render-plan architecture** and currently delivered as a local-first desktop application.
+Core product traits:
+
+- Longitude-first structural model with 24 fixed 15 degree sectors.
+- One authoritative UTC instant per frame.
+- Reference-frame presentation for user-facing civil time.
+- Screen-space display chrome separated from projection-space scene content.
+- Renderer-agnostic `RenderPlan` pipeline.
+- Curated, projection-valid map assets.
+- SceneConfig-driven base map and layer composition.
+- AGPL-3.0 user-freedom licensing.
+
+Libration is independently developed and is not affiliated with any existing commercial time-map product.
+
+## Current capabilities
+
+Current implemented areas include:
+
+- Tauri, React, TypeScript, Vite desktop app.
+- Structured `LibrationConfigV2` persistence and normalization.
+- Top-band display chrome with hour markers, tickmark tape, and NATO structural zone row.
+- Structured hour-marker configuration under `chrome.layout.hourMarkers`.
+- Text and procedural hour-marker realizations.
+- Bundled font asset registry and Canvas font realization.
+- Renderer-neutral `RenderPlan` primitives for text, rects, lines, paths, gradients, image blits, and raster patches.
+- Canvas backend execution through bridge modules.
+- SceneConfig-driven map scene.
+- File-backed curated base-map catalog.
+- Static and month-aware base-map families.
+- Per-family base-map presentation controls.
+- Static and derived scene overlays.
+- Solar analemma ground-track overlay.
+- Runtime base-map image load failure fallback.
+
+## Architecture in one sentence
+
+Libration resolves product meaning upstream through configuration, resolvers, semantic planners, layout, and realization adapters, then emits backend-neutral render plans that the backend executes mechanically.
 
 ```mermaid
 flowchart LR
-    R[Resolver] --> S[Semantic Planning]
-    S --> L[Layout]
-    L --> RP[RenderPlan]
-    RP --> E[Executor]
-    E --> B[Backend]
-
-    %% Styling
-    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef downstream fill:#1f2933,stroke:#4b5563,color:#cbd5e1;
-
-    class R,S,L upstream;
-    class RP boundary;
-    class E,B downstream;
-```
-
-Libration resolves rendering intent upstream and emits a backend-agnostic RenderPlan for execution.
-
----
-
-## Project Philosophy
-
-Libration is intended to be a canonical, publicly accessible, user-freedom-preserving reference implementation of this system.
-
-This project prioritizes the freedom of users to:
-- 🔍 Inspect the software
-- 🧠 Study how it works
-- 🛠 Modify it
-- 🔄 Share it
-- 📈 Benefit from improvements made by others
-
-To preserve those freedoms downstream, Libration is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
-
-Libration is independently developed and is not affiliated with any existing commercial product.
-
----
-
-## Current UI Direction
-
-Top band consists of:
-- Hour markers
-- Tickmark tape (hour / 15 / 5)
-- NATO timezone strip (continuous rectangular band)
-
-```mermaid
-flowchart TB
-    IE[Indicator Entries]
-    TT[Tickmark Tape]
-    NZ[NATO / structural zone row]
-
-    SCENE[Scene Viewport]
-
-    IE --> TT
-    TT --> NZ
-    NZ --> SCENE
-
-    %% Styling
-    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef scene fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef boundary fill:#00000000,stroke:#00bcd4,stroke-width:2px,color:#00bcd4;
-
-    class IE,TT,NZ chrome;
-    class SCENE scene;
-
-    %% Conceptual boundary (chrome vs scene)
-    BOUNDARY[Reserved Layout Boundary]
-    NZ -.-> BOUNDARY
-    BOUNDARY -.-> SCENE
-
-    class BOUNDARY boundary;
-```
-
-Top chrome is composed in screen space and **reserves vertical layout**.  
-The scene viewport begins strictly below the visible chrome stack.
-
-The top instrument strip uses one built-in appearance for now; future tweaks will be direct config controls, not bundled palette presets.
-
-Top chrome is now treated as real application layout:
-- the top chrome stack reserves vertical space above the map
-- the scene viewport begins below the visible top chrome
-- hiding top-band areas reclaims that space instead of leaving map content hidden underneath chrome
-
-Chrome editing is now organized by major area rather than one long mixed panel. Current major areas include:
-- 24-hour indicator entries (civil-phased at the read point in local modes)
-- 24-hour tickmarks tape (same phased band; format changes do not move ticks)
-- NATO / structural zone row (15° grid — not the reference civil clock)
-
-Each top-band area now has independent persisted visibility where applicable, including:
-- `chrome.layout.hourMarkers.indicatorEntriesAreaVisible`
-- `chrome.layout.tickTapeVisible`
-- `chrome.layout.timezoneLetterRowVisible`
-
-The 24-hour indicator entries area now also supports its own focused feature set:
-- authored background color for the indicator entries strip
-- resolver-derived contrast foreground selection for strip text/ink
-- optional noon/midnight customization scoped to that strip only
-- strip-specific noon/midnight expressions:
-  - `NOON` / `MID`
-  - highlighted `12`
-  - sun / moon pictograms
-  - semantic diamond glyphs
-
-Recent simplification:
-- one resolver-owned instant and reference frame: phased tape follows civil time in the IANA zone; the read-point meridian fixes horizontal registration only
-- the read-point tick is drawn in the tickmark tape only; it is not duplicated in the upper indicator entries area
-- UTC label mode now uses a focused **UTC Global Time** treatment: text-only realization, a highlighted current UTC hour at the read point, and only the previous / current / next UTC hours visible with no wrap
-
-![Accelerated map demo](docs/images/libration-map-demo.gif)
----
-
-## Hour Marker Direction
-
-Top-band hour markers now use a clean, explicit model:
-
-- **Realization** — text or procedural glyph mode
-- **Layout** — size and placement semantics
-- **Appearance** — realization-scoped styling layered on top
-- **Behavior** — derived from realization kind rather than edited directly:
-  - text → `civilPhased` (phased tape x from civil fractional hour + read-point registration)
-  - procedural → `civilColumnAnchored` (disk x on structural 15° column centers when the semantic plan is anchored)
-
-```mermaid
-flowchart TB
-    HM[Resolved Hour Marker Model]
-
-    DB[Derived Behavior]
-    R[Realization]
-    L[Layout]
-    A[Appearance]
-
-    DB --- HM
-    R --- HM
-    L --- HM
-    A --- HM
-
-    %% Styling
-    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-
-    class HM center;
-    class DB,R,L,A axis;
-```
-
-At semantic runtime, hour-marker **content** is still derived as part of the resolved plan (for example `hour24` vs `localWallClock`), but it is no longer treated as a persisted editor-owned axis.
-
-For clock-like procedural markers, the civil-column-anchored path uses the same resolver instant and reference civil zone as the bottom bar and phased tape; disk x aligns to the read-point column (structural sector center for the anchor meridian).
-
-Implemented realizations:
-- **Text**
-  - bundled font asset selection
-  - size and styling overrides layered on top
-- **Procedural glyphs**
-  - analog clock markers
-  - radial wedge
-  - radial line
-
-When the top-band Hour label format is `utc24`, the indicator entries realization is constrained to **Text**. Switching into UTC mode now commits `Text` before the mode change so the runtime never enters UTC with a procedural realization.
-
-Clock-like appearance controls are now leveled across the procedural modes:
-- analog clock → hand color + face color
-- radial line → line color + face color
-- radial wedge → edge color + face color + annulus fill color
-
-Bundled font inventory currently includes:
-- Zeroes One
-- Zeroes Two
-- DSEG7Modern-Regular
-- DotMatrix-Regular
-- COMPUTER
-- Flip Clock
-- Kremlin
-
-Current top-band text defaults now favor the **Zeroes Two** bundled font for the indicator entries area.
-
-Hour markers now persist through a single structured config surface:
-
-`chrome.layout.hourMarkers`
-
-That model is authoritative for:
-- editor authoring
-- normalization
-- runtime resolution
-- persistence
-
-### Indicator-band vertical model
-
-```mermaid
-flowchart TB
-    TP[Top Padding]
-    CT[Content<br/>Intrinsic Height]
-    BP[Bottom Padding]
-
-    TOTAL[Total Indicator Band Height]
-
-    TP --> CT
-    CT --> BP
-    BP --> TOTAL
-
-    %% Styling
-    classDef padding fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef content fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef total fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-
-    class TP,BP padding;
-    class CT content;
-    class TOTAL total;
-```
-
-**Total Height = intrinsic content height + top padding + bottom padding**
-
-Padding affects spacing only. It does not change intrinsic text size, glyph size, or fitted marker geometry.
-
-Where:
-- intrinsic content height comes from text intrinsic sizing in text mode
-- intrinsic content height comes from fitted geometry in glyph modes
-- `contentPaddingTopPx` / `contentPaddingBottomPx` affect spacing only
-- padding must never affect text size, glyph size, radius, or emitted marker scale
-- Auto padding is intrinsic-based, not fixed-band/slack-based
-
-The config popup exposes:
-- **Content row padding (top)**
-- **Content row padding (bottom)**
-- indicator entries background color
-- optional noon / midnight customization and expression selection
-
-Current defaults for the upper indicator entries strip include:
-- hour-marker size multiplier `1.25`
-- content-row padding top `5px`
-- content-row padding bottom `5px`
-- bundled text font defaulting to **Zeroes Two**
-
-Empty values use Auto where supported; numeric values are exact px overrides.
-
-The lower-left bottom HUD is now intentionally minimal and reference-city-only:
-- optional reference-city date line
-- optional time line
-- time rendered in the selected global display mode
-- optional seconds toggle for that HUD only
-- font and size controls scoped to the HUD readout
-
----
-
-## Data Mode Default
-
-On a fresh deploy or first application load, the default data mode is:
-
-`static`
-
-That default is defined at the canonical config layer and is only used when no persisted user configuration exists. Existing saved user state continues to take precedence.
-
-The current data model is intentionally local-first:
-- no live network feeds
-- no background refresh
-
----
-
-## Font / Typography Status
-
-```mermaid
-flowchart TB
-    FA[fontAssetId]
-    FR[FontAssetRegistry]
-    RS[ResolveTextStyle]
-    RP[RenderPlan Text]
-    CB[Canvas Text Bridge]
-    CR[Canvas Native Text Rendering]
-    FG[Future Glyph Atlas or Outline Renderer]
-
-    FA --> FR
-    FR --> RS
-    RS --> RP
-    RP --> CB
-    CB --> CR
-
-    RP -. future .-> FG
-
-    %% Styling
-    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef future fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
-
-    class FA,FR,RS pipeline;
-    class RP boundary;
-    class CB,CR backend;
-    class FG future;
-```
-
-Bundled font assets resolve into backend-agnostic text intent first.  
-Today, the active Canvas backend realizes that text through its Canvas text bridge and native Canvas text rendering path.
-
-A future glyph-atlas or outline-based text renderer would attach downstream of the same RenderPlan boundary.
-
-The project has:
-- a preprocessed font asset manifest
-- runtime font asset lookup by stable ID
-- semantic typography roles
-- glyph/text emission through `RenderPlan`
-
-Current Canvas rendering still uses **native Canvas text realization** at the backend edge, but bundled fonts are loaded and registered at runtime so changing `fontAssetId` visibly changes output in the active Canvas backend.
-
-So today the live text path is:
-
-`fontAssetId -> FontAssetRegistry -> resolveTextStyle -> RenderPlan text -> Canvas text bridge -> Canvas native text rendering`
-
-The project does **not yet** use a custom glyph-outline or atlas-based text renderer.
-
----
-
-## Architecture
-
-```mermaid
-flowchart LR
-    subgraph UPSTREAM[Upstream Intent Resolution]
-        direction LR
-
-        subgraph SCENE[Scene Pipeline]
-            SR[Resolver] --> SS[Semantic Planning]
-            SS --> SL[Layout]
-            SL --> SA[Adapter]
-        end
-
-        subgraph CHROME[Chrome Pipeline]
-            CR[Resolver] --> CS[Semantic Planning]
-            CS --> CL[Layout]
-            CL --> CA[Adapter]
-        end
-    end
-
-    SA --> RP[RenderPlan]
-    CA --> RP
-
+    CFG[Config and Time Context] --> RES[Resolvers]
+    RES --> SEM[Semantic Planning]
+    SEM --> LAY[Layout]
+    LAY --> ADA[Adapters]
+    ADA --> RP[RenderPlan]
     RP --> EX[Executor]
     EX --> BE[Backend]
-
-    NS[Backend executes only: no product semantics]
-
-    RP -. hard boundary .- NS
-
-    %% Styling
-    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
-    classDef group fill:#0f1720,stroke:#3b4b5c,color:#e6edf3;
-
-    class SR,SS,SL,SA,CR,CS,CL,CA pipeline;
-    class RP boundary;
-    class EX,BE backend;
-    class NS note;
-    class SCENE,CHROME,UPSTREAM group;
 ```
 
-Libration resolves scene and chrome intent upstream, converts both into a shared **RenderPlan**, and only then hands execution to the backend.
+## Documentation map
 
-The backend executes drawing instructions only. It does not derive product semantics, layout policy, or chrome reservation rules.
+Start here:
 
-`Resolver / Planner / Layout / Adapter → RenderPlan → Executor`
+- [ARCHITECTURE.md](ARCHITECTURE.md) - stable system architecture.
+- [PLAN.md](PLAN.md) - current phase, immediate priorities, and next execution slices.
+- [AGENTS.md](AGENTS.md) - persistent AI co-engineering rules for ChatGPT and Cursor.
+- [docs/PROJECT_STRATEGY.md](docs/PROJECT_STRATEGY.md) - product and project strategy.
+- [docs/DEVELOPMENT_STRATEGY.md](docs/DEVELOPMENT_STRATEGY.md) - implementation criteria and engineering rules.
+- [docs/ROADMAP.md](docs/ROADMAP.md) - completed and planned phases.
+- [docs/FUTURE_FEATURES.md](docs/FUTURE_FEATURES.md) - retained feature backlog.
+- [docs/AI_COENGINEERING.md](docs/AI_COENGINEERING.md) - how this project uses ChatGPT and Cursor.
+- [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing and onboarding strategy.
+- [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - current map source inventory.
 
-All rendering intent is resolved before backend execution.
+Specification docs live under `docs/specs/`.
 
-```mermaid
-flowchart TB
-    TC[Top Chrome Reserved Layout]
-    SV[Scene Viewport Computed Upstream]
-    SD[sceneLayerViewportPx]
-    BE[Backend Execution]
+Historical execution notes live under `docs/historical/`.
 
-    TC --> SV
-    SV --> SD
-    SD --> BE
+## Development
 
-    NOTE[Backend does not derive viewport layout]
-
-    SD -. concrete layout data .-> NOTE
-
-    %% Styling
-    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
-
-    class TC chrome;
-    class SV,SD boundary;
-    class BE backend;
-    class NOTE note;
-```
-
-The scene viewport for visible map content is also resolved upstream and passed to the backend as concrete layout data (`sceneLayerViewportPx`), so backends do not derive top-chrome reservation rules themselves.
-
-Current backend:
-- Canvas
-
-Planned future backend:
-- native / NVIDIA RTX-class renderer
-
----
-
-## Status
-
-Initial public release: **v1.0.0**  
-Architecture stable.  
-Top-band hour-marker runtime migration complete for the supported production path.  
-Hour-marker editor and persistence migration complete.  
-Typography + glyph subsystem implemented.  
-Canvas bundled-font realization working.  
-Current engineering focus: feature-forward top-band chrome work on top of the completed structured hour-marker model.
-
----
-
-## Run
+Install dependencies:
 
 ```bash
 npm install
-npm run tauri dev
 ```
 
----
+Run the app:
 
-## License
+```bash
+npm run dev
+```
 
-This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+Run tests:
 
-The AGPL is used so that users retain access to the source code and improvements made to the software, including in network-hosted deployments.
+```bash
+npm test
+```
+
+Prepare map assets:
+
+```bash
+npm run maps:prep -- --help
+```
+
+Prepare font assets:
+
+```bash
+npm run fonts:prep
+```
+
+## Licensing
+
+Libration is licensed under the GNU Affero General Public License v3.0.
+
+The AGPL preserves the freedom to inspect, study, modify, share, and benefit from improvements to the software, including when the software is used over a network.

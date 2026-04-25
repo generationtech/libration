@@ -1,679 +1,240 @@
-# Architecture
+# Libration Architecture
 
+## Purpose
 
-## Current Scene and Map Architecture Status
+This document is the durable architectural reference for Libration.
 
-The scene system is now a first-class runtime architecture alongside display chrome.
+It defines the system boundaries that future implementation work must preserve. More tactical status and sequencing lives in `PLAN.md` and `docs/ROADMAP.md`.
 
-Current implemented scene/map capabilities include:
+## Architectural identity
 
-- `SceneConfig` as the authoritative persisted scene model for projection, view mode, base map, and ordered scene layers.
-- Scene-driven composition via a deterministic stack plan: base map foundational, overlays ordered by `SceneLayerInstance.order`, with equal-order ties preserving document array order.
-- Source-driven overlay construction for both static raster overlays and derived astronomical overlays, including the solar analemma ground-track product.
-- Generalized scene-layer participation based on layer semantics and supported source/product eligibility rather than a strict row-id allowlist.
-- Multi-base-map support through a bundled file-backed catalog: `src/assets/maps/base-map-catalog.json`. TypeScript validates and resolves the catalog, but the growing family inventory is data, not hardcoded source definitions.
-- `npm run maps:prep` is the formal onboarding tool for curated base-map families. It converts source TIFF sets into runtime assets, creates previews, and can update the catalog without TypeScript source edits.
-- Real sourced map assets for topography, political, and Blue Marble / natural-color base maps.
-- Optional month-aware base-map families (`variantMode: "monthOfYear"`) that resolve a concrete raster from product time while preserving `scene.baseMap.id` as the only persisted selection key.
-- Runtime image-load failure recovery for base-map rasters: failed concrete URLs are excluded from subsequent resolution so month-aware families can roll backward to the next valid asset instead of leaving the scene blank.
+Libration is a renderer-agnostic, longitude-first world time and global scene instrument.
 
-This preserves the render-plan contract: backend execution may report raster load failure, but base-map fallback policy remains upstream in base-map asset resolution.
+The product is built around five architectural commitments:
 
-### Base map catalog boundary
+1. Time is canonicalized as UTC instants.
+2. Spatial structure is longitude-first, not timezone-first.
+3. Product meaning is resolved upstream of rendering.
+4. Rendering intent is expressed as backend-neutral `RenderPlan`.
+5. Backends execute resolved plans and do not own product semantics.
 
-Available base-map families are now inventory data, not per-family TypeScript source definitions.
+## System pipeline
 
-- The catalog file (`src/assets/maps/base-map-catalog.json`) owns family ids, labels, categories, attribution, preview paths, asset paths, variant mode, onboarded months, default presentation, capabilities, and recommended roles.
-- TypeScript owns validation, alias handling, fallback semantics, month-aware resolution, presentation merging, and public resolver APIs.
-- SceneConfig owns the selected family id and user/preset overrides.
-- `maps:prep --update-catalog` is the preferred onboarding path for new source-map directories.
-
-This keeps onboarding repeatable while preserving deterministic runtime behavior: the app imports a bundled catalog and never scans `public/maps` at runtime.
-
----
-
-## Architectural Intent
-
-Libration is a precision-rendered world time instrument built on a **render-plan-driven architecture**.
-
-All visual output is expressed as explicit render intent (`RenderPlan`) before backend execution.
-
-Core goals:
-- Renderer-agnostic rendering semantics
-- Deterministic visual output
-- Strict separation of concerns
-- High perceptual fidelity
-- Future multi-backend support (Canvas, GPU)
-- Clear separation between representation, semantic planning, layout, execution, and persistence intent
+All visual output follows this shape:
 
 ```mermaid
 flowchart LR
-    R[Resolver] --> S[Semantic Planning]
-    S --> L[Layout]
-    L --> RP[RenderPlan]
-    RP --> E[Executor]
-    E --> B[Backend]
-
-    classDef upstream fill:#1f2933,stroke:#6b8fb3,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef downstream fill:#1f2933,stroke:#4b5563,color:#cbd5e1;
-
-    class R,S,L upstream;
-    class RP boundary;
-    class E,B downstream;
-```
-
-Libration resolves rendering intent upstream and emits a backend-agnostic `RenderPlan` for execution.
-
----
-
-## Top-Level Subsystems
-
-### 1. App Shell
-Owns:
-- UI state
-- preset selection
-- config lifecycle
-- render loop orchestration
-
-Produces:
-- `SceneRenderInput`
-
----
-
-### 2. Core Model
-Pure domain logic:
-- time context
-- solar/lunar math
-- projection
-
-Renderer-agnostic and deterministic.
-
----
-
-### 3. RenderPlan System (CORE)
-
-All rendering flows through:
-
-**Resolvers / Plan Builders → Semantic Planning → Layout → RenderPlan → Executor**
-
-`RenderPlan` remains backend-neutral and is the only rendering intent consumed by execution.
-
-Current shared primitive surface includes:
-- rect
-- line
-- text
-- path2d
-- gradients
-- rasterPatch
-- imageBlit
-
-Path items support explicit payload identity:
-- descriptor-backed path payloads for shared intent
-- transitional `Path2D` payloads where still needed
-- descriptor-backed or `Path2D` clip payloads
-
-```mermaid
-flowchart LR
-    subgraph SCENE[Scene Pipeline]
-        SR[Resolver] --> SS[Semantic Planning]
-        SS --> SL[Layout]
-        SL --> SA[Adapter]
-    end
-
-    subgraph CHROME[Chrome Pipeline]
-        CR[Resolver] --> CS[Semantic Planning]
-        CS --> CL[Layout]
-        CL --> CA[Adapter]
-    end
-
-    SA --> RP[RenderPlan]
-    CA --> RP
-
+    IN[Config, Time, Assets] --> RES[Resolvers]
+    RES --> SEM[Semantic Planning]
+    SEM --> LAY[Layout]
+    LAY --> ADA[Realization Adapters]
+    ADA --> RP[RenderPlan]
     RP --> EX[Executor]
     EX --> BE[Backend]
-
-    NOTE[Backend executes only no product semantics]
-
-    RP -. hard boundary .- NOTE
-
-    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
-    classDef group fill:#0f1720,stroke:#3b4b5c,color:#e6edf3;
-
-    class SR,SS,SL,SA,CR,CS,CL,CA pipeline;
-    class RP boundary;
-    class EX,BE backend;
-    class NOTE note;
-    class SCENE,CHROME group;
 ```
 
-Scene and chrome resolve independently upstream, converge at `RenderPlan`, and only then pass into backend execution.
+The RenderPlan boundary is hard.
 
----
+Upstream systems may know about time, map families, chrome meaning, scene layers, fonts, glyph kinds, and user configuration.
 
-### 4. Renderer Backend
+Backends may know about surfaces, drawing APIs, caches, image resources, font registration, and primitive execution.
 
-`CanvasRenderBackend` owns execution only.
+Backends must not decide product behavior.
 
-Canvas-specific realization is isolated behind bridge modules:
-- `canvasTextFontBridge`
-- `canvasPaintBridge`
-- `canvasPathBridge`
-- bundled Canvas font loading / registration helpers
+## Top-level subsystems
 
-Future renderers must consume the same upstream intent without introducing product semantics.
+### App shell
 
----
+The app shell owns:
 
-### 5. Display Chrome
+- UI state.
+- config loading and saving.
+- preset application when implemented.
+- render-loop orchestration.
+- editor surfaces.
+- runtime wiring between time context, scene config, chrome config, and renderer.
 
-The display chrome is a **screen-space instrument system**, not part of layers.
+The app shell must not become a home for low-level product rules that belong in config normalization, resolvers, planners, or specs.
 
-Current top-band design:
-- Hour markers
-- Tickmark tape (hour / 15 / 5 hierarchy)
-- NATO timezone strip (rectangular, continuous band)
-- Fixed built-in top chrome styling (single token set in config; not user-selectable)
-- Fully RenderPlan-driven
-- The scene viewport is derived upstream and begins below the reserved top chrome; the backend consumes that resolved viewport rather than deriving chrome offsets
+### Core time model
 
-```mermaid
-flowchart TB
-    IE[Indicator Entries]
-    TT[Tickmark Tape]
-    NZ[NATO / structural zone row]
-    SCENE[Scene Viewport]
+The product uses one authoritative instant per frame.
 
-    IE --> TT
-    TT --> NZ
-    NZ --> SCENE
+Display modes format that instant and its derived civil presentation. They must not mutate the canonical instant.
 
-    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef scene fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
+The reference-frame model separates:
 
-    class IE,TT,NZ chrome;
-    class SCENE scene;
+- canonical UTC instant.
+- selected reference civil zone.
+- read-point meridian.
+- civil display projection.
+- top-band label format.
+
+Changing local 12 hour, local 24 hour, UTC style labels, or reference city presentation must not create a second product clock.
+
+Demo mode is the intentional exception when it supplies a separate configured time source.
+
+### Display chrome
+
+Display chrome is screen-space instrument content.
+
+Current top chrome includes:
+
+- hour marker entries.
+- tickmark tape.
+- NATO structural zone row.
+- reserved vertical layout above the scene viewport.
+
+Display chrome is not a scene layer. It does not participate in map projection or scene layer ordering.
+
+Top-band hour markers are configured through `chrome.layout.hourMarkers` only. Runtime behavior is derived by resolver, semantic planner, layout, and realization adapter.
+
+### Scene system
+
+The scene system owns projection-space content under the chrome.
+
+SceneConfig is authoritative for:
+
+- `projectionId`.
+- `viewMode`.
+- `baseMap`.
+- ordered `layers[]`.
+
+The scene system composes:
+
+- foundational base map.
+- static overlays.
+- derived overlays.
+- future dynamic and data-driven layers.
+
+Scene composition is deterministic. Base map remains beneath overlays. Overlay order is user-controlled through layer order, with equal-order ties preserving document array order.
+
+### Map asset system
+
+Base-map inventory is declared in the bundled JSON catalog:
+
+```text
+src/assets/maps/base-map-catalog.json
 ```
 
-Top chrome reserves real layout space. The scene viewport begins strictly below the visible chrome stack.
-
-### Chrome time model (product contract)
+The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
 
-Display chrome time is **resolver-owned**, not fragmented in config:
+Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver.
 
-- **One instant** — `TimeBasis.nowUtcInstant` (from live wall clock or demo playback).
-- **One reference frame** — IANA zone for civil wall time plus the anchor meridian that sets the horizontal **read point** on the phased top band (city / auto / geography policy — not two competing “times”).
-- **One civil projection** — wall clock in the reference zone derived from that instant.
-- **One read point** — horizontal registration for the phased hour row; **display mode** (`local12` / `local24` / `utc24`) changes presentation only.
-
-The lower-left bottom HUD is now a simple **reference-city date/time readout**: date in the reference-city civil calendar and one time line rendered in the selected display mode. In `utc24`, the date remains the reference-city date while the time line is rendered in UTC; date/time visibility, seconds, size, and font remain independently configurable.
+Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
 
-The fixed **structural** 15° / NATO letter row is geometric (equirectangular sectors); it is not “UTC as the user’s civil clock” and does not replace the reference-frame civil zone.
+### Layer engine
 
-```mermaid
-flowchart TB
-    TC[Top Chrome Reserved]
-    SV[Scene Viewport Computed Upstream]
-    SD[sceneLayerViewportPx]
-    BE[Backend Execution]
-    NOTE[Backend does not derive viewport layout]
-
-    TC --> SV
-    SV --> SD
-    SD --> BE
-    SD -. concrete layout data .-> NOTE
-
-    classDef chrome fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef note fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+Layers describe what exists in the projection-space scene.
 
-    class TC chrome;
-    class SV,SD boundary;
-    class BE backend;
-    class NOTE note;
-```
-
-The scene viewport is resolved upstream and handed to the backend as concrete layout data.
-
-Top-band major areas now expose independent visibility controls for:
-- 24-hour indicator entries (civil-phased at the read point in local modes)
-- 24-hour tickmark tape (same phased band)
-- NATO / structural zone row (geometric overlay — not the reference civil clock)
-
-The 24-hour indicator entries area now has its own structured strip-scoped presentation controls:
-- authored strip background color intent in config
-- resolver-derived contrast foreground selection for strip text/ink
-- optional noon/midnight customization for indicator-entry presentation only
-- strip-only noon/midnight realization variants:
-  - `NOON` / `MID`
-  - highlighted `12`
-  - sun / moon pictograms
-  - semantic diamond glyphs
-
-Recent chrome simplification:
-- hour-marker circle backgrounds have been removed from the top-band render plan
-- broad tape-level `NOON` / `MIDNIGHT` annotations are no longer emitted as a separate legacy pass
-- phased tape and read-point registration follow the resolver-owned instant and reference zone in local modes
-- `utc24` now uses a focused **UTC Global Time** presentation: text-only hour markers, a highlighted current UTC hour at the read point, and only the previous / current / next UTC hours visible with no wrap
-
-Chrome is:
-- visually integrated
-- architecturally separate from layers
-- free to evolve representation styles without changing the time model
-
----
-
-## Chrome Representation Direction
-
-The top band no longer uses a single fixed numeric style.
-
-Top-band hour markers now use a truthful split:
-- **Text** → selected bundled font asset + styling
-- **Procedural glyph** → selected glyph mode + styling
-
-These fall into two major categories:
-
-### A. Font-backed representations
-Examples currently in inventory/use:
-- Zeroes One
-- Zeroes Two
-- DSEG7Modern-Regular
-- DotMatrix-Regular
-- COMPUTER
-- Flip Clock
-- Kremlin
-
-These are integrated through a renderer-agnostic font asset / typography system.
-
-### B. Procedural representations
-Implemented modes:
-- Analog clock faces
-- Radial wedge
-- Radial line
+A layer may be static, derived, or future data-driven. It produces time-resolved layer state. RenderPlan builders convert that state into drawing intent.
 
-These are **not fonts**. They are symbolic glyph modes rendered from primitives.
+Layers must not fetch live data during rendering. Future live feeds belong in a lifecycle system that prepares versioned data snapshots before render execution.
 
----
+### RenderPlan system
 
-## Typography and Glyph Architecture
+RenderPlan is the shared declarative rendering contract.
 
-The system distinguishes between:
+Current primitive categories include:
 
-- **Font assets** — packaged font resources with stable IDs
-- **Typography roles** — semantic uses of text, not raw file references
-- **Representation kind** — whether a surface is using text or procedural glyphs
-- **Procedural glyphs** — non-font symbolic renderables built from primitives
-- **Style** — appearance controls layered on top of representation and asset choice
+- text.
+- rect.
+- line.
+- path.
+- gradients.
+- raster patches.
+- image blits.
 
-### Architectural Rule
+Path and clip payloads should move toward descriptor-backed intent. Backend-native objects are transitional only where still required.
 
-> Font files are assets.
->
-> Typography is a semantic system.
->
-> Glyph modes are representation choices.
->
-> Style is layered on top.
->
-> Backends only realize already-resolved intent.
+### Backend system
 
-This keeps the system compatible with:
-- current Canvas execution
-- future native / RTX execution
-- deterministic layout and rendering behavior
+The current backend is Canvas.
 
----
+Canvas-specific code belongs behind bridges such as:
 
-## Font Pipeline Status
+- `canvasTextFontBridge`.
+- `canvasPaintBridge`.
+- `canvasPathBridge`.
+- Canvas font loading and registration helpers.
 
-The current font preprocessing pipeline produces:
-- `fontAssetDb.json`
-- `fontAssetManifest.json`
-- stable font asset IDs
-- extracted metadata / metrics
+Future backends must consume the same upstream render intent and must not require product-specific branching inside the backend.
 
-It does **not** currently produce:
-- glyph outline datasets
-- per-character path command tables
-- bitmap or SDF atlases
-- renderer-owned glyph geometry caches
+Backend resource lifecycle reporting is allowed only for concrete resource events. For example, the backend may report that a raster image URL failed to load. It must not decide which map family or fallback raster should be used.
 
-```mermaid
-flowchart TB
-    FA[fontAssetId]
-    FR[FontAssetRegistry]
-    RS[ResolveTextStyle]
-    RP[RenderPlan Text]
-    CB[Canvas Text Bridge]
-    CR[Canvas Native Text Rendering]
-    FG[Future Glyph Atlas Or Outline Renderer]
+## Configuration architecture
 
-    FA --> FR
-    FR --> RS
-    RS --> RP
-    RP --> CB
-    CB --> CR
-    RP -. future .-> FG
+`LibrationConfigV2` is the authoritative persisted application config.
 
-    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef backend fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-    classDef future fill:#111827,stroke:#7c8aa0,color:#cbd5e1,stroke-dasharray: 5 5;
+Important config domains:
 
-    class FA,FR,RS pipeline;
-    class RP boundary;
-    class CB,CR backend;
-    class FG future;
-```
+- chrome layout and top-band controls.
+- structured hour-marker configuration.
+- scene config.
+- map presentation overrides.
+- future preset and partial-patch systems.
 
-### Runtime Meaning Today
+Normalization must preserve user intent, backfill defaults, clamp unsupported values, and avoid reintroducing removed compatibility surfaces.
 
-At runtime the live text path is:
+Config stores durable semantic ids, not transient file paths or derived runtime values.
 
-`fontAssetId → FontAssetRegistry → TypographyRole / resolveTextStyle → RenderPlan text item → Canvas text bridge → Canvas native text rendering`
+## Scene architecture invariants
 
-So the current system is:
-- **font-identity-aware**
-- **typography-role-aware**
-- **renderer-agnostic at the planning level**
+These rules are non-negotiable:
 
-But it is **not yet a custom glyph-shape rendering runtime**.
+1. Projection defines spatial truth.
+2. Base maps do not define spatial truth.
+3. All scene geometry is defined in geographic or projection-aware coordinates before rendering.
+4. Scene view and projection are separate concepts.
+5. Base map families are selected by durable catalog ids.
+6. Month-aware map switching is asset resolution, not camera behavior.
+7. Layer ordering is deterministic.
+8. Composition belongs upstream of backend execution.
 
-Canvas still performs final text rasterization in the current backend.
+## Chrome architecture invariants
 
----
+These rules are non-negotiable:
 
-## Top-Band Hour Marker Runtime Architecture (CURRENT)
+1. Chrome is screen-space, not projection-space.
+2. Chrome reserves layout before scene viewport resolution.
+3. Display modes format presentation and must not mutate canonical time.
+4. Hour-marker persisted state lives under `chrome.layout.hourMarkers`.
+5. Runtime content and behavior are derived, not duplicated into parallel persisted axes.
+6. Text and procedural glyph realizations flow through the same RenderPlan boundary.
 
-Top-band hour-marker rendering uses a strict semantic pipeline.
+## Renderer invariants
 
-### Authoritative runtime flow
+These rules are non-negotiable:
 
-`normalize hourMarkers config → resolveEffectiveTopBandHourMarkers → buildSemanticTopBandHourMarkers → layoutSemanticTopBandHourMarkers / realization-specific layout → realization adapter → RenderPlan`
+1. Backend receives resolved render intent.
+2. Backend does not inspect SceneConfig to decide product behavior.
+3. Backend does not implement month-aware map policy.
+4. Backend does not decide fonts, glyph kinds, layer semantics, or layout.
+5. Backend bridges translate shared intent into backend-native calls only.
+6. Resource failure reporting is event reporting, not product fallback policy.
 
-```mermaid
-flowchart LR
-    N[Normalize Config] --> R[Resolve Effective Hour Markers]
-    R --> S[Build Semantic Hour Markers]
-    S --> L[Layout Semantic Hour Markers]
-    L --> A[Realization Adapter]
-    A --> RP[RenderPlan]
+## Current implementation maturity
 
-    classDef pipeline fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef boundary fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
+Stable enough for feature-forward work:
 
-    class N,R,S,L,A pipeline;
-    class RP boundary;
-```
-
-Implemented semantic realizations:
-- text
-- analogClock
-- radialLine
-- radialWedge
-
-UTC label mode constrains the effective top-band realization to **text**. Entering `utc24` now coerces authored procedural hour-marker realizations to text before the mode switch completes so the runtime never observes an invalid UTC + procedural combination.
-
-Strip-scoped noon/midnight customization is modeled as an additional semantic presentation overlay on top of these realizations rather than as a backend concern.
-
-### Important status
-
-- The semantic pipeline is now the **only supported runtime path** for in-disk top-band hour markers.
-- The old tape-column fallback path has been removed.
-- Runtime now requires full semantic inputs for the supported path.
-- Tests use shared semantic fixtures instead of degraded single-marker fallback behavior.
-
-### Runtime contract
-
-For in-disk top-band hour markers, the supported contract is:
-- structured `chrome.layout.hourMarkers` present in normalized config
-- full 24-marker input after semantic planning
-- realization consistent with selection
-- procedural clock-like realizations consume product chrome timing context for the supported path:
-  - `referenceNowMs`
-  - static anchored product-path timing also uses reference-band context such as the present-tick structural index and reference fractional hour when available
-
-This means the current app runtime has one authoritative implementation rather than parallel semantic and fallback paths.
-
-### Hour-marker disk row: vertical content model (FINAL)
-
-The **content row** is the vertical slice allocated to hour-disk interiors inside the top-band indicator strip. One canonical pipeline applies to text and procedural glyph realizations.
-
-**Scale vs spacing (authoritative split)**
-
-- **Scale** — hour-marker `sizeMultiplier`, normal width/fit rules, and realization-specific intrinsic sizing determine marker scale. Padding must never influence intrinsic content height, radius, label size, or glyph size.
-- **Spacing** — `contentPaddingTopPx` / `contentPaddingBottomPx` change only the visible indicator-band height and vertical placement inside that band.
-
-```mermaid
-flowchart TB
-    TP[Top Padding]
-    CT[Content Intrinsic Height]
-    BP[Bottom Padding]
-    TOTAL[Visible Indicator Band Height]
-
-    TP --> CT
-    CT --> BP
-    BP --> TOTAL
-
-    classDef padding fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-    classDef content fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef total fill:#0b1220,stroke:#4b5563,color:#cbd5e1;
-
-    class TP,BP padding;
-    class CT content;
-    class TOTAL total;
-```
-
-**Total Height = intrinsic content height + top padding + bottom padding**
-
-Padding affects spacing only. It must never influence intrinsic text size, glyph size, radius, or fitted marker geometry.
-
-**Intrinsic content height**
-
-- **Text** — resolved once on the product path by the top-band text intrinsic resolver: prefer Canvas `measureText` ink height when a 2D context exists; otherwise use deterministic typography (`lineHeightPx` or font-size × em).
-- **Glyphs** — derived from fitted head-disk geometry via `hourCircleHeadMetrics` / `resolveHourMarkerDiskRowIntrinsicContentHeightPx`.
-
-**Padding and row math**
-
-- `resolveHourMarkerContentRowPaddingPx` and `computeHourMarkerContentRowVerticalMetrics` define Auto padding and allocated row height.
-- **Auto** is intrinsic-proportional per side when omitted; it is not derived from leftover strip slack.
-- Allocated row height is:
-  - `paddingTop + intrinsic + paddingBottom`
-
-**Visible indicator band height**
-
-The product chrome path solves the visible 24-hour indicator band directly from:
-- intrinsic content height
-- resolved top padding
-- resolved bottom padding
-
-There is no separate slack-split or “padded row converges to a fixed disk strip” stage in the final model.
-
-**Separation of concerns**
-
-- intrinsic acquisition happens upstream of semantic layout
-- padding resolution and row math live in the vertical-metrics module
-- `topBandHourMarkersLayout.ts` places disk-row centers using shared row metrics
-- render plans consume the same resolved inputs
-
-Do not reintroduce implicit padding derived from legacy head-disk Y hacks or any path where padding changes scale.
-
----
-
-## Behavioral / Representation Model
-
-For top-band hour markers, the runtime and editor now distinguish persisted/editor-facing concerns from fully derived effective/runtime concerns.
-
-Persisted/editor-facing axes:
-- **Realization** — text, analogClock, radialLine, radialWedge
-- **Layout** — size and placement semantics, including content-row padding
-- **Appearance** — realization-specific appearance controls
-- **Indicator-entry strip controls** — strip background intent plus optional noon/midnight customization for the upper 24-hour entries area
-
-Derived effective/runtime concerns:
-- **Behavior** — derived from realization kind:
-  - text → `civilPhased`
-  - non-text/procedural → `civilColumnAnchored`
-- **Content** — e.g. `hour24`, `localWallClock`
-  - column-anchored procedural clocks use the same resolver instant and civil projection as the phased tape, aligned to the read-point structural column
-  - display mode (`local12` / `local24` / `utc24`) affects labels only — not tape geometry or read-point registration
-
-```mermaid
-flowchart TB
-    HM[Resolved Hour Marker Model]
-    DB[Derived Behavior]
-    R[Realization]
-    L[Layout]
-    A[Appearance]
-
-    DB --- HM
-    R --- HM
-    L --- HM
-    A --- HM
-
-    classDef center fill:#0b1f2a,stroke:#00bcd4,stroke-width:3px,color:#e6edf3;
-    classDef axis fill:#16212b,stroke:#8aa4c8,color:#e6edf3;
-
-    class HM center;
-    class DB,R,L,A axis;
-```
-
-This means `content` remains part of semantic runtime modeling, but it is no longer treated as a persisted/editor-owned axis for hour markers.
-
----
-
-## Structured Persistence Model
-
-Hour markers now persist through a single structured config surface:
-
-`chrome.layout.hourMarkers`
-
-This structured model is authoritative for:
-- editor authoring
-- normalization
-- runtime resolution
-- persistence
-
-It now also carries strip-scoped indicator-entry concerns such as:
-- indicator entries area background color intent
-- resolver-derived effective foreground usage downstream of that background
-- optional `noonMidnightCustomization` with bounded expression modes
-- realization-scoped procedural appearance overrides, including:
-  - analog hand / face color
-  - radial line line / face color
-  - radial wedge edge / face / annulus fill color
-
-Legacy flat hour-marker persistence fields have been removed.
-
-That means:
-- no dual config truth remains for hour markers
-- no flat compatibility regeneration remains
-- old saved configs that only used flat hour-marker fields are no longer compatible
-
----
-
-## Recommended Shared Abstractions
-
-### Font Asset Layer
-Owns:
-- logical font IDs
-- runtime manifest
-- asset metadata
-- backend loading / realization hooks
-
-### Typography Role Layer
-Owns semantic roles such as:
-- chromeHourPrimary
-- chromeHourEmphasis
-- chromeZoneLabel
-- chromeDenseMono
-- chromeSegment
-- chromeDotMatrix
-
-### Representation Layer
-Owns surface-specific representation choice.
-
-For top-band hour markers:
-- text with a selected bundled font asset
-- procedural glyph with a selected glyph mode
-
-### Procedural Glyph Layer
-Owns symbolic glyph generation via primitives.
-
-Examples:
-- circle + hand(s) for analog clock
-- arc/wedge for radial wedge
-- center-out line for radial line
-
-### Style Layer
-Owns appearance controls layered over representation:
-- size
-- realization-scoped color and fill/stroke controls
-- future realization-specific and multi-channel controls
-
----
-
-## Layout vs Rendering Rule
-
-Chrome layout must not become dependent on backend-specific font behavior.
-
-That means:
-- sector/grid placement stays structural
-- semantic planning resolves meaning before primitive emission
-- measurement is an explicit capability, not implicit browser behavior
-- procedural glyphs obey the same layout contract as text-based markers
-- backends do not infer behavior, realization choice, or content semantics
-
----
-
-## Architectural Status
-
-Renderer-agnostic architecture is COMPLETE enough for feature-forward work.
-
-Top-band hour-marker runtime migration is COMPLETE for the current production path.
-
-Hour-marker editor and persistence migration are COMPLETE for the current production path.
-
-Typography / glyph subsystem is FUNCTIONAL and in active use.
-
-### What is implemented
-- font asset preprocessing + runtime manifest
-- typography role resolution
-- TextGlyph + procedural glyph unification
-- top-band hour-marker text/glyph split
-- semantic hour-marker resolver / planner / layout / realization adapters
-- semantic-only runtime path for in-disk hour markers
-- structured `chrome.layout.hourMarkers` persistence
-- dedicated `HourMarkersEditor` with canonical section structure: Realization / Appearance / Layout
-- content-row top/bottom padding controls for the indicator band
-- independent `tickTapeVisible` / `timezoneLetterRowVisible` top-band visibility controls
-- structured-only hour-marker authoring, normalization, and runtime consumption
-- top-band and bottom-chrome policy integration
-- renderer-agnostic scene viewport derivation (`sceneLayerViewportPx`) passed to backends as resolved layout data
-- backend-neutral text identity (`font.assetId`)
-- explicit Canvas bridge modules for text, paint, and paths
-- Canvas bundled-font loading/registration at runtime
-- descriptor-backed path and clip support
-
-### What is not yet implemented
-- renderer-owned glyph outline rendering from preprocessed font data
-- atlas-based custom text rendering
-- RTX/native backend
-- generalized structured editor/config system across multiple UI surfaces
-- broader realization-specific appearance controls beyond the currently implemented hour-marker fields
-
-### Near-Term Work
-- continue feature-forward top-band chrome and styling work on top of the completed hour-marker architecture
-- add new realization-specific appearance controls only when a concrete feature requires them
-- apply the same structured editor/persistence pattern to other chrome surfaces only after feature pressure justifies it
-
-### Ongoing Constraints
-- No backend-owned product semantics
-- No coupling between time model and display style
-- No reintroduction of degraded runtime fallback behavior for hour markers
-- No resurrection of legacy flat hour-marker persistence
-- No speculative architecture churn without feature pressure
+- RenderPlan boundary.
+- Canvas backend execution.
+- top-band semantic hour-marker path.
+- SceneConfig authority.
+- curated base-map catalog.
+- static and month-aware base maps.
+- static overlays.
+- derived solar analemma overlay.
+- map presentation controls.
+- map onboarding tooling.
+
+Still future or partial:
+
+- full dynamic data lifecycle.
+- live feeds.
+- gridded scientific datasets.
+- advanced blending, masking, and emissive composition.
+- alternate projections.
+- zoom, pan, tiling, globe view, and camera interaction.
+- broad preset system.
+- public extension/plugin model.

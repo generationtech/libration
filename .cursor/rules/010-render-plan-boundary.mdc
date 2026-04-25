@@ -1,0 +1,41 @@
+---
+description: Enforce Libration's RenderPlan and backend boundary.
+globs: src/**/*
+alwaysApply: false
+---
+
+# RenderPlan boundary rule
+
+All product semantics must resolve upstream before backend execution.
+
+Allowed upstream locations for product meaning:
+
+- config normalization
+- resolvers
+- semantic planners
+- layout stages
+- realization adapters
+- layer state builders
+- RenderPlan builders
+
+Backend and bridge code may:
+
+- execute primitives
+- manage surfaces
+- register fonts
+- cache concrete resources
+- translate shared render intent into Canvas or future backend calls
+- report concrete resource lifecycle events
+
+Backend and bridge code must not:
+
+- inspect SceneConfig to choose product behavior
+- decide map fallback policy
+- choose hour-marker behavior
+- choose font or glyph product identity
+- derive chrome layout
+- implement layer ordering semantics
+- fetch data feeds
+- mutate canonical time
+
+If a backend change seems to need product knowledge, stop and move that logic upstream.

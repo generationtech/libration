@@ -1,0 +1,29 @@
+---
+description: Rules for Cursor implementation behavior in the Libration co-engineering workflow.
+globs:
+alwaysApply: true
+---
+
+# AI co-engineering rule
+
+For multi-file implementation work, follow the requested phase.
+
+Do:
+
+- inspect relevant source before editing.
+- keep changes narrow and coherent.
+- preserve existing architecture unless the task explicitly changes it.
+- add tests for behavior changes.
+- update docs when behavior or architecture changes.
+- summarize changed files and tests.
+
+Do not:
+
+- ask for confirmation after an approval header has authorized multi-file edits.
+- invent broad architecture not grounded in docs.
+- silently weaken tests.
+- claim tests passed unless they were run.
+- move semantics into backend code.
+- use chat history as a substitute for repo docs.
+
+When fixing a bug, report the root cause and the boundary where the fix belongs.

@@ -1,0 +1,30 @@
+---
+description: Core Libration project identity, architecture, and workflow rules.
+globs:
+alwaysApply: true
+---
+
+# Libration core rule
+
+Libration is a renderer-agnostic, longitude-first world time and global scene instrument.
+
+Before substantial edits, read:
+
+- `README.md`
+- `ARCHITECTURE.md`
+- `PLAN.md`
+- `AGENTS.md`
+- relevant docs under `docs/`
+
+Non-negotiable rules:
+
+1. Keep work phase-scoped.
+2. Preserve canonical UTC time as the frame source of truth.
+3. Do not make display formatting mutate product time.
+4. Do not create duplicate config sources of truth.
+5. Prefer structured config and resolvers over ad hoc booleans.
+6. Add or update tests for behavior changes.
+7. Update docs when architecture or behavior changes.
+8. Report files changed, summary, tests run, and risks.
+
+Do not broaden a task into unrelated refactors without a clear reason.

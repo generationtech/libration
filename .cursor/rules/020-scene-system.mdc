@@ -1,0 +1,26 @@
+---
+description: SceneConfig, layer, projection, and scene composition rules.
+globs: src/**/*scene*,src/**/*layer*,src/**/*projection*,src/config/**/*
+alwaysApply: false
+---
+
+# Scene system rule
+
+SceneConfig is authoritative for projection-space scene content.
+
+Preserve these invariants:
+
+1. `scene.projectionId` is authoritative even if only one projection exists.
+2. `scene.viewMode` is authoritative even if only full-world fixed view exists.
+3. `scene.baseMap.id` is a durable base-map family id.
+4. Scene layers are ordered deterministically.
+5. Equal layer orders preserve array order.
+6. Base map stays below overlays.
+7. Projection defines spatial truth.
+8. Base maps never define spatial truth.
+9. Scene view and projection are separate concepts.
+10. Chrome is not a scene layer.
+
+Do not collapse source, presentation, lifecycle, and rendering behavior into one structure.
+
+For new scene features, update or add tests at the resolver, composition, layer state, or RenderPlan builder boundary.
