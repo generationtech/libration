@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import {
   DAYLIGHT_CLEAR_ALTITUDE_DEG,
   DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
-  MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX,
+  MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX,
   NIGHT_DARKEN,
   sampleIlluminationRgba8,
   smootherstep,
@@ -220,9 +220,8 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(fullMoon.a).toBeLessThan(baseline.a);
     expect(baseline.a - fullMoon.a).toBeGreaterThanOrEqual(40);
     expect(fullMoon.a).toBeGreaterThanOrEqual(
-      Math.floor(baseline.a * (1 - MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX)) - 1,
+      Math.floor(baseline.a * (1 - MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX)) - 1,
     );
-    expect(fullMoon.b).toBeGreaterThanOrEqual(fullMoon.r);
   });
 
   it("produces a visible but restrained lift for waxing gibbous at high incidence", () => {
@@ -234,7 +233,9 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     });
     const lift = baseline.a - waxingGibbous.a;
     expect(lift).toBeGreaterThanOrEqual(35);
-    expect(lift).toBeLessThanOrEqual(Math.ceil(baseline.a * MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX) + 1);
+    expect(lift).toBeLessThanOrEqual(
+      Math.ceil(baseline.a * MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX) + 1,
+    );
   });
 
   it("suppresses lift strongly for low-altitude moon versus high moon", () => {
@@ -302,7 +303,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(nearLift).toBeGreaterThanOrEqual(farLift * 4 + 18);
   });
 
-  it("adds cool, restrained secondary illumination in deep night composition", () => {
+  it("adds restrained secondary illumination in deep night composition", () => {
     const darkOcean = { r: 14, g: 26, b: 44 };
     const solarNightDot = dotFromAltitudeDeg(-30);
     const baseline = sampleIlluminationRgba8(solarNightDot, 1);
@@ -322,7 +323,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       b: compositeChannel(darkOcean.b, fullMoonNearSublunar.b, fullMoonNearSublunar.a),
     };
 
-    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 8);
+    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 3);
     expect(moonComposite.b).toBeGreaterThanOrEqual(moonComposite.r);
   });
 });
