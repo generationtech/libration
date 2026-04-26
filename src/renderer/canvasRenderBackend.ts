@@ -233,7 +233,13 @@ export class CanvasRenderBackend implements RenderBackend {
       return;
     }
 
-    const { subsolarLatDeg, subsolarLonDeg } = layer.data;
+    const {
+      subsolarLatDeg,
+      subsolarLonDeg,
+      sublunarLatDeg,
+      sublunarLonDeg,
+      lunarIlluminatedFraction,
+    } = layer.data;
     executeRenderPlanOnCanvas(
       ctx,
       buildSolarShadingIlluminationRenderPlan({
@@ -241,6 +247,9 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportHeightPx: h,
         subsolarLatDeg,
         subsolarLonDeg,
+        sublunarLatDeg,
+        sublunarLonDeg,
+        lunarIlluminatedFraction,
         layerOpacity: layer.opacity,
       }),
     );

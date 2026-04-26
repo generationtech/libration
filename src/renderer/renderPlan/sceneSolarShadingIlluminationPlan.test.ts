@@ -24,6 +24,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       viewportHeightPx: 100,
       subsolarLatDeg: 0,
       subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 0.5,
       layerOpacity: 1,
     }).items).toEqual([]);
 
@@ -32,6 +35,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       viewportHeightPx: -1,
       subsolarLatDeg: 0,
       subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 0.5,
       layerOpacity: 1,
     }).items).toEqual([]);
   });
@@ -42,6 +48,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       viewportHeightPx: 80,
       subsolarLatDeg: 10,
       subsolarLonDeg: -20,
+      sublunarLatDeg: -4,
+      sublunarLonDeg: 48,
+      lunarIlluminatedFraction: 0.72,
       layerOpacity: 0.75,
     });
 
@@ -69,6 +78,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       viewportHeightPx: 32,
       subsolarLatDeg: 0,
       subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 1,
       layerOpacity: 0,
     });
     const item = plan.items[0];
@@ -87,6 +99,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       viewportHeightPx: 64,
       subsolarLatDeg: 0,
       subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 1,
       layerOpacity: 1,
     });
     const item = plan.items[0];

@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import {
   DAYLIGHT_CLEAR_ALTITUDE_DEG,
   DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
+  MOONLIGHT_MAX_LIFT,
   NIGHT_DARKEN,
   sampleIlluminationRgba8,
   smootherstep,
@@ -195,5 +196,56 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       expect(delta).toBeLessThanOrEqual(20);
       previous = next;
     }
+  });
+
+  it("keeps moonlight near zero at new moon even when high above night horizon", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const lunarHighDot = dotFromAltitudeDeg(65);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const newMoon = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: lunarHighDot,
+      lunarIlluminatedFraction: 0.01,
+    });
+    expect(Math.abs(newMoon.a - baseline.a)).toBeLessThanOrEqual(2);
+  });
+
+  it("applies a small bounded night lift for a high full moon", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const lunarHighDot = dotFromAltitudeDeg(65);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const fullMoon = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: lunarHighDot,
+      lunarIlluminatedFraction: 1,
+    });
+    expect(fullMoon.a).toBeLessThan(baseline.a);
+    expect(fullMoon.a).toBeGreaterThanOrEqual(
+      Math.floor(baseline.a * (1 - MOONLIGHT_MAX_LIFT)) - 1,
+    );
+    expect(fullMoon.b).toBeGreaterThanOrEqual(fullMoon.r);
+  });
+
+  it("applies no moonlight lift when moon is below horizon", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const moonBelow = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: dotFromAltitudeDeg(-5),
+      lunarIlluminatedFraction: 1,
+    });
+    expect(moonBelow).toEqual(baseline);
+  });
+
+  it("does not meaningfully brighten daylight/twilight with moonlight inputs", () => {
+    const daylight = sampleIlluminationRgba8(dotFromAltitudeDeg(8), 1, {
+      lunarDot: dotFromAltitudeDeg(60),
+      lunarIlluminatedFraction: 1,
+    });
+    expect(daylight.a).toBe(0);
+
+    const twilightBaseline = sampleIlluminationRgba8(dotFromAltitudeDeg(-4), 1);
+    const twilightWithMoon = sampleIlluminationRgba8(dotFromAltitudeDeg(-4), 1, {
+      lunarDot: dotFromAltitudeDeg(60),
+      lunarIlluminatedFraction: 1,
+    });
+    expect(Math.abs(twilightWithMoon.a - twilightBaseline.a)).toBeLessThanOrEqual(2);
   });
 });

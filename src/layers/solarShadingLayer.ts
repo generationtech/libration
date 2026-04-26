@@ -12,6 +12,8 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import { approximateLunarPhase } from "../core/lunarPhase";
+import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SOLAR_SHADING_KIND, type SolarShadingPayload } from "./solarShadingPayload";
@@ -38,10 +40,15 @@ export function createSolarShadingLayer(
     updatePolicy,
     getState(time: TimeContext): LayerState {
       const { latDeg, lonDeg } = subsolarPoint(time.now);
+      const { latDeg: moonLatDeg, lonDeg: moonLonDeg } = sublunarPoint(time.now);
+      const phase = approximateLunarPhase(time.now);
       const data: SolarShadingPayload = {
         kind: SOLAR_SHADING_KIND,
         subsolarLatDeg: latDeg,
         subsolarLonDeg: lonDeg,
+        sublunarLatDeg: moonLatDeg,
+        sublunarLonDeg: moonLonDeg,
+        lunarIlluminatedFraction: phase.illuminatedFraction,
       };
       return {
         visible: true,

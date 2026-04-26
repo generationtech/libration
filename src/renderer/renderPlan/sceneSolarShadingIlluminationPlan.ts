@@ -28,6 +28,9 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   viewportHeightPx: number;
   subsolarLatDeg: number;
   subsolarLonDeg: number;
+  sublunarLatDeg: number;
+  sublunarLonDeg: number;
+  lunarIlluminatedFraction: number;
   layerOpacity: number;
 }): RenderPlan {
   const w = options.viewportWidthPx;
@@ -40,6 +43,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   const lonS = (options.subsolarLonDeg * Math.PI) / 180;
   const cosLatS = Math.cos(latS);
   const sinLatS = Math.sin(latS);
+  const latM = (options.sublunarLatDeg * Math.PI) / 180;
+  const lonM = (options.sublunarLonDeg * Math.PI) / 180;
+  const cosLatM = Math.cos(latM);
+  const sinLatM = Math.sin(latM);
 
   const sw = Math.max(1, Math.ceil(w / SOLAR_SHADING_PLAN_DOWNSAMPLE));
   const sh = Math.max(1, Math.ceil(h / SOLAR_SHADING_PLAN_DOWNSAMPLE));
@@ -55,8 +62,12 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
     for (let i = 0; i < sw; i++) {
       const lonDeg = longitudeDegFromMapX(i + 0.5, sw);
       const lam = (lonDeg * Math.PI) / 180;
-      const dot = cosPhi * cosLatS * Math.cos(lam - lonS) + sinPhi * sinLatS;
-      const { r, g, b, a } = sampleIlluminationRgba8(dot, op);
+      const solarDot = cosPhi * cosLatS * Math.cos(lam - lonS) + sinPhi * sinLatS;
+      const lunarDot = cosPhi * cosLatM * Math.cos(lam - lonM) + sinPhi * sinLatM;
+      const { r, g, b, a } = sampleIlluminationRgba8(solarDot, op, {
+        lunarDot,
+        lunarIlluminatedFraction: options.lunarIlluminatedFraction,
+      });
       rgba[p++] = r;
       rgba[p++] = g;
       rgba[p++] = b;

@@ -21,6 +21,9 @@ export interface SolarShadingPayload {
   kind: typeof SOLAR_SHADING_KIND;
   subsolarLatDeg: number;
   subsolarLonDeg: number;
+  sublunarLatDeg: number;
+  sublunarLonDeg: number;
+  lunarIlluminatedFraction: number;
 }
 
 export function isSolarShadingPayload(data: unknown): data is SolarShadingPayload {
@@ -29,6 +32,9 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
   return (
     o.kind === SOLAR_SHADING_KIND &&
     typeof o.subsolarLatDeg === "number" &&
-    typeof o.subsolarLonDeg === "number"
+    typeof o.subsolarLonDeg === "number" &&
+    typeof o.sublunarLatDeg === "number" &&
+    typeof o.sublunarLonDeg === "number" &&
+    typeof o.lunarIlluminatedFraction === "number"
   );
 }
