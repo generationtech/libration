@@ -46,7 +46,7 @@ const C_CIVIL_END = { r: 22, g: 30, b: 44 } as const;
 const C_NAUT = { r: 14, g: 22, b: 34 } as const;
 const C_ASTRO = { r: 8, g: 12, b: 22 } as const;
 const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
-const C_MOONLIGHT_NIGHT = { r: 12, g: 18, b: 30 } as const;
+const C_MOONLIGHT_NIGHT = { r: 42, g: 52, b: 70 } as const;
 
 /**
  * Standard twilight thresholds remain semantic reference anchors for the continuous field.
@@ -68,8 +68,8 @@ const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
 export const TWILIGHT_R = C_HORIZON.r;
 export const TWILIGHT_G = C_HORIZON.g;
 export const TWILIGHT_B = C_HORIZON.b;
-export const MOONLIGHT_MAX_LIFT = 0.14;
-export const MOONLIGHT_COLOR_BLEND_MAX = 0.16;
+export const MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX = 0.08;
+export const MOONLIGHT_SECONDARY_COLOR_BLEND_MAX = 0.35;
 
 export function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
@@ -219,15 +219,17 @@ export function sampleIlluminationRgba8(
         surfaceMoonDot: Math.max(0, Math.min(1, moonlight.lunarDot)),
       })
     : 0;
-  const lunarLift = lunarStrengthRaw * MOONLIGHT_MAX_LIFT;
-  const darknessAlpha = nightMaskStrength(altDeg) * NIGHT_DARKEN * op;
+  const nightStrength = nightMaskStrength(altDeg);
+  const darknessAlpha = nightStrength * NIGHT_DARKEN * op;
   const tintStrength = atmosphericTintStrength(altDeg);
-  const combinedAlpha = darknessAlpha * (1 - lunarLift);
+  const moonSecondaryStrength = lunarStrengthRaw * smoothstep(0.6, 1, nightStrength);
+  const alphaRelief = darknessAlpha * moonSecondaryStrength * MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX;
+  const combinedAlpha = Math.max(0, darknessAlpha - alphaRelief);
 
   if (combinedAlpha > 0) {
     const twilightTint = continuousTwilightOverlayRgb(altDeg);
     const attenuationColor = lerpColor(C_NIGHT, twilightTint, tintStrength);
-    const moonColorBlend = lunarStrengthRaw * MOONLIGHT_COLOR_BLEND_MAX;
+    const moonColorBlend = moonSecondaryStrength * MOONLIGHT_SECONDARY_COLOR_BLEND_MAX;
     const attenuationWithMoonlight = lerpColor(attenuationColor, C_MOONLIGHT_NIGHT, moonColorBlend);
     r = attenuationWithMoonlight.r;
     g = attenuationWithMoonlight.g;

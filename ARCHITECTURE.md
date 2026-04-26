@@ -226,7 +226,7 @@ Stable enough for feature-forward work:
 - static overlays.
 - derived solar analemma overlay.
 - solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer and the backend only executes the resulting rasterPatch without twilight-specific semantics.
-- restrained lunar night-lift: moon phase and lunar altitude now contribute a small, capped moonlight lift inside the same upstream planetary illumination raster, with no backend moonlight semantics or additional render-layer kind.
+- restrained lunar secondary illumination: moon phase, lunar altitude, and surface incidence now contribute a bounded, cool directional night-side illumination term inside the same upstream planetary illumination raster, with no backend moonlight semantics or additional render-layer kind.
 - twilight composition is physically-inspired and non-emissive: twilight modulates attenuation and atmospheric tint rather than behaving as an additive glow layer.
 - polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.

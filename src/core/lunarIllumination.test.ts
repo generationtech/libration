@@ -79,7 +79,7 @@ describe("moonlightStrength", () => {
 
     expect(fullMoonHighNight).toBeLessThan(1);
     expect(fullMoonHighNight).toBeGreaterThan(0.6);
-    expect(fullMoonLowIncidenceNight).toBeLessThan(fullMoonHighNight * 0.02);
+    expect(fullMoonLowIncidenceNight).toBeLessThan(fullMoonHighNight * 0.08);
     expect(newMoonHighNight).toBeLessThan(0.01);
     expect(fullMoonBelowHorizon).toBe(0);
     expect(fullMoonDaylight).toBe(0);
@@ -87,10 +87,10 @@ describe("moonlightStrength", () => {
 });
 
 describe("moonIncidenceStrength", () => {
-  it("focuses strongly near the sublunar region", () => {
+  it("keeps a strong peak near sublunar with restrained broad spill", () => {
     expect(moonIncidenceStrength(-0.5)).toBe(0);
     expect(moonIncidenceStrength(0)).toBe(0);
-    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.01);
+    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.05);
     expect(moonIncidenceStrength(0.6)).toBeGreaterThan(0.1);
     expect(moonIncidenceStrength(1)).toBe(1);
   });

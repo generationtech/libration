@@ -25,7 +25,8 @@ export interface MoonlightStrengthInputs {
 export const MOONLIGHT_ALTITUDE_FULL_STRENGTH_DEG = 30;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -12;
-export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 3;
+export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 2.2;
+export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.3;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -55,12 +56,14 @@ export function moonAltitudeStrength(lunarAltitudeDeg: number): number {
 }
 
 /**
- * Local incidence weighting (surface normal · moon direction), strongly focused
- * around high lunar altitude to avoid broad hemispheric night lift.
+ * Local incidence weighting (surface normal · moon direction).
+ * Keeps a directional lobe centered near the sublunar region while allowing
+ * restrained broad spill so moonlight reads as a soft field rather than a pin spot.
  */
 export function moonIncidenceStrength(surfaceMoonDot: number): number {
   const incidence = smoothstep(0, 1, clamp01(surfaceMoonDot));
-  return Math.pow(incidence, MOONLIGHT_INCIDENCE_FOCUS_POWER);
+  const focused = Math.pow(incidence, MOONLIGHT_INCIDENCE_FOCUS_POWER);
+  return clamp01(MOONLIGHT_INCIDENCE_BROAD_WEIGHT * incidence + (1 - MOONLIGHT_INCIDENCE_BROAD_WEIGHT) * focused);
 }
 
 /**
