@@ -19,6 +19,7 @@ import {
   smootherstep,
   smoothstep,
   TWILIGHT_BAND_BLEND_OVERLAP_DEG,
+  TWILIGHT_HORIZON_NOTCH_WIDTH_DEG,
 } from "./illuminationShading";
 import { classifyTwilightBand, solarAltitudeDegFromSurfaceSunDotProduct } from "../core/solarTwilight";
 
@@ -60,6 +61,13 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const horizon = sampleIlluminationRgba8(0, 1);
     expect(horizon.a).toBeGreaterThan(0);
     expect(horizon.a).toBeLessThan(Math.round(NIGHT_DARKEN * 255));
+  });
+
+  it("avoids a narrow brightness spike exactly at the horizon", () => {
+    const atHorizon = sampleIlluminationRgba8(dotFromAltitudeDeg(0), 1).a;
+    const nearHorizonDay = sampleIlluminationRgba8(dotFromAltitudeDeg(TWILIGHT_HORIZON_NOTCH_WIDTH_DEG), 1).a;
+    const nearHorizonNight = sampleIlluminationRgba8(dotFromAltitudeDeg(-TWILIGHT_HORIZON_NOTCH_WIDTH_DEG), 1).a;
+    expect(atHorizon).toBeLessThanOrEqual(Math.max(nearHorizonDay, nearHorizonNight));
   });
 
   it("ramps to full night darken in deep night (arbitrary sub-horizon dot)", () => {
@@ -112,5 +120,13 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(justBeforeNight.r + justBeforeNight.g + justBeforeNight.b).toBeGreaterThan(0);
     expect(atNight.r + atNight.g + atNight.b).toBe(0);
     expect(atNight.a).toBeGreaterThanOrEqual(justBeforeNight.a);
+  });
+
+  it("fades day-side atmospheric glow monotonically away from the horizon", () => {
+    const lowDay = sampleIlluminationRgba8(dotFromAltitudeDeg(1), 1).a;
+    const midDay = sampleIlluminationRgba8(dotFromAltitudeDeg(4), 1).a;
+    const highDay = sampleIlluminationRgba8(dotFromAltitudeDeg(7), 1).a;
+    expect(lowDay).toBeGreaterThanOrEqual(midDay);
+    expect(midDay).toBeGreaterThanOrEqual(highDay);
   });
 });

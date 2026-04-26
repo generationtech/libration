@@ -59,6 +59,10 @@ export const TWILIGHT_BAND_BLEND_OVERLAP_DEG = 3.5;
 
 /** Atmospheric tint weight peaks around the horizon and fades through deep twilight. */
 export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.24;
+/** Reduce exact-horizon ridge brightness to avoid pillar-like shafts in projection. */
+export const TWILIGHT_HORIZON_NOTCH_MIN = 0.72;
+/** Width of the anti-pillar horizon notch (degrees from the horizon). */
+export const TWILIGHT_HORIZON_NOTCH_WIDTH_DEG = 1.4;
 
 /** Near-terminator tint (legacy name; civil band start). */
 export const TWILIGHT_R = C_HORIZON.r;
@@ -167,17 +171,22 @@ function twilightBandOverlayRgb(altitudeDeg: number): { r: number; g: number; b:
 }
 
 function atmosphericGlowStrength(altitudeDeg: number): number {
-  if (altitudeDeg >= DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG) {
+  const absAltitude = Math.abs(altitudeDeg);
+  if (absAltitude >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
     return 0;
   }
-  if (altitudeDeg > 0) {
-    return DAY_TWILIGHT_MAX_ALPHA * smootherstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg);
-  }
-  const below = -altitudeDeg;
-  if (below >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
-    return 0;
-  }
-  return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * (1 - smootherstep(0, ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG, below));
+
+  // Use local solar altitude distance from the horizon on both sides of the terminator.
+  // A small notch at the exact horizon removes the razor-bright ridge that can project
+  // as vertical shafts in equirectangular views while keeping broad twilight shoulders visible.
+  const twilightEnvelope =
+    1 - smootherstep(0, ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG, absAltitude);
+  const daySideRollOff =
+    altitudeDeg > 0 ? smootherstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg) : 1;
+  const horizonNotch =
+    TWILIGHT_HORIZON_NOTCH_MIN +
+    (1 - TWILIGHT_HORIZON_NOTCH_MIN) * smootherstep(0, TWILIGHT_HORIZON_NOTCH_WIDTH_DEG, absAltitude);
+  return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * twilightEnvelope * daySideRollOff * horizonNotch;
 }
 
 /**
@@ -217,9 +226,7 @@ export function sampleIlluminationRgba8(dot: number, layerOpacity: number): Illu
   const below = -altDeg;
   const darknessAlpha = d <= 0 ? subHorizonMaskStrength(below) * NIGHT_DARKEN * op : 0;
   const glowAlpha = atmosphericGlowStrength(altDeg) * op;
-  const dayBranchAlpha =
-    d > 0 && d < DAY_TWILIGHT_DOT ? smootherstep(DAY_TWILIGHT_DOT, 0, d) * DAY_TWILIGHT_MAX_ALPHA * op : 0;
-  const atmosphericAlpha = Math.max(glowAlpha, dayBranchAlpha);
+  const atmosphericAlpha = glowAlpha;
   const combinedAlpha = 1 - (1 - darknessAlpha) * (1 - atmosphericAlpha);
 
   if (combinedAlpha > 0) {
