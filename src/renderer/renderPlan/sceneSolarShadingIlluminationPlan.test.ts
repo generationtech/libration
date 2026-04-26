@@ -16,8 +16,43 @@ import {
   buildSolarShadingIlluminationRenderPlan,
   SOLAR_SHADING_PLAN_DOWNSAMPLE,
 } from "./sceneSolarShadingIlluminationPlan";
+import { sampleIlluminationRgba8 } from "../illuminationShading";
+import { approximateLunarPhase } from "../../core/lunarPhase";
+import { moonlightNightEligibilityFromSolarAltitude } from "../../core/lunarIllumination";
+import { sublunarPoint } from "../../core/sublunarPoint";
+import { subsolarPoint } from "../../core/subsolarPoint";
+import { solarAltitudeDegFromSurfaceSunDotProduct } from "../../core/solarTwilight";
 
 describe("buildSolarShadingIlluminationRenderPlan", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+
+  function surfaceDotToSubpoint(
+    surfaceLatDeg: number,
+    surfaceLonDeg: number,
+    bodySubpointLatDeg: number,
+    bodySubpointLonDeg: number,
+  ): number {
+    const phi = (surfaceLatDeg * Math.PI) / 180;
+    const lam = (surfaceLonDeg * Math.PI) / 180;
+    const bodyPhi = (bodySubpointLatDeg * Math.PI) / 180;
+    const bodyLam = (bodySubpointLonDeg * Math.PI) / 180;
+    return (
+      Math.cos(phi) * Math.cos(bodyPhi) * Math.cos(lam - bodyLam) +
+      Math.sin(phi) * Math.sin(bodyPhi)
+    );
+  }
+
+  function compositeChannel(dst: number, src: number, alpha8: number): number {
+    const alpha = alpha8 / 255;
+    return src * alpha + dst * (1 - alpha);
+  }
+
+  function luminance(rgb: { r: number; g: number; b: number }): number {
+    return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+  }
+
   it("emits no items when the viewport has non-positive size", () => {
     expect(buildSolarShadingIlluminationRenderPlan({
       viewportWidthPx: 0,
@@ -115,5 +150,169 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     const midJ = Math.floor(sh / 2);
     const p = (midJ * sw + midI) * 4 + 3;
     expect(item.rgba[p]).toBe(0);
+  });
+
+  it("diagnoses moonlight contribution gates across fixed scenarios", () => {
+    const scenarios = [
+      {
+        name: "full moon, moon high overhead, deep night",
+        solarAltitudeDeg: -30,
+        lunarDot: dotFromAltitudeDeg(70),
+        lunarIlluminatedFraction: 1,
+        minAlphaDelta: 10,
+      },
+      {
+        name: "waxing gibbous, moon high overhead, deep night",
+        solarAltitudeDeg: -30,
+        lunarDot: dotFromAltitudeDeg(70),
+        lunarIlluminatedFraction: 0.9,
+        minAlphaDelta: 9,
+      },
+      {
+        name: "waxing gibbous, moon low altitude, deep night",
+        solarAltitudeDeg: -30,
+        lunarDot: dotFromAltitudeDeg(5),
+        lunarIlluminatedFraction: 0.9,
+        maxAlphaDelta: 1,
+      },
+      {
+        name: "moon below horizon",
+        solarAltitudeDeg: -30,
+        lunarDot: dotFromAltitudeDeg(-5),
+        lunarIlluminatedFraction: 0.9,
+        exactAlphaDelta: 0,
+      },
+      {
+        name: "daylight",
+        solarAltitudeDeg: 8,
+        lunarDot: dotFromAltitudeDeg(70),
+        lunarIlluminatedFraction: 0.9,
+        exactAlphaDelta: 0,
+      },
+      {
+        name: "early twilight",
+        solarAltitudeDeg: -3,
+        lunarDot: dotFromAltitudeDeg(70),
+        lunarIlluminatedFraction: 0.9,
+        exactAlphaDelta: 0,
+      },
+    ] as const;
+
+    for (const scenario of scenarios) {
+      const solarDot = dotFromAltitudeDeg(scenario.solarAltitudeDeg);
+      const baseline = sampleIlluminationRgba8(solarDot, 1);
+      const withMoonlight = sampleIlluminationRgba8(solarDot, 1, {
+        lunarDot: scenario.lunarDot,
+        lunarIlluminatedFraction: scenario.lunarIlluminatedFraction,
+      });
+      const alphaDelta = baseline.a - withMoonlight.a;
+      if ("exactAlphaDelta" in scenario) {
+        expect(alphaDelta, scenario.name).toBe(scenario.exactAlphaDelta);
+      }
+      if ("minAlphaDelta" in scenario) {
+        expect(alphaDelta, scenario.name).toBeGreaterThanOrEqual(scenario.minAlphaDelta);
+      }
+      if ("maxAlphaDelta" in scenario) {
+        expect(alphaDelta, scenario.name).toBeLessThanOrEqual(scenario.maxAlphaDelta);
+      }
+    }
+  });
+
+  it("captures April 25 2026 representative frame diagnostics at sublunar point and Knoxville", () => {
+    const demoTimestamp = Date.parse("2026-04-25T03:00:00Z");
+    const phase = approximateLunarPhase(demoTimestamp);
+    const sublunar = sublunarPoint(demoTimestamp);
+    const subsolar = subsolarPoint(demoTimestamp);
+    const knoxville = { latDeg: 35.9606, lonDeg: -83.9207 };
+    const darkSubstrate = { r: 14, g: 26, b: 44 };
+
+    const solarDotAtSublunar = surfaceDotToSubpoint(
+      sublunar.latDeg,
+      sublunar.lonDeg,
+      subsolar.latDeg,
+      subsolar.lonDeg,
+    );
+    const lunarDotAtSublunar = surfaceDotToSubpoint(
+      sublunar.latDeg,
+      sublunar.lonDeg,
+      sublunar.latDeg,
+      sublunar.lonDeg,
+    );
+    const solarDotAtKnoxville = surfaceDotToSubpoint(
+      knoxville.latDeg,
+      knoxville.lonDeg,
+      subsolar.latDeg,
+      subsolar.lonDeg,
+    );
+    const lunarDotAtKnoxville = surfaceDotToSubpoint(
+      knoxville.latDeg,
+      knoxville.lonDeg,
+      sublunar.latDeg,
+      sublunar.lonDeg,
+    );
+
+    const solarAltitudeAtSublunar = solarAltitudeDegFromSurfaceSunDotProduct(solarDotAtSublunar);
+    const solarAltitudeAtKnoxville = solarAltitudeDegFromSurfaceSunDotProduct(solarDotAtKnoxville);
+    const nightEligibilityAtSublunar = moonlightNightEligibilityFromSolarAltitude(solarAltitudeAtSublunar);
+    const nightEligibilityAtKnoxville = moonlightNightEligibilityFromSolarAltitude(solarAltitudeAtKnoxville);
+
+    const baselineAtSublunar = sampleIlluminationRgba8(solarDotAtSublunar, 1);
+    const moonlitAtSublunar = sampleIlluminationRgba8(solarDotAtSublunar, 1, {
+      lunarDot: lunarDotAtSublunar,
+      lunarIlluminatedFraction: phase.illuminatedFraction,
+    });
+    const baselineAtKnoxville = sampleIlluminationRgba8(solarDotAtKnoxville, 1);
+    const moonlitAtKnoxville = sampleIlluminationRgba8(solarDotAtKnoxville, 1, {
+      lunarDot: lunarDotAtKnoxville,
+      lunarIlluminatedFraction: phase.illuminatedFraction,
+    });
+
+    const alphaDeltaAtSublunar = baselineAtSublunar.a - moonlitAtSublunar.a;
+    const alphaDeltaAtKnoxville = baselineAtKnoxville.a - moonlitAtKnoxville.a;
+    const baselineCompositeAtSublunar = {
+      r: compositeChannel(darkSubstrate.r, baselineAtSublunar.r, baselineAtSublunar.a),
+      g: compositeChannel(darkSubstrate.g, baselineAtSublunar.g, baselineAtSublunar.a),
+      b: compositeChannel(darkSubstrate.b, baselineAtSublunar.b, baselineAtSublunar.a),
+    };
+    const moonlitCompositeAtSublunar = {
+      r: compositeChannel(darkSubstrate.r, moonlitAtSublunar.r, moonlitAtSublunar.a),
+      g: compositeChannel(darkSubstrate.g, moonlitAtSublunar.g, moonlitAtSublunar.a),
+      b: compositeChannel(darkSubstrate.b, moonlitAtSublunar.b, moonlitAtSublunar.a),
+    };
+    const baselineCompositeAtKnoxville = {
+      r: compositeChannel(darkSubstrate.r, baselineAtKnoxville.r, baselineAtKnoxville.a),
+      g: compositeChannel(darkSubstrate.g, baselineAtKnoxville.g, baselineAtKnoxville.a),
+      b: compositeChannel(darkSubstrate.b, baselineAtKnoxville.b, baselineAtKnoxville.a),
+    };
+    const moonlitCompositeAtKnoxville = {
+      r: compositeChannel(darkSubstrate.r, moonlitAtKnoxville.r, moonlitAtKnoxville.a),
+      g: compositeChannel(darkSubstrate.g, moonlitAtKnoxville.g, moonlitAtKnoxville.a),
+      b: compositeChannel(darkSubstrate.b, moonlitAtKnoxville.b, moonlitAtKnoxville.a),
+    };
+    const luminanceDeltaAtSublunar =
+      luminance(moonlitCompositeAtSublunar) - luminance(baselineCompositeAtSublunar);
+    const luminanceDeltaAtKnoxville =
+      luminance(moonlitCompositeAtKnoxville) - luminance(baselineCompositeAtKnoxville);
+
+    expect(phase.illuminatedFraction).toBeGreaterThan(0.6);
+    expect(phase.illuminatedFraction).toBeLessThan(0.62);
+    expect(sublunar.latDeg).toBeGreaterThan(16);
+    expect(sublunar.latDeg).toBeLessThan(18.5);
+    expect(sublunar.lonDeg).toBeGreaterThan(-119);
+    expect(sublunar.lonDeg).toBeLessThan(-116);
+
+    expect(lunarDotAtSublunar).toBeCloseTo(1, 6);
+    expect(lunarDotAtKnoxville).toBeGreaterThan(0.8);
+    expect(solarAltitudeAtSublunar).toBeLessThan(-12);
+    expect(solarAltitudeAtKnoxville).toBeLessThan(-20);
+    expect(nightEligibilityAtSublunar).toBe(1);
+    expect(nightEligibilityAtKnoxville).toBe(1);
+
+    expect(alphaDeltaAtSublunar).toBe(4);
+    expect(alphaDeltaAtKnoxville).toBe(4);
+    expect(luminanceDeltaAtSublunar).toBeGreaterThan(3.5);
+    expect(luminanceDeltaAtSublunar).toBeLessThan(3.7);
+    expect(luminanceDeltaAtKnoxville).toBeGreaterThan(3.2);
+    expect(luminanceDeltaAtKnoxville).toBeLessThan(3.5);
   });
 });
