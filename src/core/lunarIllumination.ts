@@ -27,6 +27,7 @@ export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -14;
 export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 1.8;
 export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.55;
+export const MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER = 0.92;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -63,8 +64,12 @@ export function moonAltitudeStrength(lunarAltitudeDeg: number): number {
  */
 export function moonIncidenceStrength(surfaceMoonDot: number): number {
   const incidence = smoothstep(0, 1, clamp01(surfaceMoonDot));
+  const softenedBroad = Math.pow(incidence, MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER);
   const focused = Math.pow(incidence, MOONLIGHT_INCIDENCE_FOCUS_POWER);
-  return clamp01(MOONLIGHT_INCIDENCE_BROAD_WEIGHT * incidence + (1 - MOONLIGHT_INCIDENCE_BROAD_WEIGHT) * focused);
+  return clamp01(
+    MOONLIGHT_INCIDENCE_BROAD_WEIGHT * softenedBroad +
+      (1 - MOONLIGHT_INCIDENCE_BROAD_WEIGHT) * focused,
+  );
 }
 
 /**
