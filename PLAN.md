@@ -64,7 +64,7 @@ Current implemented foundation:
 
 Candidate work:
 
-- twilight bands (first slice: pure solar altitude classification + `RenderPlan` raster; done).
+- twilight in the solar shading pass: solar-altitude band classification in the upstream illumination raster, emitted as a single `rasterPatch` (not a separate twilight layer; done).
 - atmospheric transition rendering.
 - composition-aware day/night illumination.
 - emissive night-light blending strategy.

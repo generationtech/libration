@@ -225,7 +225,7 @@ Stable enough for feature-forward work:
 - static and month-aware base maps.
 - static overlays.
 - derived solar analemma overlay.
-- solar shading with twilight band sampling in the upstream illumination raster.
+- solar shading: civil, nautical, and astronomical twilight is encoded in the same upstream illumination raster as day/night, not a separate user-facing twilight layer; the backend only blits that raster and does not implement twilight logic.
 - map presentation controls.
 - map onboarding tooling.
 

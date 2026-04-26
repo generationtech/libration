@@ -145,7 +145,7 @@ Delivered:
 - subsolar marker.
 - sublunar marker.
 - solar shading / dark-side visualization.
-- solar twilight band transitions (civil, nautical, astronomical) driven by surface solar altitude on the same shading pass.
+- twilight band transitions (civil, nautical, astronomical) driven by surface solar altitude, encoded in the same solar shading illumination raster as day/night (not a separate user-facing twilight layer).
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
