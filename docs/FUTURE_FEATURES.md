@@ -31,7 +31,7 @@ Future map and scene UX work should extend these foundations rather than replaci
 
 The current scene system already includes:
 
-- solar shading / dark-side visualization with twilight band transitions in the same illumination raster (not a separate user-facing twilight layer; backend execution is still a plain raster blit).
+- solar shading / dark-side visualization with a continuous twilight gradient field in the same illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution is still a plain raster blit).
 - subsolar marker.
 - sublunar marker.
 - solar analemma overlay.
@@ -101,7 +101,7 @@ Future work should extend these systems into a more coherent atmospheric and com
 
 ### Derived overlays
 
-- solar shading / dark-side visualization (civil, nautical, and astronomical twilight encoded in the same upstream illumination raster, not a separate twilight layer).
+- solar shading / dark-side visualization (continuous solar-altitude twilight gradient encoded in the same upstream illumination raster, with civil/nautical/astronomical thresholds retained as semantic anchors, not a separate twilight layer).
 - solar subpoint.
 - lunar subpoint.
 - moon phase and ground track.

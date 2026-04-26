@@ -29,19 +29,14 @@ import {
 export const NIGHT_DARKEN = 0.62;
 
 /**
- * Obsolete: retained for early exit on the high day side. Altitude & band logic handle the limb.
- * @deprecated Kept in exports for test compatibility; still used as a day-veil threshold in dot space.
+ * Altitude where the day-side shading veil should be fully clear.
  */
-export const NIGHT_RAMP_WIDTH = 0.3;
+export const DAYLIGHT_CLEAR_ALTITUDE_DEG = 8;
 
 /**
- * Pre-terminator band: subtle veil while the sun is still low on the day side. Keeps map detail readable.
+ * Altitude where deep-night treatment reaches its settled black/dark state.
  */
-export const DAY_TWILIGHT_DOT = 0.2;
-export const DAY_TWILIGHT_MAX_ALPHA = 0.16;
-
-/** Day-side atmospheric carry of twilight glow (degrees above horizon). */
-export const DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG = 8;
+export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = -24;
 
 /** Per-band overlay tints (restrained, instrument-like). */
 const C_DAY_GLOW = { r: 92, g: 72, b: 52 } as const;
@@ -52,17 +47,20 @@ const C_ASTRO = { r: 18, g: 28, b: 64 } as const;
 const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
 
 /**
- * Blend overlap around twilight thresholds to reduce visible segmentation at
- * civil/nautical/astronomical boundaries.
+ * Standard twilight thresholds remain semantic reference anchors for the continuous field.
  */
-export const TWILIGHT_BAND_BLEND_OVERLAP_DEG = 3.5;
+const TWILIGHT_REFERENCE_ALTITUDES_DEG = {
+  dayClear: DAYLIGHT_CLEAR_ALTITUDE_DEG,
+  horizon: 0,
+  civil: -CIVIL_TWILIGHT_HORIZON_OFFSET_DEG,
+  nautical: -NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG,
+  astronomical: -ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG,
+  deepNight: DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
+} as const;
 
 /** Atmospheric tint weight peaks around the horizon and fades through deep twilight. */
-export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.24;
-/** Reduce exact-horizon ridge brightness to avoid pillar-like shafts in projection. */
-export const TWILIGHT_HORIZON_NOTCH_MIN = 0.72;
-/** Width of the anti-pillar horizon notch (degrees from the horizon). */
-export const TWILIGHT_HORIZON_NOTCH_WIDTH_DEG = 1.4;
+export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.22;
+const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
 
 /** Near-terminator tint (legacy name; civil band start). */
 export const TWILIGHT_R = C_HORIZON.r;
@@ -95,112 +93,90 @@ function lerpColor(
   };
 }
 
+function gaussianWeight(value: number, center: number, sigma: number): number {
+  const d = (value - center) / sigma;
+  return Math.exp(-0.5 * d * d);
+}
+
 /**
- * Sub-horizon overlay RGB (0–255). Smooth across civil / nautical / astronomical, then to black
- * in deep night (solar altitude below about −18°).
+ * Continuous overlay RGB field (0–255) driven directly by solar altitude.
+ * Twilight thresholds are anchor points, not rendered boundaries.
  */
-function twilightBandOverlayRgb(altitudeDeg: number): { r: number; g: number; b: number } {
-  if (altitudeDeg > 0) {
-    if (altitudeDeg >= DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG) {
-      return C_NIGHT;
-    }
-    return lerpColor(
-      C_HORIZON,
-      C_DAY_GLOW,
-      smoothstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg),
-    );
+function continuousTwilightOverlayRgb(altitudeDeg: number): { r: number; g: number; b: number } {
+  if (altitudeDeg >= TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear) {
+    return C_DAY_GLOW;
   }
-  const below = -altitudeDeg;
-  if (below >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
+  if (altitudeDeg <= TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight) {
     return C_NIGHT;
   }
 
-  const civilColor = lerpColor(
-    C_HORIZON,
-    C_CIVIL_END,
-    smoothstep(0, CIVIL_TWILIGHT_HORIZON_OFFSET_DEG, below),
-  );
-  const nauticalColor = lerpColor(
-    C_CIVIL_END,
-    C_NAUT,
-    smoothstep(CIVIL_TWILIGHT_HORIZON_OFFSET_DEG, NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG, below),
-  );
-  const astronomicalColor = lerpColor(
-    C_NAUT,
-    C_ASTRO,
-    smoothstep(
-      NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG,
-      ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG,
-      below,
-    ),
-  );
+  const anchors = [
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear, color: C_DAY_GLOW },
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.horizon, color: C_HORIZON },
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.civil, color: C_CIVIL_END },
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.nautical, color: C_NAUT },
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.astronomical, color: C_ASTRO },
+    { altitudeDeg: TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight, color: C_NIGHT },
+  ] as const;
 
-  const overlap = TWILIGHT_BAND_BLEND_OVERLAP_DEG;
-  const civilEdge = CIVIL_TWILIGHT_HORIZON_OFFSET_DEG;
-  const nauticalEdge = NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG;
-  const astroEdge = ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG;
-
-  if (below < civilEdge - overlap) {
-    return civilColor;
+  let weightSum = 0;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  for (const anchor of anchors) {
+    const w = gaussianWeight(altitudeDeg, anchor.altitudeDeg, TWILIGHT_COLOR_SIGMA_DEG);
+    weightSum += w;
+    r += anchor.color.r * w;
+    g += anchor.color.g * w;
+    b += anchor.color.b * w;
   }
-  if (below <= civilEdge + overlap) {
-    return lerpColor(
-      civilColor,
-      nauticalColor,
-      smoothstep(civilEdge - overlap, civilEdge + overlap, below),
-    );
+  if (weightSum <= 0) {
+    return C_NIGHT;
   }
-  if (below < nauticalEdge - overlap) {
-    return nauticalColor;
-  }
-  if (below <= nauticalEdge + overlap) {
-    return lerpColor(
-      nauticalColor,
-      astronomicalColor,
-      smoothstep(nauticalEdge - overlap, nauticalEdge + overlap, below),
-    );
-  }
-  if (below < astroEdge - overlap) {
-    return astronomicalColor;
-  }
-  return lerpColor(
-    astronomicalColor,
-    C_NIGHT,
-    smoothstep(astroEdge - overlap, astroEdge, below),
-  );
+  return { r: r / weightSum, g: g / weightSum, b: b / weightSum };
 }
 
 function atmosphericGlowStrength(altitudeDeg: number): number {
-  const absAltitude = Math.abs(altitudeDeg);
-  if (absAltitude >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
+  if (
+    altitudeDeg >= TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear ||
+    altitudeDeg <= TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight
+  ) {
     return 0;
   }
 
-  // Use local solar altitude distance from the horizon on both sides of the terminator.
-  // A small notch at the exact horizon removes the razor-bright ridge that can project
-  // as vertical shafts in equirectangular views while keeping broad twilight shoulders visible.
-  const twilightEnvelope =
-    1 - smootherstep(0, ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG, absAltitude);
-  const daySideRollOff =
-    altitudeDeg > 0 ? smootherstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg) : 1;
-  const horizonNotch =
-    TWILIGHT_HORIZON_NOTCH_MIN +
-    (1 - TWILIGHT_HORIZON_NOTCH_MIN) * smootherstep(0, TWILIGHT_HORIZON_NOTCH_WIDTH_DEG, absAltitude);
-  return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * twilightEnvelope * daySideRollOff * horizonNotch;
+  const horizonEnvelope =
+    1 -
+    smootherstep(
+      0,
+      Math.abs(TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight),
+      Math.abs(altitudeDeg),
+    );
+  const dayFadeIn =
+    altitudeDeg > 0
+      ? 1 - smootherstep(0, TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear, altitudeDeg)
+      : 1;
+  const deepNightFadeIn =
+    altitudeDeg < TWILIGHT_REFERENCE_ALTITUDES_DEG.astronomical
+      ? 1 -
+        smootherstep(
+          TWILIGHT_REFERENCE_ALTITUDES_DEG.astronomical,
+          TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight,
+          altitudeDeg,
+        )
+      : 1;
+  return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * horizonEnvelope * dayFadeIn * deepNightFadeIn;
 }
 
 /**
- * How far through twilight to full “night” mask, for alpha (0 = on horizon, 1 = at/after end of
- * astronomical twilight).
+ * Continuous darkening ramp driven by solar altitude:
+ * clear day above +8°, full darken by −24°.
  */
-function subHorizonMaskStrength(belowHorizonDeg: number): number {
-  if (belowHorizonDeg <= 0) {
-    return 0;
-  }
-  if (belowHorizonDeg >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
-    return 1;
-  }
-  return smootherstep(0, ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG, belowHorizonDeg);
+function nightMaskStrength(altitudeDeg: number): number {
+  return smootherstep(
+    TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear,
+    TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight,
+    altitudeDeg,
+  );
 }
 
 export interface IlluminationRgba8 {
@@ -223,14 +199,13 @@ export function sampleIlluminationRgba8(dot: number, layerOpacity: number): Illu
 
   const d = Math.max(-1, Math.min(1, dot));
   const altDeg = solarAltitudeDegFromSurfaceSunDotProduct(d);
-  const below = -altDeg;
-  const darknessAlpha = d <= 0 ? subHorizonMaskStrength(below) * NIGHT_DARKEN * op : 0;
+  const darknessAlpha = nightMaskStrength(altDeg) * NIGHT_DARKEN * op;
   const glowAlpha = atmosphericGlowStrength(altDeg) * op;
   const atmosphericAlpha = glowAlpha;
   const combinedAlpha = 1 - (1 - darknessAlpha) * (1 - atmosphericAlpha);
 
   if (combinedAlpha > 0) {
-    const { r: rr, g: gg, b: bb } = twilightBandOverlayRgb(altDeg);
+    const { r: rr, g: gg, b: bb } = continuousTwilightOverlayRgb(altDeg);
     r = rr;
     g = gg;
     b = bb;

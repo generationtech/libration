@@ -64,7 +64,7 @@ Current implemented foundation:
 
 Candidate work:
 
-- twilight in the solar shading pass: solar-altitude band classification in the upstream illumination raster, emitted as a single `rasterPatch` (not a separate twilight layer; done).
+- twilight in the solar shading pass: continuous solar-altitude gradient modeling in the upstream illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors), emitted as a single `rasterPatch` (not a separate twilight layer; done).
 - atmospheric transition rendering.
 - composition-aware day/night illumination.
 - emissive night-light blending strategy.

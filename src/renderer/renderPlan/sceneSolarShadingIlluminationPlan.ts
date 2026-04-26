@@ -20,7 +20,7 @@ export const SOLAR_SHADING_PLAN_DOWNSAMPLE = 2;
 
 /**
  * Builds the solar illumination / night-side mask for the equirectangular scene strip
- * (day/night plus smooth civil, nautical, and astronomical twilight bands in {@link sampleIlluminationRgba8}).
+ * (day/night plus a continuous solar-altitude twilight gradient field in {@link sampleIlluminationRgba8}).
  * Twilight is not a separate layer or `RenderPlan` kind; the canvas executor only blits one {@link rasterPatch}.
  */
 export function buildSolarShadingIlluminationRenderPlan(options: {
