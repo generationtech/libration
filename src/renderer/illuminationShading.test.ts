@@ -52,7 +52,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
   }
 
-  it("is fully transparent on the high day side above +8 deg", () => {
+  it("is fully transparent on the high day side above +4 deg", () => {
     expect(sampleIlluminationRgba8(1, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
     expect(sampleIlluminationRgba8(0.5, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
     expect(sampleIlluminationRgba8(dotFromAltitudeDeg(DAYLIGHT_CLEAR_ALTITUDE_DEG), 1)).toEqual({
@@ -64,7 +64,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
   });
 
   it("uses a non-black atmospheric tint on the low day side near the horizon", () => {
-    const mid = sampleIlluminationRgba8(dotFromAltitudeDeg(4), 1);
+    const mid = sampleIlluminationRgba8(dotFromAltitudeDeg(2), 1);
     expect(mid.r + mid.g + mid.b).toBeGreaterThan(0);
     expect(mid.a).toBeGreaterThan(0);
     expect(mid.a).toBeLessThanOrEqual(255);
@@ -121,17 +121,14 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     }
   });
 
-  it("fades gradually into deep night below astronomical twilight", () => {
+  it("settles into deep night by astronomical twilight", () => {
     const atAstro = sampleIlluminationRgba8(dotFromAltitudeDeg(-18), 1);
-    const nearDeepNight = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1);
+    const beforeAstro = sampleIlluminationRgba8(dotFromAltitudeDeg(-17), 1);
     const deepNight = sampleIlluminationRgba8(dotFromAltitudeDeg(DEEP_NIGHT_SETTLE_ALTITUDE_DEG), 1);
-    expect(atAstro.a).toBeGreaterThan(0);
-    expect(nearDeepNight.a).toBeGreaterThanOrEqual(atAstro.a);
-    expect(nearDeepNight.r + nearDeepNight.g + nearDeepNight.b).toBeLessThanOrEqual(
-      atAstro.r + atAstro.g + atAstro.b,
-    );
+    expect(beforeAstro.a).toBeGreaterThan(0);
+    expect(beforeAstro.r + beforeAstro.g + beforeAstro.b).toBeGreaterThanOrEqual(0);
     expect(deepNight.r + deepNight.g + deepNight.b).toBe(0);
-    expect(deepNight.a).toBeGreaterThanOrEqual(nearDeepNight.a);
+    expect(deepNight.a).toBeGreaterThanOrEqual(atAstro.a);
   });
 
   it("fades day-side attenuation monotonically away from the horizon", () => {
@@ -170,15 +167,15 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(luminance(composed)).toBeLessThan(brightLum);
   });
 
-  it("darkening alpha is monotonic from +8 deg through deep night", () => {
-    const aPos8 = sampleIlluminationRgba8(dotFromAltitudeDeg(8), 1).a;
+  it("darkening alpha is monotonic from +4 deg through deep night", () => {
+    const aPos4 = sampleIlluminationRgba8(dotFromAltitudeDeg(4), 1).a;
     const a0 = sampleIlluminationRgba8(dotFromAltitudeDeg(0), 1).a;
     const aCivil = sampleIlluminationRgba8(dotFromAltitudeDeg(-6), 1).a;
     const aNaut = sampleIlluminationRgba8(dotFromAltitudeDeg(-12), 1).a;
     const aAstro = sampleIlluminationRgba8(dotFromAltitudeDeg(-18), 1).a;
-    const aDeep = sampleIlluminationRgba8(dotFromAltitudeDeg(-24), 1).a;
-    expect(aPos8).toBe(0);
-    expect(a0).toBeGreaterThan(aPos8);
+    const aDeep = sampleIlluminationRgba8(dotFromAltitudeDeg(DEEP_NIGHT_SETTLE_ALTITUDE_DEG), 1).a;
+    expect(aPos4).toBe(0);
+    expect(a0).toBeGreaterThan(aPos4);
     expect(aCivil).toBeGreaterThanOrEqual(a0);
     expect(aNaut).toBeGreaterThanOrEqual(aCivil);
     expect(aAstro).toBeGreaterThanOrEqual(aNaut);
@@ -186,8 +183,8 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
   });
 
   it("color gradient changes smoothly without abrupt frame-to-frame jumps", () => {
-    let previous = sampleIlluminationRgba8(dotFromAltitudeDeg(8), 1);
-    for (let altitude = 7.5; altitude >= -24; altitude -= 0.5) {
+    let previous = sampleIlluminationRgba8(dotFromAltitudeDeg(4), 1);
+    for (let altitude = 3.5; altitude >= -18; altitude -= 0.5) {
       const next = sampleIlluminationRgba8(dotFromAltitudeDeg(altitude), 1);
       const prevWeight = previous.a / 255;
       const nextWeight = next.a / 255;

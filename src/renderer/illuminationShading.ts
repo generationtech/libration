@@ -31,12 +31,12 @@ export const NIGHT_DARKEN = 0.62;
 /**
  * Altitude where the day-side shading veil should be fully clear.
  */
-export const DAYLIGHT_CLEAR_ALTITUDE_DEG = 8;
+export const DAYLIGHT_CLEAR_ALTITUDE_DEG = 4;
 
 /**
  * Altitude where deep-night treatment reaches its settled black/dark state.
  */
-export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = -24;
+export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = -18;
 
 /** Per-band tint anchors for attenuation color (kept deliberately low-luminance). */
 const C_DAY_GLOW = { r: 24, g: 30, b: 40 } as const;
@@ -169,7 +169,7 @@ function atmosphericTintStrength(altitudeDeg: number): number {
 
 /**
  * Continuous darkening ramp driven by solar altitude:
- * clear day above +8°, full darken by −24°.
+ * clear day above +4°, full darken by −18°.
  */
 function nightMaskStrength(altitudeDeg: number): number {
   return smootherstep(
