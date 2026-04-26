@@ -18,13 +18,14 @@
 
 export interface MoonlightStrengthInputs {
   lunarIlluminatedFraction: number;
-  lunarAltitudeDeg: number;
   solarAltitudeDeg: number;
+  surfaceMoonDot: number;
 }
 
 export const MOONLIGHT_ALTITUDE_FULL_STRENGTH_DEG = 30;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -12;
+export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 3;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -54,6 +55,15 @@ export function moonAltitudeStrength(lunarAltitudeDeg: number): number {
 }
 
 /**
+ * Local incidence weighting (surface normal · moon direction), strongly focused
+ * around high lunar altitude to avoid broad hemispheric night lift.
+ */
+export function moonIncidenceStrength(surfaceMoonDot: number): number {
+  const incidence = smoothstep(0, 1, clamp01(surfaceMoonDot));
+  return Math.pow(incidence, MOONLIGHT_INCIDENCE_FOCUS_POWER);
+}
+
+/**
  * Prefer deep twilight/night; suppress moonlight in daylight.
  */
 export function moonlightNightEligibilityFromSolarAltitude(solarAltitudeDeg: number): number {
@@ -66,7 +76,7 @@ export function moonlightNightEligibilityFromSolarAltitude(solarAltitudeDeg: num
 
 export function moonlightStrength(inputs: MoonlightStrengthInputs): number {
   const phaseStrength = moonPhaseStrengthFromIlluminatedFraction(inputs.lunarIlluminatedFraction);
-  const altitudeStrength = moonAltitudeStrength(inputs.lunarAltitudeDeg);
+  const incidenceStrength = moonIncidenceStrength(inputs.surfaceMoonDot);
   const nightEligibility = moonlightNightEligibilityFromSolarAltitude(inputs.solarAltitudeDeg);
-  return clamp01(phaseStrength * altitudeStrength * nightEligibility);
+  return clamp01(phaseStrength * incidenceStrength * nightEligibility);
 }

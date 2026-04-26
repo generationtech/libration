@@ -224,6 +224,26 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(fullMoon.b).toBeGreaterThanOrEqual(fullMoon.r);
   });
 
+  it("suppresses lift strongly for low-altitude moon versus high moon", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const highMoon = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: dotFromAltitudeDeg(65),
+      lunarIlluminatedFraction: 1,
+    });
+    const lowMoon = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: dotFromAltitudeDeg(5),
+      lunarIlluminatedFraction: 1,
+    });
+
+    const highLift = baseline.a - highMoon.a;
+    const lowLift = baseline.a - lowMoon.a;
+    expect(highLift).toBeGreaterThan(0);
+    expect(lowLift).toBeGreaterThanOrEqual(0);
+    expect(lowLift).toBeLessThanOrEqual(1);
+    expect(highLift).toBeGreaterThan(lowLift + 8);
+  });
+
   it("applies no moonlight lift when moon is below horizon", () => {
     const solarNightDot = dotFromAltitudeDeg(-30);
     const baseline = sampleIlluminationRgba8(solarNightDot, 1);
@@ -247,5 +267,24 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarIlluminatedFraction: 1,
     });
     expect(Math.abs(twilightWithMoon.a - twilightBaseline.a)).toBeLessThanOrEqual(2);
+  });
+
+  it("does not create broad uniform lift across visible lunar hemisphere", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const nearSublunar = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: 0.95,
+      lunarIlluminatedFraction: 1,
+    });
+    const farFromSublunar = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: 0.2,
+      lunarIlluminatedFraction: 1,
+    });
+
+    const nearLift = baseline.a - nearSublunar.a;
+    const farLift = baseline.a - farFromSublunar.a;
+    expect(nearLift).toBeGreaterThan(0);
+    expect(farLift).toBeLessThanOrEqual(1);
+    expect(nearLift).toBeGreaterThan(farLift + 10);
   });
 });

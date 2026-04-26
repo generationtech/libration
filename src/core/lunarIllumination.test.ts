@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import {
   moonAltitudeStrength,
+  moonIncidenceStrength,
   moonlightNightEligibilityFromSolarAltitude,
   moonlightStrength,
   moonPhaseStrengthFromIlluminatedFraction,
@@ -52,28 +53,45 @@ describe("moonlightStrength", () => {
   it("returns bounded values with expected model behavior", () => {
     const fullMoonHighNight = moonlightStrength({
       lunarIlluminatedFraction: 1,
-      lunarAltitudeDeg: 50,
       solarAltitudeDeg: -20,
+      surfaceMoonDot: 0.9,
+    });
+    const fullMoonLowIncidenceNight = moonlightStrength({
+      lunarIlluminatedFraction: 1,
+      solarAltitudeDeg: -20,
+      surfaceMoonDot: 0.2,
     });
     const newMoonHighNight = moonlightStrength({
       lunarIlluminatedFraction: 0.01,
-      lunarAltitudeDeg: 50,
       solarAltitudeDeg: -20,
+      surfaceMoonDot: 0.9,
     });
     const fullMoonBelowHorizon = moonlightStrength({
       lunarIlluminatedFraction: 1,
-      lunarAltitudeDeg: -2,
       solarAltitudeDeg: -20,
+      surfaceMoonDot: 0,
     });
     const fullMoonDaylight = moonlightStrength({
       lunarIlluminatedFraction: 1,
-      lunarAltitudeDeg: 60,
       solarAltitudeDeg: 10,
+      surfaceMoonDot: 0.9,
     });
 
-    expect(fullMoonHighNight).toBeGreaterThan(0.9);
+    expect(fullMoonHighNight).toBeLessThan(1);
+    expect(fullMoonHighNight).toBeGreaterThan(0.6);
+    expect(fullMoonLowIncidenceNight).toBeLessThan(fullMoonHighNight * 0.02);
     expect(newMoonHighNight).toBeLessThan(0.01);
     expect(fullMoonBelowHorizon).toBe(0);
     expect(fullMoonDaylight).toBe(0);
+  });
+});
+
+describe("moonIncidenceStrength", () => {
+  it("focuses strongly near the sublunar region", () => {
+    expect(moonIncidenceStrength(-0.5)).toBe(0);
+    expect(moonIncidenceStrength(0)).toBe(0);
+    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.01);
+    expect(moonIncidenceStrength(0.6)).toBeGreaterThan(0.1);
+    expect(moonIncidenceStrength(1)).toBe(1);
   });
 });
