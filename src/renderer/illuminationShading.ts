@@ -68,8 +68,8 @@ const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
 export const TWILIGHT_R = C_HORIZON.r;
 export const TWILIGHT_G = C_HORIZON.g;
 export const TWILIGHT_B = C_HORIZON.b;
-export const MOONLIGHT_MAX_LIFT = 0.1;
-export const MOONLIGHT_COLOR_BLEND_MAX = 0.12;
+export const MOONLIGHT_MAX_LIFT = 0.14;
+export const MOONLIGHT_COLOR_BLEND_MAX = 0.16;
 
 export function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));

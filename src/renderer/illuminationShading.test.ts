@@ -218,10 +218,23 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarIlluminatedFraction: 1,
     });
     expect(fullMoon.a).toBeLessThan(baseline.a);
+    expect(baseline.a - fullMoon.a).toBeGreaterThanOrEqual(14);
     expect(fullMoon.a).toBeGreaterThanOrEqual(
       Math.floor(baseline.a * (1 - MOONLIGHT_MAX_LIFT)) - 1,
     );
     expect(fullMoon.b).toBeGreaterThanOrEqual(fullMoon.r);
+  });
+
+  it("produces a visible but restrained lift for waxing gibbous at high incidence", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const waxingGibbous = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: 0.95,
+      lunarIlluminatedFraction: 0.9,
+    });
+    const lift = baseline.a - waxingGibbous.a;
+    expect(lift).toBeGreaterThanOrEqual(12);
+    expect(lift).toBeLessThanOrEqual(Math.ceil(baseline.a * MOONLIGHT_MAX_LIFT) + 1);
   });
 
   it("suppresses lift strongly for low-altitude moon versus high moon", () => {
@@ -240,7 +253,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const lowLift = baseline.a - lowMoon.a;
     expect(highLift).toBeGreaterThan(0);
     expect(lowLift).toBeGreaterThanOrEqual(0);
-    expect(lowLift).toBeLessThanOrEqual(1);
+    expect(lowLift).toBeLessThanOrEqual(2);
     expect(highLift).toBeGreaterThan(lowLift + 8);
   });
 
@@ -286,5 +299,6 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(nearLift).toBeGreaterThan(0);
     expect(farLift).toBeLessThanOrEqual(1);
     expect(nearLift).toBeGreaterThan(farLift + 10);
+    expect(nearLift).toBeGreaterThanOrEqual(farLift * 8 + 8);
   });
 });
