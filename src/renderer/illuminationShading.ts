@@ -38,12 +38,12 @@ export const DAYLIGHT_CLEAR_ALTITUDE_DEG = 8;
  */
 export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = -24;
 
-/** Per-band overlay tints (restrained, instrument-like). */
-const C_DAY_GLOW = { r: 92, g: 72, b: 52 } as const;
-const C_HORIZON = { r: 78, g: 62, b: 48 } as const;
-const C_CIVIL_END = { r: 56, g: 62, b: 82 } as const;
-const C_NAUT = { r: 36, g: 52, b: 92 } as const;
-const C_ASTRO = { r: 18, g: 28, b: 64 } as const;
+/** Per-band tint anchors for attenuation color (kept deliberately low-luminance). */
+const C_DAY_GLOW = { r: 24, g: 30, b: 40 } as const;
+const C_HORIZON = { r: 30, g: 38, b: 50 } as const;
+const C_CIVIL_END = { r: 22, g: 30, b: 44 } as const;
+const C_NAUT = { r: 14, g: 22, b: 34 } as const;
+const C_ASTRO = { r: 8, g: 12, b: 22 } as const;
 const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
 
 /**
@@ -58,8 +58,8 @@ const TWILIGHT_REFERENCE_ALTITUDES_DEG = {
   deepNight: DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
 } as const;
 
-/** Atmospheric tint weight peaks around the horizon and fades through deep twilight. */
-export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.22;
+/** Maximum tint modulation contribution; this is not additional emitted alpha. */
+export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.16;
 const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
 
 /** Near-terminator tint (legacy name; civil band start). */
@@ -136,7 +136,7 @@ function continuousTwilightOverlayRgb(altitudeDeg: number): { r: number; g: numb
   return { r: r / weightSum, g: g / weightSum, b: b / weightSum };
 }
 
-function atmosphericGlowStrength(altitudeDeg: number): number {
+function atmosphericTintStrength(altitudeDeg: number): number {
   if (
     altitudeDeg >= TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear ||
     altitudeDeg <= TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight
@@ -200,15 +200,15 @@ export function sampleIlluminationRgba8(dot: number, layerOpacity: number): Illu
   const d = Math.max(-1, Math.min(1, dot));
   const altDeg = solarAltitudeDegFromSurfaceSunDotProduct(d);
   const darknessAlpha = nightMaskStrength(altDeg) * NIGHT_DARKEN * op;
-  const glowAlpha = atmosphericGlowStrength(altDeg) * op;
-  const atmosphericAlpha = glowAlpha;
-  const combinedAlpha = 1 - (1 - darknessAlpha) * (1 - atmosphericAlpha);
+  const tintStrength = atmosphericTintStrength(altDeg);
+  const combinedAlpha = darknessAlpha;
 
   if (combinedAlpha > 0) {
-    const { r: rr, g: gg, b: bb } = continuousTwilightOverlayRgb(altDeg);
-    r = rr;
-    g = gg;
-    b = bb;
+    const twilightTint = continuousTwilightOverlayRgb(altDeg);
+    const attenuationColor = lerpColor(C_NIGHT, twilightTint, tintStrength);
+    r = attenuationColor.r;
+    g = attenuationColor.g;
+    b = attenuationColor.b;
     a = combinedAlpha;
   }
 
