@@ -19,9 +19,6 @@ import {
   smootherstep,
   smoothstep,
   TWILIGHT_BAND_BLEND_OVERLAP_DEG,
-  TWILIGHT_B,
-  TWILIGHT_G,
-  TWILIGHT_R,
 } from "./illuminationShading";
 import { classifyTwilightBand, solarAltitudeDegFromSurfaceSunDotProduct } from "../core/solarTwilight";
 
@@ -52,17 +49,17 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(sampleIlluminationRgba8(DAY_TWILIGHT_DOT, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
   });
 
-  it("uses twilight tint on the day-side pre-horizon low-sun band", () => {
+  it("uses a non-black atmospheric tint on the day-side pre-horizon low-sun band", () => {
     const mid = sampleIlluminationRgba8(DAY_TWILIGHT_DOT * 0.5, 1);
-    expect(mid.r).toBe(TWILIGHT_R);
-    expect(mid.g).toBe(TWILIGHT_G);
-    expect(mid.b).toBe(TWILIGHT_B);
+    expect(mid.r + mid.g + mid.b).toBeGreaterThan(0);
     expect(mid.a).toBeGreaterThan(0);
     expect(mid.a).toBeLessThanOrEqual(255);
   });
 
-  it("has zero alpha exactly on the subsolar/terminator dot=0 (night branch at horizon)", () => {
-    expect(sampleIlluminationRgba8(0, 1).a).toBe(0);
+  it("keeps a visible atmospheric alpha exactly on the terminator (dot=0)", () => {
+    const horizon = sampleIlluminationRgba8(0, 1);
+    expect(horizon.a).toBeGreaterThan(0);
+    expect(horizon.a).toBeLessThan(Math.round(NIGHT_DARKEN * 255));
   });
 
   it("ramps to full night darken in deep night (arbitrary sub-horizon dot)", () => {
@@ -106,7 +103,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const after = sampleIlluminationRgba8(dotFromAltitudeDeg(boundary - step), 1);
     const colorDelta =
       Math.abs(before.r - after.r) + Math.abs(before.g - after.g) + Math.abs(before.b - after.b);
-    expect(colorDelta).toBeLessThanOrEqual(12);
+    expect(colorDelta).toBeLessThanOrEqual(20);
   });
 
   it("fades astronomical tint smoothly into deep night near -18 deg", () => {

@@ -37,21 +37,28 @@ export const NIGHT_RAMP_WIDTH = 0.3;
 /**
  * Pre-terminator band: subtle veil while the sun is still low on the day side. Keeps map detail readable.
  */
-export const DAY_TWILIGHT_DOT = 0.1;
-export const DAY_TWILIGHT_MAX_ALPHA = 0.1;
+export const DAY_TWILIGHT_DOT = 0.2;
+export const DAY_TWILIGHT_MAX_ALPHA = 0.16;
+
+/** Day-side atmospheric carry of twilight glow (degrees above horizon). */
+export const DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG = 8;
 
 /** Per-band overlay tints (restrained, instrument-like). */
-const C_HORIZON = { r: 34, g: 40, b: 58 } as const;
-const C_CIVIL_END = { r: 28, g: 36, b: 56 } as const;
-const C_NAUT = { r: 20, g: 32, b: 54 } as const;
-const C_ASTRO = { r: 10, g: 20, b: 42 } as const;
+const C_DAY_GLOW = { r: 92, g: 72, b: 52 } as const;
+const C_HORIZON = { r: 78, g: 62, b: 48 } as const;
+const C_CIVIL_END = { r: 56, g: 62, b: 82 } as const;
+const C_NAUT = { r: 36, g: 52, b: 92 } as const;
+const C_ASTRO = { r: 18, g: 28, b: 64 } as const;
 const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
 
 /**
  * Blend overlap around twilight thresholds to reduce visible segmentation at
  * civil/nautical/astronomical boundaries.
  */
-export const TWILIGHT_BAND_BLEND_OVERLAP_DEG = 1.5;
+export const TWILIGHT_BAND_BLEND_OVERLAP_DEG = 3.5;
+
+/** Atmospheric tint weight peaks around the horizon and fades through deep twilight. */
+export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.24;
 
 /** Near-terminator tint (legacy name; civil band start). */
 export const TWILIGHT_R = C_HORIZON.r;
@@ -90,7 +97,14 @@ function lerpColor(
  */
 function twilightBandOverlayRgb(altitudeDeg: number): { r: number; g: number; b: number } {
   if (altitudeDeg > 0) {
-    return C_NIGHT;
+    if (altitudeDeg >= DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG) {
+      return C_NIGHT;
+    }
+    return lerpColor(
+      C_HORIZON,
+      C_DAY_GLOW,
+      smoothstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg),
+    );
   }
   const below = -altitudeDeg;
   if (below >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
@@ -152,6 +166,20 @@ function twilightBandOverlayRgb(altitudeDeg: number): { r: number; g: number; b:
   );
 }
 
+function atmosphericGlowStrength(altitudeDeg: number): number {
+  if (altitudeDeg >= DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG) {
+    return 0;
+  }
+  if (altitudeDeg > 0) {
+    return DAY_TWILIGHT_MAX_ALPHA * smootherstep(DAY_TWILIGHT_GLOW_ALTITUDE_EXTENT_DEG, 0, altitudeDeg);
+  }
+  const below = -altitudeDeg;
+  if (below >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
+    return 0;
+  }
+  return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * (1 - smootherstep(0, ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG, below));
+}
+
 /**
  * How far through twilight to full “night” mask, for alpha (0 = on horizon, 1 = at/after end of
  * astronomical twilight).
@@ -185,23 +213,21 @@ export function sampleIlluminationRgba8(dot: number, layerOpacity: number): Illu
   let a = 0;
 
   const d = Math.max(-1, Math.min(1, dot));
+  const altDeg = solarAltitudeDegFromSurfaceSunDotProduct(d);
+  const below = -altDeg;
+  const darknessAlpha = d <= 0 ? subHorizonMaskStrength(below) * NIGHT_DARKEN * op : 0;
+  const glowAlpha = atmosphericGlowStrength(altDeg) * op;
+  const dayBranchAlpha =
+    d > 0 && d < DAY_TWILIGHT_DOT ? smootherstep(DAY_TWILIGHT_DOT, 0, d) * DAY_TWILIGHT_MAX_ALPHA * op : 0;
+  const atmosphericAlpha = Math.max(glowAlpha, dayBranchAlpha);
+  const combinedAlpha = 1 - (1 - darknessAlpha) * (1 - atmosphericAlpha);
 
-  if (d > 0 && d < DAY_TWILIGHT_DOT) {
-    const u = smootherstep(DAY_TWILIGHT_DOT, 0, d);
-    const falloff = smoothstep(0, 1, u);
-    a = falloff * DAY_TWILIGHT_MAX_ALPHA * op;
-    r = TWILIGHT_R;
-    g = TWILIGHT_G;
-    b = TWILIGHT_B;
-  } else if (d <= 0) {
-    const altDeg = solarAltitudeDegFromSurfaceSunDotProduct(d);
-    const below = -altDeg;
-    const aNorm = subHorizonMaskStrength(below) * NIGHT_DARKEN * op;
+  if (combinedAlpha > 0) {
     const { r: rr, g: gg, b: bb } = twilightBandOverlayRgb(altDeg);
     r = rr;
     g = gg;
     b = bb;
-    a = aNorm;
+    a = combinedAlpha;
   }
 
   return {
