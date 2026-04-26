@@ -17,6 +17,9 @@ The major runtime foundations are implemented well enough to support disciplined
 - static and derived overlays.
 - astronomical scene overlays and markers.
 - solar shading / dark-side visualization.
+- continuous attenuation-driven planetary illumination composition with semantic twilight anchors.
+- non-emissive twilight attenuation and atmospheric tint modulation.
+- physically-derived polar illumination behavior from seasonal solar geometry.
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
@@ -57,6 +60,9 @@ Status: planned.
 Current implemented foundation:
 
 - solar shading / dark-side visualization.
+- continuous attenuation-driven planetary illumination composition with semantic twilight anchors.
+- non-emissive twilight attenuation and atmospheric tint modulation.
+- physically-derived polar illumination behavior from seasonal solar geometry.
 - subsolar marker.
 - sublunar marker.
 - solar analemma overlay.
@@ -64,8 +70,10 @@ Current implemented foundation:
 
 Candidate work:
 
-- twilight in the solar shading pass: continuous solar-altitude gradient modeling in the upstream illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors), emitted as a single `rasterPatch` (not a separate twilight layer; done).
+- twilight in the solar shading pass: implemented as a continuous attenuation-driven solar-altitude illumination field in the upstream illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors), emitted as a single `rasterPatch` with no backend twilight semantics (done).
 - atmospheric transition rendering.
+- physically-plausible twilight span and attenuation tuning.
+- future atmospheric scattering refinement without abandoning renderer-agnostic composition.
 - composition-aware day/night illumination.
 - emissive night-light blending strategy.
 - masking and clipping rules.

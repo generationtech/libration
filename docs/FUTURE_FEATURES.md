@@ -31,7 +31,9 @@ Future map and scene UX work should extend these foundations rather than replaci
 
 The current scene system already includes:
 
-- solar shading / dark-side visualization with a continuous twilight gradient field in the same illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution is still a plain raster blit).
+- solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
+- non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
+- seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
 - solar analemma overlay.
@@ -150,7 +152,7 @@ Candidates:
 - viewport clipping.
 - composition-aware day/night illumination.
 - emissive night-lights composition.
-- atmospheric glow transitions.
+- atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay readability tuning.
 - active solar-position synchronization along analemma trajectories.
@@ -159,7 +161,7 @@ Candidates:
 
 ### Day/night product ideas
 
-- scientifically grounded day/night shading.
+- scientifically grounded day/night and twilight attenuation.
 - configurable twilight softness.
 - optional night lights.
 - emissive city lights.

@@ -145,12 +145,14 @@ Delivered:
 - subsolar marker.
 - sublunar marker.
 - solar shading / dark-side visualization.
-- continuous twilight gradient transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same solar shading illumination raster as day/night (not a separate user-facing twilight layer).
+- continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
+- non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
+- physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
-- further atmospheric transition tuning, composition-aware day/night, and emissive night-light blending.
+- further atmospheric scattering refinement, composition-aware day/night, and emissive night-light blending.
 - emissive/night-light composition.
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
@@ -201,7 +203,7 @@ Candidate deliverables:
 - masking.
 - clipping.
 - composition-aware day/night illumination.
-- further twilight and atmospheric transition tuning (basic bands are in the Phase 6 shading pass).
+- higher-fidelity atmospheric scattering and illumination refinement on top of the existing continuous attenuation-driven twilight model.
 - emissive/night-light blend.
 - atmospheric glow and transition tuning.
 - overlay-compatible visual tuning.

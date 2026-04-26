@@ -44,7 +44,11 @@ Current implemented areas include:
 - Map preview and attribution display for selected base-map families.
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
-- Solar day/night shading on the “Solar shading” layer, with a continuous solar-altitude twilight gradient (using civil/nautical/astronomical thresholds as semantic anchors) encoded in the same solar shading illumination raster (not a separate user-facing twilight layer; the canvas backend only executes a `rasterPatch` and has no twilight-specific semantics).
+- Solar day/night shading on the “Solar shading” layer, implemented as a continuous, attenuation-driven solar-altitude illumination field using civil/nautical/astronomical thresholds as semantic anchors.
+- Twilight composition integrated directly into the same upstream planetary illumination raster as day/night (not a separate user-facing twilight layer).
+- Non-emissive twilight behavior: atmospheric tint and attenuation modulate substrate visibility rather than adding artificial glow.
+- Polar illumination behavior derived from real seasonal solar geometry and Earth axial tilt.
+- Canvas backend execution remains renderer-agnostic and only consumes the resulting `rasterPatch`.
 - Runtime base-map image load failure fallback.
 
 ## Architecture in one sentence

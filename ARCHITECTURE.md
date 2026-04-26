@@ -225,7 +225,9 @@ Stable enough for feature-forward work:
 - static and month-aware base maps.
 - static overlays.
 - derived solar analemma overlay.
-- solar shading: a continuous solar-altitude twilight gradient (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded in the same upstream illumination raster as day/night, not a separate user-facing twilight layer; the backend only blits that raster and does not implement twilight logic.
+- solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer and the backend only executes the resulting rasterPatch without twilight-specific semantics.
+- twilight composition is physically-inspired and non-emissive: twilight modulates attenuation and atmospheric tint rather than behaving as an additive glow layer.
+- polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.
 - map onboarding tooling.
 

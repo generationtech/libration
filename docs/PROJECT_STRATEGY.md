@@ -95,6 +95,11 @@ Expose powerful controls through coherent axes:
 - layer composition.
 - presets when implemented.
 
+
+### 7. Scientific grounding over arbitrary effects
+
+Atmospheric transitions, twilight behavior, and planetary illumination should emerge from real solar geometry and physically-inspired attenuation models rather than arbitrary glow effects or backend-specific visual tricks.
+
 ### 6. Future backends must remain possible
 
 Canvas is the current backend. The architecture should keep a future GPU or bare-metal renderer plausible.
@@ -144,7 +149,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. Day/night and emissive map composition.
+4. Physically-grounded planetary illumination, twilight attenuation, and emissive map composition.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.
