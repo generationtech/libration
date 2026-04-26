@@ -147,7 +147,7 @@ Delivered:
 - solar shading / dark-side visualization.
 - continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
 - non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
-- first restrained moonlight slice: moon phase, lunar altitude, and local incidence provide a bounded cool secondary night-side illumination field (broad but directional) inside the same upstream illumination raster while preserving day/twilight behavior and backend semantics.
+- first perceptually legible moonlight slice: moon phase, lunar altitude, and local incidence provide a bounded but intentionally visible cool secondary night-side illumination field (broad but directional) inside the same upstream illumination raster while preserving day/twilight behavior and backend semantics.
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 

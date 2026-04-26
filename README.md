@@ -47,7 +47,7 @@ Current implemented areas include:
 - Solar day/night shading on the “Solar shading” layer, implemented as a continuous, attenuation-driven solar-altitude illumination field using civil/nautical/astronomical thresholds as semantic anchors.
 - Twilight composition integrated directly into the same upstream planetary illumination raster as day/night (not a separate user-facing twilight layer).
 - Non-emissive twilight behavior: atmospheric tint and attenuation modulate substrate visibility rather than adding artificial glow.
-- Restrained lunar secondary illumination in the same upstream planetary illumination raster: waxing/full gibbous moonlight can create a broad, soft, directional cool night-side lobe centered near high lunar incidence, while daylight/early twilight remain unaffected and new moon / moon-below-horizon stay effectively unchanged.
+- Perceptually tuned lunar secondary illumination in the same upstream planetary illumination raster: waxing/full gibbous moonlight now creates a clearly legible, broad, soft, directional cool night-side lobe centered near high lunar incidence, while daylight/early twilight remain strongly suppressed and new moon / moon-below-horizon stay effectively unchanged.
 - Polar illumination behavior derived from real seasonal solar geometry and Earth axial tilt.
 - Canvas backend execution remains renderer-agnostic and only consumes the resulting `rasterPatch`.
 - Runtime base-map image load failure fallback.

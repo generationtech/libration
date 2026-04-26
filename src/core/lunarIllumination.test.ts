@@ -23,8 +23,9 @@ import {
 describe("moonPhaseStrengthFromIlluminatedFraction", () => {
   it("is near zero for new moon and stronger near full moon", () => {
     expect(moonPhaseStrengthFromIlluminatedFraction(0)).toBe(0);
-    expect(moonPhaseStrengthFromIlluminatedFraction(0.08)).toBeLessThan(0.01);
-    expect(moonPhaseStrengthFromIlluminatedFraction(0.5)).toBeGreaterThan(0.1);
+    expect(moonPhaseStrengthFromIlluminatedFraction(0.08)).toBeGreaterThan(0.1);
+    expect(moonPhaseStrengthFromIlluminatedFraction(0.08)).toBeLessThan(0.13);
+    expect(moonPhaseStrengthFromIlluminatedFraction(0.5)).toBeGreaterThan(0.5);
     expect(moonPhaseStrengthFromIlluminatedFraction(1)).toBe(1);
   });
 });
@@ -44,7 +45,7 @@ describe("moonlightNightEligibilityFromSolarAltitude", () => {
     expect(moonlightNightEligibilityFromSolarAltitude(10)).toBe(0);
     expect(moonlightNightEligibilityFromSolarAltitude(-4)).toBe(0);
     expect(moonlightNightEligibilityFromSolarAltitude(-8)).toBeGreaterThan(0);
-    expect(moonlightNightEligibilityFromSolarAltitude(-12)).toBe(1);
+    expect(moonlightNightEligibilityFromSolarAltitude(-12)).toBeGreaterThan(0.8);
     expect(moonlightNightEligibilityFromSolarAltitude(-30)).toBe(1);
   });
 });
@@ -84,14 +85,48 @@ describe("moonlightStrength", () => {
     expect(fullMoonBelowHorizon).toBe(0);
     expect(fullMoonDaylight).toBe(0);
   });
+
+  it("scales perceptually across crescent, quarter, and gibbous phases", () => {
+    const deepNightHighIncidence = {
+      solarAltitudeDeg: -30,
+      surfaceMoonDot: 0.9,
+    };
+    const newMoon = moonlightStrength({
+      ...deepNightHighIncidence,
+      lunarIlluminatedFraction: 0.01,
+    });
+    const crescent = moonlightStrength({
+      ...deepNightHighIncidence,
+      lunarIlluminatedFraction: 0.12,
+    });
+    const quarter = moonlightStrength({
+      ...deepNightHighIncidence,
+      lunarIlluminatedFraction: 0.5,
+    });
+    const gibbous = moonlightStrength({
+      ...deepNightHighIncidence,
+      lunarIlluminatedFraction: 0.9,
+    });
+    const full = moonlightStrength({
+      ...deepNightHighIncidence,
+      lunarIlluminatedFraction: 1,
+    });
+
+    expect(newMoon).toBeLessThan(0.01);
+    expect(crescent).toBeLessThan(quarter * 0.4);
+    expect(quarter).toBeGreaterThan(0.4);
+    expect(gibbous).toBeGreaterThan(quarter * 1.5);
+    expect(full).toBeGreaterThanOrEqual(gibbous);
+  });
 });
 
 describe("moonIncidenceStrength", () => {
   it("keeps a strong peak near sublunar with restrained broad spill", () => {
     expect(moonIncidenceStrength(-0.5)).toBe(0);
     expect(moonIncidenceStrength(0)).toBe(0);
-    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.05);
-    expect(moonIncidenceStrength(0.6)).toBeGreaterThan(0.1);
+    expect(moonIncidenceStrength(0.2)).toBeGreaterThan(0.05);
+    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.08);
+    expect(moonIncidenceStrength(0.6)).toBeGreaterThan(0.5);
     expect(moonIncidenceStrength(1)).toBe(1);
   });
 });

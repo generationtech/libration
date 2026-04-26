@@ -24,9 +24,9 @@ export interface MoonlightStrengthInputs {
 
 export const MOONLIGHT_ALTITUDE_FULL_STRENGTH_DEG = 30;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
-export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -12;
-export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 2.2;
-export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.3;
+export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -14;
+export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 1.8;
+export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.55;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -43,8 +43,9 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
  */
 export function moonPhaseStrengthFromIlluminatedFraction(illuminatedFraction: number): number {
   const k = clamp01(illuminatedFraction);
-  const eased = smoothstep(0.12, 1, k);
-  return eased * eased;
+  const visibleGate = smoothstep(0.01, 0.08, k);
+  const perceptualLift = Math.pow(k, 0.85);
+  return clamp01(visibleGate * perceptualLift);
 }
 
 /**

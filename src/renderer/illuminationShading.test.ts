@@ -218,7 +218,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarIlluminatedFraction: 1,
     });
     expect(fullMoon.a).toBeLessThan(baseline.a);
-    expect(baseline.a - fullMoon.a).toBeGreaterThanOrEqual(8);
+    expect(baseline.a - fullMoon.a).toBeGreaterThanOrEqual(40);
     expect(fullMoon.a).toBeGreaterThanOrEqual(
       Math.floor(baseline.a * (1 - MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX)) - 1,
     );
@@ -233,7 +233,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarIlluminatedFraction: 0.9,
     });
     const lift = baseline.a - waxingGibbous.a;
-    expect(lift).toBeGreaterThanOrEqual(6);
+    expect(lift).toBeGreaterThanOrEqual(35);
     expect(lift).toBeLessThanOrEqual(Math.ceil(baseline.a * MOONLIGHT_SECONDARY_ALPHA_RELIEF_MAX) + 1);
   });
 
@@ -253,8 +253,8 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const lowLift = baseline.a - lowMoon.a;
     expect(highLift).toBeGreaterThan(0);
     expect(lowLift).toBeGreaterThanOrEqual(0);
-    expect(lowLift).toBeLessThanOrEqual(2);
-    expect(highLift).toBeGreaterThan(lowLift + 8);
+    expect(lowLift).toBeLessThanOrEqual(4);
+    expect(highLift).toBeGreaterThan(lowLift + 30);
   });
 
   it("applies no moonlight lift when moon is below horizon", () => {
@@ -279,7 +279,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarDot: dotFromAltitudeDeg(60),
       lunarIlluminatedFraction: 1,
     });
-    expect(Math.abs(twilightWithMoon.a - twilightBaseline.a)).toBeLessThanOrEqual(2);
+    expect(Math.abs(twilightWithMoon.a - twilightBaseline.a)).toBeLessThanOrEqual(1);
   });
 
   it("does not create broad uniform lift across visible lunar hemisphere", () => {
@@ -297,9 +297,9 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const nearLift = baseline.a - nearSublunar.a;
     const farLift = baseline.a - farFromSublunar.a;
     expect(nearLift).toBeGreaterThan(0);
-    expect(farLift).toBeLessThanOrEqual(1);
-    expect(nearLift).toBeGreaterThan(farLift + 8);
-    expect(nearLift).toBeGreaterThanOrEqual(farLift * 6 + 6);
+    expect(farLift).toBeLessThanOrEqual(8);
+    expect(nearLift).toBeGreaterThan(farLift + 25);
+    expect(nearLift).toBeGreaterThanOrEqual(farLift * 4 + 18);
   });
 
   it("adds cool, restrained secondary illumination in deep night composition", () => {
@@ -322,7 +322,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       b: compositeChannel(darkOcean.b, fullMoonNearSublunar.b, fullMoonNearSublunar.a),
     };
 
-    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 2);
+    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 8);
     expect(moonComposite.b).toBeGreaterThanOrEqual(moonComposite.r);
   });
 });

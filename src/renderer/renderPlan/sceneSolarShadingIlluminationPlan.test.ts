@@ -159,21 +159,21 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
         solarAltitudeDeg: -30,
         lunarDot: dotFromAltitudeDeg(70),
         lunarIlluminatedFraction: 1,
-        minAlphaDelta: 10,
+        minAlphaDelta: 40,
       },
       {
         name: "waxing gibbous, moon high overhead, deep night",
         solarAltitudeDeg: -30,
         lunarDot: dotFromAltitudeDeg(70),
         lunarIlluminatedFraction: 0.9,
-        minAlphaDelta: 9,
+        minAlphaDelta: 35,
       },
       {
         name: "waxing gibbous, moon low altitude, deep night",
         solarAltitudeDeg: -30,
         lunarDot: dotFromAltitudeDeg(5),
         lunarIlluminatedFraction: 0.9,
-        maxAlphaDelta: 1,
+        maxAlphaDelta: 4,
       },
       {
         name: "moon below horizon",
@@ -305,14 +305,16 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(lunarDotAtKnoxville).toBeGreaterThan(0.8);
     expect(solarAltitudeAtSublunar).toBeLessThan(-12);
     expect(solarAltitudeAtKnoxville).toBeLessThan(-20);
-    expect(nightEligibilityAtSublunar).toBe(1);
+    expect(nightEligibilityAtSublunar).toBeGreaterThan(0.9);
     expect(nightEligibilityAtKnoxville).toBe(1);
 
-    expect(alphaDeltaAtSublunar).toBe(4);
-    expect(alphaDeltaAtKnoxville).toBe(4);
-    expect(luminanceDeltaAtSublunar).toBeGreaterThan(3.5);
-    expect(luminanceDeltaAtSublunar).toBeLessThan(3.7);
-    expect(luminanceDeltaAtKnoxville).toBeGreaterThan(3.2);
-    expect(luminanceDeltaAtKnoxville).toBeLessThan(3.5);
+    expect(alphaDeltaAtSublunar).toBeGreaterThanOrEqual(22);
+    expect(alphaDeltaAtSublunar).toBeLessThanOrEqual(45);
+    expect(alphaDeltaAtKnoxville).toBeGreaterThanOrEqual(20);
+    expect(alphaDeltaAtKnoxville).toBeLessThanOrEqual(42);
+    expect(luminanceDeltaAtSublunar).toBeGreaterThan(8);
+    expect(luminanceDeltaAtSublunar).toBeLessThan(24);
+    expect(luminanceDeltaAtKnoxville).toBeGreaterThan(7);
+    expect(luminanceDeltaAtKnoxville).toBeLessThan(26);
   });
 });
