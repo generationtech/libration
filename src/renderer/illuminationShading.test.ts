@@ -18,6 +18,7 @@ import {
   sampleIlluminationRgba8,
   smootherstep,
   smoothstep,
+  TWILIGHT_BAND_BLEND_OVERLAP_DEG,
   TWILIGHT_B,
   TWILIGHT_G,
   TWILIGHT_R,
@@ -41,6 +42,10 @@ describe("smoothstep", () => {
 });
 
 describe("sampleIlluminationRgba8 (twilight-aware)", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+
   it("is fully transparent on the high day side away from the low-sun band", () => {
     expect(sampleIlluminationRgba8(1, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
     expect(sampleIlluminationRgba8(0.5, 1)).toEqual({ r: 0, g: 0, b: 0, a: 0 });
@@ -92,5 +97,23 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const sum1 = c1.r + c1.g + c1.b;
     const sum2 = c2.r + c2.g + c2.b;
     expect(sum1).not.toBe(sum2);
+  });
+
+  it("keeps color continuity across civil and nautical boundaries with overlap blending", () => {
+    const boundary = -6;
+    const step = TWILIGHT_BAND_BLEND_OVERLAP_DEG * 0.5;
+    const before = sampleIlluminationRgba8(dotFromAltitudeDeg(boundary + step), 1);
+    const after = sampleIlluminationRgba8(dotFromAltitudeDeg(boundary - step), 1);
+    const colorDelta =
+      Math.abs(before.r - after.r) + Math.abs(before.g - after.g) + Math.abs(before.b - after.b);
+    expect(colorDelta).toBeLessThanOrEqual(12);
+  });
+
+  it("fades astronomical tint smoothly into deep night near -18 deg", () => {
+    const justBeforeNight = sampleIlluminationRgba8(dotFromAltitudeDeg(-17.5), 1);
+    const atNight = sampleIlluminationRgba8(dotFromAltitudeDeg(-18), 1);
+    expect(justBeforeNight.r + justBeforeNight.g + justBeforeNight.b).toBeGreaterThan(0);
+    expect(atNight.r + atNight.g + atNight.b).toBe(0);
+    expect(atNight.a).toBeGreaterThanOrEqual(justBeforeNight.a);
   });
 });

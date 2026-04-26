@@ -45,11 +45,18 @@ const C_HORIZON = { r: 34, g: 40, b: 58 } as const;
 const C_CIVIL_END = { r: 28, g: 36, b: 56 } as const;
 const C_NAUT = { r: 20, g: 32, b: 54 } as const;
 const C_ASTRO = { r: 10, g: 20, b: 42 } as const;
+const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
+
+/**
+ * Blend overlap around twilight thresholds to reduce visible segmentation at
+ * civil/nautical/astronomical boundaries.
+ */
+export const TWILIGHT_BAND_BLEND_OVERLAP_DEG = 1.5;
 
 /** Near-terminator tint (legacy name; civil band start). */
-export const TWILIGHT_R = 26;
-export const TWILIGHT_G = 30;
-export const TWILIGHT_B = 42;
+export const TWILIGHT_R = C_HORIZON.r;
+export const TWILIGHT_G = C_HORIZON.g;
+export const TWILIGHT_B = C_HORIZON.b;
 
 export function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
@@ -65,48 +72,84 @@ function lerpChannel(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function lerpColor(
+  a: { r: number; g: number; b: number },
+  b: { r: number; g: number; b: number },
+  t: number,
+): { r: number; g: number; b: number } {
+  return {
+    r: lerpChannel(a.r, b.r, t),
+    g: lerpChannel(a.g, b.g, t),
+    b: lerpChannel(a.b, b.b, t),
+  };
+}
+
 /**
  * Sub-horizon overlay RGB (0–255). Smooth across civil / nautical / astronomical, then to black
  * in deep night (solar altitude below about −18°).
  */
 function twilightBandOverlayRgb(altitudeDeg: number): { r: number; g: number; b: number } {
   if (altitudeDeg > 0) {
-    return { r: 0, g: 0, b: 0 };
+    return C_NIGHT;
   }
   const below = -altitudeDeg;
   if (below >= ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
-    return { r: 0, g: 0, b: 0 };
+    return C_NIGHT;
   }
-  if (below <= CIVIL_TWILIGHT_HORIZON_OFFSET_DEG) {
-    const t = smoothstep(0, CIVIL_TWILIGHT_HORIZON_OFFSET_DEG, below);
-    return {
-      r: lerpChannel(C_HORIZON.r, C_CIVIL_END.r, t),
-      g: lerpChannel(C_HORIZON.g, C_CIVIL_END.g, t),
-      b: lerpChannel(C_HORIZON.b, C_CIVIL_END.b, t),
-    };
-  }
-  if (below <= NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG) {
-    const t = smoothstep(
-      CIVIL_TWILIGHT_HORIZON_OFFSET_DEG,
-      NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG,
-      below,
-    );
-    return {
-      r: lerpChannel(C_CIVIL_END.r, C_NAUT.r, t),
-      g: lerpChannel(C_CIVIL_END.g, C_NAUT.g, t),
-      b: lerpChannel(C_CIVIL_END.b, C_NAUT.b, t),
-    };
-  }
-  const t = smoothstep(
-    NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG,
-    ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG,
-    below,
+
+  const civilColor = lerpColor(
+    C_HORIZON,
+    C_CIVIL_END,
+    smoothstep(0, CIVIL_TWILIGHT_HORIZON_OFFSET_DEG, below),
   );
-  return {
-    r: lerpChannel(C_NAUT.r, C_ASTRO.r, t),
-    g: lerpChannel(C_NAUT.g, C_ASTRO.g, t),
-    b: lerpChannel(C_NAUT.b, C_ASTRO.b, t),
-  };
+  const nauticalColor = lerpColor(
+    C_CIVIL_END,
+    C_NAUT,
+    smoothstep(CIVIL_TWILIGHT_HORIZON_OFFSET_DEG, NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG, below),
+  );
+  const astronomicalColor = lerpColor(
+    C_NAUT,
+    C_ASTRO,
+    smoothstep(
+      NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG,
+      ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG,
+      below,
+    ),
+  );
+
+  const overlap = TWILIGHT_BAND_BLEND_OVERLAP_DEG;
+  const civilEdge = CIVIL_TWILIGHT_HORIZON_OFFSET_DEG;
+  const nauticalEdge = NAUTICAL_TWILIGHT_HORIZON_OFFSET_DEG;
+  const astroEdge = ASTRONOMICAL_TWILIGHT_HORIZON_OFFSET_DEG;
+
+  if (below < civilEdge - overlap) {
+    return civilColor;
+  }
+  if (below <= civilEdge + overlap) {
+    return lerpColor(
+      civilColor,
+      nauticalColor,
+      smoothstep(civilEdge - overlap, civilEdge + overlap, below),
+    );
+  }
+  if (below < nauticalEdge - overlap) {
+    return nauticalColor;
+  }
+  if (below <= nauticalEdge + overlap) {
+    return lerpColor(
+      nauticalColor,
+      astronomicalColor,
+      smoothstep(nauticalEdge - overlap, nauticalEdge + overlap, below),
+    );
+  }
+  if (below < astroEdge - overlap) {
+    return astronomicalColor;
+  }
+  return lerpColor(
+    astronomicalColor,
+    C_NIGHT,
+    smoothstep(astroEdge - overlap, astroEdge, below),
+  );
 }
 
 /**
