@@ -20,10 +20,11 @@ The major runtime foundations are implemented well enough to support disciplined
 - continuous attenuation-driven planetary illumination composition with semantic twilight anchors.
 - non-emissive twilight attenuation and atmospheric tint modulation.
 - physically-derived polar illumination behavior from seasonal solar geometry.
+- perceptually legible moonlight composition with configurable presentation modes.
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is to expand the product without destabilizing the architectural boundaries that now exist.
+The current strategic objective is to expand the planetary composition and illumination system without destabilizing the architectural boundaries that now exist.
 
 ## Current goals
 
@@ -32,7 +33,7 @@ The current strategic objective is to expand the product without destabilizing t
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Prepare the project for more advanced atmospheric composition, planetary illumination, and lifecycle work.
+6. Prepare the project for more advanced atmospheric composition, emissive illumination, and lifecycle work.
 
 ## Near-term execution slices
 
@@ -55,7 +56,7 @@ Exit criteria:
 
 ### Slice 2: Atmospheric composition refinement and planetary illumination
 
-Status: planned.
+Status: active.
 
 Current implemented foundation:
 
@@ -67,25 +68,37 @@ Current implemented foundation:
 - sublunar marker.
 - solar analemma overlay.
 - derived astronomical scene overlays.
+- perceptually legible moonlight composition integrated into the same upstream illumination raster.
+- configurable moonlight presentation modes.
 
 Candidate work:
 
-- twilight in the solar shading pass: implemented as a continuous attenuation-driven solar-altitude illumination field in the upstream illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors), emitted as a single `rasterPatch` with no backend twilight semantics (done).
 - atmospheric transition rendering.
 - physically-plausible twilight span and attenuation tuning.
 - future atmospheric scattering refinement without abandoning renderer-agnostic composition.
 - composition-aware day/night illumination.
-- emissive night-light blending strategy.
+- emissive night-light composition strategy.
 - masking and clipping rules.
 - blend modes.
 - overlay readability strategy.
+- weather/cloud participation planning.
 - active solar-position synchronization along analemma trajectories.
+
+Architectural constraints:
+
+- composition policy remains upstream.
+- RenderPlan remains the rendering boundary.
+- backend remains product-semantics-free.
+- avoid backend-specific composition behavior.
+- avoid treating emissive lighting as a generic overlay hack.
+- preserve deterministic composition semantics.
 
 Exit criteria:
 
 - composition rules are clearly defined before broad implementation.
 - atmospheric transitions feel coherent rather than binary.
 - astronomical overlays participate correctly in scene composition.
+- emissive/night-light participation has a clear architectural path.
 - backend remains product-semantics-free.
 
 ### Slice 3: Scientific substrate expansion
@@ -153,6 +166,7 @@ Do not break these while implementing future work:
 - Scene is projection-space and starts below chrome.
 - RenderPlan is the rendering boundary.
 - Backends execute only.
+- Planetary composition semantics remain upstream.
 
 ## Recommended next prompt pattern
 

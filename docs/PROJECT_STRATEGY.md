@@ -8,7 +8,7 @@ It explains what the project is trying to become, what it is not trying to becom
 
 ## Product thesis
 
-Libration is a precision world time instrument, not merely a decorative map.
+Libration is a precision world time instrument evolving into a scientifically grounded planetary scene instrument, not merely a decorative map.
 
 Its differentiating ideas are:
 
@@ -18,6 +18,7 @@ Its differentiating ideas are:
 - reference-frame civil presentation.
 - renderer-agnostic architecture.
 - composable projection-space scene.
+- planetary illumination and composition.
 - local-first desktop use.
 - public, inspectable, user-freedom-preserving implementation.
 
@@ -48,6 +49,7 @@ Useful differentiation directions:
 - curated scientific and cartographic map families.
 - reference-frame time model.
 - modern top-band chrome visual language.
+- planetary illumination and atmospheric composition.
 - future data overlays and playback features.
 - local-first power-user workflows.
 
@@ -95,14 +97,38 @@ Expose powerful controls through coherent axes:
 - layer composition.
 - presets when implemented.
 
-
-### 7. Scientific grounding over arbitrary effects
-
-Atmospheric transitions, twilight behavior, and planetary illumination should emerge from real solar geometry and physically-inspired attenuation models rather than arbitrary glow effects or backend-specific visual tricks.
-
 ### 6. Future backends must remain possible
 
 Canvas is the current backend. The architecture should keep a future GPU or bare-metal renderer plausible.
+
+### 7. Scientific grounding over arbitrary effects
+
+Atmospheric transitions, twilight behavior, planetary illumination, and future emissive composition should emerge from:
+
+- real solar geometry.
+- lunar geometry.
+- physically-inspired attenuation.
+- coherent upstream composition policy.
+
+Avoid:
+
+- arbitrary glow effects.
+- backend-specific visual tricks.
+- disconnected visual layers.
+- composition logic implemented inside backend execution.
+
+### 8. Planetary composition over isolated overlays
+
+The scene system is increasingly a planetary composition system rather than a collection of unrelated overlays.
+
+Future systems should participate coherently in:
+
+- atmospheric attenuation.
+- reflected illumination.
+- emissive illumination.
+- visibility/readability policy.
+- weather/cloud participation.
+- dynamic scene composition.
 
 ## Development strategy
 
@@ -139,6 +165,9 @@ Foundational systems now exist:
 - map onboarding.
 - static and derived overlays.
 - month-aware map families.
+- planetary illumination foundation.
+- twilight composition.
+- perceptually legible moonlight composition.
 
 The next strategic need is not another large hidden architecture migration. It is disciplined feature expansion on top of the foundation.
 
@@ -149,7 +178,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. Physically-grounded planetary illumination, twilight attenuation, and emissive map composition.
+4. Planetary scene composition and emissive illumination.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

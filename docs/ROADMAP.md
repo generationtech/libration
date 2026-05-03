@@ -147,15 +147,17 @@ Delivered:
 - solar shading / dark-side visualization.
 - continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
 - non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
-- first perceptually legible moonlight slice: moon phase, lunar altitude, and local incidence provide a bounded, broad-but-directional secondary night-side field (cool additive tint plus transmittance relief on the night mask) inside the same upstream illumination raster while preserving day/twilight behavior and backend semantics.
-- scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only (transmittance lift, cool tint cap, incidence blend), with legacy documents defaulting to `illustrative` when the field was absent and greenfield defaults preferring `enhanced`.
+- perceptually legible moonlight composition integrated into the same planetary illumination raster.
+- bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
+- scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
-- further atmospheric scattering refinement, composition-aware day/night, and emissive night-light blending.
+- further atmospheric scattering refinement.
 - emissive/night-light composition.
+- composition-aware overlay readability policy.
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
 - overlay editor refinement.
@@ -195,9 +197,11 @@ Candidate deliverables:
 - seasonal natural-color refinements.
 - map selector attribution and explanatory copy.
 
-## Phase 9: Atmospheric composition and planetary illumination
+## Phase 9: Planetary scene composition and illumination
 
 Status: planned.
+
+This phase is now emerging as a major architectural subsystem rather than a collection of isolated visual effects.
 
 Candidate deliverables:
 
@@ -206,9 +210,20 @@ Candidate deliverables:
 - clipping.
 - composition-aware day/night illumination.
 - higher-fidelity atmospheric scattering and illumination refinement on top of the existing continuous attenuation-driven twilight model.
-- emissive/night-light blend.
+- emissive/night-light composition and visibility policy.
 - atmospheric glow and transition tuning.
 - overlay-compatible visual tuning.
+- overlay readability policy.
+- weather/cloud participation in planetary composition.
+- future emissive contribution framework.
+
+Architectural direction:
+
+- atmospheric attenuation, reflected illumination, and emissive illumination participate in one coherent upstream planetary composition model.
+- composition semantics remain upstream.
+- RenderPlan remains the rendering boundary.
+- backend remains unaware of planetary composition policy.
+- future weather/cloud systems should participate in scene composition rather than acting as isolated overlays.
 
 ## Phase 10: Dynamic data lifecycle
 
