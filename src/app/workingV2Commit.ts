@@ -163,6 +163,8 @@ function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
       b.baseMap.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
     ) &&
     a.illumination.moonlight.mode === b.illumination.moonlight.mode &&
+    a.illumination.emissiveNightLights.mode === b.illumination.emissiveNightLights.mode &&
+    a.illumination.emissiveNightLights.assetId === b.illumination.emissiveNightLights.assetId &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

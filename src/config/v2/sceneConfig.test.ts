@@ -22,6 +22,7 @@ import {
   v2ToAppConfig,
 } from "./librationConfig";
 import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   DEFAULT_EQUIRECT_BASE_MAP_ID,
   EQUIRECT_BASE_MAP_OPTIONS,
   buildDefaultSceneConfigFromLayerFlags,
@@ -60,6 +61,10 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.id).toBeDefined();
     expect(v2.scene?.illumination.moonlight.mode).toBe("enhanced");
+    expect(v2.scene?.illumination.emissiveNightLights.mode).toBe("off");
+    expect(v2.scene?.illumination.emissiveNightLights.assetId).toBe(
+      DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+    );
   });
 
   it("partial scene fills missing base map, ordering mode, and stack rows", () => {
@@ -78,11 +83,17 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.baseMap.opacity).toBe(1);
     expect(v2.scene?.layers).toHaveLength(7);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
+    expect(v2.scene?.illumination.emissiveNightLights.mode).toBe("off");
+    expect(v2.scene?.illumination.emissiveNightLights.assetId).toBe(
+      DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+    );
   });
 
   it("greenfield scene defaults moonlight to enhanced", () => {
     const s = buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYERS);
     expect(s.illumination.moonlight.mode).toBe("enhanced");
+    expect(s.illumination.emissiveNightLights.mode).toBe("off");
+    expect(s.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
   });
 
   it("normalizes explicit moonlight mode and rejects unknown to illustrative", () => {
@@ -99,6 +110,8 @@ describe("SceneConfig (Phase 1)", () => {
       DEFAULT_LAYERS,
     );
     expect(ok.illumination.moonlight.mode).toBe("natural");
+    expect(ok.illumination.emissiveNightLights.mode).toBe("off");
+    expect(ok.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
     const bad = normalizeSceneConfig(
       {
         version: 1,
@@ -112,6 +125,44 @@ describe("SceneConfig (Phase 1)", () => {
       DEFAULT_LAYERS,
     );
     expect(bad.illumination.moonlight.mode).toBe("illustrative");
+    expect(bad.illumination.emissiveNightLights.mode).toBe("off");
+  });
+
+  it("normalizes emissive night lights mode and rejects unknown to off", () => {
+    const ok = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: { mode: "natural", assetId: "equirect-world-night-lights-viirs-v1" },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(ok.illumination.emissiveNightLights.mode).toBe("natural");
+    expect(ok.illumination.emissiveNightLights.assetId).toBe("equirect-world-night-lights-viirs-v1");
+    const bad = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: { mode: "bogus", assetId: "  " },
+        },
+      } as unknown as Parameters<typeof normalizeSceneConfig>[0],
+      DEFAULT_LAYERS,
+    );
+    expect(bad.illumination.emissiveNightLights.mode).toBe("off");
+    expect(bad.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
   });
 
   it("base map registry exposes multiple supported ids", () => {
@@ -311,7 +362,7 @@ describe("SceneConfig (Phase 1)", () => {
         },
         layers: [],
         illumination: { moonlight: { mode: "illustrative" } },
-      },
+      } as unknown as LibrationConfigV2["scene"],
     });
     expect(v2.scene?.baseMap.id).toBe("equirect-world-blue-marble-t-v1");
     expect(v2.scene?.baseMap.presentation?.gamma).toBe(1.1);

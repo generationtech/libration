@@ -24,6 +24,7 @@ import { subsolarPoint } from "../../core/subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "../../core/solarTwilight";
 import { getMoonlightPolicy } from "../../core/moonlightPolicy";
 
+/** Emissive night lights (Phase 1+) resolve upstream; this plan stays a single `rasterPatch` with no emissive-specific options. */
 describe("buildSolarShadingIlluminationRenderPlan", () => {
   const ILL_POLICY = getMoonlightPolicy("illustrative");
   function dotFromAltitudeDeg(altitudeDeg: number): number {

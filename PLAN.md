@@ -77,7 +77,7 @@ Candidate work:
 - physically-plausible twilight span and attenuation tuning.
 - future atmospheric scattering refinement without abandoning renderer-agnostic composition.
 - composition-aware day/night illumination.
-- emissive night-light composition strategy.
+- emissive night-light composition strategy (Phase 1: `scene.illumination.emissiveNightLights` schema, defaults, and upstream policy table in core; catalog resolution and illumination raster sampling follow in later slices).
 - masking and clipping rules.
 - blend modes.
 - overlay readability strategy.

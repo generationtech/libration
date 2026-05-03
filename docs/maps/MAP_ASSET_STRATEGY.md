@@ -62,6 +62,18 @@ TypeScript owns:
 
 Runtime does not scan `public/maps`.
 
+## Planetary composition inputs (non-base-map rasters)
+
+Some rasters are **composition inputs**: they inform upstream planetary illumination and tone (for example emissive night-light radiance fields), not the geographic substrate selected as `scene.baseMap.id`.
+
+Rules (aligned with base maps):
+
+- persist **durable semantic family ids** only (no concrete month paths or ad hoc URLs in config).
+- satisfy the same equirectangular world contract as base maps until projection support expands.
+- resolve through a **bundled catalog or composition registry** (Phase 2+), not runtime directory scans.
+
+Emissive night-light families are intentionally **not** exposed as selectable base maps in early phases; they are sampled inside the planetary illumination pipeline and emitted through the same single illumination `rasterPatch` contract as solar and lunar composition.
+
 ## Persistence rule
 
 Persist the selected family id:

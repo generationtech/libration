@@ -171,7 +171,10 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                         draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
                       draft.scene = {
                         ...baseScene,
-                        illumination: { moonlight: { mode } },
+                        illumination: {
+                          ...baseScene.illumination,
+                          moonlight: { mode },
+                        },
                       };
                       draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
                     });

@@ -150,13 +150,14 @@ Delivered:
 - perceptually legible moonlight composition integrated into the same planetary illumination raster.
 - bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
 - scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
+- scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`) reserves the upstream emissive radiance contributor (not a base-map selection); default mode is `off` until catalog resolution and illumination raster sampling land.
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
 - further atmospheric scattering refinement.
-- emissive/night-light composition.
+- emissive night-light catalog resolution and per-texel composition into the illumination raster (config and policy hooks are in place).
 - composition-aware overlay readability policy.
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
@@ -224,6 +225,10 @@ Architectural direction:
 - RenderPlan remains the rendering boundary.
 - backend remains unaware of planetary composition policy.
 - future weather/cloud systems should participate in scene composition rather than acting as isolated overlays.
+
+Partial progress (Phase 1 hooks):
+
+- typed emissive presentation modes, deterministic solar-altitude visibility gate, moonlight coexistence scaling, and `scene.illumination.emissiveNightLights` normalization; emissive radiance is not yet sampled into the planetary illumination raster.
 
 ## Phase 10: Dynamic data lifecycle
 

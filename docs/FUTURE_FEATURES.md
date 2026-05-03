@@ -151,7 +151,7 @@ Candidates:
 - geometric clipping.
 - viewport clipping.
 - composition-aware day/night illumination.
-- emissive night-lights composition.
+- emissive night-lights composition (upstream policy and `scene.illumination.emissiveNightLights` config are in place; curated asset catalog, resolver, and illumination raster sampling remain to be wired).
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay readability tuning.

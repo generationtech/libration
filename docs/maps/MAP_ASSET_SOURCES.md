@@ -34,6 +34,20 @@ The current active catalog should be treated as source of truth. Known family id
 
 If the catalog differs, update this document to match the catalog.
 
+## equirect-world-night-lights-viirs-v1 (planned composition input)
+
+Status: planned (catalog entry and shipped raster pending curation).
+
+Role: upstream emissive radiance field for planetary illumination composition (not a default base-map selector target).
+
+Expected contract:
+
+- same equirectangular full-world assumptions as base maps (2:1, north-up, lon −180..180, lat −90..90, no padding).
+
+Provenance:
+
+- intended VIIRS-style or equivalent night-lights source once licensing, preprocessing, and validation are complete.
+
 ## equirect-world-legacy-v1
 
 Status: implemented.

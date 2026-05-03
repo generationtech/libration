@@ -61,6 +61,7 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   cloneSceneConfig,
   deriveLayerEnableFlagsFromScene,
+  isEmissiveNightLightsPresentationMode,
   isMoonlightPresentationMode,
   normalizeSceneConfig,
   type SceneConfig,
@@ -1030,9 +1031,19 @@ export function assertIsNormalizedLibrationConfig(
     ill === null ||
     typeof ill.moonlight !== "object" ||
     ill.moonlight === null ||
-    !isMoonlightPresentationMode((ill.moonlight as { mode?: unknown }).mode)
+    !isMoonlightPresentationMode((ill.moonlight as { mode?: unknown }).mode) ||
+    typeof (ill as { emissiveNightLights?: unknown }).emissiveNightLights !== "object" ||
+    (ill as { emissiveNightLights?: unknown }).emissiveNightLights === null
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination");
+  }
+  const enl = (ill as { emissiveNightLights: { mode?: unknown; assetId?: unknown } }).emissiveNightLights;
+  if (
+    !isEmissiveNightLightsPresentationMode(enl.mode) ||
+    typeof enl.assetId !== "string" ||
+    enl.assetId.trim() === ""
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.emissiveNightLights");
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (

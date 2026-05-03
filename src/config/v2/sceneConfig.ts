@@ -13,7 +13,7 @@
 
 /**
  * SceneConfig v1 (Phase 1): normalized scene domain for LibrationConfigV2.
- * See `docs/specs/scene/scene-config-v1.md` — this module implements the minimal runtime subset.
+ * See `ARCHITECTURE.md` and `docs/ROADMAP.md` for scene authority; this module implements the normalized runtime subset.
  */
 import type { LayerEnableFlags } from "../appConfig";
 import {
@@ -39,10 +39,20 @@ import {
   setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
 import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+  isEmissiveNightLightsPresentationMode,
+  type EmissiveNightLightsPresentationMode,
+} from "../../core/emissiveNightLightsPolicy";
+import {
   isMoonlightPresentationMode,
   type MoonlightPresentationMode,
 } from "../../core/moonlightPolicy";
 
+export {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+  isEmissiveNightLightsPresentationMode,
+  type EmissiveNightLightsPresentationMode,
+};
 export { isMoonlightPresentationMode, type MoonlightPresentationMode };
 
 export type { BaseMapOption, BaseMapResolveContext };
@@ -148,8 +158,15 @@ export type SceneMoonlightConfig = {
   mode: MoonlightPresentationMode;
 };
 
+export type SceneEmissiveNightLightsConfig = {
+  mode: EmissiveNightLightsPresentationMode;
+  /** Durable semantic composition-input id; resolved via catalog in Phase 2 (not a base-map selector). */
+  assetId: string;
+};
+
 export type SceneIlluminationConfig = {
   moonlight: SceneMoonlightConfig;
+  emissiveNightLights: SceneEmissiveNightLightsConfig;
 };
 
 export type SceneConfig = {
@@ -187,28 +204,47 @@ function clampOpacity(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
+function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNightLightsConfig {
+  const assetDefault = DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID;
+  if (!isPlainObject(raw)) {
+    return { mode: "off", assetId: assetDefault };
+  }
+  const mode = isEmissiveNightLightsPresentationMode(raw.mode) ? raw.mode : "off";
+  const assetId =
+    typeof raw.assetId === "string" && raw.assetId.trim() !== "" ? raw.assetId.trim() : assetDefault;
+  return { mode, assetId };
+}
+
 /**
  * Persisted scenes without `illumination` keep prior moonlight appearance (`illustrative`).
- * Greenfield defaults from {@link buildDefaultSceneConfigFromLayerFlags} use `enhanced`.
+ * Greenfield defaults from {@link buildDefaultSceneConfigFromLayerFlags} use `enhanced` moonlight and
+ * `off` emissive night lights until the composition path is fully wired.
  */
 export function normalizeSceneIlluminationInput(
   input: Record<string, unknown>,
 ): SceneIlluminationConfig {
+  const legacyMoon = (): SceneMoonlightConfig => ({ mode: "illustrative" });
+  const emptyEmissive = (): SceneEmissiveNightLightsConfig =>
+    normalizeSceneEmissiveNightLightsInput(undefined);
+
   if (!("illumination" in input)) {
-    return { moonlight: { mode: "illustrative" } };
+    return { moonlight: legacyMoon(), emissiveNightLights: emptyEmissive() };
   }
   const ill = input.illumination;
   if (!isPlainObject(ill)) {
-    return { moonlight: { mode: "illustrative" } };
+    return { moonlight: legacyMoon(), emissiveNightLights: emptyEmissive() };
   }
+  let moonlight: SceneMoonlightConfig = legacyMoon();
   const ml = ill.moonlight;
-  if (!isPlainObject(ml)) {
-    return { moonlight: { mode: "illustrative" } };
+  if (isPlainObject(ml) && isMoonlightPresentationMode(ml.mode)) {
+    moonlight = { mode: ml.mode };
+  } else if (isPlainObject(ml)) {
+    moonlight = { mode: "illustrative" };
   }
-  if (isMoonlightPresentationMode(ml.mode)) {
-    return { moonlight: { mode: ml.mode } };
-  }
-  return { moonlight: { mode: "illustrative" } };
+  const emissiveNightLights = normalizeSceneEmissiveNightLightsInput(
+    "emissiveNightLights" in ill ? ill.emissiveNightLights : undefined,
+  );
+  return { moonlight, emissiveNightLights };
 }
 
 export function resolveMoonlightPresentationMode(scene: SceneConfig): MoonlightPresentationMode {
@@ -343,6 +379,10 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
     layers: withFlags,
     illumination: {
       moonlight: { mode: "enhanced" },
+      emissiveNightLights: {
+        mode: "off",
+        assetId: DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+      },
     },
   };
 }
@@ -425,6 +465,10 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     })),
     illumination: {
       moonlight: { mode: scene.illumination.moonlight.mode },
+      emissiveNightLights: {
+        mode: scene.illumination.emissiveNightLights.mode,
+        assetId: scene.illumination.emissiveNightLights.assetId,
+      },
     },
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };

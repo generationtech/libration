@@ -227,6 +227,7 @@ Stable enough for feature-forward work:
 - derived solar analemma overlay.
 - solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer and the backend only executes the resulting rasterPatch without twilight-specific semantics.
 - perceptually tuned lunar secondary illumination: moon phase, lunar altitude, and surface incidence contribute a bounded directional night-side field (cool additive RGB in the raster plus a secondary transmittance lift on the darken mask) inside the same upstream planetary illumination raster, without backend moonlight semantics or additional render-layer kind. Presentation strength is selected by `scene.illumination.moonlight.mode` (`off`, `natural`, `enhanced`, `illustrative`), resolved into a deterministic upstream policy table before sampling; the RenderPlan stays a single `rasterPatch` and the backend remains unaware of the mode.
+- emissive night lights (human-made radiance) are modeled as **upstream planetary composition inputs**, not as a generic overlay or backend blend mode. Configuration lives under `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`). Policy (solar-altitude gating, moonlight coexistence, mode gains) resolves in core planners before sampling; the execution contract remains the same single planetary illumination `rasterPatch` path once the raster generator is extended—no separate RenderPlan primitive and no Canvas-specific night-light semantics.
 - twilight composition is physically-inspired and non-emissive: twilight modulates attenuation and atmospheric tint rather than behaving as an additive glow layer.
 - polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.
@@ -237,7 +238,8 @@ Still future or partial:
 - full dynamic data lifecycle.
 - live feeds.
 - gridded scientific datasets.
-- advanced blending, masking, and emissive composition.
+- advanced blending, masking, and generalized emissive stacks beyond the dedicated night-lights contributor.
+- curated emissive asset catalog resolution, per-texel sampling of emissive radiance into the illumination raster, and end-to-end visible night-lights composition (config and policy hooks exist; wiring is Phase 2–3).
 - alternate projections.
 - zoom, pan, tiling, globe view, and camera interaction.
 - broad preset system.
