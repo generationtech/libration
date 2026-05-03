@@ -19,6 +19,7 @@ import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayl
 import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
+import { getMoonlightPolicy } from "../core/moonlightPolicy";
 import { isTextOverlayPayload } from "../layers/textOverlayPayload";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
 import { buildBaseRasterMapRenderPlan } from "./renderPlan/sceneBaseRasterMapPlan";
@@ -239,7 +240,9 @@ export class CanvasRenderBackend implements RenderBackend {
       sublunarLatDeg,
       sublunarLonDeg,
       lunarIlluminatedFraction,
+      moonlightMode,
     } = layer.data;
+    const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? "illustrative");
     executeRenderPlanOnCanvas(
       ctx,
       buildSolarShadingIlluminationRenderPlan({
@@ -251,6 +254,7 @@ export class CanvasRenderBackend implements RenderBackend {
         sublunarLonDeg,
         lunarIlluminatedFraction,
         layerOpacity: layer.opacity,
+        moonlightPolicy,
       }),
     );
   }

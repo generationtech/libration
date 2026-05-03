@@ -148,6 +148,7 @@ Delivered:
 - continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
 - non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
 - first perceptually legible moonlight slice: moon phase, lunar altitude, and local incidence provide a bounded, broad-but-directional secondary night-side field (cool additive tint plus transmittance relief on the night mask) inside the same upstream illumination raster while preserving day/twilight behavior and backend semantics.
+- scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only (transmittance lift, cool tint cap, incidence blend), with legacy documents defaulting to `illustrative` when the field was absent and greenfield defaults preferring `enhanced`.
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 

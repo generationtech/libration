@@ -38,6 +38,12 @@ import {
   normalizeBaseMapPresentationByMapId,
   setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
+import {
+  isMoonlightPresentationMode,
+  type MoonlightPresentationMode,
+} from "../../core/moonlightPolicy";
+
+export { isMoonlightPresentationMode, type MoonlightPresentationMode };
 
 export type { BaseMapOption, BaseMapResolveContext };
 export {
@@ -138,6 +144,14 @@ export type SceneLayerInstance = {
   metadata?: Record<string, unknown>;
 };
 
+export type SceneMoonlightConfig = {
+  mode: MoonlightPresentationMode;
+};
+
+export type SceneIlluminationConfig = {
+  moonlight: SceneMoonlightConfig;
+};
+
 export type SceneConfig = {
   version: 1;
   projectionId: string;
@@ -145,6 +159,8 @@ export type SceneConfig = {
   baseMap: BaseMapConfig;
   layers: readonly SceneLayerInstance[];
   orderingMode: SceneOrderingMode;
+  /** Presentation-only illumination controls (resolved upstream of RenderPlan). */
+  illumination: SceneIlluminationConfig;
   metadata?: Record<string, unknown>;
 };
 
@@ -169,6 +185,34 @@ function clampOpacity(n: number): number {
     return 1;
   }
   return Math.max(0, Math.min(1, n));
+}
+
+/**
+ * Persisted scenes without `illumination` keep prior moonlight appearance (`illustrative`).
+ * Greenfield defaults from {@link buildDefaultSceneConfigFromLayerFlags} use `enhanced`.
+ */
+export function normalizeSceneIlluminationInput(
+  input: Record<string, unknown>,
+): SceneIlluminationConfig {
+  if (!("illumination" in input)) {
+    return { moonlight: { mode: "illustrative" } };
+  }
+  const ill = input.illumination;
+  if (!isPlainObject(ill)) {
+    return { moonlight: { mode: "illustrative" } };
+  }
+  const ml = ill.moonlight;
+  if (!isPlainObject(ml)) {
+    return { moonlight: { mode: "illustrative" } };
+  }
+  if (isMoonlightPresentationMode(ml.mode)) {
+    return { moonlight: { mode: ml.mode } };
+  }
+  return { moonlight: { mode: "illustrative" } };
+}
+
+export function resolveMoonlightPresentationMode(scene: SceneConfig): MoonlightPresentationMode {
+  return scene.illumination.moonlight.mode;
 }
 
 const SOLAR: SceneLayerInstance = {
@@ -297,6 +341,9 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       presentation: { ...DEFAULT_BASE_MAP_PRESENTATION },
     },
     layers: withFlags,
+    illumination: {
+      moonlight: { mode: "enhanced" },
+    },
   };
 }
 
@@ -376,6 +423,9 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
       presentation: L.presentation ? { ...L.presentation } : undefined,
       metadata: L.metadata ? { ...L.metadata } : undefined,
     })),
+    illumination: {
+      moonlight: { mode: scene.illumination.moonlight.mode },
+    },
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };
 }
@@ -588,6 +638,7 @@ export function normalizeSceneConfig(
     .map((row) => ({ ...row, opacity: row.opacity ?? 1 }));
   const merged: SceneLayerInstance[] = [...mergedKnownRows, ...mergedAdditionalRows];
   const metadata = isPlainObject(input.metadata) ? { ...input.metadata } : undefined;
+  const illumination = normalizeSceneIlluminationInput(input);
   return {
     version: 1,
     projectionId,
@@ -595,6 +646,7 @@ export function normalizeSceneConfig(
     orderingMode,
     baseMap: { ...baseMap, opacity: baseMap.opacity ?? 1 },
     layers: merged,
+    illumination,
     ...(metadata ? { metadata } : {}),
   };
 }

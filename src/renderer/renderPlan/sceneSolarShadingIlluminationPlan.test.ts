@@ -22,8 +22,10 @@ import { moonlightNightEligibilityFromSolarAltitude } from "../../core/lunarIllu
 import { sublunarPoint } from "../../core/sublunarPoint";
 import { subsolarPoint } from "../../core/subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "../../core/solarTwilight";
+import { getMoonlightPolicy } from "../../core/moonlightPolicy";
 
 describe("buildSolarShadingIlluminationRenderPlan", () => {
+  const ILL_POLICY = getMoonlightPolicy("illustrative");
   function dotFromAltitudeDeg(altitudeDeg: number): number {
     return Math.sin((altitudeDeg * Math.PI) / 180);
   }
@@ -63,6 +65,7 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       sublunarLonDeg: 0,
       lunarIlluminatedFraction: 0.5,
       layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
     }).items).toEqual([]);
 
     expect(buildSolarShadingIlluminationRenderPlan({
@@ -74,6 +77,7 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       sublunarLonDeg: 0,
       lunarIlluminatedFraction: 0.5,
       layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
     }).items).toEqual([]);
   });
 
@@ -87,6 +91,7 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       sublunarLonDeg: 48,
       lunarIlluminatedFraction: 0.72,
       layerOpacity: 0.75,
+      moonlightPolicy: ILL_POLICY,
     });
 
     expect(plan.items).toHaveLength(1);
@@ -117,6 +122,7 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       sublunarLonDeg: 0,
       lunarIlluminatedFraction: 1,
       layerOpacity: 0,
+      moonlightPolicy: ILL_POLICY,
     });
     const item = plan.items[0];
     expect(item?.kind).toBe("rasterPatch");
@@ -138,6 +144,7 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       sublunarLonDeg: 0,
       lunarIlluminatedFraction: 1,
       layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
     });
     const item = plan.items[0];
     expect(item?.kind).toBe("rasterPatch");
@@ -316,5 +323,38 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(luminanceDeltaAtSublunar).toBeLessThan(36);
     expect(luminanceDeltaAtKnoxville).toBeGreaterThan(8);
     expect(luminanceDeltaAtKnoxville).toBeLessThan(34);
+  });
+
+  it("keeps one rasterPatch while moonlight policy changes raster contents", () => {
+    const baseOpts = {
+      viewportWidthPx: 100,
+      viewportHeightPx: 80,
+      subsolarLatDeg: 10,
+      subsolarLonDeg: -20,
+      sublunarLatDeg: -4,
+      sublunarLonDeg: 48,
+      lunarIlluminatedFraction: 0.99,
+      layerOpacity: 1,
+    };
+    const off = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      moonlightPolicy: getMoonlightPolicy("off"),
+    });
+    const ill = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      moonlightPolicy: getMoonlightPolicy("illustrative"),
+    });
+    expect(off.items).toHaveLength(1);
+    expect(ill.items).toHaveLength(1);
+    expect(off.items[0]?.kind).toBe("rasterPatch");
+    expect(ill.items[0]?.kind).toBe("rasterPatch");
+    if (off.items[0]?.kind === "rasterPatch" && ill.items[0]?.kind === "rasterPatch") {
+      expect(off.items[0].rgba.length).toBe(ill.items[0].rgba.length);
+      let sumAbs = 0;
+      for (let i = 0; i < off.items[0].rgba.length; i++) {
+        sumAbs += Math.abs(off.items[0].rgba[i]! - ill.items[0].rgba[i]!);
+      }
+      expect(sumAbs).toBeGreaterThan(100);
+    }
   });
 });

@@ -21,6 +21,7 @@ import {
   deriveLayerEnableFlagsFromScene,
   getBaseMapPresentationForMapId,
   setBaseMapPresentationForMapId,
+  type MoonlightPresentationMode,
 } from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -34,6 +35,13 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "subsolarMarker",
   "sublunarMarker",
   "solarAnalemma",
+];
+
+const MOONLIGHT_OPTIONS: { value: MoonlightPresentationMode; label: string; title: string }[] = [
+  { value: "off", label: "Off", title: "No moonlight tint or extra night-side lift." },
+  { value: "natural", label: "Natural", title: "Subtle, physically restrained moonlight." },
+  { value: "enhanced", label: "Enhanced", title: "Readable moonlight while staying grounded." },
+  { value: "illustrative", label: "Illustrative", title: "Stronger, instrument-like moonlight visibility." },
 ];
 
 function labelForLayer(key: keyof LayerEnableFlags): string {
@@ -147,6 +155,37 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
               : undefined
           }
         />
+        <ConfigControlRow label="Moonlight appearance">
+          <select
+            className="config-input"
+            value={scene.illumination.moonlight.mode}
+            disabled={!mutable}
+            aria-label="Moonlight appearance"
+            title="How strongly moon phase affects the shaded night map (solar shading layer)."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const mode = e.currentTarget.value as MoonlightPresentationMode;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = {
+                        ...baseScene,
+                        illumination: { moonlight: { mode } },
+                      };
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {MOONLIGHT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value} title={o.title}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
         {LAYER_KEYS.map((key) => {
           return (
             <ConfigControlRow key={key} label={labelForLayer(key)}>

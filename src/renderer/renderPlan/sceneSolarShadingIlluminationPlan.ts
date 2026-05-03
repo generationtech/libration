@@ -12,6 +12,7 @@
  */
 
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
+import type { MoonlightPolicy } from "../../core/moonlightPolicy";
 import { sampleIlluminationRgba8 } from "../illuminationShading";
 import type { RenderPlan } from "./renderPlanTypes";
 
@@ -32,6 +33,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   sublunarLonDeg: number;
   lunarIlluminatedFraction: number;
   layerOpacity: number;
+  moonlightPolicy: MoonlightPolicy;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -64,10 +66,15 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
       const lam = (lonDeg * Math.PI) / 180;
       const solarDot = cosPhi * cosLatS * Math.cos(lam - lonS) + sinPhi * sinLatS;
       const lunarDot = cosPhi * cosLatM * Math.cos(lam - lonM) + sinPhi * sinLatM;
-      const { r, g, b, a } = sampleIlluminationRgba8(solarDot, op, {
-        lunarDot,
-        lunarIlluminatedFraction: options.lunarIlluminatedFraction,
-      });
+      const { r, g, b, a } = sampleIlluminationRgba8(
+        solarDot,
+        op,
+        {
+          lunarDot,
+          lunarIlluminatedFraction: options.lunarIlluminatedFraction,
+        },
+        options.moonlightPolicy,
+      );
       rgba[p++] = r;
       rgba[p++] = g;
       rgba[p++] = b;

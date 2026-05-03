@@ -12,6 +12,7 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
@@ -27,10 +28,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * State uses current time from {@link TimeContext}.
  */
 export function createSolarShadingLayer(
-  options: { zIndex?: number; opacity?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    /** Defaults to illustrative when omitted (tests / legacy callers). */
+    moonlightMode?: MoonlightPresentationMode;
+  } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
+  const moonlightMode = options.moonlightMode ?? "illustrative";
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
@@ -49,6 +56,7 @@ export function createSolarShadingLayer(
         sublunarLatDeg: moonLatDeg,
         sublunarLonDeg: moonLonDeg,
         lunarIlluminatedFraction: phase.illuminatedFraction,
+        moonlightMode,
       };
       return {
         visible: true,

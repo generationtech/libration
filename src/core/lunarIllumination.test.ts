@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { getMoonlightPolicy } from "./moonlightPolicy";
 import {
   moonAltitudeStrength,
   moonIncidenceStrength,
@@ -19,6 +20,8 @@ import {
   moonlightStrength,
   moonPhaseStrengthFromIlluminatedFraction,
 } from "./lunarIllumination";
+
+const ILL = getMoonlightPolicy("illustrative");
 
 describe("moonPhaseStrengthFromIlluminatedFraction", () => {
   it("is near zero for new moon and stronger near full moon", () => {
@@ -52,31 +55,46 @@ describe("moonlightNightEligibilityFromSolarAltitude", () => {
 
 describe("moonlightStrength", () => {
   it("returns bounded values with expected model behavior", () => {
-    const fullMoonHighNight = moonlightStrength({
-      lunarIlluminatedFraction: 1,
-      solarAltitudeDeg: -20,
-      surfaceMoonDot: 0.9,
-    });
-    const fullMoonLowIncidenceNight = moonlightStrength({
-      lunarIlluminatedFraction: 1,
-      solarAltitudeDeg: -20,
-      surfaceMoonDot: 0.2,
-    });
-    const newMoonHighNight = moonlightStrength({
-      lunarIlluminatedFraction: 0.01,
-      solarAltitudeDeg: -20,
-      surfaceMoonDot: 0.9,
-    });
-    const fullMoonBelowHorizon = moonlightStrength({
-      lunarIlluminatedFraction: 1,
-      solarAltitudeDeg: -20,
-      surfaceMoonDot: 0,
-    });
-    const fullMoonDaylight = moonlightStrength({
-      lunarIlluminatedFraction: 1,
-      solarAltitudeDeg: 10,
-      surfaceMoonDot: 0.9,
-    });
+    const fullMoonHighNight = moonlightStrength(
+      {
+        lunarIlluminatedFraction: 1,
+        solarAltitudeDeg: -20,
+        surfaceMoonDot: 0.9,
+      },
+      ILL,
+    );
+    const fullMoonLowIncidenceNight = moonlightStrength(
+      {
+        lunarIlluminatedFraction: 1,
+        solarAltitudeDeg: -20,
+        surfaceMoonDot: 0.2,
+      },
+      ILL,
+    );
+    const newMoonHighNight = moonlightStrength(
+      {
+        lunarIlluminatedFraction: 0.01,
+        solarAltitudeDeg: -20,
+        surfaceMoonDot: 0.9,
+      },
+      ILL,
+    );
+    const fullMoonBelowHorizon = moonlightStrength(
+      {
+        lunarIlluminatedFraction: 1,
+        solarAltitudeDeg: -20,
+        surfaceMoonDot: 0,
+      },
+      ILL,
+    );
+    const fullMoonDaylight = moonlightStrength(
+      {
+        lunarIlluminatedFraction: 1,
+        solarAltitudeDeg: 10,
+        surfaceMoonDot: 0.9,
+      },
+      ILL,
+    );
 
     expect(fullMoonHighNight).toBeLessThan(1);
     expect(fullMoonHighNight).toBeGreaterThan(0.6);
@@ -91,26 +109,41 @@ describe("moonlightStrength", () => {
       solarAltitudeDeg: -30,
       surfaceMoonDot: 0.9,
     };
-    const newMoon = moonlightStrength({
-      ...deepNightHighIncidence,
-      lunarIlluminatedFraction: 0.01,
-    });
-    const crescent = moonlightStrength({
-      ...deepNightHighIncidence,
-      lunarIlluminatedFraction: 0.12,
-    });
-    const quarter = moonlightStrength({
-      ...deepNightHighIncidence,
-      lunarIlluminatedFraction: 0.5,
-    });
-    const gibbous = moonlightStrength({
-      ...deepNightHighIncidence,
-      lunarIlluminatedFraction: 0.9,
-    });
-    const full = moonlightStrength({
-      ...deepNightHighIncidence,
-      lunarIlluminatedFraction: 1,
-    });
+    const newMoon = moonlightStrength(
+      {
+        ...deepNightHighIncidence,
+        lunarIlluminatedFraction: 0.01,
+      },
+      ILL,
+    );
+    const crescent = moonlightStrength(
+      {
+        ...deepNightHighIncidence,
+        lunarIlluminatedFraction: 0.12,
+      },
+      ILL,
+    );
+    const quarter = moonlightStrength(
+      {
+        ...deepNightHighIncidence,
+        lunarIlluminatedFraction: 0.5,
+      },
+      ILL,
+    );
+    const gibbous = moonlightStrength(
+      {
+        ...deepNightHighIncidence,
+        lunarIlluminatedFraction: 0.9,
+      },
+      ILL,
+    );
+    const full = moonlightStrength(
+      {
+        ...deepNightHighIncidence,
+        lunarIlluminatedFraction: 1,
+      },
+      ILL,
+    );
 
     expect(newMoon).toBeLessThan(0.01);
     expect(crescent).toBeLessThan(quarter * 0.4);
@@ -122,11 +155,11 @@ describe("moonlightStrength", () => {
 
 describe("moonIncidenceStrength", () => {
   it("keeps a strong peak near sublunar with a broad soft spill", () => {
-    expect(moonIncidenceStrength(-0.5)).toBe(0);
-    expect(moonIncidenceStrength(0)).toBe(0);
-    expect(moonIncidenceStrength(0.2)).toBeGreaterThan(0.08);
-    expect(moonIncidenceStrength(0.2)).toBeLessThan(0.14);
-    expect(moonIncidenceStrength(0.6)).toBeGreaterThan(0.55);
-    expect(moonIncidenceStrength(1)).toBe(1);
+    expect(moonIncidenceStrength(-0.5, ILL)).toBe(0);
+    expect(moonIncidenceStrength(0, ILL)).toBe(0);
+    expect(moonIncidenceStrength(0.2, ILL)).toBeGreaterThan(0.08);
+    expect(moonIncidenceStrength(0.2, ILL)).toBeLessThan(0.14);
+    expect(moonIncidenceStrength(0.6, ILL)).toBeGreaterThan(0.55);
+    expect(moonIncidenceStrength(1, ILL)).toBe(1);
   });
 });

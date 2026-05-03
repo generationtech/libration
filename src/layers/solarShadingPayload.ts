@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { isMoonlightPresentationMode, type MoonlightPresentationMode } from "../core/moonlightPolicy";
+
 export const SOLAR_SHADING_KIND = "solarShading" as const;
 
 /**
@@ -24,6 +26,8 @@ export interface SolarShadingPayload {
   sublunarLatDeg: number;
   sublunarLonDeg: number;
   lunarIlluminatedFraction: number;
+  /** Scene-level moonlight presentation; resolved before the raster plan (not backend-owned). */
+  moonlightMode: MoonlightPresentationMode;
 }
 
 export function isSolarShadingPayload(data: unknown): data is SolarShadingPayload {
@@ -35,6 +39,8 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.subsolarLonDeg === "number" &&
     typeof o.sublunarLatDeg === "number" &&
     typeof o.sublunarLonDeg === "number" &&
-    typeof o.lunarIlluminatedFraction === "number"
+    typeof o.lunarIlluminatedFraction === "number" &&
+    typeof o.moonlightMode === "string" &&
+    isMoonlightPresentationMode(o.moonlightMode)
   );
 }

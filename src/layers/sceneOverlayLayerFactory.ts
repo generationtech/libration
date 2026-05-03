@@ -22,6 +22,7 @@ import {
   resolvePinDateTimeTextFontAssetId,
 } from "../config/productTextFont";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
+import { resolveMoonlightPresentationMode } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
@@ -81,7 +82,11 @@ function createDerivedOverlayByProduct(
   const utcH = utcHourFromOptionalParameters(source.parameters);
   switch (source.product) {
     case "solarDayNightShading":
-      return createSolarShadingLayer({ zIndex, opacity });
+      return createSolarShadingLayer({
+        zIndex,
+        opacity,
+        moonlightMode: resolveMoonlightPresentationMode(config.scene),
+      });
     case "latLonGrid":
       return createLatLonGridLayer({ zIndex, opacity });
     case "referenceAndCustomCityPins":

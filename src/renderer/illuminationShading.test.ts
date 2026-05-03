@@ -22,6 +22,7 @@ import {
   smootherstep,
   smoothstep,
 } from "./illuminationShading";
+import { getMoonlightPolicy } from "../core/moonlightPolicy";
 import { classifyTwilightBand, solarAltitudeDegFromSurfaceSunDotProduct } from "../core/solarTwilight";
 
 describe("smootherstep", () => {
@@ -361,5 +362,59 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
 
     expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 10);
     expect(moonComposite.b).toBeGreaterThan(moonComposite.r + 4);
+  });
+});
+
+describe("sampleIlluminationRgba8 moonlight presentation modes", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+
+  const solarNightDot = dotFromAltitudeDeg(-30);
+  const moonHighFull = { lunarDot: dotFromAltitudeDeg(65), lunarIlluminatedFraction: 1 };
+
+  it("off mode matches baseline (no moonlight contribution)", () => {
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const off = sampleIlluminationRgba8(solarNightDot, 1, moonHighFull, getMoonlightPolicy("off"));
+    expect(off).toEqual(baseline);
+  });
+
+  it("orders night-side alpha relief natural < enhanced < illustrative", () => {
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const dNatural =
+      baseline.a -
+      sampleIlluminationRgba8(solarNightDot, 1, moonHighFull, getMoonlightPolicy("natural")).a;
+    const dEnhanced =
+      baseline.a -
+      sampleIlluminationRgba8(solarNightDot, 1, moonHighFull, getMoonlightPolicy("enhanced")).a;
+    const dIllustrative =
+      baseline.a -
+      sampleIlluminationRgba8(solarNightDot, 1, moonHighFull, getMoonlightPolicy("illustrative")).a;
+    expect(dNatural).toBeGreaterThan(2);
+    expect(dEnhanced).toBeGreaterThan(dNatural + 4);
+    expect(dIllustrative).toBeGreaterThan(dEnhanced + 4);
+  });
+
+  it("suppresses daylight in every non-off mode", () => {
+    const daylightDot = dotFromAltitudeDeg(8);
+    for (const mode of ["natural", "enhanced", "illustrative"] as const) {
+      const rgba = sampleIlluminationRgba8(
+        daylightDot,
+        1,
+        { lunarDot: dotFromAltitudeDeg(60), lunarIlluminatedFraction: 1 },
+        getMoonlightPolicy(mode),
+      );
+      expect(rgba.a).toBe(0);
+    }
+  });
+
+  it("leaves moon-below-horizon identical to baseline for natural through illustrative", () => {
+    const baseline = sampleIlluminationRgba8(solarNightDot, 1);
+    const moonBelow = { lunarDot: dotFromAltitudeDeg(-5), lunarIlluminatedFraction: 1 };
+    for (const mode of ["natural", "enhanced", "illustrative"] as const) {
+      expect(sampleIlluminationRgba8(solarNightDot, 1, moonBelow, getMoonlightPolicy(mode))).toEqual(
+        baseline,
+      );
+    }
   });
 });

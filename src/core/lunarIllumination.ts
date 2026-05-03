@@ -16,6 +16,8 @@
  * Returns a bounded scalar in [0, 1] for phase, night, and incidence gating downstream.
  */
 
+import type { MoonlightPolicy } from "./moonlightPolicy";
+
 export interface MoonlightStrengthInputs {
   lunarIlluminatedFraction: number;
   solarAltitudeDeg: number;
@@ -25,11 +27,6 @@ export interface MoonlightStrengthInputs {
 export const MOONLIGHT_ALTITUDE_FULL_STRENGTH_DEG = 30;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -14;
-/** Softer peak so the sublunar lobe stays broad on the globe (not a tight spot). */
-export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 1.5;
-/** Emphasize the broad incidence component for a legible field, not a pin highlight. */
-export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.66;
-export const MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER = 0.88;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -63,14 +60,18 @@ export function moonAltitudeStrength(lunarAltitudeDeg: number): number {
  * Local incidence weighting (surface normal · moon direction).
  * Keeps directional falloff toward the sublunar region with a broad soft spill.
  */
-export function moonIncidenceStrength(surfaceMoonDot: number): number {
+export function moonIncidenceStrength(
+  surfaceMoonDot: number,
+  policy: Pick<
+    MoonlightPolicy,
+    "incidenceBroadWeight" | "incidenceFocusPower" | "incidenceSoftRampPower"
+  >,
+): number {
   const incidence = smoothstep(0, 1, clamp01(surfaceMoonDot));
-  const softenedBroad = Math.pow(incidence, MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER);
-  const focused = Math.pow(incidence, MOONLIGHT_INCIDENCE_FOCUS_POWER);
-  return clamp01(
-    MOONLIGHT_INCIDENCE_BROAD_WEIGHT * softenedBroad +
-      (1 - MOONLIGHT_INCIDENCE_BROAD_WEIGHT) * focused,
-  );
+  const softenedBroad = Math.pow(incidence, policy.incidenceSoftRampPower);
+  const focused = Math.pow(incidence, policy.incidenceFocusPower);
+  const w = policy.incidenceBroadWeight;
+  return clamp01(w * softenedBroad + (1 - w) * focused);
 }
 
 /**
@@ -84,9 +85,15 @@ export function moonlightNightEligibilityFromSolarAltitude(solarAltitudeDeg: num
   );
 }
 
-export function moonlightStrength(inputs: MoonlightStrengthInputs): number {
+export function moonlightStrength(
+  inputs: MoonlightStrengthInputs,
+  policy: Pick<
+    MoonlightPolicy,
+    "incidenceBroadWeight" | "incidenceFocusPower" | "incidenceSoftRampPower"
+  >,
+): number {
   const phaseStrength = moonPhaseStrengthFromIlluminatedFraction(inputs.lunarIlluminatedFraction);
-  const incidenceStrength = moonIncidenceStrength(inputs.surfaceMoonDot);
+  const incidenceStrength = moonIncidenceStrength(inputs.surfaceMoonDot, policy);
   const nightEligibility = moonlightNightEligibilityFromSolarAltitude(inputs.solarAltitudeDeg);
   return clamp01(phaseStrength * incidenceStrength * nightEligibility);
 }

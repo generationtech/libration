@@ -59,6 +59,7 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.viewMode).toBe("fullWorldFixed");
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.id).toBeDefined();
+    expect(v2.scene?.illumination.moonlight.mode).toBe("enhanced");
   });
 
   it("partial scene fills missing base map, ordering mode, and stack rows", () => {
@@ -76,6 +77,41 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
     expect(v2.scene?.layers).toHaveLength(7);
+    expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
+  });
+
+  it("greenfield scene defaults moonlight to enhanced", () => {
+    const s = buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYERS);
+    expect(s.illumination.moonlight.mode).toBe("enhanced");
+  });
+
+  it("normalizes explicit moonlight mode and rejects unknown to illustrative", () => {
+    const ok = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: { moonlight: { mode: "natural" } },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(ok.illumination.moonlight.mode).toBe("natural");
+    const bad = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: { moonlight: { mode: "bogus" } },
+      } as unknown as Parameters<typeof normalizeSceneConfig>[0],
+      DEFAULT_LAYERS,
+    );
+    expect(bad.illumination.moonlight.mode).toBe("illustrative");
   });
 
   it("base map registry exposes multiple supported ids", () => {
@@ -274,6 +310,7 @@ describe("SceneConfig (Phase 1)", () => {
           presentation: { brightness: 1.25, contrast: 1, gamma: 1.1, saturation: 1.05 },
         },
         layers: [],
+        illumination: { moonlight: { mode: "illustrative" } },
       },
     });
     expect(v2.scene?.baseMap.id).toBe("equirect-world-blue-marble-t-v1");

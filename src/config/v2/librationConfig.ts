@@ -61,6 +61,7 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   cloneSceneConfig,
   deriveLayerEnableFlagsFromScene,
+  isMoonlightPresentationMode,
   normalizeSceneConfig,
   type SceneConfig,
 } from "./sceneConfig";
@@ -1022,6 +1023,16 @@ export function assertIsNormalizedLibrationConfig(
     !Array.isArray((sc as SceneConfig).layers)
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene");
+  }
+  const ill = (sc as SceneConfig).illumination;
+  if (
+    typeof ill !== "object" ||
+    ill === null ||
+    typeof ill.moonlight !== "object" ||
+    ill.moonlight === null ||
+    !isMoonlightPresentationMode((ill.moonlight as { mode?: unknown }).mode)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination");
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
