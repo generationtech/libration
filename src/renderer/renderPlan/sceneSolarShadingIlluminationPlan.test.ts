@@ -312,9 +312,9 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(alphaDeltaAtSublunar).toBeLessThanOrEqual(45);
     expect(alphaDeltaAtKnoxville).toBeGreaterThanOrEqual(20);
     expect(alphaDeltaAtKnoxville).toBeLessThanOrEqual(42);
-    expect(luminanceDeltaAtSublunar).toBeGreaterThan(2);
-    expect(luminanceDeltaAtSublunar).toBeLessThan(24);
-    expect(luminanceDeltaAtKnoxville).toBeGreaterThan(2);
-    expect(luminanceDeltaAtKnoxville).toBeLessThan(26);
+    expect(luminanceDeltaAtSublunar).toBeGreaterThan(10);
+    expect(luminanceDeltaAtSublunar).toBeLessThan(36);
+    expect(luminanceDeltaAtKnoxville).toBeGreaterThan(8);
+    expect(luminanceDeltaAtKnoxville).toBeLessThan(34);
   });
 });

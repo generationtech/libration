@@ -67,7 +67,22 @@ const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
 export const TWILIGHT_R = C_HORIZON.r;
 export const TWILIGHT_G = C_HORIZON.g;
 export const TWILIGHT_B = C_HORIZON.b;
+
+/**
+ * Straight-alpha transmittance relief on the night darken mask (secondary to cool RGB fill).
+ */
 export const MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX = 0.26;
+
+/**
+ * Bounded additive cool moonlight in overlay RGB (0–1 scale on visibility).
+ * Intentionally strong for screenshot legibility; gated upstream by phase, night, and incidence.
+ */
+export const MOONLIGHT_SECONDARY_COOL_INTENSITY = 1;
+
+/** Cool lunar tint direction (scaled by visibility × {@link MOONLIGHT_SECONDARY_COOL_INTENSITY}). */
+export const MOONLIGHT_COOL_TINT_R = 28;
+export const MOONLIGHT_COOL_TINT_G = 52;
+export const MOONLIGHT_COOL_TINT_B = 112;
 
 export function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
@@ -220,10 +235,11 @@ export function sampleIlluminationRgba8(
   const nightStrength = nightMaskStrength(altDeg);
   const darknessAlpha = nightStrength * NIGHT_DARKEN * op;
   const tintStrength = atmosphericTintStrength(altDeg);
-  const moonSecondaryStrength = lunarStrengthRaw * smoothstep(0.45, 0.95, nightStrength);
+  const moonlightVisibility = lunarStrengthRaw * smoothstep(0.45, 0.95, nightStrength);
+  const moonlightContribution = moonlightVisibility * MOONLIGHT_SECONDARY_COOL_INTENSITY;
   const baselineTransmittance = 1 - darknessAlpha;
   const moonlightTransmittanceLift =
-    darknessAlpha * moonSecondaryStrength * MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX;
+    darknessAlpha * moonlightVisibility * MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX;
   const combinedAlpha = Math.max(
     0,
     1 - Math.min(1, baselineTransmittance + moonlightTransmittanceLift),
@@ -232,9 +248,10 @@ export function sampleIlluminationRgba8(
   if (combinedAlpha > 0) {
     const twilightTint = continuousTwilightOverlayRgb(altDeg);
     const attenuationColor = lerpColor(C_NIGHT, twilightTint, tintStrength);
-    r = attenuationColor.r;
-    g = attenuationColor.g;
-    b = attenuationColor.b;
+    const moonCoolScale = Math.max(0, Math.min(1, moonlightContribution));
+    r = Math.min(255, attenuationColor.r + MOONLIGHT_COOL_TINT_R * moonCoolScale);
+    g = Math.min(255, attenuationColor.g + MOONLIGHT_COOL_TINT_G * moonCoolScale);
+    b = Math.min(255, attenuationColor.b + MOONLIGHT_COOL_TINT_B * moonCoolScale);
     a = combinedAlpha;
   }
 

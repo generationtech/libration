@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import {
   DAYLIGHT_CLEAR_ALTITUDE_DEG,
   DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
+  MOONLIGHT_COOL_TINT_B,
   MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX,
   NIGHT_DARKEN,
   sampleIlluminationRgba8,
@@ -207,6 +208,11 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       lunarIlluminatedFraction: 0.01,
     });
     expect(Math.abs(newMoon.a - baseline.a)).toBeLessThanOrEqual(2);
+    const rgbDelta =
+      Math.abs(newMoon.r - baseline.r) +
+      Math.abs(newMoon.g - baseline.g) +
+      Math.abs(newMoon.b - baseline.b);
+    expect(rgbDelta).toBeLessThanOrEqual(2);
   });
 
   it("applies bounded moonlight alpha relief for a high full moon", () => {
@@ -236,6 +242,32 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(lift).toBeLessThanOrEqual(
       Math.ceil(baseline.a * MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX) + 1,
     );
+  });
+
+  it("scales composed moonlight strongly between quarter and gibbous at high incidence", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const darkOcean = { r: 14, g: 26, b: 44 };
+    const highLunarDot = dotFromAltitudeDeg(65);
+    const quarter = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: highLunarDot,
+      lunarIlluminatedFraction: 0.5,
+    });
+    const gibbous = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: highLunarDot,
+      lunarIlluminatedFraction: 0.9,
+    });
+    const compositeQuarter = {
+      r: compositeChannel(darkOcean.r, quarter.r, quarter.a),
+      g: compositeChannel(darkOcean.g, quarter.g, quarter.a),
+      b: compositeChannel(darkOcean.b, quarter.b, quarter.a),
+    };
+    const compositeGibbous = {
+      r: compositeChannel(darkOcean.r, gibbous.r, gibbous.a),
+      g: compositeChannel(darkOcean.g, gibbous.g, gibbous.a),
+      b: compositeChannel(darkOcean.b, gibbous.b, gibbous.a),
+    };
+    expect(luminance(compositeGibbous)).toBeGreaterThan(luminance(compositeQuarter) + 6);
+    expect(compositeGibbous.b - compositeGibbous.r).toBeGreaterThan(compositeQuarter.b - compositeQuarter.r + 2);
   });
 
   it("suppresses lift strongly for low-altitude moon versus high moon", () => {
@@ -298,12 +330,16 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const nearLift = baseline.a - nearSublunar.a;
     const farLift = baseline.a - farFromSublunar.a;
     expect(nearLift).toBeGreaterThan(0);
-    expect(farLift).toBeLessThanOrEqual(8);
-    expect(nearLift).toBeGreaterThan(farLift + 25);
-    expect(nearLift).toBeGreaterThanOrEqual(farLift * 4 + 18);
+    expect(farLift).toBeLessThanOrEqual(12);
+    expect(nearLift).toBeGreaterThan(farLift + 20);
+    expect(nearLift).toBeGreaterThanOrEqual(farLift * 3 + 12);
+    const nearRgb = nearSublunar.r + nearSublunar.g + nearSublunar.b;
+    const farRgb = farFromSublunar.r + farFromSublunar.g + farFromSublunar.b;
+    expect(nearRgb).toBeGreaterThan(farRgb + MOONLIGHT_COOL_TINT_B * 0.35);
+    expect(nearSublunar.b).toBeGreaterThan(farFromSublunar.b + 18);
   });
 
-  it("adds restrained secondary illumination in deep night composition", () => {
+  it("adds clearly visible cool secondary illumination in deep night composition", () => {
     const darkOcean = { r: 14, g: 26, b: 44 };
     const solarNightDot = dotFromAltitudeDeg(-30);
     const baseline = sampleIlluminationRgba8(solarNightDot, 1);
@@ -323,7 +359,7 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
       b: compositeChannel(darkOcean.b, fullMoonNearSublunar.b, fullMoonNearSublunar.a),
     };
 
-    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 3);
-    expect(moonComposite.b).toBeGreaterThanOrEqual(moonComposite.r);
+    expect(luminance(moonComposite)).toBeGreaterThan(luminance(baselineComposite) + 10);
+    expect(moonComposite.b).toBeGreaterThan(moonComposite.r + 4);
   });
 });

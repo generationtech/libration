@@ -12,8 +12,8 @@
  */
 
 /**
- * Restrained moonlight model for night-side illumination lift.
- * Returns a bounded scalar in [0, 1] that can be safely capped downstream.
+ * Moonlight visibility model for the planetary illumination raster.
+ * Returns a bounded scalar in [0, 1] for phase, night, and incidence gating downstream.
  */
 
 export interface MoonlightStrengthInputs {
@@ -25,9 +25,11 @@ export interface MoonlightStrengthInputs {
 export const MOONLIGHT_ALTITUDE_FULL_STRENGTH_DEG = 30;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_START_DEG = -6;
 export const MOONLIGHT_NIGHT_ELIGIBILITY_FULL_DEG = -14;
-export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 1.8;
-export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.55;
-export const MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER = 0.92;
+/** Softer peak so the sublunar lobe stays broad on the globe (not a tight spot). */
+export const MOONLIGHT_INCIDENCE_FOCUS_POWER = 1.5;
+/** Emphasize the broad incidence component for a legible field, not a pin highlight. */
+export const MOONLIGHT_INCIDENCE_BROAD_WEIGHT = 0.66;
+export const MOONLIGHT_INCIDENCE_SOFT_RAMP_POWER = 0.88;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -59,8 +61,7 @@ export function moonAltitudeStrength(lunarAltitudeDeg: number): number {
 
 /**
  * Local incidence weighting (surface normal · moon direction).
- * Keeps a directional lobe centered near the sublunar region while allowing
- * restrained broad spill so moonlight reads as a soft field rather than a pin spot.
+ * Keeps directional falloff toward the sublunar region with a broad soft spill.
  */
 export function moonIncidenceStrength(surfaceMoonDot: number): number {
   const incidence = smoothstep(0, 1, clamp01(surfaceMoonDot));
