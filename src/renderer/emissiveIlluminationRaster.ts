@@ -36,6 +36,22 @@ function linearLumaFromSrgb888(r: number, g: number, b: number): number {
   );
 }
 
+/**
+ * Maps true linear luma (0..1) to the bounded driver used by {@link sampleEquirectEmissiveRadianceLinear01}.
+ * 8-bit JPEG night-light products collapse mid-tones when decoded through sRGB linearization alone, which
+ * made urban cores nearly invisible after policy gains; a sub-linear exponent restores readable contrast
+ * vs ocean while keeping the high tail clamped at 1 (upstream composition only; not Canvas semantics).
+ */
+export const EMISSIVE_JPEG_LUMA_TO_COMPOSITION_DRIVER_EXPONENT = 0.52;
+
+function linearLumaToCompositionDriver01(linearLuma: number): number {
+  if (!Number.isFinite(linearLuma) || linearLuma <= 0) {
+    return 0;
+  }
+  const x = Math.min(1, linearLuma);
+  return clampEmissiveRadianceTexelSample(Math.pow(x, EMISSIVE_JPEG_LUMA_TO_COMPOSITION_DRIVER_EXPONENT));
+}
+
 function wrapLonDeg(lonDeg: number): number {
   let x = lonDeg;
   while (x < -180) {
@@ -103,7 +119,8 @@ function sampleRgbaBilinear(buf: EmissiveRasterSampleBuffer, u: number, v: numbe
 }
 
 /**
- * Maps lon/lat (degrees, full-world equirect) to linear emissive radiance in 0..1 (luma of sRGB-encoded texels).
+ * Maps lon/lat (degrees, full-world equirect) to a bounded 0..1 **composition driver** (not calibrated
+ * physical radiance): sRGB-linear luma from decoded texels, then {@link EMISSIVE_JPEG_LUMA_TO_COMPOSITION_DRIVER_EXPONENT}.
  */
 export function sampleEquirectEmissiveRadianceLinear01(
   buf: EmissiveRasterSampleBuffer,
@@ -115,5 +132,6 @@ export function sampleEquirectEmissiveRadianceLinear01(
   const u = (lon + 180) / 360;
   const v = (90 - lat) / 180;
   const { r, g, b } = sampleRgbaBilinear(buf, u, v);
-  return clampEmissiveRadianceTexelSample(linearLumaFromSrgb888(r, g, b));
+  const linearLuma = linearLumaFromSrgb888(r, g, b);
+  return linearLumaToCompositionDriver01(linearLuma);
 }
