@@ -12,10 +12,12 @@
  */
 
 /** @vitest-environment happy-dom */
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
+import { createLayerRegistryFromConfig } from "../../app/bootstrap";
+import { commitWorkingV2Update, deriveAppConfigFromV2 } from "../../app/workingV2Commit";
 import { defaultLibrationConfigV2, normalizeLibrationConfig, type LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
@@ -50,6 +52,26 @@ function readIlluminationState(): {
   emissiveNightLights?: { mode: string; assetId: string };
 } | null {
   return JSON.parse(screen.getByTestId("illumination-state").textContent ?? "null");
+}
+
+/** Same commit path as {@link App} `updateConfig` → {@link commitWorkingV2Update}. */
+function LayersTabCommitHarness({ initial }: { initial: LibrationConfigV2 }) {
+  const workingV2Ref = useRef(normalizeLibrationConfig(initial));
+  const derivedAppConfigRef = useRef(deriveAppConfigFromV2(workingV2Ref.current));
+  const registryRef = useRef(createLayerRegistryFromConfig(derivedAppConfigRef.current));
+  const [, bump] = useState(0);
+  const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, updater);
+    bump((n) => n + 1);
+  }, []);
+  return (
+    <>
+      <LayersTab config={workingV2Ref.current} updateConfig={updateConfig} />
+      <pre data-testid="committed-illumination">
+        {JSON.stringify(workingV2Ref.current.scene?.illumination ?? null)}
+      </pre>
+    </>
+  );
 }
 
 describe("LayersTab base-map presentation persistence", () => {
@@ -153,6 +175,19 @@ describe("LayersTab base-map presentation persistence", () => {
     expect(ill?.moonlight?.mode).toBe("natural");
     expect(ill?.emissiveNightLights?.mode).toBe("enhanced");
     expect(ill?.emissiveNightLights?.assetId).toBe(assetId);
+  });
+
+  it("Night lights change through commitWorkingV2Update persists scene.illumination in working v2", async () => {
+    const user = userEvent.setup();
+    const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
+    render(<LayersTabCommitHarness initial={initial} />);
+
+    await user.selectOptions(screen.getByLabelText("Night lights appearance"), "illustrative");
+
+    const committed = JSON.parse(screen.getByTestId("committed-illumination").textContent ?? "null") as {
+      emissiveNightLights?: { mode: string };
+    };
+    expect(committed?.emissiveNightLights?.mode).toBe("illustrative");
   });
 
   it("moonlight mode change preserves emissive night-lights fields", async () => {

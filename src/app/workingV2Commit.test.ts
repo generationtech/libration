@@ -29,10 +29,17 @@ import {
   reviveLibrationConfigV2FromUnknown,
   WORKING_V2_LOCAL_STORAGE_KEY,
 } from "../config/v2/workingV2Persistence";
+import { createTimeContext } from "../core/time";
+import { isSolarShadingPayload } from "../layers/solarShadingPayload";
+import {
+  buildDefaultSceneConfigFromLayerFlags,
+  deriveLayerEnableFlagsFromScene,
+} from "../config/v2/sceneConfig";
 import {
   commitWorkingV2Update,
   deriveAppConfigFromV2,
   replaceWorkingV2FromSnapshot,
+  sceneRuntimeAffectingEqual,
 } from "./workingV2Commit";
 
 function makeMemoryStorage(): Storage {
@@ -284,6 +291,75 @@ describe("commitWorkingV2Update", () => {
     expect(registryRef.current).toBe(registryBefore);
     expect(derivedAppConfigRef.current.geography.referenceMode).toBe("fixedCoordinate");
     expect(derivedAppConfigRef.current.geography.fixedCoordinate.label).toBe("Test");
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only emissive night-lights mode changes", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      solarAnalemma: false,
+    });
+    const b: typeof a = {
+      ...a,
+      illumination: {
+        ...a.illumination,
+        emissiveNightLights: { ...a.illumination.emissiveNightLights, mode: "illustrative" },
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
+  });
+
+  it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {
+    const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const base = normalizeLibrationConfig({
+      ...seed,
+      scene: {
+        ...seed.scene!,
+        illumination: {
+          ...seed.scene!.illumination,
+          emissiveNightLights: { ...seed.scene!.illumination.emissiveNightLights, mode: "off" },
+        },
+      },
+    });
+    expect(base.scene!.illumination.emissiveNightLights.mode).toBe("off");
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const prevDerivedScene = deriveAppConfigFromV2(workingV2Ref.current!).scene;
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+      draft.scene = {
+        ...baseScene,
+        illumination: {
+          ...baseScene.illumination,
+          emissiveNightLights: {
+            ...baseScene.illumination.emissiveNightLights,
+            mode: "illustrative",
+          },
+        },
+      };
+      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+    });
+
+    expect(workingV2Ref.current!.scene!.illumination.emissiveNightLights.mode).toBe("illustrative");
+    expect(derivedAppConfigRef.current.scene.illumination.emissiveNightLights.mode).toBe("illustrative");
+    expect(sceneRuntimeAffectingEqual(prevDerivedScene, derivedAppConfigRef.current.scene)).toBe(false);
+    expect(registryRef.current).not.toBe(registryBefore);
+
+    const solar = registryRef.current.getLayers().find((l) => l.id === SOLAR_SHADING_LAYER_ID);
+    expect(solar).toBeDefined();
+    const st = solar!.getState(createTimeContext(Date.now(), 0, false));
+    expect(isSolarShadingPayload(st.data)).toBe(true);
+    if (isSolarShadingPayload(st.data)) {
+      expect(st.data.emissiveNightLightsMode).toBe("illustrative");
+      expect(st.data.emissiveCompositionAssetId.trim()).not.toBe("");
+    }
   });
 
   it("toggling solarShading updates the layer registry membership", () => {

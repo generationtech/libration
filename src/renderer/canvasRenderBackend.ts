@@ -184,8 +184,14 @@ export class CanvasRenderBackend implements RenderBackend {
           this.onRasterImageLoadFailed?.(src);
         }
       };
-      img.src = src;
+      // Register before `src` so a synchronous `onload` (browser decode cache) still sees this
+      // entry during any re-entrant `render` from `onRasterReady`, and we only construct one
+      // `Image` per URL.
       this.rasterImages.set(src, img);
+      img.src = src;
+      if (img.complete && img.naturalWidth > 0) {
+        return img;
+      }
       return null;
     }
     if (!img.complete || img.naturalWidth === 0) {

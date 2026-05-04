@@ -149,7 +149,8 @@ function sceneLayersRuntimeEqual(a: readonly SceneLayerInstance[], b: readonly S
  * Legacy `layers` flags remain as transitional compatibility, but scene deltas
  * are the primary trigger surface for registry rebuilds.
  */
-function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
+/** Exported for pipeline / regression tests (commit path vs scene-derived AppConfig). */
+export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
   return (
     a.projectionId === b.projectionId &&
     a.viewMode === b.viewMode &&
