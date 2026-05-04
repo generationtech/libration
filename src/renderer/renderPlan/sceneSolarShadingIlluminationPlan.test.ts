@@ -23,6 +23,7 @@ import { sublunarPoint } from "../../core/sublunarPoint";
 import { subsolarPoint } from "../../core/subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "../../core/solarTwilight";
 import { getMoonlightPolicy } from "../../core/moonlightPolicy";
+import { DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE } from "../../core/sceneIlluminationPresentationDefaults";
 
 /** Emissive night lights (Phase 1+) resolve upstream; this plan stays a single `rasterPatch` with no emissive-specific options. */
 describe("buildSolarShadingIlluminationRenderPlan", () => {
@@ -395,6 +396,31 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     return m;
   }
 
+  it("honors explicit emissiveNightLightsMode off versus the omitted default when a raster is present", () => {
+    const baseOpts = {
+      viewportWidthPx: 96,
+      viewportHeightPx: 64,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 10,
+      sublunarLonDeg: 40,
+      lunarIlluminatedFraction: 0.55,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy("natural"),
+    } as const;
+    const raster = solidGrayEmissiveRaster(8, 110);
+    const omittedDefault = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveRaster: raster,
+    });
+    const explicitOff = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: "off",
+      emissiveRaster: raster,
+    });
+    expect(maxRgbChannelSum(explicitOff)).toBeLessThan(maxRgbChannelSum(omittedDefault));
+  });
+
   it("still emits a single rasterPatch when emissive raster buffer is provided", () => {
     const plan = buildSolarShadingIlluminationRenderPlan({
       viewportWidthPx: 64,
@@ -411,6 +437,27 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     });
     expect(plan.items).toHaveLength(1);
     expect(plan.items[0]?.kind).toBe("rasterPatch");
+  });
+
+  it("defaults omitted emissiveNightLightsMode to the neutral scene default (illustrative), matching explicit illustrative with null raster", () => {
+    const baseOpts = {
+      viewportWidthPx: 80,
+      viewportHeightPx: 56,
+      subsolarLatDeg: -8,
+      subsolarLonDeg: 15,
+      sublunarLatDeg: 2,
+      sublunarLonDeg: -120,
+      lunarIlluminatedFraction: 0.4,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy("natural"),
+      emissiveRaster: null,
+    } as const;
+    const omitted = buildSolarShadingIlluminationRenderPlan({ ...baseOpts });
+    const explicit = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+    });
+    expect(maxRgbChannelSum(omitted)).toBe(maxRgbChannelSum(explicit));
   });
 
   it("increases peak RGB in the patch for illustrative emissive vs off with the same white raster", () => {

@@ -43,6 +43,10 @@ import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../../core/emissiveNightLightsPresentationDefaults";
 import {
+  DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+  DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
+} from "../../core/sceneIlluminationPresentationDefaults";
+import {
   isEmissiveNightLightsPresentationMode,
   type EmissiveNightLightsPresentationMode,
 } from "../../core/emissiveNightLightsPolicy";
@@ -61,6 +65,10 @@ export {
   type EmissiveNightLightsPresentationMode,
 };
 export { isMoonlightPresentationMode, type MoonlightPresentationMode };
+export {
+  DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+  DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
+} from "../../core/sceneIlluminationPresentationDefaults";
 
 export type { BaseMapOption, BaseMapResolveContext };
 export {
@@ -192,13 +200,6 @@ export const DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION: SceneEmissiveNightLight
     driverExponent: DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   });
 
-/** Greenfield and missing-subtree defaults for `scene.illumination.moonlight.mode`. */
-export const DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE: MoonlightPresentationMode = "illustrative";
-
-/** Greenfield and missing-subtree defaults for `scene.illumination.emissiveNightLights.mode`. */
-export const DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE: EmissiveNightLightsPresentationMode =
-  "illustrative";
-
 export function clampEmissiveNightLightsPresentationIntensity(n: number): number {
   if (!Number.isFinite(n)) {
     return DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
@@ -311,7 +312,7 @@ function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNigh
 export function normalizeSceneIlluminationInput(
   input: Record<string, unknown>,
 ): SceneIlluminationConfig {
-  const legacyMoon = (): SceneMoonlightConfig => ({ mode: "illustrative" });
+  const legacyMoon = (): SceneMoonlightConfig => ({ mode: DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE });
   const emptyEmissive = (): SceneEmissiveNightLightsConfig =>
     normalizeSceneEmissiveNightLightsInput(undefined);
 
@@ -327,7 +328,7 @@ export function normalizeSceneIlluminationInput(
   if (isPlainObject(ml) && isMoonlightPresentationMode(ml.mode)) {
     moonlight = { mode: ml.mode };
   } else if (isPlainObject(ml)) {
-    moonlight = { mode: "illustrative" };
+    moonlight = { mode: DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE };
   }
   const emissiveNightLights = normalizeSceneEmissiveNightLightsInput(
     "emissiveNightLights" in ill ? ill.emissiveNightLights : undefined,

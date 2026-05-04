@@ -14,6 +14,8 @@
 /**
  * Single source for emissive night-light **presentation** defaults used by SceneConfig normalization
  * and by illumination raster planning. Lives in `core` so renderer paths avoid importing `config/v2`.
+ * Presentation **mode** greenfield defaults (`illustrative` / moonlight parity) live in
+ * {@link ./sceneIlluminationPresentationDefaults}.
  */
 
 export const DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY = 1;

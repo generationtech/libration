@@ -18,6 +18,7 @@ import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../../core/emissiveNightLightsPresentationDefaults";
+import { DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE } from "../../core/sceneIlluminationPresentationDefaults";
 import type { EmissiveRasterSampleBuffer } from "../emissiveIlluminationRaster";
 import { sampleEquirectEmissiveRadianceLinear01 } from "../emissiveIlluminationRaster";
 import { sampleIlluminationRgba8 } from "../illuminationShading";
@@ -41,7 +42,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   lunarIlluminatedFraction: number;
   layerOpacity: number;
   moonlightPolicy: MoonlightPolicy;
-  /** When omitted, defaults to `off` with no raster sampling. */
+  /**
+   * When omitted, defaults to {@link DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE}
+   * (aligned with normalized `SceneConfig`). Raster sampling still yields zero when `emissiveRaster` is null.
+   */
   emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
   /** Decoded emissive equirect RGBA; when null/omitted, emissive radiance is treated as zero. */
   emissiveRaster?: EmissiveRasterSampleBuffer | null;
@@ -70,7 +74,8 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
 
   const rgba = new Uint8ClampedArray(sw * sh * 4);
   const op = options.layerOpacity;
-  const emissiveMode = options.emissiveNightLightsMode ?? "off";
+  const emissiveMode =
+    options.emissiveNightLightsMode ?? DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE;
   const emissiveRaster = options.emissiveRaster ?? null;
   const emissivePresentationIntensity =
     options.emissivePresentationIntensity ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;

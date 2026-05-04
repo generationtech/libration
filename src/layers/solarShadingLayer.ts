@@ -17,6 +17,10 @@ import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../core/emissiveNightLightsPresentationDefaults";
+import {
+  DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+  DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
+} from "../core/sceneIlluminationPresentationDefaults";
 import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { approximateLunarPhase } from "../core/lunarPhase";
@@ -37,8 +41,14 @@ export function createSolarShadingLayer(
   options: {
     zIndex?: number;
     opacity?: number;
-    /** Defaults to illustrative when omitted (tests / legacy callers). */
+    /**
+     * Omitted uses {@link DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE} (same as normalized `SceneConfig`).
+     * Low-level tests or direct callers bypassing config should pass explicit modes when diverging.
+     */
     moonlightMode?: MoonlightPresentationMode;
+    /**
+     * Omitted uses {@link DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE} (same as normalized `SceneConfig`).
+     */
     emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
     emissiveCompositionAssetId?: string;
     emissivePresentationIntensity?: number;
@@ -47,8 +57,9 @@ export function createSolarShadingLayer(
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
-  const moonlightMode = options.moonlightMode ?? "illustrative";
-  const emissiveNightLightsMode = options.emissiveNightLightsMode ?? "off";
+  const moonlightMode = options.moonlightMode ?? DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE;
+  const emissiveNightLightsMode =
+    options.emissiveNightLightsMode ?? DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE;
   const emissiveCompositionAssetId =
     options.emissiveCompositionAssetId ?? DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID;
   const emissivePresentationIntensity =

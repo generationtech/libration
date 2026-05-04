@@ -20,6 +20,7 @@ import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
 import { resolveEmissiveCompositionAsset } from "../config/emissiveCompositionAssetResolve";
 import { getMoonlightPolicy } from "../core/moonlightPolicy";
+import { DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE } from "../core/sceneIlluminationPresentationDefaults";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import { isTextOverlayPayload } from "../layers/textOverlayPayload";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
@@ -257,7 +258,7 @@ export class CanvasRenderBackend implements RenderBackend {
       emissivePresentationIntensity,
       emissiveDriverExponent,
     } = layer.data;
-    const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? "illustrative");
+    const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE);
 
     let emissiveRaster: EmissiveRasterSampleBuffer | null = null;
     if (emissiveNightLightsMode === "off") {

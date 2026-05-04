@@ -14,9 +14,14 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_APP_CONFIG } from "../config/appConfig";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
+import {
+  DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+  DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
+} from "../core/sceneIlluminationPresentationDefaults";
 import { createTimeContext } from "../core/time";
 import { isEquirectangularPolylinePayload } from "./equirectPolylinePayload";
 import { createLayerForSceneOverlayInstance } from "./sceneOverlayLayerFactory";
+import { isSolarShadingPayload } from "./solarShadingPayload";
 
 describe("createLayerForSceneOverlayInstance (source-driven)", () => {
   it("builds solar analemma from product and parameters, not from row id", () => {
@@ -45,6 +50,30 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     if (isEquirectangularPolylinePayload(st.data)) {
       expect(st.data.closed).toBe(true);
       expect(st.data.points.length).toBe(366);
+    }
+  });
+
+  it("passes normalized scene illumination defaults into solar shading payload", () => {
+    const inst: SceneLayerInstance = {
+      id: "solarShading",
+      family: "astronomy",
+      type: "astronomyVector",
+      enabled: true,
+      order: 0,
+      source: { kind: "derived", product: "solarDayNightShading" },
+    };
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: 0, opacity: 1 },
+      DEFAULT_APP_CONFIG,
+    );
+    expect(layer).not.toBeNull();
+    const time = createTimeContext(Date.UTC(2020, 0, 1, 12, 0, 0, 0), 0, false);
+    const st = layer!.getState(time);
+    expect(isSolarShadingPayload(st.data)).toBe(true);
+    if (isSolarShadingPayload(st.data)) {
+      expect(st.data.moonlightMode).toBe(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE);
+      expect(st.data.emissiveNightLightsMode).toBe(DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE);
     }
   });
 
