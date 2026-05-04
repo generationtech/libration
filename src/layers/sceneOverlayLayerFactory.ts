@@ -86,6 +86,8 @@ function createDerivedOverlayByProduct(
         zIndex,
         opacity,
         moonlightMode: resolveMoonlightPresentationMode(config.scene),
+        emissiveNightLightsMode: config.scene.illumination.emissiveNightLights.mode,
+        emissiveCompositionAssetId: config.scene.illumination.emissiveNightLights.assetId,
       });
     case "latLonGrid":
       return createLatLonGridLayer({ zIndex, opacity });

@@ -12,7 +12,10 @@
  */
 
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
+import type { EmissiveNightLightsPresentationMode } from "../../core/emissiveNightLightsPolicy";
 import type { MoonlightPolicy } from "../../core/moonlightPolicy";
+import type { EmissiveRasterSampleBuffer } from "../emissiveIlluminationRaster";
+import { sampleEquirectEmissiveRadianceLinear01 } from "../emissiveIlluminationRaster";
 import { sampleIlluminationRgba8 } from "../illuminationShading";
 import type { RenderPlan } from "./renderPlanTypes";
 
@@ -34,6 +37,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   lunarIlluminatedFraction: number;
   layerOpacity: number;
   moonlightPolicy: MoonlightPolicy;
+  /** When omitted, defaults to `off` with no raster sampling. */
+  emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
+  /** Decoded emissive equirect RGBA; when null/omitted, emissive radiance is treated as zero. */
+  emissiveRaster?: EmissiveRasterSampleBuffer | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -55,6 +62,8 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
 
   const rgba = new Uint8ClampedArray(sw * sh * 4);
   const op = options.layerOpacity;
+  const emissiveMode = options.emissiveNightLightsMode ?? "off";
+  const emissiveRaster = options.emissiveRaster ?? null;
   let p = 0;
   for (let j = 0; j < sh; j++) {
     const latDeg = 90 - ((j + 0.5) / sh) * 180;
@@ -66,6 +75,14 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
       const lam = (lonDeg * Math.PI) / 180;
       const solarDot = cosPhi * cosLatS * Math.cos(lam - lonS) + sinPhi * sinLatS;
       const lunarDot = cosPhi * cosLatM * Math.cos(lam - lonM) + sinPhi * sinLatM;
+      const radianceLinear01 =
+        emissiveRaster && emissiveMode !== "off"
+          ? sampleEquirectEmissiveRadianceLinear01(emissiveRaster, lonDeg, latDeg)
+          : 0;
+      const emissiveInputs =
+        emissiveMode !== "off"
+          ? { radianceLinear01, emissiveMode }
+          : undefined;
       const { r, g, b, a } = sampleIlluminationRgba8(
         solarDot,
         op,
@@ -74,6 +91,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
           lunarIlluminatedFraction: options.lunarIlluminatedFraction,
         },
         options.moonlightPolicy,
+        emissiveInputs,
       );
       rgba[p++] = r;
       rgba[p++] = g;

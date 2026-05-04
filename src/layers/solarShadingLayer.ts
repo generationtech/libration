@@ -11,7 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID } from "../config/emissiveCompositionAssetResolve";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
@@ -33,11 +35,16 @@ export function createSolarShadingLayer(
     opacity?: number;
     /** Defaults to illustrative when omitted (tests / legacy callers). */
     moonlightMode?: MoonlightPresentationMode;
+    emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
+    emissiveCompositionAssetId?: string;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const moonlightMode = options.moonlightMode ?? "illustrative";
+  const emissiveNightLightsMode = options.emissiveNightLightsMode ?? "off";
+  const emissiveCompositionAssetId =
+    options.emissiveCompositionAssetId ?? DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID;
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
@@ -57,6 +64,8 @@ export function createSolarShadingLayer(
         sublunarLonDeg: moonLonDeg,
         lunarIlluminatedFraction: phase.illuminatedFraction,
         moonlightMode,
+        emissiveNightLightsMode,
+        emissiveCompositionAssetId,
       };
       return {
         visible: true,

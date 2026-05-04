@@ -18,13 +18,16 @@ import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
 import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
 import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
-import { isSolarShadingPayload } from "../layers/solarShadingPayload";
+import { resolveEmissiveCompositionAsset } from "../config/emissiveCompositionAssetResolve";
 import { getMoonlightPolicy } from "../core/moonlightPolicy";
+import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import { isTextOverlayPayload } from "../layers/textOverlayPayload";
 import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor";
 import { buildBaseRasterMapRenderPlan } from "./renderPlan/sceneBaseRasterMapPlan";
 import { buildEquirectangularGridOverlayRenderPlan } from "./renderPlan/equirectGridOverlayPlan";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./renderPlan/equirectPolylineOverlayPlan";
+import type { EmissiveRasterSampleBuffer } from "./emissiveIlluminationRaster";
+import { rgbaBufferFromHtmlImage } from "./emissiveIlluminationRaster";
 import { buildSolarShadingIlluminationRenderPlan } from "./renderPlan/sceneSolarShadingIlluminationPlan";
 import {
   buildSubsolarMarkerRenderPlan,
@@ -42,6 +45,7 @@ import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
 
 export class CanvasRenderBackend implements RenderBackend {
   private readonly rasterImages = new Map<string, HTMLImageElement>();
+  private emissiveRasterCache: { assetId: string; buf: EmissiveRasterSampleBuffer } | null = null;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -120,6 +124,7 @@ export class CanvasRenderBackend implements RenderBackend {
 
   dispose(): void {
     this.rasterImages.clear();
+    this.emissiveRasterCache = null;
   }
 
   private applyViewport(viewport: Viewport): void {
@@ -241,8 +246,31 @@ export class CanvasRenderBackend implements RenderBackend {
       sublunarLonDeg,
       lunarIlluminatedFraction,
       moonlightMode,
+      emissiveNightLightsMode,
+      emissiveCompositionAssetId,
     } = layer.data;
     const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? "illustrative");
+
+    let emissiveRaster: EmissiveRasterSampleBuffer | null = null;
+    if (emissiveNightLightsMode === "off") {
+      this.emissiveRasterCache = null;
+    } else {
+      if (this.emissiveRasterCache && this.emissiveRasterCache.assetId !== emissiveCompositionAssetId) {
+        this.emissiveRasterCache = null;
+      }
+      if (this.emissiveRasterCache?.assetId === emissiveCompositionAssetId) {
+        emissiveRaster = this.emissiveRasterCache.buf;
+      } else {
+        const asset = resolveEmissiveCompositionAsset(emissiveCompositionAssetId);
+        const img = this.ensureRasterImage(asset.src, { reportLoadFailure: false });
+        const buf = img ? rgbaBufferFromHtmlImage(img) : null;
+        if (buf) {
+          this.emissiveRasterCache = { assetId: emissiveCompositionAssetId, buf };
+        }
+        emissiveRaster = buf;
+      }
+    }
+
     executeRenderPlanOnCanvas(
       ctx,
       buildSolarShadingIlluminationRenderPlan({
@@ -255,6 +283,8 @@ export class CanvasRenderBackend implements RenderBackend {
         lunarIlluminatedFraction,
         layerOpacity: layer.opacity,
         moonlightPolicy,
+        emissiveNightLightsMode,
+        emissiveRaster,
       }),
     );
   }

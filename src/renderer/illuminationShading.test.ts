@@ -418,3 +418,64 @@ describe("sampleIlluminationRgba8 moonlight presentation modes", () => {
     }
   });
 });
+
+describe("sampleIlluminationRgba8 emissive night lights", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+
+  const moonOpts = { lunarDot: 0.5, lunarIlluminatedFraction: 0.5 };
+  const illPolicy = getMoonlightPolicy("illustrative");
+
+  it("mode off matches baseline regardless of radiance hint", () => {
+    const base = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy);
+    const withEm = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy, {
+      radianceLinear01: 1,
+      emissiveMode: "off",
+    });
+    expect(withEm).toEqual(base);
+  });
+
+  it("suppresses emissive in daylight", () => {
+    const d = dotFromAltitudeDeg(12);
+    const base = sampleIlluminationRgba8(d, 1, moonOpts, illPolicy);
+    const withEm = sampleIlluminationRgba8(d, 1, moonOpts, illPolicy, {
+      radianceLinear01: 1,
+      emissiveMode: "illustrative",
+    });
+    expect(withEm).toEqual(base);
+  });
+
+  it("ramps emissive visibility through civil twilight vs deep night", () => {
+    const civil = dotFromAltitudeDeg(-3);
+    const deep = dotFromAltitudeDeg(-22);
+    const eCivil = sampleIlluminationRgba8(civil, 1, moonOpts, illPolicy, {
+      radianceLinear01: 1,
+      emissiveMode: "illustrative",
+    });
+    const eDeep = sampleIlluminationRgba8(deep, 1, moonOpts, illPolicy, {
+      radianceLinear01: 1,
+      emissiveMode: "illustrative",
+    });
+    expect(eDeep.r + eDeep.g + eDeep.b).toBeGreaterThan(eCivil.r + eCivil.g + eCivil.b + 5);
+  });
+
+  it("adds bounded warm lift in deep night for illustrative with full radiance", () => {
+    const base = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy);
+    const em = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy, {
+      radianceLinear01: 1,
+      emissiveMode: "illustrative",
+    });
+    expect(em.r).toBeGreaterThan(base.r);
+    expect(em.r - base.r).toBeLessThanOrEqual(60);
+  });
+
+  it("zero radiance matches baseline with emissive mode illustrative", () => {
+    const a = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy, {
+      radianceLinear01: 0,
+      emissiveMode: "illustrative",
+    });
+    const b = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy);
+    expect(a).toEqual(b);
+  });
+});

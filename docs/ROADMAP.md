@@ -230,7 +230,7 @@ Partial progress (Phase 1–2):
 
 - typed emissive presentation modes, deterministic solar-altitude visibility gate, moonlight coexistence scaling, and `scene.illumination.emissiveNightLights` normalization.
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
-- emissive radiance is not yet sampled into the planetary illumination raster.
+- emissive radiance is sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when `scene.illumination.emissiveNightLights.mode` is not `off` and the resolved raster decodes; otherwise contribution is zero.
 
 ## Phase 10: Dynamic data lifecycle
 

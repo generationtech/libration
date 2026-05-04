@@ -11,6 +11,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import {
+  isEmissiveNightLightsPresentationMode,
+  type EmissiveNightLightsPresentationMode,
+} from "../core/emissiveNightLightsPolicy";
 import { isMoonlightPresentationMode, type MoonlightPresentationMode } from "../core/moonlightPolicy";
 
 export const SOLAR_SHADING_KIND = "solarShading" as const;
@@ -28,6 +32,9 @@ export interface SolarShadingPayload {
   lunarIlluminatedFraction: number;
   /** Scene-level moonlight presentation; resolved before the raster plan (not backend-owned). */
   moonlightMode: MoonlightPresentationMode;
+  emissiveNightLightsMode: EmissiveNightLightsPresentationMode;
+  /** Canonical emissive composition asset id from scene normalization. */
+  emissiveCompositionAssetId: string;
 }
 
 export function isSolarShadingPayload(data: unknown): data is SolarShadingPayload {
@@ -41,6 +48,10 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.sublunarLonDeg === "number" &&
     typeof o.lunarIlluminatedFraction === "number" &&
     typeof o.moonlightMode === "string" &&
-    isMoonlightPresentationMode(o.moonlightMode)
+    isMoonlightPresentationMode(o.moonlightMode) &&
+    typeof o.emissiveNightLightsMode === "string" &&
+    isEmissiveNightLightsPresentationMode(o.emissiveNightLightsMode) &&
+    typeof o.emissiveCompositionAssetId === "string" &&
+    o.emissiveCompositionAssetId.trim() !== ""
   );
 }

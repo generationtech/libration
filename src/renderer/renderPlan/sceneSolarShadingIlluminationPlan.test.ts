@@ -358,4 +358,97 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
       expect(sumAbs).toBeGreaterThan(100);
     }
   });
+
+  function solidWhiteEmissiveRaster(n: number): import("../emissiveIlluminationRaster").EmissiveRasterSampleBuffer {
+    const rgba = new Uint8ClampedArray(n * n * 4);
+    for (let i = 0; i < n * n; i++) {
+      rgba[i * 4] = 255;
+      rgba[i * 4 + 1] = 255;
+      rgba[i * 4 + 2] = 255;
+      rgba[i * 4 + 3] = 255;
+    }
+    return { width: n, height: n, rgba };
+  }
+
+  function maxRgbChannelSum(plan: ReturnType<typeof buildSolarShadingIlluminationRenderPlan>): number {
+    const it = plan.items[0];
+    if (!it || it.kind !== "rasterPatch") {
+      return 0;
+    }
+    let m = 0;
+    const { rgba } = it;
+    for (let i = 0; i < rgba.length; i += 4) {
+      m = Math.max(m, rgba[i]! + rgba[i + 1]! + rgba[i + 2]!);
+    }
+    return m;
+  }
+
+  it("still emits a single rasterPatch when emissive raster buffer is provided", () => {
+    const plan = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: 64,
+      viewportHeightPx: 48,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 5,
+      sublunarLonDeg: 10,
+      lunarIlluminatedFraction: 0.5,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy("illustrative"),
+      emissiveNightLightsMode: "illustrative",
+      emissiveRaster: solidWhiteEmissiveRaster(4),
+    });
+    expect(plan.items).toHaveLength(1);
+    expect(plan.items[0]?.kind).toBe("rasterPatch");
+  });
+
+  it("increases peak RGB in the patch for illustrative emissive vs off with the same white raster", () => {
+    const baseOpts = {
+      viewportWidthPx: 96,
+      viewportHeightPx: 64,
+      subsolarLatDeg: 10,
+      subsolarLonDeg: -30,
+      sublunarLatDeg: -5,
+      sublunarLonDeg: 40,
+      lunarIlluminatedFraction: 0.9,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy("enhanced"),
+    } as const;
+    const raster = solidWhiteEmissiveRaster(8);
+    const without = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: "off",
+      emissiveRaster: null,
+    });
+    const withEm = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: "illustrative",
+      emissiveRaster: raster,
+    });
+    expect(maxRgbChannelSum(withEm)).toBeGreaterThan(maxRgbChannelSum(without));
+  });
+
+  it("treats null emissive raster as zero contribution versus explicit off (same peak RGB sum)", () => {
+    const baseOpts = {
+      viewportWidthPx: 80,
+      viewportHeightPx: 56,
+      subsolarLatDeg: -8,
+      subsolarLonDeg: 15,
+      sublunarLatDeg: 2,
+      sublunarLonDeg: -120,
+      lunarIlluminatedFraction: 0.4,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy("natural"),
+    } as const;
+    const a = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: "natural",
+      emissiveRaster: null,
+    });
+    const b = buildSolarShadingIlluminationRenderPlan({
+      ...baseOpts,
+      emissiveNightLightsMode: "off",
+      emissiveRaster: solidWhiteEmissiveRaster(4),
+    });
+    expect(maxRgbChannelSum(a)).toBe(maxRgbChannelSum(b));
+  });
 });

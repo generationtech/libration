@@ -18,6 +18,10 @@ import {
   solarAltitudeDegFromSurfaceSunDotProduct,
 } from "../core/solarTwilight";
 import { moonlightStrength } from "../core/lunarIllumination";
+import {
+  computeEmissiveNightLightsContributionLinear01,
+  type EmissiveNightLightsPresentationMode,
+} from "../core/emissiveNightLightsPolicy";
 import { getMoonlightPolicy, type MoonlightPolicy } from "../core/moonlightPolicy";
 
 /**
@@ -215,6 +219,18 @@ export interface MoonlightSamplingInputs {
   lunarIlluminatedFraction: number;
 }
 
+/** Per-texel emissive composition input resolved upstream of {@link sampleIlluminationRgba8}. */
+export interface EmissiveIlluminationInputs {
+  /** Linear 0..1 radiance sample (e.g. from {@link sampleEquirectEmissiveRadianceLinear01}). */
+  radianceLinear01: number;
+  emissiveMode: EmissiveNightLightsPresentationMode;
+}
+
+/** Max additive RGB boost per channel at contribution 1 (bounded city-glow read). */
+const EMISSIVE_ADDITIVE_SCALE = 52;
+const EMISSIVE_WARM_G = 0.9;
+const EMISSIVE_WARM_B = 0.62;
+
 /**
  * RGBA for one shading pixel given subsolar geometry dot product and layer opacity.
  */
@@ -223,6 +239,7 @@ export function sampleIlluminationRgba8(
   layerOpacity: number,
   moonlight?: MoonlightSamplingInputs,
   moonlightPolicy: MoonlightPolicy = ILLUSTRATIVE_MOONLIGHT,
+  emissive?: EmissiveIlluminationInputs,
 ): IlluminationRgba8 {
   const op = layerOpacity;
   let r = 0;
@@ -264,6 +281,21 @@ export function sampleIlluminationRgba8(
     g = Math.min(255, attenuationColor.g + moonlightPolicy.coolTintG * moonCoolScale);
     b = Math.min(255, attenuationColor.b + moonlightPolicy.coolTintB * moonCoolScale);
     a = combinedAlpha;
+
+    if (emissive && emissive.emissiveMode !== "off") {
+      const emissiveContrib = computeEmissiveNightLightsContributionLinear01({
+        emissiveSampleLinear01: emissive.radianceLinear01,
+        solarAltitudeDeg: altDeg,
+        moonlightMode: moonlightPolicy.mode,
+        emissiveMode: emissive.emissiveMode,
+      });
+      if (emissiveContrib > 0) {
+        const s = EMISSIVE_ADDITIVE_SCALE * emissiveContrib;
+        r = Math.min(255, r + s);
+        g = Math.min(255, g + s * EMISSIVE_WARM_G);
+        b = Math.min(255, b + s * EMISSIVE_WARM_B);
+      }
+    }
   }
 
   return {
