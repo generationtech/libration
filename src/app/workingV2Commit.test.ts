@@ -294,7 +294,7 @@ describe("commitWorkingV2Update", () => {
   });
 
   it("sceneRuntimeAffectingEqual is false when only emissive night-lights mode changes", () => {
-    const a = buildDefaultSceneConfigFromLayerFlags({
+    const base = buildDefaultSceneConfigFromLayerFlags({
       baseMap: true,
       solarShading: true,
       grid: false,
@@ -304,11 +304,18 @@ describe("commitWorkingV2Update", () => {
       sublunarMarker: false,
       solarAnalemma: false,
     });
-    const b: typeof a = {
-      ...a,
+    const a: typeof base = {
+      ...base,
       illumination: {
-        ...a.illumination,
-        emissiveNightLights: { ...a.illumination.emissiveNightLights, mode: "illustrative" },
+        ...base.illumination,
+        emissiveNightLights: { ...base.illumination.emissiveNightLights, mode: "off" },
+      },
+    };
+    const b: typeof base = {
+      ...base,
+      illumination: {
+        ...base.illumination,
+        emissiveNightLights: { ...base.illumination.emissiveNightLights, mode: "illustrative" },
       },
     };
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);

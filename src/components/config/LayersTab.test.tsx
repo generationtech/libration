@@ -231,7 +231,14 @@ describe("LayersTab base-map presentation persistence", () => {
     expect(ill?.emissiveNightLights?.presentation?.driverExponent).toBe(0.88);
   });
 
-  it("reset night-light presentation restores defaults without changing mode or asset id", async () => {
+  it("renders clear numeric tuning labels and reset control copy", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    expect(screen.getByText("Intensity value (0–4)")).toBeTruthy();
+    expect(screen.getByText("Lift value (0.35–1)")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reset night-light tuning" })).toBeTruthy();
+  });
+
+  it("reset night-light tuning restores defaults without changing mode or asset id", async () => {
     const user = userEvent.setup();
     const initial = normalizeLibrationConfig({
       ...defaultLibrationConfigV2(),
@@ -249,7 +256,7 @@ describe("LayersTab base-map presentation persistence", () => {
     });
     render(<LayersTabHarness initial={initial} />);
 
-    await user.click(screen.getByRole("button", { name: "Reset night-light presentation" }));
+    await user.click(screen.getByRole("button", { name: "Reset night-light tuning" }));
 
     const ill = readIlluminationState();
     expect(ill?.emissiveNightLights?.mode).toBe("enhanced");

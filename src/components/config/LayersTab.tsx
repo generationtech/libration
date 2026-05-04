@@ -257,168 +257,214 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
         </ConfigControlRow>
         <ConfigControlRow label="Night-light intensity">
           <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <input
-              type="range"
-              className="config-input"
-              min={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN}
-              max={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX}
-              step={0.05}
-              disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
-              aria-label="Night-light intensity"
-              title="Scales emissive contribution after mode policy and solar gates (0–4). Off mode ignores night lights regardless."
-              value={scene.illumination.emissiveNightLights.presentation.intensity}
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      const intensity = Number(e.currentTarget.value);
-                      updateConfig((draft) => {
-                        const baseScene =
-                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                        draft.scene = {
-                          ...baseScene,
-                          illumination: {
-                            ...baseScene.illumination,
-                            emissiveNightLights: {
-                              ...baseScene.illumination.emissiveNightLights,
-                              presentation: {
-                                ...baseScene.illumination.emissiveNightLights.presentation,
-                                intensity,
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN}
+                max={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX}
+                step={0.05}
+                disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
+                aria-label="Night-light intensity"
+                title="Scales emissive contribution after mode policy and solar gates (0–4). Off mode ignores night lights regardless."
+                value={scene.illumination.emissiveNightLights.presentation.intensity}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const intensity = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          draft.scene = {
+                            ...baseScene,
+                            illumination: {
+                              ...baseScene.illumination,
+                              emissiveNightLights: {
+                                ...baseScene.illumination.emissiveNightLights,
+                                presentation: {
+                                  ...baseScene.illumination.emissiveNightLights.presentation,
+                                  intensity,
+                                },
                               },
                             },
-                          },
-                        };
-                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                      });
-                    }
-                  : undefined
-              }
-            />
-            <input
-              type="number"
-              className="config-input"
-              min={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN}
-              max={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX}
-              step={0.05}
-              disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
-              aria-label="Night-light intensity numeric"
-              value={scene.illumination.emissiveNightLights.presentation.intensity}
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      const v = Number(e.currentTarget.value);
-                      const intensity = Number.isFinite(v)
-                        ? Math.max(
-                            EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN,
-                            Math.min(EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX, v),
-                          )
-                        : DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION.intensity;
-                      updateConfig((draft) => {
-                        const baseScene =
-                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                        draft.scene = {
-                          ...baseScene,
-                          illumination: {
-                            ...baseScene.illumination,
-                            emissiveNightLights: {
-                              ...baseScene.illumination.emissiveNightLights,
-                              presentation: {
-                                ...baseScene.illumination.emissiveNightLights.presentation,
-                                intensity,
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Intensity value (0–4)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN}
+                  max={EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX}
+                  step={0.05}
+                  disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
+                  aria-label="Night-light intensity value"
+                  value={scene.illumination.emissiveNightLights.presentation.intensity}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const intensity = Number.isFinite(v)
+                            ? Math.max(
+                                EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN,
+                                Math.min(EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX, v),
+                              )
+                            : DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION.intensity;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            draft.scene = {
+                              ...baseScene,
+                              illumination: {
+                                ...baseScene.illumination,
+                                emissiveNightLights: {
+                                  ...baseScene.illumination.emissiveNightLights,
+                                  presentation: {
+                                    ...baseScene.illumination.emissiveNightLights.presentation,
+                                    intensity,
+                                  },
+                                },
                               },
-                            },
-                          },
-                        };
-                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                      });
-                    }
-                  : undefined
-              }
-            />
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
           </div>
         </ConfigControlRow>
         <ConfigControlRow label="Faint-light lift">
           <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <input
-              type="range"
-              className="config-input"
-              min={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN}
-              max={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX}
-              step={0.01}
-              disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
-              aria-label="Night-light luma lift exponent"
-              title="Lower values lift dim JPEG texels more strongly; higher values keep urban hotspots tighter."
-              value={scene.illumination.emissiveNightLights.presentation.driverExponent}
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      const driverExponent = Number(e.currentTarget.value);
-                      updateConfig((draft) => {
-                        const baseScene =
-                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                        draft.scene = {
-                          ...baseScene,
-                          illumination: {
-                            ...baseScene.illumination,
-                            emissiveNightLights: {
-                              ...baseScene.illumination.emissiveNightLights,
-                              presentation: {
-                                ...baseScene.illumination.emissiveNightLights.presentation,
-                                driverExponent,
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN}
+                max={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX}
+                step={0.01}
+                disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
+                aria-label="Night-light faint-light lift (driver exponent)"
+                title="Lower values lift dim JPEG texels more strongly; higher values keep urban hotspots tighter."
+                value={scene.illumination.emissiveNightLights.presentation.driverExponent}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const driverExponent = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          draft.scene = {
+                            ...baseScene,
+                            illumination: {
+                              ...baseScene.illumination,
+                              emissiveNightLights: {
+                                ...baseScene.illumination.emissiveNightLights,
+                                presentation: {
+                                  ...baseScene.illumination.emissiveNightLights.presentation,
+                                  driverExponent,
+                                },
                               },
                             },
-                          },
-                        };
-                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                      });
-                    }
-                  : undefined
-              }
-            />
-            <input
-              type="number"
-              className="config-input"
-              min={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN}
-              max={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX}
-              step={0.01}
-              disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
-              aria-label="Faint-light lift numeric"
-              value={scene.illumination.emissiveNightLights.presentation.driverExponent}
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      const v = Number(e.currentTarget.value);
-                      const driverExponent = Number.isFinite(v)
-                        ? Math.max(
-                            EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN,
-                            Math.min(EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX, v),
-                          )
-                        : DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION.driverExponent;
-                      updateConfig((draft) => {
-                        const baseScene =
-                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                        draft.scene = {
-                          ...baseScene,
-                          illumination: {
-                            ...baseScene.illumination,
-                            emissiveNightLights: {
-                              ...baseScene.illumination.emissiveNightLights,
-                              presentation: {
-                                ...baseScene.illumination.emissiveNightLights.presentation,
-                                driverExponent,
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Lift value (0.35–1)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN}
+                  max={EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX}
+                  step={0.01}
+                  disabled={!mutable || scene.illumination.emissiveNightLights.mode === "off"}
+                  aria-label="Faint-light lift value"
+                  value={scene.illumination.emissiveNightLights.presentation.driverExponent}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const driverExponent = Number.isFinite(v)
+                            ? Math.max(
+                                EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN,
+                                Math.min(EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX, v),
+                              )
+                            : DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION.driverExponent;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            draft.scene = {
+                              ...baseScene,
+                              illumination: {
+                                ...baseScene.illumination,
+                                emissiveNightLights: {
+                                  ...baseScene.illumination.emissiveNightLights,
+                                  presentation: {
+                                    ...baseScene.illumination.emissiveNightLights.presentation,
+                                    driverExponent,
+                                  },
+                                },
                               },
-                            },
-                          },
-                        };
-                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                      });
-                    }
-                  : undefined
-              }
-            />
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
+            <p className="config-section__hint" style={{ marginTop: 0, marginBottom: 0 }}>
+              Lower faint-light lift reveals dimmer lights more strongly.
+            </p>
           </div>
-          <p className="config-section__hint" style={{ marginTop: "0.25rem", marginBottom: 0 }}>
-            Lower values reveal faint lights more strongly in the upstream illumination raster.
-          </p>
         </ConfigControlRow>
         <ConfigControlRow label="Night-light tuning">
           <button
@@ -448,7 +494,7 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                 : undefined
             }
           >
-            Reset night-light presentation
+            Reset night-light tuning
           </button>
         </ConfigControlRow>
         {LAYER_KEYS.map((key) => {

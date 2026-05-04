@@ -192,6 +192,13 @@ export const DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION: SceneEmissiveNightLight
     driverExponent: DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   });
 
+/** Greenfield and missing-subtree defaults for `scene.illumination.moonlight.mode`. */
+export const DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE: MoonlightPresentationMode = "illustrative";
+
+/** Greenfield and missing-subtree defaults for `scene.illumination.emissiveNightLights.mode`. */
+export const DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE: EmissiveNightLightsPresentationMode =
+  "illustrative";
+
 export function clampEmissiveNightLightsPresentationIntensity(n: number): number {
   if (!Number.isFinite(n)) {
     return DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
@@ -279,12 +286,14 @@ function clampOpacity(n: number): number {
 function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNightLightsConfig {
   if (!isPlainObject(raw)) {
     return {
-      mode: "off",
+      mode: DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
       assetId: resolveEmissiveCompositionAssetIdToCanonicalId(""),
       presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
     };
   }
-  const mode = isEmissiveNightLightsPresentationMode(raw.mode) ? raw.mode : "off";
+  const mode = isEmissiveNightLightsPresentationMode(raw.mode)
+    ? raw.mode
+    : DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE;
   const rawId = typeof raw.assetId === "string" ? raw.assetId : "";
   const assetId = resolveEmissiveCompositionAssetIdToCanonicalId(rawId);
   const presentation = normalizeSceneEmissiveNightLightsPresentationInput(
@@ -295,8 +304,9 @@ function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNigh
 
 /**
  * Persisted scenes without `illumination` keep prior moonlight appearance (`illustrative`).
- * Greenfield defaults from {@link buildDefaultSceneConfigFromLayerFlags} use `enhanced` moonlight and
- * `off` emissive night lights (user can enable presentation modes in Layers when solar shading is on).
+ * Missing `emissiveNightLights` under `illumination` normalizes like a greenfield subtree:
+ * {@link DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE}.
+ * {@link buildDefaultSceneConfigFromLayerFlags} uses illustrative moonlight and illustrative emissive night lights.
  */
 export function normalizeSceneIlluminationInput(
   input: Record<string, unknown>,
@@ -456,9 +466,9 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
     },
     layers: withFlags,
     illumination: {
-      moonlight: { mode: "enhanced" },
+      moonlight: { mode: DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE },
       emissiveNightLights: {
-        mode: "off",
+        mode: DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
         assetId: DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
         presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
       },
