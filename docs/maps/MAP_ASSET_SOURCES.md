@@ -34,15 +34,26 @@ The current active catalog should be treated as source of truth. Known family id
 
 If the catalog differs, update this document to match the catalog.
 
-## equirect-world-night-lights-viirs-v1 (planned composition input)
+## equirect-world-night-lights-viirs-v1 (composition input)
 
-Status: planned (catalog entry and shipped raster pending curation).
+Status: catalog entry implemented; shipped raster **transitional** (see `transitionalPlaceholder` in `src/assets/composition/emissive-composition-catalog.json`).
 
 Role: upstream emissive radiance field for planetary illumination composition (not a default base-map selector target).
+
+Registry:
+
+- bundled composition catalog: `src/assets/composition/emissive-composition-catalog.json`
+- runtime resolution: `src/config/emissiveCompositionAssetResolve.ts` (`resolveEmissiveCompositionAsset`, canonical id fallback for unknown/blank `assetId`).
 
 Expected contract:
 
 - same equirectangular full-world assumptions as base maps (2:1, north-up, lon −180..180, lat −90..90, no padding).
+
+Runtime asset (intended path once onboarded):
+
+```text
+public/maps/composition/equirect-world-night-lights-viirs-v1.jpg
+```
 
 Provenance:
 

@@ -74,6 +74,14 @@ Rules (aligned with base maps):
 
 Emissive night-light families are intentionally **not** exposed as selectable base maps in early phases; they are sampled inside the planetary illumination pipeline and emitted through the same single illumination `rasterPatch` contract as solar and lunar composition.
 
+Authoritative **emissive composition** inventory (family ids and resolver-owned `src` paths) lives in:
+
+```text
+src/assets/composition/emissive-composition-catalog.json
+```
+
+TypeScript owns validation, id canonicalization, and `resolveEmissiveCompositionAsset` / `resolveEmissiveCompositionAssetIdToCanonicalId`. Runtime does not scan `public/maps` for composition inputs.
+
 ## Persistence rule
 
 Persist the selected family id:

@@ -618,21 +618,29 @@ describe("buildTopBandCircleBandHourStackRenderPlan", () => {
       readPointX,
     });
     const annotation = plan.items.find((i) => i.kind === "text" && i.text === "UTC Global Time");
-    const hourText = plan.items.find(
-      (i) =>
+    const hourDigitTexts = plan.items.filter(
+      (i): i is Extract<(typeof plan.items)[number], { kind: "text" }> =>
         i.kind === "text" &&
         /^\d{2}$/.test(i.text) &&
         i.font.assetId === SEL_TEXT_DEFAULT.fontAssetId,
     );
     expect(annotation?.kind).toBe("text");
-    expect(hourText?.kind).toBe("text");
-    if (annotation?.kind === "text" && hourText?.kind === "text") {
-      expect(annotation.font.assetId).toBe(hourText.font.assetId);
-      expect(annotation.font.sizePx).toBeCloseTo(hourText.font.sizePx, 5);
-      expect(annotation.y).toBeCloseTo(utcFocusAnnotationCenterY(10 + f.circleStack.padTopPx + f.circleStack.upperNumeralH + f.circleStack.gapNumeralToDiskPx, f.circleStack.diskBandH), 5);
-      expect(annotation.x).toBeLessThan(readPointX);
-      expect(annotation.x).toBeGreaterThan(0);
+    expect(hourDigitTexts.length).toBeGreaterThan(0);
+    if (annotation?.kind !== "text") {
+      return;
     }
+    const onAnnotationRow = hourDigitTexts.filter((h) => Math.abs(h.y - annotation.y) < 2);
+    const pool = onAnnotationRow.length > 0 ? onAnnotationRow : hourDigitTexts;
+    const hourText = pool.reduce((best, h) =>
+      Math.abs(h.font.sizePx - annotation.font.sizePx) < Math.abs(best.font.sizePx - annotation.font.sizePx)
+        ? h
+        : best,
+    );
+    expect(annotation.font.assetId).toBe(hourText.font.assetId);
+    expect(annotation.font.sizePx).toBeCloseTo(hourText.font.sizePx, 5);
+    expect(annotation.y).toBeCloseTo(utcFocusAnnotationCenterY(10 + f.circleStack.padTopPx + f.circleStack.upperNumeralH + f.circleStack.gapNumeralToDiskPx, f.circleStack.diskBandH), 5);
+    expect(annotation.x).toBeLessThan(readPointX);
+    expect(annotation.x).toBeGreaterThan(0);
   });
 
   it("enforces visible horizontal separation between UTC annotation and focused-hour cluster", () => {

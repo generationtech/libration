@@ -56,6 +56,7 @@ import {
 } from "../productFontConstants.ts";
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
 import { coerceHourMarkersForUtc24IfProcedural } from "../topBandUtcRealizationCoercion.ts";
+import { isKnownEmissiveCompositionAssetId } from "../emissiveCompositionAssetResolve";
 import {
   applyLayerEnableFlagsToScene,
   buildDefaultSceneConfigFromLayerFlags,
@@ -1041,7 +1042,8 @@ export function assertIsNormalizedLibrationConfig(
   if (
     !isEmissiveNightLightsPresentationMode(enl.mode) ||
     typeof enl.assetId !== "string" ||
-    enl.assetId.trim() === ""
+    enl.assetId.trim() === "" ||
+    !isKnownEmissiveCompositionAssetId(enl.assetId)
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.emissiveNightLights");
   }

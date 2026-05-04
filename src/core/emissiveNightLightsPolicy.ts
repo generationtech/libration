@@ -66,10 +66,6 @@ const POLICIES: Record<EmissiveNightLightsPresentationMode, EmissiveNightLightsP
   illustrative: ILLUSTRATIVE,
 };
 
-/** Canonical default durable id for the curated VIIRS-style night-lights family (Phase 2 catalog). */
-export const DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID =
-  "equirect-world-night-lights-viirs-v1" as const;
-
 /**
  * Phase 1 contract: one texel of linear emissive radiance from a projection-valid equirectangular
  * asset (normalized 0..1 upstream of display encoding).

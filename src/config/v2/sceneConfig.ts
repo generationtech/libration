@@ -39,17 +39,20 @@ import {
   setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
 import {
-  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   isEmissiveNightLightsPresentationMode,
   type EmissiveNightLightsPresentationMode,
 } from "../../core/emissiveNightLightsPolicy";
+import {
+  DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
+  resolveEmissiveCompositionAssetIdToCanonicalId,
+} from "../emissiveCompositionAssetResolve";
 import {
   isMoonlightPresentationMode,
   type MoonlightPresentationMode,
 } from "../../core/moonlightPolicy";
 
 export {
-  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+  DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID as DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   isEmissiveNightLightsPresentationMode,
   type EmissiveNightLightsPresentationMode,
 };
@@ -205,13 +208,12 @@ function clampOpacity(n: number): number {
 }
 
 function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNightLightsConfig {
-  const assetDefault = DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID;
   if (!isPlainObject(raw)) {
-    return { mode: "off", assetId: assetDefault };
+    return { mode: "off", assetId: resolveEmissiveCompositionAssetIdToCanonicalId("") };
   }
   const mode = isEmissiveNightLightsPresentationMode(raw.mode) ? raw.mode : "off";
-  const assetId =
-    typeof raw.assetId === "string" && raw.assetId.trim() !== "" ? raw.assetId.trim() : assetDefault;
+  const rawId = typeof raw.assetId === "string" ? raw.assetId : "";
+  const assetId = resolveEmissiveCompositionAssetIdToCanonicalId(rawId);
   return { mode, assetId };
 }
 
@@ -381,7 +383,7 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       moonlight: { mode: "enhanced" },
       emissiveNightLights: {
         mode: "off",
-        assetId: DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+        assetId: DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
       },
     },
   };

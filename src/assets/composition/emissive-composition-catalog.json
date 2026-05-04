@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "defaultEmissiveCompositionAssetId": "equirect-world-night-lights-viirs-v1",
+  "entries": [
+    {
+      "id": "equirect-world-night-lights-viirs-v1",
+      "label": "VIIRS-style night lights (composition)",
+      "shortDescription": "Linear emissive radiance field for upstream planetary illumination composition (not a base-map family).",
+      "src": "/maps/composition/equirect-world-night-lights-viirs-v1.jpg",
+      "transitionalPlaceholder": true,
+      "attribution": "Placeholder entry until a curated VIIRS-style or equivalent night-lights raster is onboarded under `public/maps/composition/`."
+    }
+  ]
+}

@@ -165,6 +165,25 @@ describe("SceneConfig (Phase 1)", () => {
     expect(bad.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
   });
 
+  it("normalizes unknown emissive asset ids to the catalog default", () => {
+    const s = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: { mode: "natural", assetId: "unknown-emissive-family" },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(s.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
+  });
+
   it("base map registry exposes multiple supported ids", () => {
     expect(SUPPORTED_EQUIRECT_BASE_MAP_IDS).toEqual([
       "equirect-world-legacy-v1",

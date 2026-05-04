@@ -12,10 +12,10 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID } from "../config/emissiveCompositionAssetResolve";
 import {
   clampEmissiveRadianceTexelSample,
   computeEmissiveNightLightsContributionLinear01,
-  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   emissiveMoonlightCoexistenceFactor,
   emissiveSolarVisibilityGate01,
   getEmissiveNightLightsPolicy,
@@ -136,8 +136,8 @@ describe("clampEmissiveRadianceTexelSample", () => {
   });
 });
 
-describe("DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID", () => {
+describe("DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID", () => {
   it("is a stable semantic id string", () => {
-    expect(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID).toMatch(/^equirect-world-night-lights-viirs-v1$/);
+    expect(DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID).toMatch(/^equirect-world-night-lights-viirs-v1$/);
   });
 });
