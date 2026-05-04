@@ -39,4 +39,12 @@ describe("sampleEquirectEmissiveRadianceLinear01", () => {
     const b = sampleEquirectEmissiveRadianceLinear01(buf, 181, 0);
     expect(a).toBeCloseTo(b, 5);
   });
+
+  it("uses lower driverExponent to lift a dim texel more than a higher exponent", () => {
+    const buf = solidRaster(4, 4, [22, 22, 22]);
+    const lowExp = sampleEquirectEmissiveRadianceLinear01(buf, 0, 0, 0.35);
+    const highExp = sampleEquirectEmissiveRadianceLinear01(buf, 0, 0, 1);
+    expect(lowExp).toBeGreaterThan(highExp);
+    expect(highExp).toBeGreaterThan(0);
+  });
 });

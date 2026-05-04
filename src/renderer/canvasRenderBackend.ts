@@ -254,6 +254,8 @@ export class CanvasRenderBackend implements RenderBackend {
       moonlightMode,
       emissiveNightLightsMode,
       emissiveCompositionAssetId,
+      emissivePresentationIntensity,
+      emissiveDriverExponent,
     } = layer.data;
     const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? "illustrative");
 
@@ -291,6 +293,8 @@ export class CanvasRenderBackend implements RenderBackend {
         moonlightPolicy,
         emissiveNightLightsMode,
         emissiveRaster,
+        emissivePresentationIntensity,
+        emissiveDriverExponent,
       }),
     );
   }

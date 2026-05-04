@@ -23,6 +23,7 @@ import {
 } from "./librationConfig";
 import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
   DEFAULT_EQUIRECT_BASE_MAP_ID,
   EQUIRECT_BASE_MAP_OPTIONS,
   buildDefaultSceneConfigFromLayerFlags,
@@ -65,6 +66,9 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.illumination.emissiveNightLights.assetId).toBe(
       DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
     );
+    expect(v2.scene?.illumination.emissiveNightLights.presentation).toEqual({
+      ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+    });
   });
 
   it("partial scene fills missing base map, ordering mode, and stack rows", () => {
@@ -87,6 +91,9 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.illumination.emissiveNightLights.assetId).toBe(
       DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
     );
+    expect(v2.scene?.illumination.emissiveNightLights.presentation).toEqual({
+      ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+    });
   });
 
   it("greenfield scene defaults moonlight to enhanced", () => {
@@ -94,6 +101,9 @@ describe("SceneConfig (Phase 1)", () => {
     expect(s.illumination.moonlight.mode).toBe("enhanced");
     expect(s.illumination.emissiveNightLights.mode).toBe("off");
     expect(s.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
+    expect(s.illumination.emissiveNightLights.presentation).toEqual({
+      ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+    });
   });
 
   it("normalizes explicit moonlight mode and rejects unknown to illustrative", () => {
@@ -146,6 +156,9 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(ok.illumination.emissiveNightLights.mode).toBe("natural");
     expect(ok.illumination.emissiveNightLights.assetId).toBe("equirect-world-night-lights-viirs-v1");
+    expect(ok.illumination.emissiveNightLights.presentation).toEqual({
+      ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+    });
     const bad = normalizeSceneConfig(
       {
         version: 1,
@@ -182,6 +195,54 @@ describe("SceneConfig (Phase 1)", () => {
       DEFAULT_LAYERS,
     );
     expect(s.illumination.emissiveNightLights.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
+  });
+
+  it("normalizes emissive presentation defaults and clamps out-of-range values", () => {
+    const clamped = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: {
+            mode: "natural",
+            assetId: "equirect-world-night-lights-viirs-v1",
+            presentation: { intensity: 99, driverExponent: 0.05 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(clamped.illumination.emissiveNightLights.presentation.intensity).toBe(4);
+    expect(clamped.illumination.emissiveNightLights.presentation.driverExponent).toBe(0.35);
+
+    const missingFields = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: {
+            mode: "enhanced",
+            assetId: "equirect-world-night-lights-viirs-v1",
+            presentation: { intensity: 2 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(missingFields.illumination.emissiveNightLights.presentation.intensity).toBe(2);
+    expect(missingFields.illumination.emissiveNightLights.presentation.driverExponent).toBe(
+      DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION.driverExponent,
+    );
   });
 
   it("base map registry exposes multiple supported ids", () => {

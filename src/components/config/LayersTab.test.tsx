@@ -19,7 +19,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createLayerRegistryFromConfig } from "../../app/bootstrap";
 import { commitWorkingV2Update, deriveAppConfigFromV2 } from "../../app/workingV2Commit";
 import { defaultLibrationConfigV2, normalizeLibrationConfig, type LibrationConfigV2 } from "../../config/v2/librationConfig";
-import { DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID } from "../../config/v2/sceneConfig";
+import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+} from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
 
 function LayersTabHarness({ initial }: { initial: LibrationConfigV2 }) {
@@ -49,7 +52,11 @@ function readSceneBaseMapState(): {
 
 function readIlluminationState(): {
   moonlight?: { mode: string };
-  emissiveNightLights?: { mode: string; assetId: string };
+  emissiveNightLights?: {
+    mode: string;
+    assetId: string;
+    presentation?: { intensity: number; driverExponent: number };
+  };
 } | null {
   return JSON.parse(screen.getByTestId("illumination-state").textContent ?? "null");
 }
@@ -153,7 +160,7 @@ describe("LayersTab base-map presentation persistence", () => {
     });
   });
 
-  it("emissive night-lights mode change preserves moonlight and emissive assetId", async () => {
+  it("emissive night-lights mode change preserves moonlight, assetId, and presentation tuning", async () => {
     const user = userEvent.setup();
     const assetId = "equirect-world-night-lights-viirs-v1";
     const initial = normalizeLibrationConfig({
@@ -162,7 +169,11 @@ describe("LayersTab base-map presentation persistence", () => {
         ...defaultLibrationConfigV2().scene!,
         illumination: {
           moonlight: { mode: "natural" },
-          emissiveNightLights: { mode: "natural", assetId },
+          emissiveNightLights: {
+            mode: "natural",
+            assetId,
+            presentation: { intensity: 2.2, driverExponent: 0.42 },
+          },
         },
       },
     });
@@ -175,6 +186,8 @@ describe("LayersTab base-map presentation persistence", () => {
     expect(ill?.moonlight?.mode).toBe("natural");
     expect(ill?.emissiveNightLights?.mode).toBe("enhanced");
     expect(ill?.emissiveNightLights?.assetId).toBe(assetId);
+    expect(ill?.emissiveNightLights?.presentation?.intensity).toBe(2.2);
+    expect(ill?.emissiveNightLights?.presentation?.driverExponent).toBe(0.42);
   });
 
   it("Night lights change through commitWorkingV2Update persists scene.illumination in working v2", async () => {
@@ -201,6 +214,7 @@ describe("LayersTab base-map presentation persistence", () => {
           emissiveNightLights: {
             mode: "illustrative",
             assetId: DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+            presentation: { intensity: 1.8, driverExponent: 0.88 },
           },
         },
       },
@@ -213,5 +227,35 @@ describe("LayersTab base-map presentation persistence", () => {
     expect(ill?.moonlight?.mode).toBe("enhanced");
     expect(ill?.emissiveNightLights?.mode).toBe("illustrative");
     expect(ill?.emissiveNightLights?.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
+    expect(ill?.emissiveNightLights?.presentation?.intensity).toBe(1.8);
+    expect(ill?.emissiveNightLights?.presentation?.driverExponent).toBe(0.88);
+  });
+
+  it("reset night-light presentation restores defaults without changing mode or asset id", async () => {
+    const user = userEvent.setup();
+    const initial = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...defaultLibrationConfigV2().scene!,
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: {
+            mode: "enhanced",
+            assetId: DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+            presentation: { intensity: 3.5, driverExponent: 0.9 },
+          },
+        },
+      },
+    });
+    render(<LayersTabHarness initial={initial} />);
+
+    await user.click(screen.getByRole("button", { name: "Reset night-light presentation" }));
+
+    const ill = readIlluminationState();
+    expect(ill?.emissiveNightLights?.mode).toBe("enhanced");
+    expect(ill?.emissiveNightLights?.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
+    expect(ill?.emissiveNightLights?.presentation).toEqual({
+      ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+    });
   });
 });

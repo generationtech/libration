@@ -39,6 +39,10 @@ import {
   setBaseMapPresentationForMapId,
 } from "../baseMapPresentation";
 import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
+} from "../../core/emissiveNightLightsPresentationDefaults";
+import {
   isEmissiveNightLightsPresentationMode,
   type EmissiveNightLightsPresentationMode,
 } from "../../core/emissiveNightLightsPolicy";
@@ -161,10 +165,58 @@ export type SceneMoonlightConfig = {
   mode: MoonlightPresentationMode;
 };
 
+/** User-facing tuning for emissive night-light read (normalized; always present on {@link SceneEmissiveNightLightsConfig}). */
+export type SceneEmissiveNightLightsPresentationConfig = {
+  /** Multiplies policy contribution after mode gain and gates; 0..4. */
+  intensity: number;
+  /**
+   * Display-encoded luma lift on decoded Black Marble–class texels: `pow(linearLuma, exponent)`.
+   * Lower reveals faint lights more strongly; higher preserves urban hotspots. Clamped 0.35..1.
+   */
+  driverExponent: number;
+};
+
+export const EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN = 0;
+export const EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX = 4;
+export const EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN = 0.35;
+export const EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX = 1;
+
+export {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
+};
+
+export const DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION: SceneEmissiveNightLightsPresentationConfig =
+  Object.freeze({
+    intensity: DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
+    driverExponent: DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
+  });
+
+export function clampEmissiveNightLightsPresentationIntensity(n: number): number {
+  if (!Number.isFinite(n)) {
+    return DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
+  }
+  return Math.max(
+    EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN,
+    Math.min(EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX, n),
+  );
+}
+
+export function clampEmissiveNightLightsDriverExponent(n: number): number {
+  if (!Number.isFinite(n)) {
+    return DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
+  }
+  return Math.max(
+    EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN,
+    Math.min(EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX, n),
+  );
+}
+
 export type SceneEmissiveNightLightsConfig = {
   mode: EmissiveNightLightsPresentationMode;
   /** Durable semantic composition-input id; resolved via catalog in Phase 2 (not a base-map selector). */
   assetId: string;
+  presentation: SceneEmissiveNightLightsPresentationConfig;
 };
 
 export type SceneIlluminationConfig = {
@@ -200,6 +252,23 @@ function isPlainObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
 }
 
+function normalizeSceneEmissiveNightLightsPresentationInput(raw: unknown): SceneEmissiveNightLightsPresentationConfig {
+  if (!isPlainObject(raw)) {
+    return { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION };
+  }
+  const iRaw = raw.intensity;
+  const eRaw = raw.driverExponent;
+  const intensity =
+    typeof iRaw === "number" && Number.isFinite(iRaw)
+      ? clampEmissiveNightLightsPresentationIntensity(iRaw)
+      : DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
+  const driverExponent =
+    typeof eRaw === "number" && Number.isFinite(eRaw)
+      ? clampEmissiveNightLightsDriverExponent(eRaw)
+      : DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
+  return { intensity, driverExponent };
+}
+
 function clampOpacity(n: number): number {
   if (!Number.isFinite(n)) {
     return 1;
@@ -209,12 +278,19 @@ function clampOpacity(n: number): number {
 
 function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNightLightsConfig {
   if (!isPlainObject(raw)) {
-    return { mode: "off", assetId: resolveEmissiveCompositionAssetIdToCanonicalId("") };
+    return {
+      mode: "off",
+      assetId: resolveEmissiveCompositionAssetIdToCanonicalId(""),
+      presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
+    };
   }
   const mode = isEmissiveNightLightsPresentationMode(raw.mode) ? raw.mode : "off";
   const rawId = typeof raw.assetId === "string" ? raw.assetId : "";
   const assetId = resolveEmissiveCompositionAssetIdToCanonicalId(rawId);
-  return { mode, assetId };
+  const presentation = normalizeSceneEmissiveNightLightsPresentationInput(
+    "presentation" in raw ? raw.presentation : undefined,
+  );
+  return { mode, assetId, presentation };
 }
 
 /**
@@ -384,6 +460,7 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       emissiveNightLights: {
         mode: "off",
         assetId: DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
+        presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
       },
     },
   };
@@ -470,6 +547,7 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
       emissiveNightLights: {
         mode: scene.illumination.emissiveNightLights.mode,
         assetId: scene.illumination.emissiveNightLights.assetId,
+        presentation: { ...scene.illumination.emissiveNightLights.presentation },
       },
     },
     metadata: scene.metadata ? { ...scene.metadata } : undefined,

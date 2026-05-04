@@ -370,6 +370,18 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     return { width: n, height: n, rgba };
   }
 
+  /** Mid-gray so mode gains stay below RGB saturation in the illumination patch. */
+  function solidGrayEmissiveRaster(n: number, v: number): import("../emissiveIlluminationRaster").EmissiveRasterSampleBuffer {
+    const rgba = new Uint8ClampedArray(n * n * 4);
+    for (let i = 0; i < n * n; i++) {
+      rgba[i * 4] = v;
+      rgba[i * 4 + 1] = v;
+      rgba[i * 4 + 2] = v;
+      rgba[i * 4 + 3] = 255;
+    }
+    return { width: n, height: n, rgba };
+  }
+
   function maxRgbChannelSum(plan: ReturnType<typeof buildSolarShadingIlluminationRenderPlan>): number {
     const it = plan.items[0];
     if (!it || it.kind !== "rasterPatch") {
@@ -452,8 +464,8 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(maxRgbChannelSum(a)).toBe(maxRgbChannelSum(b));
   });
 
-  it("natural < enhanced < illustrative for peak RGB with the same white emissive raster (deep-night pixels)", () => {
-    const raster = solidWhiteEmissiveRaster(8);
+  it("natural < enhanced < illustrative for peak RGB with the same gray emissive raster (deep-night pixels)", () => {
+    const raster = solidGrayEmissiveRaster(8, 110);
     const mk = (mode: "natural" | "enhanced" | "illustrative") =>
       maxRgbChannelSum(
         buildSolarShadingIlluminationRenderPlan({

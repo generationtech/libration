@@ -315,6 +315,33 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
   });
 
+  it("sceneRuntimeAffectingEqual is false when only emissive presentation intensity changes", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      solarAnalemma: false,
+    });
+    const b: typeof a = {
+      ...a,
+      illumination: {
+        ...a.illumination,
+        emissiveNightLights: {
+          ...a.illumination.emissiveNightLights,
+          presentation: {
+            ...a.illumination.emissiveNightLights.presentation,
+            intensity: 3,
+          },
+        },
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+  });
+
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {
     const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
     const base = normalizeLibrationConfig({
@@ -359,6 +386,12 @@ describe("commitWorkingV2Update", () => {
     if (isSolarShadingPayload(st.data)) {
       expect(st.data.emissiveNightLightsMode).toBe("illustrative");
       expect(st.data.emissiveCompositionAssetId.trim()).not.toBe("");
+      expect(st.data.emissivePresentationIntensity).toBe(
+        workingV2Ref.current!.scene!.illumination.emissiveNightLights.presentation.intensity,
+      );
+      expect(st.data.emissiveDriverExponent).toBe(
+        workingV2Ref.current!.scene!.illumination.emissiveNightLights.presentation.driverExponent,
+      );
     }
   });
 

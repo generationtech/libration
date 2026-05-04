@@ -14,6 +14,10 @@
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
 import type { EmissiveNightLightsPresentationMode } from "../../core/emissiveNightLightsPolicy";
 import type { MoonlightPolicy } from "../../core/moonlightPolicy";
+import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
+} from "../../core/emissiveNightLightsPresentationDefaults";
 import type { EmissiveRasterSampleBuffer } from "../emissiveIlluminationRaster";
 import { sampleEquirectEmissiveRadianceLinear01 } from "../emissiveIlluminationRaster";
 import { sampleIlluminationRgba8 } from "../illuminationShading";
@@ -41,6 +45,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
   /** Decoded emissive equirect RGBA; when null/omitted, emissive radiance is treated as zero. */
   emissiveRaster?: EmissiveRasterSampleBuffer | null;
+  /** Scene `presentation.intensity`; omitted defaults per {@link DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY}. */
+  emissivePresentationIntensity?: number;
+  /** Scene `presentation.driverExponent`; omitted defaults per {@link DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT}. */
+  emissiveDriverExponent?: number;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -64,6 +72,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   const op = options.layerOpacity;
   const emissiveMode = options.emissiveNightLightsMode ?? "off";
   const emissiveRaster = options.emissiveRaster ?? null;
+  const emissivePresentationIntensity =
+    options.emissivePresentationIntensity ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
+  const emissiveDriverExponent =
+    options.emissiveDriverExponent ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
   let p = 0;
   for (let j = 0; j < sh; j++) {
     const latDeg = 90 - ((j + 0.5) / sh) * 180;
@@ -77,11 +89,20 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
       const lunarDot = cosPhi * cosLatM * Math.cos(lam - lonM) + sinPhi * sinLatM;
       const radianceLinear01 =
         emissiveRaster && emissiveMode !== "off"
-          ? sampleEquirectEmissiveRadianceLinear01(emissiveRaster, lonDeg, latDeg)
+          ? sampleEquirectEmissiveRadianceLinear01(
+              emissiveRaster,
+              lonDeg,
+              latDeg,
+              emissiveDriverExponent,
+            )
           : 0;
       const emissiveInputs =
         emissiveMode !== "off"
-          ? { radianceLinear01, emissiveMode }
+          ? {
+              radianceLinear01,
+              emissiveMode,
+              presentationIntensity: emissivePresentationIntensity,
+            }
           : undefined;
       const { r, g, b, a } = sampleIlluminationRgba8(
         solarDot,

@@ -166,6 +166,10 @@ export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): bool
     a.illumination.moonlight.mode === b.illumination.moonlight.mode &&
     a.illumination.emissiveNightLights.mode === b.illumination.emissiveNightLights.mode &&
     a.illumination.emissiveNightLights.assetId === b.illumination.emissiveNightLights.assetId &&
+    a.illumination.emissiveNightLights.presentation.intensity ===
+      b.illumination.emissiveNightLights.presentation.intensity &&
+    a.illumination.emissiveNightLights.presentation.driverExponent ===
+      b.illumination.emissiveNightLights.presentation.driverExponent &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

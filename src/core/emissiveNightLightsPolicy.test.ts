@@ -58,6 +58,32 @@ describe("computeEmissiveNightLightsContributionLinear01", () => {
     ).toBe(0);
   });
 
+  it("is zero in off mode even with high presentationIntensity", () => {
+    expect(
+      computeEmissiveNightLightsContributionLinear01({
+        emissiveSampleLinear01: 1,
+        solarAltitudeDeg: -30,
+        moonlightMode: "illustrative",
+        emissiveMode: "off",
+        presentationIntensity: 4,
+      }),
+    ).toBe(0);
+  });
+
+  it("increases contribution monotonically with presentationIntensity before clamp", () => {
+    const base = {
+      emissiveSampleLinear01: 0.2,
+      solarAltitudeDeg: -24,
+      moonlightMode: "off" as const,
+      emissiveMode: "enhanced" as const,
+    };
+    const a = computeEmissiveNightLightsContributionLinear01({ ...base, presentationIntensity: 0.5 });
+    const b = computeEmissiveNightLightsContributionLinear01({ ...base, presentationIntensity: 1 });
+    const c = computeEmissiveNightLightsContributionLinear01({ ...base, presentationIntensity: 2 });
+    expect(b).toBeGreaterThanOrEqual(a);
+    expect(c).toBeGreaterThanOrEqual(b);
+  });
+
   it("suppresses contribution in daylight for active modes", () => {
     const x = computeEmissiveNightLightsContributionLinear01({
       emissiveSampleLinear01: 1,
@@ -92,7 +118,10 @@ describe("computeEmissiveNightLightsContributionLinear01", () => {
       emissiveMode: "illustrative",
     });
     expect(ill).toBeGreaterThan(nat);
-    expect(ill).toBeCloseTo(0.5 * getEmissiveNightLightsPolicy("illustrative").radianceGain, 5);
+    expect(ill).toBeCloseTo(
+      Math.min(1, 0.5 * getEmissiveNightLightsPolicy("illustrative").radianceGain),
+      5,
+    );
   });
 
   it("orders natural < enhanced < illustrative at deep night for the same radiance sample", () => {
@@ -110,13 +139,13 @@ describe("computeEmissiveNightLightsContributionLinear01", () => {
 
   it("reduces emissive slightly when moonlight contributes in natural mode", () => {
     const moonOff = computeEmissiveNightLightsContributionLinear01({
-      emissiveSampleLinear01: 1,
+      emissiveSampleLinear01: 0.65,
       solarAltitudeDeg: -22,
       moonlightMode: "off",
       emissiveMode: "natural",
     });
     const moonNat = computeEmissiveNightLightsContributionLinear01({
-      emissiveSampleLinear01: 1,
+      emissiveSampleLinear01: 0.65,
       solarAltitudeDeg: -22,
       moonlightMode: "natural",
       emissiveMode: "natural",

@@ -45,19 +45,19 @@ const OFF: EmissiveNightLightsPolicy = {
 const NATURAL: EmissiveNightLightsPolicy = {
   mode: "natural",
   contributesEmissive: true,
-  radianceGain: 0.82,
+  radianceGain: 1.25,
 };
 
 const ENHANCED: EmissiveNightLightsPolicy = {
   mode: "enhanced",
   contributesEmissive: true,
-  radianceGain: 0.98,
+  radianceGain: 1.7,
 };
 
 const ILLUSTRATIVE: EmissiveNightLightsPolicy = {
   mode: "illustrative",
   contributesEmissive: true,
-  radianceGain: 1.12,
+  radianceGain: 2.35,
 };
 
 const POLICIES: Record<EmissiveNightLightsPresentationMode, EmissiveNightLightsPolicy> = {
@@ -97,6 +97,20 @@ function clamp01(x: number): number {
     return 0;
   }
   return Math.max(0, Math.min(1, x));
+}
+
+/** Scene-normalized user intensity; clamped defensively for composition math. */
+const PRESENTATION_INTENSITY_MIN = 0;
+const PRESENTATION_INTENSITY_MAX = 4;
+
+function clampPresentationIntensity(n: number | undefined): number {
+  if (n === undefined) {
+    return 1;
+  }
+  if (!Number.isFinite(n)) {
+    return 1;
+  }
+  return Math.max(PRESENTATION_INTENSITY_MIN, Math.min(PRESENTATION_INTENSITY_MAX, n));
 }
 
 function lerp(a: number, b: number, t: number): number {
@@ -156,6 +170,11 @@ export function computeEmissiveNightLightsContributionLinear01(input: {
   solarAltitudeDeg: number;
   moonlightMode: MoonlightPresentationMode;
   emissiveMode: EmissiveNightLightsPresentationMode;
+  /**
+   * Multiplies policy contribution after mode gain and gates; omitted defaults to 1.
+   * Clamped to 0..4; mode `off` still yields zero before intensity is applied.
+   */
+  presentationIntensity?: number;
 }): number {
   const policy = getEmissiveNightLightsPolicy(input.emissiveMode);
   if (!policy.contributesEmissive) {
@@ -170,5 +189,6 @@ export function computeEmissiveNightLightsContributionLinear01(input: {
     return 0;
   }
   const moon = emissiveMoonlightCoexistenceFactor(input.moonlightMode);
-  return clamp01(sample * gate * moon * policy.radianceGain);
+  const intensity = clampPresentationIntensity(input.presentationIntensity);
+  return clamp01(sample * gate * moon * policy.radianceGain * intensity);
 }

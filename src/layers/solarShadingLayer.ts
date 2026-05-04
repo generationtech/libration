@@ -13,6 +13,10 @@
 
 import { DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID } from "../config/emissiveCompositionAssetResolve";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import {
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
+  DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
+} from "../core/emissiveNightLightsPresentationDefaults";
 import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { approximateLunarPhase } from "../core/lunarPhase";
@@ -37,6 +41,8 @@ export function createSolarShadingLayer(
     moonlightMode?: MoonlightPresentationMode;
     emissiveNightLightsMode?: EmissiveNightLightsPresentationMode;
     emissiveCompositionAssetId?: string;
+    emissivePresentationIntensity?: number;
+    emissiveDriverExponent?: number;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -45,6 +51,10 @@ export function createSolarShadingLayer(
   const emissiveNightLightsMode = options.emissiveNightLightsMode ?? "off";
   const emissiveCompositionAssetId =
     options.emissiveCompositionAssetId ?? DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID;
+  const emissivePresentationIntensity =
+    options.emissivePresentationIntensity ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
+  const emissiveDriverExponent =
+    options.emissiveDriverExponent ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
@@ -66,6 +76,8 @@ export function createSolarShadingLayer(
         moonlightMode,
         emissiveNightLightsMode,
         emissiveCompositionAssetId,
+        emissivePresentationIntensity,
+        emissiveDriverExponent,
       };
       return {
         visible: true,

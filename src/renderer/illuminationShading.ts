@@ -224,13 +224,15 @@ export interface EmissiveIlluminationInputs {
   /** Linear 0..1 radiance sample (e.g. from {@link sampleEquirectEmissiveRadianceLinear01}). */
   radianceLinear01: number;
   emissiveMode: EmissiveNightLightsPresentationMode;
+  /** Scene `presentation.intensity`; defaults to 1 when omitted. */
+  presentationIntensity?: number;
 }
 
 /**
  * Max additive RGB boost per channel at contribution 1 (bounded city-glow read).
  * Tuned for NASA Black Marble 2016 1° grayscale onboarded asset (low global mean, high urban tail).
  */
-const EMISSIVE_ADDITIVE_SCALE = 52;
+const EMISSIVE_ADDITIVE_SCALE = 150;
 const EMISSIVE_WARM_G = 0.9;
 const EMISSIVE_WARM_B = 0.62;
 
@@ -291,6 +293,7 @@ export function sampleIlluminationRgba8(
         solarAltitudeDeg: altDeg,
         moonlightMode: moonlightPolicy.mode,
         emissiveMode: emissive.emissiveMode,
+        presentationIntensity: emissive.presentationIntensity,
       });
       if (emissiveContrib > 0) {
         const s = EMISSIVE_ADDITIVE_SCALE * emissiveContrib;

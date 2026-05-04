@@ -35,6 +35,10 @@ export interface SolarShadingPayload {
   emissiveNightLightsMode: EmissiveNightLightsPresentationMode;
   /** Canonical emissive composition asset id from scene normalization. */
   emissiveCompositionAssetId: string;
+  /** From `scene.illumination.emissiveNightLights.presentation.intensity` (0..4). */
+  emissivePresentationIntensity: number;
+  /** From `scene.illumination.emissiveNightLights.presentation.driverExponent` (0.35..1). */
+  emissiveDriverExponent: number;
 }
 
 export function isSolarShadingPayload(data: unknown): data is SolarShadingPayload {
@@ -52,6 +56,10 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.emissiveNightLightsMode === "string" &&
     isEmissiveNightLightsPresentationMode(o.emissiveNightLightsMode) &&
     typeof o.emissiveCompositionAssetId === "string" &&
-    o.emissiveCompositionAssetId.trim() !== ""
+    o.emissiveCompositionAssetId.trim() !== "" &&
+    typeof o.emissivePresentationIntensity === "number" &&
+    Number.isFinite(o.emissivePresentationIntensity) &&
+    typeof o.emissiveDriverExponent === "number" &&
+    Number.isFinite(o.emissiveDriverExponent)
   );
 }

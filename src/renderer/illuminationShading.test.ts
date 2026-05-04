@@ -432,6 +432,7 @@ describe("sampleIlluminationRgba8 emissive night lights", () => {
     const withEm = sampleIlluminationRgba8(dotFromAltitudeDeg(-22), 1, moonOpts, illPolicy, {
       radianceLinear01: 1,
       emissiveMode: "off",
+      presentationIntensity: 4,
     });
     expect(withEm).toEqual(base);
   });
@@ -467,7 +468,22 @@ describe("sampleIlluminationRgba8 emissive night lights", () => {
       emissiveMode: "illustrative",
     });
     expect(em.r).toBeGreaterThan(base.r);
-    expect(em.r - base.r).toBeLessThanOrEqual(60);
+    expect(em.r - base.r).toBeLessThanOrEqual(170);
+  });
+
+  it("increases emissive RGB lift monotonically with presentationIntensity in deep night", () => {
+    const dot = dotFromAltitudeDeg(-22);
+    const low = sampleIlluminationRgba8(dot, 1, moonOpts, illPolicy, {
+      radianceLinear01: 0.8,
+      emissiveMode: "illustrative",
+      presentationIntensity: 0.5,
+    });
+    const high = sampleIlluminationRgba8(dot, 1, moonOpts, illPolicy, {
+      radianceLinear01: 0.8,
+      emissiveMode: "illustrative",
+      presentationIntensity: 2,
+    });
+    expect(high.r + high.g + high.b).toBeGreaterThan(low.r + low.g + low.b);
   });
 
   it("zero radiance matches baseline with emissive mode illustrative", () => {

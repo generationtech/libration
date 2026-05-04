@@ -1038,12 +1038,22 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination");
   }
-  const enl = (ill as { emissiveNightLights: { mode?: unknown; assetId?: unknown } }).emissiveNightLights;
+  const enl = (
+    ill as {
+      emissiveNightLights: { mode?: unknown; assetId?: unknown; presentation?: unknown };
+    }
+  ).emissiveNightLights;
   if (
     !isEmissiveNightLightsPresentationMode(enl.mode) ||
     typeof enl.assetId !== "string" ||
     enl.assetId.trim() === "" ||
-    !isKnownEmissiveCompositionAssetId(enl.assetId)
+    !isKnownEmissiveCompositionAssetId(enl.assetId) ||
+    typeof enl.presentation !== "object" ||
+    enl.presentation === null ||
+    typeof (enl.presentation as { intensity?: unknown }).intensity !== "number" ||
+    !Number.isFinite((enl.presentation as { intensity: number }).intensity) ||
+    typeof (enl.presentation as { driverExponent?: unknown }).driverExponent !== "number" ||
+    !Number.isFinite((enl.presentation as { driverExponent: number }).driverExponent)
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.emissiveNightLights");
   }

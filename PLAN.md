@@ -70,7 +70,7 @@ Current implemented foundation:
 - derived astronomical scene overlays.
 - perceptually legible moonlight composition integrated into the same upstream illumination raster.
 - configurable moonlight presentation modes.
-- emissive night lights (catalog-backed asset, policy, upstream sampling into the same illumination raster, Layers mode control; default **Off**).
+- emissive night lights (catalog-backed asset, policy, upstream sampling into the same illumination raster, Layers mode control plus persisted **presentation** intensity and luma lift; default **Off**).
 
 Candidate work:
 
