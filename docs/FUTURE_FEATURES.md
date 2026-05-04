@@ -151,7 +151,7 @@ Candidates:
 - geometric clipping.
 - viewport clipping.
 - composition-aware day/night illumination.
-- emissive night-lights composition (upstream policy, scene config, catalog, resolver, and per-texel composition into the illumination raster are wired; curated shipped raster and UX controls may still evolve).
+- emissive night-lights composition (upstream policy, scene config, catalog, resolver, per-texel composition, and NASA Black Marble 2016 1° grayscale ship asset are wired; optional UI and higher-resolution variants may still evolve).
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay readability tuning.

@@ -66,7 +66,7 @@ describe("computeEmissiveNightLightsContributionLinear01", () => {
       moonlightMode: "off",
       emissiveMode: "natural",
     });
-    expect(x).toBeCloseTo(0.5, 5);
+    expect(x).toBeCloseTo(0.5 * getEmissiveNightLightsPolicy("natural").radianceGain, 5);
   });
 
   it("applies illustrative radiance gain vs natural", () => {

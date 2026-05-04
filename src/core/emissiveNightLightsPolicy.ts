@@ -41,22 +41,23 @@ const OFF: EmissiveNightLightsPolicy = {
   radianceGain: 0,
 };
 
+/** Tuned against shipped NASA Black Marble 2016 1° grayscale (dim ocean, bright urban cores). */
 const NATURAL: EmissiveNightLightsPolicy = {
   mode: "natural",
   contributesEmissive: true,
-  radianceGain: 1,
+  radianceGain: 0.92,
 };
 
 const ENHANCED: EmissiveNightLightsPolicy = {
   mode: "enhanced",
   contributesEmissive: true,
-  radianceGain: 1.12,
+  radianceGain: 1.06,
 };
 
 const ILLUSTRATIVE: EmissiveNightLightsPolicy = {
   mode: "illustrative",
   contributesEmissive: true,
-  radianceGain: 1.28,
+  radianceGain: 1.2,
 };
 
 const POLICIES: Record<EmissiveNightLightsPresentationMode, EmissiveNightLightsPolicy> = {

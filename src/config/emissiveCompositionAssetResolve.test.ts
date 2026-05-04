@@ -30,7 +30,7 @@ describe("emissive composition asset resolver", () => {
     expect(a.hasPadding).toBe(false);
     expect(a.extent).toEqual({ minLat: -90, maxLat: 90, minLon: -180, maxLon: 180 });
     expect(a.src).toMatch(/^\/maps\/composition\//);
-    expect(a.transitionalPlaceholder).toBe(true);
+    expect(a.transitionalPlaceholder).toBeUndefined();
   });
 
   it("falls back to the default id for unknown and blank ids", () => {

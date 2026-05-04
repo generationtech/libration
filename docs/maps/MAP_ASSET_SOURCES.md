@@ -36,7 +36,7 @@ If the catalog differs, update this document to match the catalog.
 
 ## equirect-world-night-lights-viirs-v1 (composition input)
 
-Status: catalog entry implemented; shipped raster **transitional** (see `transitionalPlaceholder` in `src/assets/composition/emissive-composition-catalog.json`).
+Status: **implemented** (validated onboarded raster; `transitionalPlaceholder` is `false` in `src/assets/composition/emissive-composition-catalog.json`).
 
 Role: upstream emissive radiance field for planetary illumination composition (not a default base-map selector target).
 
@@ -49,15 +49,29 @@ Expected contract:
 
 - same equirectangular full-world assumptions as base maps (2:1, north-up, lon −180..180, lat −90..90, no padding).
 
-Runtime asset (intended path once onboarded):
+Runtime asset:
 
 ```text
 public/maps/composition/equirect-world-night-lights-viirs-v1.jpg
 ```
 
-Provenance:
+### Provenance and license
 
-- intended VIIRS-style or equivalent night-lights source once licensing, preprocessing, and validation are complete.
+- **Source:** NASA Earth Observatory / Visible Earth — **VIIRS Black Marble 2016**, flat map product “Earth at Night / Black Marble: Flat Maps” (grayscale, 1° / 3600×1800 JPEG).
+- **Upstream file retrieved (repo onboarding):** `BlackMarble_2016_01deg_gray.jpg` from NASA Science assets (`assets.science.nasa.gov`, `imagerecords/144000/144897/` path as published for that product).
+- **License / usage:** NASA imagery is generally **U.S. government work** and reusable under the [NASA Media Use Policy](https://www.nasa.gov/nasa-brand-center/images-and-media-use-policy/). Retain attribution in product and docs; do not imply NASA endorsement of the application.
+
+### Processing notes
+
+- Stored **as delivered** (baseline JPEG, single-channel luminance encoded in JPEG grayscale).
+- No reprojection applied in-repo: product is already **equirectangular Plate Carrée**, full world, **3600×1800** (exact **2:1** width:height).
+- Filename and catalog id remain the durable semantic id `equirect-world-night-lights-viirs-v1` (product is Black Marble 2016–based; not a raw VIIRS L1 swath archive).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **3600×1800** (2:1); **8-bit grayscale** JPEG; file decodes in browser tooling used by the app (`Image` + canvas `getImageData`).
+- Statistical spot-check: global mean luminance is very low with a **high upper tail** (urban cores to sensor saturation), consistent with night-lights products — downstream composition uses **log-like sRGB→linear luma** and **policy gains** tuned for this histogram (see `emissiveNightLightsPolicy` and `illuminationShading` emissive additive constants).
+- CI regression: `src/renderer/emissiveBlackMarbleOnboardedAsset.test.ts` (Node) parses JPEG SOF for **3600×1800** and locks **SHA-256** of the shipped file; update the expected digest when intentionally replacing the bytes.
 
 ## equirect-world-legacy-v1
 

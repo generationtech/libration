@@ -239,7 +239,7 @@ Still future or partial:
 - live feeds.
 - gridded scientific datasets.
 - advanced blending, masking, and generalized emissive stacks beyond the dedicated night-lights contributor.
-- further tuning of emissive radiance encoding (sRGB vs true linear radiance) and onboarding of a validated night-lights raster under `public/maps/composition/`.
+- further tuning of emissive radiance encoding (true linear radiance vs display-encoded JPEG) and optional higher-resolution Black Marble variants.
 - alternate projections.
 - zoom, pan, tiling, globe view, and camera interaction.
 - broad preset system.
