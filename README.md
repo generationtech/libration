@@ -48,6 +48,7 @@ Current implemented areas include:
 - Twilight composition integrated directly into the same upstream planetary illumination raster as day/night (not a separate user-facing twilight layer).
 - Non-emissive twilight behavior: atmospheric tint and attenuation modulate substrate visibility rather than adding artificial glow.
 - Perceptually tuned lunar secondary illumination in the same upstream planetary illumination raster: moon phase, lunar altitude, and surface incidence gate a bounded cool additive field plus a secondary transmittance lift on the night mask, giving a broad directional moonlit read near high lunar incidence while daylight/early twilight stay strongly suppressed and new moon / moon-below-horizon stay effectively unchanged.
+- Emissive night lights (NASA Black Marble–based composition raster) sampled upstream into that same planetary illumination raster, with presentation modes **Off / Natural / Enhanced / Illustrative** under Scene layers (default **Off**); durable `assetId` is catalog-backed and not surfaced as a base-map family.
 - Polar illumination behavior derived from real seasonal solar geometry and Earth axial tilt.
 - Canvas backend execution remains renderer-agnostic and only consumes the resulting `rasterPatch`.
 - Runtime base-map image load failure fallback.

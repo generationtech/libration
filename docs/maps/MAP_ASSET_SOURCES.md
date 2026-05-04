@@ -73,6 +73,13 @@ public/maps/composition/equirect-world-night-lights-viirs-v1.jpg
 - Statistical spot-check: global mean luminance is very low with a **high upper tail** (urban cores to sensor saturation), consistent with night-lights products — downstream composition uses **log-like sRGB→linear luma** and **policy gains** tuned for this histogram (see `emissiveNightLightsPolicy` and `illuminationShading` emissive additive constants).
 - CI regression: `src/renderer/emissiveBlackMarbleOnboardedAsset.test.ts` (Node) parses JPEG SOF for **3600×1800** and locks **SHA-256** of the shipped file; update the expected digest when intentionally replacing the bytes.
 
+### Known limitations
+
+- Single annual composite (2016); no seasonal or diurnal variation in the shipped asset.
+- 8-bit JPEG grayscale: not a calibrated linear radiance archive; upstream composition treats decoded sRGB-like bytes as a **bounded display-encoded field** and maps luma through a standard transfer before policy gains (see `emissiveIlluminationRaster` / `emissiveNightLightsPolicy`).
+- 1° (~111 km) native sampling: fine urban texture is aggregated; instrument modes scale contribution for readability, not physical resolution.
+- Ocean noise and sensor artifacts can appear at very high emissive presentation gains; modes stay intentionally capped upstream.
+
 ## equirect-world-legacy-v1
 
 Status: implemented.

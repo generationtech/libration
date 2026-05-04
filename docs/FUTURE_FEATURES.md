@@ -33,6 +33,7 @@ The current scene system already includes:
 
 - solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
+- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and readability-oriented composition without moving semantics into the backend.
 - seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
@@ -61,7 +62,7 @@ Future work should extend these systems into a more coherent atmospheric and com
 - precipitation.
 - temperature normals.
 - cloud climatology.
-- night lights.
+- additional night-light or light-pollution **map substrate** products beyond the bundled Black Marble composition input.
 - light pollution.
 - shaded relief.
 - terrain-only neutral substrate.
@@ -151,7 +152,6 @@ Candidates:
 - geometric clipping.
 - viewport clipping.
 - composition-aware day/night illumination.
-- emissive night-lights composition (upstream policy, scene config, catalog, resolver, per-texel composition, and NASA Black Marble 2016 1° grayscale ship asset are wired; optional UI and higher-resolution variants may still evolve).
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay readability tuning.
@@ -163,8 +163,8 @@ Candidates:
 
 - scientifically grounded day/night and twilight attenuation.
 - configurable twilight softness.
-- optional night lights.
-- emissive city lights.
+- optional **additional** night-light data products layered as future composition or substrate inputs (beyond current Black Marble path).
+- stronger emissive **readability** presets tied to overlay density or zoom when those modes exist.
 - seasonal illumination effects.
 - solar altitude shading.
 - reference-time comparison modes.

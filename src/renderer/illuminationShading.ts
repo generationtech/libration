@@ -230,9 +230,9 @@ export interface EmissiveIlluminationInputs {
  * Max additive RGB boost per channel at contribution 1 (bounded city-glow read).
  * Tuned for NASA Black Marble 2016 1° grayscale onboarded asset (low global mean, high urban tail).
  */
-const EMISSIVE_ADDITIVE_SCALE = 56;
-const EMISSIVE_WARM_G = 0.88;
-const EMISSIVE_WARM_B = 0.58;
+const EMISSIVE_ADDITIVE_SCALE = 52;
+const EMISSIVE_WARM_G = 0.9;
+const EMISSIVE_WARM_B = 0.62;
 
 /**
  * RGBA for one shading pixel given subsolar geometry dot product and layer opacity.

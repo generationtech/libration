@@ -451,4 +451,29 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     });
     expect(maxRgbChannelSum(a)).toBe(maxRgbChannelSum(b));
   });
+
+  it("natural < enhanced < illustrative for peak RGB with the same white emissive raster (deep-night pixels)", () => {
+    const raster = solidWhiteEmissiveRaster(8);
+    const mk = (mode: "natural" | "enhanced" | "illustrative") =>
+      maxRgbChannelSum(
+        buildSolarShadingIlluminationRenderPlan({
+          viewportWidthPx: 96,
+          viewportHeightPx: 64,
+          subsolarLatDeg: 0,
+          subsolarLonDeg: 0,
+          sublunarLatDeg: 10,
+          sublunarLonDeg: 40,
+          lunarIlluminatedFraction: 0.55,
+          layerOpacity: 1,
+          moonlightPolicy: getMoonlightPolicy("natural"),
+          emissiveNightLightsMode: mode,
+          emissiveRaster: raster,
+        }),
+      );
+    const n = mk("natural");
+    const e = mk("enhanced");
+    const i = mk("illustrative");
+    expect(n).toBeLessThan(e);
+    expect(e).toBeLessThan(i);
+  });
 });

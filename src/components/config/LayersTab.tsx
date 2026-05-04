@@ -21,6 +21,7 @@ import {
   deriveLayerEnableFlagsFromScene,
   getBaseMapPresentationForMapId,
   setBaseMapPresentationForMapId,
+  type EmissiveNightLightsPresentationMode,
   type MoonlightPresentationMode,
 } from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
@@ -42,6 +43,29 @@ const MOONLIGHT_OPTIONS: { value: MoonlightPresentationMode; label: string; titl
   { value: "natural", label: "Natural", title: "Subtle, physically restrained moonlight." },
   { value: "enhanced", label: "Enhanced", title: "Readable moonlight while staying grounded." },
   { value: "illustrative", label: "Illustrative", title: "Stronger, instrument-like moonlight visibility." },
+];
+
+const EMISSIVE_NIGHT_LIGHTS_OPTIONS: {
+  value: EmissiveNightLightsPresentationMode;
+  label: string;
+  title: string;
+}[] = [
+  { value: "off", label: "Off", title: "No city / night-lights radiance in the solar shading illumination raster." },
+  {
+    value: "natural",
+    label: "Natural",
+    title: "Restrained emissive read: subtle in twilight, legible deep night; moonlight can soften dominance slightly.",
+  },
+  {
+    value: "enhanced",
+    label: "Enhanced",
+    title: "Clearer instrument readability for urban cores without unbounded glow.",
+  },
+  {
+    value: "illustrative",
+    label: "Illustrative",
+    title: "Stronger bounded emissive emphasis for teaching and comparison; still one illumination raster.",
+  },
 ];
 
 function labelForLayer(key: keyof LayerEnableFlags): string {
@@ -183,6 +207,43 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
             }
           >
             {MOONLIGHT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value} title={o.title}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Night lights (emissive)">
+          <select
+            className="config-input"
+            value={scene.illumination.emissiveNightLights.mode}
+            disabled={!mutable}
+            aria-label="Night lights appearance"
+            title="Human-made radiance sampled into the solar shading illumination raster (same planetary raster as twilight and moonlight)."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const mode = e.currentTarget.value as EmissiveNightLightsPresentationMode;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = {
+                        ...baseScene,
+                        illumination: {
+                          ...baseScene.illumination,
+                          emissiveNightLights: {
+                            ...baseScene.illumination.emissiveNightLights,
+                            mode,
+                          },
+                        },
+                      };
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {EMISSIVE_NIGHT_LIGHTS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value} title={o.title}>
                 {o.label}
               </option>

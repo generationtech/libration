@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
+  getEmissiveCompositionCatalogEntry,
   parseAndValidateEmissiveCompositionCatalog,
   resolveEmissiveCompositionAsset,
   resolveEmissiveCompositionAssetIdToCanonicalId,
@@ -60,6 +61,13 @@ describe("emissive composition asset resolver", () => {
       expect(keys.has(forbidden)).toBe(false);
     }
     expect(typeof a.src).toBe("string");
+  });
+
+  it("marks the default catalog entry as a validated (non-transitional) onboarded raster", () => {
+    const entry = getEmissiveCompositionCatalogEntry(DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID);
+    expect(entry).toBeDefined();
+    expect(entry?.id).toBe(DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID);
+    expect(entry?.transitionalPlaceholder).not.toBe(true);
   });
 });
 

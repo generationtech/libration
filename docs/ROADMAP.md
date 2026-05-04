@@ -150,15 +150,14 @@ Delivered:
 - perceptually legible moonlight composition integrated into the same planetary illumination raster.
 - bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
 - scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
-- scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`) reserves the upstream emissive radiance contributor (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; default mode is `off` until illumination raster sampling lands.
+- scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; default mode remains **`off`**; Layers UI exposes **Off / Natural / Enhanced / Illustrative** for `mode` only; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 
 Remaining future work:
 
 - further atmospheric scattering refinement.
-- emissive night-light per-texel composition into the illumination raster (catalog, resolver, and config hooks are in place).
-- composition-aware overlay readability policy.
+- composition-aware overlay readability policy (cloud/weather and advanced readability participation in planetary composition remain future scope).
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
 - overlay editor refinement.
@@ -194,7 +193,7 @@ Candidate deliverables:
 - climate map families.
 - bathymetry/ocean substrate.
 - vegetation/land cover substrate.
-- night-lights or emissive-compatible substrate.
+- additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path).
 - seasonal natural-color refinements.
 - map selector attribution and explanatory copy.
 
@@ -211,12 +210,12 @@ Candidate deliverables:
 - clipping.
 - composition-aware day/night illumination.
 - higher-fidelity atmospheric scattering and illumination refinement on top of the existing continuous attenuation-driven twilight model.
-- emissive/night-light composition and visibility policy.
+- extended emissive stacks and visibility policy beyond the dedicated night-lights contributor (foundation delivered in Phase 6).
 - atmospheric glow and transition tuning.
 - overlay-compatible visual tuning.
 - overlay readability policy.
 - weather/cloud participation in planetary composition.
-- future emissive contribution framework.
+- future multi-source emissive contribution framework if product scope requires it.
 
 Architectural direction:
 
@@ -226,11 +225,15 @@ Architectural direction:
 - backend remains unaware of planetary composition policy.
 - future weather/cloud systems should participate in scene composition rather than acting as isolated overlays.
 
-Partial progress (Phase 1–2):
+Delivered in Phase 6 (emissive path complete for current scope):
 
 - typed emissive presentation modes, deterministic solar-altitude visibility gate, moonlight coexistence scaling, and `scene.illumination.emissiveNightLights` normalization.
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
-- emissive radiance is sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when `scene.illumination.emissiveNightLights.mode` is not `off` and the resolved raster decodes; otherwise contribution is zero.
+- emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI.
+
+Remaining under Phase 9 (composition expansion, not emissive MVP):
+
+- weather/cloud participation, richer overlay readability, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
 

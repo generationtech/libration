@@ -33,7 +33,7 @@ The current strategic objective is to expand the planetary composition and illum
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Prepare the project for more advanced atmospheric composition, emissive illumination, and lifecycle work.
+6. Prepare the project for more advanced atmospheric composition and lifecycle work (emissive night lights foundation is in place).
 
 ## Near-term execution slices
 
@@ -70,6 +70,7 @@ Current implemented foundation:
 - derived astronomical scene overlays.
 - perceptually legible moonlight composition integrated into the same upstream illumination raster.
 - configurable moonlight presentation modes.
+- emissive night lights (catalog-backed asset, policy, upstream sampling into the same illumination raster, Layers mode control; default **Off**).
 
 Candidate work:
 
@@ -77,7 +78,7 @@ Candidate work:
 - physically-plausible twilight span and attenuation tuning.
 - future atmospheric scattering refinement without abandoning renderer-agnostic composition.
 - composition-aware day/night illumination.
-- emissive night-light composition strategy (Phase 1–3: schema, policy, catalog/resolver, and illumination raster sampling into the single `rasterPatch`; further asset curation and UI exposure as needed).
+- emissive night-light composition is **implemented**: bundled composition catalog, resolver, upstream per-texel sampling into the single illumination `rasterPatch`, Layers UI mode control, and validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`). Further work is optional (higher-resolution assets, advanced readability policy), not a blocker for the core path.
 - masking and clipping rules.
 - blend modes.
 - overlay readability strategy.

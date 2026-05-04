@@ -16,11 +16,8 @@ import { useCallback, useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  defaultLibrationConfigV2,
-  normalizeLibrationConfig,
-  type LibrationConfigV2,
-} from "../../config/v2/librationConfig";
+import { defaultLibrationConfigV2, normalizeLibrationConfig, type LibrationConfigV2 } from "../../config/v2/librationConfig";
+import { DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
 
 function LayersTabHarness({ initial }: { initial: LibrationConfigV2 }) {
@@ -36,6 +33,7 @@ function LayersTabHarness({ initial }: { initial: LibrationConfigV2 }) {
     <>
       <LayersTab config={config} updateConfig={updateConfig} />
       <pre data-testid="scene-state">{JSON.stringify(config.scene?.baseMap ?? {})}</pre>
+      <pre data-testid="illumination-state">{JSON.stringify(config.scene?.illumination ?? null)}</pre>
     </>
   );
 }
@@ -45,6 +43,13 @@ function readSceneBaseMapState(): {
   presentationByMapId?: Record<string, { brightness: number; contrast: number; gamma: number; saturation: number }>;
 } {
   return JSON.parse(screen.getByTestId("scene-state").textContent ?? "{}");
+}
+
+function readIlluminationState(): {
+  moonlight?: { mode: string };
+  emissiveNightLights?: { mode: string; assetId: string };
+} | null {
+  return JSON.parse(screen.getByTestId("illumination-state").textContent ?? "null");
 }
 
 describe("LayersTab base-map presentation persistence", () => {
@@ -124,5 +129,54 @@ describe("LayersTab base-map presentation persistence", () => {
       gamma: 1.3,
       saturation: 1.1,
     });
+  });
+
+  it("emissive night-lights mode change preserves moonlight and emissive assetId", async () => {
+    const user = userEvent.setup();
+    const assetId = "equirect-world-night-lights-viirs-v1";
+    const initial = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...defaultLibrationConfigV2().scene!,
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: { mode: "natural", assetId },
+        },
+      },
+    });
+    render(<LayersTabHarness initial={initial} />);
+
+    const sel = screen.getByLabelText("Night lights appearance");
+    await user.selectOptions(sel, "enhanced");
+
+    const ill = readIlluminationState();
+    expect(ill?.moonlight?.mode).toBe("natural");
+    expect(ill?.emissiveNightLights?.mode).toBe("enhanced");
+    expect(ill?.emissiveNightLights?.assetId).toBe(assetId);
+  });
+
+  it("moonlight mode change preserves emissive night-lights fields", async () => {
+    const user = userEvent.setup();
+    const initial = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...defaultLibrationConfigV2().scene!,
+        illumination: {
+          moonlight: { mode: "natural" },
+          emissiveNightLights: {
+            mode: "illustrative",
+            assetId: DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
+          },
+        },
+      },
+    });
+    render(<LayersTabHarness initial={initial} />);
+
+    await user.selectOptions(screen.getByLabelText("Moonlight appearance"), "enhanced");
+
+    const ill = readIlluminationState();
+    expect(ill?.moonlight?.mode).toBe("enhanced");
+    expect(ill?.emissiveNightLights?.mode).toBe("illustrative");
+    expect(ill?.emissiveNightLights?.assetId).toBe(DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID);
   });
 });

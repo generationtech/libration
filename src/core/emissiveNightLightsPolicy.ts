@@ -45,19 +45,19 @@ const OFF: EmissiveNightLightsPolicy = {
 const NATURAL: EmissiveNightLightsPolicy = {
   mode: "natural",
   contributesEmissive: true,
-  radianceGain: 0.92,
+  radianceGain: 0.82,
 };
 
 const ENHANCED: EmissiveNightLightsPolicy = {
   mode: "enhanced",
   contributesEmissive: true,
-  radianceGain: 1.06,
+  radianceGain: 0.98,
 };
 
 const ILLUSTRATIVE: EmissiveNightLightsPolicy = {
   mode: "illustrative",
   contributesEmissive: true,
-  radianceGain: 1.2,
+  radianceGain: 1.12,
 };
 
 const POLICIES: Record<EmissiveNightLightsPresentationMode, EmissiveNightLightsPolicy> = {
@@ -113,14 +113,15 @@ export function emissiveSolarVisibilityGate01(solarAltitudeDeg: number): number 
   if (a >= 0) {
     return 0;
   }
+  // Civil: very subtle; nautical: readable ramp; astronomical → deep night: high legibility.
   if (a >= -6) {
-    return lerp(0, 0.08, a / -6);
+    return lerp(0, 0.035, a / -6);
   }
   if (a >= -12) {
-    return lerp(0.08, 0.42, (a + 6) / -6);
+    return lerp(0.035, 0.36, (a + 6) / -6);
   }
   if (a >= -18) {
-    return lerp(0.42, 0.92, (a + 12) / -6);
+    return lerp(0.36, 0.88, (a + 12) / -6);
   }
   return 1;
 }
@@ -136,9 +137,9 @@ export function emissiveMoonlightCoexistenceFactor(mode: MoonlightPresentationMo
   }
   switch (mode) {
     case "natural":
-      return 0.88;
+      return 0.91;
     case "enhanced":
-      return 0.94;
+      return 0.96;
     case "illustrative":
       return 1;
     default:

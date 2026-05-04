@@ -220,7 +220,7 @@ function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNigh
 /**
  * Persisted scenes without `illumination` keep prior moonlight appearance (`illustrative`).
  * Greenfield defaults from {@link buildDefaultSceneConfigFromLayerFlags} use `enhanced` moonlight and
- * `off` emissive night lights until the composition path is fully wired.
+ * `off` emissive night lights (user can enable presentation modes in Layers when solar shading is on).
  */
 export function normalizeSceneIlluminationInput(
   input: Record<string, unknown>,

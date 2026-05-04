@@ -28,12 +28,21 @@ describe("emissiveSolarVisibilityGate01", () => {
   });
 
   it("ramps through twilight bands toward full night", () => {
-    expect(emissiveSolarVisibilityGate01(-3)).toBeCloseTo(0.04, 5);
-    expect(emissiveSolarVisibilityGate01(-6)).toBeCloseTo(0.08, 5);
-    expect(emissiveSolarVisibilityGate01(-9)).toBeCloseTo(0.25, 5);
-    expect(emissiveSolarVisibilityGate01(-15)).toBeCloseTo(0.67, 5);
-    expect(emissiveSolarVisibilityGate01(-18)).toBeCloseTo(0.92, 5);
+    expect(emissiveSolarVisibilityGate01(-3)).toBeCloseTo(0.0175, 5);
+    expect(emissiveSolarVisibilityGate01(-6)).toBeCloseTo(0.035, 5);
+    expect(emissiveSolarVisibilityGate01(-9)).toBeCloseTo(0.1975, 5);
+    expect(emissiveSolarVisibilityGate01(-15)).toBeCloseTo(0.62, 5);
+    expect(emissiveSolarVisibilityGate01(-18)).toBeCloseTo(0.88, 5);
     expect(emissiveSolarVisibilityGate01(-22)).toBe(1);
+  });
+
+  it("is monotonic non-increasing as solar altitude increases (deeper night → higher gate)", () => {
+    const alts = [-24, -20, -18, -15, -12, -9, -6, -3, -1, 0, 4];
+    for (let i = 1; i < alts.length; i++) {
+      const prev = emissiveSolarVisibilityGate01(alts[i - 1]!);
+      const cur = emissiveSolarVisibilityGate01(alts[i]!);
+      expect(cur).toBeLessThanOrEqual(prev + 1e-12);
+    }
   });
 });
 
@@ -84,6 +93,19 @@ describe("computeEmissiveNightLightsContributionLinear01", () => {
     });
     expect(ill).toBeGreaterThan(nat);
     expect(ill).toBeCloseTo(0.5 * getEmissiveNightLightsPolicy("illustrative").radianceGain, 5);
+  });
+
+  it("orders natural < enhanced < illustrative at deep night for the same radiance sample", () => {
+    const base = {
+      emissiveSampleLinear01: 0.35,
+      solarAltitudeDeg: -25,
+      moonlightMode: "off" as const,
+    };
+    const n = computeEmissiveNightLightsContributionLinear01({ ...base, emissiveMode: "natural" });
+    const e = computeEmissiveNightLightsContributionLinear01({ ...base, emissiveMode: "enhanced" });
+    const i = computeEmissiveNightLightsContributionLinear01({ ...base, emissiveMode: "illustrative" });
+    expect(n).toBeLessThan(e);
+    expect(e).toBeLessThan(i);
   });
 
   it("reduces emissive slightly when moonlight contributes in natural mode", () => {
