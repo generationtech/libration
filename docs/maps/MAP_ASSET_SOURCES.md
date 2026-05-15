@@ -179,6 +179,7 @@ Notes:
 - Persist only the family id.
 - Keep attribution and source processing notes explicit.
 - Ensure all monthly rasters are dimensionally and spatially identical.
+- **`equirect-world-blue-marble-tb-v1`:** bundled catalog sets **`capabilities.bathymetryShaded`** (with **`reliefShaded`**) for upstream overlay-readability lift—curator signal for shaded bathymetry; no runtime raster sampling (see overlay-readability `capabilities` section above).
 
 ## Topography family
 

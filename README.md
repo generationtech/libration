@@ -36,7 +36,7 @@ Current implemented areas include:
 - Renderer-neutral `RenderPlan` primitives for text, rects, lines, paths, gradients, image blits, and raster patches.
 - Canvas backend execution through bridge modules.
 - SceneConfig-driven map scene.
-- File-backed curated base-map catalog (optional **`capabilities`** for upstream overlay lift: e.g. **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, `overlayOptimized`, `darkFriendly`).
+- File-backed curated base-map catalog (optional **`capabilities`** for upstream overlay lift: **shipped** intrinsics **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, plus **`overlayOptimized`** / **`darkFriendly`**).
 - Categorized base-map selector UI with grouped substrate families.
 - Static and month-aware base-map families.
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.

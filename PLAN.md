@@ -61,7 +61,9 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Next frontier (same subsystem, future):** additional optional `BaseMapCapabilities` axes or resolver-only signals **beyond** that shipped set when product-justified; **still** no raster sampling unless explicitly scoped.
 
-### Atmospheric twilight refinement — **shipped increment** (Slice 2)
+**Recently completed (narrow vertical, Slice 2):** optional catalog intrinsic **`bathymetryShaded`** (shaded bathymetry competes with vector/grid overlays upstream of RenderPlan); bundled catalog marks **`equirect-world-blue-marble-tb-v1`** alongside existing **`reliefShaded`**. Implementation: `src/core/substrateOverlayReadabilityLiftScale.ts`, `src/config/baseMapCatalog.ts`, `src/assets/maps/base-map-catalog.json`; tests: `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
+
+### Atmospheric twilight refinement — **shipped increment** (Slice 2) — **shipped increment** (Slice 2)
 
 **Status:** **complete** for this narrow phase. Upstream-only tuning in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts): wider Gaussian coupling between semantic twilight anchor colors, cooler low-luminance anchor progression, slightly higher bounded non-emissive atmospheric tint cap (`TWILIGHT_ATMOSPHERIC_ALPHA_MAX`), and a gentler day-side atmospheric envelope as altitude approaches the shared +4° daylight-clear sampling cutoff from below (tint is still zero at and above that cutoff). Still **one** planetary illumination `rasterPatch`; **no** new SceneConfig surface or backend composition policy. Tests: [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts).
 
@@ -71,7 +73,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 Status: complete (ongoing hygiene only).
 
-Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + substrate heuristic increments (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots** and **incremental twilight transition tuning** in `illuminationShading.ts` are documented as **shipped** across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, “substrate unreadable”, or “no twilight tuning” drift where the runtime matches source.
+Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + substrate heuristic increments (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots** and **incremental twilight transition tuning** in `illuminationShading.ts` are documented as **shipped** across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, `docs/maps/MAP_ASSET_SOURCES.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, “substrate unreadable”, or “no twilight tuning” drift where the runtime matches source.
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
@@ -90,7 +92,7 @@ Status: **primary active execution slice**.
 
 **Likely next implementation slice (Slice 2; pick one narrow vertical per phase):**
 
-- **Further substrate/readability signals:** extend catalog/resolver-only hints and presentation-derived rules beyond **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** + sub-1 brightness dimming (still upstream; no raster sampling unless explicitly scoped).
+- **Further substrate/readability signals:** extend catalog/resolver-only hints and presentation-derived rules beyond the **shipped** four intrinsics **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** plus sub-1 brightness dimming and `overlayOptimized` / `darkFriendly` multipliers (still upstream; no raster sampling unless explicitly scoped).
 - **Further atmospheric refinement:** additional scattering / transition tuning on top of the **existing** continuous twilight field and the shipped **incremental twilight tuning** pass in `illuminationShading.ts` (still one illumination `rasterPatch`; no backend composition policy; optional future SceneConfig axis for user-facing softness only if needed).
 
 **Shipped pilots:** `scene.overlayReadability.perLayer` supports the six stack ids above (veil + lift scalars each) after the global frame in `createLatLonGridLayer`, `createSolarAnalemmaLayer`, `createSubsolarMarkerLayer`, `createSublunarMarkerLayer`, `createCityPinsLayer`, and `createStaticEquirectRasterOverlayLayer`; normalized config omits identity-only per-layer subtrees.

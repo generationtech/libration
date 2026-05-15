@@ -24,6 +24,7 @@ The current map configuration UI already includes:
 - attribution display for the selected base-map family.
 - per-family base-map presentation controls.
 - shared presentation persistence across seasonal/month-aware raster variants.
+- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**).
 
 Future map and scene UX work should extend these foundations rather than replacing them.
 
