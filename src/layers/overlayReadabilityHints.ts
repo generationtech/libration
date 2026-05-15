@@ -18,7 +18,7 @@
  * resolved base-map substrate (see frame). Optional SceneConfig `overlayReadability.presentation`
  * scales the derived frame in the shell before hints are built; optional `scene.overlayReadability.perLayer`
  * pilots apply the same veil/lift scalars again only for configured stack rows (lat/lon grid, solar analemma,
- * subsolar/sublunar markers, city pins, static equirect overlay; see `sceneConfig` normalization).
+ * subsolar/sublunar markers, city pins, static equirect overlay; see normalization in {@link ../config/v2/sceneConfig}).
  */
 export interface OverlayReadabilityHints {
   /**

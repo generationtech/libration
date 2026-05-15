@@ -170,7 +170,7 @@ Foundational systems now exist:
 - coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
 - composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + **default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass per pilot layer via `scene.overlayReadability.perLayer`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond the shipped global presentation + **`grid` / `solarAnalemma` pilots** (per-layer tuning for remaining stack ids, richer substrate heuristics), atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond the shipped **global presentation plus six default-stack `scene.overlayReadability.perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay` — canonical list: `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)), such as **`perLayer` tuning for stack rows beyond those defaults**, richer substrate heuristics, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -179,7 +179,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Readability extensions** (per-layer tuning beyond the shipped **`grid` / `solarAnalemma` pilots**, richer substrate heuristics), atmospheric refinement on the **existing** upstream illumination stack, and cloud/weather **planning** until dynamic lifecycle opens.
+4. **Readability extensions** (per-layer readability beyond the **six shipped** default-stack `perLayer` keys above, richer **substrate** heuristics), atmospheric refinement on the **existing** upstream illumination stack, and cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

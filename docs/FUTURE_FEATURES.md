@@ -158,7 +158,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- **Overlay readability beyond derived v1.1 + substrate lift + presentation + `grid` / `solarAnalemma` pilots:** per-layer tuning for remaining stack ids where justified; richer catalog or resolver heuristics.
+- **Overlay readability beyond derived v1.1 + substrate lift + presentation + the six shipped default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): `perLayer` contracts for additional stack rows where justified; finer multi-row semantics (e.g. separate pilots per static-raster row); richer catalog or resolver heuristics.
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.

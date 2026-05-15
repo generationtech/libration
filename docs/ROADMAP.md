@@ -208,11 +208,11 @@ Candidate deliverables:
 
 Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift + presentation scalars + **`grid` / `solarAnalemma` per-layer pilots**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift + presentation scalars + **six default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`), atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 
-- **Readability extensions:** per-layer tuning for stack layers beyond the shipped **`grid`** and **`solarAnalemma`** pilots when justified; substrate heuristics beyond presentation + catalog `capabilities` (e.g. per-family tuning in catalog or resolver) if product needs them.
+- **Readability extensions:** `perLayer` readability for scene stack rows **beyond** those six defaulted ids when product-defined; finer semantics when multiple overlay rows share one pilot key (e.g. static equirect); substrate heuristics beyond presentation + catalog `capabilities` (e.g. per-family tuning in catalog or resolver) if product needs them.
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
@@ -233,9 +233,9 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
 - emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI; perceptual luma driver via `presentation.driverExponent`.
 
-Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + presentation scalars + `grid` / `solarAnalemma` pilots** delivery):
+Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + presentation scalars + six default-stack `perLayer` pilots** delivery):
 
-- readability extensions (per-layer tuning for stack layers beyond **`grid`** and **`solarAnalemma`**; richer substrate modeling beyond presentation + catalog flags).
+- readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; richer substrate modeling beyond presentation + catalog flags).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
