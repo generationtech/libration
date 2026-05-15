@@ -23,6 +23,12 @@ import { solarAltitudeDegFromSurfaceSunDotProduct } from "./solarTwilight";
 const SAMPLE_LAT_DEG = [-67.5, -22.5, 22.5, 67.5] as const;
 const SAMPLE_LON_DEG = [-135, -45, 45, 135] as const;
 
+/** Per-frame subsolar-derived veil field for overlay legibility; may be attached on the render tick time object. */
+export interface OverlayReadabilityFrame {
+  readonly globalNightVeil01: number;
+  nightVeil01At(latDeg: number, lonDeg: number): number;
+}
+
 function surfaceSunDotProduct(
   latDeg: number,
   lonDeg: number,
@@ -41,10 +47,7 @@ function surfaceSunDotProduct(
 /**
  * Global average night veil (coarse lat/lon samples) plus point queries for markers.
  */
-export function computeOverlayReadabilityFrameFromTimeMs(nowMs: number): {
-  globalNightVeil01: number;
-  nightVeil01At(latDeg: number, lonDeg: number): number;
-} {
+export function computeOverlayReadabilityFrameFromTimeMs(nowMs: number): OverlayReadabilityFrame {
   const { latDeg: subLat, lonDeg: subLon } = subsolarPoint(nowMs);
   let sum = 0;
   let n = 0;
@@ -64,4 +67,15 @@ export function computeOverlayReadabilityFrameFromTimeMs(nowMs: number): {
       return illuminationNightVeil01FromSolarAltitudeDeg(solarAltitudeDegFromSurfaceSunDotProduct(d));
     },
   };
+}
+
+/**
+ * Reuses `overlayReadabilityFrame` on the time object when the shell attached one for this tick;
+ * otherwise computes from `now` (for tests and narrow callers).
+ */
+export function getOverlayReadabilityFrameOrCompute(time: {
+  now: number;
+  overlayReadabilityFrame?: OverlayReadabilityFrame;
+}): OverlayReadabilityFrame {
+  return time.overlayReadabilityFrame ?? computeOverlayReadabilityFrameFromTimeMs(time.now);
 }

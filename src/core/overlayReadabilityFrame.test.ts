@@ -12,8 +12,11 @@
  */
 
 import { describe, expect, it } from "vitest";
+import {
+  computeOverlayReadabilityFrameFromTimeMs,
+  getOverlayReadabilityFrameOrCompute,
+} from "./overlayReadabilityFrame";
 import { subsolarPoint } from "./subsolarPoint";
-import { computeOverlayReadabilityFrameFromTimeMs } from "./overlayReadabilityFrame";
 
 describe("computeOverlayReadabilityFrameFromTimeMs", () => {
   it("returns subsolar-consistent zero veil at the subsolar surface point", () => {
@@ -41,5 +44,28 @@ describe("computeOverlayReadabilityFrameFromTimeMs", () => {
     const frame = computeOverlayReadabilityFrameFromTimeMs(Date.UTC(2020, 0, 1, 0, 0, 0, 0));
     expect(frame.globalNightVeil01).toBeGreaterThanOrEqual(0);
     expect(frame.globalNightVeil01).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("getOverlayReadabilityFrameOrCompute", () => {
+  it("returns the injected frame without consulting now", () => {
+    const injected = {
+      globalNightVeil01: 0.42,
+      nightVeil01At: () => 0.99,
+    };
+    const got = getOverlayReadabilityFrameOrCompute({
+      now: Date.UTC(2024, 5, 15, 12, 0, 0, 0),
+      overlayReadabilityFrame: injected,
+    });
+    expect(got).toBe(injected);
+    expect(got.globalNightVeil01).toBe(0.42);
+    expect(got.nightVeil01At(0, 0)).toBe(0.99);
+  });
+
+  it("computes from now when no frame is attached", () => {
+    const t = Date.UTC(2024, 5, 15, 12, 0, 0, 0);
+    const a = computeOverlayReadabilityFrameFromTimeMs(t);
+    const b = getOverlayReadabilityFrameOrCompute({ now: t });
+    expect(b.globalNightVeil01).toBeCloseTo(a.globalNightVeil01, 10);
   });
 });

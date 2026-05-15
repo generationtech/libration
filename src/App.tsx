@@ -50,6 +50,7 @@ import {
 } from "./app/demoPlayback";
 import { ConfigShell } from "./components/config/ConfigShell";
 import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
+import { computeOverlayReadabilityFrameFromTimeMs } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
@@ -291,7 +292,10 @@ export default function App() {
           : Math.max(0, clockNowMs - lastRenderClockMsRef.current);
       lastRenderClockMsRef.current = clockNowMs;
 
-      const time = createTimeContext(clockNowMs, deltaMs, simulated);
+      const overlayReadabilityFrame = computeOverlayReadabilityFrameFromTimeMs(clockNowMs);
+      const time = createTimeContext(clockNowMs, deltaMs, simulated, {
+        overlayReadabilityFrame,
+      });
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
       registry.update(time);

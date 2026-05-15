@@ -12,7 +12,7 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
-import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
+import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import { formatPinDateTimeLabel } from "../core/pinDateTimeDisplayFormat";
 import type { ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes";
@@ -94,7 +94,7 @@ export function createCityPinsLayer(
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
+      const frame = getOverlayReadabilityFrameOrCompute(time);
       const cities: CityPinEntry[] = pinDefinitions.map((c) => ({
         id: c.id,
         name: c.name,

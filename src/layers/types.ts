@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { OverlayReadabilityFrame } from "../core/overlayReadabilityFrame";
+
 export type LayerId = string;
 
 export type LayerType =
@@ -26,6 +28,11 @@ export interface TimeContext {
   now: number;
   deltaMs: number;
   simulated: boolean;
+  /**
+   * When set (typically once per frame by the app shell), overlay layers reuse this instead of
+   * each calling `computeOverlayReadabilityFrameFromTimeMs`.
+   */
+  overlayReadabilityFrame?: OverlayReadabilityFrame;
 }
 
 export interface LayerState {

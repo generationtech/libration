@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
+import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -63,7 +63,7 @@ export function createStaticEquirectRasterOverlayLayer(
     type: "raster",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
+      const frame = getOverlayReadabilityFrameOrCompute(time);
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,

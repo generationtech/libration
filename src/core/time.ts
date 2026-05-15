@@ -12,13 +12,22 @@
  */
 
 import type { TimeContext } from "../layers/types";
+import type { OverlayReadabilityFrame } from "./overlayReadabilityFrame";
 
 export function createTimeContext(
   now: number,
   deltaMs: number,
   simulated: boolean,
+  options?: { overlayReadabilityFrame?: OverlayReadabilityFrame },
 ): TimeContext {
-  return { now, deltaMs, simulated };
+  return {
+    now,
+    deltaMs,
+    simulated,
+    ...(options?.overlayReadabilityFrame !== undefined
+      ? { overlayReadabilityFrame: options.overlayReadabilityFrame }
+      : {}),
+  };
 }
 
 export function nowTimeContext(
