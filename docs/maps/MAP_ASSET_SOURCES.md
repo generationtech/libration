@@ -30,6 +30,7 @@ Optional keys on base-map catalog entries influence **upstream** overlay lift sc
 - `reliefShaded` — hypsometric / hillshade-style relief reads as strong local contrast.
 - `boundaryDense` — dense linework (boundaries, scientific overlays).
 - `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills).
+- `bathymetryShaded` — shaded / hypsometric ocean-floor (bathymetry) reads as strong local contrast (often with land relief; e.g. Blue Marble **TB** family in the bundled catalog).
 
 **Presentation-penalty multipliers** (not separate intrinsic flags): `overlayOptimized`, `darkFriendly`.
 

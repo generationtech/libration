@@ -49,6 +49,12 @@ export type BaseMapCapabilities = Readonly<{
    * with overlay color legibility; upstream overlay lift attenuates slightly at neutral presentation.
    */
   chromaticDense?: boolean;
+  /**
+   * Shaded / hypsometric ocean floor (bathymetry) reads as strong local contrast alongside land
+   * relief; upstream overlay lift attenuates slightly at neutral presentation (often paired with
+   * {@link reliefShaded} on Blue Marble TB–style families).
+   */
+  bathymetryShaded?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

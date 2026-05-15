@@ -62,10 +62,11 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({})).toBe(0);
   });
 
-  it("accumulates bounded penalties for relief, boundary-dense, and chromatic-dense flags", () => {
+  it("accumulates bounded penalties for relief, boundary-dense, chromatic-dense, and bathymetry flags", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true })).toBeCloseTo(0.072, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ boundaryDense: true })).toBeCloseTo(0.055, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ chromaticDense: true })).toBeCloseTo(0.05, 10);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ bathymetryShaded: true })).toBeCloseTo(0.048, 10);
     expect(
       intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true, boundaryDense: true }),
     ).toBeCloseTo(0.127, 10);
@@ -76,6 +77,23 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
         chromaticDense: true,
       }),
     ).toBeCloseTo(0.177, 10);
+    expect(
+      intrinsicSubstrateReadabilityCatalogPenalty01({
+        reliefShaded: true,
+        bathymetryShaded: true,
+      }),
+    ).toBeCloseTo(0.12, 10);
+  });
+
+  it("caps intrinsic catalog penalties at 0.18 when all intrinsic flags are set", () => {
+    expect(
+      intrinsicSubstrateReadabilityCatalogPenalty01({
+        reliefShaded: true,
+        boundaryDense: true,
+        chromaticDense: true,
+        bathymetryShaded: true,
+      }),
+    ).toBeCloseTo(0.18, 10);
   });
 });
 
@@ -97,7 +115,7 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(s).toBe(SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN);
   });
 
-  it("scales below 1 at neutral presentation when relief, boundary, or chromatic hints are set", () => {
+  it("scales below 1 at neutral presentation when relief, boundary, chromatic, or bathymetry hints are set", () => {
     const r = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       reliefShaded: true,
     });
@@ -107,9 +125,21 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     const c = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       chromaticDense: true,
     });
+    const bathy = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      bathymetryShaded: true,
+    });
     expect(r).toBeCloseTo(1 - 0.072, 10);
     expect(d).toBeCloseTo(1 - 0.055, 10);
     expect(c).toBeCloseTo(1 - 0.05, 10);
+    expect(bathy).toBeCloseTo(1 - 0.048, 10);
+  });
+
+  it("combines relief and bathymetry like Blue Marble TB at neutral presentation", () => {
+    const scale = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      reliefShaded: true,
+      bathymetryShaded: true,
+    });
+    expect(scale).toBeCloseTo(1 - 0.12, 10);
   });
 
   it("preserves more lift on dimmed bases than on bright bases for same contrast boost", () => {

@@ -257,7 +257,8 @@
         "emissiveCompatible": false,
         "darkFriendly": false,
         "seasonal": true,
-        "reliefShaded": true
+        "reliefShaded": true,
+        "bathymetryShaded": true
       },
       "recommendedRoles": [
         "general",
