@@ -44,6 +44,11 @@ export type BaseMapCapabilities = Readonly<{
    * upstream overlay lift attenuates slightly at neutral presentation.
    */
   boundaryDense?: boolean;
+  /**
+   * Strong distinct hue bands (geological classes, political fills, hypsometric tints) compete
+   * with overlay color legibility; upstream overlay lift attenuates slightly at neutral presentation.
+   */
+  chromaticDense?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

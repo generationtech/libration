@@ -48,7 +48,8 @@
         "overlayOptimized": true,
         "emissiveCompatible": false,
         "darkFriendly": false,
-        "seasonal": false
+        "seasonal": false,
+        "chromaticDense": true
       },
       "recommendedRoles": [
         "political",
@@ -76,7 +77,8 @@
         "emissiveCompatible": false,
         "darkFriendly": false,
         "seasonal": false,
-        "boundaryDense": true
+        "boundaryDense": true,
+        "chromaticDense": true
       },
       "recommendedRoles": [
         "geology",

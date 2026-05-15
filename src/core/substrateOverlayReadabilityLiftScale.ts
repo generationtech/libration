@@ -28,6 +28,8 @@ export type SubstrateReadabilityCatalogHint = Readonly<{
   reliefShaded?: boolean;
   /** Dense linework substrate (catalog `capabilities.boundaryDense`). */
   boundaryDense?: boolean;
+  /** Strong thematic / false-color hue bands (catalog `capabilities.chromaticDense`). */
+  chromaticDense?: boolean;
 }>;
 
 /** Upper bound on combined (presentation + intrinsic catalog) readability penalty → lift floor. */
@@ -83,6 +85,9 @@ export function intrinsicSubstrateReadabilityCatalogPenalty01(
   }
   if (hint.boundaryDense) {
     p += 0.055;
+  }
+  if (hint.chromaticDense) {
+    p += 0.05;
   }
   return Math.max(0, Math.min(0.18, p));
 }

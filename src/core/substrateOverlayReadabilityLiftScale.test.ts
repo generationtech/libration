@@ -62,12 +62,20 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({})).toBe(0);
   });
 
-  it("accumulates bounded penalties for relief and boundary-dense flags", () => {
+  it("accumulates bounded penalties for relief, boundary-dense, and chromatic-dense flags", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true })).toBeCloseTo(0.072, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ boundaryDense: true })).toBeCloseTo(0.055, 10);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ chromaticDense: true })).toBeCloseTo(0.05, 10);
     expect(
       intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true, boundaryDense: true }),
     ).toBeCloseTo(0.127, 10);
+    expect(
+      intrinsicSubstrateReadabilityCatalogPenalty01({
+        reliefShaded: true,
+        boundaryDense: true,
+        chromaticDense: true,
+      }),
+    ).toBeCloseTo(0.177, 10);
   });
 });
 
@@ -89,15 +97,19 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(s).toBe(SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN);
   });
 
-  it("scales below 1 at neutral presentation when relief or boundary hints are set", () => {
+  it("scales below 1 at neutral presentation when relief, boundary, or chromatic hints are set", () => {
     const r = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       reliefShaded: true,
     });
     const d = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       boundaryDense: true,
     });
+    const c = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      chromaticDense: true,
+    });
     expect(r).toBeCloseTo(1 - 0.072, 10);
     expect(d).toBeCloseTo(1 - 0.055, 10);
+    expect(c).toBeCloseTo(1 - 0.05, 10);
   });
 
   it("preserves more lift on dimmed bases than on bright bases for same contrast boost", () => {
