@@ -42,7 +42,7 @@ The current scene system already includes:
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems with **readability policy** beyond the shipped stack (per-layer tuning, richer substrate heuristics), richer atmosphere, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability path.
+Future work should extend these systems with **readability policy** beyond the shipped stack (global presentation + substrate lift + **`grid` per-layer pilot** already in place: extend to **other** stack layer ids, richer substrate heuristics), richer atmosphere, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability path.
 
 ## Maps and base-map families
 

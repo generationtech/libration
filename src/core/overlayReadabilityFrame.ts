@@ -15,6 +15,9 @@
  * Composition-aware overlay readability frame: derives terminator / night veil signals from
  * subsolar geometry, plus a deterministic **emissive policy** legibility pressure (v1.1) from
  * SceneConfig-resolved night-light mode and presentation — no emissive raster sampling here.
+ *
+ * Global `scene.overlayReadability.presentation` is applied when the shell builds the frame; optional
+ * `scene.overlayReadability.perLayer.grid` repeats the same veil/lift scalars upstream in the lat/lon grid layer only.
  */
 
 import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";

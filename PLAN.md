@@ -39,9 +39,9 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 ## Near-term execution slices
 
-### Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation) — **phase complete**
+### Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + `grid` pilot) — **phase complete**
 
-**Status:** shipped in production. This phase is **closed**; treat as a settled foundation alongside planetary illumination composition (subsolar veil, emissive policy lift, presentation/catalog–based substrate lift, plus optional **persisted** `scene.overlayReadability.presentation` scaling applied in the shell).
+**Status:** shipped in production. This phase is **closed**; treat as a settled foundation alongside planetary illumination composition (subsolar veil, emissive policy lift, presentation/catalog–based substrate lift, **persisted** `scene.overlayReadability.presentation` scaling in the shell, and optional **`scene.overlayReadability.perLayer.grid`** for the lat/lon grid stack row only).
 
 **v1 (subsolar-only veil):** derived solar night-veil hints on lat/lon grid, solar analemma, subsolar/sublunar markers, **city pins** (per-pin veil scalar), and **static equirect raster overlays** (global scalar → merged `imageBlit` `cssFilter` upstream). The app shell attaches **one** `OverlayReadabilityFrame` per tick on `TimeContext`; layers use `getOverlayReadabilityFrameOrCompute`.
 

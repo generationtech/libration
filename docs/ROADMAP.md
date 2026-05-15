@@ -177,7 +177,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars, not stale “v1 only” or “substrate unreadable” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + optional `perLayer.grid` pilot, not stale “v1 only” or “substrate unreadable” phrasing).
 
 Exit criteria:
 
@@ -208,7 +208,7 @@ Candidate deliverables:
 
 Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift + presentation scalars, atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift + presentation scalars + **`grid` per-layer pilot**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 

@@ -104,10 +104,12 @@ When behavior changes, update docs in the same change.
 
 Update:
 
+- `README.md` when public capability bullets change.
 - `PLAN.md` for current execution direction.
 - `ARCHITECTURE.md` for durable architecture changes.
 - `docs/ROADMAP.md` for phase status.
 - `docs/FUTURE_FEATURES.md` when preserving or adding future ideas.
+- `docs/PROJECT_STRATEGY.md` and `docs/AI_COENGINEERING.md` when shipped scope or strategy summaries change.
 - map docs when onboarding or changing asset workflows.
 
 Do not create sprawling speculative spec files unless they provide durable architectural value.
