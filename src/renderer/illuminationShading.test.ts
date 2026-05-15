@@ -19,6 +19,7 @@ import {
   MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX,
   NIGHT_DARKEN,
   sampleIlluminationRgba8,
+  TWILIGHT_ATMOSPHERIC_ALPHA_MAX,
   smootherstep,
   smoothstep,
 } from "./illuminationShading";
@@ -77,6 +78,19 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     const horizon = sampleIlluminationRgba8(0, 1);
     expect(horizon.a).toBeGreaterThan(0);
     expect(horizon.a).toBeLessThan(Math.round(NIGHT_DARKEN * 255));
+  });
+
+  it("bounds exported twilight tint modulation to the upstream atmospheric budget", () => {
+    expect(TWILIGHT_ATMOSPHERIC_ALPHA_MAX).toBeGreaterThan(0.14);
+    expect(TWILIGHT_ATMOSPHERIC_ALPHA_MAX).toBeLessThan(0.22);
+  });
+
+  it("keeps terminator tint in a low-luminance band after atmospheric refinement", () => {
+    const horizon = sampleIlluminationRgba8(0, 1);
+    const sum = horizon.r + horizon.g + horizon.b;
+    expect(sum).toBeGreaterThan(12);
+    expect(sum).toBeLessThan(130);
+    expect(horizon.b).toBeGreaterThanOrEqual(horizon.r);
   });
 
   it("ramps to full night darken in deep night (arbitrary sub-horizon dot)", () => {

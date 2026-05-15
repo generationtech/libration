@@ -59,6 +59,12 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Next frontier (same subsystem, future):** additional capability axes or resolver-only signals when justified; **still** no raster sampling unless explicitly scoped.
 
+### Atmospheric twilight refinement — **shipped increment** (Slice 2)
+
+**Status:** **complete** for this narrow phase. Upstream-only tuning in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts): wider Gaussian coupling between semantic twilight anchor colors, cooler low-luminance anchor progression, slightly higher bounded non-emissive atmospheric tint cap (`TWILIGHT_ATMOSPHERIC_ALPHA_MAX`), and a gentler day-side atmospheric envelope as altitude approaches the shared +4° daylight-clear sampling cutoff from below (tint is still zero at and above that cutoff). Still **one** planetary illumination `rasterPatch`; **no** new SceneConfig surface or backend composition policy. Tests: [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts).
+
+**Next frontier (same subsystem):** deeper scattering or haze modeling; optional persisted “twilight softness” only when product warrants a config axis.
+
 ### Slice 1: Documentation alignment with source reality
 
 Status: complete (ongoing hygiene only).
@@ -83,14 +89,14 @@ Status: **primary active execution slice**.
 **Likely next implementation slice (Slice 2; pick one narrow vertical per phase):**
 
 - **Further substrate/readability signals:** extend catalog/resolver-only hints and presentation-derived rules beyond **`reliefShaded`** / **`boundaryDense`** + sub-1 brightness dimming (still upstream; no raster sampling unless explicitly scoped).
-- **Atmospheric refinement:** tuned scattering / transition behavior on the **existing** continuous twilight field (still one illumination `rasterPatch`; no backend composition policy).
+- **Further atmospheric refinement:** additional scattering / transition tuning on top of the **existing** continuous twilight field and the shipped **incremental twilight tuning** pass in `illuminationShading.ts` (still one illumination `rasterPatch`; no backend composition policy; optional future SceneConfig axis for user-facing softness only if needed).
 
 **Shipped pilots:** `scene.overlayReadability.perLayer` supports the six stack ids above (veil + lift scalars each) after the global frame in `createLatLonGridLayer`, `createSolarAnalemmaLayer`, `createSubsolarMarkerLayer`, `createSublunarMarkerLayer`, `createCityPinsLayer`, and `createStaticEquirectRasterOverlayLayer`; normalized config omits identity-only per-layer subtrees.
 
 **Remaining frontier work (incremental; sequence as dependencies allow):**
 
 - weather / cloud participation **planning** and later upstream participation (depends on lifecycle and data model when opened).
-- atmospheric transition rendering and scattering refinement on top of the existing continuous field (not a rewrite of the illumination boundary).
+- **further** atmospheric transition rendering and scattering refinement beyond the shipped incremental twilight tuning pass on the existing continuous field (not a rewrite of the illumination boundary).
 - composition-aware day/night illumination nuances tied to overlays and readability.
 - masking, clipping, and blend modes **only when justified** by product scope and readability needs (not as a generic backend compositor).
 - active solar-position synchronization along analemma trajectories.

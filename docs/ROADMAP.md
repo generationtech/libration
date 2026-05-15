@@ -147,6 +147,7 @@ Delivered:
 - solar shading / dark-side visualization.
 - continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
 - non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
+- incremental upstream twilight transition tuning (wider anchor color coupling, cooler low-luminance anchor progression, bounded atmospheric tint cap, gentler day-side tint envelope in `src/renderer/illuminationShading.ts`)—still one planetary illumination `rasterPatch`, still non-emissive modulation.
 - perceptually legible moonlight composition integrated into the same planetary illumination raster.
 - bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
 - scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
@@ -158,7 +159,7 @@ Delivered:
 Remaining future work:
 
 - **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; **further** substrate heuristics beyond the shipped presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** + sub-1 brightness dimming rules (still upstream, no backend policy).
-- further atmospheric scattering and transition refinement on the existing continuous twilight field.
+- **further** atmospheric scattering and transition refinement beyond the shipped incremental twilight tuning pass on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
@@ -213,7 +214,7 @@ The subsystem remains **incremental-extension territory** (`PLAN.md` Slice 2): r
 Candidate deliverables:
 
 - **Readability extensions:** `perLayer` readability for scene stack rows **beyond** those six defaulted ids when product-defined; finer semantics when multiple overlay rows share one pilot key (e.g. static equirect); **further** substrate heuristics beyond presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** + sub-1 brightness dimming when product needs them.
-- higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
+- higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model (an incremental non-emissive twilight tuning pass is already shipped in `illuminationShading.ts`; deeper fidelity remains).
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
 - blending modes, masking, and clipping **only when justified** by readability or data participation needs (not as an open-ended backend compositor).
@@ -236,7 +237,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + substrate heuristic increment + presentation scalars + six default-stack `perLayer` pilots** delivery):
 
 - readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; **further** substrate modeling beyond the shipped presentation + dimming + `reliefShaded` / `boundaryDense` + `overlayOptimized` / `darkFriendly` model).
-- weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
+- **further** weather/cloud participation, **further** atmospheric refinement beyond the shipped incremental twilight tuning pass, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
 

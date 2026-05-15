@@ -135,6 +135,8 @@ Layers must not fetch live data during rendering. Future live feeds belong in a 
 
 Planetary illumination is a **coherent upstream subsystem**: dedicated modules resolve solar geometry, continuous twilight (attenuation and atmospheric tint), moonlight policy, and optional emissive night-light radiance from bundled catalogs into a **single** planetary illumination raster that becomes one `rasterPatch` in the RenderPlan for the Solar shading execution path.
 
+Twilight coloring and non-emissive atmospheric tint live in upstream sampling (`src/renderer/illuminationShading.ts`); semantic civil/nautical/astronomical anchors inform a **continuous** field—incremental tuning refines band coupling and day-side transition smoothness without adding layers or backend policy.
+
 There is **no generalized compositor abstraction** and **no backend-owned composition policy**: composition remains specialized upstream code with deterministic tables and sampling; the Canvas backend only decodes images when executing primitives and does not interpret illumination modes or layer semantics.
 
 ### Overlay readability (composition-aware: v1 + v1.1 + derived substrate lift + SceneConfig presentation + per-layer pilots)

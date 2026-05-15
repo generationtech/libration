@@ -47,12 +47,15 @@ export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = ILLUMINATION_DEEP_NIGHT_SETTLE_ALT
 
 export { illuminationNightVeil01FromSolarAltitudeDeg };
 
-/** Per-band tint anchors for attenuation color (kept deliberately low-luminance). */
-const C_DAY_GLOW = { r: 24, g: 30, b: 40 } as const;
-const C_HORIZON = { r: 30, g: 38, b: 50 } as const;
-const C_CIVIL_END = { r: 22, g: 30, b: 44 } as const;
-const C_NAUT = { r: 14, g: 22, b: 34 } as const;
-const C_ASTRO = { r: 8, g: 12, b: 22 } as const;
+/**
+ * Per-band tint anchors for attenuation color (kept deliberately low-luminance).
+ * Tuned for smoother Gaussian blending between bands and a slightly cooler terminator read.
+ */
+const C_DAY_GLOW = { r: 22, g: 28, b: 42 } as const;
+const C_HORIZON = { r: 28, g: 36, b: 52 } as const;
+const C_CIVIL_END = { r: 20, g: 28, b: 46 } as const;
+const C_NAUT = { r: 13, g: 21, b: 35 } as const;
+const C_ASTRO = { r: 7, g: 11, b: 23 } as const;
 const C_NIGHT = { r: 0, g: 0, b: 0 } as const;
 
 /**
@@ -68,8 +71,16 @@ const TWILIGHT_REFERENCE_ALTITUDES_DEG = {
 } as const;
 
 /** Maximum tint modulation contribution; this is not additional emitted alpha. */
-export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.16;
-const TWILIGHT_COLOR_SIGMA_DEG = 3.5;
+export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.168;
+/** Wider sigma smooths band coupling (anchors remain semantic, not hard edges). */
+const TWILIGHT_COLOR_SIGMA_DEG = 4.1;
+/**
+ * Upper edge for the day-side tint envelope (only applies where `altitudeDeg < dayClear`).
+ * Using a value slightly above {@link TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear} makes the
+ * fade gentler as altitude approaches +4° from below without changing the shared daylight-clear cutoff.
+ */
+const TWILIGHT_DAY_SIDE_TINT_CLEAR_DEG =
+  TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear + 1.15;
 
 /** Near-terminator tint (legacy name; civil band start). */
 export const TWILIGHT_R = C_HORIZON.r;
@@ -183,7 +194,7 @@ function atmosphericTintStrength(altitudeDeg: number): number {
     );
   const dayFadeIn =
     altitudeDeg > 0
-      ? 1 - smootherstep(0, TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear, altitudeDeg)
+      ? 1 - smootherstep(0, TWILIGHT_DAY_SIDE_TINT_CLEAR_DEG, altitudeDeg)
       : 1;
   const deepNightFadeIn =
     altitudeDeg < TWILIGHT_REFERENCE_ALTITUDES_DEG.astronomical
