@@ -17,6 +17,7 @@
  * (see {@link ../core/overlayReadabilityFrame} v1.1). Optional `overlayReadabilityLiftScale01` attenuates lift from
  * resolved base-map substrate (see frame). Optional SceneConfig `overlayReadability.presentation`
  * scales the derived frame in the shell before hints are built; optional `scene.overlayReadability.perLayer.grid`
+ * and `perLayer.solarAnalemma` apply the same scalars again for those layers only
  * applies the same veil/lift scalars again for the lat/lon grid layer only (see {@link ./latLonGridLayer}).
  */
 export interface OverlayReadabilityHints {

@@ -37,13 +37,13 @@ Cursor should not independently invent major architecture. It should implement p
 
 ## Planetary illumination and composition (agent guidance)
 
-The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability** (v1 + v1.1 + **derived substrate lift scale** + **SceneConfig presentation** under `scene.overlayReadability.presentation`: `readabilityVeilScale01`, `overlayLiftMultiplier01`, plus optional **`scene.overlayReadability.perLayer.grid`** for the lat/lon grid stack row only) is **shipped** and documented as a **closed phase** in `PLAN.md` / `ARCHITECTURE.md` (derived solar night veil, emissive **policy-only** legibility pressure, presentation/catalog substrate lift, user presentation scalars applied in the shell before hints; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it). **Do not** treat emissive composition or the settled overlay readability stack as future MVP work or propose a new “compositor” boundary inside the backend.
+The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability** (v1 + v1.1 + **derived substrate lift scale** + **SceneConfig presentation** under `scene.overlayReadability.presentation`: `readabilityVeilScale01`, `overlayLiftMultiplier01`, plus optional **`perLayer.grid`** and **`perLayer.solarAnalemma`** pilots) is **shipped** and documented as a **closed phase** in `PLAN.md` / `ARCHITECTURE.md` (derived solar night veil, emissive **policy-only** legibility pressure, presentation/catalog substrate lift, user presentation scalars applied in the shell before hints; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it). **Do not** treat emissive composition or the settled overlay readability stack as future MVP work or propose a new “compositor” boundary inside the backend.
 
 For new work in this area:
 
 - read `ARCHITECTURE.md` (subsystem section), `PLAN.md` Slice 2, and `docs/ROADMAP.md` Phase 6 / Phase 9.
 - assume **SceneConfig remains authoritative** and **RenderPlan + execution-only backend** remain intact.
-- prefer **incremental** features (e.g. per-layer readability tuning for stack layers beyond the shipped **`grid` pilot**; richer catalog/resolver substrate heuristics beyond presentation + `capabilities`) over reopening settled composition architecture.
+- prefer **incremental** features (e.g. per-layer readability tuning for stack layers beyond the shipped **`grid` / `solarAnalemma` pilots**; richer catalog/resolver substrate heuristics beyond presentation + `capabilities`) over reopening settled composition architecture.
 - ground behavior changes in tests at normalization, resolver, illumination sampling, or RenderPlan boundaries—not in Canvas policy branches.
 
 ## Standard co-engineering loop

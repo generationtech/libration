@@ -153,11 +153,11 @@ Delivered:
 - scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, `presentation` intensity and driver exponent) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; greenfield default mode is **`illustrative`** (with illustrative moonlight; persisted explicit modes are preserved); Layers UI exposes **Off / Natural / Enhanced / Illustrative** plus night-light intensity and faint-light lift; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
-- **Overlay readability (v1 + v1.1 + substrate + SceneConfig presentation + `grid` pilot):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`scene.overlayReadability.perLayer.grid`** applies the same scalars again for the lat/lon grid only.
+- **Overlay readability (v1 + v1.1 + substrate + SceneConfig presentation + per-layer pilots):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`perLayer.grid`** and **`perLayer.solarAnalemma`** apply the same scalars again for those layers only.
 
 Remaining future work:
 
-- **Readability extensions (future):** per-layer tuning for stack layers beyond the shipped **`grid` pilot** when product-ready; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
+- **Readability extensions (future):** per-layer tuning for stack layers beyond the shipped **`grid`** and **`solarAnalemma`** pilots when product-ready; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -188,7 +188,7 @@ Exit criteria:
 
 **Completed milestones (rolling):**
 
-- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + `grid` pilot):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `scene.overlayReadability.perLayer.grid`; **next** readability work is per-layer tuning for other stack ids and richer substrate heuristics only (Phase 6 “remaining” extensions).
+- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `perLayer.grid` / `perLayer.solarAnalemma`; **next** readability work is per-layer tuning for remaining stack ids and richer substrate heuristics only (Phase 6 “remaining” extensions).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
@@ -212,7 +212,7 @@ The subsystem is **mature enough for incremental features** (readability **exten
 
 Candidate deliverables:
 
-- **Readability extensions:** per-layer tuning for stack layers beyond the shipped **`grid` pilot** when justified; substrate heuristics beyond presentation + catalog `capabilities` (e.g. per-family tuning in catalog or resolver) if product needs them.
+- **Readability extensions:** per-layer tuning for stack layers beyond the shipped **`grid`** and **`solarAnalemma`** pilots when justified; substrate heuristics beyond presentation + catalog `capabilities` (e.g. per-family tuning in catalog or resolver) if product needs them.
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
@@ -235,7 +235,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 
 Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + presentation scalars + `grid` pilot** delivery):
 
-- readability extensions (per-layer tuning for stack layers beyond **`grid`**; richer substrate modeling beyond presentation + catalog flags).
+- readability extensions (per-layer tuning for stack layers beyond **`grid`** and **`solarAnalemma`**; richer substrate modeling beyond presentation + catalog flags).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle

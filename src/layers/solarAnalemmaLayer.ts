@@ -11,8 +11,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { sampleSolarAnalemmaGroundTrack } from "../core/solarAnalemmaGroundTrack";
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -37,11 +41,18 @@ function parseUtcHour(options: { utcHour?: number }): number {
  * geometry on the equirect map), using the same sun model as solar shading.
  */
 export function createSolarAnalemmaLayer(
-  options: { zIndex?: number; opacity?: number; utcHour?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    utcHour?: number;
+    /** Optional pilot: extra veil/lift pass for the solar analemma only (after global presentation). */
+    solarAnalemmaReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+  } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const utcHour = parseUtcHour(options);
+  const solarAnalemmaReadabilityPresentation = options.solarAnalemmaReadabilityPresentation;
   return {
     id: SOLAR_ANALEMMA_LAYER_ID,
     name: "Solar analemma (ground track)",
@@ -51,7 +62,13 @@ export function createSolarAnalemmaLayer(
     updatePolicy,
     getState(time: TimeContext): LayerState {
       const pts = sampleSolarAnalemmaGroundTrack(time.now, utcHour);
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (solarAnalemmaReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(
+          frame,
+          solarAnalemmaReadabilityPresentation,
+        );
+      }
       const data: EquirectangularPolylinePayload = {
         kind: EQUIRECT_POLYLINE_KIND,
         points: pts,

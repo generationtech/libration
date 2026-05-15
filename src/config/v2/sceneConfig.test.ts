@@ -219,6 +219,51 @@ describe("SceneConfig (Phase 1)", () => {
     expect(scene.overlayReadability.perLayer).toBeUndefined();
   });
 
+  it("normalizes overlay readability per-layer solarAnalemma pilot and clamps values", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        overlayReadability: {
+          presentation: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          perLayer: {
+            solarAnalemma: { readabilityVeilScale01: 9, overlayLiftMultiplier01: 0 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.overlayReadability.perLayer?.solarAnalemma?.readabilityVeilScale01).toBe(1.5);
+    expect(scene.overlayReadability.perLayer?.solarAnalemma?.overlayLiftMultiplier01).toBe(0.65);
+  });
+
+  it("retains non-identity grid pilot when solarAnalemma pilot is identity-only", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        overlayReadability: {
+          presentation: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          perLayer: {
+            grid: { readabilityVeilScale01: 0.5, overlayLiftMultiplier01: 1 },
+            solarAnalemma: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.overlayReadability.perLayer?.grid?.readabilityVeilScale01).toBe(0.5);
+    expect(scene.overlayReadability.perLayer?.solarAnalemma).toBeUndefined();
+  });
+
   it("normalizes emissive night lights mode and rejects unknown to illustrative", () => {
     const ok = normalizeSceneConfig(
       {

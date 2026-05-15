@@ -94,21 +94,32 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
   return map[key];
 }
 
-function overlayReadabilityWithGridPilotUpdate(
-  overlay: SceneConfig["overlayReadability"],
-  nextGrid: SceneOverlayReadabilityPresentationConfig,
-): SceneConfig["overlayReadability"] {
-  const identity =
-    nextGrid.readabilityVeilScale01 ===
+function isIdentityOverlayReadabilityPresentation(
+  pres: SceneOverlayReadabilityPresentationConfig,
+): boolean {
+  return (
+    pres.readabilityVeilScale01 ===
       DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01 &&
-    nextGrid.overlayLiftMultiplier01 ===
-      DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
-  if (identity) {
-    return { presentation: overlay.presentation };
+    pres.overlayLiftMultiplier01 ===
+      DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01
+  );
+}
+
+function overlayReadabilityWithPerLayerPilotUpdate(
+  overlay: SceneConfig["overlayReadability"],
+  key: "grid" | "solarAnalemma",
+  nextPilot: SceneOverlayReadabilityPresentationConfig,
+): SceneConfig["overlayReadability"] {
+  const nextPerLayer = { ...overlay.perLayer };
+  if (isIdentityOverlayReadabilityPresentation(nextPilot)) {
+    delete nextPerLayer[key];
+  } else {
+    nextPerLayer[key] = { ...nextPilot };
   }
+  const hasPerLayer = Object.keys(nextPerLayer).length > 0;
   return {
-    ...overlay,
-    perLayer: { ...overlay.perLayer, grid: { ...nextGrid } },
+    presentation: overlay.presentation,
+    ...(hasPerLayer ? { perLayer: nextPerLayer } : {}),
   };
 }
 
@@ -124,6 +135,10 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
+  };
+  const solarAnalemmaPilotReadability: SceneOverlayReadabilityPresentationConfig = {
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.solarAnalemma,
   };
   const effectivePresentation = getBaseMapPresentationForMapId(
     scene.baseMap.id,
@@ -757,8 +772,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                           };
                           draft.scene = {
                             ...baseScene,
-                            overlayReadability: overlayReadabilityWithGridPilotUpdate(
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
                               baseScene.overlayReadability,
+                              "grid",
                               { ...curGrid, readabilityVeilScale01 },
                             ),
                           };
@@ -807,8 +823,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                             };
                             draft.scene = {
                               ...baseScene,
-                              overlayReadability: overlayReadabilityWithGridPilotUpdate(
+                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
                                 baseScene.overlayReadability,
+                                "grid",
                                 { ...curGrid, readabilityVeilScale01 },
                               ),
                             };
@@ -857,8 +874,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                           };
                           draft.scene = {
                             ...baseScene,
-                            overlayReadability: overlayReadabilityWithGridPilotUpdate(
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
                               baseScene.overlayReadability,
+                              "grid",
                               { ...curGrid, overlayLiftMultiplier01 },
                             ),
                           };
@@ -907,8 +925,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                             };
                             draft.scene = {
                               ...baseScene,
-                              overlayReadability: overlayReadabilityWithGridPilotUpdate(
+                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
                                 baseScene.overlayReadability,
+                                "grid",
                                 { ...curGrid, overlayLiftMultiplier01 },
                               ),
                             };
@@ -936,8 +955,9 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
                         draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
                       draft.scene = {
                         ...baseScene,
-                        overlayReadability: overlayReadabilityWithGridPilotUpdate(
+                        overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
                           baseScene.overlayReadability,
+                          "grid",
                           { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
                         ),
                       };
@@ -950,12 +970,245 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
             Reset grid overlay readability
           </button>
         </ConfigControlRow>
+        <ConfigControlRow label="Solar analemma overlay veil (pilot)">
+          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+                max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+                step={0.05}
+                disabled={!mutable}
+                aria-label="Solar analemma overlay readability veil scale"
+                title="Extra veil multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
+                value={solarAnalemmaPilotReadability.readabilityVeilScale01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const readabilityVeilScale01 = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          const cur = {
+                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+                            ...baseScene.overlayReadability.perLayer?.solarAnalemma,
+                          };
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                              baseScene.overlayReadability,
+                              "solarAnalemma",
+                              { ...cur, readabilityVeilScale01 },
+                            ),
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Value (0–1.5)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+                  max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+                  step={0.05}
+                  disabled={!mutable}
+                  aria-label="Solar analemma overlay veil scale value"
+                  value={solarAnalemmaPilotReadability.readabilityVeilScale01}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const readabilityVeilScale01 = Number.isFinite(v)
+                            ? Math.max(
+                                OVERLAY_READABILITY_VEIL_SCALE_MIN,
+                                Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, v),
+                              )
+                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            const cur = {
+                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+                              ...baseScene.overlayReadability.perLayer?.solarAnalemma,
+                            };
+                            draft.scene = {
+                              ...baseScene,
+                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                                baseScene.overlayReadability,
+                                "solarAnalemma",
+                                { ...cur, readabilityVeilScale01 },
+                              ),
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        </ConfigControlRow>
+        <ConfigControlRow label="Solar analemma overlay lift (pilot)">
+          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+                max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+                step={0.01}
+                disabled={!mutable}
+                aria-label="Solar analemma overlay lift multiplier"
+                title="Extra lift multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
+                value={solarAnalemmaPilotReadability.overlayLiftMultiplier01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const overlayLiftMultiplier01 = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          const cur = {
+                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+                            ...baseScene.overlayReadability.perLayer?.solarAnalemma,
+                          };
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                              baseScene.overlayReadability,
+                              "solarAnalemma",
+                              { ...cur, overlayLiftMultiplier01 },
+                            ),
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Value (0.65–1.35)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+                  max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+                  step={0.01}
+                  disabled={!mutable}
+                  aria-label="Solar analemma overlay lift multiplier value"
+                  value={solarAnalemmaPilotReadability.overlayLiftMultiplier01}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const overlayLiftMultiplier01 = Number.isFinite(v)
+                            ? Math.max(
+                                OVERLAY_READABILITY_LIFT_MULT_MIN,
+                                Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, v),
+                              )
+                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            const cur = {
+                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+                              ...baseScene.overlayReadability.perLayer?.solarAnalemma,
+                            };
+                            draft.scene = {
+                              ...baseScene,
+                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                                baseScene.overlayReadability,
+                                "solarAnalemma",
+                                { ...cur, overlayLiftMultiplier01 },
+                              ),
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        </ConfigControlRow>
+        <ConfigControlRow label="Solar analemma overlay readability (pilot)">
+          <button
+            type="button"
+            className="config-input"
+            disabled={!mutable}
+            title="Clear solar-analemma-only veil/lift overrides (does not change global overlay readability)."
+            onClick={
+              mutable && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = {
+                        ...baseScene,
+                        overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                          baseScene.overlayReadability,
+                          "solarAnalemma",
+                          { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
+                        ),
+                      };
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                    });
+                  }
+                : undefined
+            }
+          >
+            Reset solar analemma overlay readability
+          </button>
+        </ConfigControlRow>
         <ConfigControlRow label="Overlay readability tuning">
           <button
             type="button"
             className="config-input"
             disabled={!mutable}
-            title="Reset global veil/lift and clear grid-only pilot overrides (all 1 / 1)."
+            title="Reset global veil/lift and clear all per-layer pilot overrides (all 1 / 1)."
             onClick={
               mutable && updateConfig
                 ? () => {

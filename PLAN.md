@@ -41,7 +41,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 ### Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + `grid` pilot) — **phase complete**
 
-**Status:** shipped in production. This phase is **closed**; treat as a settled foundation alongside planetary illumination composition (subsolar veil, emissive policy lift, presentation/catalog–based substrate lift, **persisted** `scene.overlayReadability.presentation` scaling in the shell, and optional **`scene.overlayReadability.perLayer.grid`** for the lat/lon grid stack row only).
+**Status:** shipped in production. This phase is **closed**; treat as a settled foundation alongside planetary illumination composition (subsolar veil, emissive policy lift, presentation/catalog–based substrate lift, **persisted** `scene.overlayReadability.presentation` scaling in the shell, and optional per-layer pilots **`perLayer.grid`** and **`perLayer.solarAnalemma`**).
 
 **v1 (subsolar-only veil):** derived solar night-veil hints on lat/lon grid, solar analemma, subsolar/sublunar markers, **city pins** (per-pin veil scalar), and **static equirect raster overlays** (global scalar → merged `imageBlit` `cssFilter` upstream). The app shell attaches **one** `OverlayReadabilityFrame` per tick on `TimeContext`; layers use `getOverlayReadabilityFrameOrCompute`.
 
@@ -49,7 +49,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Scene presentation scaling (shipped):** normalized `scene.overlayReadability.presentation` (`readabilityVeilScale01` 0–1.5, `overlayLiftMultiplier01` 0.65–1.35, defaults 1) post-processes the derived frame in the shell; Layers tab exposes controls and reset.
 
-**Not in this closed stack (future):** per-layer readability tuning for stack layers other than **`grid`**; richer substrate-only heuristics beyond presentation + catalog flags.
+**Not in this closed stack (future):** per-layer readability tuning for stack layers other than **`grid`** and **`solarAnalemma`**; richer substrate-only heuristics beyond presentation + catalog flags.
 
 **Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling); hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
 
@@ -87,13 +87,13 @@ Status: active.
 - perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
 - **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).
 - subsolar marker, sublunar marker, solar analemma overlay, and derived astronomical overlays in the layer stack.
-- **Overlay readability (v1 + v1.1 + substrate + optional SceneConfig presentation + `grid` pilot, derived):** `OverlayReadabilityFrame` from `computeOverlayReadabilityFrameFromTimeMs` (emissive policy + **substrate** inputs: effective base-map presentation + catalog `capabilities`), then `scene.overlayReadability.presentation` scaling, attached each tick via `TimeContext.overlayReadabilityFrame` and `getOverlayReadabilityFrameOrCompute` in layers; optional **`scene.overlayReadability.perLayer.grid`** applies the same presentation scalars again for the lat/lon grid layer only; `OverlayReadabilityHints` on grid/analemma/marker payloads (`overlayReadabilityLiftScale01` from frame); per-pin `readabilityNightVeil01` on city pins + payload-level lift scale; static equirect raster `readability` + merged `cssFilter` in `buildBaseRasterMapRenderPlan`; vector stroke/alpha via `effectiveOverlayReadabilityLiftVeil01` (no emissive raster sampling in the readability path).
+- **Overlay readability (v1 + v1.1 + substrate + optional SceneConfig presentation + per-layer pilots, derived):** `OverlayReadabilityFrame` from `computeOverlayReadabilityFrameFromTimeMs` (emissive policy + **substrate** inputs: effective base-map presentation + catalog `capabilities`), then `scene.overlayReadability.presentation` scaling, attached each tick via `TimeContext.overlayReadabilityFrame` and `getOverlayReadabilityFrameOrCompute` in layers; optional **`perLayer.grid`** and **`perLayer.solarAnalemma`** apply the same presentation scalars again for those layers only; `OverlayReadabilityHints` on grid/analemma/marker payloads (`overlayReadabilityLiftScale01` from frame); per-pin `readabilityNightVeil01` on city pins + payload-level lift scale; static equirect raster `readability` + merged `cssFilter` in `buildBaseRasterMapRenderPlan`; vector stroke/alpha via `effectiveOverlayReadabilityLiftVeil01` (no emissive raster sampling in the readability path).
 
 **Likely next implementation slice:**
 
-- **Readability extensions:** per-layer tuning for additional stack layer ids beyond the shipped **`grid` pilot**; optional richer substrate modeling beyond presentation + catalog flags.
+- **Readability extensions:** per-layer tuning for additional stack layer ids beyond the shipped **`grid`** and **`solarAnalemma`** pilots; optional richer substrate modeling beyond presentation + catalog flags.
 
-**Shipped pilot:** `scene.overlayReadability.perLayer.grid` (veil + lift scalars) applies only to the lat/lon grid overlay after the global frame; normalized config omits the subtree when both scalars are identity.
+**Shipped pilots:** `scene.overlayReadability.perLayer.grid` and `perLayer.solarAnalemma` (veil + lift scalars each) apply after the global frame in `createLatLonGridLayer` and `createSolarAnalemmaLayer`; normalized config omits identity-only per-layer subtrees.
 
 **Remaining frontier work (incremental; sequence as dependencies allow):**
 

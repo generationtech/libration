@@ -114,7 +114,12 @@ function createDerivedOverlayByProduct(
     case "sublunarPoint":
       return createSublunarMarkerLayer({ zIndex, opacity });
     case "solarAnalemmaGroundTrack":
-      return createSolarAnalemmaLayer({ zIndex, opacity, ...(utcH !== undefined ? { utcHour: utcH } : {}) });
+      return createSolarAnalemmaLayer({
+        zIndex,
+        opacity,
+        ...(utcH !== undefined ? { utcHour: utcH } : {}),
+        solarAnalemmaReadabilityPresentation: config.scene.overlayReadability.perLayer?.solarAnalemma,
+      });
     default:
       return null;
   }

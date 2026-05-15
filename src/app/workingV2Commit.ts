@@ -149,21 +149,29 @@ function sceneLayersRuntimeEqual(a: readonly SceneLayerInstance[], b: readonly S
  * Legacy `layers` flags remain as transitional compatibility, but scene deltas
  * are the primary trigger surface for registry rebuilds.
  */
-function overlayReadabilityPerLayerGridEqual(
-  a: SceneConfig["overlayReadability"]["perLayer"],
-  b: SceneConfig["overlayReadability"]["perLayer"],
+function overlayReadabilityPerLayerPilotEqual(
+  a: SceneConfig["overlayReadability"]["presentation"] | undefined,
+  b: SceneConfig["overlayReadability"]["presentation"] | undefined,
 ): boolean {
-  const ag = a?.grid;
-  const bg = b?.grid;
-  if (ag === undefined && bg === undefined) {
+  if (a === undefined && b === undefined) {
     return true;
   }
-  if (ag === undefined || bg === undefined) {
+  if (a === undefined || b === undefined) {
     return false;
   }
   return (
-    ag.readabilityVeilScale01 === bg.readabilityVeilScale01 &&
-    ag.overlayLiftMultiplier01 === bg.overlayLiftMultiplier01
+    a.readabilityVeilScale01 === b.readabilityVeilScale01 &&
+    a.overlayLiftMultiplier01 === b.overlayLiftMultiplier01
+  );
+}
+
+function overlayReadabilityPerLayerEqual(
+  a: SceneConfig["overlayReadability"]["perLayer"],
+  b: SceneConfig["overlayReadability"]["perLayer"],
+): boolean {
+  return (
+    overlayReadabilityPerLayerPilotEqual(a?.grid, b?.grid) &&
+    overlayReadabilityPerLayerPilotEqual(a?.solarAnalemma, b?.solarAnalemma)
   );
 }
 
@@ -192,7 +200,7 @@ export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): bool
       b.overlayReadability.presentation.readabilityVeilScale01 &&
     a.overlayReadability.presentation.overlayLiftMultiplier01 ===
       b.overlayReadability.presentation.overlayLiftMultiplier01 &&
-    overlayReadabilityPerLayerGridEqual(a.overlayReadability.perLayer, b.overlayReadability.perLayer) &&
+    overlayReadabilityPerLayerEqual(a.overlayReadability.perLayer, b.overlayReadability.perLayer) &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

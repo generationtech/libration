@@ -1082,21 +1082,28 @@ export function assertIsNormalizedLibrationConfig(
     if (typeof ovr.perLayer !== "object" || ovr.perLayer === null) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer");
     }
-    const pl = ovr.perLayer as { grid?: unknown };
-    if ("grid" in pl && pl.grid !== undefined) {
-      const g = pl.grid;
-      if (typeof g !== "object" || g === null) {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.grid");
+    const pl = ovr.perLayer as { grid?: unknown; solarAnalemma?: unknown };
+    const assertPerLayerPilot = (key: "grid" | "solarAnalemma", raw: unknown): void => {
+      if (typeof raw !== "object" || raw === null) {
+        throw new Error(`assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.${key}`);
       }
-      const gv = g as { readabilityVeilScale01?: unknown; overlayLiftMultiplier01?: unknown };
+      const fields = raw as { readabilityVeilScale01?: unknown; overlayLiftMultiplier01?: unknown };
       if (
-        typeof gv.readabilityVeilScale01 !== "number" ||
-        !Number.isFinite(gv.readabilityVeilScale01) ||
-        typeof gv.overlayLiftMultiplier01 !== "number" ||
-        !Number.isFinite(gv.overlayLiftMultiplier01)
+        typeof fields.readabilityVeilScale01 !== "number" ||
+        !Number.isFinite(fields.readabilityVeilScale01) ||
+        typeof fields.overlayLiftMultiplier01 !== "number" ||
+        !Number.isFinite(fields.overlayLiftMultiplier01)
       ) {
-        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.grid fields");
+        throw new Error(
+          `assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.${key} fields`,
+        );
       }
+    };
+    if ("grid" in pl && pl.grid !== undefined) {
+      assertPerLayerPilot("grid", pl.grid);
+    }
+    if ("solarAnalemma" in pl && pl.solarAnalemma !== undefined) {
+      assertPerLayerPilot("solarAnalemma", pl.solarAnalemma);
     }
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;

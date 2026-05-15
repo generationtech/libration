@@ -250,12 +250,13 @@ export type SceneOverlayReadabilityPresentationConfig = {
 };
 
 /**
- * Optional per-stack-layer readability presentation (pilot: {@link SceneStackLayerId} `grid` only).
+ * Optional per-stack-layer readability presentation (pilots: {@link SceneStackLayerId} `grid`, `solarAnalemma`).
  * Applied after global {@link SceneOverlayReadabilityConfig#presentation} when building that layer's hints
  * (same scalar semantics as the global presentation pass).
  */
 export type SceneOverlayReadabilityPerLayerMap = {
   grid?: SceneOverlayReadabilityPresentationConfig;
+  solarAnalemma?: SceneOverlayReadabilityPresentationConfig;
 };
 
 export type SceneOverlayReadabilityConfig = {
@@ -305,7 +306,7 @@ export type SceneConfig = {
   /** Presentation-only illumination controls (resolved upstream of RenderPlan). */
   illumination: SceneIlluminationConfig;
   /**
-   * Overlay legibility presentation: global veil/lift scaling in the shell, plus optional per-layer pilot for the lat/lon grid (`perLayer.grid`).
+   * Overlay legibility presentation: global veil/lift scaling in the shell, plus optional per-layer pilots (`perLayer.grid`, `perLayer.solarAnalemma`).
    * Always present on normalized configs.
    */
   overlayReadability: SceneOverlayReadabilityConfig;
@@ -424,6 +425,28 @@ function normalizeOverlayReadabilityPresentationFields(
   return { readabilityVeilScale01, overlayLiftMultiplier01 };
 }
 
+function isIdentityOverlayReadabilityPresentation(
+  pres: SceneOverlayReadabilityPresentationConfig,
+): boolean {
+  return (
+    pres.readabilityVeilScale01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01 &&
+    pres.overlayLiftMultiplier01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01
+  );
+}
+
+function normalizePerLayerOverlayReadabilityPilot(
+  raw: unknown,
+): SceneOverlayReadabilityPresentationConfig | undefined {
+  if (!isPlainObject(raw)) {
+    return undefined;
+  }
+  const normalized = normalizeOverlayReadabilityPresentationFields(
+    raw,
+    DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+  );
+  return isIdentityOverlayReadabilityPresentation(normalized) ? undefined : normalized;
+}
+
 function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): SceneOverlayReadabilityConfig {
   const defaults = (): SceneOverlayReadabilityConfig => ({
     presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
@@ -438,18 +461,13 @@ function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): 
   );
   let perLayer: SceneOverlayReadabilityPerLayerMap | undefined;
   if (isPlainObject(raw.perLayer)) {
-    const gRaw = raw.perLayer.grid;
-    if (isPlainObject(gRaw)) {
-      const grid = normalizeOverlayReadabilityPresentationFields(
-        gRaw,
-        DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-      );
-      const identity =
-        grid.readabilityVeilScale01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01 &&
-        grid.overlayLiftMultiplier01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
-      if (!identity) {
-        perLayer = { grid };
-      }
+    const grid = normalizePerLayerOverlayReadabilityPilot(raw.perLayer.grid);
+    const solarAnalemma = normalizePerLayerOverlayReadabilityPilot(raw.perLayer.solarAnalemma);
+    if (grid !== undefined || solarAnalemma !== undefined) {
+      perLayer = {
+        ...(grid !== undefined ? { grid } : {}),
+        ...(solarAnalemma !== undefined ? { solarAnalemma } : {}),
+      };
     }
   }
   return {
@@ -688,10 +706,15 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     },
     overlayReadability: {
       presentation: { ...scene.overlayReadability.presentation },
-      ...(scene.overlayReadability.perLayer?.grid
+      ...(scene.overlayReadability.perLayer?.grid || scene.overlayReadability.perLayer?.solarAnalemma
         ? {
             perLayer: {
-              grid: { ...scene.overlayReadability.perLayer.grid },
+              ...(scene.overlayReadability.perLayer?.grid
+                ? { grid: { ...scene.overlayReadability.perLayer.grid } }
+                : {}),
+              ...(scene.overlayReadability.perLayer?.solarAnalemma
+                ? { solarAnalemma: { ...scene.overlayReadability.perLayer.solarAnalemma } }
+                : {}),
             },
           }
         : {}),
