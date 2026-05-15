@@ -44,6 +44,7 @@ Current implemented areas include:
 - Map preview and attribution display for selected base-map families.
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
+- Coherent **upstream planetary illumination** subsystem: SceneConfig-resolved policy composes solar day/night, twilight, moonlight, and emissive inputs into **one** `rasterPatch` for the Solar shading path (no backend-side composition branching).
 - Solar day/night shading on the “Solar shading” layer, implemented as a continuous, attenuation-driven solar-altitude illumination field using civil/nautical/astronomical thresholds as semantic anchors.
 - Twilight composition integrated directly into the same upstream planetary illumination raster as day/night (not a separate user-facing twilight layer).
 - Non-emissive twilight behavior: atmospheric tint and attenuation modulate substrate visibility rather than adding artificial glow.

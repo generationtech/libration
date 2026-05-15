@@ -33,14 +33,15 @@ The current scene system already includes:
 
 - solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
-- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and readability-oriented composition without moving semantics into the backend.
+- **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
+- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and readability-oriented composition without moving semantics into the backend.
 - seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems into a more coherent atmospheric and composition-aware rendering model.
+Future work should extend these systems with **readability policy**, richer atmosphere, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive behavior.
 
 ## Maps and base-map families
 
@@ -144,6 +145,8 @@ Candidates:
 
 ## Composition and visual systems
 
+Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. The items below are **extensions** or optional product directions, not prerequisites for the current stack.
+
 ### Planned or candidate composition features
 
 - layer blending modes.
@@ -154,7 +157,7 @@ Candidates:
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- overlay readability tuning.
+- overlay readability tuning (**likely next upstream slice**; composition-aware policy vs substrate/terminator/emissive tone).
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.

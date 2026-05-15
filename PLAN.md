@@ -21,10 +21,11 @@ The major runtime foundations are implemented well enough to support disciplined
 - non-emissive twilight attenuation and atmospheric tint modulation.
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible moonlight composition with configurable presentation modes.
+- emissive night-light upstream composition (catalog-backed asset, policy, perceptual luma driver, Layers presentation controls, illustrative defaults).
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is to expand the planetary composition and illumination system without destabilizing the architectural boundaries that now exist.
+The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (readability, atmosphere, clouds/weather planning) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
 ## Current goals
 
@@ -33,9 +34,14 @@ The current strategic objective is to expand the planetary composition and illum
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Prepare the project for more advanced atmospheric composition and lifecycle work (emissive night lights foundation is in place).
+6. Extend planetary composition on top of the **delivered** twilight, moonlight, and emissive stack: readability policy, then clouds/weather planning, then atmospheric refinement—incremental slices, not a new compositor layer.
 
 ## Near-term execution slices
+
+### Next likely runtime slice (after doc alignment)
+
+**Composition-aware overlay readability policy:** upstream rules for how static/derived overlays read against substrate, terminator, moonlight, and emissive tone (contrast, veil, or ordering hints resolved before the backend), without moving composition into Canvas execution.
+
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -54,35 +60,30 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-### Slice 2: Atmospheric composition refinement and planetary illumination
+### Slice 2: Planetary illumination — extensions on delivered foundations
 
 Status: active.
 
-Current implemented foundation:
+**Implemented foundations (treat as settled; extend, do not reopen):**
 
 - solar shading / dark-side visualization.
-- continuous attenuation-driven planetary illumination composition with semantic twilight anchors.
-- non-emissive twilight attenuation and atmospheric tint modulation.
+- coherent upstream planetary illumination composition: **one** illumination `rasterPatch`, SceneConfig-authoritative policy, renderer-agnostic execution.
+- continuous attenuation-driven twilight with civil/nautical/astronomical **semantic** anchors (not separate user-facing twilight layers); non-emissive atmospheric tint and attenuation.
 - physically-derived polar illumination behavior from seasonal solar geometry.
-- subsolar marker.
-- sublunar marker.
-- solar analemma overlay.
-- derived astronomical scene overlays.
-- perceptually legible moonlight composition integrated into the same upstream illumination raster.
-- configurable moonlight presentation modes.
-- emissive night lights (catalog-backed asset, policy, upstream sampling into the same illumination raster, Layers mode control plus persisted **presentation** intensity and luma lift; default **Illustrative** with illustrative moonlight).
+- perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
+- **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).
+- subsolar marker, sublunar marker, solar analemma overlay, and derived astronomical overlays in the layer stack.
 
-Candidate work:
+**Likely next implementation slice:**
 
-- atmospheric transition rendering.
-- physically-plausible twilight span and attenuation tuning.
-- future atmospheric scattering refinement without abandoning renderer-agnostic composition.
-- composition-aware day/night illumination.
-- emissive night-light composition is **implemented**: bundled composition catalog, resolver, upstream per-texel sampling into the single illumination `rasterPatch`, Layers UI mode control, and validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`). Further work is optional (higher-resolution assets, advanced readability policy), not a blocker for the core path.
-- masking and clipping rules.
-- blend modes.
-- overlay readability strategy.
-- weather/cloud participation planning.
+- **Composition-aware overlay readability policy** (upstream contrast/veil or ordering semantics so overlays stay legible against terminator and emissive-modulated substrate).
+
+**Remaining frontier work (incremental; sequence as dependencies allow):**
+
+- weather / cloud participation **planning** and later upstream participation (depends on lifecycle and data model when opened).
+- atmospheric transition rendering and scattering refinement on top of the existing continuous field (not a rewrite of the illumination boundary).
+- composition-aware day/night illumination nuances tied to overlays and readability.
+- masking, clipping, and blend modes **only when justified** by product scope and readability needs (not as a generic backend compositor).
 - active solar-position synchronization along analemma trajectories.
 
 Architectural constraints:
@@ -93,13 +94,13 @@ Architectural constraints:
 - avoid backend-specific composition behavior.
 - avoid treating emissive lighting as a generic overlay hack.
 - preserve deterministic composition semantics.
+- do not introduce a generalized compositor abstraction or backend-owned composition logic.
 
 Exit criteria:
 
-- composition rules are clearly defined before broad implementation.
-- atmospheric transitions feel coherent rather than binary.
-- astronomical overlays participate correctly in scene composition.
-- emissive/night-light participation has a clear architectural path.
+- each extension ships with defined upstream rules, tests at resolver/composition/RenderPlan boundaries, and doc updates.
+- atmospheric transitions remain coherent (continuous field preserved unless intentionally replaced with a scoped change).
+- astronomical overlays remain correct in scene composition.
 - backend remains product-semantics-free.
 
 ### Slice 3: Scientific substrate expansion
@@ -183,6 +184,8 @@ Before editing, read:
 - AGENTS.md
 - docs/ROADMAP.md
 - docs/FUTURE_FEATURES.md
+- docs/PROJECT_STRATEGY.md
+- docs/AI_COENGINEERING.md
 - docs/DEVELOPMENT_STRATEGY.md
 
 Task:

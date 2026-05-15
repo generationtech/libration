@@ -133,7 +133,7 @@ Remaining future work:
 
 ## Phase 6: Static and derived overlays
 
-Status: partially complete.
+Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`).
 
 Delivered:
 
@@ -156,8 +156,9 @@ Delivered:
 
 Remaining future work:
 
-- further atmospheric scattering refinement.
-- composition-aware overlay readability policy (cloud/weather and advanced readability participation in planetary composition remain future scope).
+- **composition-aware overlay readability policy** (likely next incremental slice; upstream legibility vs substrate/terminator/emissive tone).
+- further atmospheric scattering and transition refinement on the existing continuous twilight field.
+- weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
 - overlay editor refinement.
@@ -199,41 +200,36 @@ Candidate deliverables:
 
 ## Phase 9: Planetary scene composition and illumination
 
-Status: planned.
+Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-This phase is now emerging as a major architectural subsystem rather than a collection of isolated visual effects.
+The subsystem is **mature enough for incremental features** (readability, atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 
-- blending modes.
-- masking.
-- clipping.
-- composition-aware day/night illumination.
-- higher-fidelity atmospheric scattering and illumination refinement on top of the existing continuous attenuation-driven twilight model.
-- extended emissive stacks and visibility policy beyond the dedicated night-lights contributor (foundation delivered in Phase 6).
-- atmospheric glow and transition tuning.
-- overlay-compatible visual tuning.
-- overlay readability policy.
-- weather/cloud participation in planetary composition.
-- future multi-source emissive contribution framework if product scope requires it.
+- **composition-aware overlay readability policy** (first-tier candidate; see `PLAN.md`).
+- higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
+- weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
+- composition-aware day/night illumination nuances tied to overlays and substrate.
+- blending modes, masking, and clipping **only when justified** by readability or data participation needs (not as an open-ended backend compositor).
+- optional **additional** emissive or radiance contributors beyond the dedicated Black Marble path if product scope requires them.
 
 Architectural direction:
 
-- atmospheric attenuation, reflected illumination, and emissive illumination participate in one coherent upstream planetary composition model.
+- atmospheric attenuation, reflected illumination, and emissive illumination already participate in one coherent upstream planetary composition model; Phase 9 **deepens and widens** that model.
 - composition semantics remain upstream.
 - RenderPlan remains the rendering boundary.
 - backend remains unaware of planetary composition policy.
 - future weather/cloud systems should participate in scene composition rather than acting as isolated overlays.
 
-Delivered in Phase 6 (emissive path complete for current scope):
+Delivered in Phase 6 (emissive MVP and integration **complete** for current scope):
 
 - typed emissive presentation modes, deterministic solar-altitude visibility gate, moonlight coexistence scaling, and `scene.illumination.emissiveNightLights` normalization.
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
-- emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI.
+- emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI; perceptual luma driver via `presentation.driverExponent`.
 
-Remaining under Phase 9 (composition expansion, not emissive MVP):
+Remaining under Phase 9 (**composition expansion**, not baseline emissive delivery):
 
-- weather/cloud participation, richer overlay readability, and optional higher-resolution or alternate-year emissive assets when curated.
+- overlay readability policy, weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
 

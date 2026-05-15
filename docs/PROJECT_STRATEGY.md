@@ -103,12 +103,14 @@ Canvas is the current backend. The architecture should keep a future GPU or bare
 
 ### 7. Scientific grounding over arbitrary effects
 
-Atmospheric transitions, twilight behavior, planetary illumination, and future emissive composition should emerge from:
+Atmospheric transitions, twilight behavior, planetary illumination, **moonlight, and emissive city-light composition** should emerge from:
 
 - real solar geometry.
 - lunar geometry.
 - physically-inspired attenuation.
 - coherent upstream composition policy.
+
+Further refinement (overlay readability, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
 
 Avoid:
 
@@ -119,9 +121,9 @@ Avoid:
 
 ### 8. Planetary composition over isolated overlays
 
-The scene system is increasingly a planetary composition system rather than a collection of unrelated overlays.
+The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
 
-Future systems should participate coherently in:
+Future work **extends** that subsystem for readability, atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
 
 - atmospheric attenuation.
 - reflected illumination.
@@ -165,11 +167,9 @@ Foundational systems now exist:
 - map onboarding.
 - static and derived overlays.
 - month-aware map families.
-- planetary illumination foundation.
-- twilight composition.
-- perceptually legible moonlight composition.
+- coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined feature expansion on top of the foundation.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: overlay readability policy, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -178,7 +178,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. Planetary scene composition and emissive illumination.
+4. **Composition-aware overlay readability policy** and atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

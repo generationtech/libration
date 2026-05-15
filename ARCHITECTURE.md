@@ -131,6 +131,12 @@ A layer may be static, derived, or future data-driven. It produces time-resolved
 
 Layers must not fetch live data during rendering. Future live feeds belong in a lifecycle system that prepares versioned data snapshots before render execution.
 
+### Planetary illumination composition
+
+Planetary illumination is a **coherent upstream subsystem**: dedicated modules resolve solar geometry, continuous twilight (attenuation and atmospheric tint), moonlight policy, and optional emissive night-light radiance from bundled catalogs into a **single** planetary illumination raster that becomes one `rasterPatch` in the RenderPlan for the Solar shading execution path.
+
+There is **no generalized compositor abstraction** and **no backend-owned composition policy**: composition remains specialized upstream code with deterministic tables and sampling; the Canvas backend only decodes images when executing primitives and does not interpret illumination modes or layer semantics.
+
 ### RenderPlan system
 
 RenderPlan is the shared declarative rendering contract.
@@ -238,7 +244,10 @@ Still future or partial:
 - full dynamic data lifecycle.
 - live feeds.
 - gridded scientific datasets.
-- advanced blending, masking, and generalized emissive stacks beyond the dedicated night-lights contributor.
+- **composition-aware overlay readability policy** (how overlays, substrate, and terminator/emissive tone interact for legibility).
+- cloud and weather participation in upstream planetary composition (planning and lifecycle prerequisites).
+- atmospheric transition and scattering refinement beyond the current continuous twilight field.
+- advanced blending, masking, and **additional** emissive or radiance contributors beyond the dedicated night-lights path (only if product scope justifies them; not a generic multi-pass compositor in the backend).
 - further tuning of emissive radiance encoding (true linear radiance vs display-encoded JPEG) and optional higher-resolution Black Marble variants.
 - alternate projections.
 - zoom, pan, tiling, globe view, and camera interaction.

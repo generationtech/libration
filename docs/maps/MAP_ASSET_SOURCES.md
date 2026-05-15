@@ -36,7 +36,7 @@ If the catalog differs, update this document to match the catalog.
 
 ## equirect-world-night-lights-viirs-v1 (composition input)
 
-Status: **implemented** (validated onboarded raster; `transitionalPlaceholder` is `false` in `src/assets/composition/emissive-composition-catalog.json`).
+Status: **implemented** — **onboarded** ship raster under `public/maps/composition/`; **validated** projection contract and decode path; **CI regression** locks JPEG SOF dimensions (**3600×1800**) and **SHA-256** of committed bytes; upstream **perceptual luma driver** via scene `presentation.driverExponent` (see processing notes below). `transitionalPlaceholder` is `false` in `src/assets/composition/emissive-composition-catalog.json`.
 
 Role: upstream emissive radiance field for planetary illumination composition (not a default base-map selector target).
 
