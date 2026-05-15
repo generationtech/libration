@@ -83,7 +83,7 @@ Start here:
 - [docs/ROADMAP.md](docs/ROADMAP.md) - completed and planned phases.
 - [docs/FUTURE_FEATURES.md](docs/FUTURE_FEATURES.md) - retained feature backlog.
 - [docs/AI_COENGINEERING.md](docs/AI_COENGINEERING.md) - how this project uses ChatGPT and Cursor.
-- [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing and onboarding strategy.
+- [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing, onboarding strategy, and catalog **`capabilities`** roles (including overlay-readability hints).
 - [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - map source inventory and base-map **capabilities** notes (including overlay-readability catalog hints).
 
 Note:

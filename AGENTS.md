@@ -111,7 +111,7 @@ Update:
 - `docs/ROADMAP.md` for phase status.
 - `docs/FUTURE_FEATURES.md` when preserving or adding future ideas.
 - `docs/PROJECT_STRATEGY.md` and `docs/AI_COENGINEERING.md` when shipped scope or strategy summaries change.
-- map docs when onboarding or changing asset workflows.
+- map docs when onboarding or changing asset workflows or **base-map `capabilities` consumed upstream** (`docs/maps/MAP_ASSET_SOURCES.md`, `docs/maps/MAP_ASSET_STRATEGY.md`).
 
 Do not create sprawling speculative spec files unless they provide durable architectural value.
 
