@@ -32,6 +32,8 @@ export type SubstrateReadabilityCatalogHint = Readonly<{
   chromaticDense?: boolean;
   /** Shaded bathymetry / ocean-floor relief (catalog `capabilities.bathymetryShaded`). */
   bathymetryShaded?: boolean;
+  /** Fine-scale sensor/photographic texture (catalog `capabilities.fineScaleTexture`). */
+  fineScaleTexture?: boolean;
 }>;
 
 /** Upper bound on combined (presentation + intrinsic catalog) readability penalty → lift floor. */
@@ -94,6 +96,9 @@ export function intrinsicSubstrateReadabilityCatalogPenalty01(
   if (hint.bathymetryShaded) {
     p += 0.048;
   }
+  if (hint.fineScaleTexture) {
+    p += 0.04;
+  }
   return Math.max(0, Math.min(0.18, p));
 }
 
@@ -116,7 +121,7 @@ function catalogHintMultiplier(hint: SubstrateReadabilityCatalogHint | null | un
 /**
  * 1 = apply full overlay readability lift at a given veil; lower values attenuate lift when the
  * base map is already bright / contrasted (presentation), catalog-marked (overlay tuning,
- * relief, linework, chroma, bathymetry), or a combination.
+ * relief, linework, chroma, bathymetry, fine-scale texture), or a combination.
  */
 export function deriveSubstrateOverlayReadabilityLiftScale01(
   presentation: BaseMapPresentationConfig,

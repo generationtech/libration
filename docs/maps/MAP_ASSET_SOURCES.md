@@ -31,6 +31,7 @@ Optional keys on base-map catalog entries influence **upstream** overlay lift sc
 - `boundaryDense` — dense linework (boundaries, scientific overlays).
 - `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills).
 - `bathymetryShaded` — shaded / hypsometric ocean-floor (bathymetry) reads as strong local contrast (often with land relief; e.g. Blue Marble **TB** family in the bundled catalog).
+- `fineScaleTexture` — fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector overlays; distinct from relief hypsometry, dense linework, thematic hue bands, or bathymetry shading alone. Bundled catalog sets this on Blue Marble **BM** and **T** seasonal families.
 
 **Presentation-penalty multipliers** (not separate intrinsic flags): `overlayOptimized`, `darkFriendly`.
 
@@ -179,6 +180,7 @@ Notes:
 - Persist only the family id.
 - Keep attribution and source processing notes explicit.
 - Ensure all monthly rasters are dimensionally and spatially identical.
+- **`equirect-world-blue-marble-bm-v1`** / **`equirect-world-blue-marble-t-v1`:** bundled catalog sets **`capabilities.fineScaleTexture`** for upstream overlay-readability lift—curator signal for fine-scale natural-color texture; no runtime raster sampling.
 - **`equirect-world-blue-marble-tb-v1`:** bundled catalog sets **`capabilities.bathymetryShaded`** (with **`reliefShaded`**) for upstream overlay-readability lift—curator signal for shaded bathymetry; no runtime raster sampling (see overlay-readability `capabilities` section above).
 
 ## Topography family

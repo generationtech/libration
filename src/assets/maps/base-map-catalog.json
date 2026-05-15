@@ -137,7 +137,8 @@
         "overlayOptimized": false,
         "emissiveCompatible": false,
         "darkFriendly": false,
-        "seasonal": true
+        "seasonal": true,
+        "fineScaleTexture": true
       },
       "recommendedRoles": [
         "general",
@@ -197,7 +198,8 @@
         "emissiveCompatible": false,
         "darkFriendly": false,
         "seasonal": true,
-        "reliefShaded": true
+        "reliefShaded": true,
+        "fineScaleTexture": true
       },
       "recommendedRoles": [
         "general",

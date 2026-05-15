@@ -55,6 +55,12 @@ export type BaseMapCapabilities = Readonly<{
    * {@link reliefShaded} on Blue Marble TB–style families).
    */
   bathymetryShaded?: boolean;
+  /**
+   * Fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector
+   * overlays; distinct from {@link reliefShaded} hillshade, {@link boundaryDense} linework, and
+   * {@link chromaticDense} thematic fills.
+   */
+  fineScaleTexture?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{
