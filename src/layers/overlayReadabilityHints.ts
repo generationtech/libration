@@ -15,7 +15,8 @@
  * Upstream overlay legibility hints derived from the same solar-altitude / night-veil
  * field as planetary illumination, optionally augmented by emissive night-light **policy**
  * (see {@link ../core/overlayReadabilityFrame} v1.1). Optional `overlayReadabilityLiftScale01` attenuates lift from
- * resolved base-map substrate (see frame). No persisted readability-only SceneConfig keys for v1/v1.1/substrate slice.
+ * resolved base-map substrate (see frame). Optional SceneConfig `overlayReadability.presentation`
+ * scales the derived frame in the shell before hints are built.
  */
 export interface OverlayReadabilityHints {
   /**

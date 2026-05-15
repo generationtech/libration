@@ -18,6 +18,7 @@
  */
 
 import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import {
   getEmissiveNightLightsPolicy,
   type EmissiveNightLightsPresentationMode,
@@ -27,6 +28,7 @@ import { illuminationNightVeil01FromSolarAltitudeDeg } from "./nightVeilFromSola
 import { subsolarPoint } from "./subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "./solarTwilight";
 import {
+  SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN,
   type SubstrateReadabilityCatalogHint,
   deriveSubstrateOverlayReadabilityLiftScale01,
 } from "./substrateOverlayReadabilityLiftScale";
@@ -144,6 +146,33 @@ export interface OverlayReadabilityFrame {
   readabilityVeil01At(latDeg: number, lonDeg: number): number;
 }
 
+/**
+ * Applies normalized {@link SceneOverlayReadabilityPresentationConfig} on top of the derived frame
+ * (subsolar + emissive policy + substrate lift scale). Identity when both scalars are 1.
+ */
+export function applySceneOverlayReadabilityPresentationToFrame(
+  frame: OverlayReadabilityFrame,
+  presentation: SceneOverlayReadabilityPresentationConfig,
+): OverlayReadabilityFrame {
+  const veilScale = presentation.readabilityVeilScale01;
+  const liftMult = presentation.overlayLiftMultiplier01;
+  const globalReadabilityVeil01 = clamp01(frame.globalReadabilityVeil01 * veilScale);
+  const substrateOverlayReadabilityLiftScale01 = Math.max(
+    SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN,
+    Math.min(1, frame.substrateOverlayReadabilityLiftScale01 * liftMult),
+  );
+  return {
+    globalNightVeil01: frame.globalNightVeil01,
+    globalEmissiveLegibilityPressure01: frame.globalEmissiveLegibilityPressure01,
+    globalReadabilityVeil01,
+    substrateOverlayReadabilityLiftScale01,
+    nightVeil01At: frame.nightVeil01At,
+    readabilityVeil01At(latDeg: number, lonDeg: number): number {
+      return clamp01(frame.readabilityVeil01At(latDeg, lonDeg) * veilScale);
+    },
+  };
+}
+
 function surfaceSunDotProduct(
   latDeg: number,
   lonDeg: number,
@@ -163,11 +192,13 @@ function surfaceSunDotProduct(
  * Global average night veil (coarse lat/lon samples) plus point queries for markers.
  * When `emissiveReadability` is omitted or mode is `off`, behavior matches v1 (subsolar-only hints).
  * When `substrate` is omitted, {@link OverlayReadabilityFrame#substrateOverlayReadabilityLiftScale01} is 1.
+ * When `sceneOverlayPresentation` is set, applies SceneConfig readability presentation scaling (shell).
  */
 export function computeOverlayReadabilityFrameFromTimeMs(
   nowMs: number,
   emissiveReadability?: EmissiveOverlayReadabilityInputs,
   substrate?: SubstrateOverlayReadabilityFrameInputs | null,
+  sceneOverlayPresentation?: SceneOverlayReadabilityPresentationConfig | null,
 ): OverlayReadabilityFrame {
   const { latDeg: subLat, lonDeg: subLon } = subsolarPoint(nowMs);
   const pressure = computeEmissiveLegibilityPressure01(emissiveReadability);
@@ -198,7 +229,7 @@ export function computeOverlayReadabilityFrameFromTimeMs(
     return combineReadabilityVeil01(nightVeil01At(latDeg, lonDeg), pressure);
   }
 
-  return {
+  const base: OverlayReadabilityFrame = {
     globalNightVeil01,
     globalEmissiveLegibilityPressure01: pressure,
     globalReadabilityVeil01,
@@ -206,6 +237,9 @@ export function computeOverlayReadabilityFrameFromTimeMs(
     nightVeil01At,
     readabilityVeil01At,
   };
+  return sceneOverlayPresentation
+    ? applySceneOverlayReadabilityPresentationToFrame(base, sceneOverlayPresentation)
+    : base;
 }
 
 /**

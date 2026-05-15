@@ -16,10 +16,15 @@ import type { LayerEnableFlags } from "../../config/appConfig";
 import {
   DEFAULT_BASE_MAP_PRESENTATION,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+  DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
   EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX,
   EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MIN,
   EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MAX,
   EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY_MIN,
+  OVERLAY_READABILITY_LIFT_MULT_MAX,
+  OVERLAY_READABILITY_LIFT_MULT_MIN,
+  OVERLAY_READABILITY_VEIL_SCALE_MAX,
+  OVERLAY_READABILITY_VEIL_SCALE_MIN,
   applyLayerEnableFlagsToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
@@ -495,6 +500,229 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
             }
           >
             Reset night-light tuning
+          </button>
+        </ConfigControlRow>
+        <ConfigControlRow label="Overlay readability veil scale">
+          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+                max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+                step={0.05}
+                disabled={!mutable}
+                aria-label="Overlay combined readability veil scale"
+                title="Scales subsolar + emissive-policy combined veil for grids, markers, pins, and static equirect overlays (0 = minimum; 1 = default; up to 1.5)."
+                value={scene.overlayReadability.presentation.readabilityVeilScale01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const readabilityVeilScale01 = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          const prevPres = baseScene.overlayReadability.presentation;
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: {
+                              presentation: {
+                                ...prevPres,
+                                readabilityVeilScale01,
+                              },
+                            },
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Value (0–1.5)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+                  max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+                  step={0.05}
+                  disabled={!mutable}
+                  aria-label="Overlay veil scale value"
+                  value={scene.overlayReadability.presentation.readabilityVeilScale01}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const readabilityVeilScale01 = Number.isFinite(v)
+                            ? Math.max(
+                                OVERLAY_READABILITY_VEIL_SCALE_MIN,
+                                Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, v),
+                              )
+                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            const prevPres = baseScene.overlayReadability.presentation;
+                            draft.scene = {
+                              ...baseScene,
+                              overlayReadability: {
+                                presentation: {
+                                  ...prevPres,
+                                  readabilityVeilScale01,
+                                },
+                              },
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        </ConfigControlRow>
+        <ConfigControlRow label="Overlay lift multiplier">
+          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                flexWrap: "wrap",
+                width: "100%",
+              }}
+            >
+              <input
+                type="range"
+                className="config-input"
+                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+                min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+                max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+                step={0.01}
+                disabled={!mutable}
+                aria-label="Overlay substrate lift multiplier"
+                title="Multiplies substrate-derived overlay lift scale before clamp (1 = default; lower reduces stroke and cssFilter lift on bright bases)."
+                value={scene.overlayReadability.presentation.overlayLiftMultiplier01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const overlayLiftMultiplier01 = Number(e.currentTarget.value);
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          const prevPres = baseScene.overlayReadability.presentation;
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: {
+                              presentation: {
+                                ...prevPres,
+                                overlayLiftMultiplier01,
+                              },
+                            },
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  margin: 0,
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>Value (0.65–1.35)</span>
+                <input
+                  type="number"
+                  className="config-input"
+                  style={{ width: "4.25rem" }}
+                  min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+                  max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+                  step={0.01}
+                  disabled={!mutable}
+                  aria-label="Overlay lift multiplier value"
+                  value={scene.overlayReadability.presentation.overlayLiftMultiplier01}
+                  onChange={
+                    mutable && updateConfig
+                      ? (e) => {
+                          const v = Number(e.currentTarget.value);
+                          const overlayLiftMultiplier01 = Number.isFinite(v)
+                            ? Math.max(
+                                OVERLAY_READABILITY_LIFT_MULT_MIN,
+                                Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, v),
+                              )
+                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
+                          updateConfig((draft) => {
+                            const baseScene =
+                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                            const prevPres = baseScene.overlayReadability.presentation;
+                            draft.scene = {
+                              ...baseScene,
+                              overlayReadability: {
+                                presentation: {
+                                  ...prevPres,
+                                  overlayLiftMultiplier01,
+                                },
+                              },
+                            };
+                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </label>
+            </div>
+          </div>
+        </ConfigControlRow>
+        <ConfigControlRow label="Overlay readability tuning">
+          <button
+            type="button"
+            className="config-input"
+            disabled={!mutable}
+            title="Reset veil scale and lift multiplier to defaults (1 / 1)."
+            onClick={
+              mutable && updateConfig
+                ? () => {
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = {
+                        ...baseScene,
+                        overlayReadability: {
+                          presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
+                        },
+                      };
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                    });
+                  }
+                : undefined
+            }
+          >
+            Reset overlay readability
           </button>
         </ConfigControlRow>
         {LAYER_KEYS.map((key) => {

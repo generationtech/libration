@@ -73,6 +73,10 @@ describe("SceneConfig (Phase 1)", () => {
     expect(v2.scene?.illumination.emissiveNightLights.presentation).toEqual({
       ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
     });
+    expect(v2.scene?.overlayReadability.presentation).toEqual({
+      readabilityVeilScale01: 1,
+      overlayLiftMultiplier01: 1,
+    });
   });
 
   it("partial scene fills missing base map, ordering mode, and stack rows", () => {
@@ -112,6 +116,10 @@ describe("SceneConfig (Phase 1)", () => {
     expect(s.illumination.emissiveNightLights.presentation).toEqual({
       ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
     });
+    expect(s.overlayReadability.presentation).toEqual({
+      readabilityVeilScale01: 1,
+      overlayLiftMultiplier01: 1,
+    });
   });
 
   it("normalizes explicit moonlight mode and rejects unknown to illustrative", () => {
@@ -148,6 +156,25 @@ describe("SceneConfig (Phase 1)", () => {
     expect(bad.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
     );
+  });
+
+  it("normalizes overlay readability presentation and clamps out-of-range values", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        overlayReadability: {
+          presentation: { readabilityVeilScale01: 99, overlayLiftMultiplier01: -1 },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.overlayReadability.presentation.readabilityVeilScale01).toBe(1.5);
+    expect(scene.overlayReadability.presentation.overlayLiftMultiplier01).toBe(0.65);
   });
 
   it("normalizes emissive night lights mode and rejects unknown to illustrative", () => {

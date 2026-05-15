@@ -349,6 +349,30 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
   });
 
+  it("sceneRuntimeAffectingEqual is false when only overlay readability veil scale changes", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      solarAnalemma: false,
+    });
+    const b: typeof base = {
+      ...base,
+      overlayReadability: {
+        presentation: {
+          ...base.overlayReadability.presentation,
+          readabilityVeilScale01: 0.75,
+        },
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(base, b)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(base, base)).toBe(true);
+  });
+
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {
     const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
     const base = normalizeLibrationConfig({

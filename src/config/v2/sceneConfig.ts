@@ -232,6 +232,58 @@ export type SceneIlluminationConfig = {
   emissiveNightLights: SceneEmissiveNightLightsConfig;
 };
 
+/**
+ * User-facing scaling of the derived overlay readability frame (post-process in the shell).
+ * Defaults preserve shipped v1 + v1.1 + substrate behavior.
+ */
+export type SceneOverlayReadabilityPresentationConfig = {
+  /**
+   * Multiplies combined readability veil (subsolar + emissive policy) before overlay hints / filters.
+   * Clamped 0..1.5; default 1.
+   */
+  readabilityVeilScale01: number;
+  /**
+   * Multiplies substrate-derived overlay lift scale before clamp to [substrate min, 1].
+   * Clamped 0.65..1.35; default 1.
+   */
+  overlayLiftMultiplier01: number;
+};
+
+export type SceneOverlayReadabilityConfig = {
+  presentation: SceneOverlayReadabilityPresentationConfig;
+};
+
+export const OVERLAY_READABILITY_VEIL_SCALE_MIN = 0;
+export const OVERLAY_READABILITY_VEIL_SCALE_MAX = 1.5;
+export const OVERLAY_READABILITY_LIFT_MULT_MIN = 0.65;
+export const OVERLAY_READABILITY_LIFT_MULT_MAX = 1.35;
+
+export const DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION: SceneOverlayReadabilityPresentationConfig =
+  Object.freeze({
+    readabilityVeilScale01: 1,
+    overlayLiftMultiplier01: 1,
+  });
+
+export function clampReadabilityVeilScale01(n: number): number {
+  if (!Number.isFinite(n)) {
+    return 1;
+  }
+  return Math.max(
+    OVERLAY_READABILITY_VEIL_SCALE_MIN,
+    Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, n),
+  );
+}
+
+export function clampOverlayLiftMultiplier01(n: number): number {
+  if (!Number.isFinite(n)) {
+    return 1;
+  }
+  return Math.max(
+    OVERLAY_READABILITY_LIFT_MULT_MIN,
+    Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, n),
+  );
+}
+
 export type SceneConfig = {
   version: 1;
   projectionId: string;
@@ -241,6 +293,11 @@ export type SceneConfig = {
   orderingMode: SceneOrderingMode;
   /** Presentation-only illumination controls (resolved upstream of RenderPlan). */
   illumination: SceneIlluminationConfig;
+  /**
+   * Optional overlay legibility presentation (scales derived veil and substrate lift in the shell).
+   * Always present on normalized configs.
+   */
+  overlayReadability: SceneOverlayReadabilityConfig;
   metadata?: Record<string, unknown>;
 };
 
@@ -334,6 +391,31 @@ export function normalizeSceneIlluminationInput(
     "emissiveNightLights" in ill ? ill.emissiveNightLights : undefined,
   );
   return { moonlight, emissiveNightLights };
+}
+
+function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): SceneOverlayReadabilityConfig {
+  const defaults = (): SceneOverlayReadabilityConfig => ({
+    presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
+  });
+  const raw = input.overlayReadability;
+  if (!isPlainObject(raw)) {
+    return defaults();
+  }
+  const pres = raw.presentation;
+  if (!isPlainObject(pres)) {
+    return defaults();
+  }
+  const vsRaw = pres.readabilityVeilScale01;
+  const lmRaw = pres.overlayLiftMultiplier01;
+  const readabilityVeilScale01 =
+    typeof vsRaw === "number" && Number.isFinite(vsRaw)
+      ? clampReadabilityVeilScale01(vsRaw)
+      : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
+  const overlayLiftMultiplier01 =
+    typeof lmRaw === "number" && Number.isFinite(lmRaw)
+      ? clampOverlayLiftMultiplier01(lmRaw)
+      : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
+  return { presentation: { readabilityVeilScale01, overlayLiftMultiplier01 } };
 }
 
 export function resolveMoonlightPresentationMode(scene: SceneConfig): MoonlightPresentationMode {
@@ -474,6 +556,9 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
         presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
       },
     },
+    overlayReadability: {
+      presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
+    },
   };
 }
 
@@ -560,6 +645,9 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
         assetId: scene.illumination.emissiveNightLights.assetId,
         presentation: { ...scene.illumination.emissiveNightLights.presentation },
       },
+    },
+    overlayReadability: {
+      presentation: { ...scene.overlayReadability.presentation },
     },
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };
@@ -774,6 +862,7 @@ export function normalizeSceneConfig(
   const merged: SceneLayerInstance[] = [...mergedKnownRows, ...mergedAdditionalRows];
   const metadata = isPlainObject(input.metadata) ? { ...input.metadata } : undefined;
   const illumination = normalizeSceneIlluminationInput(input);
+  const overlayReadability = normalizeSceneOverlayReadabilityInput(input);
   return {
     version: 1,
     projectionId,
@@ -782,6 +871,7 @@ export function normalizeSceneConfig(
     baseMap: { ...baseMap, opacity: baseMap.opacity ?? 1 },
     layers: merged,
     illumination,
+    overlayReadability,
     ...(metadata ? { metadata } : {}),
   };
 }

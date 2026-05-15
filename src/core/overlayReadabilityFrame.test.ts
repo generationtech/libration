@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import {
   combineReadabilityVeil01,
+  applySceneOverlayReadabilityPresentationToFrame,
   computeEmissiveLegibilityPressure01,
   computeOverlayReadabilityFrameFromTimeMs,
   getOverlayReadabilityFrameOrCompute,
@@ -112,6 +113,53 @@ describe("computeOverlayReadabilityFrameFromTimeMs", () => {
     });
     expect(frame.substrateOverlayReadabilityLiftScale01).toBeLessThan(1);
     expect(frame.substrateOverlayReadabilityLiftScale01).toBeGreaterThanOrEqual(0.35);
+  });
+
+  it("applies scene presentation scaling to combined veil and substrate lift", () => {
+    const t = Date.UTC(2020, 0, 1, 0, 0, 0, 0);
+    const em = {
+      mode: "illustrative" as const,
+      presentationIntensity: 2,
+      presentationDriverExponent: 0.35,
+    };
+    const sub = {
+      presentation: { brightness: 1.2, contrast: 1, gamma: 1, saturation: 1 },
+    };
+    const base = computeOverlayReadabilityFrameFromTimeMs(t, em, sub);
+    const scaled = computeOverlayReadabilityFrameFromTimeMs(t, em, sub, {
+      readabilityVeilScale01: 0.5,
+      overlayLiftMultiplier01: 1,
+    });
+    expect(scaled.globalReadabilityVeil01).toBeCloseTo(base.globalReadabilityVeil01 * 0.5, 6);
+    expect(scaled.readabilityVeil01At(10, 20)).toBeCloseTo(base.readabilityVeil01At(10, 20) * 0.5, 6);
+    const lifted = computeOverlayReadabilityFrameFromTimeMs(t, em, sub, {
+      readabilityVeilScale01: 1,
+      overlayLiftMultiplier01: 1.2,
+    });
+    expect(lifted.substrateOverlayReadabilityLiftScale01).toBeCloseTo(
+      Math.min(1, base.substrateOverlayReadabilityLiftScale01 * 1.2),
+      6,
+    );
+  });
+});
+
+describe("applySceneOverlayReadabilityPresentationToFrame", () => {
+  it("is identity at defaults (1, 1)", () => {
+    const base: OverlayReadabilityFrame = {
+      globalNightVeil01: 0.2,
+      globalEmissiveLegibilityPressure01: 0.1,
+      globalReadabilityVeil01: 0.35,
+      substrateOverlayReadabilityLiftScale01: 0.72,
+      nightVeil01At: () => 0.4,
+      readabilityVeil01At: () => 0.55,
+    };
+    const out = applySceneOverlayReadabilityPresentationToFrame(base, {
+      readabilityVeilScale01: 1,
+      overlayLiftMultiplier01: 1,
+    });
+    expect(out.globalReadabilityVeil01).toBeCloseTo(0.35, 8);
+    expect(out.substrateOverlayReadabilityLiftScale01).toBeCloseTo(0.72, 8);
+    expect(out.readabilityVeil01At(0, 0)).toBeCloseTo(0.55, 8);
   });
 });
 

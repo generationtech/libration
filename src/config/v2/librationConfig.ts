@@ -1057,6 +1057,27 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.emissiveNightLights");
   }
+  const ovr = (sc as SceneConfig).overlayReadability;
+  if (
+    typeof ovr !== "object" ||
+    ovr === null ||
+    typeof ovr.presentation !== "object" ||
+    ovr.presentation === null
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability");
+  }
+  const ovrPres = ovr.presentation as {
+    readabilityVeilScale01?: unknown;
+    overlayLiftMultiplier01?: unknown;
+  };
+  if (
+    typeof ovrPres.readabilityVeilScale01 !== "number" ||
+    !Number.isFinite(ovrPres.readabilityVeilScale01) ||
+    typeof ovrPres.overlayLiftMultiplier01 !== "number" ||
+    !Number.isFinite(ovrPres.overlayLiftMultiplier01)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.presentation");
+  }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
     baseMapPres !== undefined &&

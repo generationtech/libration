@@ -110,7 +110,7 @@ Atmospheric transitions, twilight behavior, planetary illumination, **moonlight,
 - physically-inspired attenuation.
 - coherent upstream composition policy.
 
-Further refinement (readability **after** shipped v1.1 + derived substrate lift, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
+Further refinement (readability **after** shipped v1.1 + derived substrate lift + presentation scalars, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
 
 Avoid:
 
@@ -123,7 +123,7 @@ Avoid:
 
 The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
 
-Future work **extends** that subsystem for **readability policy** after the shipped derived stack (optional SceneConfig axis, richer heuristics), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
+Future work **extends** that subsystem for **readability policy** after the shipped stack (per-layer tuning, richer heuristics), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
 
 - atmospheric attenuation.
 - reflected illumination.
@@ -168,9 +168,9 @@ Foundational systems now exist:
 - static and derived overlays.
 - month-aware map families.
 - coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
-- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift: night veil + emissive policy + presentation/catalog lift attenuation on selected overlays; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
+- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars: night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: optional readability SceneConfig / UI, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond presentation scalars (per-layer tuning, richer heuristics), atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -179,7 +179,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Readability extensions** (optional SceneConfig / UI for readability-only tuning), atmospheric refinement on the **existing** upstream illumination stack, and cloud/weather **planning** until dynamic lifecycle opens.
+4. **Readability extensions** (per-layer tuning, richer substrate heuristics), atmospheric refinement on the **existing** upstream illumination stack, and cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

@@ -170,6 +170,10 @@ export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): bool
       b.illumination.emissiveNightLights.presentation.intensity &&
     a.illumination.emissiveNightLights.presentation.driverExponent ===
       b.illumination.emissiveNightLights.presentation.driverExponent &&
+    a.overlayReadability.presentation.readabilityVeilScale01 ===
+      b.overlayReadability.presentation.readabilityVeilScale01 &&
+    a.overlayReadability.presentation.overlayLiftMultiplier01 ===
+      b.overlayReadability.presentation.overlayLiftMultiplier01 &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

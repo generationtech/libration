@@ -318,6 +318,7 @@ export default function App() {
           presentationDriverExponent: emissive.presentation.driverExponent,
         },
         substrate,
+        scene.overlayReadability.presentation,
       );
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
