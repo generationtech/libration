@@ -34,7 +34,7 @@ The current scene system already includes:
 - solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
 - **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
-- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and **extended** readability (emissive/substrate-aware, pins, static overlays) without moving semantics into the backend.
+- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and **extended** readability (emissive/substrate-aware, static raster overlays) without moving semantics into the backend.
 - seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
@@ -157,7 +157,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- overlay readability tuning (**v1 shipped** for grid, analemma, subsolar/sublunar via derived solar night veil → RenderPlan stroke/alpha scaling). **Remaining:** emissive/substrate-aware tuning, pins/static rasters, optional SceneConfig axis.
+- overlay readability tuning (**v1 shipped** for grid, analemma, subsolar/sublunar, city pins via derived solar night veil → RenderPlan stroke/alpha scaling). **Remaining:** emissive/substrate-aware tuning, static raster overlays, optional SceneConfig axis.
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.

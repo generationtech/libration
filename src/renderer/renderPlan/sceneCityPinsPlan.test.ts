@@ -14,7 +14,7 @@
 import { describe, expect, it, vi, type Mock } from "vitest";
 import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../../config/appConfig";
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
-import { CITY_PINS_KIND } from "../../layers/cityPinsPayload";
+import { CITY_PINS_KIND, type CityPinsPayload } from "../../layers/cityPinsPayload";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
 import { buildCityPinsRenderPlan } from "./sceneCityPinsPlan";
 
@@ -83,6 +83,55 @@ describe("buildCityPinsRenderPlan", () => {
     expect(t0.font.assetId).toBe(LABEL_FONT);
     expect(t0.stroke?.color).toBe("rgba(8, 14, 28, 0.88)");
     expect(t0.opacity).toBe(0.9);
+  });
+
+  it("widens pin disc and name stroke when readabilityNightVeil01 is high", () => {
+    const payloadBase: CityPinsPayload = {
+      kind: CITY_PINS_KIND,
+      cities: [
+        {
+          id: "nyc",
+          name: "New York",
+          latDeg: 40.7,
+          lonDeg: -74,
+          localTimeLabel: "",
+        },
+      ],
+      showLabels: true,
+      labelMode: "city",
+      scale: "medium",
+      cityNameFontAssetId: LABEL_FONT,
+      dateTimeFontAssetId: LABEL_FONT,
+    };
+    const base = buildCityPinsRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      layerOpacity: 1,
+      payload: payloadBase,
+    });
+    const hi = buildCityPinsRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      layerOpacity: 1,
+      payload: {
+        ...payloadBase,
+        cities: [{ ...payloadBase.cities[0]!, readabilityNightVeil01: 1 }],
+      },
+    });
+    const innerB = base.items[0];
+    const innerH = hi.items[0];
+    expect(innerB?.kind).toBe("path2d");
+    expect(innerH?.kind).toBe("path2d");
+    if (innerB?.kind === "path2d" && innerH?.kind === "path2d") {
+      expect(innerH.strokeWidthPx).toBeGreaterThan(innerB.strokeWidthPx!);
+    }
+    const textB = base.items[2];
+    const textH = hi.items[2];
+    expect(textB?.kind).toBe("text");
+    expect(textH?.kind).toBe("text");
+    if (textB?.kind === "text" && textH?.kind === "text" && textB.stroke && textH.stroke) {
+      expect(textH.stroke.widthPx).toBeGreaterThan(textB.stroke.widthPx);
+    }
   });
 
   it("uses separate payload fonts for city name vs date/time lines", () => {

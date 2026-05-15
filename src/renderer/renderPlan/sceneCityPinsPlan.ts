@@ -74,13 +74,17 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
     const r =
       scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
 
+    const v = city.readabilityNightVeil01 ?? 0;
+    const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
+    const a = (alpha: number) => Math.min(1, alpha * (1 + 0.22 * v));
+
     const inner: RenderPath2DItem = {
       kind: "path2d",
       pathKind: "path2d",
       path: circlePath2D(x, y, r),
-      fill: "rgba(165, 205, 255, 0.92)",
-      stroke: "rgba(18, 28, 48, 0.55)",
-      strokeWidthPx: 1,
+      fill: `rgba(165, 205, 255, ${a(0.92)})`,
+      stroke: `rgba(18, 28, 48, ${a(0.55)})`,
+      strokeWidthPx: sw(1),
     };
     items.push(inner);
 
@@ -88,8 +92,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
       kind: "path2d",
       pathKind: "path2d",
       path: circlePath2D(x, y, r + 1.5),
-      stroke: "rgba(255, 255, 255, 0.35)",
-      strokeWidthPx: 1,
+      stroke: `rgba(255, 255, 255, ${a(0.35)})`,
+      strokeWidthPx: sw(1),
     });
 
     if (!showLabels) {
@@ -102,13 +106,13 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
     const blockH = showTimeLine ? nameSize + lineGap + timeSize : nameSize;
     let textY = y - blockH / 2;
 
-    const nameStrokeW = Math.max(2.5, nameSize * 0.28);
+    const nameStrokeW = sw(Math.max(2.5, nameSize * 0.28));
     const nameText: RenderTextItem = {
       kind: "text",
       x: lx,
       y: textY,
       text: city.name,
-      fill: "rgba(245, 248, 255, 0.94)",
+      fill: `rgba(245, 248, 255, ${a(0.94)})`,
       font: {
         assetId: cityNameFontAssetId,
         displayName: cityNameDisplayName,
@@ -119,7 +123,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
       textAlign: "left",
       textBaseline: "top",
       stroke: {
-        color: "rgba(8, 14, 28, 0.88)",
+        color: `rgba(8, 14, 28, ${a(0.88)})`,
         widthPx: nameStrokeW,
         lineJoin: "round",
         miterLimit: 2,
@@ -130,13 +134,13 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
 
     if (showTimeLine) {
       textY += nameSize + lineGap;
-      const tw = Math.max(2, timeSize * 0.28);
+      const tw = sw(Math.max(2, timeSize * 0.28));
       items.push({
         kind: "text",
         x: lx,
         y: textY,
         text: city.localTimeLabel,
-        fill: "rgba(215, 224, 242, 0.9)",
+        fill: `rgba(215, 224, 242, ${a(0.9)})`,
         font: {
           assetId: dateTimeFontAssetId,
           displayName: dateTimeDisplayName,
@@ -147,7 +151,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
         textAlign: "left",
         textBaseline: "top",
         stroke: {
-          color: "rgba(6, 12, 22, 0.9)",
+          color: `rgba(6, 12, 22, ${a(0.9)})`,
           widthPx: tw,
           lineJoin: "round",
           miterLimit: 2,

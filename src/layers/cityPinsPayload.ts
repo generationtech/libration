@@ -33,6 +33,11 @@ export interface CityPinEntry {
   lonDeg: number;
   /** Preformatted local wall time for the current frame instant (Intl; timezone from dataset). */
   localTimeLabel: string;
+  /**
+   * Optional derived solar night veil (0–1) at this pin, aligned with planetary illumination;
+   * used upstream to scale pin/label contrast on the night side.
+   */
+  readabilityNightVeil01?: number;
 }
 
 export interface CityPinsPayload {
@@ -74,6 +79,12 @@ export function isCityPinsPayload(data: unknown): data is CityPinsPayload {
       typeof row.localTimeLabel !== "string"
     ) {
       return false;
+    }
+    if (row.readabilityNightVeil01 !== undefined) {
+      const v = row.readabilityNightVeil01;
+      if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1) {
+        return false;
+      }
     }
   }
   return true;

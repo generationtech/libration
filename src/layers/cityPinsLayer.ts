@@ -12,6 +12,7 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
 import { formatPinDateTimeLabel } from "../core/pinDateTimeDisplayFormat";
 import type { ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes";
@@ -93,6 +94,7 @@ export function createCityPinsLayer(
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
+      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
       const cities: CityPinEntry[] = pinDefinitions.map((c) => ({
         id: c.id,
         name: c.name,
@@ -107,6 +109,7 @@ export function createCityPinsLayer(
                 presentation.pinDateTimeDisplayMode,
                 presentation.displayTimeMode,
               ),
+        readabilityNightVeil01: frame.nightVeil01At(c.latDeg, c.lonDeg),
       }));
       const data: CityPinsPayload = {
         kind: CITY_PINS_KIND,
