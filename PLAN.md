@@ -35,7 +35,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Extend planetary composition on top of the **delivered** twilight, moonlight, emissive, and **overlay readability v1** stacks: readability **extensions**, then clouds/weather planning, then atmospheric refinement—incremental slices, not a new compositor layer.
+6. Extend planetary composition on top of the **delivered** twilight, moonlight, emissive, and **overlay readability v1 + v1.1** stacks: readability **extensions** (substrate / optional config beyond v1.1), then clouds/weather planning, then atmospheric refinement—incremental slices, not a new compositor layer.
 
 ## Near-term execution slices
 
@@ -65,6 +65,8 @@ Exit criteria:
 - docs reflect actual runtime state.
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
+
+**Rolling doc fixes:** overlay readability **v1 + v1.1** wording reconciled in current goals (`PLAN.md`), agent guidance (`docs/AI_COENGINEERING.md`), and Phase 7 goals (`docs/ROADMAP.md`) so “shipped stack” matches source.
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 

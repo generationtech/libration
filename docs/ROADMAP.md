@@ -177,6 +177,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 baseline + v1.1 emissive policy lift, not stale “v1 only” phrasing).
 
 Exit criteria:
 
