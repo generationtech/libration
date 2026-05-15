@@ -139,7 +139,7 @@ There is **no generalized compositor abstraction** and **no backend-owned compos
 
 ### Overlay readability (composition-aware, v1)
 
-Selected derived overlays (latitude/longitude grid, solar analemma polyline, subsolar and sub-lunar markers) attach **derived-only** `OverlayReadabilityHints` (`nightVeil01` aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) resolved each frame upstream. Reference and custom **city pins** carry the same veil signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`). RenderPlan builders adjust stroke widths and RGBA alphas; the backend continues to execute primitives mechanically. v1 uses **subsolar geometry only** (no emissive raster sampling); broader substrate/emissive-aware readability and optional user controls remain incremental follow-ups.
+Selected derived overlays (latitude/longitude grid, solar analemma polyline, subsolar and sub-lunar markers) attach **derived-only** `OverlayReadabilityHints` (`nightVeil01` aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) resolved each frame upstream. Reference and custom **city pins** carry the same veil signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`). **Static full-viewport equirect raster overlays** attach the **global** frame veil on `EquirectangularRasterPayload.readability`; `buildBaseRasterMapRenderPlan` merges `overlayReadabilityCssFilterAppend` with presentation-derived `cssFilter` on the single `imageBlit`. RenderPlan builders adjust vector stroke widths and RGBA alphas; the backend continues to execute primitives mechanically. v1 uses **subsolar geometry only** (no emissive raster sampling); broader substrate/emissive-aware readability and optional user controls remain incremental follow-ups.
 
 ### RenderPlan system
 
@@ -242,14 +242,14 @@ Stable enough for feature-forward work:
 - polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.
 - map onboarding tooling.
-- derived overlay readability (v1): grid, analemma, subsolar/sublunar markers, and city pins scale RenderPlan stroke intent from the shared solar night-veil field (no backend composition policy).
+- derived overlay readability (v1): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global veil → merged `imageBlit` cssFilter) scale resolved draw intent from the shared solar night-veil field (no backend composition policy).
 
 Still future or partial:
 
 - full dynamic data lifecycle.
 - live feeds.
 - gridded scientific datasets.
-- **extended** composition-aware overlay readability (emissive/substrate-aware contrast, city pins, static rasters, user-facing controls).
+- **extended** composition-aware overlay readability (emissive/substrate-aware contrast, optional user-facing controls).
 - cloud and weather participation in upstream planetary composition (planning and lifecycle prerequisites).
 - atmospheric transition and scattering refinement beyond the current continuous twilight field.
 - advanced blending, masking, and **additional** emissive or radiance contributors beyond the dedicated night-lights path (only if product scope justifies them; not a generic multi-pass compositor in the backend).

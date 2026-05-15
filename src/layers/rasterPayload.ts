@@ -14,6 +14,8 @@
 export const EQUIRECTANGULAR_RASTER_KIND = "equirectangularRaster" as const;
 
 import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";
+import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
+import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
 
 /**
  * Renderer-facing payload for a full-viewport equirectangular raster (static URL).
@@ -33,6 +35,8 @@ export interface EquirectangularRasterPayload {
    * exclude that URL from base map resolution (see `baseMapEquirectImageExclusions`).
    */
   emitLoadFailure?: true;
+  /** Optional derived legibility hint for static overlays (merged into imageBlit cssFilter upstream). */
+  readability?: OverlayReadabilityHints;
 }
 
 export function isEquirectangularRasterPayload(
@@ -40,5 +44,11 @@ export function isEquirectangularRasterPayload(
 ): data is EquirectangularRasterPayload {
   if (data === null || typeof data !== "object") return false;
   const o = data as Record<string, unknown>;
-  return o.kind === EQUIRECTANGULAR_RASTER_KIND && typeof o.src === "string";
+  if (o.kind !== EQUIRECTANGULAR_RASTER_KIND || typeof o.src !== "string") {
+    return false;
+  }
+  if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
+    return false;
+  }
+  return true;
 }

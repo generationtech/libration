@@ -104,4 +104,39 @@ describe("buildBaseRasterMapRenderPlan", () => {
       }).items,
     ).toEqual([]);
   });
+
+  it("adds cssFilter from readability night veil alone when presentation is default", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({ brightness: 1, contrast: 1, gamma: 1, saturation: 1 }),
+      readabilityNightVeil01: 1,
+    });
+    const item = plan.items[0]!;
+    expect(item.kind).toBe("imageBlit");
+    if (item.kind !== "imageBlit") {
+      return;
+    }
+    expect(item.cssFilter).toBeDefined();
+    expect(item.cssFilter).toContain("brightness(");
+    expect(item.cssFilter).toContain("contrast(");
+  });
+
+  it("merges presentation cssFilter with readability fragment", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({ brightness: 1.1, contrast: 1, gamma: 1, saturation: 1 }),
+      readabilityNightVeil01: 1,
+    });
+    const item = plan.items[0]!;
+    expect(item.kind).toBe("imageBlit");
+    if (item.kind !== "imageBlit") {
+      return;
+    }
+    expect(item.cssFilter).toContain("brightness(1.1)");
+    expect(item.cssFilter).toMatch(/brightness\(1\.1\).*brightness\(1\./);
+  });
 });

@@ -15,6 +15,7 @@ import {
   type BaseMapPresentationConfig,
   baseMapPresentationToCssFilterString,
 } from "../../config/baseMapPresentation";
+import { mergeCssFilterParts, overlayReadabilityCssFilterAppend } from "../../core/overlayReadabilityRasterFilter";
 import type { RenderPlan } from "./renderPlanTypes";
 
 /**
@@ -28,6 +29,11 @@ export function buildBaseRasterMapRenderPlan(options: {
   viewportHeightPx: number;
   /** Family-level display tuning; same for every concrete month URL in a month-aware family. */
   presentation?: BaseMapPresentationConfig;
+  /**
+   * Optional derived solar night veil (0–1), aligned with planetary illumination; merged into
+   * `cssFilter` for static overlay legibility on the night side.
+   */
+  readabilityNightVeil01?: number;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -35,8 +41,10 @@ export function buildBaseRasterMapRenderPlan(options: {
     return { items: [] };
   }
   const pres = options.presentation;
-  const cssFilter =
+  const presFilter =
     pres !== undefined ? baseMapPresentationToCssFilterString(pres) : undefined;
+  const readFilter = overlayReadabilityCssFilterAppend(options.readabilityNightVeil01 ?? 0);
+  const cssFilter = mergeCssFilterParts(presFilter, readFilter);
   const gamma = pres !== undefined && pres.gamma !== 1 ? pres.gamma : undefined;
   return {
     items: [

@@ -156,7 +156,7 @@ Delivered:
 
 Remaining future work:
 
-- **composition-aware overlay readability v1 (derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, and city pins (per-pin veil) → upstream RenderPlan stroke/alpha scaling; no new persisted config; emissive/substrate-aware extensions remain future work.
+- **composition-aware overlay readability v1 (derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin veil), and static equirect raster overlays (global veil → merged `imageBlit` cssFilter); no new persisted config; emissive/substrate-aware extensions remain future work.
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -206,7 +206,7 @@ The subsystem is **mature enough for incremental features** (readability, atmosp
 
 Candidate deliverables:
 
-- **composition-aware overlay readability v1** (terminator-aligned night veil on grid, analemma, subsolar/sublunar markers, city pins; RenderPlan-only; derived hints).
+- **composition-aware overlay readability v1** (terminator-aligned night veil on grid, analemma, subsolar/sublunar markers, city pins, static equirect rasters; RenderPlan-only; derived hints).
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
@@ -229,7 +229,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 
 Remaining under Phase 9 (**composition expansion**, not baseline emissive delivery):
 
-- readability extensions (emissive/substrate-aware tuning, static raster overlays, optional SceneConfig controls).
+- readability extensions (emissive/substrate-aware tuning, optional SceneConfig controls).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
