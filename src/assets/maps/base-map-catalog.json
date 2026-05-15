@@ -75,7 +75,8 @@
         "overlayOptimized": false,
         "emissiveCompatible": false,
         "darkFriendly": false,
-        "seasonal": false
+        "seasonal": false,
+        "boundaryDense": true
       },
       "recommendedRoles": [
         "geology",
@@ -193,7 +194,8 @@
         "overlayOptimized": false,
         "emissiveCompatible": false,
         "darkFriendly": false,
-        "seasonal": true
+        "seasonal": true,
+        "reliefShaded": true
       },
       "recommendedRoles": [
         "general",
@@ -252,7 +254,8 @@
         "overlayOptimized": false,
         "emissiveCompatible": false,
         "darkFriendly": false,
-        "seasonal": true
+        "seasonal": true,
+        "reliefShaded": true
       },
       "recommendedRoles": [
         "general",

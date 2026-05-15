@@ -47,7 +47,7 @@ The catalog owns:
 - variant mode.
 - onboarded months.
 - default presentation.
-- capabilities.
+- capabilities (including optional **overlay-readability** hints such as `reliefShaded` and `boundaryDense`, alongside `overlayOptimized` and `darkFriendly`, for upstream overlay lift scaling without raster sampling).
 - recommended roles.
 - placeholder or transitional status where applicable.
 

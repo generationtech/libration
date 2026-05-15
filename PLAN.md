@@ -51,9 +51,9 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Not in this closed stack (future):** readability pilots for stack rows **beyond** those six defaults (unless new scene rows adopt the same `perLayer.<rowId>` contract); richer substrate-only heuristics beyond presentation + catalog flags.
 
-**Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling); hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
+**Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling). Presentation **below** default brightness reduces attenuation so overlays keep lift on dimmed bases. Catalog may set optional **`reliefShaded`** / **`boundaryDense`** for small intrinsic attenuation at neutral presentation; hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
 
-**Next frontier (implementation):** richer substrate modeling in catalog or resolver if needed (per-layer pilots for default rows are shipped).
+**Next frontier (implementation):** further catalog or resolver-only substrate signals when product needs them (additional capability axes, per-family tuning beyond these flags); avoid raster sampling unless explicitly scoped.
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -76,9 +76,9 @@ Status: **primary active execution slice**.
 - subsolar marker, sublunar marker, solar analemma overlay, and derived astronomical overlays in the layer stack.
 - **Overlay readability (v1 + v1.1 + substrate + persisted SceneConfig presentation + six default-stack `perLayer` pilots, derived — closed foundation):** `OverlayReadabilityFrame` from `computeOverlayReadabilityFrameFromTimeMs` (emissive policy + **substrate** inputs: effective base-map presentation + catalog `capabilities`), then `scene.overlayReadability.presentation` scaling, attached each tick via `TimeContext.overlayReadabilityFrame` and `getOverlayReadabilityFrameOrCompute` in layers; **`perLayer` pilots** for **`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`** optionally repeat the same scalars again for those rows (identity omitted on normalize); `OverlayReadabilityHints` on grid/analemma/marker payloads (`overlayReadabilityLiftScale01` from frame); per-pin `readabilityNightVeil01` on city pins + payload-level lift scale; static equirect raster `readability` + merged `cssFilter` in `buildBaseRasterMapRenderPlan`; vector stroke/alpha via `effectiveOverlayReadabilityLiftVeil01` (no emissive raster sampling in the readability path).
 
-**Likely next implementation slice:**
+**Likely next implementation slice (incremental; some gaps closed):**
 
-- **Substrate readability heuristics:** optional richer substrate modeling beyond effective base-map presentation + catalog flags (still upstream, no raster sampling unless explicitly scoped).
+- **Substrate readability heuristics:** extend catalog/resolver-only hints and presentation-derived rules beyond the initial **`reliefShaded`** / **`boundaryDense`** flags and sub-1 brightness dimming (still upstream; no raster sampling unless explicitly scoped).
 
 **Shipped pilots:** `scene.overlayReadability.perLayer` supports the six stack ids above (veil + lift scalars each) after the global frame in `createLatLonGridLayer`, `createSolarAnalemmaLayer`, `createSubsolarMarkerLayer`, `createSublunarMarkerLayer`, `createCityPinsLayer`, and `createStaticEquirectRasterOverlayLayer`; normalized config omits identity-only per-layer subtrees.
 

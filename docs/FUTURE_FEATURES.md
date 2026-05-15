@@ -42,7 +42,7 @@ The current scene system already includes:
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems with **substrate readability heuristics** beyond presentation + catalog `capabilities`, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
+Future work should extend these systems with **further substrate readability heuristics** (additional catalog/resolver signals beyond the shipped presentation model, sub-1 brightness dimming, and `reliefShaded` / `boundaryDense` flags), and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
 
 ## Maps and base-map families
 

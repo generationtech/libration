@@ -34,6 +34,16 @@ export type BaseMapCapabilities = Readonly<{
   emissiveCompatible?: boolean;
   darkFriendly?: boolean;
   seasonal?: boolean;
+  /**
+   * Hypsometric / hillshade-style relief reads as strong local contrast; upstream overlay lift
+   * attenuates slightly even at neutral presentation (see substrate readability heuristics).
+   */
+  reliefShaded?: boolean;
+  /**
+   * Dense linework (e.g. boundaries, scientific overlays) competes with vector grid/markers;
+   * upstream overlay lift attenuates slightly at neutral presentation.
+   */
+  boundaryDense?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

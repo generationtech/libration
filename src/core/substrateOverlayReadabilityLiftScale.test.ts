@@ -18,6 +18,7 @@ import {
 import {
   SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN,
   deriveSubstrateOverlayReadabilityLiftScale01,
+  intrinsicSubstrateReadabilityCatalogPenalty01,
   substratePresentationReadabilityPenalty01,
 } from "./substrateOverlayReadabilityLiftScale";
 
@@ -37,6 +38,36 @@ describe("substratePresentationReadabilityPenalty01", () => {
       contrast: 1.3,
     });
     expect(b).toBeGreaterThan(a);
+  });
+
+  it("reduces penalty when brightness is below 1 (dimmed base)", () => {
+    const boosted = {
+      brightness: 1.35,
+      contrast: 1.25,
+      gamma: 1,
+      saturation: 1,
+    };
+    const brightPenalty = substratePresentationReadabilityPenalty01(boosted);
+    const dimmedPenalty = substratePresentationReadabilityPenalty01({
+      ...boosted,
+      brightness: 0.55,
+    });
+    expect(dimmedPenalty).toBeLessThan(brightPenalty);
+  });
+});
+
+describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
+  it("is zero without hints", () => {
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01(undefined)).toBe(0);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({})).toBe(0);
+  });
+
+  it("accumulates bounded penalties for relief and boundary-dense flags", () => {
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true })).toBeCloseTo(0.072, 10);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ boundaryDense: true })).toBeCloseTo(0.055, 10);
+    expect(
+      intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true, boundaryDense: true }),
+    ).toBeCloseTo(0.127, 10);
   });
 });
 
@@ -58,7 +89,31 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(s).toBe(SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN);
   });
 
-  it("applies overlayOptimized catalog hint", () => {
+  it("scales below 1 at neutral presentation when relief or boundary hints are set", () => {
+    const r = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      reliefShaded: true,
+    });
+    const d = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      boundaryDense: true,
+    });
+    expect(r).toBeCloseTo(1 - 0.072, 10);
+    expect(d).toBeCloseTo(1 - 0.055, 10);
+  });
+
+  it("preserves more lift on dimmed bases than on bright bases for same contrast boost", () => {
+    const shared = { contrast: 1.4, gamma: 1, saturation: 1 };
+    const bright = deriveSubstrateOverlayReadabilityLiftScale01({
+      brightness: 1.25,
+      ...shared,
+    });
+    const dimmed = deriveSubstrateOverlayReadabilityLiftScale01({
+      brightness: 0.6,
+      ...shared,
+    });
+    expect(dimmed).toBeGreaterThan(bright);
+  });
+
+  it("applies overlayOptimized catalog hint on presentation boosts", () => {
     const base = deriveSubstrateOverlayReadabilityLiftScale01({
       brightness: 1.4,
       contrast: 1,

@@ -157,7 +157,7 @@ Delivered:
 
 Remaining future work:
 
-- **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
+- **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; **further** substrate heuristics beyond the shipped presentation model, sub-1 brightness dimming, and catalog flags including `reliefShaded` / `boundaryDense` (still upstream, no backend policy).
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -188,7 +188,7 @@ Exit criteria:
 
 **Completed milestones (rolling):**
 
-- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + default-stack per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `perLayer` keys `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`; **next** readability work is richer substrate heuristics and **`perLayer` coverage for rows beyond those defaults** when product-ready only (Phase 6 “remaining” extensions).
+- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + default-stack per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `perLayer` keys `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`; **next** readability work is **additional** substrate heuristics (beyond catalog `reliefShaded` / `boundaryDense`, presentation, and sub-1 brightness dimming) and **`perLayer` coverage for rows beyond those defaults** when product-ready only (Phase 6 “remaining” extensions).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
@@ -235,7 +235,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 
 Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + presentation scalars + six default-stack `perLayer` pilots** delivery):
 
-- readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; richer substrate modeling beyond presentation + catalog flags).
+- readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; **further** substrate modeling beyond the shipped presentation + dimming rules + catalog flags such as `reliefShaded` / `boundaryDense`).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
