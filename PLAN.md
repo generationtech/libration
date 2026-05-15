@@ -18,7 +18,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - astronomical scene overlays and markers.
 - solar shading / dark-side visualization.
 - continuous attenuation-driven planetary illumination composition with semantic twilight anchors.
-- non-emissive twilight attenuation and atmospheric tint modulation.
+- non-emissive twilight attenuation and atmospheric tint modulation, including a **shipped incremental twilight transition tuning** pass in `src/renderer/illuminationShading.ts` (constants-only; still one `rasterPatch`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible moonlight composition with configurable presentation modes.
 - emissive night-light upstream composition (catalog-backed asset, policy, perceptual luma driver, Layers presentation controls, illustrative defaults).
@@ -26,7 +26,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**readability extensions** beyond the shipped overlay stack + first substrate-heuristic increment, **atmospheric** refinement on the continuous twilight field, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
+The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**readability extensions** beyond the shipped overlay stack + first substrate-heuristic increment, **further atmospheric** refinement after the shipped twilight tuning increment, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
 ## Current goals
 
@@ -35,7 +35,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Extend planetary composition on top of the **delivered** twilight, moonlight, emissive, and **overlay readability** stacks (v1 + v1.1 + derived substrate lift + **first** catalog/dimming substrate heuristics + SceneConfig presentation scalars + **full default-stack `perLayer` pilots** — canonical keys `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)): **further** substrate-only signals or atmospheric refinement when justified, then clouds/weather planning—incremental slices, not a new compositor layer.
+6. Extend planetary composition on top of the **delivered** twilight baseline (including the **shipped incremental twilight tuning** pass in `illuminationShading`), moonlight, emissive, and **overlay readability** stacks (v1 + v1.1 + derived substrate lift + **first** catalog/dimming substrate heuristics + SceneConfig presentation scalars + **full default-stack `perLayer` pilots** — canonical keys `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)): **further** substrate-only signals, **further** atmospheric refinement when justified, then clouds/weather planning—incremental slices, not a new compositor layer.
 
 ## Near-term execution slices
 
@@ -69,7 +69,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 Status: complete (ongoing hygiene only).
 
-Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + first substrate heuristic increment (`reliefShaded` / `boundaryDense`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots** is documented as **shipped / closed** (substrate increment is **feature-complete** for its scope) across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, or “substrate unreadable” drift where the runtime persists presentation.
+Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + first substrate heuristic increment (`reliefShaded` / `boundaryDense`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots** and **incremental twilight transition tuning** in `illuminationShading.ts` are documented as **shipped** across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, “substrate unreadable”, or “no twilight tuning” drift where the runtime matches source.
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
@@ -79,7 +79,7 @@ Status: **primary active execution slice**.
 
 - solar shading / dark-side visualization.
 - coherent upstream planetary illumination composition: **one** illumination `rasterPatch`, SceneConfig-authoritative policy, renderer-agnostic execution.
-- continuous attenuation-driven twilight with civil/nautical/astronomical **semantic** anchors (not separate user-facing twilight layers); non-emissive atmospheric tint and attenuation.
+- continuous attenuation-driven twilight with civil/nautical/astronomical **semantic** anchors (not separate user-facing twilight layers); non-emissive atmospheric tint and attenuation; **incremental twilight transition tuning** shipped in `illuminationShading.ts` (see dedicated subsection above).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
 - **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).

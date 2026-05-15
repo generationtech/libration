@@ -178,7 +178,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift + **first substrate heuristic increment** + SceneConfig presentation scalars + **`perLayer` defaults for grid, solar analemma, subsolar/sublunar markers, city pins, static equirect overlay**, not stale “v1 only” or “substrate unreadable” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **incremental twilight transition tuning** in `illuminationShading.ts`; not stale “v1 only”, “substrate unreadable”, or “twilight tuning not shipped” phrasing).
 
 Exit criteria:
 
@@ -189,6 +189,7 @@ Exit criteria:
 
 **Completed milestones (rolling):**
 
+- **Atmospheric twilight refinement (incremental):** docs and maturity describe shipped upstream-only tuning in `illuminationShading.ts` (anchor coupling, tint cap, day-side envelope); **further** scattering/haze and optional persisted softness remain future (`PLAN.md` Slice 2, Phase 6/9).
 - **Overlay readability (v1 + v1.1 + derived substrate lift + first substrate heuristic increment + SceneConfig presentation + default-stack per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation`, optional `perLayer` keys `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`, and substrate lift rules (`reliefShaded` / `boundaryDense`, sub-1 brightness dimming); **next** readability work is **additional** substrate heuristics (beyond that shipped set) and **`perLayer` coverage for rows beyond those defaults** when product-ready only (Phase 6 “remaining” extensions).
 
 ## Phase 8: Map inventory and scientific substrate expansion

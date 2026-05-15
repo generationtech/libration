@@ -32,6 +32,7 @@ Future map and scene UX work should extend these foundations rather than replaci
 The current scene system already includes:
 
 - solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
+- **incremental twilight transition tuning** (upstream-only constants in `src/renderer/illuminationShading.ts`): smoother anchor color coupling, bounded non-emissive atmospheric tint cap, gentler day-side tint envelope below +4° daylight clear—still no separate twilight layer, still one `rasterPatch`.
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
 - **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
 - emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years—without moving semantics into the backend.
@@ -42,7 +43,7 @@ The current scene system already includes:
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems with **further substrate readability heuristics** (additional catalog/resolver signals beyond **`reliefShaded`** / **`boundaryDense`**, sub-1 brightness dimming, and presentation + `overlayOptimized` / `darkFriendly`), and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
+Future work should extend these systems with **further substrate readability heuristics** (additional catalog/resolver signals beyond **`reliefShaded`** / **`boundaryDense`**, sub-1 brightness dimming, and presentation + `overlayOptimized` / `darkFriendly`), **further atmospheric refinement** (scattering, haze, optional SceneConfig twilight softness) beyond the shipped incremental tuning in `illuminationShading.ts`, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
 
 ## Maps and base-map families
 
@@ -166,7 +167,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 ### Day/night product ideas
 
 - scientifically grounded day/night and twilight attenuation.
-- configurable twilight softness.
+- configurable twilight softness (not persisted in the shipped incremental tuning pass; future SceneConfig axis if product adds it).
 - optional **additional** night-light data products layered as future composition or substrate inputs (beyond current Black Marble path).
 - stronger emissive **readability** presets tied to overlay density or zoom when those modes exist.
 - seasonal illumination effects.
