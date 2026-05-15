@@ -110,7 +110,7 @@ Atmospheric transitions, twilight behavior, planetary illumination, **moonlight,
 - physically-inspired attenuation.
 - coherent upstream composition policy.
 
-Further refinement (readability **beyond shipped v1**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
+Further refinement (readability **beyond shipped v1.1**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
 
 Avoid:
 

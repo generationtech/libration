@@ -61,7 +61,7 @@ For map or scene work, also read:
 - Month-aware behavior must be explicit in the catalog.
 - Product time drives month-aware base-map resolution.
 - Backend raster load failure reporting is allowed, but fallback policy belongs upstream.
-- **Overlay readability v1 + v1.1** is derived upstream (RenderPlan hints + merged cssFilter where applicable); the shell may attach one `OverlayReadabilityFrame` per tick on `TimeContext`—see `ARCHITECTURE.md`. v1.1 adds emissive **policy-only** pressure into the combined veil (no emissive texture sampling in the readability frame).
+- **Overlay readability v1 + v1.1** is **shipped** and derived upstream (RenderPlan hints + merged `cssFilter` where applicable); the shell attaches one `OverlayReadabilityFrame` per tick on `TimeContext` with subsolar veil + emissive **policy** inputs—see `ARCHITECTURE.md`. **Not shipped:** substrate-aware contrast; optional dedicated readability SceneConfig (see `PLAN.md` Slice 2).
 
 ## Cursor and ChatGPT workflow rules
 

@@ -133,7 +133,7 @@ Remaining future work:
 
 ## Phase 6: Static and derived overlays
 
-Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`).
+Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability v1 + v1.1** (derived hints + emissive policy lift) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
 
 Delivered:
 
@@ -186,6 +186,10 @@ Exit criteria:
 - roadmap and future-feature backlog are explicit.
 - stale historical docs are clearly marked historical.
 
+**Completed milestones (rolling):**
+
+- **Overlay readability v1 + v1.1** documentation finalization: plan, roadmap, architecture maturity, future-feature inventory, and agent/strategy docs describe shipped behavior and separate **next** readability extensions (substrate / optional SceneConfig) from completed foundations.
+
 ## Phase 8: Map inventory and scientific substrate expansion
 
 Status: planned.
@@ -204,7 +208,7 @@ Candidate deliverables:
 
 Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-The subsystem is **mature enough for incremental features** (readability **extensions**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem is **mature enough for incremental features** (readability **extensions beyond v1.1**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 

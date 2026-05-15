@@ -37,7 +37,7 @@ Cursor should not independently invent major architecture. It should implement p
 
 ## Planetary illumination and composition (agent guidance)
 
-The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability v1 + v1.1** is also **shipped** (derived solar night veil plus emissive **policy-only** legibility pressure on selected overlays into RenderPlan; optional one `OverlayReadabilityFrame` per tick on `TimeContext`). **Do not** treat emissive composition or overlay readability v1/v1.1 as future MVP work or propose a new “compositor” boundary inside the backend.
+The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability v1 + v1.1** is also **shipped** and documented as a **closed phase** in `PLAN.md` (derived solar night veil plus emissive **policy-only** legibility pressure on selected overlays into RenderPlan; optional one `OverlayReadabilityFrame` per tick on `TimeContext`). **Do not** treat emissive composition or overlay readability v1/v1.1 as future MVP work or propose a new “compositor” boundary inside the backend.
 
 For new work in this area:
 

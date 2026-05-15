@@ -39,15 +39,17 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 ## Near-term execution slices
 
-### Overlay readability v1 (complete)
+### Overlay readability (v1 + v1.1) — **phase complete**
 
-Shipped: derived solar night-veil hints on lat/lon grid, solar analemma, subsolar/sublunar markers, **city pins** (per-pin `readabilityNightVeil01`), and **static equirect raster overlays** (global veil merged into `imageBlit` cssFilter upstream); no SceneConfig surface; v1 uses **subsolar geometry only** (no emissive raster sampling). The app shell attaches **one** `OverlayReadabilityFrame` per tick on `TimeContext`; layers use `getOverlayReadabilityFrameOrCompute`.
+**Status:** shipped in production. This phase is **closed**; treat as a settled foundation alongside planetary illumination composition.
 
-### Overlay readability v1.1 (emissive policy lift; complete)
+**v1 (subsolar-only veil):** derived solar night-veil hints on lat/lon grid, solar analemma, subsolar/sublunar markers, **city pins** (per-pin veil scalar), and **static equirect raster overlays** (global scalar → merged `imageBlit` `cssFilter` upstream). No dedicated readability keys in SceneConfig. The app shell attaches **one** `OverlayReadabilityFrame` per tick on `TimeContext`; layers use `getOverlayReadabilityFrameOrCompute`.
 
-Shipped: the same frame and hint plumbing; `computeOverlayReadabilityFrameFromTimeMs` accepts normalized **emissive night-light policy** (`mode`, `presentation.intensity`, `presentation.driverExponent`). The shell passes SceneConfig-derived inputs each tick. `globalReadabilityVeil01` / `readabilityVeil01At` combine subsolar veil with bounded **policy-only** emissive legibility pressure (no emissive texture sampling in the readability path). Payload keys remain `OverlayReadabilityHints.nightVeil01` / pin `readabilityNightVeil01` but now carry the combined scalar where layers attach the frame-backed hints.
+**v1.1 (emissive policy lift):** `computeOverlayReadabilityFrameFromTimeMs` accepts normalized **emissive night-light policy** from `scene.illumination.emissiveNightLights` (`mode`, `presentation.intensity`, `presentation.driverExponent`); the shell passes those inputs each tick. `globalReadabilityVeil01` / `readabilityVeil01At` combine subsolar veil with bounded **policy-only** emissive legibility pressure (**no emissive texture sampling** in the readability path). Payload keys remain `OverlayReadabilityHints.nightVeil01` / pin `readabilityNightVeil01` but carry the **combined** scalar for frame-backed overlays.
 
-**Likely next readability / composition slices:** substrate-aware legibility, optional minimal SceneConfig presentation axis—each scoped, tested, and documented.
+**Not in this phase:** substrate-aware contrast from base-map substrate; user-facing or persisted SceneConfig readability controls.
+
+**Next frontier (implementation):** readability **extensions** — see **Slice 2** below (substrate-aware tuning and/or minimal SceneConfig presentation axis when product-ready).
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -66,7 +68,7 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-**Rolling doc fixes:** overlay readability **v1 + v1.1** wording reconciled in current goals (`PLAN.md`), agent guidance (`docs/AI_COENGINEERING.md`), and Phase 7 goals (`docs/ROADMAP.md`) so “shipped stack” matches source.
+**Rolling doc fixes:** overlay readability **v1 + v1.1** phase marked **complete** in `PLAN.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, and agent/strategy docs; terminology aligned with shipped runtime (no “v1 only” drift).
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
