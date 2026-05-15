@@ -133,7 +133,7 @@ Remaining future work:
 
 ## Phase 6: Static and derived overlays
 
-Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability v1 + v1.1** (derived hints + emissive policy lift) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
+Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability** (v1 + v1.1 + **derived substrate lift scale**) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
 
 Delivered:
 
@@ -153,11 +153,11 @@ Delivered:
 - scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, `presentation` intensity and driver exponent) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; greenfield default mode is **`illustrative`** (with illustrative moonlight; persisted explicit modes are preserved); Layers UI exposes **Off / Natural / Enhanced / Illustrative** plus night-light intensity and faint-light lift; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
-- **Overlay readability v1 + v1.1 (derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; no separate persisted readability SceneConfig keys.
+- **Overlay readability (v1 + v1.1 + substrate, derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; no separate persisted readability SceneConfig keys.
 
 Remaining future work:
 
-- **Readability beyond v1.1:** optional user-facing or SceneConfig readability controls when product-ready; optional richer substrate heuristics (first derived increment: presentation + catalog `capabilities` → `substrateOverlayReadabilityLiftScale01` ships).
+- **Readability extensions (future):** optional user-facing or SceneConfig readability controls when product-ready; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -177,7 +177,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 baseline + v1.1 emissive policy lift, not stale “v1 only” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift, not stale “v1 only” or “substrate unreadable” phrasing).
 
 Exit criteria:
 
@@ -188,7 +188,7 @@ Exit criteria:
 
 **Completed milestones (rolling):**
 
-- **Overlay readability v1 + v1.1** documentation finalization: plan, roadmap, architecture maturity, future-feature inventory, and agent/strategy docs describe shipped behavior and separate **next** readability extensions (substrate / optional SceneConfig) from completed foundations.
+- **Overlay readability (v1 + v1.1 + derived substrate lift scale):** docs finalized this pass—plan, roadmap, architecture maturity, future-feature inventory, and agent/strategy docs describe shipped behavior; **next** readability work is optional SceneConfig / UI and richer heuristics only (Phase 6 “remaining” no longer treats presentation/catalog lift as unshipped).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
@@ -208,11 +208,11 @@ Candidate deliverables:
 
 Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-The subsystem is **mature enough for incremental features** (readability **extensions beyond v1.1**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift, atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 
-- **Readability extensions** beyond shipped v1.1: first **derived** substrate-aware lift scale is shipped (`substrateOverlayReadabilityLiftScale01`); optional SceneConfig presentation axis when justified; richer substrate heuristics if needed.
+- **Readability extensions:** optional SceneConfig presentation axis when justified; substrate heuristics beyond presentation + catalog `capabilities` (e.g. per-family tuning in catalog or resolver) if product needs them.
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
@@ -233,7 +233,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
 - emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI; perceptual luma driver via `presentation.driverExponent`.
 
-Remaining under Phase 9 (**composition expansion**, not baseline emissive or readability v1/v1.1 delivery):
+Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift** delivery):
 
 - readability extensions (optional SceneConfig controls; richer substrate modeling beyond presentation + catalog flags).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.
