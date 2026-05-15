@@ -57,10 +57,15 @@ export type BaseMapCapabilities = Readonly<{
   bathymetryShaded?: boolean;
   /**
    * Fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector
-   * overlays; distinct from {@link reliefShaded} hillshade, {@link boundaryDense} linework, and
-   * {@link chromaticDense} thematic fills.
+   * overlays; distinct from {@link reliefShaded} hillshade, {@link boundaryDense} linework,
+   * {@link chromaticDense} thematic fills, and {@link labelDense} dense cartographic typography.
    */
   fineScaleTexture?: boolean;
+  /**
+   * Dense cartographic typography (city/country/formation labels) competes with overlay annotation
+   * and fine grid ticks; distinct from {@link boundaryDense} boundary linework alone.
+   */
+  labelDense?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

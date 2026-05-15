@@ -32,6 +32,7 @@ Optional keys on base-map catalog entries influence **upstream** overlay lift sc
 - `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills).
 - `bathymetryShaded` — shaded / hypsometric ocean-floor (bathymetry) reads as strong local contrast (often with land relief; e.g. Blue Marble **TB** family in the bundled catalog).
 - `fineScaleTexture` — fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector overlays; distinct from relief hypsometry, dense linework, thematic hue bands, or bathymetry shading alone. Bundled catalog sets this on Blue Marble **BM** and **T** seasonal families.
+- `labelDense` — dense cartographic typography (place names, formation labels) competes with overlay annotation and fine grid ticks; distinct from `boundaryDense` linework alone. Bundled catalog sets this on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`**.
 
 **Presentation-penalty multipliers** (not separate intrinsic flags): `overlayOptimized`, `darkFriendly`.
 
@@ -136,6 +137,7 @@ Known source ingredients:
 Notes:
 
 - Intended as muted, overlay-friendly political/reference substrate.
+- Bundled catalog sets **`capabilities.labelDense`** (with **`chromaticDense`**) for upstream overlay-readability lift—curator signal for dense place-name / country-label typography.
 - If the asset has been accepted as real, remove transitional placeholder status in the catalog.
 
 ## equirect-world-geology-v1
@@ -159,6 +161,7 @@ Required before treating as validated:
 Notes:
 
 - Do not treat as sourced and validated until all requirements are met.
+- Bundled catalog sets **`capabilities.labelDense`** (with **`boundaryDense`** and **`chromaticDense`**) for upstream overlay-readability lift—curator signal for dense scientific labels alongside linework and thematic fills.
 
 ## Blue Marble / natural-color families
 

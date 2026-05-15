@@ -49,7 +49,8 @@
         "emissiveCompatible": false,
         "darkFriendly": false,
         "seasonal": false,
-        "chromaticDense": true
+        "chromaticDense": true,
+        "labelDense": true
       },
       "recommendedRoles": [
         "political",
@@ -78,7 +79,8 @@
         "darkFriendly": false,
         "seasonal": false,
         "boundaryDense": true,
-        "chromaticDense": true
+        "chromaticDense": true,
+        "labelDense": true
       },
       "recommendedRoles": [
         "geology",
