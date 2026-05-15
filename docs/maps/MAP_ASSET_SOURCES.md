@@ -21,6 +21,20 @@ This document explains provenance, processing state, and notes that should not b
 - Review catalog diffs before committing.
 - Keep placeholder or transitional status accurate.
 
+## Base-map `capabilities`: overlay readability (upstream)
+
+Optional keys on base-map catalog entries influence **upstream** overlay lift scaling (`substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame`, derived in the shell from effective presentation + catalog row—see `src/core/substrateOverlayReadabilityLiftScale.ts`). **No raster sampling**; curators assign hints from substrate class.
+
+**Intrinsic lift attenuation** (small bounded penalties at neutral presentation; combinable up to a fixed cap in code):
+
+- `reliefShaded` — hypsometric / hillshade-style relief reads as strong local contrast.
+- `boundaryDense` — dense linework (boundaries, scientific overlays).
+- `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills).
+
+**Presentation-penalty multipliers** (not separate intrinsic flags): `overlayOptimized`, `darkFriendly`.
+
+When onboarding a family, align flags with visual intent and note significant choices in this document or [MAP_ASSET_STRATEGY.md](MAP_ASSET_STRATEGY.md).
+
 ## Current inventory to verify against catalog
 
 The current active catalog should be treated as source of truth. Known family ids from recent documentation include:

@@ -26,7 +26,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**readability extensions** beyond the shipped overlay stack + intrinsic substrate-heuristic increments (`reliefShaded`, `boundaryDense`, `chromaticDense`; sub-1 brightness dimming), **further atmospheric** refinement after the shipped twilight tuning increment, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
+The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**readability extensions** beyond the shipped overlay stack + **shipped** intrinsic substrate hints (`reliefShaded`, `boundaryDense`, `chromaticDense`) and presentation/dimming rules in lift, **further atmospheric** refinement after the shipped twilight tuning increment, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
 ## Current goals
 
@@ -53,11 +53,13 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling). Presentation **below** default brightness reduces attenuation so overlays keep lift on dimmed bases. Catalog may set optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** for small intrinsic attenuation at neutral presentation; hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
 
-### Substrate overlay readability heuristics — **shipped increment** (Slice 2)
+### Substrate overlay readability heuristics — **shipped** (Slice 2)
 
-**Status:** **complete** for this narrow phase. Upstream-only extension of `deriveSubstrateOverlayReadabilityLiftScale01` (`src/core/substrateOverlayReadabilityLiftScale.ts`): sub-1 **effective** brightness scales presentation-derived penalty down; optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** on `BaseMapCapabilities` add bounded intrinsic penalty at neutral presentation; curated catalog entries updated (e.g. Blue Marble T/TB, geology, political). Tests: `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
+**Status:** **complete** for the scoped substrate-lift increments. Upstream-only `deriveSubstrateOverlayReadabilityLiftScale01` (`src/core/substrateOverlayReadabilityLiftScale.ts`): sub-1 **effective** brightness scales presentation-derived penalty down; optional catalog **`reliefShaded`**, **`boundaryDense`**, and **`chromaticDense`** on `BaseMapCapabilities` each add a **bounded** intrinsic penalty at neutral presentation (combined intrinsic penalties capped before merging with presentation penalty); curated catalog entries carry the flags where appropriate (e.g. Blue Marble T/TB, geology, political). Tests: `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 
-**Next frontier (same subsystem, future):** additional capability axes or resolver-only signals when justified; **still** no raster sampling unless explicitly scoped.
+**Phase closure:** treat **`reliefShaded` / `boundaryDense` / `chromaticDense`** plus `overlayOptimized` / `darkFriendly` multipliers and sub-1 brightness dimming as the **current shipped** substrate-readability catalog contract for overlay lift—not hypothetical.
+
+**Next frontier (same subsystem, future):** additional optional `BaseMapCapabilities` axes or resolver-only signals **beyond** that shipped set when product-justified; **still** no raster sampling unless explicitly scoped.
 
 ### Atmospheric twilight refinement — **shipped increment** (Slice 2)
 
