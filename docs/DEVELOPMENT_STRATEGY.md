@@ -154,7 +154,7 @@ Update docs when:
 - config semantics change.
 - source of truth changes.
 - workflows change.
-- feature status changes.
+- feature status changes (including composition and overlay readability milestones).
 - future ideas are accepted, deferred, or rejected.
 
 Keep docs in these roles:

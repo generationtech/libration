@@ -61,6 +61,7 @@ For map or scene work, also read:
 - Month-aware behavior must be explicit in the catalog.
 - Product time drives month-aware base-map resolution.
 - Backend raster load failure reporting is allowed, but fallback policy belongs upstream.
+- **Overlay readability v1** is derived upstream (RenderPlan hints + merged cssFilter where applicable); the shell may attach one `OverlayReadabilityFrame` per tick on `TimeContext`—see `ARCHITECTURE.md`.
 
 ## Cursor and ChatGPT workflow rules
 

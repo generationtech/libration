@@ -29,8 +29,8 @@ export interface TimeContext {
   deltaMs: number;
   simulated: boolean;
   /**
-   * When set (typically once per frame by the app shell), overlay layers reuse this instead of
-   * each calling `computeOverlayReadabilityFrameFromTimeMs`.
+   * When set (typically once per frame by the app shell), overlay layers reuse this via
+   * `getOverlayReadabilityFrameOrCompute` instead of each calling `computeOverlayReadabilityFrameFromTimeMs`.
    */
   overlayReadabilityFrame?: OverlayReadabilityFrame;
 }

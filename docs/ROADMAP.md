@@ -153,10 +153,11 @@ Delivered:
 - scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, `presentation` intensity and driver exponent) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; greenfield default mode is **`illustrative`** (with illustrative moonlight; persisted explicit modes are preserved); Layers UI exposes **Off / Natural / Enhanced / Illustrative** plus night-light intensity and faint-light lift; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
+- **composition-aware overlay readability v1 (derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin `readabilityNightVeil01`), and static full-viewport equirect raster overlays (global veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); no new persisted SceneConfig; backend remains execution-only.
 
 Remaining future work:
 
-- **composition-aware overlay readability v1 (derived):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin veil), and static equirect raster overlays (global veil → merged `imageBlit` cssFilter); no new persisted config; emissive/substrate-aware extensions remain future work.
+- **Readability beyond v1:** emissive/substrate-aware contrast tuning and optional user-facing or SceneConfig presentation controls when product-ready.
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -202,11 +203,11 @@ Candidate deliverables:
 
 Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
 
-The subsystem is **mature enough for incremental features** (readability, atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem is **mature enough for incremental features** (readability **extensions**, atmosphere, clouds); avoid speculative “greenfield composition” designs.
 
 Candidate deliverables:
 
-- **composition-aware overlay readability v1** (terminator-aligned night veil on grid, analemma, subsolar/sublunar markers, city pins, static equirect rasters; RenderPlan-only; derived hints).
+- **Readability extensions** beyond shipped v1: emissive/substrate-aware tuning, optional SceneConfig presentation axis when justified.
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model.
 - weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
@@ -227,7 +228,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 - bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
 - emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI; perceptual luma driver via `presentation.driverExponent`.
 
-Remaining under Phase 9 (**composition expansion**, not baseline emissive delivery):
+Remaining under Phase 9 (**composition expansion**, not baseline emissive or readability v1 delivery):
 
 - readability extensions (emissive/substrate-aware tuning, optional SceneConfig controls).
 - weather/cloud participation, atmospheric refinement, and optional higher-resolution or alternate-year emissive assets when curated.

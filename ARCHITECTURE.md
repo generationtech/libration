@@ -242,7 +242,7 @@ Stable enough for feature-forward work:
 - polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.
 - map onboarding tooling.
-- derived overlay readability (v1): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global veil → merged `imageBlit` cssFilter) scale resolved draw intent from the shared solar night-veil field (no backend composition policy).
+- derived overlay readability (v1): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global veil → merged `imageBlit` cssFilter) scale resolved draw intent from the shared solar night-veil field (no backend composition policy). Production path: **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it; layers call `getOverlayReadabilityFrameOrCompute` (fallback computes from `now` if omitted).
 
 Still future or partial:
 
