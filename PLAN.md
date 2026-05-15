@@ -59,9 +59,11 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Phase closure (runtime + docs aligned):** treat the six intrinsics above plus `overlayOptimized` / `darkFriendly` multipliers and sub-1 brightness dimming as the **current shipped** substrate-readability catalog contract for overlay lift—not hypothetical.
 
-**Next frontier (same subsystem, Slice 2):** additional optional `BaseMapCapabilities` axes or resolver-only signals **beyond** that shipped set when product-justified; **still** no raster sampling unless explicitly scoped.
+**Next frontier (same subsystem, Slice 2):** additional optional `BaseMapCapabilities` axes or resolver-only signals **beyond** the shipped six-intrinsic set (`reliefShaded` … `labelDense`) when product-justified; **still** no raster sampling unless explicitly scoped.
 
-### Atmospheric twilight refinement — **shipped increment** (Slice 2) — **shipped increment** (Slice 2)
+**Closed increment (documented):** optional catalog **`labelDense`** (dense typography; intrinsic penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`) with bundled curation on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`**; regression coverage in `src/core/substrateOverlayReadabilityLiftScale.test.ts`. Treat as part of the settled substrate contract—not a partial rollout.
+
+### Atmospheric twilight refinement — **shipped increment** (Slice 2)
 
 **Status:** **complete** for this narrow phase. Upstream-only tuning in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts): wider Gaussian coupling between semantic twilight anchor colors, cooler low-luminance anchor progression, slightly higher bounded non-emissive atmospheric tint cap (`TWILIGHT_ATMOSPHERIC_ALPHA_MAX`), and a gentler day-side atmospheric envelope as altitude approaches the shared +4° daylight-clear sampling cutoff from below (tint is still zero at and above that cutoff). Still **one** planetary illumination `rasterPatch`; **no** new SceneConfig surface or backend composition policy. Tests: [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts).
 

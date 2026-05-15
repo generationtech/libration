@@ -148,7 +148,7 @@ Candidates:
 
 ## Composition and visual systems
 
-Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. The items below are **extensions** or optional product directions, not prerequisites for the current stack.
+Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. Upstream overlay **substrate lift** consumes bundled catalog **`capabilities`**: **six** optional intrinsic hints through **`labelDense`** (see `docs/maps/MAP_ASSET_SOURCES.md` and `src/core/substrateOverlayReadabilityLiftScale.ts`), plus `overlayOptimized` / `darkFriendly` presentation multipliers—**implemented**, not speculative. The items below are **extensions** or optional product directions, not prerequisites for the current stack.
 
 ### Planned or candidate composition features
 

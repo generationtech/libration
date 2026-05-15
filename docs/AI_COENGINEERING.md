@@ -43,7 +43,7 @@ For new work in this area:
 
 - read `ARCHITECTURE.md` (subsystem section), `PLAN.md` Slice 2, and `docs/ROADMAP.md` Phase 6 / Phase 9.
 - assume **SceneConfig remains authoritative** and **RenderPlan + execution-only backend** remain intact.
-- prefer **incremental** features (e.g. **`perLayer` pilots for new stack rows** beyond the six shipped defaults; **further** catalog/resolver substrate heuristics; **further** atmospheric refinement **after** the shipped twilight tuning increment; optional future SceneConfig twilight softness) over reopening settled composition architecture.
+- prefer **incremental** features (e.g. **`perLayer` pilots for new stack rows** beyond the six shipped defaults; **further** catalog/resolver substrate heuristics **beyond** the shipped six intrinsics (`reliefShaded` … `labelDense`); **further** atmospheric refinement **after** the shipped twilight tuning increment; optional future SceneConfig twilight softness) over reopening settled composition architecture.
 - ground behavior changes in tests at normalization, resolver, illumination sampling, or RenderPlan boundaries—not in Canvas policy branches.
 
 ## Standard co-engineering loop
