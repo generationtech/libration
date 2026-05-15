@@ -65,6 +65,7 @@ import {
   isEmissiveNightLightsPresentationMode,
   isMoonlightPresentationMode,
   normalizeSceneConfig,
+  SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS,
   type SceneConfig,
 } from "./sceneConfig";
 
@@ -1082,8 +1083,8 @@ export function assertIsNormalizedLibrationConfig(
     if (typeof ovr.perLayer !== "object" || ovr.perLayer === null) {
       throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer");
     }
-    const pl = ovr.perLayer as { grid?: unknown; solarAnalemma?: unknown };
-    const assertPerLayerPilot = (key: "grid" | "solarAnalemma", raw: unknown): void => {
+    const pl = ovr.perLayer as Partial<Record<string, unknown>>;
+    const assertPerLayerPilot = (key: string, raw: unknown): void => {
       if (typeof raw !== "object" || raw === null) {
         throw new Error(`assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.${key}`);
       }
@@ -1099,11 +1100,10 @@ export function assertIsNormalizedLibrationConfig(
         );
       }
     };
-    if ("grid" in pl && pl.grid !== undefined) {
-      assertPerLayerPilot("grid", pl.grid);
-    }
-    if ("solarAnalemma" in pl && pl.solarAnalemma !== undefined) {
-      assertPerLayerPilot("solarAnalemma", pl.solarAnalemma);
+    for (const key of SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS) {
+      if (key in pl && pl[key] !== undefined) {
+        assertPerLayerPilot(key, pl[key]);
+      }
     }
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;

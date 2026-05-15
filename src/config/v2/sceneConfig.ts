@@ -250,13 +250,31 @@ export type SceneOverlayReadabilityPresentationConfig = {
 };
 
 /**
- * Optional per-stack-layer readability presentation (pilots: {@link SceneStackLayerId} `grid`, `solarAnalemma`).
- * Applied after global {@link SceneOverlayReadabilityConfig#presentation} when building that layer's hints
- * (same scalar semantics as the global presentation pass).
+ * Keys for optional per-stack-row overlay readability pilots (veil/lift scalars after the global shell frame).
+ * Applied after global {@link SceneOverlayReadabilityConfig#presentation} when building that layer's hints.
+ */
+export const SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS = [
+  "grid",
+  "solarAnalemma",
+  "subsolarMarker",
+  "sublunarMarker",
+  "cityPins",
+  "staticEquirectOverlay",
+] as const;
+
+export type SceneOverlayReadabilityPerLayerPilotKey =
+  (typeof SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS)[number];
+
+/**
+ * Optional per-stack-layer readability presentation (pilots for default stack rows).
  */
 export type SceneOverlayReadabilityPerLayerMap = {
   grid?: SceneOverlayReadabilityPresentationConfig;
   solarAnalemma?: SceneOverlayReadabilityPresentationConfig;
+  subsolarMarker?: SceneOverlayReadabilityPresentationConfig;
+  sublunarMarker?: SceneOverlayReadabilityPresentationConfig;
+  cityPins?: SceneOverlayReadabilityPresentationConfig;
+  staticEquirectOverlay?: SceneOverlayReadabilityPresentationConfig;
 };
 
 export type SceneOverlayReadabilityConfig = {
@@ -306,7 +324,8 @@ export type SceneConfig = {
   /** Presentation-only illumination controls (resolved upstream of RenderPlan). */
   illumination: SceneIlluminationConfig;
   /**
-   * Overlay legibility presentation: global veil/lift scaling in the shell, plus optional per-layer pilots (`perLayer.grid`, `perLayer.solarAnalemma`).
+   * Overlay legibility presentation: global veil/lift scaling in the shell, plus optional per-layer pilots
+   * (`perLayer` keys in {@link SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS}).
    * Always present on normalized configs.
    */
   overlayReadability: SceneOverlayReadabilityConfig;
@@ -461,12 +480,28 @@ function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): 
   );
   let perLayer: SceneOverlayReadabilityPerLayerMap | undefined;
   if (isPlainObject(raw.perLayer)) {
-    const grid = normalizePerLayerOverlayReadabilityPilot(raw.perLayer.grid);
-    const solarAnalemma = normalizePerLayerOverlayReadabilityPilot(raw.perLayer.solarAnalemma);
-    if (grid !== undefined || solarAnalemma !== undefined) {
+    const pl = raw.perLayer;
+    const grid = normalizePerLayerOverlayReadabilityPilot(pl.grid);
+    const solarAnalemma = normalizePerLayerOverlayReadabilityPilot(pl.solarAnalemma);
+    const subsolarMarker = normalizePerLayerOverlayReadabilityPilot(pl.subsolarMarker);
+    const sublunarMarker = normalizePerLayerOverlayReadabilityPilot(pl.sublunarMarker);
+    const cityPins = normalizePerLayerOverlayReadabilityPilot(pl.cityPins);
+    const staticEquirectOverlay = normalizePerLayerOverlayReadabilityPilot(pl.staticEquirectOverlay);
+    if (
+      grid !== undefined ||
+      solarAnalemma !== undefined ||
+      subsolarMarker !== undefined ||
+      sublunarMarker !== undefined ||
+      cityPins !== undefined ||
+      staticEquirectOverlay !== undefined
+    ) {
       perLayer = {
         ...(grid !== undefined ? { grid } : {}),
         ...(solarAnalemma !== undefined ? { solarAnalemma } : {}),
+        ...(subsolarMarker !== undefined ? { subsolarMarker } : {}),
+        ...(sublunarMarker !== undefined ? { sublunarMarker } : {}),
+        ...(cityPins !== undefined ? { cityPins } : {}),
+        ...(staticEquirectOverlay !== undefined ? { staticEquirectOverlay } : {}),
       };
     }
   }
@@ -706,14 +741,33 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     },
     overlayReadability: {
       presentation: { ...scene.overlayReadability.presentation },
-      ...(scene.overlayReadability.perLayer?.grid || scene.overlayReadability.perLayer?.solarAnalemma
+      ...(scene.overlayReadability.perLayer &&
+      SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS.some(
+        (k) => scene.overlayReadability.perLayer![k] !== undefined,
+      )
         ? {
             perLayer: {
-              ...(scene.overlayReadability.perLayer?.grid
+              ...(scene.overlayReadability.perLayer.grid
                 ? { grid: { ...scene.overlayReadability.perLayer.grid } }
                 : {}),
-              ...(scene.overlayReadability.perLayer?.solarAnalemma
+              ...(scene.overlayReadability.perLayer.solarAnalemma
                 ? { solarAnalemma: { ...scene.overlayReadability.perLayer.solarAnalemma } }
+                : {}),
+              ...(scene.overlayReadability.perLayer.subsolarMarker
+                ? { subsolarMarker: { ...scene.overlayReadability.perLayer.subsolarMarker } }
+                : {}),
+              ...(scene.overlayReadability.perLayer.sublunarMarker
+                ? { sublunarMarker: { ...scene.overlayReadability.perLayer.sublunarMarker } }
+                : {}),
+              ...(scene.overlayReadability.perLayer.cityPins
+                ? { cityPins: { ...scene.overlayReadability.perLayer.cityPins } }
+                : {}),
+              ...(scene.overlayReadability.perLayer.staticEquirectOverlay
+                ? {
+                    staticEquirectOverlay: {
+                      ...scene.overlayReadability.perLayer.staticEquirectOverlay,
+                    },
+                  }
                 : {}),
             },
           }

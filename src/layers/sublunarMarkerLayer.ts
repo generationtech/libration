@@ -13,7 +13,11 @@
 
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBLUNAR_MARKER_KIND, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
@@ -27,10 +31,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Uses {@link sublunarPoint} in core; shading remains solar-only.
  */
 export function createSublunarMarkerLayer(
-  options: { zIndex?: number; opacity?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    /** Optional pilot: extra veil/lift pass for this marker only (after global presentation). */
+    sublunarMarkerReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+  } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
+  const sublunarMarkerReadabilityPresentation = options.sublunarMarkerReadabilityPresentation;
   return {
     id: SUBLUNAR_MARKER_ID,
     name: "Sub-lunar point",
@@ -42,7 +52,10 @@ export function createSublunarMarkerLayer(
     getState(time: TimeContext): LayerState {
       const { latDeg, lonDeg } = sublunarPoint(time.now);
       const phase = approximateLunarPhase(time.now);
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (sublunarMarkerReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(frame, sublunarMarkerReadabilityPresentation);
+      }
       const data: SublunarMarkerPayload = {
         kind: SUBLUNAR_MARKER_KIND,
         latDeg,

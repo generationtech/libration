@@ -52,6 +52,8 @@ export function createLayerForSceneOverlayInstance(
       src: s.src,
       zIndex,
       opacity,
+      staticEquirectOverlayReadabilityPresentation:
+        config.scene.overlayReadability.perLayer?.staticEquirectOverlay,
     });
   }
   if (s.kind === "derived") {
@@ -107,12 +109,24 @@ function createDerivedOverlayByProduct(
         },
         resolvePinCityNameTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
         resolvePinDateTimeTextFontAssetId(config.displayChromeLayout, config.pinPresentation),
-        { zIndex, opacity },
+        {
+          zIndex,
+          opacity,
+          cityPinsReadabilityPresentation: config.scene.overlayReadability.perLayer?.cityPins,
+        },
       );
     case "subsolarPoint":
-      return createSubsolarMarkerLayer({ zIndex, opacity });
+      return createSubsolarMarkerLayer({
+        zIndex,
+        opacity,
+        subsolarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.subsolarMarker,
+      });
     case "sublunarPoint":
-      return createSublunarMarkerLayer({ zIndex, opacity });
+      return createSublunarMarkerLayer({
+        zIndex,
+        opacity,
+        sublunarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.sublunarMarker,
+      });
     case "solarAnalemmaGroundTrack":
       return createSolarAnalemmaLayer({
         zIndex,

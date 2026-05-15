@@ -16,9 +16,9 @@
  * field as planetary illumination, optionally augmented by emissive night-light **policy**
  * (see {@link ../core/overlayReadabilityFrame} v1.1). Optional `overlayReadabilityLiftScale01` attenuates lift from
  * resolved base-map substrate (see frame). Optional SceneConfig `overlayReadability.presentation`
- * scales the derived frame in the shell before hints are built; optional `scene.overlayReadability.perLayer.grid`
- * and `perLayer.solarAnalemma` apply the same scalars again for those layers only
- * applies the same veil/lift scalars again for the lat/lon grid layer only (see {@link ./latLonGridLayer}).
+ * scales the derived frame in the shell before hints are built; optional `scene.overlayReadability.perLayer`
+ * pilots apply the same veil/lift scalars again only for configured stack rows (lat/lon grid, solar analemma,
+ * subsolar/sublunar markers, city pins, static equirect overlay; see `sceneConfig` normalization).
  */
 export interface OverlayReadabilityHints {
   /**

@@ -421,6 +421,54 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(b, b)).toBe(true);
   });
 
+  it("sceneRuntimeAffectingEqual is false when only overlay readability subsolarMarker pilot veil changes", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      cityPins: false,
+      subsolarMarker: true,
+      sublunarMarker: false,
+      solarAnalemma: false,
+    });
+    const b: typeof base = {
+      ...base,
+      overlayReadability: {
+        ...base.overlayReadability,
+        perLayer: {
+          subsolarMarker: { readabilityVeilScale01: 0.55, overlayLiftMultiplier01: 1 },
+        },
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(base, b)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(b, b)).toBe(true);
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only overlay readability staticEquirectOverlay pilot lift changes", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      solarAnalemma: false,
+    });
+    const b: typeof base = {
+      ...base,
+      overlayReadability: {
+        ...base.overlayReadability,
+        perLayer: {
+          staticEquirectOverlay: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 0.9 },
+        },
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(base, b)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(b, b)).toBe(true);
+  });
+
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {
     const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
     const base = normalizeLibrationConfig({

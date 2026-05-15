@@ -20,7 +20,11 @@ import {
   DEFAULT_BASE_MAP_PRESENTATION,
   baseMapPresentationEqual,
 } from "../config/baseMapPresentation";
-import type { SceneConfig, SceneLayerInstance } from "../config/v2/sceneConfig";
+import {
+  SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS,
+  type SceneConfig,
+  type SceneLayerInstance,
+} from "../config/v2/sceneConfig";
 import {
   normalizeLibrationConfig,
   v2ToAppConfig,
@@ -169,9 +173,8 @@ function overlayReadabilityPerLayerEqual(
   a: SceneConfig["overlayReadability"]["perLayer"],
   b: SceneConfig["overlayReadability"]["perLayer"],
 ): boolean {
-  return (
-    overlayReadabilityPerLayerPilotEqual(a?.grid, b?.grid) &&
-    overlayReadabilityPerLayerPilotEqual(a?.solarAnalemma, b?.solarAnalemma)
+  return SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS.every((k) =>
+    overlayReadabilityPerLayerPilotEqual(a?.[k], b?.[k]),
   );
 }
 

@@ -133,7 +133,7 @@ Remaining future work:
 
 ## Phase 6: Static and derived overlays
 
-Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability** (v1 + v1.1 + **derived substrate lift scale** + **SceneConfig presentation scalars** + **per-layer pilots** `perLayer.grid` / `perLayer.solarAnalemma`) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
+Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability** (v1 + v1.1 + **derived substrate lift scale** + **SceneConfig presentation scalars** + **per-layer pilots** for **default stack rows** — `perLayer.grid`, `perLayer.solarAnalemma`, `perLayer.subsolarMarker`, `perLayer.sublunarMarker`, `perLayer.cityPins`, `perLayer.staticEquirectOverlay`) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
 
 Delivered:
 
@@ -153,11 +153,11 @@ Delivered:
 - scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, `presentation` intensity and driver exponent) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; greenfield default mode is **`illustrative`** (with illustrative moonlight; persisted explicit modes are preserved); Layers UI exposes **Off / Natural / Enhanced / Illustrative** plus night-light intensity and faint-light lift; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
-- **Overlay readability (v1 + v1.1 + substrate + SceneConfig presentation + per-layer pilots):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`perLayer.grid`** and **`perLayer.solarAnalemma`** apply the same scalars again for those layers only.
+- **Overlay readability (v1 + v1.1 + substrate + SceneConfig presentation + default-stack per-layer pilots):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream, or pilots per defaulted row below); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`perLayer`** keys **`grid`**, **`solarAnalemma`**, **`subsolarMarker`**, **`sublunarMarker`**, **`cityPins`**, **`staticEquirectOverlay`** apply the same scalars again for those layers only.
 
 Remaining future work:
 
-- **Readability extensions (future):** per-layer tuning for stack layers beyond the shipped **`grid`** and **`solarAnalemma`** pilots when product-ready; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
+- **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; richer substrate modeling beyond presentation + catalog `capabilities` (still upstream, no backend policy).
 - further atmospheric scattering and transition refinement on the existing continuous twilight field.
 - weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
 - active solar-position synchronization along astronomical reference trajectories.
@@ -177,7 +177,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + optional `perLayer.grid` pilot, not stale “v1 only” or “substrate unreadable” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + **`perLayer` defaults for grid, solar analemma, subsolar/sublunar markers, city pins, static equirect overlay**, not stale “v1 only” or “substrate unreadable” phrasing).
 
 Exit criteria:
 
@@ -188,7 +188,7 @@ Exit criteria:
 
 **Completed milestones (rolling):**
 
-- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `perLayer.grid` / `perLayer.solarAnalemma`; **next** readability work is per-layer tuning for remaining stack ids and richer substrate heuristics only (Phase 6 “remaining” extensions).
+- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + default-stack per-layer pilots):** docs describe shipped behavior including `scene.overlayReadability.presentation` and optional `perLayer` keys `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`; **next** readability work is richer substrate heuristics and **`perLayer` coverage for rows beyond those defaults** when product-ready only (Phase 6 “remaining” extensions).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 

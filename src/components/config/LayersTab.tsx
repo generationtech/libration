@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { ReactElement } from "react";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
@@ -34,6 +35,7 @@ import {
   type EmissiveNightLightsPresentationMode,
   type MoonlightPresentationMode,
   type SceneConfig,
+  type SceneOverlayReadabilityPerLayerPilotKey,
   type SceneOverlayReadabilityPresentationConfig,
 } from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
@@ -107,7 +109,7 @@ function isIdentityOverlayReadabilityPresentation(
 
 function overlayReadabilityWithPerLayerPilotUpdate(
   overlay: SceneConfig["overlayReadability"],
-  key: "grid" | "solarAnalemma",
+  key: SceneOverlayReadabilityPerLayerPilotKey,
   nextPilot: SceneOverlayReadabilityPresentationConfig,
 ): SceneConfig["overlayReadability"] {
   const nextPerLayer = { ...overlay.perLayer };
@@ -121,6 +123,263 @@ function overlayReadabilityWithPerLayerPilotUpdate(
     presentation: overlay.presentation,
     ...(hasPerLayer ? { perLayer: nextPerLayer } : {}),
   };
+}
+
+function OverlayReadabilityPerLayerPilotBlock(props: {
+  mutable: boolean;
+  updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
+  pilotKey: SceneOverlayReadabilityPerLayerPilotKey;
+  pilotReadability: SceneOverlayReadabilityPresentationConfig;
+  veilRowLabel: string;
+  liftRowLabel: string;
+  resetRowLabel: string;
+  veilAriaLabel: string;
+  liftAriaLabel: string;
+  veilSliderTitle: string;
+  liftSliderTitle: string;
+  resetButtonTitle: string;
+  resetButtonText: string;
+}): ReactElement {
+  const {
+    mutable,
+    updateConfig,
+    pilotKey,
+    pilotReadability,
+    veilRowLabel,
+    liftRowLabel,
+    resetRowLabel,
+    veilAriaLabel,
+    liftAriaLabel,
+    veilSliderTitle,
+    liftSliderTitle,
+    resetButtonTitle,
+    resetButtonText,
+  } = props;
+  const curPilot = (scene: SceneConfig) => ({
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.[pilotKey],
+  });
+  return (
+    <>
+      <ConfigControlRow label={veilRowLabel}>
+        <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+              width: "100%",
+            }}
+          >
+            <input
+              type="range"
+              className="config-input"
+              style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+              min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+              max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+              step={0.05}
+              disabled={!mutable}
+              aria-label={veilAriaLabel}
+              title={veilSliderTitle}
+              value={pilotReadability.readabilityVeilScale01}
+              onChange={
+                mutable && updateConfig
+                  ? (e) => {
+                      const readabilityVeilScale01 = Number(e.currentTarget.value);
+                      updateConfig((draft) => {
+                        const baseScene =
+                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                        draft.scene = {
+                          ...baseScene,
+                          overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                            baseScene.overlayReadability,
+                            pilotKey,
+                            { ...curPilot(baseScene), readabilityVeilScale01 },
+                          ),
+                        };
+                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                      });
+                    }
+                  : undefined
+              }
+            />
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                margin: 0,
+                fontSize: "0.85rem",
+              }}
+            >
+              <span>Value (0–1.5)</span>
+              <input
+                type="number"
+                className="config-input"
+                style={{ width: "4.25rem" }}
+                min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
+                max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
+                step={0.05}
+                disabled={!mutable}
+                aria-label={`${veilAriaLabel} value`}
+                value={pilotReadability.readabilityVeilScale01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const v = Number(e.currentTarget.value);
+                        const readabilityVeilScale01 = Number.isFinite(v)
+                          ? Math.max(
+                              OVERLAY_READABILITY_VEIL_SCALE_MIN,
+                              Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, v),
+                            )
+                          : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                              baseScene.overlayReadability,
+                              pilotKey,
+                              { ...curPilot(baseScene), readabilityVeilScale01 },
+                            ),
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+            </label>
+          </div>
+        </div>
+      </ConfigControlRow>
+      <ConfigControlRow label={liftRowLabel}>
+        <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              flexWrap: "wrap",
+              width: "100%",
+            }}
+          >
+            <input
+              type="range"
+              className="config-input"
+              style={{ flex: "1 1 7rem", minWidth: "6rem" }}
+              min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+              max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+              step={0.01}
+              disabled={!mutable}
+              aria-label={liftAriaLabel}
+              title={liftSliderTitle}
+              value={pilotReadability.overlayLiftMultiplier01}
+              onChange={
+                mutable && updateConfig
+                  ? (e) => {
+                      const overlayLiftMultiplier01 = Number(e.currentTarget.value);
+                      updateConfig((draft) => {
+                        const baseScene =
+                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                        draft.scene = {
+                          ...baseScene,
+                          overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                            baseScene.overlayReadability,
+                            pilotKey,
+                            { ...curPilot(baseScene), overlayLiftMultiplier01 },
+                          ),
+                        };
+                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                      });
+                    }
+                  : undefined
+              }
+            />
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                margin: 0,
+                fontSize: "0.85rem",
+              }}
+            >
+              <span>Value (0.65–1.35)</span>
+              <input
+                type="number"
+                className="config-input"
+                style={{ width: "4.25rem" }}
+                min={OVERLAY_READABILITY_LIFT_MULT_MIN}
+                max={OVERLAY_READABILITY_LIFT_MULT_MAX}
+                step={0.01}
+                disabled={!mutable}
+                aria-label={`${liftAriaLabel} value`}
+                value={pilotReadability.overlayLiftMultiplier01}
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        const v = Number(e.currentTarget.value);
+                        const overlayLiftMultiplier01 = Number.isFinite(v)
+                          ? Math.max(
+                              OVERLAY_READABILITY_LIFT_MULT_MIN,
+                              Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, v),
+                            )
+                          : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
+                        updateConfig((draft) => {
+                          const baseScene =
+                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                          draft.scene = {
+                            ...baseScene,
+                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                              baseScene.overlayReadability,
+                              pilotKey,
+                              { ...curPilot(baseScene), overlayLiftMultiplier01 },
+                            ),
+                          };
+                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                        });
+                      }
+                    : undefined
+                }
+              />
+            </label>
+          </div>
+        </div>
+      </ConfigControlRow>
+      <ConfigControlRow label={resetRowLabel}>
+        <button
+          type="button"
+          className="config-input"
+          disabled={!mutable}
+          title={resetButtonTitle}
+          onClick={
+            mutable && updateConfig
+              ? () => {
+                  updateConfig((draft) => {
+                    const baseScene =
+                      draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                    draft.scene = {
+                      ...baseScene,
+                      overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
+                        baseScene.overlayReadability,
+                        pilotKey,
+                        { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
+                      ),
+                    };
+                    draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
+                  });
+                }
+              : undefined
+          }
+        >
+          {resetButtonText}
+        </button>
+      </ConfigControlRow>
+    </>
+  );
 }
 
 export type LayersTabProps = {
@@ -139,6 +398,22 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
   const solarAnalemmaPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.solarAnalemma,
+  };
+  const subsolarPilotReadability: SceneOverlayReadabilityPresentationConfig = {
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.subsolarMarker,
+  };
+  const sublunarPilotReadability: SceneOverlayReadabilityPresentationConfig = {
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.sublunarMarker,
+  };
+  const cityPinsPilotReadability: SceneOverlayReadabilityPresentationConfig = {
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.cityPins,
+  };
+  const staticEquirectPilotReadability: SceneOverlayReadabilityPresentationConfig = {
+    ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+    ...scene.overlayReadability.perLayer?.staticEquirectOverlay,
   };
   const effectivePresentation = getBaseMapPresentationForMapId(
     scene.baseMap.id,
@@ -737,472 +1012,96 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
             </div>
           </div>
         </ConfigControlRow>
-        <ConfigControlRow label="Grid overlay veil (pilot)">
-          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <input
-                type="range"
-                className="config-input"
-                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
-                min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
-                max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
-                step={0.05}
-                disabled={!mutable}
-                aria-label="Latitude longitude grid overlay readability veil scale"
-                title="Extra veil multiplier for the lat/lon grid only, applied after global overlay readability (1 = default)."
-                value={gridPilotReadability.readabilityVeilScale01}
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        const readabilityVeilScale01 = Number(e.currentTarget.value);
-                        updateConfig((draft) => {
-                          const baseScene =
-                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                          const curGrid = {
-                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                            ...baseScene.overlayReadability.perLayer?.grid,
-                          };
-                          draft.scene = {
-                            ...baseScene,
-                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                              baseScene.overlayReadability,
-                              "grid",
-                              { ...curGrid, readabilityVeilScale01 },
-                            ),
-                          };
-                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                        });
-                      }
-                    : undefined
-                }
-              />
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  margin: 0,
-                  fontSize: "0.85rem",
-                }}
-              >
-                <span>Value (0–1.5)</span>
-                <input
-                  type="number"
-                  className="config-input"
-                  style={{ width: "4.25rem" }}
-                  min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
-                  max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
-                  step={0.05}
-                  disabled={!mutable}
-                  aria-label="Grid overlay veil scale value"
-                  value={gridPilotReadability.readabilityVeilScale01}
-                  onChange={
-                    mutable && updateConfig
-                      ? (e) => {
-                          const v = Number(e.currentTarget.value);
-                          const readabilityVeilScale01 = Number.isFinite(v)
-                            ? Math.max(
-                                OVERLAY_READABILITY_VEIL_SCALE_MIN,
-                                Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, v),
-                              )
-                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
-                          updateConfig((draft) => {
-                            const baseScene =
-                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                            const curGrid = {
-                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                              ...baseScene.overlayReadability.perLayer?.grid,
-                            };
-                            draft.scene = {
-                              ...baseScene,
-                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                                baseScene.overlayReadability,
-                                "grid",
-                                { ...curGrid, readabilityVeilScale01 },
-                              ),
-                            };
-                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                          });
-                        }
-                      : undefined
-                  }
-                />
-              </label>
-            </div>
-          </div>
-        </ConfigControlRow>
-        <ConfigControlRow label="Grid overlay lift (pilot)">
-          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <input
-                type="range"
-                className="config-input"
-                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
-                min={OVERLAY_READABILITY_LIFT_MULT_MIN}
-                max={OVERLAY_READABILITY_LIFT_MULT_MAX}
-                step={0.01}
-                disabled={!mutable}
-                aria-label="Latitude longitude grid overlay lift multiplier"
-                title="Extra lift multiplier for the lat/lon grid only, applied after global overlay readability (1 = default)."
-                value={gridPilotReadability.overlayLiftMultiplier01}
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        const overlayLiftMultiplier01 = Number(e.currentTarget.value);
-                        updateConfig((draft) => {
-                          const baseScene =
-                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                          const curGrid = {
-                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                            ...baseScene.overlayReadability.perLayer?.grid,
-                          };
-                          draft.scene = {
-                            ...baseScene,
-                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                              baseScene.overlayReadability,
-                              "grid",
-                              { ...curGrid, overlayLiftMultiplier01 },
-                            ),
-                          };
-                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                        });
-                      }
-                    : undefined
-                }
-              />
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  margin: 0,
-                  fontSize: "0.85rem",
-                }}
-              >
-                <span>Value (0.65–1.35)</span>
-                <input
-                  type="number"
-                  className="config-input"
-                  style={{ width: "4.25rem" }}
-                  min={OVERLAY_READABILITY_LIFT_MULT_MIN}
-                  max={OVERLAY_READABILITY_LIFT_MULT_MAX}
-                  step={0.01}
-                  disabled={!mutable}
-                  aria-label="Grid overlay lift multiplier value"
-                  value={gridPilotReadability.overlayLiftMultiplier01}
-                  onChange={
-                    mutable && updateConfig
-                      ? (e) => {
-                          const v = Number(e.currentTarget.value);
-                          const overlayLiftMultiplier01 = Number.isFinite(v)
-                            ? Math.max(
-                                OVERLAY_READABILITY_LIFT_MULT_MIN,
-                                Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, v),
-                              )
-                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
-                          updateConfig((draft) => {
-                            const baseScene =
-                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                            const curGrid = {
-                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                              ...baseScene.overlayReadability.perLayer?.grid,
-                            };
-                            draft.scene = {
-                              ...baseScene,
-                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                                baseScene.overlayReadability,
-                                "grid",
-                                { ...curGrid, overlayLiftMultiplier01 },
-                              ),
-                            };
-                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                          });
-                        }
-                      : undefined
-                  }
-                />
-              </label>
-            </div>
-          </div>
-        </ConfigControlRow>
-        <ConfigControlRow label="Grid overlay readability (pilot)">
-          <button
-            type="button"
-            className="config-input"
-            disabled={!mutable}
-            title="Clear grid-only veil/lift overrides (does not change global overlay readability)."
-            onClick={
-              mutable && updateConfig
-                ? () => {
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = {
-                        ...baseScene,
-                        overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                          baseScene.overlayReadability,
-                          "grid",
-                          { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
-                        ),
-                      };
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                    });
-                  }
-                : undefined
-            }
-          >
-            Reset grid overlay readability
-          </button>
-        </ConfigControlRow>
-        <ConfigControlRow label="Solar analemma overlay veil (pilot)">
-          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <input
-                type="range"
-                className="config-input"
-                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
-                min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
-                max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
-                step={0.05}
-                disabled={!mutable}
-                aria-label="Solar analemma overlay readability veil scale"
-                title="Extra veil multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
-                value={solarAnalemmaPilotReadability.readabilityVeilScale01}
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        const readabilityVeilScale01 = Number(e.currentTarget.value);
-                        updateConfig((draft) => {
-                          const baseScene =
-                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                          const cur = {
-                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                            ...baseScene.overlayReadability.perLayer?.solarAnalemma,
-                          };
-                          draft.scene = {
-                            ...baseScene,
-                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                              baseScene.overlayReadability,
-                              "solarAnalemma",
-                              { ...cur, readabilityVeilScale01 },
-                            ),
-                          };
-                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                        });
-                      }
-                    : undefined
-                }
-              />
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  margin: 0,
-                  fontSize: "0.85rem",
-                }}
-              >
-                <span>Value (0–1.5)</span>
-                <input
-                  type="number"
-                  className="config-input"
-                  style={{ width: "4.25rem" }}
-                  min={OVERLAY_READABILITY_VEIL_SCALE_MIN}
-                  max={OVERLAY_READABILITY_VEIL_SCALE_MAX}
-                  step={0.05}
-                  disabled={!mutable}
-                  aria-label="Solar analemma overlay veil scale value"
-                  value={solarAnalemmaPilotReadability.readabilityVeilScale01}
-                  onChange={
-                    mutable && updateConfig
-                      ? (e) => {
-                          const v = Number(e.currentTarget.value);
-                          const readabilityVeilScale01 = Number.isFinite(v)
-                            ? Math.max(
-                                OVERLAY_READABILITY_VEIL_SCALE_MIN,
-                                Math.min(OVERLAY_READABILITY_VEIL_SCALE_MAX, v),
-                              )
-                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
-                          updateConfig((draft) => {
-                            const baseScene =
-                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                            const cur = {
-                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                              ...baseScene.overlayReadability.perLayer?.solarAnalemma,
-                            };
-                            draft.scene = {
-                              ...baseScene,
-                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                                baseScene.overlayReadability,
-                                "solarAnalemma",
-                                { ...cur, readabilityVeilScale01 },
-                              ),
-                            };
-                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                          });
-                        }
-                      : undefined
-                  }
-                />
-              </label>
-            </div>
-          </div>
-        </ConfigControlRow>
-        <ConfigControlRow label="Solar analemma overlay lift (pilot)">
-          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <input
-                type="range"
-                className="config-input"
-                style={{ flex: "1 1 7rem", minWidth: "6rem" }}
-                min={OVERLAY_READABILITY_LIFT_MULT_MIN}
-                max={OVERLAY_READABILITY_LIFT_MULT_MAX}
-                step={0.01}
-                disabled={!mutable}
-                aria-label="Solar analemma overlay lift multiplier"
-                title="Extra lift multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
-                value={solarAnalemmaPilotReadability.overlayLiftMultiplier01}
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        const overlayLiftMultiplier01 = Number(e.currentTarget.value);
-                        updateConfig((draft) => {
-                          const baseScene =
-                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                          const cur = {
-                            ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                            ...baseScene.overlayReadability.perLayer?.solarAnalemma,
-                          };
-                          draft.scene = {
-                            ...baseScene,
-                            overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                              baseScene.overlayReadability,
-                              "solarAnalemma",
-                              { ...cur, overlayLiftMultiplier01 },
-                            ),
-                          };
-                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                        });
-                      }
-                    : undefined
-                }
-              />
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                  margin: 0,
-                  fontSize: "0.85rem",
-                }}
-              >
-                <span>Value (0.65–1.35)</span>
-                <input
-                  type="number"
-                  className="config-input"
-                  style={{ width: "4.25rem" }}
-                  min={OVERLAY_READABILITY_LIFT_MULT_MIN}
-                  max={OVERLAY_READABILITY_LIFT_MULT_MAX}
-                  step={0.01}
-                  disabled={!mutable}
-                  aria-label="Solar analemma overlay lift multiplier value"
-                  value={solarAnalemmaPilotReadability.overlayLiftMultiplier01}
-                  onChange={
-                    mutable && updateConfig
-                      ? (e) => {
-                          const v = Number(e.currentTarget.value);
-                          const overlayLiftMultiplier01 = Number.isFinite(v)
-                            ? Math.max(
-                                OVERLAY_READABILITY_LIFT_MULT_MIN,
-                                Math.min(OVERLAY_READABILITY_LIFT_MULT_MAX, v),
-                              )
-                            : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
-                          updateConfig((draft) => {
-                            const baseScene =
-                              draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                            const cur = {
-                              ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
-                              ...baseScene.overlayReadability.perLayer?.solarAnalemma,
-                            };
-                            draft.scene = {
-                              ...baseScene,
-                              overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                                baseScene.overlayReadability,
-                                "solarAnalemma",
-                                { ...cur, overlayLiftMultiplier01 },
-                              ),
-                            };
-                            draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                          });
-                        }
-                      : undefined
-                  }
-                />
-              </label>
-            </div>
-          </div>
-        </ConfigControlRow>
-        <ConfigControlRow label="Solar analemma overlay readability (pilot)">
-          <button
-            type="button"
-            className="config-input"
-            disabled={!mutable}
-            title="Clear solar-analemma-only veil/lift overrides (does not change global overlay readability)."
-            onClick={
-              mutable && updateConfig
-                ? () => {
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = {
-                        ...baseScene,
-                        overlayReadability: overlayReadabilityWithPerLayerPilotUpdate(
-                          baseScene.overlayReadability,
-                          "solarAnalemma",
-                          { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
-                        ),
-                      };
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                    });
-                  }
-                : undefined
-            }
-          >
-            Reset solar analemma overlay readability
-          </button>
-        </ConfigControlRow>
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="grid"
+          pilotReadability={gridPilotReadability}
+          veilRowLabel="Grid overlay veil (pilot)"
+          liftRowLabel="Grid overlay lift (pilot)"
+          resetRowLabel="Grid overlay readability (pilot)"
+          veilAriaLabel="Latitude longitude grid overlay readability veil scale"
+          liftAriaLabel="Latitude longitude grid overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for the lat/lon grid only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for the lat/lon grid only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear grid-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset grid overlay readability"
+        />
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="solarAnalemma"
+          pilotReadability={solarAnalemmaPilotReadability}
+          veilRowLabel="Solar analemma overlay veil (pilot)"
+          liftRowLabel="Solar analemma overlay lift (pilot)"
+          resetRowLabel="Solar analemma overlay readability (pilot)"
+          veilAriaLabel="Solar analemma overlay readability veil scale"
+          liftAriaLabel="Solar analemma overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for the solar analemma only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear solar-analemma-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset solar analemma overlay readability"
+        />
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="subsolarMarker"
+          pilotReadability={subsolarPilotReadability}
+          veilRowLabel="Subsolar marker overlay veil (pilot)"
+          liftRowLabel="Subsolar marker overlay lift (pilot)"
+          resetRowLabel="Subsolar marker overlay readability (pilot)"
+          veilAriaLabel="Subsolar marker overlay readability veil scale"
+          liftAriaLabel="Subsolar marker overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for the subsolar marker only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for the subsolar marker only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear subsolar-marker-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset subsolar marker overlay readability"
+        />
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="sublunarMarker"
+          pilotReadability={sublunarPilotReadability}
+          veilRowLabel="Sublunar marker overlay veil (pilot)"
+          liftRowLabel="Sublunar marker overlay lift (pilot)"
+          resetRowLabel="Sublunar marker overlay readability (pilot)"
+          veilAriaLabel="Sublunar marker overlay readability veil scale"
+          liftAriaLabel="Sublunar marker overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for the sublunar marker only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for the sublunar marker only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear sublunar-marker-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset sublunar marker overlay readability"
+        />
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="cityPins"
+          pilotReadability={cityPinsPilotReadability}
+          veilRowLabel="City pins overlay veil (pilot)"
+          liftRowLabel="City pins overlay lift (pilot)"
+          resetRowLabel="City pins overlay readability (pilot)"
+          veilAriaLabel="City pins overlay readability veil scale"
+          liftAriaLabel="City pins overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for city pins only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for city pins only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear city-pins-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset city pins overlay readability"
+        />
+        <OverlayReadabilityPerLayerPilotBlock
+          mutable={mutable}
+          updateConfig={updateConfig}
+          pilotKey="staticEquirectOverlay"
+          pilotReadability={staticEquirectPilotReadability}
+          veilRowLabel="Static equirect overlay veil (pilot)"
+          liftRowLabel="Static equirect overlay lift (pilot)"
+          resetRowLabel="Static equirect overlay readability (pilot)"
+          veilAriaLabel="Static equirect overlay readability veil scale"
+          liftAriaLabel="Static equirect overlay lift multiplier"
+          veilSliderTitle="Extra veil multiplier for static equirect rasters only, applied after global overlay readability (1 = default)."
+          liftSliderTitle="Extra lift multiplier for static equirect rasters only, applied after global overlay readability (1 = default)."
+          resetButtonTitle="Clear static-equirect-only veil/lift overrides (does not change global overlay readability)."
+          resetButtonText="Reset static equirect overlay readability"
+        />
         <ConfigControlRow label="Overlay readability tuning">
           <button
             type="button"

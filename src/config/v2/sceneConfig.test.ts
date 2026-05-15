@@ -264,6 +264,51 @@ describe("SceneConfig (Phase 1)", () => {
     expect(scene.overlayReadability.perLayer?.solarAnalemma).toBeUndefined();
   });
 
+  it("drops identity-only subsolarMarker pilot while retaining non-identity grid pilot", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        overlayReadability: {
+          presentation: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          perLayer: {
+            grid: { readabilityVeilScale01: 0.5, overlayLiftMultiplier01: 1 },
+            subsolarMarker: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.overlayReadability.perLayer?.grid?.readabilityVeilScale01).toBe(0.5);
+    expect(scene.overlayReadability.perLayer?.subsolarMarker).toBeUndefined();
+  });
+
+  it("normalizes overlay readability per-layer cityPins pilot and clamps values", () => {
+    const scene = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        overlayReadability: {
+          presentation: { readabilityVeilScale01: 1, overlayLiftMultiplier01: 1 },
+          perLayer: {
+            cityPins: { readabilityVeilScale01: -1, overlayLiftMultiplier01: 9 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(scene.overlayReadability.perLayer?.cityPins?.readabilityVeilScale01).toBe(0);
+    expect(scene.overlayReadability.perLayer?.cityPins?.overlayLiftMultiplier01).toBe(1.35);
+  });
+
   it("normalizes emissive night lights mode and rejects unknown to illustrative", () => {
     const ok = normalizeSceneConfig(
       {

@@ -12,7 +12,11 @@
  */
 
 import { subsolarPoint } from "../core/subsolarPoint";
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBSOLAR_MARKER_KIND, type SubsolarMarkerPayload } from "./subsolarMarkerPayload";
@@ -26,10 +30,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Uses the same {@link subsolarPoint} model as solar shading.
  */
 export function createSubsolarMarkerLayer(
-  options: { zIndex?: number; opacity?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    /** Optional pilot: extra veil/lift pass for this marker only (after global presentation). */
+    subsolarMarkerReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+  } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
+  const subsolarMarkerReadabilityPresentation = options.subsolarMarkerReadabilityPresentation;
   return {
     id: SUBSOLAR_MARKER_ID,
     name: "Subsolar point",
@@ -40,7 +50,10 @@ export function createSubsolarMarkerLayer(
     updatePolicy,
     getState(time: TimeContext): LayerState {
       const { latDeg, lonDeg } = subsolarPoint(time.now);
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (subsolarMarkerReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(frame, subsolarMarkerReadabilityPresentation);
+      }
       const data: SubsolarMarkerPayload = {
         kind: SUBSOLAR_MARKER_KIND,
         latDeg,

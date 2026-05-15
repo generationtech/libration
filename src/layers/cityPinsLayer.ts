@@ -12,7 +12,11 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
 import { formatPinDateTimeLabel } from "../core/pinDateTimeDisplayFormat";
 import type { ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes";
@@ -80,11 +84,17 @@ export function createCityPinsLayer(
   presentation: CityPinsPresentationOptions,
   cityNameFontAssetId: FontAssetId,
   dateTimeFontAssetId: FontAssetId,
-  options: { zIndex?: number; opacity?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    /** Optional pilot: extra veil/lift pass for city pins only (after global presentation). */
+    cityPinsReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+  } = {},
 ): Layer {
   const pinDefinitions = resolvePinDefinitions(cities, customPins);
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
+  const cityPinsReadabilityPresentation = options.cityPinsReadabilityPresentation;
   return {
     id: CITY_PINS_LAYER_ID,
     name: "Reference cities",
@@ -94,7 +104,10 @@ export function createCityPinsLayer(
     type: "points",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (cityPinsReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(frame, cityPinsReadabilityPresentation);
+      }
       const cities: CityPinEntry[] = pinDefinitions.map((c) => ({
         id: c.id,
         name: c.name,

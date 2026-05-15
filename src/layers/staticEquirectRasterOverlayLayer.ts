@@ -11,7 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -41,6 +45,8 @@ export type CreateStaticEquirectRasterOverlayLayerOptions = {
   opacity?: number;
   /** Shown in debug / tooling; not a scene id. */
   name?: string;
+  /** Optional pilot: extra veil/lift pass for this static raster only (after global presentation). */
+  staticEquirectOverlayReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
 };
 
 /**
@@ -55,6 +61,8 @@ export function createStaticEquirectRasterOverlayLayer(
   const opacity = options.opacity ?? 1;
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const id = runtimeIdForStaticRasterSceneLayer(options.sceneLayerId);
+  const staticEquirectOverlayReadabilityPresentation =
+    options.staticEquirectOverlayReadabilityPresentation;
   return {
     id,
     name: options.name ?? "Static equirect overlay",
@@ -63,7 +71,13 @@ export function createStaticEquirectRasterOverlayLayer(
     type: "raster",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (staticEquirectOverlayReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(
+          frame,
+          staticEquirectOverlayReadabilityPresentation,
+        );
+      }
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,

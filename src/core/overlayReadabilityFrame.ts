@@ -17,7 +17,7 @@
  * SceneConfig-resolved night-light mode and presentation — no emissive raster sampling here.
  *
  * Global `scene.overlayReadability.presentation` is applied when the shell builds the frame; optional
- * `scene.overlayReadability.perLayer.grid` and `perLayer.solarAnalemma` repeat the same veil/lift scalars
+ * `scene.overlayReadability.perLayer` entries for default stack rows (see `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in `sceneConfig`) repeat the same veil/lift scalars
  * upstream in those layers only (after the global frame).
  */
 
