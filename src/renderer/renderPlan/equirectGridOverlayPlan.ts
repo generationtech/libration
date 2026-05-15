@@ -18,6 +18,7 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
 import {
   meridianLongitudesDegForEquirectGrid,
   parallelLatitudesDegForEquirectGrid,
@@ -32,6 +33,8 @@ export interface EquirectangularGridOverlayPlanOptions {
   parallelStepDeg: number;
   /** Same factor baked into RGBA alphas as legacy grid draw (layer opacity). */
   layerOpacity: number;
+  /** Optional terminator-aware legibility (upstream). */
+  readability?: OverlayReadabilityHints | null;
 }
 
 /**
@@ -47,8 +50,14 @@ export function buildEquirectangularGridOverlayRenderPlan(
   }
 
   const op = options.layerOpacity;
-  const lineMinor = `rgba(220, 230, 255, ${0.07 * op})`;
-  const lineMajor = `rgba(235, 242, 255, ${0.16 * op})`;
+  const veil = options.readability?.nightVeil01 ?? 0;
+  const minorA = Math.min(0.38 * op, (0.07 + 0.2 * veil) * op);
+  const majorA = Math.min(0.42 * op, (0.16 + 0.18 * veil) * op);
+  const minorW = 1 + 0.75 * veil;
+  const majorW = 1 + 1.1 * veil;
+
+  const lineMinor = `rgba(220, 230, 255, ${minorA})`;
+  const lineMajor = `rgba(235, 242, 255, ${majorA})`;
 
   const items: RenderLineItem[] = [];
 
@@ -62,7 +71,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
       x2: x,
       y2: h,
       stroke: major ? lineMajor : lineMinor,
-      strokeWidthPx: 1,
+      strokeWidthPx: major ? majorW : minorW,
     });
   }
 
@@ -76,7 +85,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
       x2: w,
       y2: y,
       stroke: major ? lineMajor : lineMinor,
-      strokeWidthPx: 1,
+      strokeWidthPx: major ? majorW : minorW,
     });
   }
 

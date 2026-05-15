@@ -121,6 +121,33 @@ describe("buildEquirectangularGridOverlayRenderPlan", () => {
       expect(majorLon.stroke).toBe("rgba(235, 242, 255, 0.08)");
     }
   });
+
+  it("boosts line alpha and stroke width when readability night veil is high", () => {
+    const base = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: 720,
+      viewportHeightPx: 360,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+    });
+    const boosted = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: 720,
+      viewportHeightPx: 360,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+      readability: { nightVeil01: 1 },
+    });
+    expect(boosted.items.length).toBe(base.items.length);
+    const b0 = boosted.items[0];
+    const a0 = base.items[0];
+    expect(b0?.kind).toBe("line");
+    expect(a0?.kind).toBe("line");
+    if (b0?.kind === "line" && a0?.kind === "line") {
+      expect(b0.strokeWidthPx).toBeGreaterThan(a0.strokeWidthPx);
+      expect(b0.stroke.length).toBeGreaterThan(10);
+    }
+  });
 });
 
 describe("executeRenderPlanOnCanvas equirect grid overlay lines", () => {

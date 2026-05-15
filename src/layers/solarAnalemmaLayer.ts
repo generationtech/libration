@@ -12,6 +12,7 @@
  */
 
 import { sampleSolarAnalemmaGroundTrack } from "../core/solarAnalemmaGroundTrack";
+import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -50,10 +51,12 @@ export function createSolarAnalemmaLayer(
     updatePolicy,
     getState(time: TimeContext): LayerState {
       const pts = sampleSolarAnalemmaGroundTrack(time.now, utcHour);
+      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
       const data: EquirectangularPolylinePayload = {
         kind: EQUIRECT_POLYLINE_KIND,
         points: pts,
         closed: true,
+        readability: { nightVeil01: frame.globalNightVeil01 },
       };
       return {
         visible: true,

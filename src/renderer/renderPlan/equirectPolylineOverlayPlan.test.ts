@@ -41,4 +41,35 @@ describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
     });
     expect(plan.items).toHaveLength(0);
   });
+
+  it("increases stroke width when readability night veil is high", () => {
+    const base = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      points: [
+        { latDeg: 0, lonDeg: -10 },
+        { latDeg: 0, lonDeg: 10 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+    });
+    const hi = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      points: [
+        { latDeg: 0, lonDeg: -10 },
+        { latDeg: 0, lonDeg: 10 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+      readability: { nightVeil01: 1 },
+    });
+    const b = base.items[0];
+    const h = hi.items[0];
+    expect(b?.kind).toBe("line");
+    expect(h?.kind).toBe("line");
+    if (b?.kind === "line" && h?.kind === "line") {
+      expect(h.strokeWidthPx).toBeGreaterThan(b.strokeWidthPx);
+    }
+  });
 });

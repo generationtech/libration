@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
+import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+
 export const EQUIRECT_POLYLINE_KIND = "equirectPolyline" as const;
 
 export interface EquirectangularPolylinePayload {
@@ -18,6 +21,7 @@ export interface EquirectangularPolylinePayload {
   readonly points: readonly { latDeg: number; lonDeg: number }[];
   /** When true, adds a segment from last to first with longitude unwrapping. */
   closed: boolean;
+  readability?: OverlayReadabilityHints;
 }
 
 export function isEquirectangularPolylinePayload(
@@ -38,6 +42,9 @@ export function isEquirectangularPolylinePayload(
     if (typeof q.latDeg !== "number" || typeof q.lonDeg !== "number") {
       return false;
     }
+  }
+  if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
+    return false;
   }
   return true;
 }

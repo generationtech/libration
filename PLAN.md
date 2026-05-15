@@ -22,6 +22,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible moonlight composition with configurable presentation modes.
 - emissive night-light upstream composition (catalog-backed asset, policy, perceptual luma driver, Layers presentation controls, illustrative defaults).
+- derived overlay readability v1 (grid, analemma, subsolar/sublunar; solar night-veil hints into RenderPlan).
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
@@ -38,10 +39,11 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 ## Near-term execution slices
 
-### Next likely runtime slice (after doc alignment)
+### Next runtime extensions (after doc alignment)
 
-**Composition-aware overlay readability policy:** upstream rules for how static/derived overlays read against substrate, terminator, moonlight, and emissive tone (contrast, veil, or ordering hints resolved before the backend), without moving composition into Canvas execution.
+**Overlay readability v1 (shipped):** derived solar night-veil hints on lat/lon grid, solar analemma, and subsolar/sublunar markers → stronger strokes/alphas in upstream RenderPlan builders; no SceneConfig surface yet.
 
+**Likely next readability / composition slices:** emissive- or substrate-aware legibility, city pins and static raster overlays, optional SceneConfig presentation axis—each scoped, tested, and documented.
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -73,10 +75,11 @@ Status: active.
 - perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
 - **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).
 - subsolar marker, sublunar marker, solar analemma overlay, and derived astronomical overlays in the layer stack.
+- **Overlay readability v1 (derived):** `computeOverlayReadabilityFrameFromTimeMs` + `OverlayReadabilityHints` on grid/analemma/marker payloads; RenderPlan stroke/alpha scaling (terminator-aligned night veil; no emissive sampling in v1).
 
 **Likely next implementation slice:**
 
-- **Composition-aware overlay readability policy** (upstream contrast/veil or ordering semantics so overlays stay legible against terminator and emissive-modulated substrate).
+- **Readability extensions:** emissive/substrate-aware contrast, additional overlay kinds (e.g. city pins), and/or a minimal SceneConfig presentation axis when product-ready.
 
 **Remaining frontier work (incremental; sequence as dependencies allow):**
 

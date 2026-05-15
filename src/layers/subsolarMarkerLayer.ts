@@ -12,6 +12,7 @@
  */
 
 import { subsolarPoint } from "../core/subsolarPoint";
+import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBSOLAR_MARKER_KIND, type SubsolarMarkerPayload } from "./subsolarMarkerPayload";
@@ -39,10 +40,12 @@ export function createSubsolarMarkerLayer(
     updatePolicy,
     getState(time: TimeContext): LayerState {
       const { latDeg, lonDeg } = subsolarPoint(time.now);
+      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
       const data: SubsolarMarkerPayload = {
         kind: SUBSOLAR_MARKER_KIND,
         latDeg,
         lonDeg,
+        readability: { nightVeil01: frame.nightVeil01At(latDeg, lonDeg) },
       };
       return {
         visible: true,

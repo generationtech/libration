@@ -316,7 +316,7 @@ export class CanvasRenderBackend implements RenderBackend {
     }
     ctx.setLineDash([]);
     if (isEquirectangularGridPayload(layer.data)) {
-      const { meridianStepDeg, parallelStepDeg } = layer.data;
+      const { meridianStepDeg, parallelStepDeg, readability } = layer.data;
       executeRenderPlanOnCanvas(
         ctx,
         buildEquirectangularGridOverlayRenderPlan({
@@ -325,12 +325,13 @@ export class CanvasRenderBackend implements RenderBackend {
           meridianStepDeg,
           parallelStepDeg,
           layerOpacity: layer.opacity,
+          readability: readability ?? null,
         }),
       );
       return;
     }
     if (isEquirectangularPolylinePayload(layer.data)) {
-      const { points, closed } = layer.data;
+      const { points, closed, readability } = layer.data;
       executeRenderPlanOnCanvas(
         ctx,
         buildEquirectangularPolylineOverlayRenderPlan({
@@ -339,6 +340,7 @@ export class CanvasRenderBackend implements RenderBackend {
           points,
           closed,
           layerOpacity: layer.opacity,
+          readability: readability ?? null,
         }),
       );
     }
@@ -391,6 +393,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportHeightPx: viewport.height,
           lonDeg: layer.data.lonDeg,
           latDeg: layer.data.latDeg,
+          readability: layer.data.readability ?? null,
         }),
       );
       return;
@@ -405,6 +408,7 @@ export class CanvasRenderBackend implements RenderBackend {
           latDeg: layer.data.latDeg,
           illuminatedFraction: layer.data.illuminatedFraction,
           waxing: layer.data.waxing,
+          readability: layer.data.readability ?? null,
         }),
       );
       return;

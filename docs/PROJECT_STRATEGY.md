@@ -169,7 +169,7 @@ Foundational systems now exist:
 - month-aware map families.
 - coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: overlay readability policy, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: extend overlay readability beyond the shipped v1 slice, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -178,7 +178,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Composition-aware overlay readability policy** and atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
+4. **Overlay readability** (v1: derived solar night veil on key overlays) **and extensions** (emissive/substrate-aware tuning, optional config), atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

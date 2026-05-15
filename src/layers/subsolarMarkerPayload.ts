@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
+import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+
 export const SUBSOLAR_MARKER_KIND = "subsolarMarkerEquirect" as const;
 
 /**
@@ -21,14 +24,23 @@ export interface SubsolarMarkerPayload {
   kind: typeof SUBSOLAR_MARKER_KIND;
   latDeg: number;
   lonDeg: number;
+  readability?: OverlayReadabilityHints;
 }
 
 export function isSubsolarMarkerPayload(data: unknown): data is SubsolarMarkerPayload {
   if (data === null || typeof data !== "object") return false;
   const o = data as Record<string, unknown>;
-  return (
-    o.kind === SUBSOLAR_MARKER_KIND &&
-    typeof o.latDeg === "number" &&
-    typeof o.lonDeg === "number"
-  );
+  if (
+    !(
+      o.kind === SUBSOLAR_MARKER_KIND &&
+      typeof o.latDeg === "number" &&
+      typeof o.lonDeg === "number"
+    )
+  ) {
+    return false;
+  }
+  if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
+    return false;
+  }
+  return true;
 }

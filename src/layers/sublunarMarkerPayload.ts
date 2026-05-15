@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
+import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+
 export const SUBLUNAR_MARKER_KIND = "sublunarMarkerEquirect" as const;
 
 /**
@@ -30,17 +33,26 @@ export interface SublunarMarkerPayload {
   geocentricElongationDeg: number;
   /** When true, the lit portion grows toward full; when false, toward new. */
   waxing: boolean;
+  readability?: OverlayReadabilityHints;
 }
 
 export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPayload {
   if (data === null || typeof data !== "object") return false;
   const o = data as Record<string, unknown>;
-  return (
-    o.kind === SUBLUNAR_MARKER_KIND &&
-    typeof o.latDeg === "number" &&
-    typeof o.lonDeg === "number" &&
-    typeof o.illuminatedFraction === "number" &&
-    typeof o.geocentricElongationDeg === "number" &&
-    typeof o.waxing === "boolean"
-  );
+  if (
+    !(
+      o.kind === SUBLUNAR_MARKER_KIND &&
+      typeof o.latDeg === "number" &&
+      typeof o.lonDeg === "number" &&
+      typeof o.illuminatedFraction === "number" &&
+      typeof o.geocentricElongationDeg === "number" &&
+      typeof o.waxing === "boolean"
+    )
+  ) {
+    return false;
+  }
+  if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
+    return false;
+  }
+  return true;
 }

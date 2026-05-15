@@ -11,6 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
+import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+
 export const EQUIRECT_GRID_KIND = "equirectGrid" as const;
 
 /**
@@ -20,6 +23,8 @@ export interface EquirectangularGridPayload {
   kind: typeof EQUIRECT_GRID_KIND;
   meridianStepDeg: number;
   parallelStepDeg: number;
+  /** When set, grid line weight/contrast track terminator-aware legibility (upstream). */
+  readability?: OverlayReadabilityHints;
 }
 
 export function isEquirectangularGridPayload(
@@ -27,9 +32,17 @@ export function isEquirectangularGridPayload(
 ): data is EquirectangularGridPayload {
   if (data === null || typeof data !== "object") return false;
   const o = data as Record<string, unknown>;
-  return (
-    o.kind === EQUIRECT_GRID_KIND &&
-    typeof o.meridianStepDeg === "number" &&
-    typeof o.parallelStepDeg === "number"
-  );
+  if (
+    !(
+      o.kind === EQUIRECT_GRID_KIND &&
+      typeof o.meridianStepDeg === "number" &&
+      typeof o.parallelStepDeg === "number"
+    )
+  ) {
+    return false;
+  }
+  if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
+    return false;
+  }
+  return true;
 }

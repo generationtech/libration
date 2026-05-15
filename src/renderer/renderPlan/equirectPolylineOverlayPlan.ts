@@ -12,6 +12,7 @@
  */
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
+import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 
 export interface EquirectangularPolylineOverlayPlanOptions {
@@ -20,6 +21,7 @@ export interface EquirectangularPolylineOverlayPlanOptions {
   readonly points: readonly { latDeg: number; lonDeg: number }[];
   closed: boolean;
   layerOpacity: number;
+  readability?: OverlayReadabilityHints | null;
 }
 
 function shortLonDeltaDeg(a: number, b: number): number {
@@ -74,7 +76,11 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     return { items: [] };
   }
   const op = options.layerOpacity;
-  const stroke = `rgba(255, 200, 120, ${0.5 * op})`;
+  const veil = options.readability?.nightVeil01 ?? 0;
+  const baseStrokeA = 0.5 * op;
+  const strokeA = Math.min(0.92 * op, baseStrokeA + 0.32 * veil * op);
+  const stroke = `rgba(255, 200, 120, ${strokeA})`;
+  const strokeW = 1.2 + 0.95 * veil;
   const lons = unwrappedLongitudes(pts.map((p) => p.lonDeg));
   const items: RenderLineItem[] = [];
 
@@ -87,7 +93,7 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     const y0 = parallelYFromLatitudeDeg(pts[i0]!.latDeg, h);
     const y1 = parallelYFromLatitudeDeg(pts[i1]!.latDeg, h);
     if (Number.isFinite(x0) && Number.isFinite(x1)) {
-      items.push({ kind: "line", x1: x0, y1: y0, x2: x1, y2: y1, stroke, strokeWidthPx: 1.2 });
+      items.push({ kind: "line", x1: x0, y1: y0, x2: x1, y2: y1, stroke, strokeWidthPx: strokeW });
     }
   };
 

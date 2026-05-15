@@ -63,6 +63,29 @@ describe("buildSubsolarMarkerRenderPlan", () => {
     expect(plan.items).toHaveLength(11);
   });
 
+  it("widens subsolar strokes when readability night veil is high", () => {
+    const base = buildSubsolarMarkerRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      lonDeg: 0,
+      latDeg: 0,
+    });
+    const hi = buildSubsolarMarkerRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      lonDeg: 0,
+      latDeg: 0,
+      readability: { nightVeil01: 1 },
+    });
+    const rayB = base.items[1];
+    const rayH = hi.items[1];
+    expect(rayB?.kind).toBe("line");
+    expect(rayH?.kind).toBe("line");
+    if (rayB?.kind === "line" && rayH?.kind === "line") {
+      expect(rayH.strokeWidthPx).toBeGreaterThan(rayB.strokeWidthPx);
+    }
+  });
+
   it("maps longitude and latitude to scene coordinates", () => {
     const plan = buildSubsolarMarkerRenderPlan({
       viewportWidthPx: 360,

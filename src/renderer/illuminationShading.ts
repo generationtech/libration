@@ -23,6 +23,11 @@ import {
   type EmissiveNightLightsPresentationMode,
 } from "../core/emissiveNightLightsPolicy";
 import { getMoonlightPolicy, type MoonlightPolicy } from "../core/moonlightPolicy";
+import {
+  illuminationNightVeil01FromSolarAltitudeDeg,
+  ILLUMINATION_DAYLIGHT_CLEAR_ALTITUDE_DEG,
+  ILLUMINATION_DEEP_NIGHT_SETTLE_ALTITUDE_DEG,
+} from "../core/nightVeilFromSolarAltitude";
 
 /**
  * Solar illumination sampling for the canvas equirectangular pass.
@@ -34,15 +39,13 @@ import { getMoonlightPolicy, type MoonlightPolicy } from "../core/moonlightPolic
 /** Max night-side overlay opacity (straight alpha). */
 export const NIGHT_DARKEN = 0.62;
 
-/**
- * Altitude where the day-side shading veil should be fully clear.
- */
-export const DAYLIGHT_CLEAR_ALTITUDE_DEG = 4;
+/** Altitude where the day-side shading veil should be fully clear (shared with `nightVeilFromSolarAltitude`). */
+export const DAYLIGHT_CLEAR_ALTITUDE_DEG = ILLUMINATION_DAYLIGHT_CLEAR_ALTITUDE_DEG;
 
-/**
- * Altitude where deep-night treatment reaches its settled black/dark state.
- */
-export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = -18;
+/** Altitude where deep-night treatment reaches its settled black/dark state. */
+export const DEEP_NIGHT_SETTLE_ALTITUDE_DEG = ILLUMINATION_DEEP_NIGHT_SETTLE_ALTITUDE_DEG;
+
+export { illuminationNightVeil01FromSolarAltitudeDeg };
 
 /** Per-band tint anchors for attenuation color (kept deliberately low-luminance). */
 const C_DAY_GLOW = { r: 24, g: 30, b: 40 } as const;
@@ -194,18 +197,6 @@ function atmosphericTintStrength(altitudeDeg: number): number {
   return TWILIGHT_ATMOSPHERIC_ALPHA_MAX * horizonEnvelope * dayFadeIn * deepNightFadeIn;
 }
 
-/**
- * Continuous darkening ramp driven by solar altitude:
- * clear day above +4°, full darken by −18°.
- */
-function nightMaskStrength(altitudeDeg: number): number {
-  return smootherstep(
-    TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear,
-    TWILIGHT_REFERENCE_ALTITUDES_DEG.deepNight,
-    altitudeDeg,
-  );
-}
-
 export interface IlluminationRgba8 {
   r: number;
   g: number;
@@ -265,7 +256,7 @@ export function sampleIlluminationRgba8(
           moonlightPolicy,
         )
       : 0;
-  const nightStrength = nightMaskStrength(altDeg);
+  const nightStrength = illuminationNightVeil01FromSolarAltitudeDeg(altDeg);
   const darknessAlpha = nightStrength * NIGHT_DARKEN * op;
   const tintStrength = atmosphericTintStrength(altDeg);
   const moonlightVisibility = lunarStrengthRaw * smoothstep(0.45, 0.95, nightStrength);

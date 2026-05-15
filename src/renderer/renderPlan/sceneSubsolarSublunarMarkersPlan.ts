@@ -17,6 +17,7 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
 import type { RenderLineItem, RenderPlan, RenderRadialGradientFillItem } from "./renderPlanTypes";
 import { circlePath2D, circlePathDescriptor } from "./circlePath2D";
 import { clipPayloadDescriptor, createPath2DItem } from "./pathItemFactories";
@@ -33,6 +34,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
   viewportHeightPx: number;
   lonDeg: number;
   latDeg: number;
+  readability?: OverlayReadabilityHints | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -40,6 +42,10 @@ export function buildSubsolarMarkerRenderPlan(options: {
   if (!(w > 0) || !(h > 0)) {
     return { items };
   }
+
+  const v = options.readability?.nightVeil01 ?? 0;
+  const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
+  const a = (x: number) => Math.min(1, x * (1 + 0.22 * v));
 
   const cx = mapXFromLongitudeDeg(options.lonDeg, w);
   const cy = mapLatToY(options.latDeg, h);
@@ -54,8 +60,8 @@ export function buildSubsolarMarkerRenderPlan(options: {
     y1: cy,
     r1: r * 2.4,
     stops: [
-      { offset: 0, color: "rgba(255, 228, 140, 0.5)" },
-      { offset: 0.45, color: "rgba(255, 200, 90, 0.12)" },
+      { offset: 0, color: `rgba(255, 228, 140, ${a(0.5)})` },
+      { offset: 0.45, color: `rgba(255, 200, 90, ${a(0.12)})` },
       { offset: 1, color: "rgba(255, 190, 70, 0)" },
     ],
     clipCx: cx,
@@ -64,8 +70,8 @@ export function buildSubsolarMarkerRenderPlan(options: {
   };
   items.push(glow);
 
-  const rayStroke = "rgba(255, 240, 200, 0.88)";
-  const rayWidth = Math.max(1, r * 0.11);
+  const rayStroke = `rgba(255, 240, 200, ${a(0.88)})`;
+  const rayWidth = sw(Math.max(1, r * 0.11));
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
     const inner = r * 1.12;
@@ -87,17 +93,17 @@ export function buildSubsolarMarkerRenderPlan(options: {
     kind: "path2d",
     pathKind: "path2d",
     path: circlePath2D(cx, cy, r),
-    fill: "rgba(255, 210, 72, 0.96)",
-    stroke: "rgba(28, 22, 10, 0.78)",
-    strokeWidthPx: Math.max(1.1, r * 0.13),
+    fill: `rgba(255, 210, 72, ${a(0.96)})`,
+    stroke: `rgba(28, 22, 10, ${a(0.78)})`,
+    strokeWidthPx: sw(Math.max(1.1, r * 0.13)),
   });
 
   items.push({
     kind: "path2d",
     pathKind: "path2d",
     path: circlePath2D(cx, cy, r + 1.25),
-    stroke: "rgba(255, 255, 255, 0.42)",
-    strokeWidthPx: 1,
+    stroke: `rgba(255, 255, 255, ${a(0.42)})`,
+    strokeWidthPx: sw(1),
   });
 
   return { items };
@@ -113,6 +119,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   latDeg: number;
   illuminatedFraction: number;
   waxing: boolean;
+  readability?: OverlayReadabilityHints | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -120,6 +127,10 @@ export function buildSublunarMarkerRenderPlan(options: {
   if (!(w > 0) || !(h > 0)) {
     return { items };
   }
+
+  const v = options.readability?.nightVeil01 ?? 0;
+  const sw = (base: number) => Math.max(base, base * (1 + 0.7 * v));
+  const a = (x: number) => Math.min(1, x * (1 + 0.25 * v));
 
   const cx = mapXFromLongitudeDeg(options.lonDeg, w);
   const cy = mapLatToY(options.latDeg, h);
@@ -137,8 +148,8 @@ export function buildSublunarMarkerRenderPlan(options: {
     y1: cy,
     r1: r * 2.1,
     stops: [
-      { offset: 0, color: "rgba(200, 220, 255, 0.35)" },
-      { offset: 0.5, color: "rgba(140, 175, 220, 0.1)" },
+      { offset: 0, color: `rgba(200, 220, 255, ${a(0.35)})` },
+      { offset: 0.5, color: `rgba(140, 175, 220, ${a(0.1)})` },
       { offset: 1, color: "rgba(100, 140, 190, 0)" },
     ],
     clipCx: cx,
@@ -155,9 +166,9 @@ export function buildSublunarMarkerRenderPlan(options: {
     y1: cy,
     r1: r * 1.05,
     stops: [
-      { offset: 0, color: "rgba(235, 242, 255, 0.98)" },
-      { offset: 0.55, color: "rgba(200, 218, 242, 0.95)" },
-      { offset: 1, color: "rgba(175, 198, 228, 0.92)" },
+      { offset: 0, color: `rgba(235, 242, 255, ${a(0.98)})` },
+      { offset: 0.55, color: `rgba(200, 218, 242, ${a(0.95)})` },
+      { offset: 1, color: `rgba(175, 198, 228, ${a(0.92)})` },
     ],
     clipCx: cx,
     clipCy: cy,
@@ -165,7 +176,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   });
 
   const xTerm = waxing ? r * (1 - 2 * f) : r * (2 * f - 1);
-  const shadow = "rgba(28, 38, 56, 0.9)";
+  const shadow = `rgba(28, 38, 56, ${a(0.9)})`;
 
   let quadPath: Path2D;
   if (waxing) {
@@ -191,7 +202,7 @@ export function buildSublunarMarkerRenderPlan(options: {
       kind: "path2d",
       pathKind: "path2d",
       path: circlePath2D(cx - r * 0.32, cy - r * 0.3, r * 0.2),
-      fill: "rgba(255, 255, 255, 0.2)",
+      fill: `rgba(255, 255, 255, ${a(0.2)})`,
     });
   }
 
@@ -202,8 +213,8 @@ export function buildSublunarMarkerRenderPlan(options: {
       y1: cy - r * 1.02,
       x2: cx + xTerm,
       y2: cy + r * 1.02,
-      stroke: "rgba(18, 26, 40, 0.45)",
-      strokeWidthPx: Math.max(0.8, r * 0.09),
+      stroke: `rgba(18, 26, 40, ${a(0.45)})`,
+      strokeWidthPx: sw(Math.max(0.8, r * 0.09)),
     });
   }
 
@@ -211,16 +222,16 @@ export function buildSublunarMarkerRenderPlan(options: {
     kind: "path2d",
     pathKind: "path2d",
     path: circlePath2D(cx, cy, r),
-    stroke: "rgba(28, 40, 58, 0.78)",
-    strokeWidthPx: Math.max(1, r * 0.14),
+    stroke: `rgba(28, 40, 58, ${a(0.78)})`,
+    strokeWidthPx: sw(Math.max(1, r * 0.14)),
   });
 
   items.push({
     kind: "path2d",
     pathKind: "path2d",
     path: circlePath2D(cx, cy, r + 1.1),
-    stroke: "rgba(255, 255, 255, 0.38)",
-    strokeWidthPx: 1,
+    stroke: `rgba(255, 255, 255, ${a(0.38)})`,
+    strokeWidthPx: sw(1),
   });
 
   return { items };

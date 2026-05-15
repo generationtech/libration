@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -37,11 +38,13 @@ export function createLatLonGridLayer(
     zIndex,
     type: "vector",
     updatePolicy,
-    getState(_time: TimeContext): LayerState {
+    getState(time: TimeContext): LayerState {
+      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
       const data: EquirectangularGridPayload = {
         kind: EQUIRECT_GRID_KIND,
         meridianStepDeg: 30,
         parallelStepDeg: 30,
+        readability: { nightVeil01: frame.globalNightVeil01 },
       };
       return {
         visible: true,

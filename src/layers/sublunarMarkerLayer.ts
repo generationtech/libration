@@ -13,6 +13,7 @@
 
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
+import { computeOverlayReadabilityFrameFromTimeMs } from "../core/overlayReadabilityFrame";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SUBLUNAR_MARKER_KIND, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
@@ -41,6 +42,7 @@ export function createSublunarMarkerLayer(
     getState(time: TimeContext): LayerState {
       const { latDeg, lonDeg } = sublunarPoint(time.now);
       const phase = approximateLunarPhase(time.now);
+      const frame = computeOverlayReadabilityFrameFromTimeMs(time.now);
       const data: SublunarMarkerPayload = {
         kind: SUBLUNAR_MARKER_KIND,
         latDeg,
@@ -48,6 +50,7 @@ export function createSublunarMarkerLayer(
         illuminatedFraction: phase.illuminatedFraction,
         geocentricElongationDeg: phase.geocentricElongationDeg,
         waxing: phase.waxing,
+        readability: { nightVeil01: frame.nightVeil01At(latDeg, lonDeg) },
       };
       return {
         visible: true,
