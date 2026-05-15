@@ -155,7 +155,7 @@ Update docs when:
 - source of truth changes.
 - workflows change.
 - feature status changes (including composition and overlay readability milestones).
-- when a vertical phase ships (e.g. overlay readability v1.1, or **derived substrate lift scale**), update `PLAN.md`, `docs/ROADMAP.md`, `ARCHITECTURE.md` maturity, and `docs/FUTURE_FEATURES.md` so shipped vs backlog is obvious without reading source.
+- when a vertical phase ships (e.g. overlay readability v1.1, **derived substrate lift scale**, or **SceneConfig presentation scalars** on `scene.overlayReadability.presentation`), update `PLAN.md`, `docs/ROADMAP.md`, `ARCHITECTURE.md` maturity, `docs/FUTURE_FEATURES.md`, and `docs/AI_COENGINEERING.md` so shipped vs backlog is obvious without reading source.
 - future ideas are accepted, deferred, or rejected.
 
 Keep docs in these roles:

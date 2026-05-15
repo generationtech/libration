@@ -72,7 +72,7 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-**Rolling doc fixes:** overlay readability **v1 + v1.1 + derived substrate lift** documented as **complete** in `PLAN.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, and agent/strategy docs; terminology aligned with shipped runtime (no “v1 only” or “substrate unreadable” drift).
+**Rolling doc fixes:** overlay readability **v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars** documented as **complete** in `PLAN.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/AI_COENGINEERING.md`, and agent/strategy docs; terminology aligned with shipped runtime (no “v1 only”, “substrate unreadable”, or “no persisted readability keys” drift where presentation is persisted).
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 

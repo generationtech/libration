@@ -37,13 +37,13 @@ Cursor should not independently invent major architecture. It should implement p
 
 ## Planetary illumination and composition (agent guidance)
 
-The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability** (v1 + v1.1 + **derived substrate lift scale**) is also **shipped** and documented as a **closed phase** in `PLAN.md` (derived solar night veil, emissive **policy-only** legibility pressure, and presentation/catalog–based overlay lift attenuation into RenderPlan; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it). **Do not** treat emissive composition or the settled overlay readability stack as future MVP work or propose a new “compositor” boundary inside the backend.
+The upstream planetary illumination path is **production-complete** for twilight, moonlight, and emissive night lights (catalog, sampling, policy tables, Layers controls, illustrative defaults, single `rasterPatch`). **Composition-aware overlay readability** (v1 + v1.1 + **derived substrate lift scale** + **SceneConfig presentation** under `scene.overlayReadability.presentation`: `readabilityVeilScale01`, `overlayLiftMultiplier01`) is **shipped** and documented as a **closed phase** in `PLAN.md` / `ARCHITECTURE.md` (derived solar night veil, emissive **policy-only** legibility pressure, presentation/catalog substrate lift, user presentation scalars applied in the shell before hints; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it). **Do not** treat emissive composition or the settled overlay readability stack as future MVP work or propose a new “compositor” boundary inside the backend.
 
 For new work in this area:
 
 - read `ARCHITECTURE.md` (subsystem section), `PLAN.md` Slice 2, and `docs/ROADMAP.md` Phase 6 / Phase 9.
 - assume **SceneConfig remains authoritative** and **RenderPlan + execution-only backend** remain intact.
-- prefer **incremental** features (e.g. optional SceneConfig readability axis; richer substrate heuristics beyond the shipped derived lift scale) over reopening settled composition architecture.
+- prefer **incremental** features (e.g. per-layer readability tuning; richer catalog/resolver substrate heuristics beyond presentation + `capabilities`) over reopening settled composition architecture.
 - ground behavior changes in tests at normalization, resolver, illumination sampling, or RenderPlan boundaries—not in Canvas policy branches.
 
 ## Standard co-engineering loop
@@ -165,6 +165,7 @@ When a phase changes architecture:
 - update specs if contracts changed.
 - update roadmap phase status.
 - update future feature inventory if an idea is deferred.
+- update `docs/AI_COENGINEERING.md` when illumination or overlay-readability shipped scope changes (agent guidance must match runtime).
 - update Cursor rules if the mistake is likely to recur.
 
 Do not rely on chat history as project memory. Important decisions belong in repo docs.

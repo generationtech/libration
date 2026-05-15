@@ -137,11 +137,15 @@ Planetary illumination is a **coherent upstream subsystem**: dedicated modules r
 
 There is **no generalized compositor abstraction** and **no backend-owned composition policy**: composition remains specialized upstream code with deterministic tables and sampling; the Canvas backend only decodes images when executing primitives and does not interpret illumination modes or layer semantics.
 
-### Overlay readability (composition-aware: v1 + v1.1 + derived substrate lift)
+### Overlay readability (composition-aware: v1 + v1.1 + derived substrate lift + SceneConfig presentation)
 
 The app shell may attach **one** `OverlayReadabilityFrame` per tick on `TimeContext` so participating layers call `getOverlayReadabilityFrameOrCompute` instead of each recomputing coarse samples from `now`. The frame exposes **subsolar-only** `nightVeil01At` / `globalNightVeil01` (aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) plus **v1.1** `readabilityVeil01At` / `globalReadabilityVeil01`: the same solar field, deterministically augmented by **emissive night-light policy** (`mode`, `presentation.intensity`, `presentation.driverExponent` from normalized SceneConfig) as `globalEmissiveLegibilityPressure01` — **no emissive raster sampling** in the readability path. **Substrate-aware lift (post–v1.1, derived):** `substrateOverlayReadabilityLiftScale01` (0.35–1) comes from **effective** base-map presentation (`resolveEffectiveBaseMapPresentation` + `scene.baseMap`) and optional catalog `capabilities` (`overlayOptimized` strengthens attenuation; `darkFriendly` slightly relaxes it); no raster sampling. **Scene presentation scaling:** normalized `scene.overlayReadability.presentation` (`readabilityVeilScale01`, `overlayLiftMultiplier01`) post-processes the derived combined veil and substrate lift scale in the shell after `computeOverlayReadabilityFrameFromTimeMs` (defaults preserve v1 + v1.1 + substrate-only behavior). Selected derived overlays attach **derived-only** `OverlayReadabilityHints` using the **combined** readability veil for `nightVeil01` plus optional `overlayReadabilityLiftScale01` from the frame. Reference and custom **city pins** carry the combined signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`) and payload-level `overlayReadabilityLiftScale01`. **Static full-viewport equirect raster overlays** attach the **global** combined veil on `EquirectangularRasterPayload.readability`; `buildBaseRasterMapRenderPlan` merges `overlayReadabilityCssFilterAppend` with presentation-derived `cssFilter` on the single `imageBlit`. RenderPlan builders adjust vector stroke widths and RGBA alphas using `effectiveOverlayReadabilityLiftVeil01` (veil × lift scale); the backend continues to execute primitives mechanically. Further optional readability axes (per-layer tuning, richer heuristics) remain future work when product-ready (see `PLAN.md` Slice 2 and `docs/ROADMAP.md` Phase 6 / Phase 9).
 
-**Phase closure:** v1, v1.1, **derived substrate-aware overlay lift**, and **optional SceneConfig presentation scaling** are **production-complete**; the shell supplies emissive policy, effective base-map presentation, catalog `capabilities`, and `scene.overlayReadability.presentation` into `computeOverlayReadabilityFrameFromTimeMs` (with presentation applied on the frame) each tick (`App.tsx` → `TimeContext.overlayReadabilityFrame`).
+**Phase closure:** v1, v1.1, **derived substrate-aware overlay lift**, and **SceneConfig presentation scaling** (`scene.overlayReadability.presentation`: `readabilityVeilScale01`, `overlayLiftMultiplier01`) are **production-complete**; the shell supplies emissive policy, effective base-map presentation, catalog `capabilities`, and normalized presentation into `computeOverlayReadabilityFrameFromTimeMs` (presentation applied on the derived frame) each tick (`App.tsx` → `TimeContext.overlayReadabilityFrame`). **`getOverlayReadabilityFrameOrCompute` fallback** (no pre-attached frame): still subsolar-only for emissive/substrate/presentation inputs—production uses the shell-attached frame.
+
+**Fully implemented for this phase:** persisted keys, normalization + clamps, Layers controls + reset, `sceneRuntimeAffectingEqual` / registry invalidation parity with other scene presentation deltas, `assertIsNormalizedLibrationConfig` coverage.
+
+**Future (not partial):** per-layer readability tuning; catalog/resolver substrate heuristics beyond presentation + `capabilities`; optional improvement so the `OrCompute` fallback could accept the same inputs as the shell (only if a real caller needs it).
 
 ### RenderPlan system
 
@@ -182,7 +186,7 @@ Important config domains:
 
 - chrome layout and top-band controls.
 - structured hour-marker configuration.
-- scene config.
+- scene config (including `scene.illumination` and `scene.overlayReadability.presentation` for overlay legibility scaling upstream of RenderPlan hints).
 - map presentation overrides.
 - future preset and partial-patch systems.
 
