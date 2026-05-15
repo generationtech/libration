@@ -31,6 +31,7 @@ export interface TimeContext {
   /**
    * When set (typically once per frame by the app shell), overlay layers reuse this via
    * `getOverlayReadabilityFrameOrCompute` instead of each calling `computeOverlayReadabilityFrameFromTimeMs`.
+   * The shell should pass a frame built with scene emissive policy so readability v1.1 can apply.
    */
   overlayReadabilityFrame?: OverlayReadabilityFrame;
 }

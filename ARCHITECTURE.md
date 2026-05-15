@@ -137,9 +137,9 @@ Planetary illumination is a **coherent upstream subsystem**: dedicated modules r
 
 There is **no generalized compositor abstraction** and **no backend-owned composition policy**: composition remains specialized upstream code with deterministic tables and sampling; the Canvas backend only decodes images when executing primitives and does not interpret illumination modes or layer semantics.
 
-### Overlay readability (composition-aware, v1)
+### Overlay readability (composition-aware, v1 + v1.1)
 
-The app shell may attach **one** `OverlayReadabilityFrame` per tick on `TimeContext` so participating layers call `getOverlayReadabilityFrameOrCompute` instead of each recomputing coarse samples from `now`. Selected derived overlays (latitude/longitude grid, solar analemma polyline, subsolar and sub-lunar markers) attach **derived-only** `OverlayReadabilityHints` (`nightVeil01` aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) resolved each frame upstream. Reference and custom **city pins** carry the same veil signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`). **Static full-viewport equirect raster overlays** attach the **global** frame veil on `EquirectangularRasterPayload.readability`; `buildBaseRasterMapRenderPlan` merges `overlayReadabilityCssFilterAppend` with presentation-derived `cssFilter` on the single `imageBlit`. RenderPlan builders adjust vector stroke widths and RGBA alphas; the backend continues to execute primitives mechanically. v1 uses **subsolar geometry only** (no emissive raster sampling); broader substrate/emissive-aware readability and optional user controls remain incremental follow-ups.
+The app shell may attach **one** `OverlayReadabilityFrame` per tick on `TimeContext` so participating layers call `getOverlayReadabilityFrameOrCompute` instead of each recomputing coarse samples from `now`. The frame exposes **subsolar-only** `nightVeil01At` / `globalNightVeil01` (aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) plus **v1.1** `readabilityVeil01At` / `globalReadabilityVeil01`: the same solar field, deterministically augmented by **emissive night-light policy** (`mode`, `presentation.intensity`, `presentation.driverExponent` from normalized SceneConfig) as `globalEmissiveLegibilityPressure01` — **no emissive raster sampling** in the readability path. Selected derived overlays (latitude/longitude grid, solar analemma polyline, subsolar and sub-lunar markers) attach **derived-only** `OverlayReadabilityHints` using the **combined** readability veil for `nightVeil01`. Reference and custom **city pins** carry the combined signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`). **Static full-viewport equirect raster overlays** attach the **global** combined veil on `EquirectangularRasterPayload.readability`; `buildBaseRasterMapRenderPlan` merges `overlayReadabilityCssFilterAppend` with presentation-derived `cssFilter` on the single `imageBlit`. RenderPlan builders adjust vector stroke widths and RGBA alphas; the backend continues to execute primitives mechanically. Broader **substrate-aware** readability and optional dedicated SceneConfig readability keys remain incremental follow-ups.
 
 ### RenderPlan system
 
@@ -242,14 +242,14 @@ Stable enough for feature-forward work:
 - polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
 - map presentation controls.
 - map onboarding tooling.
-- derived overlay readability (v1): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global veil → merged `imageBlit` cssFilter) scale resolved draw intent from the shared solar night-veil field (no backend composition policy). Production path: **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it; layers call `getOverlayReadabilityFrameOrCompute` (fallback computes from `now` if omitted).
+- derived overlay readability (v1 + v1.1 policy): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global combined veil → merged `imageBlit` cssFilter) scale resolved draw intent upstream (no backend composition policy). v1.1 adds emissive **policy** pressure only (no emissive texture sampling in the readability frame). Production path: **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it; layers call `getOverlayReadabilityFrameOrCompute` (fallback computes from `now` if omitted).
 
 Still future or partial:
 
 - full dynamic data lifecycle.
 - live feeds.
 - gridded scientific datasets.
-- **extended** composition-aware overlay readability (emissive/substrate-aware contrast, optional user-facing controls).
+- **extended** composition-aware overlay readability (substrate-aware contrast, optional user-facing / SceneConfig readability controls beyond v1.1 policy lift).
 - cloud and weather participation in upstream planetary composition (planning and lifecycle prerequisites).
 - atmospheric transition and scattering refinement beyond the current continuous twilight field.
 - advanced blending, masking, and **additional** emissive or radiance contributors beyond the dedicated night-lights path (only if product scope justifies them; not a generic multi-pass compositor in the backend).

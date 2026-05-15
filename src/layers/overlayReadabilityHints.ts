@@ -13,12 +13,14 @@
 
 /**
  * Upstream overlay legibility hints derived from the same solar-altitude / night-veil
- * field as planetary illumination (no persisted config in v1).
+ * field as planetary illumination, optionally augmented by emissive night-light **policy**
+ * (see {@link ../core/overlayReadabilityFrame} v1.1). No persisted readability keys in v1/v1.1.
  */
 export interface OverlayReadabilityHints {
   /**
-   * 0 = day-clarity reference; 1 = deep-night side of the continuous illumination veil.
-   * Aligns with {@link illuminationNightVeil01FromSolarAltitudeDeg}.
+   * 0 = day-clarity reference; 1 = strong night-side overlay lift for stroke / cssFilter scaling.
+   * Typically {@link ../core/overlayReadabilityFrame.readabilityVeil01At} / `globalReadabilityVeil01`
+   * (subsolar veil plus bounded emissive policy pressure when enabled).
    */
   nightVeil01: number;
 }

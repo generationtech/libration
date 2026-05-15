@@ -18,7 +18,10 @@ describe("createTimeContext", () => {
   it("includes overlayReadabilityFrame when provided", () => {
     const frame = {
       globalNightVeil01: 0.5,
+      globalEmissiveLegibilityPressure01: 0,
+      globalReadabilityVeil01: 0.5,
       nightVeil01At: () => 0,
+      readabilityVeil01At: () => 0,
     };
     const ctx = createTimeContext(1, 2, false, { overlayReadabilityFrame: frame });
     expect(ctx.overlayReadabilityFrame).toBe(frame);

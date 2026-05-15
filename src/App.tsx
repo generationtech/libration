@@ -292,7 +292,12 @@ export default function App() {
           : Math.max(0, clockNowMs - lastRenderClockMsRef.current);
       lastRenderClockMsRef.current = clockNowMs;
 
-      const overlayReadabilityFrame = computeOverlayReadabilityFrameFromTimeMs(clockNowMs);
+      const emissive = derivedAppConfigRef.current.scene.illumination.emissiveNightLights;
+      const overlayReadabilityFrame = computeOverlayReadabilityFrameFromTimeMs(clockNowMs, {
+        mode: emissive.mode,
+        presentationIntensity: emissive.presentation.intensity,
+        presentationDriverExponent: emissive.presentation.driverExponent,
+      });
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
       });

@@ -50,7 +50,7 @@ export function createSublunarMarkerLayer(
         illuminatedFraction: phase.illuminatedFraction,
         geocentricElongationDeg: phase.geocentricElongationDeg,
         waxing: phase.waxing,
-        readability: { nightVeil01: frame.nightVeil01At(latDeg, lonDeg) },
+        readability: { nightVeil01: frame.readabilityVeil01At(latDeg, lonDeg) },
       };
       return {
         visible: true,

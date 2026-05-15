@@ -67,7 +67,7 @@ export function createStaticEquirectRasterOverlayLayer(
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
         src,
-        readability: { nightVeil01: frame.globalNightVeil01 },
+        readability: { nightVeil01: frame.globalReadabilityVeil01 },
       };
       return {
         visible: true,

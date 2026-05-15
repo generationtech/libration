@@ -34,15 +34,15 @@ The current scene system already includes:
 - solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
 - **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
-- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and **readability beyond v1** (emissive/substrate-aware tuning, optional SceneConfig) without moving semantics into the backend.
-- **Overlay readability v1:** derived solar night-veil hints on lat/lon grid, solar analemma, subsolar/sublunar markers, city pins (per-pin veil), and static equirect raster overlays (merged `imageBlit` cssFilter); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it.
+- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years, and **readability beyond v1.1** (substrate-aware tuning, optional SceneConfig) without moving semantics into the backend.
+- **Overlay readability v1.1:** same frame path; combined veil adds deterministic **emissive policy** pressure from `scene.illumination.emissiveNightLights` (no emissive raster sampling in readability); optional dedicated readability SceneConfig remains future work.
 - seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems with **readability policy beyond v1**, richer atmosphere, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or v1 overlay readability behavior.
+Future work should extend these systems with **readability policy beyond v1.1** (substrate-aware tuning, optional config), richer atmosphere, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the shipped overlay readability stack.
 
 ## Maps and base-map families
 
@@ -158,7 +158,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- overlay readability tuning (**v1 shipped** for grid, analemma, subsolar/sublunar, city pins, static equirect rasters via derived solar night veil → RenderPlan vectors + merged `imageBlit` cssFilter; **one** `OverlayReadabilityFrame` per tick on `TimeContext` in production). **Remaining:** emissive/substrate-aware tuning, optional SceneConfig axis.
+- overlay readability tuning (**v1 + v1.1 shipped** for grid, analemma, subsolar/sublunar, city pins, static equirect rasters via derived solar night veil + emissive **policy** lift → RenderPlan vectors + merged `imageBlit` cssFilter; **one** `OverlayReadabilityFrame` per tick on `TimeContext` in production). **Remaining:** substrate-aware tuning, optional SceneConfig axis.
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.

@@ -123,7 +123,7 @@ Avoid:
 
 The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
 
-Future work **extends** that subsystem for **readability policy beyond v1**, atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
+Future work **extends** that subsystem for **readability policy beyond v1.1**, atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
 
 - atmospheric attenuation.
 - reflected illumination.
@@ -168,9 +168,9 @@ Foundational systems now exist:
 - static and derived overlays.
 - month-aware map families.
 - coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
-- composition-aware **overlay readability v1** (derived night veil on selected overlays; optional one `OverlayReadabilityFrame` per tick on `TimeContext`).
+- composition-aware **overlay readability v1 + v1.1** (derived night veil + emissive policy lift on selected overlays; optional one `OverlayReadabilityFrame` per tick on `TimeContext`).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: extend overlay readability beyond the shipped v1 slice, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: extend overlay readability beyond the shipped v1.1 slice, atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -179,7 +179,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Overlay readability extensions** (v1 shipped: derived solar night veil on key overlays, per-tick frame on `TimeContext`; next: emissive/substrate-aware tuning, optional config), atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
+4. **Overlay readability extensions** (v1 + v1.1 shipped: derived solar night veil + emissive policy lift on key overlays, per-tick frame on `TimeContext`; next: substrate-aware tuning, optional config), atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

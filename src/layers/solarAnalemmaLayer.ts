@@ -56,7 +56,7 @@ export function createSolarAnalemmaLayer(
         kind: EQUIRECT_POLYLINE_KIND,
         points: pts,
         closed: true,
-        readability: { nightVeil01: frame.globalNightVeil01 },
+        readability: { nightVeil01: frame.globalReadabilityVeil01 },
       };
       return {
         visible: true,

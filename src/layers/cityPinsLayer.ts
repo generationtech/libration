@@ -109,7 +109,7 @@ export function createCityPinsLayer(
                 presentation.pinDateTimeDisplayMode,
                 presentation.displayTimeMode,
               ),
-        readabilityNightVeil01: frame.nightVeil01At(c.latDeg, c.lonDeg),
+        readabilityNightVeil01: frame.readabilityVeil01At(c.latDeg, c.lonDeg),
       }));
       const data: CityPinsPayload = {
         kind: CITY_PINS_KIND,
