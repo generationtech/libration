@@ -20,6 +20,7 @@ describe("createTimeContext", () => {
       globalNightVeil01: 0.5,
       globalEmissiveLegibilityPressure01: 0,
       globalReadabilityVeil01: 0.5,
+      substrateOverlayReadabilityLiftScale01: 1,
       nightVeil01At: () => 0,
       readabilityVeil01At: () => 0,
     };

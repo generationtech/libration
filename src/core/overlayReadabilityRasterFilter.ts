@@ -25,15 +25,28 @@ export function mergeCssFilterParts(a: string | undefined, b: string | undefined
   return parts.join(" ");
 }
 
+export type OverlayReadabilityCssFilterOptions = Readonly<{
+  /**
+   * Attenuates lift when the base map is already bright/contrasted (substrate-aware readability).
+   * Defaults to 1.
+   */
+  liftScale01?: number;
+}>;
+
 /**
  * Small brightness/contrast lift when `nightVeil01` is high so static overlays stay readable
  * over darkened substrate; no-op near zero veil.
  */
-export function overlayReadabilityCssFilterAppend(nightVeil01: number): string | undefined {
+export function overlayReadabilityCssFilterAppend(
+  nightVeil01: number,
+  options?: OverlayReadabilityCssFilterOptions,
+): string | undefined {
   if (!Number.isFinite(nightVeil01)) {
     return undefined;
   }
-  const v = Math.max(0, Math.min(1, nightVeil01));
+  const rawLift = Math.max(0, Math.min(1, nightVeil01));
+  const liftScale = Math.max(0, Math.min(1, options?.liftScale01 ?? 1));
+  const v = rawLift * liftScale;
   if (v < 1e-4) {
     return undefined;
   }

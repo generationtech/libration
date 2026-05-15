@@ -139,4 +139,34 @@ describe("buildBaseRasterMapRenderPlan", () => {
     expect(item.cssFilter).toContain("brightness(1.1)");
     expect(item.cssFilter).toMatch(/brightness\(1\.1\).*brightness\(1\./);
   });
+
+  it("attenuates readability css when overlayReadabilityLiftScale01 is low", () => {
+    const full = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({ brightness: 1, contrast: 1, gamma: 1, saturation: 1 }),
+      readabilityNightVeil01: 1,
+      overlayReadabilityLiftScale01: 1,
+    });
+    const weak = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 100,
+      viewportHeightPx: 50,
+      presentation: normalizeBaseMapPresentation({ brightness: 1, contrast: 1, gamma: 1, saturation: 1 }),
+      readabilityNightVeil01: 1,
+      overlayReadabilityLiftScale01: 0.35,
+    });
+    const iFull = full.items[0]!;
+    const iWeak = weak.items[0]!;
+    expect(iFull.kind).toBe("imageBlit");
+    expect(iWeak.kind).toBe("imageBlit");
+    if (iFull.kind !== "imageBlit" || iWeak.kind !== "imageBlit") {
+      return;
+    }
+    const mFull = iFull.cssFilter!.match(/brightness\(([\d.]+)\)/);
+    const mWeak = iWeak.cssFilter!.match(/brightness\(([\d.]+)\)/);
+    expect(mFull && mWeak).toBeTruthy();
+    expect(Number(mWeak![1])).toBeLessThan(Number(mFull![1]));
+  });
 });

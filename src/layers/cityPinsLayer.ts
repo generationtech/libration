@@ -119,6 +119,7 @@ export function createCityPinsLayer(
         scale: presentation.scale,
         cityNameFontAssetId,
         dateTimeFontAssetId,
+        overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,
       };
       return {
         visible: true,

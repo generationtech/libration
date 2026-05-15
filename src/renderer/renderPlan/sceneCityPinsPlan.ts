@@ -20,6 +20,7 @@
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
+import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
 import { circlePath2D } from "./circlePath2D";
@@ -49,6 +50,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   const layerOp = options.layerOpacity;
   const { showLabels, labelMode, scale, cities, cityNameFontAssetId, dateTimeFontAssetId } =
     options.payload;
+  const liftScale = options.payload.overlayReadabilityLiftScale01;
+
   const cityNameDisplayName =
     cityNameFontAssetId === PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID
       ? "Renderer default"
@@ -74,7 +77,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
     const r =
       scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
 
-    const v = city.readabilityNightVeil01 ?? 0;
+    const v = effectiveOverlayReadabilityLiftVeil01(city.readabilityNightVeil01, liftScale);
     const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
     const a = (alpha: number) => Math.min(1, alpha * (1 + 0.22 * v));
 

@@ -179,7 +179,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Overlay readability extensions** (v1 + v1.1 shipped: derived solar night veil + emissive policy lift on key overlays, per-tick frame on `TimeContext`; next: substrate-aware tuning, optional config), atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
+4. **Overlay readability** (v1 + v1.1 + derived substrate lift scale shipped: solar night veil + emissive policy lift + presentation/catalog substrate attenuation on key overlays, per-tick frame on `TimeContext`; next: optional SceneConfig axis), atmospheric refinement on the **existing** upstream illumination stack; cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

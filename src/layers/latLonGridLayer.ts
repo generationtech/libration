@@ -44,7 +44,10 @@ export function createLatLonGridLayer(
         kind: EQUIRECT_GRID_KIND,
         meridianStepDeg: 30,
         parallelStepDeg: 30,
-        readability: { nightVeil01: frame.globalReadabilityVeil01 },
+        readability: {
+          nightVeil01: frame.globalReadabilityVeil01,
+          overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,
+        },
       };
       return {
         visible: true,

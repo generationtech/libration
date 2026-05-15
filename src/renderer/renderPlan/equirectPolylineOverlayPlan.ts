@@ -12,7 +12,10 @@
  */
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
-import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
+import {
+  type OverlayReadabilityHints,
+  effectiveOverlayReadabilityLiftVeil01,
+} from "../../layers/overlayReadabilityHints";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 
 export interface EquirectangularPolylineOverlayPlanOptions {
@@ -76,7 +79,10 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     return { items: [] };
   }
   const op = options.layerOpacity;
-  const veil = options.readability?.nightVeil01 ?? 0;
+  const veil = effectiveOverlayReadabilityLiftVeil01(
+    options.readability?.nightVeil01,
+    options.readability?.overlayReadabilityLiftScale01,
+  );
   const baseStrokeA = 0.5 * op;
   const strokeA = Math.min(0.92 * op, baseStrokeA + 0.32 * veil * op);
   const stroke = `rgba(255, 200, 120, ${strokeA})`;

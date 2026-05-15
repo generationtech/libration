@@ -45,7 +45,10 @@ export function createSubsolarMarkerLayer(
         kind: SUBSOLAR_MARKER_KIND,
         latDeg,
         lonDeg,
-        readability: { nightVeil01: frame.readabilityVeil01At(latDeg, lonDeg) },
+        readability: {
+          nightVeil01: frame.readabilityVeil01At(latDeg, lonDeg),
+          overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,
+        },
       };
       return {
         visible: true,

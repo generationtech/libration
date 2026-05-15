@@ -223,6 +223,7 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportHeightPx: h,
         presentation: layer.data.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
         readabilityNightVeil01: layer.data.readability?.nightVeil01,
+        overlayReadabilityLiftScale01: layer.data.readability?.overlayReadabilityLiftScale01,
       }),
       {
         resolveRasterImage: (s) => this.ensureRasterImage(s, { reportLoadFailure }),

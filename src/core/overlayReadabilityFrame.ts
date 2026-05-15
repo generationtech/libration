@@ -17,6 +17,7 @@
  * SceneConfig-resolved night-light mode and presentation — no emissive raster sampling here.
  */
 
+import type { BaseMapPresentationConfig } from "../config/baseMapPresentation";
 import {
   getEmissiveNightLightsPolicy,
   type EmissiveNightLightsPresentationMode,
@@ -25,6 +26,10 @@ import { DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT } from "./emissiveNightLi
 import { illuminationNightVeil01FromSolarAltitudeDeg } from "./nightVeilFromSolarAltitude";
 import { subsolarPoint } from "./subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "./solarTwilight";
+import {
+  type SubstrateReadabilityCatalogHint,
+  deriveSubstrateOverlayReadabilityLiftScale01,
+} from "./substrateOverlayReadabilityLiftScale";
 
 const SAMPLE_LAT_DEG = [-67.5, -22.5, 22.5, 67.5] as const;
 const SAMPLE_LON_DEG = [-135, -45, 45, 135] as const;
@@ -35,6 +40,12 @@ export type EmissiveOverlayReadabilityInputs = {
   presentationIntensity?: number;
   presentationDriverExponent?: number;
 };
+
+/** Resolved base-map substrate signals for overlay lift attenuation (no raster sampling). */
+export type SubstrateOverlayReadabilityFrameInputs = Readonly<{
+  presentation: BaseMapPresentationConfig;
+  catalogHint?: SubstrateReadabilityCatalogHint | null;
+}>;
 
 function clamp01(x: number): number {
   if (!Number.isFinite(x)) {
@@ -123,6 +134,11 @@ export interface OverlayReadabilityFrame {
   readonly globalEmissiveLegibilityPressure01: number;
   /** Global combined veil for full-viewport overlays that use a single scalar. */
   readonly globalReadabilityVeil01: number;
+  /**
+   * 1 = full overlay readability lift at a given veil; lower when base-map presentation (and optional
+   * catalog capabilities) already make the substrate visually strong.
+   */
+  readonly substrateOverlayReadabilityLiftScale01: number;
   nightVeil01At(latDeg: number, lonDeg: number): number;
   /** Solar night veil plus bounded emissive policy lift (for vectors, pins, and merged raster filters). */
   readabilityVeil01At(latDeg: number, lonDeg: number): number;
@@ -146,13 +162,19 @@ function surfaceSunDotProduct(
 /**
  * Global average night veil (coarse lat/lon samples) plus point queries for markers.
  * When `emissiveReadability` is omitted or mode is `off`, behavior matches v1 (subsolar-only hints).
+ * When `substrate` is omitted, {@link OverlayReadabilityFrame#substrateOverlayReadabilityLiftScale01} is 1.
  */
 export function computeOverlayReadabilityFrameFromTimeMs(
   nowMs: number,
   emissiveReadability?: EmissiveOverlayReadabilityInputs,
+  substrate?: SubstrateOverlayReadabilityFrameInputs | null,
 ): OverlayReadabilityFrame {
   const { latDeg: subLat, lonDeg: subLon } = subsolarPoint(nowMs);
   const pressure = computeEmissiveLegibilityPressure01(emissiveReadability);
+  const substrateOverlayReadabilityLiftScale01 =
+    substrate === undefined || substrate === null
+      ? 1
+      : deriveSubstrateOverlayReadabilityLiftScale01(substrate.presentation, substrate.catalogHint);
 
   let sum = 0;
   let n = 0;
@@ -180,6 +202,7 @@ export function computeOverlayReadabilityFrameFromTimeMs(
     globalNightVeil01,
     globalEmissiveLegibilityPressure01: pressure,
     globalReadabilityVeil01,
+    substrateOverlayReadabilityLiftScale01,
     nightVeil01At,
     readabilityVeil01At,
   };

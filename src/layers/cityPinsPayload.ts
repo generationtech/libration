@@ -50,6 +50,11 @@ export interface CityPinsPayload {
   cityNameFontAssetId: FontAssetId;
   /** Resolved font for the date/time line (bundled id or renderer-default sentinel). */
   dateTimeFontAssetId: FontAssetId;
+  /**
+   * Substrate-aware scale for overlay readability lift (0.35–1), same for all pins this frame.
+   * Omitted means 1.
+   */
+  overlayReadabilityLiftScale01?: number;
 }
 
 /** Options supplied at layer construction (payload fonts resolved at bootstrap; display mode shapes the time string). */
@@ -68,6 +73,12 @@ export function isCityPinsPayload(data: unknown): data is CityPinsPayload {
   if (o.scale !== "small" && o.scale !== "medium" && o.scale !== "large") return false;
   if (typeof o.cityNameFontAssetId !== "string" || o.cityNameFontAssetId.trim() === "") return false;
   if (typeof o.dateTimeFontAssetId !== "string" || o.dateTimeFontAssetId.trim() === "") return false;
+  if (o.overlayReadabilityLiftScale01 !== undefined) {
+    const ls = o.overlayReadabilityLiftScale01;
+    if (typeof ls !== "number" || !Number.isFinite(ls) || ls < 0 || ls > 1) {
+      return false;
+    }
+  }
   for (const c of o.cities) {
     if (c === null || typeof c !== "object") return false;
     const row = c as Record<string, unknown>;

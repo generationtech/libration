@@ -24,6 +24,15 @@ describe("overlayReadabilityCssFilterAppend", () => {
     expect(s).toContain("brightness(");
     expect(s).toContain("contrast(");
   });
+
+  it("attenuates lift when liftScale01 is below 1", () => {
+    const full = overlayReadabilityCssFilterAppend(1, { liftScale01: 1 })!;
+    const weak = overlayReadabilityCssFilterAppend(1, { liftScale01: 0.35 })!;
+    const mFull = full.match(/brightness\(([\d.]+)\)/);
+    const mWeak = weak.match(/brightness\(([\d.]+)\)/);
+    expect(mFull && mWeak).toBeTruthy();
+    expect(Number(mWeak![1])).toBeLessThan(Number(mFull![1]));
+  });
 });
 
 describe("mergeCssFilterParts", () => {

@@ -50,7 +50,12 @@ import {
 } from "./app/demoPlayback";
 import { ConfigShell } from "./components/config/ConfigShell";
 import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
-import { computeOverlayReadabilityFrameFromTimeMs } from "./core/overlayReadabilityFrame";
+import { getEquirectBaseMapCatalogEntry } from "./config/baseMapAssetResolve";
+import { resolveEffectiveBaseMapPresentation } from "./config/baseMapPresentation";
+import {
+  computeOverlayReadabilityFrameFromTimeMs,
+  type SubstrateOverlayReadabilityFrameInputs,
+} from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
@@ -293,11 +298,27 @@ export default function App() {
       lastRenderClockMsRef.current = clockNowMs;
 
       const emissive = derivedAppConfigRef.current.scene.illumination.emissiveNightLights;
-      const overlayReadabilityFrame = computeOverlayReadabilityFrameFromTimeMs(clockNowMs, {
-        mode: emissive.mode,
-        presentationIntensity: emissive.presentation.intensity,
-        presentationDriverExponent: emissive.presentation.driverExponent,
-      });
+      const scene = derivedAppConfigRef.current.scene;
+      const catalogEntry = getEquirectBaseMapCatalogEntry(scene.baseMap.id);
+      const effectivePresentation = resolveEffectiveBaseMapPresentation(catalogEntry, scene.baseMap);
+      const substrate: SubstrateOverlayReadabilityFrameInputs = {
+        presentation: {
+          brightness: effectivePresentation.brightness,
+          contrast: effectivePresentation.contrast,
+          gamma: effectivePresentation.gamma,
+          saturation: effectivePresentation.saturation,
+        },
+        catalogHint: catalogEntry.capabilities,
+      };
+      const overlayReadabilityFrame = computeOverlayReadabilityFrameFromTimeMs(
+        clockNowMs,
+        {
+          mode: emissive.mode,
+          presentationIntensity: emissive.presentation.intensity,
+          presentationDriverExponent: emissive.presentation.driverExponent,
+        },
+        substrate,
+      );
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
       });

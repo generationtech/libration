@@ -99,6 +99,20 @@ describe("computeOverlayReadabilityFrameFromTimeMs", () => {
     expect(frame.globalEmissiveLegibilityPressure01).toBe(0);
     expect(frame.readabilityVeil01At(12, -77)).toBeCloseTo(frame.nightVeil01At(12, -77), 10);
   });
+
+  it("defaults substrateOverlayReadabilityLiftScale01 to 1 when substrate is omitted", () => {
+    const frame = computeOverlayReadabilityFrameFromTimeMs(Date.UTC(2020, 0, 1, 0, 0, 0, 0));
+    expect(frame.substrateOverlayReadabilityLiftScale01).toBe(1);
+  });
+
+  it("reduces substrateOverlayReadabilityLiftScale01 when presentation is boosted", () => {
+    const t = Date.UTC(2020, 0, 1, 0, 0, 0, 0);
+    const frame = computeOverlayReadabilityFrameFromTimeMs(t, undefined, {
+      presentation: { brightness: 1.8, contrast: 1.7, gamma: 1, saturation: 1 },
+    });
+    expect(frame.substrateOverlayReadabilityLiftScale01).toBeLessThan(1);
+    expect(frame.substrateOverlayReadabilityLiftScale01).toBeGreaterThanOrEqual(0.35);
+  });
 });
 
 describe("getOverlayReadabilityFrameOrCompute", () => {
@@ -107,6 +121,7 @@ describe("getOverlayReadabilityFrameOrCompute", () => {
       globalNightVeil01: 0.42,
       globalEmissiveLegibilityPressure01: 0.1,
       globalReadabilityVeil01: 0.5,
+      substrateOverlayReadabilityLiftScale01: 1,
       nightVeil01At: () => 0.99,
       readabilityVeil01At: () => 0.99,
     };
@@ -124,5 +139,6 @@ describe("getOverlayReadabilityFrameOrCompute", () => {
     const a = computeOverlayReadabilityFrameFromTimeMs(t);
     const b = getOverlayReadabilityFrameOrCompute({ now: t });
     expect(b.globalNightVeil01).toBeCloseTo(a.globalNightVeil01, 10);
+    expect(b.substrateOverlayReadabilityLiftScale01).toBe(1);
   });
 });

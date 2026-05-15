@@ -17,7 +17,10 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
-import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
+import {
+  type OverlayReadabilityHints,
+  effectiveOverlayReadabilityLiftVeil01,
+} from "../../layers/overlayReadabilityHints";
 import type { RenderLineItem, RenderPlan, RenderRadialGradientFillItem } from "./renderPlanTypes";
 import { circlePath2D, circlePathDescriptor } from "./circlePath2D";
 import { clipPayloadDescriptor, createPath2DItem } from "./pathItemFactories";
@@ -43,7 +46,10 @@ export function buildSubsolarMarkerRenderPlan(options: {
     return { items };
   }
 
-  const v = options.readability?.nightVeil01 ?? 0;
+  const v = effectiveOverlayReadabilityLiftVeil01(
+    options.readability?.nightVeil01,
+    options.readability?.overlayReadabilityLiftScale01,
+  );
   const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.22 * v));
 
@@ -128,7 +134,10 @@ export function buildSublunarMarkerRenderPlan(options: {
     return { items };
   }
 
-  const v = options.readability?.nightVeil01 ?? 0;
+  const v = effectiveOverlayReadabilityLiftVeil01(
+    options.readability?.nightVeil01,
+    options.readability?.overlayReadabilityLiftScale01,
+  );
   const sw = (base: number) => Math.max(base, base * (1 + 0.7 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.25 * v));
 

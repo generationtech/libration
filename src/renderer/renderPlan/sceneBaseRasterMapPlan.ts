@@ -34,6 +34,8 @@ export function buildBaseRasterMapRenderPlan(options: {
    * `cssFilter` for static overlay legibility on the night side.
    */
   readabilityNightVeil01?: number;
+  /** Substrate-aware attenuation of readability css lift (0.35–1); defaults to 1. */
+  overlayReadabilityLiftScale01?: number;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -43,7 +45,9 @@ export function buildBaseRasterMapRenderPlan(options: {
   const pres = options.presentation;
   const presFilter =
     pres !== undefined ? baseMapPresentationToCssFilterString(pres) : undefined;
-  const readFilter = overlayReadabilityCssFilterAppend(options.readabilityNightVeil01 ?? 0);
+  const readFilter = overlayReadabilityCssFilterAppend(options.readabilityNightVeil01 ?? 0, {
+    liftScale01: options.overlayReadabilityLiftScale01,
+  });
   const cssFilter = mergeCssFilterParts(presFilter, readFilter);
   const gamma = pres !== undefined && pres.gamma !== 1 ? pres.gamma : undefined;
   return {

@@ -148,6 +148,32 @@ describe("buildEquirectangularGridOverlayRenderPlan", () => {
       expect(b0.stroke.length).toBeGreaterThan(10);
     }
   });
+
+  it("reduces stroke boost when overlayReadabilityLiftScale01 is low at equal veil", () => {
+    const full = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: 720,
+      viewportHeightPx: 360,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+      readability: { nightVeil01: 1, overlayReadabilityLiftScale01: 1 },
+    });
+    const attenuated = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: 720,
+      viewportHeightPx: 360,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+      readability: { nightVeil01: 1, overlayReadabilityLiftScale01: 0.35 },
+    });
+    const f0 = full.items[0];
+    const a0 = attenuated.items[0];
+    expect(f0?.kind).toBe("line");
+    expect(a0?.kind).toBe("line");
+    if (f0?.kind === "line" && a0?.kind === "line") {
+      expect(a0.strokeWidthPx).toBeLessThan(f0.strokeWidthPx);
+    }
+  });
 });
 
 describe("executeRenderPlanOnCanvas equirect grid overlay lines", () => {

@@ -18,7 +18,10 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
-import type { OverlayReadabilityHints } from "../../layers/overlayReadabilityHints";
+import {
+  type OverlayReadabilityHints,
+  effectiveOverlayReadabilityLiftVeil01,
+} from "../../layers/overlayReadabilityHints";
 import {
   meridianLongitudesDegForEquirectGrid,
   parallelLatitudesDegForEquirectGrid,
@@ -50,7 +53,10 @@ export function buildEquirectangularGridOverlayRenderPlan(
   }
 
   const op = options.layerOpacity;
-  const veil = options.readability?.nightVeil01 ?? 0;
+  const veil = effectiveOverlayReadabilityLiftVeil01(
+    options.readability?.nightVeil01,
+    options.readability?.overlayReadabilityLiftScale01,
+  );
   const minorA = Math.min(0.38 * op, (0.07 + 0.2 * veil) * op);
   const majorA = Math.min(0.42 * op, (0.16 + 0.18 * veil) * op);
   const minorW = 1 + 0.75 * veil;

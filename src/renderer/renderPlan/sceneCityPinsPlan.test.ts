@@ -134,6 +134,45 @@ describe("buildCityPinsRenderPlan", () => {
     }
   });
 
+  it("attenuates pin stroke when overlayReadabilityLiftScale01 is low at equal readability veil", () => {
+    const city = {
+      id: "nyc",
+      name: "New York",
+      latDeg: 40.7,
+      lonDeg: -74,
+      localTimeLabel: "",
+      readabilityNightVeil01: 1 as const,
+    };
+    const payloadBase: CityPinsPayload = {
+      kind: CITY_PINS_KIND,
+      cities: [city],
+      showLabels: false,
+      labelMode: "city",
+      scale: "medium",
+      cityNameFontAssetId: LABEL_FONT,
+      dateTimeFontAssetId: LABEL_FONT,
+    };
+    const full = buildCityPinsRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      layerOpacity: 1,
+      payload: { ...payloadBase, overlayReadabilityLiftScale01: 1 },
+    });
+    const weak = buildCityPinsRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      layerOpacity: 1,
+      payload: { ...payloadBase, overlayReadabilityLiftScale01: 0.35 },
+    });
+    const innerF = full.items[0];
+    const innerW = weak.items[0];
+    expect(innerF?.kind).toBe("path2d");
+    expect(innerW?.kind).toBe("path2d");
+    if (innerF?.kind === "path2d" && innerW?.kind === "path2d") {
+      expect(innerW.strokeWidthPx).toBeLessThan(innerF.strokeWidthPx!);
+    }
+  });
+
   it("uses separate payload fonts for city name vs date/time lines", () => {
     const plan = buildCityPinsRenderPlan({
       viewportWidthPx: 800,

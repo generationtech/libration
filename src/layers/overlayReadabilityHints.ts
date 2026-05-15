@@ -14,7 +14,8 @@
 /**
  * Upstream overlay legibility hints derived from the same solar-altitude / night-veil
  * field as planetary illumination, optionally augmented by emissive night-light **policy**
- * (see {@link ../core/overlayReadabilityFrame} v1.1). No persisted readability keys in v1/v1.1.
+ * (see {@link ../core/overlayReadabilityFrame} v1.1). Optional `overlayReadabilityLiftScale01` attenuates lift from
+ * resolved base-map substrate (see frame). No persisted readability-only SceneConfig keys for v1/v1.1/substrate slice.
  */
 export interface OverlayReadabilityHints {
   /**
@@ -23,12 +24,45 @@ export interface OverlayReadabilityHints {
    * (subsolar veil plus bounded emissive policy pressure when enabled).
    */
   nightVeil01: number;
+  /**
+   * Substrate-aware attenuation of overlay lift (0.35–1), from resolved base-map presentation +
+   * optional catalog capabilities. Omitted means 1 (legacy v1.1 behavior).
+   */
+  overlayReadabilityLiftScale01?: number;
 }
 
 export function isOverlayReadabilityHints(value: unknown): value is OverlayReadabilityHints {
   if (value === null || typeof value !== "object") {
     return false;
   }
-  const v = (value as Record<string, unknown>).nightVeil01;
-  return typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1;
+  const o = value as Record<string, unknown>;
+  const v = o.nightVeil01;
+  if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1) {
+    return false;
+  }
+  if (o.overlayReadabilityLiftScale01 !== undefined) {
+    const ls = o.overlayReadabilityLiftScale01;
+    if (typeof ls !== "number" || !Number.isFinite(ls) || ls < 0 || ls > 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Night-side veil (0–1) scaled by substrate lift scale for stroke / cssFilter deltas.
+ */
+export function effectiveOverlayReadabilityLiftVeil01(
+  nightVeil01: number | undefined,
+  liftScale01: number | undefined,
+): number {
+  const v =
+    typeof nightVeil01 === "number" && Number.isFinite(nightVeil01)
+      ? Math.max(0, Math.min(1, nightVeil01))
+      : 0;
+  const s =
+    typeof liftScale01 === "number" && Number.isFinite(liftScale01)
+      ? Math.max(0, Math.min(1, liftScale01))
+      : 1;
+  return v * s;
 }
