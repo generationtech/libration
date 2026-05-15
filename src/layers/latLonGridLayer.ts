@@ -11,7 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
+import {
+  applySceneOverlayReadabilityPresentationToFrame,
+  getOverlayReadabilityFrameOrCompute,
+} from "../core/overlayReadabilityFrame";
+import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -27,10 +31,16 @@ const updatePolicy: UpdatePolicy = { type: "perFrame" };
  * Subtle latitude/longitude grid in equirectangular space (no live data).
  */
 export function createLatLonGridLayer(
-  options: { zIndex?: number; opacity?: number } = {},
+  options: {
+    zIndex?: number;
+    opacity?: number;
+    /** Optional pilot: extra veil/lift pass for the lat/lon grid only (after global presentation). */
+    gridReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+  } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
+  const gridReadabilityPresentation = options.gridReadabilityPresentation;
   return {
     id: GRID_ID,
     name: "Latitude / longitude grid",
@@ -39,7 +49,10 @@ export function createLatLonGridLayer(
     type: "vector",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const frame = getOverlayReadabilityFrameOrCompute(time);
+      let frame = getOverlayReadabilityFrameOrCompute(time);
+      if (gridReadabilityPresentation) {
+        frame = applySceneOverlayReadabilityPresentationToFrame(frame, gridReadabilityPresentation);
+      }
       const data: EquirectangularGridPayload = {
         kind: EQUIRECT_GRID_KIND,
         meridianStepDeg: 30,

@@ -249,8 +249,19 @@ export type SceneOverlayReadabilityPresentationConfig = {
   overlayLiftMultiplier01: number;
 };
 
+/**
+ * Optional per-stack-layer readability presentation (pilot: {@link SceneStackLayerId} `grid` only).
+ * Applied after global {@link SceneOverlayReadabilityConfig#presentation} when building that layer's hints
+ * (same scalar semantics as the global presentation pass).
+ */
+export type SceneOverlayReadabilityPerLayerMap = {
+  grid?: SceneOverlayReadabilityPresentationConfig;
+};
+
 export type SceneOverlayReadabilityConfig = {
   presentation: SceneOverlayReadabilityPresentationConfig;
+  /** Omitted when empty or identity-only after normalization. */
+  perLayer?: SceneOverlayReadabilityPerLayerMap;
 };
 
 export const OVERLAY_READABILITY_VEIL_SCALE_MIN = 0;
@@ -294,7 +305,7 @@ export type SceneConfig = {
   /** Presentation-only illumination controls (resolved upstream of RenderPlan). */
   illumination: SceneIlluminationConfig;
   /**
-   * Optional overlay legibility presentation (scales derived veil and substrate lift in the shell).
+   * Overlay legibility presentation: global veil/lift scaling in the shell, plus optional per-layer pilot for the lat/lon grid (`perLayer.grid`).
    * Always present on normalized configs.
    */
   overlayReadability: SceneOverlayReadabilityConfig;
@@ -393,6 +404,26 @@ export function normalizeSceneIlluminationInput(
   return { moonlight, emissiveNightLights };
 }
 
+function normalizeOverlayReadabilityPresentationFields(
+  pres: unknown,
+  fallbacks: SceneOverlayReadabilityPresentationConfig,
+): SceneOverlayReadabilityPresentationConfig {
+  if (!isPlainObject(pres)) {
+    return { ...fallbacks };
+  }
+  const vsRaw = pres.readabilityVeilScale01;
+  const lmRaw = pres.overlayLiftMultiplier01;
+  const readabilityVeilScale01 =
+    typeof vsRaw === "number" && Number.isFinite(vsRaw)
+      ? clampReadabilityVeilScale01(vsRaw)
+      : fallbacks.readabilityVeilScale01;
+  const overlayLiftMultiplier01 =
+    typeof lmRaw === "number" && Number.isFinite(lmRaw)
+      ? clampOverlayLiftMultiplier01(lmRaw)
+      : fallbacks.overlayLiftMultiplier01;
+  return { readabilityVeilScale01, overlayLiftMultiplier01 };
+}
+
 function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): SceneOverlayReadabilityConfig {
   const defaults = (): SceneOverlayReadabilityConfig => ({
     presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
@@ -401,21 +432,30 @@ function normalizeSceneOverlayReadabilityInput(input: Record<string, unknown>): 
   if (!isPlainObject(raw)) {
     return defaults();
   }
-  const pres = raw.presentation;
-  if (!isPlainObject(pres)) {
-    return defaults();
+  const presentation = normalizeOverlayReadabilityPresentationFields(
+    raw.presentation,
+    DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+  );
+  let perLayer: SceneOverlayReadabilityPerLayerMap | undefined;
+  if (isPlainObject(raw.perLayer)) {
+    const gRaw = raw.perLayer.grid;
+    if (isPlainObject(gRaw)) {
+      const grid = normalizeOverlayReadabilityPresentationFields(
+        gRaw,
+        DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
+      );
+      const identity =
+        grid.readabilityVeilScale01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01 &&
+        grid.overlayLiftMultiplier01 === DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
+      if (!identity) {
+        perLayer = { grid };
+      }
+    }
   }
-  const vsRaw = pres.readabilityVeilScale01;
-  const lmRaw = pres.overlayLiftMultiplier01;
-  const readabilityVeilScale01 =
-    typeof vsRaw === "number" && Number.isFinite(vsRaw)
-      ? clampReadabilityVeilScale01(vsRaw)
-      : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.readabilityVeilScale01;
-  const overlayLiftMultiplier01 =
-    typeof lmRaw === "number" && Number.isFinite(lmRaw)
-      ? clampOverlayLiftMultiplier01(lmRaw)
-      : DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION.overlayLiftMultiplier01;
-  return { presentation: { readabilityVeilScale01, overlayLiftMultiplier01 } };
+  return {
+    presentation,
+    ...(perLayer ? { perLayer } : {}),
+  };
 }
 
 export function resolveMoonlightPresentationMode(scene: SceneConfig): MoonlightPresentationMode {
@@ -648,6 +688,13 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     },
     overlayReadability: {
       presentation: { ...scene.overlayReadability.presentation },
+      ...(scene.overlayReadability.perLayer?.grid
+        ? {
+            perLayer: {
+              grid: { ...scene.overlayReadability.perLayer.grid },
+            },
+          }
+        : {}),
     },
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };

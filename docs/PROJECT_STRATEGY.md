@@ -168,7 +168,7 @@ Foundational systems now exist:
 - static and derived overlays.
 - month-aware map families.
 - coherent upstream planetary illumination composition (twilight, moonlight, emissive night lights; single illumination `rasterPatch`).
-- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars: night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
+- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + **`grid` per-layer pilot**: night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass for the lat/lon grid via `scene.overlayReadability.perLayer.grid`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
 
 The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond presentation scalars (per-layer tuning, richer heuristics), atmospheric refinement, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 

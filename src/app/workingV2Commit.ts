@@ -149,6 +149,24 @@ function sceneLayersRuntimeEqual(a: readonly SceneLayerInstance[], b: readonly S
  * Legacy `layers` flags remain as transitional compatibility, but scene deltas
  * are the primary trigger surface for registry rebuilds.
  */
+function overlayReadabilityPerLayerGridEqual(
+  a: SceneConfig["overlayReadability"]["perLayer"],
+  b: SceneConfig["overlayReadability"]["perLayer"],
+): boolean {
+  const ag = a?.grid;
+  const bg = b?.grid;
+  if (ag === undefined && bg === undefined) {
+    return true;
+  }
+  if (ag === undefined || bg === undefined) {
+    return false;
+  }
+  return (
+    ag.readabilityVeilScale01 === bg.readabilityVeilScale01 &&
+    ag.overlayLiftMultiplier01 === bg.overlayLiftMultiplier01
+  );
+}
+
 /** Exported for pipeline / regression tests (commit path vs scene-derived AppConfig). */
 export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): boolean {
   return (
@@ -174,6 +192,7 @@ export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): bool
       b.overlayReadability.presentation.readabilityVeilScale01 &&
     a.overlayReadability.presentation.overlayLiftMultiplier01 ===
       b.overlayReadability.presentation.overlayLiftMultiplier01 &&
+    overlayReadabilityPerLayerGridEqual(a.overlayReadability.perLayer, b.overlayReadability.perLayer) &&
     sceneLayersRuntimeEqual(a.layers, b.layers)
   );
 }

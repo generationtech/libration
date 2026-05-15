@@ -22,7 +22,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible moonlight composition with configurable presentation modes.
 - emissive night-light upstream composition (catalog-backed asset, policy, perceptual luma driver, Layers presentation controls, illustrative defaults).
-- derived overlay readability v1 + v1.1 + **substrate-aware lift scale** + **optional SceneConfig presentation** (grid, analemma, subsolar/sublunar, city pins, static equirect rasters; solar night veil + emissive **policy** lift + presentation/catalog attenuation + user veil/lift multipliers into RenderPlan; optional **one** `OverlayReadabilityFrame` per tick on `TimeContext`).
+- derived overlay readability v1 + v1.1 + **substrate-aware lift scale** + **optional SceneConfig presentation** + optional **`grid` per-layer pilot** (`scene.overlayReadability.perLayer.grid`) (grid, analemma, subsolar/sublunar, city pins, static equirect rasters; solar night veil + emissive **policy** lift + presentation/catalog attenuation + user veil/lift multipliers into RenderPlan; optional **one** `OverlayReadabilityFrame` per tick on `TimeContext`).
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
@@ -35,7 +35,7 @@ The current strategic objective is to **extend** the delivered upstream planetar
 3. Continue disciplined map and scene expansion.
 4. Preserve future-feature inventory without prematurely implementing it.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Extend planetary composition on top of the **delivered** twilight, moonlight, emissive, and **overlay readability** stacks (v1 + v1.1 + derived substrate lift scale + SceneConfig presentation scalars): further readability **extensions** (per-layer tuning, richer heuristics), then clouds/weather planning, then atmospheric refinement—incremental slices, not a new compositor layer.
+6. Extend planetary composition on top of the **delivered** twilight, moonlight, emissive, and **overlay readability** stacks (v1 + v1.1 + derived substrate lift scale + SceneConfig presentation scalars + **`grid` per-layer pilot**): further readability **extensions** (per-layer tuning for other stack ids, richer heuristics), then clouds/weather planning, then atmospheric refinement—incremental slices, not a new compositor layer.
 
 ## Near-term execution slices
 
@@ -49,11 +49,11 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Scene presentation scaling (shipped):** normalized `scene.overlayReadability.presentation` (`readabilityVeilScale01` 0–1.5, `overlayLiftMultiplier01` 0.65–1.35, defaults 1) post-processes the derived frame in the shell; Layers tab exposes controls and reset.
 
-**Not in this closed stack (future):** per-layer readability tuning; richer substrate-only heuristics beyond presentation + catalog flags.
+**Not in this closed stack (future):** per-layer readability tuning for stack layers other than **`grid`**; richer substrate-only heuristics beyond presentation + catalog flags.
 
 **Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling); hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
 
-**Next frontier (implementation):** per-layer readability tuning when justified; richer substrate modeling in catalog or resolver if needed.
+**Next frontier (implementation):** extend per-layer readability to additional stack layer ids when justified; richer substrate modeling in catalog or resolver if needed.
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -72,7 +72,7 @@ Exit criteria:
 - docs do not reference removed structures.
 - future chat sessions can onboard quickly.
 
-**Rolling doc fixes:** overlay readability **v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars** documented as **complete** in `PLAN.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/AI_COENGINEERING.md`, and agent/strategy docs; terminology aligned with shipped runtime (no “v1 only”, “substrate unreadable”, or “no persisted readability keys” drift where presentation is persisted).
+**Rolling doc fixes:** overlay readability **v1 + v1.1 + derived substrate lift + SceneConfig presentation scalars + `grid` per-layer pilot** documented as **complete** in `PLAN.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/AI_COENGINEERING.md`, and agent/strategy docs; terminology aligned with shipped runtime (no “v1 only”, “substrate unreadable”, or “no persisted readability keys” drift where presentation is persisted).
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
@@ -87,11 +87,13 @@ Status: active.
 - perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
 - **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).
 - subsolar marker, sublunar marker, solar analemma overlay, and derived astronomical overlays in the layer stack.
-- **Overlay readability (v1 + v1.1 + substrate + optional SceneConfig presentation, derived):** `OverlayReadabilityFrame` from `computeOverlayReadabilityFrameFromTimeMs` (emissive policy + **substrate** inputs: effective base-map presentation + catalog `capabilities`), then `scene.overlayReadability.presentation` scaling, attached each tick via `TimeContext.overlayReadabilityFrame` and `getOverlayReadabilityFrameOrCompute` in layers; `OverlayReadabilityHints` on grid/analemma/marker payloads (`overlayReadabilityLiftScale01` from frame); per-pin `readabilityNightVeil01` on city pins + payload-level lift scale; static equirect raster `readability` + merged `cssFilter` in `buildBaseRasterMapRenderPlan`; vector stroke/alpha via `effectiveOverlayReadabilityLiftVeil01` (no emissive raster sampling in the readability path).
+- **Overlay readability (v1 + v1.1 + substrate + optional SceneConfig presentation + `grid` pilot, derived):** `OverlayReadabilityFrame` from `computeOverlayReadabilityFrameFromTimeMs` (emissive policy + **substrate** inputs: effective base-map presentation + catalog `capabilities`), then `scene.overlayReadability.presentation` scaling, attached each tick via `TimeContext.overlayReadabilityFrame` and `getOverlayReadabilityFrameOrCompute` in layers; optional **`scene.overlayReadability.perLayer.grid`** applies the same presentation scalars again for the lat/lon grid layer only; `OverlayReadabilityHints` on grid/analemma/marker payloads (`overlayReadabilityLiftScale01` from frame); per-pin `readabilityNightVeil01` on city pins + payload-level lift scale; static equirect raster `readability` + merged `cssFilter` in `buildBaseRasterMapRenderPlan`; vector stroke/alpha via `effectiveOverlayReadabilityLiftVeil01` (no emissive raster sampling in the readability path).
 
 **Likely next implementation slice:**
 
-- **Readability extensions:** per-layer tuning when justified; optional richer substrate modeling beyond presentation + catalog flags.
+- **Readability extensions:** per-layer tuning for additional stack layer ids beyond the shipped **`grid` pilot**; optional richer substrate modeling beyond presentation + catalog flags.
+
+**Shipped pilot:** `scene.overlayReadability.perLayer.grid` (veil + lift scalars) applies only to the lat/lon grid overlay after the global frame; normalized config omits the subtree when both scalars are identity.
 
 **Remaining frontier work (incremental; sequence as dependencies allow):**
 

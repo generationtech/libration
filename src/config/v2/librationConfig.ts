@@ -1078,6 +1078,27 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.presentation");
   }
+  if ("perLayer" in ovr && ovr.perLayer !== undefined) {
+    if (typeof ovr.perLayer !== "object" || ovr.perLayer === null) {
+      throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer");
+    }
+    const pl = ovr.perLayer as { grid?: unknown };
+    if ("grid" in pl && pl.grid !== undefined) {
+      const g = pl.grid;
+      if (typeof g !== "object" || g === null) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.grid");
+      }
+      const gv = g as { readabilityVeilScale01?: unknown; overlayLiftMultiplier01?: unknown };
+      if (
+        typeof gv.readabilityVeilScale01 !== "number" ||
+        !Number.isFinite(gv.readabilityVeilScale01) ||
+        typeof gv.overlayLiftMultiplier01 !== "number" ||
+        !Number.isFinite(gv.overlayLiftMultiplier01)
+      ) {
+        throw new Error("assertIsNormalizedLibrationConfig: invalid scene.overlayReadability.perLayer.grid fields");
+      }
+    }
+  }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
     baseMapPres !== undefined &&

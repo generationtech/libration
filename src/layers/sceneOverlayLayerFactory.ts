@@ -92,7 +92,11 @@ function createDerivedOverlayByProduct(
         emissiveDriverExponent: config.scene.illumination.emissiveNightLights.presentation.driverExponent,
       });
     case "latLonGrid":
-      return createLatLonGridLayer({ zIndex, opacity });
+      return createLatLonGridLayer({
+        zIndex,
+        opacity,
+        gridReadabilityPresentation: config.scene.overlayReadability.perLayer?.grid,
+      });
     case "referenceAndCustomCityPins":
       return createCityPinsLayer(
         resolveCitiesForPins(config),

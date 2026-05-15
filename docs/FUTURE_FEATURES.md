@@ -35,7 +35,7 @@ The current scene system already includes:
 - non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
 - **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
 - emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years—without moving semantics into the backend.
-- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation):** `OverlayReadabilityFrame` on `TimeContext` (one per tick from the shell): **v1** subsolar night veil on grid, analemma, subsolar/sublunar markers, city pins, and static equirect rasters; **v1.1** adds deterministic emissive **policy-only** legibility pressure from `scene.illumination.emissiveNightLights` into `readabilityVeil01At` / `globalReadabilityVeil01` (no emissive texture sampling in the readability path); **substrate lift scale** on the same frame (`substrateOverlayReadabilityLiftScale01`) from effective base-map presentation + catalog `capabilities`; **presentation** via `scene.overlayReadability.presentation` scales combined veil and lift in the shell before hints; vector stroke/alpha scaling resolved upstream.
+- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + `grid` pilot):** `OverlayReadabilityFrame` on `TimeContext` (one per tick from the shell): **v1** subsolar night veil on grid, analemma, subsolar/sublunar markers, city pins, and static equirect rasters; **v1.1** adds deterministic emissive **policy-only** legibility pressure from `scene.illumination.emissiveNightLights` into `readabilityVeil01At` / `globalReadabilityVeil01` (no emissive texture sampling in the readability path); **substrate lift scale** on the same frame (`substrateOverlayReadabilityLiftScale01`) from effective base-map presentation + catalog `capabilities`; **presentation** via `scene.overlayReadability.presentation` scales combined veil and lift in the shell before hints; optional **`scene.overlayReadability.perLayer.grid`** applies the same scalars again for the lat/lon grid only; vector stroke/alpha scaling resolved upstream.
 - seasonal polar illumination behavior emerging from solar geometry and axial tilt.
 - subsolar marker.
 - sublunar marker.
@@ -158,7 +158,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- overlay readability **beyond derived v1.1 + substrate lift scale + SceneConfig presentation scalars:** per-layer tuning where justified; richer catalog or resolver heuristics.
+- **Overlay readability beyond derived v1.1 + substrate lift scale + SceneConfig presentation scalars + `grid` pilot:** per-layer tuning for other stack ids where justified; richer catalog or resolver heuristics.
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.
