@@ -110,7 +110,7 @@ Atmospheric transitions, twilight behavior, planetary illumination, **moonlight,
 - physically-inspired attenuation.
 - coherent upstream composition policy.
 
-Further refinement (readability **after** shipped v1.1 + derived substrate lift + presentation scalars, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
+Further refinement (**readability extensions after** shipped v1 + v1.1 + derived substrate lift + presentation scalars + **six default-stack `perLayer` pilots**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
 
 Avoid:
 
@@ -123,7 +123,7 @@ Avoid:
 
 The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
 
-Future work **extends** that subsystem for **readability policy** after the shipped stack (per-layer tuning, richer heuristics), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
+Future work **extends** that subsystem for readability policy **beyond the shipped global presentation + six default `perLayer` keys**, atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
 
 - atmospheric attenuation.
 - reflected illumination.

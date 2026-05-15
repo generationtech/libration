@@ -204,11 +204,11 @@ Candidate deliverables:
 - seasonal natural-color refinements.
 - map selector attribution and explanatory copy.
 
-## Phase 9: Planetary scene composition and illumination
+## Phase 9: Planetary scene composition and illumination — incremental extensions
 
-Status: planned — **extends** the coherent upstream planetary illumination subsystem already in production (Phase 6); does **not** introduce a new rendering boundary or backend compositor.
+Status: planned (**extends** Phase 6 production baseline upstream illumination + readability closure; adds atmosphere, heuristic tuning, clouds/weather when prerequisites exist — **no** new rendering boundary).
 
-The subsystem is **mature enough for incremental features** (readability **extensions after** shipped v1.1 + substrate lift + presentation scalars + **six default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`), atmosphere, clouds); avoid speculative “greenfield composition” designs.
+The subsystem remains **incremental-extension territory** (`PLAN.md` Slice 2): readability **after** shipped v1 + v1.1 + substrate lift + presentation + **six** default-stack `perLayer` pilots (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`); richer substrate/heuristic modeling and atmosphere/clouds—not speculative greenfield composition.
 
 Candidate deliverables:
 
