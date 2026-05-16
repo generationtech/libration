@@ -71,6 +71,7 @@ Rules (aligned with base maps):
 - persist **durable semantic family ids** only (no concrete month paths or ad hoc URLs in config).
 - satisfy the same equirectangular world contract as base maps until projection support expands.
 - resolve through a **bundled catalog** (`src/assets/composition/emissive-composition-catalog.json` for emissive inputs), not runtime directory scans.
+- non-emissive twilight and day/night sampling are upstream **constants-only** tuning in `illuminationShading.ts` (cumulative narrow passes; see `PLAN.md`), not additional catalog rasters.
 
 Emissive night-light families are **not** exposed as selectable base maps; they are sampled inside the planetary illumination pipeline and emitted through the same single illumination `rasterPatch` contract as solar and lunar composition. The first validated ship asset is **NASA Black Marble 2016** (1° grayscale JPEG) at `public/maps/composition/equirect-world-night-lights-viirs-v1.jpg`, documented under `docs/maps/MAP_ASSET_SOURCES.md`.
 
