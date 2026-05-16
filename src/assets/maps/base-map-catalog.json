@@ -141,7 +141,8 @@
         "emissiveCompatible": false,
         "darkFriendly": false,
         "seasonal": true,
-        "fineScaleTexture": true
+        "fineScaleTexture": true,
+        "sunGlintDense": true
       },
       "recommendedRoles": [
         "general",
@@ -202,7 +203,8 @@
         "darkFriendly": false,
         "seasonal": true,
         "reliefShaded": true,
-        "fineScaleTexture": true
+        "fineScaleTexture": true,
+        "sunGlintDense": true
       },
       "recommendedRoles": [
         "general",

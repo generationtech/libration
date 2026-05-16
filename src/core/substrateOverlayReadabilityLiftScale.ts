@@ -38,6 +38,8 @@ export type SubstrateReadabilityCatalogHint = Readonly<{
   labelDense?: boolean;
   /** Directional etched / scribed relief shading (catalog `capabilities.etchedReliefDense`). */
   etchedReliefDense?: boolean;
+  /** Dense sun glint on open water in natural-color imagery (catalog `capabilities.sunGlintDense`). */
+  sunGlintDense?: boolean;
 }>;
 
 /** Upper bound on combined (presentation + intrinsic catalog) readability penalty → lift floor. */
@@ -109,6 +111,9 @@ export function intrinsicSubstrateReadabilityCatalogPenalty01(
   if (hint.etchedReliefDense) {
     p += 0.046;
   }
+  if (hint.sunGlintDense) {
+    p += 0.043;
+  }
   return Math.max(0, Math.min(0.18, p));
 }
 
@@ -131,7 +136,7 @@ function catalogHintMultiplier(hint: SubstrateReadabilityCatalogHint | null | un
 /**
  * 1 = apply full overlay readability lift at a given veil; lower values attenuate lift when the
  * base map is already bright / contrasted (presentation), catalog-marked (overlay tuning,
- * relief, linework, chroma, bathymetry, fine-scale texture, dense labels, etched relief), or a combination.
+ * relief, linework, chroma, bathymetry, fine-scale texture, dense labels, etched relief, sun glint), or a combination.
  */
 export function deriveSubstrateOverlayReadabilityLiftScale01(
   presentation: BaseMapPresentationConfig,

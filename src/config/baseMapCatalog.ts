@@ -72,6 +72,13 @@ export type BaseMapCapabilities = Readonly<{
    * imagery and from {@link fineScaleTexture} photographic grain.
    */
   etchedReliefDense?: boolean;
+  /**
+   * Strong, spatially dense sun glint on open water in true-color / natural-color imagery reads as
+   * high-contrast specular sparkle that competes with thin vector overlays; distinct from
+   * {@link bathymetryShaded} ocean-floor relief shading and from {@link fineScaleTexture} land/cloud
+   * micro-texture alone.
+   */
+  sunGlintDense?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

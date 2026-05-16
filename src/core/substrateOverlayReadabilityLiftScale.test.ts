@@ -62,7 +62,7 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({})).toBe(0);
   });
 
-  it("accumulates bounded penalties for relief, boundary-dense, chromatic-dense, bathymetry, fine-scale texture, label-dense, and etched-relief flags", () => {
+  it("accumulates bounded penalties for relief, boundary-dense, chromatic-dense, bathymetry, fine-scale texture, label-dense, etched-relief, and sun-glint flags", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true })).toBeCloseTo(0.072, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ boundaryDense: true })).toBeCloseTo(0.055, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ chromaticDense: true })).toBeCloseTo(0.05, 10);
@@ -70,6 +70,7 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ fineScaleTexture: true })).toBeCloseTo(0.04, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ labelDense: true })).toBeCloseTo(0.052, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ etchedReliefDense: true })).toBeCloseTo(0.046, 10);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ sunGlintDense: true })).toBeCloseTo(0.043, 10);
     expect(
       intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true, boundaryDense: true }),
     ).toBeCloseTo(0.127, 10);
@@ -104,6 +105,7 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
         fineScaleTexture: true,
         labelDense: true,
         etchedReliefDense: true,
+        sunGlintDense: true,
       }),
     ).toBeCloseTo(0.18, 10);
   });
@@ -127,7 +129,7 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(s).toBe(SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN);
   });
 
-  it("scales below 1 at neutral presentation when relief, boundary, chromatic, bathymetry, fine-scale texture, label-dense, or etched-relief hints are set", () => {
+  it("scales below 1 at neutral presentation when relief, boundary, chromatic, bathymetry, fine-scale texture, label-dense, etched-relief, or sun-glint hints are set", () => {
     const r = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       reliefShaded: true,
     });
@@ -149,6 +151,9 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     const etched = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       etchedReliefDense: true,
     });
+    const glint = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      sunGlintDense: true,
+    });
     expect(r).toBeCloseTo(1 - 0.072, 10);
     expect(d).toBeCloseTo(1 - 0.055, 10);
     expect(c).toBeCloseTo(1 - 0.05, 10);
@@ -156,6 +161,7 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(fine).toBeCloseTo(1 - 0.04, 10);
     expect(labels).toBeCloseTo(1 - 0.052, 10);
     expect(etched).toBeCloseTo(1 - 0.046, 10);
+    expect(glint).toBeCloseTo(1 - 0.043, 10);
   });
 
   it("combines chromatic and label-dense like political/geology families at neutral presentation", () => {
@@ -174,12 +180,21 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(scale).toBeCloseTo(1 - 0.12, 10);
   });
 
-  it("combines relief and fine-scale texture like Blue Marble T at neutral presentation", () => {
+  it("combines relief, fine-scale texture, and sun glint like Blue Marble T at neutral presentation", () => {
     const scale = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       reliefShaded: true,
       fineScaleTexture: true,
+      sunGlintDense: true,
     });
-    expect(scale).toBeCloseTo(1 - 0.112, 10);
+    expect(scale).toBeCloseTo(1 - 0.072 - 0.04 - 0.043, 10);
+  });
+
+  it("combines fine-scale texture and sun glint like Blue Marble BM at neutral presentation", () => {
+    const scale = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      fineScaleTexture: true,
+      sunGlintDense: true,
+    });
+    expect(scale).toBeCloseTo(1 - 0.04 - 0.043, 10);
   });
 
   it("preserves more lift on dimmed bases than on bright bases for same contrast boost", () => {
