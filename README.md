@@ -95,7 +95,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**), **primary active execution slice** (same), and **single best next PR** (next **A**-class substrate when sourced, else **Slice 4** month-aware selector polish). **Structured attribution presentation** in the map selector is **shipped**. **Slice 2** is the composition *program* when queue **A** has no shippable increment or the session scopes composition only.
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**), **primary active execution slice** (same), and **single best next PR** (next **A**-class substrate when sourced). **Structured attribution** and **month-aware selector polish** (active UTC civil month for Blue Marble families) are **shipped**. **Slice 2** is the composition *program* when queue **A** has no shippable increment or the session scopes composition only.
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

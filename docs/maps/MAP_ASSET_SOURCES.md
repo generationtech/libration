@@ -233,8 +233,9 @@ Role: natural-color or seasonal visual substrates.
 
 Notes:
 
-- Month-aware families resolve concrete month rasters from product time.
-- Persist only the family id.
+- Month-aware families resolve concrete month rasters from product time (UTC civil month via `baseMapMonthResolve` / `baseMapAssetResolve`; same instant as the render clock).
+- Persist only the family id (no stored month in SceneConfig).
+- **Layers map selector (shipped):** when a month-aware family is selected, `BaseMapStyleControl` shows catalog `shortDescription` plus an active month line (`Displaying: <month> (UTC civil month N)`) driven by render-clock `productInstantMs` while the config panel is open—display-only; does not change resolution policy.
 - Keep attribution and source processing notes explicit.
 - Ensure all monthly rasters are dimensionally and spatially identical.
 - **`equirect-world-blue-marble-bm-v1`** / **`equirect-world-blue-marble-t-v1`:** bundled catalog sets **`capabilities.fineScaleTexture`** and **`capabilities.sunGlintDense`** for upstream overlay-readability lift—curator signals for fine-scale natural-color texture and dense open-ocean sun glint; no runtime raster sampling.

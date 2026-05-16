@@ -109,6 +109,7 @@ Delivered:
 - bundled JSON base-map catalog.
 - family ids, labels, categories, paths, previews, capabilities, defaults, and attribution.
 - structured selector attribution on all bundled families (`attribution`, optional `licenseNote`, up to two `sourceLinks`; **Source & license** block in `BaseMapStyleControl`—see Phase 8).
+- month-aware selector polish: Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line when config is open (see Phase 8 / Slice 4).
 - selector/editor integration.
 - per-family base-map presentation controls.
 - static and month-aware variant modes.

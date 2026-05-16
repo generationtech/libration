@@ -123,7 +123,7 @@ Good:
 
 - Add a new map catalog validation test.
 - Move historical docs under `docs/historical` and update links.
-- Add selector copy for month-aware map families.
+- Onboard the next **A**-class base-map substrate when raster and rights exist (`maps:prep`, catalog, tests).
 - Implement a narrow resolver fix with regression tests.
 - Extract a component without changing behavior.
 - Add one layer type behind existing SceneConfig boundaries.

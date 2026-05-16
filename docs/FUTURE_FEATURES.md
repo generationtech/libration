@@ -22,6 +22,7 @@ The current map configuration UI already includes:
 - curated substrate taxonomy.
 - map preview card for the selected base-map family.
 - attribution display for the selected base-map family (**Source & license** block: credit line, optional `licenseNote`, up to two external `sourceLinks` from the bundled catalog).
+- month-aware family catalog copy and **active UTC civil month** indication for Blue Marble families in `BaseMapStyleControl` (render-clock `productInstantMs`; not persisted in SceneConfig).
 - per-family base-map presentation controls.
 - shared presentation persistence across seasonal/month-aware raster variants.
 - bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** set **`labelDense`** alongside chromatic/boundary hints (shipped non-transitional families); legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).

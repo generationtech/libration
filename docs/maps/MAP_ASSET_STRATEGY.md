@@ -115,7 +115,7 @@ A static family resolves to one concrete raster.
 
 ### Month-aware families
 
-A month-aware family stores one selected family id in config but resolves a concrete monthly raster from product time.
+A month-aware family stores one selected family id in config but resolves a concrete monthly raster from product time (UTC civil month). The Layers selector surfaces the active month read-only when that family is selected (`BaseMapStyleControl`; see `MAP_ASSET_SOURCES.md` Blue Marble notes)—month is not a separate persisted config field.
 
 Rules:
 
