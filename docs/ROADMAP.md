@@ -163,7 +163,7 @@ Remaining future work:
 
 - **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; **further** substrate heuristics beyond the shipped presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** + sub-1 brightness dimming rules (still upstream, no backend policy).
 - **further** atmospheric scattering and transition refinement beyond cumulative incremental twilight tuning in the existing continuous twilight field.
-- weather/cloud **participation planning** and later upstream participation in planetary composition (ties to Phase 10 lifecycle when opened).
+- weather/cloud **upstream participation** in planetary composition (ties to Phase 10 lifecycle when opened; **planning shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
 - active solar-position synchronization along astronomical reference trajectories.
 - richer derived astronomical overlays.
 - overlay editor refinement.
@@ -203,6 +203,7 @@ Exit criteria:
 - **Phase 8 / Slice 3 map inventory (rolling):** all bundled catalog families have `previewThumbnailSrc` (legacy + static trio + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** queue **A** PR: next sourced substrate (`PLAN.md` Slice 3 item **(2)**).
 - **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all seven families; see `PLAN.md` closed increment.
+- **Slice 2 queue D — weather/cloud planning (closed):** [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); implementation blocked on Phase 10 lifecycle; see `PLAN.md` closed increment.
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
@@ -235,7 +236,7 @@ Candidate deliverables:
 
 - **Readability extensions:** `perLayer` readability for scene stack rows **beyond** those six defaulted ids when product-defined; finer semantics when multiple overlay rows share one pilot key (e.g. static equirect); **further** substrate heuristics beyond presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** + sub-1 brightness dimming when product needs them.
 - higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model (cumulative incremental non-emissive twilight tuning is already shipped in `illuminationShading.ts`; deeper fidelity remains).
-- weather/cloud participation in planetary composition (after planning and lifecycle prerequisites).
+- weather/cloud participation in planetary composition (after Phase 10 lifecycle; follows [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed**).
 - composition-aware day/night illumination nuances tied to overlays and substrate.
 - blending modes, masking, and clipping **only when justified** by readability or data participation needs (not as an open-ended backend compositor).
 - optional **additional** emissive or radiance contributors beyond the dedicated Black Marble path if product scope requires them.
@@ -257,7 +258,7 @@ Delivered in Phase 6 (emissive MVP and integration **complete** for current scop
 Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + substrate heuristic increments + presentation scalars + six default-stack `perLayer` pilots** delivery):
 
 - readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; **further** substrate modeling beyond the shipped presentation + dimming + `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` + `overlayOptimized` / `darkFriendly` model).
-- **further** weather/cloud participation, **further** atmospheric refinement beyond cumulative shipped twilight tuning, and optional higher-resolution or alternate-year emissive assets when curated.
+- **further** weather/cloud **implementation** (planning in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)), **further** atmospheric refinement beyond cumulative shipped twilight tuning, and optional higher-resolution or alternate-year emissive assets when curated.
 
 ## Phase 10: Dynamic data lifecycle
 

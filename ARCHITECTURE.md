@@ -261,7 +261,7 @@ Still future or partial:
 - live feeds.
 - gridded scientific datasets.
 - **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.
-- cloud and weather participation in upstream planetary composition (planning and lifecycle prerequisites).
+- cloud and weather **implementation** in upstream planetary composition (Phase 10 lifecycle prerequisites; planning in [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md)—**closed** for queue **D**).
 - **further** atmospheric transition, scattering, or haze refinement beyond **cumulative shipped** twilight tuning in `illuminationShading.ts` on the same continuous field (optional future SceneConfig “twilight softness” only if product warrants it).
 - advanced blending, masking, and **additional** emissive or radiance contributors beyond the dedicated night-lights path (only if product scope justifies them; not a generic multi-pass compositor in the backend).
 - further tuning of emissive radiance encoding (true linear radiance vs display-encoded JPEG) and optional higher-resolution Black Marble variants.

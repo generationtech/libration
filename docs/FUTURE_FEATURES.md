@@ -45,7 +45,7 @@ The current scene system already includes:
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work should extend these systems with **further substrate readability heuristics** (additional catalog/resolver signals beyond **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`**, sub-1 brightness dimming, and presentation + `overlayOptimized` / `darkFriendly`), **further atmospheric refinement** (scattering, haze, optional SceneConfig twilight softness, or **optional third+** narrow constants-only passes) beyond the shipped cumulative incremental tuning in `illuminationShading.ts`, and (when lifecycle exists) weather/cloud participation—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
+Future work should extend these systems with **further substrate readability heuristics** (additional catalog/resolver signals beyond **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`**, sub-1 brightness dimming, and presentation + `overlayOptimized` / `darkFriendly`), **further atmospheric refinement** (scattering, haze, optional SceneConfig twilight softness, or **optional third+** narrow constants-only passes) beyond the shipped cumulative incremental tuning in `illuminationShading.ts`, and (when Phase 10 lifecycle exists) weather/cloud **implementation** per [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed** (`PLAN.md` Slice 2 queue **D**)—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
 
 ## Maps and base-map families
 
@@ -123,7 +123,7 @@ Future work should extend these systems with **further substrate readability heu
 
 ### Dynamic and live layers
 
-Blocked until dynamic data lifecycle exists.
+Blocked until dynamic data lifecycle exists (Phase 10). Participation boundaries and sequencing: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 Candidates:
 
