@@ -129,7 +129,7 @@ Future work **extends** that subsystem for readability policy **beyond the shipp
 - reflected illumination.
 - emissive illumination.
 - visibility/readability policy.
-- weather/cloud participation.
+- weather/cloud **implementation** (planning **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); Phase 10 lifecycle prerequisite).
 - dynamic scene composition.
 
 ## Development strategy

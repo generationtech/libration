@@ -181,7 +181,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **cumulative incremental twilight transition tuning** in `illuminationShading.ts`; **structured map selector attribution**; not stale “v1 only”, “substrate unreadable”, “no twilight tuning”, or “attribution presentation not shipped” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **cumulative incremental twilight transition tuning** in `illuminationShading.ts`; **structured map selector attribution**; **weather/cloud planning** in `docs/specs/scene/weather-cloud-composition-plan.md`; not stale “v1 only”, “substrate unreadable”, “no twilight tuning”, “weather/cloud planning not shipped”, or “attribution presentation not shipped” phrasing).
 
 Exit criteria:
 
@@ -207,7 +207,7 @@ Exit criteria:
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**).
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**; preferred order: bathymetry/ocean → vegetation/land cover → climate normals). Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
 
 **Rolling delivered (Slice 3 / Phase 8):**
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Planning artifact (Slice 2 queue D).** This document records boundaries, prerequisites, and sequencing for future weather and cloud participation in Libration. It does **not** authorize runtime implementation, new SceneConfig axes, or backend composition policy.
+**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** This document records boundaries, prerequisites, and sequencing for future weather and cloud participation in Libration. It does **not** authorize runtime implementation, new SceneConfig axes, or backend composition policy. **Default next PR** remains Phase 8 queue **A(2)** substrate onboarding when raster + rights exist; Slice 2 **B**/**C** when **A** is blocked; weather/cloud **code** waits on Phase 10.
 
 **Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 2), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phases 6, 9, 10).
 
