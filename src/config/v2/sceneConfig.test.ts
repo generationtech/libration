@@ -537,6 +537,7 @@ describe("SceneConfig (Phase 1)", () => {
     const o = getEquirectBaseMapOptionForId("equirect-world-topography-ne-v1");
     expect(o.label).toBe("World topography (Natural Earth)");
     expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-topography-thumb.jpg");
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {

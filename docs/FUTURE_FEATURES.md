@@ -78,7 +78,7 @@ Future work should extend these systems with **further substrate readability heu
 
 - stronger source provenance in catalog.
 - richer attribution display.
-- preview thumbnails for all families (**partial:** political and geology have bundled previews; **`equirect-world-topography-ne-v1`** ship raster exists but catalog preview is still missing—default next queue **A** in `PLAN.md`).
+- preview thumbnails for all families (**partial:** static trio **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`** have bundled previews; legacy reference and month-aware Blue Marble families use their own preview paths—see catalog).
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.

@@ -245,6 +245,12 @@ Runtime asset:
 public/maps/world-equirectangular-topography.jpg
 ```
 
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-topography-thumb.jpg
+```
+
 ### Provenance and license
 
 - **Source lineage:** [Natural Earth](https://www.naturalearthdata.com/) 1:10m-scale geographic data (raster or vector derivatives), exported for Libration as a single global Plate Carrée JPEG (same pipeline class as `equirect-world-political-v1`).
@@ -254,11 +260,12 @@ public/maps/world-equirectangular-topography.jpg
 
 - Full-world equirectangular, **north-up**, **5400×2700** JPEG (**2:1** width:height), **RGB** (hypsometric-style relief coloring).
 - No reprojection applied in-repo beyond export to the world extent contract (lon −180..180, lat −90..90, no padding).
+- Preview thumbnail **800×400** from the ship JPEG (same pattern as other static families).
 
 ### Catalog notes
 
 - Bundled catalog sets **`capabilities.reliefShaded`** for upstream overlay-readability lift—curator signal for strong local relief contrast competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
-- **Inventory polish (open):** ship raster is committed; bundled catalog does **not** yet set **`previewThumbnailSrc`** (political and geology families already have previews)—default next queue **A** vertical in `PLAN.md`.
+- Bundled catalog sets **`previewThumbnailSrc`** for the map selector (same pattern as political and geology static families).
 
 ### Legacy ids (resolver aliases)
 
