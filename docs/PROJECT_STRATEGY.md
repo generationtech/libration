@@ -176,7 +176,7 @@ The next strategic need is not another large hidden architecture migration. It i
 
 Likely next frontiers:
 
-1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract is **shipped**, not hypothetical).
+1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract through **`sunGlintDense`** is **shipped and doc-finalized**, not hypothetical).
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
 4. **Readability and composition extensions** (`perLayer` beyond the **six shipped** default-stack keys where product defines new rows; **further** substrate/catalog signals beyond `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` + dimming; **further** atmospheric refinement on the **existing** upstream illumination stack **after** the shipped incremental twilight tuning pass), and cloud/weather **planning** until dynamic lifecycle opens.

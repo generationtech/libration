@@ -148,7 +148,7 @@ Candidates:
 
 ## Composition and visual systems
 
-Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. Upstream overlay **substrate lift** consumes bundled catalog **`capabilities`**: **eight** optional intrinsic hints through **`sunGlintDense`** (see `docs/maps/MAP_ASSET_SOURCES.md` and `src/core/substrateOverlayReadabilityLiftScale.ts`), plus `overlayOptimized` / `darkFriendly` presentation multipliers—**implemented**, not speculative. The items below are **extensions** or optional product directions, not prerequisites for the current stack.
+Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. Upstream overlay **substrate lift** consumes bundled catalog **`capabilities`**: **eight** optional intrinsic hints through **`sunGlintDense`** (see `docs/maps/MAP_ASSET_SOURCES.md` and `src/core/substrateOverlayReadabilityLiftScale.ts`), plus `overlayOptimized` / `darkFriendly` presentation multipliers—**implemented**, not speculative. **Doc-finalized:** BM/T **`sunGlintDense`** curation closes the “open-ocean glint vs overlays” slice; backlog items below target **ninth+** optional intrinsics or other extensions—not re-litigating the eight-intrinsic baseline. The items below are **extensions** or optional product directions, not prerequisites for the current stack.
 
 ### Planned or candidate composition features
 
