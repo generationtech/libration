@@ -40,6 +40,7 @@ Current implemented areas include:
 - Categorized base-map selector UI with grouped substrate families.
 - Static and month-aware base-map families.
 - Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
+- Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution; not a transitional placeholder).
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
 - Map preview and attribution display for selected base-map families.

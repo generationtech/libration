@@ -123,11 +123,23 @@ Notes:
 
 ## equirect-world-political-v1
 
-Status: implemented or transitional depending on active catalog flag.
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; **`transitionalPlaceholder` is not set** (treated as a shipped substrate family).
 
 Variant mode: static.
 
 Role: political/reference substrate.
+
+Runtime asset:
+
+```text
+public/maps/world-equirectangular-political.jpg
+```
+
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-political-thumb.jpg
+```
 
 Source family:
 
@@ -139,15 +151,24 @@ Known source ingredients:
 - `ne_10m_admin_0_boundary_lines_land`
 - `ne_10m_coastline`
 
-Notes:
+### Provenance and license
+
+- **Source lineage:** [Natural Earth](https://www.naturalearthdata.com/) 1:10m-scale geographic data (raster or vector derivatives), exported for Libration as a single global Plate Carrée JPEG (same pipeline class as `equirect-world-topography-ne-v1`).
+- **License / usage:** Natural Earth cartographic data are **public domain**; retain “Natural Earth” attribution in product and docs per their credit guidance.
+
+### Processing notes
+
+- Full-world equirectangular, **north-up**, **5400×2700** JPEG (**2:1** width:height), **RGB**.
+- No reprojection applied in-repo beyond export to the world extent contract (lon −180..180, lat −90..90, no padding).
+
+### Catalog notes
 
 - Intended as muted, overlay-friendly political/reference substrate.
 - Bundled catalog sets **`capabilities.labelDense`** (with **`chromaticDense`**) for upstream overlay-readability lift—curator signal for dense place-name / country-label typography.
-- If the asset has been accepted as real, remove transitional placeholder status in the catalog.
 
 ## equirect-world-geology-v1
 
-Status: planned, placeholder, or newly onboarded depending on active catalog and asset reality.
+Status: **placeholder** — bundled catalog still lists **`transitionalPlaceholder: true`** and a target **`src`**; the committed ship raster is **not** present at `public/maps/world-equirectangular-geology.jpg` in the default checkout until geology is sourced, validated, and onboarded (queue **A** follow-on in `PLAN.md` Slice 3).
 
 Variant mode: static unless catalog says otherwise.
 
@@ -158,10 +179,10 @@ Required before treating as validated:
 - finalized source.
 - license/provenance.
 - processing workflow.
-- runtime asset.
+- runtime asset (commit **`public/maps/world-equirectangular-geology.jpg`** or update catalog `src` consistently).
 - preview.
 - validation against projection contract.
-- catalog metadata update.
+- catalog metadata update (clear **`transitionalPlaceholder`** when real).
 
 Notes:
 

@@ -34,9 +34,10 @@
       "label": "World political",
       "shortDescription": "Country and boundary emphasis for orientation and place names.",
       "category": "political",
-      "transitionalPlaceholder": true,
+      "attribution": "Natural Earth (public domain)",
       "variantMode": "static",
       "src": "/maps/world-equirectangular-political.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-political-thumb.jpg",
       "defaultPresentation": {
         "opacity": 1,
         "brightness": 1,

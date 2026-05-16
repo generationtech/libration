@@ -510,11 +510,18 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.transitionalPlaceholder).toBeUndefined();
   });
 
-  it("non-topography placeholder base maps remain marked transitional in registry and options", () => {
-    for (const id of ["equirect-world-political-v1", "equirect-world-geology-v1"] as const) {
-      expect(resolveEquirectBaseMapAsset(id).transitionalPlaceholder).toBe(true);
-      expect(getEquirectBaseMapOptionForId(id).transitionalPlaceholder).toBe(true);
-    }
+  it("political base map is shipped as non-transitional in registry and options", () => {
+    const asset = resolveEquirectBaseMapAsset("equirect-world-political-v1");
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    const o = getEquirectBaseMapOptionForId("equirect-world-political-v1");
+    expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-political-thumb.jpg");
+  });
+
+  it("geology base map remains transitional until runtime asset is sourced and validated", () => {
+    const id = "equirect-world-geology-v1" as const;
+    expect(resolveEquirectBaseMapAsset(id).transitionalPlaceholder).toBe(true);
+    expect(getEquirectBaseMapOptionForId(id).transitionalPlaceholder).toBe(true);
   });
 
   it("Natural Earth static topography family is canonical, not transitional, and not a legacy alias target", () => {

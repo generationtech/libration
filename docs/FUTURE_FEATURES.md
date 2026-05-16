@@ -50,13 +50,13 @@ Future work should extend these systems with **further substrate readability heu
 
 ### Candidate curated map families
 
-- geology.
+- geology (bundled family id exists; ship raster **`world-equirectangular-geology.jpg`** not yet committed—see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)).
 - **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
 - bathymetry.
 - ocean floor / seafloor relief.
 - natural-color seasonal imagery.
 - Blue Marble variants.
-- political reference maps.
+- **Implemented baseline (political/reference):** **`equirect-world-political-v1`** (Natural Earth–lineage shipped raster in the bundled catalog). **Future:** alternate political styles, borders-only overlay-friendly variants.
 - borders-only overlay-friendly maps.
 - population density.
 - vegetation / land cover.
