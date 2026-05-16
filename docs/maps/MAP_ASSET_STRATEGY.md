@@ -193,6 +193,8 @@ Examples:
 ```text
 equirect-world-legacy-v1
 equirect-world-political-v1
+equirect-world-topography-ne-v1
+equirect-world-geology-v1
 equirect-world-blue-marble-bm-v1
 ```
 

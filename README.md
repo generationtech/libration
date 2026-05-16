@@ -93,7 +93,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3 when a shippable catalog gap exists—**`equirect-world-geology-v1`** ship raster is **shipped**; default ordered focus is **narrow inventory polish** or the next sourced substrate unless blocked) versus the **Slice 2** composition *program* (illumination + readability extensions when **A** is empty, blocked, or explicitly out of scope).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3; **default first vertical:** bundled preview for **`equirect-world-topography-ne-v1`**—geology and political previews already shipped) versus the **Slice 2** composition *program* (when **A** has no increment, is blocked, or the session scopes composition only).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

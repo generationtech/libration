@@ -204,6 +204,10 @@ public/maps/previews/world-equirectangular-geology-thumb.jpg
 
 - Bundled catalog sets **`capabilities.boundaryDense`**, **`chromaticDense`**, and **`labelDense`** for upstream overlay-readability lift—curator signals for dense scientific linework, thematic hue bands, and formation / province labels (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
 
+### Future refinements (same family)
+
+- Higher-resolution or alternate USGS/CGMW geology source if curated later (current ship asset is upscaled from a ~1200px-wide public-domain reference).
+
 ## Blue Marble / natural-color families
 
 Known recent family ids:
@@ -254,6 +258,7 @@ public/maps/world-equirectangular-topography.jpg
 ### Catalog notes
 
 - Bundled catalog sets **`capabilities.reliefShaded`** for upstream overlay-readability lift—curator signal for strong local relief contrast competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+- **Inventory polish (open):** ship raster is committed; bundled catalog does **not** yet set **`previewThumbnailSrc`** (political and geology families already have previews)—default next queue **A** vertical in `PLAN.md`.
 
 ### Legacy ids (resolver aliases)
 
