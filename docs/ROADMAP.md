@@ -199,7 +199,7 @@ Exit criteria:
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned.
+Status: planned. **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory / substrate expansion before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2).
 
 Candidate deliverables:
 

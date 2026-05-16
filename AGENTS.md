@@ -6,6 +6,8 @@ This file gives AI coding agents persistent project context for Libration.
 
 It is intentionally concise. Human-readable strategy and specification detail lives in the documentation set. Cursor-specific rules live under `.cursor/rules/`.
 
+**Planning / discovery sessions:** after `README.md` and `ARCHITECTURE.md`, read **`PLAN.md` → “Agent session handoff (planning prompts)”** and **`docs/ROADMAP.md`** phase status before recommending the next PR-sized slice.
+
 ## Project identity
 
 Libration is a renderer-agnostic, longitude-first world time and global scene instrument.

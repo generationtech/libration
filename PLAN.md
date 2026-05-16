@@ -28,6 +28,19 @@ The major runtime foundations are implemented well enough to support disciplined
 
 The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**additional** catalog/resolver substrate signals **beyond** the **shipped** eight-intrinsic overlay-lift contract (`reliefShaded` … `sunGlintDense`) and its presentation/dimming rules, **further atmospheric** refinement after cumulative shipped twilight tuning in `illuminationShading.ts`, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
+### Agent session handoff (planning prompts)
+
+Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
+
+1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 2** near-term section) plus `docs/ROADMAP.md` (Phases 6–9 and Phase 8 in particular).
+2. **Primary active execution slice (composition code):** **Slice 2 — Planetary illumination — extensions on delivered foundations** (see near-term execution slices below). Recent **doc-finalized** closures: overlay readability six-default `perLayer` stack, eight-intrinsic substrate lift contract, **second** narrow cumulative twilight pass in `illuminationShading.ts`.
+3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo + catalog; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
+   - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (e.g. geology validation path, attribution/selector copy, catalog metadata, or onboarding workflow notes—use existing `maps:prep` / bundled catalog patterns; do not invent new architecture).
+   - **B. Slice 2 — substrate:** ninth+ optional `BaseMapCapabilities` intrinsic + bounded penalty + tests + bundled catalog curation (**requires** a product-defensible flag name and target families in the session prompt or an existing written product note—do not invent taxonomy in code alone).
+   - **C. Slice 2 — atmosphere:** optional **third+** narrow constants-only twilight pass in `illuminationShading.ts` (**requires** explicit rationale in the session prompt—avoid unbounded subjective tuning loops).
+   - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) when Phase 10 is not yet opened.
+4. **Anti-stall / tie-break:** if **A** is a genuine shippable gap, prefer **A** over another **C** session unless the user prompt explicitly requests composition atmosphere tuning. If **A** is blocked (missing sources, legal, or tooling), state the blocker briefly and fall through to **B**, **C**, or **D** in order.
+
 **Closed and doc-finalized (Slice 2 substrate increment):** optional catalog intrinsic **`sunGlintDense`** (`BaseMapCapabilities`, bounded penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`, bundled curation on Blue Marble **BM**/**T**) — the **eight-intrinsic** upstream overlay-lift contract is now the **active shipped baseline** (not partial). Next product slices in this vein are **ninth+** optional intrinsics (when justified), **optional third+** narrow twilight constants-only passes in `illuminationShading.ts` when visually justified, or weather/cloud **planning** per Slice 2 below—not reopening BM/T glint coverage.
 
 **Closed and doc-finalized (Slice 2 atmospheric increment):** **second** narrow cumulative twilight tuning pass in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts) (Gaussian sigma, civil–astro anchor chroma, `TWILIGHT_ATMOSPHERIC_ALPHA_MAX`, day-side envelope)—still one `rasterPatch`, still no SceneConfig axis; tests [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts). **Next** in this vein: deeper scattering/haze or **optional third+** constants-only passes—not reopening this second pass as missing work.
@@ -102,6 +115,8 @@ Status: **primary active execution slice**.
 
 **Likely next implementation slice (Slice 2; pick one narrow vertical per phase):**
 
+**Scheduling tie-break:** use **`PLAN.md` → “Agent session handoff (planning prompts)”** first; the list below applies when the handoff queue routes here (items **B–D**) or the session explicitly scopes Slice 2 composition work.
+
 With atmospheric **second pass** doc-finalized, the **most likely next code slices** are: **(1)** one new optional `BaseMapCapabilities` intrinsic + bundled catalog curation when a substrate conflict is product-identified; **(2)** an optional **third+** narrow constants-only twilight pass in `illuminationShading.ts`; or **(3)** weather/cloud **planning** (docs/design) ahead of lifecycle—**one vertical per PR**.
 
 **Primary product choices (same slice; do not mix in one PR):**
@@ -138,7 +153,7 @@ Exit criteria:
 
 ### Slice 3: Scientific substrate expansion
 
-Status: planned.
+Status: **planned**; this slice plus `docs/ROADMAP.md` **Phase 8** are the **default macro track** for the next PR-sized increment when the **Agent session handoff** queue item **A** applies (see subsection above).
 
 Candidate work:
 

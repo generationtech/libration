@@ -172,6 +172,8 @@ Foundational systems now exist:
 
 The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond the shipped **global presentation**, **six default-stack `scene.overlayReadability.perLayer` pilots** (canonical list: `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)), and **beyond** the **shipped eight-intrinsic** substrate catalog contract (`reliefShaded` … `sunGlintDense`, plus presentation/dimming via `overlayOptimized` / `darkFriendly` and sub-1 brightness in lift)—e.g. **`perLayer` tuning for stack rows beyond those six defaults**, **additional** optional catalog or resolver-only substrate signals (ninth+ intrinsic axes when product-defined), **further** atmospheric refinement **beyond** cumulative shipped twilight tuning in `illuminationShading.ts`, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
+**Default sequencing for planning/discovery sessions:** when no explicit human override is given, use **`PLAN.md` → “Agent session handoff (planning prompts)”** (prioritized queue **A–D**) before debating multiple equally small Slice 2 options.
+
 ## Strategic next frontiers
 
 Likely next frontiers:
