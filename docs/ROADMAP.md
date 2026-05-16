@@ -196,11 +196,12 @@ Exit criteria:
 - **Substrate intrinsic `etchedReliefDense` (Slice 2 shipped):** optional `capabilities.etchedReliefDense` on **`equirect-world-legacy-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 - **Substrate intrinsic `sunGlintDense` (Slice 2 shipped):** optional `capabilities.sunGlintDense` on **`equirect-world-blue-marble-bm-v1`** and **`equirect-world-blue-marble-t-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 - **Eight-intrinsic substrate overlay-lift contract (doc-finalized):** product docs, map asset notes, and rules describe the **shipped** optional catalog intrinsics through **`sunGlintDense`** as the current baseline; future work is **ninth+** optional axes, further atmosphere, or `perLayer` rows beyond the six defaults—see `PLAN.md` Slice 2.
-- **Phase 8 / Slice 3 map inventory (rolling):** validated static topography **`equirect-world-topography-ne-v1`** shipped in `base-map-catalog.json` with provenance and bundled preview thumbnail in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); **`equirect-world-political-v1`** shipped as a non-transitional Natural Earth–lineage political substrate (attribution, bundled preview thumbnail, `transitionalPlaceholder` cleared, tests); **`equirect-world-geology-v1`** shipped as a non-transitional USGS public-domain–lineage geology substrate (`world-equirectangular-geology.jpg`, bundled preview thumbnail, `transitionalPlaceholder` cleared, tests)—**default next** queue **A** work is broader inventory polish or further sourced substrates (`PLAN.md` Slice 3).
+- **Phase 8 / Slice 3 topography preview (closed):** **`equirect-world-topography-ne-v1`** bundled preview (`world-equirectangular-topography-thumb.jpg`, catalog `previewThumbnailSrc`, tests)—static scientific trio previews now **shipped**; see `PLAN.md` closed increment.
+- **Phase 8 / Slice 3 map inventory (rolling):** validated static topography, political, and geology families shipped in `base-map-catalog.json` with provenance and bundled preview thumbnails in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)—**default next** queue **A** work: legacy reference preview, attribution/selector polish, or further sourced substrates (`PLAN.md` Slice 3).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Default next PR-sized slice:** broader inventory polish (attribution presentation, selector copy, placeholder hygiene) or the next sourced substrate when ready.
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Default next PR-sized slice (ordered):** **(1)** bundled preview for **`equirect-world-legacy-v1`**; **(2)** attribution presentation in map selector; **(3)** next sourced substrate when ready.
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -210,6 +211,7 @@ Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md
 
 Candidate deliverables:
 
+- bundled preview + catalog `previewThumbnailSrc` for **`equirect-world-legacy-v1`** (default next inspectable queue **A** gap).
 - broader map selector / attribution polish across the young catalog.
 - climate map families.
 - bathymetry/ocean substrate.

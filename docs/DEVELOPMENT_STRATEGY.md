@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (queue **A** = default map PR when a gap exists—broader inventory polish or next sourced substrate; static trio previews shipped; **Slice 2** = composition *program* when **A** has no increment, is blocked, or session scopes composition only).
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (queue **A** = default map PR when a gap exists—**first:** legacy bundled preview; **then:** attribution polish or next sourced substrate; static trio previews **shipped**; **Slice 2** = composition *program* when **A** has no increment, is blocked, or session scopes composition only).
 
 ## Implementation intent template
 

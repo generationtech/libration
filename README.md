@@ -39,8 +39,8 @@ Current implemented areas include:
 - File-backed curated base-map catalog (optional **`capabilities`** for upstream overlay lift: **eight shipped** intrinsic hints **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**, plus presentation multipliers **`overlayOptimized`** / **`darkFriendly`**).
 - Categorized base-map selector UI with grouped substrate families.
 - Static and month-aware base-map families.
-- Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
-- Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution; not a transitional placeholder).
+- Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog with bundled preview thumbnail; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
+- Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - USGS public-domain geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
@@ -93,7 +93,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3—broader inventory polish or next sourced substrate when a gap exists) versus the **Slice 2** composition *program* (when **A** has no increment, is blocked, or the session scopes composition only).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3—**first:** legacy bundled preview; **then:** attribution/selector polish or next sourced substrate) versus the **Slice 2** composition *program* (when **A** has no increment, is blocked, or the session scopes composition only).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

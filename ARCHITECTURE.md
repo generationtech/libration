@@ -119,7 +119,7 @@ src/assets/maps/base-map-catalog.json
 
 The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
 
-Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog also includes a validated static global topography family (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster); legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family. **`equirect-world-political-v1`** is a shipped Natural Earth–lineage political substrate in the bundled catalog (not transitional). **`equirect-world-geology-v1`** is a shipped USGS public-domain–lineage geology substrate in the bundled catalog (not transitional; `docs/maps/MAP_ASSET_SOURCES.md`).
+Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog includes shipped static scientific substrates **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, and **`equirect-world-geology-v1`** (Natural Earth / USGS lineages; bundled **`previewThumbnailSrc`** where catalog lists them; `docs/maps/MAP_ASSET_SOURCES.md`). Legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family (not aliases for the static NE topography family).
 
 Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
 
@@ -256,7 +256,7 @@ Stable enough for feature-forward work:
 Still future or partial:
 
 - full dynamic data lifecycle.
-- **Phase 8 base-map catalog:** static trio **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`** are **shipped** (non-transitional; committed rasters + bundled **`previewThumbnailSrc`** where catalog lists them). See `docs/maps/MAP_ASSET_SOURCES.md`.
+- **Phase 8 base-map catalog:** static trio **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`** are **shipped** (non-transitional; committed rasters + bundled previews). **`equirect-world-legacy-v1`** remains the default reference family but lacks a catalog preview thumbnail (default next queue **A** polish). See `docs/maps/MAP_ASSET_SOURCES.md`.
 - live feeds.
 - gridded scientific datasets.
 - **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.
