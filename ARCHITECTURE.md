@@ -119,7 +119,7 @@ src/assets/maps/base-map-catalog.json
 
 The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
 
-Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog also includes a validated static global topography family (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster); legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family. **`equirect-world-political-v1`** is a shipped Natural Earth–lineage political substrate in the bundled catalog (not transitional). **`equirect-world-geology-v1`** remains `transitionalPlaceholder` in the bundled catalog and references a ship raster not yet committed at `public/maps/world-equirectangular-geology.jpg` until geology is sourced and validated (`docs/maps/MAP_ASSET_SOURCES.md`).
+Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog also includes a validated static global topography family (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster); legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family. **`equirect-world-political-v1`** is a shipped Natural Earth–lineage political substrate in the bundled catalog (not transitional). **`equirect-world-geology-v1`** is a shipped USGS public-domain–lineage geology substrate in the bundled catalog (not transitional; `docs/maps/MAP_ASSET_SOURCES.md`).
 
 Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
 
@@ -241,7 +241,7 @@ Stable enough for feature-forward work:
 - SceneConfig authority.
 - curated base-map catalog.
 - static and month-aware base maps.
-- shipped Natural Earth–lineage political base map **`equirect-world-political-v1`** in the bundled catalog (non-transitional; geology family still placeholder until ship raster).
+- shipped Natural Earth–lineage political base map **`equirect-world-political-v1`** in the bundled catalog (non-transitional); shipped USGS public-domain–lineage geology base map **`equirect-world-geology-v1`** in the bundled catalog (non-transitional).
 - static overlays.
 - derived solar analemma overlay.
 - solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer; composition is **non-emissive** (attenuation + atmospheric tint, not glow); the backend only executes the resulting `rasterPatch` without twilight-specific semantics.
@@ -256,7 +256,7 @@ Stable enough for feature-forward work:
 Still future or partial:
 
 - full dynamic data lifecycle.
-- **Phase 8 base-map catalog:** **`equirect-world-geology-v1`** remains `transitionalPlaceholder: true`; bundled `src` targets **`public/maps/world-equirectangular-geology.jpg`**, which is **not** committed in the default checkout until geology is sourced and onboarded (`PLAN.md` Slice 3, `docs/maps/MAP_ASSET_SOURCES.md`).
+- **Phase 8 base-map catalog:** **`equirect-world-geology-v1`** is **shipped** (`transitionalPlaceholder` cleared); bundled `src` is **`public/maps/world-equirectangular-geology.jpg`** with preview thumbnail (`PLAN.md` Slice 3, `docs/maps/MAP_ASSET_SOURCES.md`).
 - live feeds.
 - gridded scientific datasets.
 - **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.

@@ -46,7 +46,7 @@ Useful differentiation directions:
 - renderer-agnostic internals.
 - open AGPL reference implementation.
 - explicit SceneConfig and composable layers.
-- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates—including shipped static topography **`equirect-world-topography-ne-v1`** and political **`equirect-world-political-v1`**; geology raster still pending—see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
+- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates—including shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, and geology **`equirect-world-geology-v1`**—see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
 - reference-frame time model.
 - modern top-band chrome visual language.
 - planetary illumination and atmospheric composition.
@@ -180,7 +180,7 @@ Likely next frontiers:
 
 1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract through **`sunGlintDense`** is **shipped and doc-finalized**, not hypothetical; cumulative twilight tuning through the **second** narrow `illuminationShading.ts` pass is likewise **doc-finalized**).
 2. Map inventory curation and selector polish.
-3. Geology or other scientific substrate onboarding.
+3. Further scientific substrate onboarding (bathymetry, climate, vegetation, and other sourced families) and map inventory polish beyond shipped topography, political, and geology baselines.
 4. **Readability and composition extensions** (`perLayer` beyond the **six shipped** default-stack keys where product defines new rows; **further** substrate/catalog signals beyond `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` + dimming; **further** atmospheric refinement on the **existing** upstream illumination stack **after** cumulative shipped twilight tuning in `illuminationShading.ts`), and cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.

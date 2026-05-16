@@ -64,9 +64,10 @@
       "label": "World geology",
       "shortDescription": "Geological provinces and related features (scientific use).",
       "category": "scientific",
-      "transitionalPlaceholder": true,
+      "attribution": "USGS (public domain)",
       "variantMode": "static",
       "src": "/maps/world-equirectangular-geology.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-geology-thumb.jpg",
       "defaultPresentation": {
         "opacity": 1,
         "brightness": 1,

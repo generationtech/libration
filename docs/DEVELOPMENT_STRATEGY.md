@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (queue **A** = default map/substrate PR when a shippable gap exists—**first default ordered gap:** geology ship raster at `public/maps/world-equirectangular-geology.jpg` + catalog/docs unless blocked; then narrow inventory polish; **Slice 2** = primary composition *program* when **A** is empty, blocked, or out of session scope).
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (queue **A** = default map/substrate PR when a shippable gap exists—**`equirect-world-geology-v1`** ship raster is **shipped**; **first ordered focus:** narrow inventory polish or the next sourced substrate + catalog/docs unless blocked; **Slice 2** = primary composition *program* when **A** is empty, blocked, or out of session scope).
 
 ## Implementation intent template
 

@@ -168,26 +168,41 @@ Known source ingredients:
 
 ## equirect-world-geology-v1
 
-Status: **placeholder** — bundled catalog still lists **`transitionalPlaceholder: true`** and a target **`src`**; the committed ship raster is **not** present at `public/maps/world-equirectangular-geology.jpg` in the default checkout until geology is sourced, validated, and onboarded (queue **A** follow-on in `PLAN.md` Slice 3).
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
 
-Variant mode: static unless catalog says otherwise.
+Variant mode: static.
 
-Role: scientific substrate.
+Role: scientific substrate (geologic provinces / plate-boundary context).
 
-Required before treating as validated:
+Runtime asset:
 
-- finalized source.
-- license/provenance.
-- processing workflow.
-- runtime asset (commit **`public/maps/world-equirectangular-geology.jpg`** or update catalog `src` consistently).
-- preview.
-- validation against projection contract.
-- catalog metadata update (clear **`transitionalPlaceholder`** when real).
+```text
+public/maps/world-equirectangular-geology.jpg
+```
 
-Notes:
+Preview thumbnail:
 
-- Do not treat as sourced and validated until all requirements are met.
-- Bundled catalog sets **`capabilities.labelDense`** (with **`boundaryDense`** and **`chromaticDense`**) for upstream overlay-readability lift—curator signal for dense scientific labels alongside linework and thematic fills.
+```text
+public/maps/previews/world-equirectangular-geology-thumb.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** USGS global crust / geologic provinces reference graphic, mirrored for onboarding from Wikimedia Commons [**File:World geologic provinces.jpg**](https://commons.wikimedia.org/wiki/File:World_geologic_provinces.jpg) (credit links on that file page point to archived USGS `earthquake.usgs.gov/data/crust/maps.php` material).
+- **License / usage:** **Public domain** (US government work) per Commons metadata; retain “USGS” attribution in product and docs.
+
+### Processing notes
+
+- Upstream Commons JPEG was **1200×637** sRGB; resampled in-repo with ImageMagick to full-world Plate Carrée contract **5400×2700** (**2:1** width:height), **RGB**, **north-up**, center-crop extent to the world contract (lon −180..180, lat −90..90, no padding).
+- Preview thumbnail **800×400** from the ship JPEG (same pattern as other static families).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **5400×2700** (2:1); **8-bit sRGB** JPEG; matches other shipped static world substrates (`world-equirectangular-political.jpg`, `world-equirectangular-topography.jpg`).
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.boundaryDense`**, **`chromaticDense`**, and **`labelDense`** for upstream overlay-readability lift—curator signals for dense scientific linework, thematic hue bands, and formation / province labels (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
 
 ## Blue Marble / natural-color families
 

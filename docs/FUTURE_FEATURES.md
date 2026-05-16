@@ -24,7 +24,7 @@ The current map configuration UI already includes:
 - attribution display for the selected base-map family.
 - per-family base-map presentation controls.
 - shared presentation persistence across seasonal/month-aware raster variants.
-- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; **`equirect-world-political-v1`** sets **`labelDense`** alongside chromatic hints (shipped non-transitional family); **`equirect-world-geology-v1`** lists the same capability keys but remains a placeholder family until the ship raster exists; legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).
+- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** set **`labelDense`** alongside chromatic/boundary hints (shipped non-transitional families); legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).
 
 Future map and scene UX work should extend these foundations rather than replacing them.
 
@@ -50,7 +50,7 @@ Future work should extend these systems with **further substrate readability heu
 
 ### Candidate curated map families
 
-- geology (bundled family id exists; ship raster **`world-equirectangular-geology.jpg`** not yet committed—see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)).
+- **Implemented baseline (geology):** global geologic provinces **`equirect-world-geology-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate geology styles, higher-resolution scientific linework.
 - **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
 - bathymetry.
 - ocean floor / seafloor relief.

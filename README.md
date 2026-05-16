@@ -41,6 +41,7 @@ Current implemented areas include:
 - Static and month-aware base-map families.
 - Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
 - Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution; not a transitional placeholder).
+- USGS public-domain geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
 - Map preview and attribution display for selected base-map families.
@@ -92,7 +93,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3 when a shippable catalog gap exists—**default ordered gap:** geology ship raster at `public/maps/world-equirectangular-geology.jpg` unless blocked) versus the **Slice 2** composition *program* (illumination + readability extensions when **A** is empty, blocked, or explicitly out of scope).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3 when a shippable catalog gap exists—**`equirect-world-geology-v1`** ship raster is **shipped**; default ordered focus is **narrow inventory polish** or the next sourced substrate unless blocked) versus the **Slice 2** composition *program* (illumination + readability extensions when **A** is empty, blocked, or explicitly out of scope).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

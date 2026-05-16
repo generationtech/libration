@@ -518,10 +518,13 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-political-thumb.jpg");
   });
 
-  it("geology base map remains transitional until runtime asset is sourced and validated", () => {
+  it("geology base map is shipped as non-transitional in registry and options", () => {
     const id = "equirect-world-geology-v1" as const;
-    expect(resolveEquirectBaseMapAsset(id).transitionalPlaceholder).toBe(true);
-    expect(getEquirectBaseMapOptionForId(id).transitionalPlaceholder).toBe(true);
+    const asset = resolveEquirectBaseMapAsset(id);
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    const o = getEquirectBaseMapOptionForId(id);
+    expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-geology-thumb.jpg");
   });
 
   it("Natural Earth static topography family is canonical, not transitional, and not a legacy alias target", () => {
