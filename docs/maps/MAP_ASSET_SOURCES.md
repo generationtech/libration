@@ -20,6 +20,7 @@ This document explains provenance, processing state, and notes that should not b
 - Use `npm run maps:prep -- --update-catalog` for curated source TIFF onboarding.
 - Review catalog diffs before committing.
 - Keep placeholder or transitional status accurate.
+- Keep selector attribution accurate: each family may set `attribution`, optional `licenseNote`, and up to two `sourceLinks` (`label` + http(s) `href`); the Layers map selector shows them in the **Source & license** block (`BaseMapStyleControl`). These fields are catalog-only and are not persisted in SceneConfig.
 
 ## Base-map `capabilities`: overlay readability (upstream)
 
@@ -125,6 +126,7 @@ Notes:
 
 - Original packaged world map asset.
 - Useful as a dark-friendly stable fallback.
+- Bundled catalog **`attribution`:** “Libration packaged reference map”; **`licenseNote`** documents that this is the original shaded-relief basemap shipped with Libration (not third-party licensed imagery).
 - Bundled catalog sets **`capabilities.etchedReliefDense`** (with **`darkFriendly`**) for upstream overlay-readability lift—curator signal for directional etched / scribed shaded relief competing with thin vector overlays.
 - Bundled catalog sets **`previewThumbnailSrc`** (800×400 JPEG thumb derived from the committed main raster).
 

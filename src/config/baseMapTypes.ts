@@ -11,6 +11,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/** External provenance link shown in the map selector (catalog-only; not persisted in SceneConfig). */
+export type BaseMapSourceLink = Readonly<{
+  label: string;
+  href: string;
+}>;
+
 /**
  * User-facing option model for the base map selector (editor and scene-facing UI).
  * Paired 1:1 with equirectangular base map catalog entries.
@@ -20,7 +26,12 @@ export type BaseMapOption = {
   label: string;
   shortDescription?: string;
   category: "reference" | "scientific" | "terrain" | "political";
+  /** Primary credit line for the selected family. */
   attribution?: string;
+  /** Short license or usage note (catalog-only). */
+  licenseNote?: string;
+  /** Up to two external provenance or policy links (catalog-only). */
+  sourceLinks?: readonly BaseMapSourceLink[];
   previewThumbnailSrc?: string;
   transitionalPlaceholder?: boolean;
 };

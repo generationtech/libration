@@ -26,18 +26,18 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is **twofold**: (1) continue **Phase 8 / Slice 3** curated map inventory where shippable gaps remain (see **Agent session handoff** queue **A** below—the **default next merged PR** when a real gap exists; **all bundled family previews are shipped**—queue **A** now advances **attribution/selector polish** or the next sourced **A**-class substrate onboarding when rights and raster are ready); and (2) **extend** the delivered upstream planetary illumination and composition system (**Slice 2** program: ninth+ optional catalog substrate signals, optional **third+** narrow twilight constants pass, weather/cloud **planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends. When queue **A** has no remaining shippable increment for the session (or is blocked), fall through to **B** / **C** / **D** in order unless the session explicitly scopes Slice 2 composition work.
+The current strategic objective is **twofold**: (1) continue **Phase 8 / Slice 3** curated map inventory where shippable gaps remain (see **Agent session handoff** queue **A** below—the **default next merged PR** when a real gap exists; **richer attribution presentation in the map selector is shipped**—queue **A** now advances the next sourced **A**-class substrate onboarding when rights and raster are ready, or further Slice 4 selector polish); and (2) **extend** the delivered upstream planetary illumination and composition system (**Slice 2** program: ninth+ optional catalog substrate signals, optional **third+** narrow twilight constants pass, weather/cloud **planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends. When queue **A** has no remaining shippable increment for the session (or is blocked), fall through to **B** / **C** / **D** in order unless the session explicitly scopes Slice 2 composition work.
 
 ### Agent session handoff (planning prompts)
 
 Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
 
-**Scheduling snapshot (post–legacy preview closure):**
+**Scheduling snapshot (post–richer attribution presentation):**
 
 | Role | Name | Meaning |
 |------|------|---------|
 | **Default macro PR track** | **Phase 8 / Slice 3** (queue **A**) | What the **next merged PR** should advance unless blocked or session-scopes Slice 2 only. |
-| **Single best next PR** | **Richer attribution presentation** in the map selector | Queue **A** item **(1)** — one bounded UX vertical (`BaseMapStyleControl` + styles); Slice 4 overlap. |
+| **Single best next PR** | **Next A-class substrate onboarding** (or Slice 4 month-aware selector polish) | Queue **A** item **(2)** when a sourced raster and rights are ready; otherwise Slice 4 copy/month indicator or fall through to Slice 2 **B**/**C**/**D**. |
 | **Composition program (medium-term)** | **Slice 2** | Illumination + overlay-readability extensions when queue **A** has no increment—queues **B** / **C** / **D**. |
 
 1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 2** and **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phases 5–9 and Phase 8 in particular).
@@ -45,7 +45,7 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
    - **Default macro PR track (next merged PR):** **Phase 8 / Slice 3** — map inventory and selector polish (queue **A** below). **All bundled catalog families have `previewThumbnailSrc`** (legacy reference preview **closed** May 2026).
    - **Primary composition *program* (not every PR):** **Slice 2 — Planetary illumination — extensions on delivered foundations** — dominant medium-term illumination + overlay-readability work when queue **A** is empty, blocked, or explicitly out of scope. Recent **doc-finalized** closures: overlay readability six-default `perLayer` stack, eight-intrinsic substrate lift contract, **second** narrow cumulative twilight pass in `illuminationShading.ts`, static trio + **legacy** bundled previews.
 3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo + catalog; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
-   - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (use existing `maps:prep` / bundled catalog patterns; do not invent new architecture). **Default next PR-sized slice (inspect `base-map-catalog.json` + `public/maps/previews/`):** **(1)** richer **attribution presentation** in the map selector (Slice 4 overlap; one bounded UX vertical). **(2)** next **A**-class substrate onboarding (climate, bathymetry, vegetation, etc.) when a sourced raster and rights are ready. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`** (default reference; bundled preview `world-equirectangular-thumb.jpg`); **`equirect-world-topography-ne-v1`** (`world-equirectangular-topography.jpg`; **`reliefShaded`**; bundled preview `world-equirectangular-topography-thumb.jpg`); **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (non-transitional; bundled previews).
+   - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (use existing `maps:prep` / bundled catalog patterns; do not invent new architecture). **Default next PR-sized slice (inspect rights/assets; catalog attribution fields are shipped):** **(1)** richer **attribution presentation** in the map selector — **shipped** (catalog `licenseNote` + `sourceLinks`; **Source & license** block in `BaseMapStyleControl`). **(2)** next **A**-class substrate onboarding (climate, bathymetry, vegetation, etc.) when a sourced raster and rights are ready. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`** (default reference; bundled preview `world-equirectangular-thumb.jpg`); **`equirect-world-topography-ne-v1`** (`world-equirectangular-topography.jpg`; **`reliefShaded`**; bundled preview `world-equirectangular-topography-thumb.jpg`); **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (non-transitional; bundled previews); **structured attribution** on all seven bundled families.
    - **B. Slice 2 — substrate:** ninth+ optional `BaseMapCapabilities` intrinsic + bounded penalty + tests + bundled catalog curation (**requires** a product-defensible flag name and target families in the session prompt or an existing written product note—do not invent taxonomy in code alone).
    - **C. Slice 2 — atmosphere:** optional **third+** narrow constants-only twilight pass in `illuminationShading.ts` (**requires** explicit rationale in the session prompt—avoid unbounded subjective tuning loops).
    - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) when Phase 10 is not yet opened.
@@ -59,7 +59,9 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 **Closed and doc-finalized (Phase 8 / Slice 3 topography preview increment):** **`equirect-world-topography-ne-v1`** — committed `public/maps/previews/world-equirectangular-topography-thumb.jpg` (800×400), catalog `previewThumbnailSrc`, provenance in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); tests in [`src/config/v2/sceneConfig.test.ts`](src/config/v2/sceneConfig.test.ts).
 
-**Closed and doc-finalized (Phase 8 / Slice 3 legacy preview increment):** **`equirect-world-legacy-v1`** — committed `public/maps/previews/world-equirectangular-thumb.jpg` (800×400), catalog `previewThumbnailSrc`, provenance in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); tests in [`src/config/v2/sceneConfig.test.ts`](src/config/v2/sceneConfig.test.ts). **Next** on queue **A:** attribution/selector polish or next sourced substrate—see item **3** above.
+**Closed and doc-finalized (Phase 8 / Slice 3 legacy preview increment):** **`equirect-world-legacy-v1`** — committed `public/maps/previews/world-equirectangular-thumb.jpg` (800×400), catalog `previewThumbnailSrc`, provenance in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); tests in [`src/config/v2/sceneConfig.test.ts`](src/config/v2/sceneConfig.test.ts).
+
+**Closed and doc-finalized (Phase 8 / Slice 3–4 attribution presentation increment):** richer **attribution presentation** in the map selector — catalog optional `licenseNote` and `sourceLinks` (≤2 http(s) links per family) on all seven bundled families; **Source & license** block in [`src/components/config/BaseMapStyleControl.tsx`](src/components/config/BaseMapStyleControl.tsx); tests in [`src/components/config/BaseMapStyleControl.test.tsx`](src/components/config/BaseMapStyleControl.test.tsx) and [`src/config/baseMapCatalog.test.ts`](src/config/baseMapCatalog.test.ts). **Next** on queue **A:** next sourced substrate or Slice 4 selector polish—see item **3** above.
 
 ## Current goals
 
@@ -169,11 +171,11 @@ Exit criteria:
 
 ### Slice 3: Scientific substrate expansion
 
-Status: **active (Phase 8)**—**default macro PR track** when handoff queue **A** applies (**default next merged PR:** **richer attribution presentation** in the map selector—queue **A** item **(1)**; next sourced substrate is item **(2)** when assets/rights exist—see handoff item **3**). **Shipped** reference + static scientific substrates: **`equirect-world-legacy-v1`** (default reference; bundled preview), **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, and **`equirect-world-geology-v1`** (non-transitional where applicable; attribution + bundled previews). **Static trio preview polish:** **closed** (see closed topography preview increment). **Legacy reference preview:** **closed** (see closed legacy preview increment). Legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**. **Remaining** toward the same slice: broader selector/attribution polish, further sourced substrates (climate, bathymetry, vegetation), emissive-compatible **substrate** families (distinct from Black Marble composition input)—see `docs/ROADMAP.md` Phase 8.
+Status: **active (Phase 8)**—**default macro PR track** when handoff queue **A** applies (**default next merged PR:** next **A**-class substrate when assets/rights exist—queue **A** item **(2)**; otherwise Slice 4 selector polish—see handoff item **3**). **Shipped** reference + static scientific substrates: **`equirect-world-legacy-v1`** (default reference; bundled preview), **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, and **`equirect-world-geology-v1`** (non-transitional where applicable; structured attribution + bundled previews). **Attribution presentation (Slice 3–4 overlap):** **closed** (see closed attribution increment). **Static trio preview polish:** **closed**. **Legacy reference preview:** **closed**. Legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**. **Remaining** toward the same slice: further sourced substrates (climate, bathymetry, vegetation), month-aware selector copy, emissive-compatible **substrate** families (distinct from Black Marble composition input)—see `docs/ROADMAP.md` Phase 8.
 
 Candidate work:
 
-- broader inventory polish (attribution presentation, selector copy, placeholder hygiene across the young catalog).
+- broader inventory polish (selector copy, month-aware hints, placeholder hygiene across the young catalog).
 - further terrain refinement (**shipped baseline:** **`equirect-world-topography-ne-v1`**; **future:** higher-resolution DEMs, alternate relief palettes, month-aware terrain families when product-scoped).
 - climate or vegetation substrate exploration.
 - emissive-compatible substrate planning.
@@ -184,11 +186,11 @@ Exit criteria:
 
 ### Slice 4: Map inventory and selector polish
 
-Status: **active (overlaps Phase 8 queue A)**—**hosts the default next PR** (attribution presentation); not a separate competing track.
+Status: **active (overlaps Phase 8 queue A)**—**attribution presentation shipped**; hosts further selector polish (month-aware copy, labels); not a separate competing track.
 
 Candidate work:
 
-- **richer attribution presentation** in the map selector (**default next PR** — queue **A** item **(1)**).
+- improve selector copy for month-aware map families (**likely next** when queue **A** item **(2)** is blocked).
 - normalize family ids, labels, and categories while catalog is still young.
 - improve selector copy for month-aware map families.
 - consider active displayed-month indication for seasonal families.

@@ -43,7 +43,9 @@ The catalog owns:
 - categories.
 - runtime paths.
 - preview paths.
-- attribution.
+- attribution (primary credit line).
+- optional `licenseNote` (short usage or license summary for the selector).
+- optional `sourceLinks` (up to two http(s) provenance or policy links for the selector).
 - variant mode.
 - onboarded months.
 - default presentation.

@@ -521,6 +521,9 @@ describe("SceneConfig (Phase 1)", () => {
     const o = getEquirectBaseMapOptionForId("equirect-world-political-v1");
     expect(o.transitionalPlaceholder).toBeUndefined();
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-political-thumb.jpg");
+    expect(o.attribution).toBe("Natural Earth (public domain)");
+    expect(o.licenseNote).toMatch(/public domain/i);
+    expect(o.sourceLinks?.[0]?.href).toBe("https://www.naturalearthdata.com/");
   });
 
   it("geology base map is shipped as non-transitional in registry and options", () => {

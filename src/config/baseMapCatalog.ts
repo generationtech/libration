@@ -12,7 +12,7 @@
  */
 
 import type { MonthOfYearFamilyPaths } from "./baseMapMonthResolve";
-import type { BaseMapOption, BaseMapVariantMode } from "./baseMapTypes";
+import type { BaseMapOption, BaseMapSourceLink, BaseMapVariantMode } from "./baseMapTypes";
 
 /**
  * File-backed catalog of supported equirectangular base map families. Loaded at build time; not fetched at runtime.
@@ -87,6 +87,8 @@ export type BaseMapCatalogEntry = Readonly<{
   shortDescription?: string;
   category: BaseMapCategory;
   attribution?: string;
+  licenseNote?: string;
+  sourceLinks?: readonly BaseMapSourceLink[];
   /** UI / registry; paired with EquirectBaseMapAsset. */
   transitionalPlaceholder?: true;
   variantMode: BaseMapVariantMode;
@@ -136,6 +138,37 @@ const CATEGORIES: readonly BaseMapCategory[] = ["reference", "political", "terra
 
 function asCategory(s: string): s is BaseMapCategory {
   return (CATEGORIES as readonly string[]).includes(s);
+}
+
+const MAX_SOURCE_LINKS = 2;
+
+function validateSourceLinks(id: string, links: readonly BaseMapSourceLink[] | undefined): void {
+  if (links === undefined) {
+    return;
+  }
+  if (!Array.isArray(links)) {
+    throw new Error(`Base map catalog: ${id} sourceLinks must be an array.`);
+  }
+  if (links.length > MAX_SOURCE_LINKS) {
+    throw new Error(`Base map catalog: ${id} sourceLinks must have at most ${MAX_SOURCE_LINKS} entries.`);
+  }
+  for (let i = 0; i < links.length; i++) {
+    const link = links[i];
+    if (!isPlainObject(link as unknown as object)) {
+      throw new Error(`Base map catalog: ${id} sourceLinks[${i}] must be an object.`);
+    }
+    const label = link.label?.trim() ?? "";
+    const href = link.href?.trim() ?? "";
+    if (label === "") {
+      throw new Error(`Base map catalog: ${id} sourceLinks[${i}] requires a non-empty label.`);
+    }
+    if (href === "") {
+      throw new Error(`Base map catalog: ${id} sourceLinks[${i}] requires a non-empty href.`);
+    }
+    if (!/^https?:\/\//i.test(href)) {
+      throw new Error(`Base map catalog: ${id} sourceLinks[${i}] href must be http or https.`);
+    }
+  }
 }
 
 function toMonthOfYearForResolve(m: BaseMapCatalogEntry["monthOfYear"]): MonthOfYearFamilyPaths | undefined {
@@ -190,6 +223,7 @@ export function parseAndValidateBaseMapCatalog(file: BaseMapCatalogFile): Readon
     if (!asCategory(e.category)) {
       throw new Error(`Base map catalog: ${e.id} has invalid category "${e.category}"`);
     }
+    validateSourceLinks(e.id, e.sourceLinks);
     const optTrans = e.transitionalPlaceholder === true;
     const defTrans = e.transitionalPlaceholder === true;
     if (defTrans !== optTrans) {
@@ -280,6 +314,8 @@ function toOptionFromEntry(e: BaseMapCatalogEntry): BaseMapOption {
     shortDescription: e.shortDescription,
     category: e.category,
     attribution: e.attribution,
+    licenseNote: e.licenseNote,
+    sourceLinks: e.sourceLinks,
     previewThumbnailSrc: e.previewThumbnailSrc,
     transitionalPlaceholder: e.transitionalPlaceholder,
   };

@@ -20,24 +20,37 @@ import {
   DEFAULT_BASE_MAP_PRESENTATION,
   type BaseMapPresentationConfig,
 } from "../../config/baseMapPresentation";
-import { DEFAULT_EQUIRECT_BASE_MAP_ID } from "../../config/v2/sceneConfig";
+import {
+  DEFAULT_EQUIRECT_BASE_MAP_ID,
+  getEquirectBaseMapOptionForId,
+} from "../../config/v2/sceneConfig";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 
 function Harness({
+  baseMapId = DEFAULT_EQUIRECT_BASE_MAP_ID,
   initial = DEFAULT_BASE_MAP_PRESENTATION,
   mutable = true,
+  onSelectId,
 }: {
+  baseMapId?: string;
   initial?: BaseMapPresentationConfig;
   mutable?: boolean;
+  onSelectId?: (id: string) => void;
 }) {
   const [presentation, setPresentation] = useState(initial);
+  const [mapId, setMapId] = useState(baseMapId);
   return (
     <>
       <BaseMapStyleControl
-        baseMapId={DEFAULT_EQUIRECT_BASE_MAP_ID}
+        baseMapId={mapId}
         presentation={presentation}
         mutable={mutable}
-        onSelectId={() => {}}
+        onSelectId={
+          onSelectId ??
+          ((id) => {
+            setMapId(id);
+          })
+        }
         onPresentationChange={setPresentation}
       />
       <pre data-testid="presentation-state">{JSON.stringify(presentation)}</pre>
@@ -110,6 +123,33 @@ describe("BaseMapStyleControl", () => {
     await user.clear(num);
     fireEvent.blur(num);
     expect(readPresentation().contrast).toBe(0.7);
+  });
+
+  it("shows source and license block for legacy default with packaged attribution", () => {
+    render(<Harness />);
+    const block = screen.getByTestId("config-base-map-source-license");
+    expect(block).toHaveAttribute("aria-label", "Source and license");
+    expect(screen.getByText("Libration packaged reference map")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Original shaded-relief basemap shipped with Libration/),
+    ).toBeInTheDocument();
+  });
+
+  it("shows external source link when political family is selected", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.selectOptions(screen.getByLabelText("Map style"), "equirect-world-political-v1");
+    const link = screen.getByRole("link", { name: "Natural Earth" });
+    expect(link).toHaveAttribute("href", "https://www.naturalearthdata.com/");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.getByText("Natural Earth (public domain)")).toBeInTheDocument();
+  });
+
+  it("exposes licenseNote and sourceLinks on political catalog option", () => {
+    const o = getEquirectBaseMapOptionForId("equirect-world-political-v1");
+    expect(o.licenseNote).toMatch(/public domain/i);
+    expect(o.sourceLinks?.[0]?.href).toBe("https://www.naturalearthdata.com/");
   });
 
   it("reset display restores defaults for all presentation fields", async () => {

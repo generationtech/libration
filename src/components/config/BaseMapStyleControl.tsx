@@ -17,7 +17,7 @@ import {
   DEFAULT_BASE_MAP_PRESENTATION,
   normalizeBaseMapPresentation,
 } from "../../config/baseMapPresentation";
-import type { BaseMapOption } from "../../config/v2/sceneConfig";
+import type { BaseMapOption } from "../../config/baseMapTypes";
 import {
   BASE_MAP_OPTION_CATEGORY_ORDER,
   EQUIRECT_BASE_MAP_OPTIONS,
@@ -41,6 +41,57 @@ function optionsByCategory(
     category,
     options: options.filter((o) => o.category === category),
   })).filter((g) => g.options.length > 0);
+}
+
+function hasSourceAndLicenseDetail(option: BaseMapOption): boolean {
+  return Boolean(
+    option.attribution?.trim() ||
+      option.licenseNote?.trim() ||
+      (option.sourceLinks && option.sourceLinks.length > 0),
+  );
+}
+
+type BaseMapSourceLicenseBlockProps = {
+  option: BaseMapOption;
+};
+
+function BaseMapSourceLicenseBlock({ option }: BaseMapSourceLicenseBlockProps) {
+  if (!hasSourceAndLicenseDetail(option)) {
+    return null;
+  }
+  const credit = option.attribution?.trim();
+  const licenseNote = option.licenseNote?.trim();
+  const links = option.sourceLinks ?? [];
+
+  return (
+    <section
+      className="config-base-map-style__source-license"
+      data-testid="config-base-map-source-license"
+      aria-label="Source and license"
+    >
+      <h4 className="config-base-map-style__source-license-heading">Source &amp; license</h4>
+      {credit ? <p className="config-base-map-style__attr">{credit}</p> : null}
+      {licenseNote ? (
+        <p className="config-base-map-style__license-note">{licenseNote}</p>
+      ) : null}
+      {links.length > 0 ? (
+        <ul className="config-base-map-style__source-links">
+          {links.map((link) => (
+            <li key={`${link.href}-${link.label}`}>
+              <a
+                className="config-base-map-style__source-link"
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
 }
 
 export type BaseMapStyleControlProps = {
@@ -280,9 +331,7 @@ export function BaseMapStyleControl({
         {selected.shortDescription ? (
           <p className="config-base-map-style__desc">{selected.shortDescription}</p>
         ) : null}
-        {selected.attribution ? (
-          <p className="config-base-map-style__attr">{selected.attribution}</p>
-        ) : null}
+        <BaseMapSourceLicenseBlock option={selected} />
       </div>
     </div>
   );

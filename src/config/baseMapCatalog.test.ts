@@ -12,6 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import baseMapCatalogJson from "../assets/maps/base-map-catalog.json";
 import { parseAndValidateBaseMapCatalog, type BaseMapCatalogFile } from "./baseMapCatalog";
 
 const minimalValid: BaseMapCatalogFile = {
@@ -29,6 +30,16 @@ const minimalValid: BaseMapCatalogFile = {
 };
 
 describe("parseAndValidateBaseMapCatalog", () => {
+  it("validates the shipped bundled catalog", () => {
+    const r = parseAndValidateBaseMapCatalog(baseMapCatalogJson as BaseMapCatalogFile);
+    expect(r.entries.length).toBe(7);
+    const political = r.definitions.find((d) => d.id === "equirect-world-political-v1");
+    expect(political?.option.licenseNote).toMatch(/public domain/i);
+    expect(political?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
+    const legacy = r.definitions.find((d) => d.id === "equirect-world-legacy-v1");
+    expect(legacy?.option.attribution).toMatch(/Libration packaged reference map/);
+  });
+
   it("accepts a static entry", () => {
     const r = parseAndValidateBaseMapCatalog(minimalValid);
     expect(r.defaultEquirectBaseMapId).toBe("a");
@@ -175,5 +186,69 @@ describe("parseAndValidateBaseMapCatalog", () => {
       entries: [{ id: "a", label: "A", category: "reference", variantMode: "static", src: "/a.jpg" }],
     };
     expect(() => parseAndValidateBaseMapCatalog(bad)).toThrow(/not a catalog entry/);
+  });
+
+  it("accepts sourceLinks with http(s) hrefs and maps them to options", () => {
+    const file: BaseMapCatalogFile = {
+      version: 1,
+      defaultEquirectBaseMapId: "a",
+      entries: [
+        {
+          id: "a",
+          label: "A",
+          category: "political",
+          variantMode: "static",
+          src: "/a.jpg",
+          attribution: "Natural Earth (public domain)",
+          licenseNote: "Public domain.",
+          sourceLinks: [{ label: "Natural Earth", href: "https://www.naturalearthdata.com/" }],
+        },
+      ],
+    };
+    const r = parseAndValidateBaseMapCatalog(file);
+    expect(r.definitions[0]!.option.sourceLinks).toEqual([
+      { label: "Natural Earth", href: "https://www.naturalearthdata.com/" },
+    ]);
+    expect(r.definitions[0]!.option.licenseNote).toBe("Public domain.");
+  });
+
+  it("rejects more than two sourceLinks", () => {
+    const bad: BaseMapCatalogFile = {
+      version: 1,
+      defaultEquirectBaseMapId: "a",
+      entries: [
+        {
+          id: "a",
+          label: "A",
+          category: "reference",
+          variantMode: "static",
+          src: "/a.jpg",
+          sourceLinks: [
+            { label: "One", href: "https://example.com/1" },
+            { label: "Two", href: "https://example.com/2" },
+            { label: "Three", href: "https://example.com/3" },
+          ],
+        },
+      ],
+    };
+    expect(() => parseAndValidateBaseMapCatalog(bad)).toThrow(/at most 2/);
+  });
+
+  it("rejects sourceLinks with non-http href", () => {
+    const bad: BaseMapCatalogFile = {
+      version: 1,
+      defaultEquirectBaseMapId: "a",
+      entries: [
+        {
+          id: "a",
+          label: "A",
+          category: "reference",
+          variantMode: "static",
+          src: "/a.jpg",
+          sourceLinks: [{ label: "Bad", href: "ftp://example.com" }],
+        },
+      ],
+    };
+    expect(() => parseAndValidateBaseMapCatalog(bad)).toThrow(/http or https/);
   });
 });

@@ -7,6 +7,8 @@
       "label": "World (legacy, shaded)",
       "shortDescription": "The original default equirectangular world basemap in Libration.",
       "category": "reference",
+      "attribution": "Libration packaged reference map",
+      "licenseNote": "Original shaded-relief basemap shipped with Libration (not third-party licensed imagery).",
       "variantMode": "static",
       "src": "/maps/world-equirectangular.jpg",
       "previewThumbnailSrc": "/maps/previews/world-equirectangular-thumb.jpg",
@@ -36,6 +38,13 @@
       "shortDescription": "Country and boundary emphasis for orientation and place names.",
       "category": "political",
       "attribution": "Natural Earth (public domain)",
+      "licenseNote": "Natural Earth cartographic data are public domain.",
+      "sourceLinks": [
+        {
+          "label": "Natural Earth",
+          "href": "https://www.naturalearthdata.com/"
+        }
+      ],
       "variantMode": "static",
       "src": "/maps/world-equirectangular-political.jpg",
       "previewThumbnailSrc": "/maps/previews/world-equirectangular-political-thumb.jpg",
@@ -66,6 +75,13 @@
       "shortDescription": "Geological provinces and related features (scientific use).",
       "category": "scientific",
       "attribution": "USGS (public domain)",
+      "licenseNote": "Public domain (U.S. government work).",
+      "sourceLinks": [
+        {
+          "label": "World geologic provinces (Wikimedia Commons)",
+          "href": "https://commons.wikimedia.org/wiki/File:World_geologic_provinces.jpg"
+        }
+      ],
       "variantMode": "static",
       "src": "/maps/world-equirectangular-geology.jpg",
       "previewThumbnailSrc": "/maps/previews/world-equirectangular-geology-thumb.jpg",
@@ -97,6 +113,13 @@
       "shortDescription": "Global shaded relief and land elevation emphasis for terrain reading.",
       "category": "terrain",
       "attribution": "Natural Earth (public domain)",
+      "licenseNote": "Natural Earth cartographic data are public domain.",
+      "sourceLinks": [
+        {
+          "label": "Natural Earth",
+          "href": "https://www.naturalearthdata.com/"
+        }
+      ],
       "variantMode": "static",
       "src": "/maps/world-equirectangular-topography.jpg",
       "previewThumbnailSrc": "/maps/previews/world-equirectangular-topography-thumb.jpg",
@@ -126,6 +149,13 @@
       "shortDescription": "Natural-color Earth imagery with seasonal surface variation. Base map.",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
+      "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
+      "sourceLinks": [
+        {
+          "label": "NASA media use policy",
+          "href": "https://www.nasa.gov/nasa-brand-center/images-and-media-use-policy/"
+        }
+      ],
       "variantMode": "monthOfYear",
       "src": "/maps/variants/equirect-world-blue-marble-bm-v1/base.jpg",
       "previewThumbnailSrc": "/maps/previews/equirect-world-blue-marble-bm-v1-thumb.jpg",
@@ -187,6 +217,13 @@
       "shortDescription": "Natural-color Earth imagery with seasonal surface variation. With topography.",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
+      "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
+      "sourceLinks": [
+        {
+          "label": "NASA media use policy",
+          "href": "https://www.nasa.gov/nasa-brand-center/images-and-media-use-policy/"
+        }
+      ],
       "variantMode": "monthOfYear",
       "src": "/maps/variants/equirect-world-blue-marble-t-v1/base.jpg",
       "previewThumbnailSrc": "/maps/previews/equirect-world-blue-marble-t-v1-thumb.jpg",
@@ -249,6 +286,13 @@
       "shortDescription": "Natural-color Earth imagery with seasonal surface variation. With topography and bathymetry.",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
+      "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
+      "sourceLinks": [
+        {
+          "label": "NASA media use policy",
+          "href": "https://www.nasa.gov/nasa-brand-center/images-and-media-use-policy/"
+        }
+      ],
       "variantMode": "monthOfYear",
       "src": "/maps/variants/equirect-world-blue-marble-tb-v1/base.jpg",
       "previewThumbnailSrc": "/maps/previews/equirect-world-blue-marble-tb-v1-thumb.jpg",

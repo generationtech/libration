@@ -21,7 +21,7 @@ The current map configuration UI already includes:
 - categorized base-map selector groups.
 - curated substrate taxonomy.
 - map preview card for the selected base-map family.
-- attribution display for the selected base-map family.
+- attribution display for the selected base-map family (**Source & license** block: credit line, optional `licenseNote`, up to two external `sourceLinks` from the bundled catalog).
 - per-family base-map presentation controls.
 - shared presentation persistence across seasonal/month-aware raster variants.
 - bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** set **`labelDense`** alongside chromatic/boundary hints (shipped non-transitional families); legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).
@@ -77,8 +77,7 @@ Future work should extend these systems with **further substrate readability heu
 ### Map asset quality improvements
 
 - stronger source provenance in catalog.
-- richer attribution display.
-- richer **attribution presentation** in the map selector (links, license detail, per-family provenance copy—**default next** queue **A** PR in `PLAN.md`; basic attribution line for families that declare `attribution` is **shipped**).
+- richer attribution display (**shipped** in map selector: catalog `attribution`, `licenseNote`, `sourceLinks`; see `PLAN.md` closed Phase 8 increment).
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.

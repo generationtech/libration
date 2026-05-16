@@ -764,3 +764,54 @@ select.config-input option:disabled {
   font-style: italic;
   opacity: 0.85;
 }
+
+.config-base-map-style__source-license {
+  margin: 0;
+  padding: 0.35rem 0 0;
+  border-top: 1px solid var(--config-control-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.config-base-map-style__source-license-heading {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.9;
+}
+
+.config-base-map-style__license-note {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--config-control-fg-muted, var(--config-control-fg));
+  opacity: 0.9;
+}
+
+.config-base-map-style__source-links {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  list-style: disc;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.config-base-map-style__source-link {
+  color: var(--config-link-fg, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.config-base-map-style__source-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.config-base-map-style__source-link:focus-visible {
+  outline: 2px solid var(--config-focus-ring, #2563eb);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

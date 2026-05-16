@@ -45,7 +45,7 @@ Current implemented areas include:
 - USGS public-domain geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
-- Map preview and attribution display for selected base-map families.
+- Map preview and **Source & license** attribution block for selected base-map families (catalog `attribution`, optional `licenseNote`, and up to two `sourceLinks`).
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
 - Coherent **upstream planetary illumination** subsystem: SceneConfig-resolved policy composes solar day/night, twilight, moonlight, and emissive inputs into **one** `rasterPatch` for the Solar shading path (no backend-side composition branching).
@@ -94,7 +94,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**) and **single best next PR** (**richer attribution presentation** in the map selector). **Slice 2** is the composition *program* when queue **A** has no increment, is blocked, or the session scopes composition only. All bundled catalog families have **`previewThumbnailSrc`** (legacy reference preview **shipped**).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**) and **single best next PR** (next **A**-class substrate when sourced, or Slice 4 selector polish). **Richer attribution presentation** in the map selector is **shipped**. **Slice 2** is the composition *program* when queue **A** has no increment, is blocked, or the session scopes composition only.
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development
