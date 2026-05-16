@@ -9,6 +9,7 @@
       "category": "reference",
       "variantMode": "static",
       "src": "/maps/world-equirectangular.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-thumb.jpg",
       "defaultPresentation": {
         "opacity": 1,
         "brightness": 1,

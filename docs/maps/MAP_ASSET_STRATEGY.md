@@ -200,7 +200,7 @@ equirect-world-blue-marble-bm-v1
 
 ## Future map directions
 
-Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, Blue Marble month-aware families, and legacy reference—with **legacy preview polish** still open on queue **A**):
+Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
 - bathymetry.
 - climate.
 - vegetation.

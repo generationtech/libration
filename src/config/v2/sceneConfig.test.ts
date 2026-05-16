@@ -510,6 +510,11 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.transitionalPlaceholder).toBeUndefined();
   });
 
+  it("legacy reference base map exposes bundled preview thumbnail in options", () => {
+    const o = getEquirectBaseMapOptionForId("equirect-world-legacy-v1");
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-thumb.jpg");
+  });
+
   it("political base map is shipped as non-transitional in registry and options", () => {
     const asset = resolveEquirectBaseMapAsset("equirect-world-political-v1");
     expect(asset.transitionalPlaceholder).toBeUndefined();

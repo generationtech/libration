@@ -115,12 +115,18 @@ Runtime asset:
 public/maps/world-equirectangular.jpg
 ```
 
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-thumb.jpg
+```
+
 Notes:
 
 - Original packaged world map asset.
 - Useful as a dark-friendly stable fallback.
 - Bundled catalog sets **`capabilities.etchedReliefDense`** (with **`darkFriendly`**) for upstream overlay-readability lift—curator signal for directional etched / scribed shaded relief competing with thin vector overlays.
-- **Inventory polish (open):** ship raster is committed; bundled catalog does **not** yet set **`previewThumbnailSrc`** (static scientific trio and Blue Marble families already have previews)—default next queue **A** vertical in `PLAN.md`.
+- Bundled catalog sets **`previewThumbnailSrc`** (800×400 JPEG thumb derived from the committed main raster).
 
 ## equirect-world-political-v1
 
