@@ -160,7 +160,7 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - composition-aware day/night illumination.
 - atmospheric scattering and haze refinement (incremental upstream twilight transition tuning shipped in `src/renderer/illuminationShading.ts`; deeper scattering/haze remains open).
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- **Overlay readability extensions beyond** v1 + v1.1 + substrate lift + presentation + six default-stack `perLayer` pilots + **substrate heuristic increments** (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense`, sub-1 brightness dimming): `perLayer` contracts for additional stack rows where justified; finer multi-row semantics (e.g. separate pilots per static-raster row); **further** catalog or resolver heuristics.
+- **Overlay readability extensions beyond** v1 + v1.1 + substrate lift + presentation + six default-stack `perLayer` pilots + the **shipped** seven-intrinsic substrate heuristic set (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense`, sub-1 brightness dimming): `perLayer` contracts for additional stack rows where justified; finer multi-row semantics (e.g. separate pilots per static-raster row); **additional** optional catalog or resolver heuristics (eighth+ intrinsic axes or presentation rules when product-defined).
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.

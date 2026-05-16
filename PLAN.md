@@ -26,7 +26,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**readability extensions** beyond the shipped overlay stack + **shipped** intrinsic substrate hints (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`) and presentation/dimming rules in lift, **further atmospheric** refinement after the shipped twilight tuning increment, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
+The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**additional** catalog/resolver substrate signals **beyond** the **shipped** seven-intrinsic overlay-lift contract (`reliefShaded` … `etchedReliefDense`) and its presentation/dimming rules, **further atmospheric** refinement after the shipped twilight tuning increment, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
 ## Current goals
 
@@ -54,6 +54,8 @@ The current strategic objective is to **extend** the delivered upstream planetar
 **Derived substrate lift (implemented):** `substrateOverlayReadabilityLiftScale01` on `OverlayReadabilityFrame` from effective base-map presentation + catalog `capabilities` (no raster sampling). Presentation **below** default brightness reduces attenuation so overlays keep lift on dimmed bases. Catalog may set optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** for small intrinsic attenuation at neutral presentation; hints, static rasters, and city pins carry `overlayReadabilityLiftScale01` into RenderPlan builders.
 
 ### Substrate overlay readability heuristics — **shipped** (Slice 2)
+
+**Phase status (narrow increment):** the seven-intrinsic catalog contract—including **`etchedReliefDense`** (bundled on **`equirect-world-legacy-v1`**)—is **closed** in runtime and docs; treat further optional `BaseMapCapabilities` axes as **new** Slice 2 increments, not a partial rollout of this contract.
 
 **Status:** **shipped** upstream-only lift derivation in `deriveSubstrateOverlayReadabilityLiftScale01` (`src/core/substrateOverlayReadabilityLiftScale.ts`). Sub-1 **effective** brightness scales presentation-derived penalty; **`overlayOptimized`** / **`darkFriendly`** multiply presentation penalty; **seven** optional catalog intrinsics on `BaseMapCapabilities` each add a **bounded** intrinsic penalty at neutral presentation (combined intrinsic penalties capped before merging with presentation penalty): **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**. Curator examples: Blue Marble **BM**/**T** → **`fineScaleTexture`**; **TB** → **`reliefShaded`** + **`bathymetryShaded`**; political → **`chromaticDense`** + **`labelDense`**; geology → **`boundaryDense`** + **`chromaticDense`** + **`labelDense`**; legacy world → **`etchedReliefDense`** (with **`darkFriendly`**). No raster sampling. Tests: `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 
