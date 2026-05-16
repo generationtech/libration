@@ -21,7 +21,8 @@
         "overlayOptimized": false,
         "emissiveCompatible": false,
         "darkFriendly": true,
-        "seasonal": false
+        "seasonal": false,
+        "etchedReliefDense": true
       },
       "recommendedRoles": [
         "general",

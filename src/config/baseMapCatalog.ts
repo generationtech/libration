@@ -66,6 +66,12 @@ export type BaseMapCapabilities = Readonly<{
    * and fine grid ticks; distinct from {@link boundaryDense} boundary linework alone.
    */
   labelDense?: boolean;
+  /**
+   * Directional etched / scribed shaded relief (hand-drawn or pre-digital hillshade art) competes
+   * with thin vector overlays; distinct from {@link reliefShaded} DEM-style hillshade on natural-color
+   * imagery and from {@link fineScaleTexture} photographic grain.
+   */
+  etchedReliefDense?: boolean;
 }>;
 
 export type BaseMapCatalogEntry = Readonly<{

@@ -62,13 +62,14 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({})).toBe(0);
   });
 
-  it("accumulates bounded penalties for relief, boundary-dense, chromatic-dense, bathymetry, fine-scale texture, and label-dense flags", () => {
+  it("accumulates bounded penalties for relief, boundary-dense, chromatic-dense, bathymetry, fine-scale texture, label-dense, and etched-relief flags", () => {
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true })).toBeCloseTo(0.072, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ boundaryDense: true })).toBeCloseTo(0.055, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ chromaticDense: true })).toBeCloseTo(0.05, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ bathymetryShaded: true })).toBeCloseTo(0.048, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ fineScaleTexture: true })).toBeCloseTo(0.04, 10);
     expect(intrinsicSubstrateReadabilityCatalogPenalty01({ labelDense: true })).toBeCloseTo(0.052, 10);
+    expect(intrinsicSubstrateReadabilityCatalogPenalty01({ etchedReliefDense: true })).toBeCloseTo(0.046, 10);
     expect(
       intrinsicSubstrateReadabilityCatalogPenalty01({ reliefShaded: true, boundaryDense: true }),
     ).toBeCloseTo(0.127, 10);
@@ -102,6 +103,7 @@ describe("intrinsicSubstrateReadabilityCatalogPenalty01", () => {
         bathymetryShaded: true,
         fineScaleTexture: true,
         labelDense: true,
+        etchedReliefDense: true,
       }),
     ).toBeCloseTo(0.18, 10);
   });
@@ -125,7 +127,7 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(s).toBe(SUBSTRATE_OVERLAY_READABILITY_LIFT_SCALE_MIN);
   });
 
-  it("scales below 1 at neutral presentation when relief, boundary, chromatic, bathymetry, fine-scale texture, or label-dense hints are set", () => {
+  it("scales below 1 at neutral presentation when relief, boundary, chromatic, bathymetry, fine-scale texture, label-dense, or etched-relief hints are set", () => {
     const r = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       reliefShaded: true,
     });
@@ -144,12 +146,16 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     const labels = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
       labelDense: true,
     });
+    const etched = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      etchedReliefDense: true,
+    });
     expect(r).toBeCloseTo(1 - 0.072, 10);
     expect(d).toBeCloseTo(1 - 0.055, 10);
     expect(c).toBeCloseTo(1 - 0.05, 10);
     expect(bathy).toBeCloseTo(1 - 0.048, 10);
     expect(fine).toBeCloseTo(1 - 0.04, 10);
     expect(labels).toBeCloseTo(1 - 0.052, 10);
+    expect(etched).toBeCloseTo(1 - 0.046, 10);
   });
 
   it("combines chromatic and label-dense like political/geology families at neutral presentation", () => {

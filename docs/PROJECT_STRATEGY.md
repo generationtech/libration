@@ -110,7 +110,7 @@ Atmospheric transitions, twilight behavior, planetary illumination, **moonlight,
 - physically-inspired attenuation.
 - coherent upstream composition policy.
 
-Further refinement (**readability extensions after** shipped v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (catalog `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense`, sub-1 brightness dimming) + presentation scalars + **six default-stack `perLayer` pilots**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
+Further refinement (**readability extensions after** shipped v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (catalog `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense`, sub-1 brightness dimming) + presentation scalars + **six default-stack `perLayer` pilots**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
 
 Avoid:
 
@@ -123,7 +123,7 @@ Avoid:
 
 The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
 
-Future work **extends** that subsystem for readability policy **beyond the shipped global presentation + six default `perLayer` keys + substrate heuristic increments** (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, presentation dimming in lift), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
+Future work **extends** that subsystem for readability policy **beyond the shipped global presentation + six default `perLayer` keys + substrate heuristic increments** (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, presentation dimming in lift), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
 
 - atmospheric attenuation.
 - reflected illumination.
@@ -168,9 +168,9 @@ Foundational systems now exist:
 - static and derived overlays.
 - month-aware map families.
 - coherent upstream planetary illumination composition (twilight—including **shipped incremental transition tuning** in `illuminationShading.ts`—moonlight, emissive night lights; single illumination `rasterPatch`).
-- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense`, sub-1 effective brightness dimming in lift) + SceneConfig presentation scalars + **default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass per pilot layer via `scene.overlayReadability.perLayer`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
+- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense`, sub-1 effective brightness dimming in lift) + SceneConfig presentation scalars + **default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass per pilot layer via `scene.overlayReadability.perLayer`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
 
-The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond the shipped **global presentation**, **six default-stack `scene.overlayReadability.perLayer` pilots** (canonical list: `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)), and **shipped** intrinsic substrate hints (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, plus presentation/dimming via `overlayOptimized` / `darkFriendly` and sub-1 brightness in lift)—e.g. **`perLayer` tuning for stack rows beyond those defaults**, **additional** optional catalog or resolver-only substrate signals, **further** atmospheric refinement **beyond** the shipped twilight tuning pass, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
+The next strategic need is not another large hidden architecture migration. It is disciplined **incremental** work: readability extensions beyond the shipped **global presentation**, **six default-stack `scene.overlayReadability.perLayer` pilots** (canonical list: `SCENE_OVERLAY_READABILITY_PER_LAYER_PILOT_KEYS` in [`src/config/v2/sceneConfig.ts`](src/config/v2/sceneConfig.ts)), and **shipped** intrinsic substrate hints (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, plus presentation/dimming via `overlayOptimized` / `darkFriendly` and sub-1 brightness in lift)—e.g. **`perLayer` tuning for stack rows beyond those defaults**, **additional** optional catalog or resolver-only substrate signals, **further** atmospheric refinement **beyond** the shipped twilight tuning pass, and (with lifecycle) cloud/weather participation—each scoped, tested, and documented.
 
 ## Strategic next frontiers
 
@@ -179,7 +179,7 @@ Likely next frontiers:
 1. Documentation, rules, and co-engineering reliability.
 2. Map inventory curation and selector polish.
 3. Geology or other scientific substrate onboarding.
-4. **Readability and composition extensions** (`perLayer` beyond the **six shipped** default-stack keys where product defines new rows; **further** substrate/catalog signals beyond `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` + dimming; **further** atmospheric refinement on the **existing** upstream illumination stack **after** the shipped incremental twilight tuning pass), and cloud/weather **planning** until dynamic lifecycle opens.
+4. **Readability and composition extensions** (`perLayer` beyond the **six shipped** default-stack keys where product defines new rows; **further** substrate/catalog signals beyond `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` + dimming; **further** atmospheric refinement on the **existing** upstream illumination stack **after** the shipped incremental twilight tuning pass), and cloud/weather **planning** until dynamic lifecycle opens.
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.
 7. Preset system.

@@ -115,6 +115,7 @@ Notes:
 
 - Original packaged world map asset.
 - Useful as a dark-friendly stable fallback.
+- Bundled catalog sets **`capabilities.etchedReliefDense`** (with **`darkFriendly`**) for upstream overlay-readability lift—curator signal for directional etched / scribed shaded relief competing with thin vector overlays.
 
 ## equirect-world-political-v1
 
