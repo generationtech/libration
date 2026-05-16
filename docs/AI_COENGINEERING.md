@@ -43,6 +43,8 @@ The upstream planetary illumination path is **production-complete** for twilight
 
 **Doc-finalization (atmospheric Slice 2 second pass):** cumulative twilight tuning includes a **second** narrow constants-only pass in `illuminationShading.ts` (doc-finalized with runtime and tests); **third+** passes, scattering/haze, and optional persisted softness remain future (`PLAN.md` Slice 2).
 
+**Map inventory (Phase 8 / Slice 3):** The bundled base-map catalog (`src/assets/maps/base-map-catalog.json`) remains authoritative; do not runtime-scan `public/maps`. **Shipped:** validated static global topography **`equirect-world-topography-ne-v1`** (Natural Earth–lineage raster; catalog **`reliefShaded`** for overlay lift). **Legacy scene ids:** **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** still resolve to **`equirect-world-blue-marble-t-v1`** (`src/config/baseMapAssetResolve.ts`). **Default next PR** for map work follows **`PLAN.md` → Agent session handoff queue A** until geology / political / inventory gaps are cleared or blocked; then fall through to Slice 2 items **B**/**C**/**D** per the same handoff.
+
 For new work in this area:
 
 - read `ARCHITECTURE.md` (subsystem section), `PLAN.md` Slice 2, and `docs/ROADMAP.md` Phase 6 / Phase 9.

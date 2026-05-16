@@ -6,7 +6,7 @@ This file gives AI coding agents persistent project context for Libration.
 
 It is intentionally concise. Human-readable strategy and specification detail lives in the documentation set. Cursor-specific rules live under `.cursor/rules/`.
 
-**Planning / discovery sessions:** after `README.md` and `ARCHITECTURE.md`, read **`PLAN.md` → “Agent session handoff (planning prompts)”** and **`docs/ROADMAP.md`** phase status before recommending the next PR-sized slice.
+**Planning / discovery sessions:** after `README.md` and `ARCHITECTURE.md`, read **`PLAN.md` → “Agent session handoff (planning prompts)”** and **`docs/ROADMAP.md`** phase status before recommending the next PR-sized slice. **Map substrates:** **`equirect-world-topography-ne-v1`** (static Natural Earth–lineage topography) is **shipped** in the bundled catalog; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for **`equirect-world-blue-marble-t-v1`**. Default next PR for catalog gaps is **Phase 8 / Slice 3** (handoff queue **A**); **Slice 2** remains the primary **composition extension program** when **A** has no shippable increment or the session scopes illumination/readability work.
 
 ## Project identity
 

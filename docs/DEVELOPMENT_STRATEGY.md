@@ -26,6 +26,8 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (queue **A** = default map/substrate PR when a shippable gap exists; **Slice 2** = primary composition *program* when **A** is empty, blocked, or out of session scope).
+
 ## Implementation intent template
 
 Use this shape when asking Cursor to implement:

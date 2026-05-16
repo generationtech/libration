@@ -46,7 +46,7 @@ Useful differentiation directions:
 - renderer-agnostic internals.
 - open AGPL reference implementation.
 - explicit SceneConfig and composable layers.
-- curated scientific and cartographic map families.
+- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates; see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
 - reference-frame time model.
 - modern top-band chrome visual language.
 - planetary illumination and atmospheric composition.

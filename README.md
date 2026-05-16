@@ -91,7 +91,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default prioritized next-PR queue** (tie-break vs. repeating Slice 2 micro-tuning).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3 map inventory when a shippable catalog gap exists) versus the **Slice 2** composition *program* (illumination + readability extensions when **A** is empty, blocked, or explicitly out of scope).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

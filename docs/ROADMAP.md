@@ -196,10 +196,15 @@ Exit criteria:
 - **Substrate intrinsic `etchedReliefDense` (Slice 2 shipped):** optional `capabilities.etchedReliefDense` on **`equirect-world-legacy-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 - **Substrate intrinsic `sunGlintDense` (Slice 2 shipped):** optional `capabilities.sunGlintDense` on **`equirect-world-blue-marble-bm-v1`** and **`equirect-world-blue-marble-t-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
 - **Eight-intrinsic substrate overlay-lift contract (doc-finalized):** product docs, map asset notes, and rules describe the **shipped** optional catalog intrinsics through **`sunGlintDense`** as the current baseline; future work is **ninth+** optional axes, further atmosphere, or `perLayer` rows beyond the six defaults—see `PLAN.md` Slice 2.
+- **Phase 8 / Slice 3 terrain increment (rolling):** validated static global topography **`equirect-world-topography-ne-v1`** shipped in `base-map-catalog.json` with provenance in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); geology validation and further Phase 8 inventory work remain open (`PLAN.md` Slice 3).
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned. **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory / substrate expansion before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2).
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory / substrate expansion before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2).
+
+**Rolling delivered (Slice 3 / Phase 8 terrain increment):**
+
+- Validated static Natural Earth–lineage global topography base-map family **`equirect-world-topography-ne-v1`** (`public/maps/world-equirectangular-topography.jpg`; bundled catalog sets **`reliefShaded`** for upstream overlay lift; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** scene ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 
 Candidate deliverables:
 

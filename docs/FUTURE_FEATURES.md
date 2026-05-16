@@ -51,7 +51,7 @@ Future work should extend these systems with **further substrate readability heu
 ### Candidate curated map families
 
 - geology.
-- topography refinement.
+- **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
 - bathymetry.
 - ocean floor / seafloor relief.
 - natural-color seasonal imagery.
