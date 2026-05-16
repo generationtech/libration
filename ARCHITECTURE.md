@@ -241,6 +241,7 @@ Stable enough for feature-forward work:
 - SceneConfig authority.
 - curated base-map catalog.
 - static and month-aware base maps.
+- shipped Natural Earth–lineage political base map **`equirect-world-political-v1`** in the bundled catalog (non-transitional; geology family still placeholder until ship raster).
 - static overlays.
 - derived solar analemma overlay.
 - solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer; composition is **non-emissive** (attenuation + atmospheric tint, not glow); the backend only executes the resulting `rasterPatch` without twilight-specific semantics.
@@ -255,6 +256,7 @@ Stable enough for feature-forward work:
 Still future or partial:
 
 - full dynamic data lifecycle.
+- **Phase 8 base-map catalog:** **`equirect-world-geology-v1`** remains `transitionalPlaceholder: true`; bundled `src` targets **`public/maps/world-equirectangular-geology.jpg`**, which is **not** committed in the default checkout until geology is sourced and onboarded (`PLAN.md` Slice 3, `docs/maps/MAP_ASSET_SOURCES.md`).
 - live feeds.
 - gridded scientific datasets.
 - **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.
