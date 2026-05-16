@@ -40,6 +40,8 @@ export type ConfigShellProps = {
   workingV2Ref: RefObject<LibrationConfigV2 | null>;
   /** Optional guarded updater; inactive while {@link ALLOW_PHASE3_MUTATIONS} is false in App. */
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
+  /** Product instant for month-aware base-map selector copy (matches render-loop clock). */
+  productInstantMs?: number;
   /** User-named full v2 snapshots (Phase 5); optional when panel is read-only. */
   userPresetsUi?: UserPresetsUiProps;
   /** Demo play / pause / reset; runtime-only, does not mutate persisted config. */
@@ -50,12 +52,19 @@ function renderActiveTabContent(
   tabId: ConfigTabId,
   config: LibrationConfigV2,
   updateConfig: ConfigShellProps["updateConfig"],
+  productInstantMs: ConfigShellProps["productInstantMs"],
   userPresetsUi: ConfigShellProps["userPresetsUi"],
   demoTransport: ConfigShellProps["demoTransport"],
 ): ReactNode {
   switch (tabId) {
     case "layers":
-      return <LayersTab config={config} updateConfig={updateConfig} />;
+      return (
+        <LayersTab
+          config={config}
+          updateConfig={updateConfig}
+          productInstantMs={productInstantMs}
+        />
+      );
     case "pins":
       return <PinsTab config={config} updateConfig={updateConfig} />;
     case "chrome":
@@ -85,6 +94,7 @@ export function ConfigShell({
   panelDomId = "libration-config-shell",
   workingV2Ref,
   updateConfig,
+  productInstantMs,
   userPresetsUi,
   demoTransport,
 }: ConfigShellProps) {
@@ -147,6 +157,7 @@ export function ConfigShell({
             tab.id,
             config,
             updateConfig,
+            productInstantMs,
             userPresetsUi,
             demoTransport,
           )}

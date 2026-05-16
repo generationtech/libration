@@ -32,13 +32,13 @@ The current strategic objective is **twofold**: (1) continue **Phase 8 / Slice 3
 
 Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
 
-**Scheduling snapshot (post–structured attribution presentation in map selector):**
+**Scheduling snapshot (post–Slice 4 month-aware selector polish):**
 
 | Role | Name | Meaning |
 |------|------|---------|
 | **Default macro PR track** | **Phase 8 / Slice 3** (queue **A**) | What the **next merged PR** should advance unless blocked or session-scopes Slice 2 only. |
 | **Primary active execution slice** | **Phase 8 / Slice 3** (queue **A**) | Same as default macro PR track—the **next merged PR** is map inventory / selector work, not Slice 2 composition micro-tuning by default. |
-| **Single best next PR** | **Next A-class substrate onboarding** when sourced; else **Slice 4 month-aware selector polish** | Inspect in order: **(2)** new family when raster + rights exist; else **(2b)** Slice 4 (month-aware copy, active displayed-month for seasonal families—no external assets). If queue **A** has no shippable gap, fall through to Slice 2 **B**/**C**/**D**. |
+| **Single best next PR** | **Next A-class substrate onboarding** when sourced | Inspect **(2)** when a sourced raster and rights exist; queue **(2b)** month-aware selector polish is **shipped**. If queue **A** has no shippable gap, fall through to Slice 2 **B**/**C**/**D**. |
 | **Composition program (medium-term)** | **Slice 2** | Illumination + overlay-readability extensions when queue **A** has no increment—queues **B** / **C** / **D**. |
 
 1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 2** and **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phases 5–9 and Phase 8 in particular).
@@ -46,7 +46,7 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
    - **Default macro PR track (next merged PR):** **Phase 8 / Slice 3** — map inventory and selector polish (queue **A** below). **All bundled catalog families have `previewThumbnailSrc`** and **structured selector attribution** (legacy reference preview + attribution presentation **closed** May 2026).
    - **Primary composition *program* (not every PR):** **Slice 2 — Planetary illumination — extensions on delivered foundations** — dominant medium-term illumination + overlay-readability work when queue **A** is empty, blocked, or explicitly out of scope. Recent **doc-finalized** closures: overlay readability six-default `perLayer` stack, eight-intrinsic substrate lift contract, **second** narrow cumulative twilight pass in `illuminationShading.ts`, static trio + **legacy** bundled previews, **structured attribution presentation** in the map selector.
 3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo + catalog; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
-   - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (use existing `maps:prep` / bundled catalog patterns; do not invent new architecture). **Queue status:** **(1)** richer **attribution presentation** in the map selector — **shipped** (catalog `licenseNote` + `sourceLinks`; **Source & license** block in `BaseMapStyleControl`). **Default next PR-sized slice (inspect in order):** **(2)** next **A**-class substrate onboarding (climate, bathymetry, vegetation, etc.) when a sourced raster and rights are ready; **(2b)** else **Slice 4** month-aware selector polish (copy, active displayed-month indication for Blue Marble families). **Shipped (rolling on this track):** **`equirect-world-legacy-v1`** (default reference; bundled preview `world-equirectangular-thumb.jpg`); **`equirect-world-topography-ne-v1`** (`world-equirectangular-topography.jpg`; **`reliefShaded`**; bundled preview `world-equirectangular-topography-thumb.jpg`); **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (non-transitional; bundled previews); **structured attribution** on all seven bundled families.
+   - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (use existing `maps:prep` / bundled catalog patterns; do not invent new architecture). **Queue status:** **(1)** richer **attribution presentation** in the map selector — **shipped**; **(2b)** **Slice 4** month-aware selector polish (catalog copy, active UTC civil month for Blue Marble families, `productInstantMs` from render clock) — **shipped**. **Default next PR-sized slice:** **(2)** next **A**-class substrate onboarding (climate, bathymetry, vegetation, etc.) when a sourced raster and rights are ready. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`** (default reference; bundled preview `world-equirectangular-thumb.jpg`); **`equirect-world-topography-ne-v1`** (`world-equirectangular-topography.jpg`; **`reliefShaded`**; bundled preview `world-equirectangular-topography-thumb.jpg`); **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (non-transitional; bundled previews); **structured attribution** on all seven bundled families; **month-aware selector** copy + active month line in `BaseMapStyleControl`.
    - **B. Slice 2 — substrate:** ninth+ optional `BaseMapCapabilities` intrinsic + bounded penalty + tests + bundled catalog curation (**requires** a product-defensible flag name and target families in the session prompt or an existing written product note—do not invent taxonomy in code alone).
    - **C. Slice 2 — atmosphere:** optional **third+** narrow constants-only twilight pass in `illuminationShading.ts` (**requires** explicit rationale in the session prompt—avoid unbounded subjective tuning loops).
    - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) when Phase 10 is not yet opened.
@@ -62,7 +62,9 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 **Closed and doc-finalized (Phase 8 / Slice 3 legacy preview increment):** **`equirect-world-legacy-v1`** — committed `public/maps/previews/world-equirectangular-thumb.jpg` (800×400), catalog `previewThumbnailSrc`, provenance in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md); tests in [`src/config/v2/sceneConfig.test.ts`](src/config/v2/sceneConfig.test.ts).
 
-**Closed and doc-finalized (Phase 8 / Slice 3–4 attribution presentation increment):** richer **attribution presentation** in the map selector — catalog optional `licenseNote` and `sourceLinks` (≤2 http(s) links per family) on all seven bundled families; **Source & license** block in [`src/components/config/BaseMapStyleControl.tsx`](src/components/config/BaseMapStyleControl.tsx); tests in [`src/components/config/BaseMapStyleControl.test.tsx`](src/components/config/BaseMapStyleControl.test.tsx) and [`src/config/baseMapCatalog.test.ts`](src/config/baseMapCatalog.test.ts). **Next** on queue **A:** next sourced substrate or Slice 4 selector polish—see item **3** above.
+**Closed and doc-finalized (Phase 8 / Slice 3–4 attribution presentation increment):** richer **attribution presentation** in the map selector — catalog optional `licenseNote` and `sourceLinks` (≤2 http(s) links per family) on all seven bundled families; **Source & license** block in [`src/components/config/BaseMapStyleControl.tsx`](src/components/config/BaseMapStyleControl.tsx); tests in [`src/components/config/BaseMapStyleControl.test.tsx`](src/components/config/BaseMapStyleControl.test.tsx) and [`src/config/baseMapCatalog.test.ts`](src/config/baseMapCatalog.test.ts).
+
+**Closed and doc-finalized (Phase 8 / Slice 4 month-aware selector increment):** month-aware catalog copy for Blue Marble **BM**/**T**/**TB**; `variantMode` on selector options; active **UTC civil month** line in [`BaseMapStyleControl`](src/components/config/BaseMapStyleControl.tsx) when a month-aware family is selected (`formatActiveUtcCivilMonthLabel` in [`src/config/baseMapMonthResolve.ts`](src/config/baseMapMonthResolve.ts)); `productInstantMs` threaded from the render loop when the config panel is open ([`App.tsx`](src/App.tsx) → [`ConfigShell`](src/components/config/ConfigShell.tsx) → [`LayersTab`](src/components/config/LayersTab.tsx)); tests in [`BaseMapStyleControl.test.tsx`](src/components/config/BaseMapStyleControl.test.tsx) and [`baseMapMonthResolve.test.ts`](src/config/baseMapMonthResolve.test.ts). **Next** on queue **A:** next sourced **(2)** substrate when raster + rights exist—see item **3** above.
 
 ## Current goals
 
@@ -187,12 +189,12 @@ Exit criteria:
 
 ### Slice 4: Map inventory and selector polish
 
-Status: **active (overlaps Phase 8 queue A)**—**attribution presentation shipped**; hosts further selector polish (month-aware copy, labels); not a separate competing track.
+Status: **active (overlaps Phase 8 queue A)**—**attribution presentation shipped**; **month-aware selector polish shipped** (catalog copy, active UTC civil month line, render-clock `productInstantMs` in config UI). Further selector hygiene remains; not a separate competing track.
 
 Candidate work:
 
-- improve selector copy for month-aware map families (**default next within queue A** when item **(2)** substrate is blocked).
-- consider active displayed-month indication for seasonal families (**same Slice 4 vertical** as month-aware copy when item **(2)** is blocked).
+- improve selector copy for month-aware map families — **baseline shipped** (Blue Marble descriptions + active month line); further copy passes optional.
+- active displayed-month indication for seasonal families — **shipped** (`Displaying: <month> (UTC civil month N)` in `BaseMapStyleControl`).
 - normalize family ids, labels, and categories while catalog is still young.
 - finalize placeholder versus validated family states.
 - validate all preview thumbnails and metadata (**all bundled families: shipped**).

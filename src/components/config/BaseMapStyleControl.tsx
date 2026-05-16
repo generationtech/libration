@@ -18,6 +18,7 @@ import {
   normalizeBaseMapPresentation,
 } from "../../config/baseMapPresentation";
 import type { BaseMapOption } from "../../config/baseMapTypes";
+import { formatActiveUtcCivilMonthLabel } from "../../config/baseMapMonthResolve";
 import {
   BASE_MAP_OPTION_CATEGORY_ORDER,
   EQUIRECT_BASE_MAP_OPTIONS,
@@ -99,6 +100,11 @@ export type BaseMapStyleControlProps = {
   baseMapId: string;
   /** Normalized `SceneConfig.baseMap.presentation` (family-level, not per month). */
   presentation: BaseMapPresentationConfig;
+  /**
+   * Product instant used for month-aware family display (UTC civil month).
+   * Should match the render-loop clock (wall or demo); omit only in isolated tests.
+   */
+  productInstantMs?: number;
   mutable: boolean;
   onSelectId?: (canonicalId: string) => void;
   onPresentationChange?: (next: BaseMapPresentationConfig) => void;
@@ -240,15 +246,24 @@ function BaseMapPresentationSliderRow({
 export function BaseMapStyleControl({
   baseMapId,
   presentation,
+  productInstantMs,
   mutable,
   onSelectId,
   onPresentationChange,
 }: BaseMapStyleControlProps) {
   const selected = getEquirectBaseMapOptionForId(baseMapId);
   const value = selected.id;
+  const resolveContext =
+    productInstantMs !== undefined ? { productInstantMs } : undefined;
   const previewSrc =
-    selected.previewThumbnailSrc ?? resolveEquirectBaseMapImageSrc(value);
+    selected.previewThumbnailSrc ??
+    resolveEquirectBaseMapImageSrc(value, resolveContext);
   const groups = optionsByCategory(BASE_MAP_OPTION_CATEGORY_ORDER, EQUIRECT_BASE_MAP_OPTIONS);
+  const isMonthAware = selected.variantMode === "monthOfYear";
+  const activeMonthLabel =
+    isMonthAware && productInstantMs !== undefined
+      ? formatActiveUtcCivilMonthLabel(productInstantMs)
+      : null;
 
   return (
     <div className="config-base-map-style">
@@ -330,6 +345,14 @@ export function BaseMapStyleControl({
         </div>
         {selected.shortDescription ? (
           <p className="config-base-map-style__desc">{selected.shortDescription}</p>
+        ) : null}
+        {activeMonthLabel ? (
+          <p
+            className="config-base-map-style__active-month"
+            data-testid="config-base-map-active-month"
+          >
+            {activeMonthLabel}
+          </p>
         ) : null}
         <BaseMapSourceLicenseBlock option={selected} />
       </div>

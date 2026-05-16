@@ -40,6 +40,36 @@ export function calendarMonthUtc1To12FromUnixMs(ms: number): number {
   return new Date(ms).getUTCMonth() + 1;
 }
 
+const UTC_CIVIL_MONTH_NAMES_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+/** English UTC civil month name for catalog/selector copy (month 1…12). */
+export function utcCivilMonthNameEn(month1To12: number): string {
+  const idx = month1To12 - 1;
+  if (idx < 0 || idx >= 12) {
+    return "Unknown";
+  }
+  return UTC_CIVIL_MONTH_NAMES_EN[idx]!;
+}
+
+/** Selector label for the active month-aware raster month from product instant. */
+export function formatActiveUtcCivilMonthLabel(productInstantMs: number): string {
+  const month = calendarMonthUtc1To12FromUnixMs(productInstantMs);
+  return `Displaying: ${utcCivilMonthNameEn(month)} (UTC civil month ${month})`;
+}
+
 /**
  * Walk order for missing-month lookback: current month first, then backward month-by-month,
  * wrapping across the year boundary (e.g. January → December).

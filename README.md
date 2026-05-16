@@ -46,6 +46,7 @@ Current implemented areas include:
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
 - Map preview and **Source & license** attribution block for selected base-map families (catalog `attribution`, optional `licenseNote`, and up to two `sourceLinks`).
+- Month-aware base-map selector copy and **active UTC civil month** indication for Blue Marble families (follows instrument time via render clock; not stored in SceneConfig).
 - Static and derived scene overlays.
 - Solar analemma ground-track overlay.
 - Coherent **upstream planetary illumination** subsystem: SceneConfig-resolved policy composes solar day/night, twilight, moonlight, and emissive inputs into **one** `rasterPatch` for the Solar shading path (no backend-side composition branching).

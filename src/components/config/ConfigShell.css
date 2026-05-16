@@ -752,12 +752,18 @@ select.config-input option:disabled {
 }
 
 .config-base-map-style__desc,
-.config-base-map-style__attr {
+.config-base-map-style__attr,
+.config-base-map-style__active-month {
   margin: 0;
   font-size: 0.75rem;
   line-height: 1.4;
   color: var(--config-control-fg-muted, var(--config-control-fg));
   opacity: 0.9;
+}
+
+.config-base-map-style__active-month {
+  font-weight: 500;
+  opacity: 1;
 }
 
 .config-base-map-style__attr {

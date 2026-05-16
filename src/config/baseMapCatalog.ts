@@ -318,5 +318,6 @@ function toOptionFromEntry(e: BaseMapCatalogEntry): BaseMapOption {
     sourceLinks: e.sourceLinks,
     previewThumbnailSrc: e.previewThumbnailSrc,
     transitionalPlaceholder: e.transitionalPlaceholder,
+    variantMode: e.variantMode ?? "static",
   };
 }

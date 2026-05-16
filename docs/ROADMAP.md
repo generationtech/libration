@@ -199,12 +199,13 @@ Exit criteria:
 - **Eight-intrinsic substrate overlay-lift contract (doc-finalized):** product docs, map asset notes, and rules describe the **shipped** optional catalog intrinsics through **`sunGlintDense`** as the current baseline; future work is **ninth+** optional axes, further atmosphere, or `perLayer` rows beyond the six defaults—see `PLAN.md` Slice 2.
 - **Phase 8 / Slice 3 topography preview (closed):** **`equirect-world-topography-ne-v1`** bundled preview (`world-equirectangular-topography-thumb.jpg`, catalog `previewThumbnailSrc`, tests); see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 legacy preview (closed):** **`equirect-world-legacy-v1`** bundled preview (`world-equirectangular-thumb.jpg`, catalog `previewThumbnailSrc`, tests)—all bundled base-map families now have catalog previews; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 map inventory (rolling):** all bundled catalog families have `previewThumbnailSrc` (legacy + static trio + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** queue **A** PR: next sourced substrate or Slice 4 selector polish (`PLAN.md` Slice 3 / Slice 4).
+- **Phase 8 / Slice 3 map inventory (rolling):** all bundled catalog families have `previewThumbnailSrc` (legacy + static trio + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** queue **A** PR: next sourced substrate (`PLAN.md` Slice 3 item **(2)**).
+- **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all seven families; see `PLAN.md` closed increment.
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**); else **Slice 4** month-aware selector polish (item **(2b)**).
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**).
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -215,7 +216,7 @@ Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md
 
 Candidate deliverables:
 
-- further map selector polish (month-aware copy, active displayed-month indication for seasonal families).
+- further map selector polish (labels, placeholder hygiene; month-aware copy and active UTC civil month indication **shipped** in Slice 4).
 - broader map selector copy and placeholder hygiene across the young catalog.
 - climate map families.
 - bathymetry/ocean substrate.

@@ -80,8 +80,8 @@ Future work should extend these systems with **further substrate readability heu
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.
-- month-aware family explanation in UI.
-- active displayed-month indication for seasonal families.
+- ~~month-aware family explanation in UI.~~ **Shipped:** Blue Marble catalog `shortDescription` copy and `variantMode` on selector options.
+- ~~active displayed-month indication for seasonal families.~~ **Shipped:** `Displaying: <month> (UTC civil month N)` in `BaseMapStyleControl` when a month-aware family is selected (`productInstantMs` from render loop).
 - fixed-month override for comparison or demonstration.
 - presentation presets per map role.
 

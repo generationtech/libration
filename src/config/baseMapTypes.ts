@@ -34,6 +34,8 @@ export type BaseMapOption = {
   sourceLinks?: readonly BaseMapSourceLink[];
   previewThumbnailSrc?: string;
   transitionalPlaceholder?: boolean;
+  /** Catalog variant mode; month-aware families follow product UTC civil month at resolve time. */
+  variantMode?: BaseMapVariantMode;
 };
 
 /** `"static"` uses one URL; `"monthOfYear"` picks a month file from the catalog. */

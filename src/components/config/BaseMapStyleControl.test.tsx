@@ -29,11 +29,13 @@ import { BaseMapStyleControl } from "./BaseMapStyleControl";
 function Harness({
   baseMapId = DEFAULT_EQUIRECT_BASE_MAP_ID,
   initial = DEFAULT_BASE_MAP_PRESENTATION,
+  productInstantMs,
   mutable = true,
   onSelectId,
 }: {
   baseMapId?: string;
   initial?: BaseMapPresentationConfig;
+  productInstantMs?: number;
   mutable?: boolean;
   onSelectId?: (id: string) => void;
 }) {
@@ -44,6 +46,7 @@ function Harness({
       <BaseMapStyleControl
         baseMapId={mapId}
         presentation={presentation}
+        productInstantMs={productInstantMs}
         mutable={mutable}
         onSelectId={
           onSelectId ??
@@ -150,6 +153,40 @@ describe("BaseMapStyleControl", () => {
     const o = getEquirectBaseMapOptionForId("equirect-world-political-v1");
     expect(o.licenseNote).toMatch(/public domain/i);
     expect(o.sourceLinks?.[0]?.href).toBe("https://www.naturalearthdata.com/");
+  });
+
+  it("exposes variantMode on catalog options", () => {
+    expect(getEquirectBaseMapOptionForId(DEFAULT_EQUIRECT_BASE_MAP_ID).variantMode).toBe("static");
+    expect(getEquirectBaseMapOptionForId("equirect-world-blue-marble-bm-v1").variantMode).toBe(
+      "monthOfYear",
+    );
+  });
+
+  it("does not show active UTC month for static families", () => {
+    const julyMs = Date.UTC(2024, 6, 15);
+    render(<Harness productInstantMs={julyMs} />);
+    expect(screen.queryByTestId("config-base-map-active-month")).not.toBeInTheDocument();
+  });
+
+  it("shows active UTC civil month for month-aware Blue Marble family", async () => {
+    const user = userEvent.setup();
+    const julyMs = Date.UTC(2024, 6, 15);
+    render(
+      <Harness
+        baseMapId="equirect-world-blue-marble-bm-v1"
+        productInstantMs={julyMs}
+      />,
+    );
+    expect(screen.getByTestId("config-base-map-active-month")).toHaveTextContent(
+      "Displaying: July (UTC civil month 7)",
+    );
+    await user.selectOptions(screen.getByLabelText("Map style"), "equirect-world-political-v1");
+    expect(screen.queryByTestId("config-base-map-active-month")).not.toBeInTheDocument();
+  });
+
+  it("omits active month line when productInstantMs is not provided", () => {
+    render(<Harness baseMapId="equirect-world-blue-marble-t-v1" />);
+    expect(screen.queryByTestId("config-base-map-active-month")).not.toBeInTheDocument();
   });
 
   it("reset display restores defaults for all presentation fields", async () => {

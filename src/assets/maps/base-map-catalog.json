@@ -146,7 +146,7 @@
     {
       "id": "equirect-world-blue-marble-bm-v1",
       "label": "Blue Marble - BM",
-      "shortDescription": "Natural-color Earth imagery with seasonal surface variation. Base map.",
+      "shortDescription": "NASA Blue Marble natural-color imagery with twelve onboarded monthly rasters. The scene follows instrument time (UTC civil month), not a stored month in config.",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
       "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
@@ -214,7 +214,7 @@
     {
       "id": "equirect-world-blue-marble-t-v1",
       "label": "Blue Marble - T",
-      "shortDescription": "Natural-color Earth imagery with seasonal surface variation. With topography.",
+      "shortDescription": "Blue Marble natural-color plus topography; twelve monthly rasters resolved from instrument UTC civil month. For static shaded relief only, use World topography (Natural Earth).",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
       "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
@@ -283,7 +283,7 @@
     {
       "id": "equirect-world-blue-marble-tb-v1",
       "label": "Blue Marble - TB",
-      "shortDescription": "Natural-color Earth imagery with seasonal surface variation. With topography and bathymetry.",
+      "shortDescription": "Blue Marble natural-color with land topography and shaded bathymetry; twelve monthly rasters from instrument UTC civil month.",
       "category": "terrain",
       "attribution": "NASA Blue Marble Next Generation",
       "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",

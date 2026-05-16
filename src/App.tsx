@@ -51,6 +51,7 @@ import {
 import { ConfigShell } from "./components/config/ConfigShell";
 import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
 import { getEquirectBaseMapCatalogEntry } from "./config/baseMapAssetResolve";
+import { calendarMonthUtc1To12FromUnixMs } from "./config/baseMapMonthResolve";
 import { resolveEffectiveBaseMapPresentation } from "./config/baseMapPresentation";
 import {
   computeOverlayReadabilityFrameFromTimeMs,
@@ -85,6 +86,11 @@ export default function App() {
   const [userPresetsEpoch, setUserPresetsEpoch] = useState(0);
   const bumpUserPresets = useCallback(() => setUserPresetsEpoch((n) => n + 1), []);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const isConfigOpenRef = useRef(false);
+  const productInstantMsRef = useRef(Date.now());
+  const [configPanelProductInstantMs, setConfigPanelProductInstantMs] = useState(
+    () => Date.now(),
+  );
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [isDirtyFromPreset, setIsDirtyFromPreset] = useState(false);
   const activePresetIdRef = useRef<string | null>(null);
@@ -200,6 +206,16 @@ export default function App() {
   );
 
   useEffect(() => {
+    isConfigOpenRef.current = isConfigOpen;
+  }, [isConfigOpen]);
+
+  useEffect(() => {
+    if (isConfigOpen) {
+      setConfigPanelProductInstantMs(productInstantMsRef.current);
+    }
+  }, [isConfigOpen]);
+
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
       if (e.key === "Escape") {
         if (!isConfigOpen) {
@@ -291,6 +307,15 @@ export default function App() {
       }
 
       const clockNowMs = demoActive ? effectiveNowMs : realNowMs;
+      productInstantMsRef.current = clockNowMs;
+      if (isConfigOpenRef.current) {
+        setConfigPanelProductInstantMs((prev) => {
+          if (calendarMonthUtc1To12FromUnixMs(prev) !== calendarMonthUtc1To12FromUnixMs(clockNowMs)) {
+            return clockNowMs;
+          }
+          return prev;
+        });
+      }
       const deltaMs =
         lastRenderClockMsRef.current === null
           ? 0
@@ -430,6 +455,7 @@ export default function App() {
             panelDomId={CONFIG_PANEL_DOM_ID}
             workingV2Ref={workingV2Ref}
             updateConfig={updateConfig}
+            productInstantMs={configPanelProductInstantMs}
             userPresetsUi={ALLOW_PHASE3_MUTATIONS ? userPresetsUi : undefined}
             demoTransport={{
               paused: demoTransportPaused,

@@ -386,9 +386,11 @@ export type LayersTabProps = {
   config: LibrationConfigV2;
   /** When set, layer checkboxes call into App’s guarded update path (`commitWorkingV2Update`). */
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
+  /** Product instant for month-aware map selector (UTC civil month display). */
+  productInstantMs?: number;
 };
 
-export function LayersTab({ config, updateConfig }: LayersTabProps) {
+export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabProps) {
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
@@ -436,6 +438,7 @@ export function LayersTab({ config, updateConfig }: LayersTabProps) {
         <BaseMapStyleControl
           baseMapId={scene.baseMap.id}
           presentation={effectivePresentation}
+          productInstantMs={productInstantMs}
           mutable={mutable}
           onSelectId={
             mutable && updateConfig
