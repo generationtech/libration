@@ -121,8 +121,8 @@ Current families include:
 - legacy reference map.
 - political map.
 - geology placeholder or early family depending on catalog state.
-- Blue Marble / natural-color families.
-- topography family if present in the active catalog.
+- validated static Natural Earth–lineage global topography (**`equirect-world-topography-ne-v1`**, `world-equirectangular-topography.jpg`).
+- Blue Marble / natural-color families (month-aware **BM**, **T**, **TB**; legacy ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** alias to **T** for compatibility).
 
 Remaining future work:
 
@@ -155,7 +155,7 @@ Delivered:
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - astronomical scene participation integrated into the layered scene system.
 - **Overlay readability (v1 + v1.1 + substrate + substrate heuristic increments + SceneConfig presentation + default-stack per-layer pilots):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream, or pilots per defaulted row below); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream, including optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** intrinsic hints and **sub-1 effective brightness** dimming in penalty derivation; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`perLayer`** keys **`grid`**, **`solarAnalemma`**, **`subsolarMarker`**, **`sublunarMarker`**, **`cityPins`**, **`staticEquirectOverlay`** apply the same scalars again for those layers only.
-- **Catalog curation (substrate lift):** bundled `base-map-catalog.json` marks **`bathymetryShaded`** on **`equirect-world-blue-marble-tb-v1`** (with **`reliefShaded`**) as the curator signal for shaded bathymetry competing with overlays, **`fineScaleTexture`** and **`sunGlintDense`** on Blue Marble **BM**/**T** for fine-scale natural-color texture and dense open-ocean sun glint, **`labelDense`** on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (alongside **`chromaticDense`** / boundary+chromatic hints) for dense cartographic typography, and **`etchedReliefDense`** on **`equirect-world-legacy-v1`** for packaged etched shaded relief—no runtime raster sampling.
+- **Catalog curation (substrate lift):** bundled `base-map-catalog.json` marks **`bathymetryShaded`** on **`equirect-world-blue-marble-tb-v1`** (with **`reliefShaded`**) as the curator signal for shaded bathymetry competing with overlays, **`fineScaleTexture`** and **`sunGlintDense`** on Blue Marble **BM**/**T** for fine-scale natural-color texture and dense open-ocean sun glint, **`labelDense`** on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (alongside **`chromaticDense`** / boundary+chromatic hints) for dense cartographic typography, **`etchedReliefDense`** on **`equirect-world-legacy-v1`** for packaged etched shaded relief, and **`reliefShaded`** on **`equirect-world-topography-ne-v1`** for the static Natural Earth–lineage global topography raster—no runtime raster sampling.
 
 Remaining future work:
 

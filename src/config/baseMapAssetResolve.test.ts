@@ -24,6 +24,9 @@ describe("baseMapAssetResolve month-aware integration", () => {
     expect(resolveEquirectBaseMapImageSrc("equirect-world-political-v1", { productInstantMs: ms })).toBe(
       "/maps/world-equirectangular-political.jpg",
     );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-ne-v1", { productInstantMs: ms })).toBe(
+      "/maps/world-equirectangular-topography.jpg",
+    );
     expect(resolveEquirectBaseMapImageSrc(DEFAULT_EQUIRECT_BASE_MAP_ID, { productInstantMs: ms })).toBe(
       "/maps/world-equirectangular.jpg",
     );

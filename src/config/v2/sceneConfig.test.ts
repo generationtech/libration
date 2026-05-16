@@ -444,6 +444,7 @@ describe("SceneConfig (Phase 1)", () => {
       "equirect-world-legacy-v1",
       "equirect-world-political-v1",
       "equirect-world-geology-v1",
+      "equirect-world-topography-ne-v1",
       "equirect-world-blue-marble-bm-v1",
       "equirect-world-blue-marble-t-v1",
       "equirect-world-blue-marble-tb-v1",
@@ -463,6 +464,9 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-geology-v1")).toBe(
       "/maps/world-equirectangular-geology.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-ne-v1")).toBe(
+      "/maps/world-equirectangular-topography.jpg",
     );
     const july = Date.UTC(2019, 6, 15);
     expect(
@@ -511,6 +515,18 @@ describe("SceneConfig (Phase 1)", () => {
       expect(resolveEquirectBaseMapAsset(id).transitionalPlaceholder).toBe(true);
       expect(getEquirectBaseMapOptionForId(id).transitionalPlaceholder).toBe(true);
     }
+  });
+
+  it("Natural Earth static topography family is canonical, not transitional, and not a legacy alias target", () => {
+    const asset = resolveEquirectBaseMapAsset("equirect-world-topography-ne-v1");
+    expect(asset.id).toBe("equirect-world-topography-ne-v1");
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-ne-v1")).toBe(
+      "/maps/world-equirectangular-topography.jpg",
+    );
+    const o = getEquirectBaseMapOptionForId("equirect-world-topography-ne-v1");
+    expect(o.label).toBe("World topography (Natural Earth)");
+    expect(o.transitionalPlaceholder).toBeUndefined();
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {

@@ -89,6 +89,34 @@
       ]
     },
     {
+      "id": "equirect-world-topography-ne-v1",
+      "label": "World topography (Natural Earth)",
+      "shortDescription": "Global shaded relief and land elevation emphasis for terrain reading.",
+      "category": "terrain",
+      "attribution": "Natural Earth (public domain)",
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-topography.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false,
+        "reliefShaded": true
+      },
+      "recommendedRoles": [
+        "terrain",
+        "science"
+      ]
+    },
+    {
       "id": "equirect-world-blue-marble-bm-v1",
       "label": "Blue Marble - BM",
       "shortDescription": "Natural-color Earth imagery with seasonal surface variation. Base map.",

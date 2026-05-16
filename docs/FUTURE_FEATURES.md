@@ -24,7 +24,7 @@ The current map configuration UI already includes:
 - attribution display for the selected base-map family.
 - per-family base-map presentation controls.
 - shared presentation persistence across seasonal/month-aware raster variants.
-- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; political/geology set **`labelDense`** alongside chromatic/boundary hints; legacy world sets **`etchedReliefDense`** for packaged etched shaded relief).
+- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; political/geology set **`labelDense`** alongside chromatic/boundary hints; legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).
 
 Future map and scene UX work should extend these foundations rather than replacing them.
 

@@ -54,7 +54,7 @@ The catalog owns:
 TypeScript owns:
 
 - validation.
-- alias handling.
+- alias handling (for example legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** → Blue Marble **T**; distinct catalog family **`equirect-world-topography-ne-v1`** for the static Natural Earth–lineage topography raster—see `docs/maps/MAP_ASSET_SOURCES.md`).
 - fallback semantics.
 - month-aware resolution.
 - presentation merging.

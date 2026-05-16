@@ -254,6 +254,27 @@ describe("createLayerRegistryFromConfig", () => {
     expect(data?.src).toBe("/maps/world-equirectangular-geology.jpg");
   });
 
+  it("resolves static Natural Earth topography family raster from scene.baseMap.id", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
+    const scene = {
+      ...base,
+      baseMap: {
+        ...base.baseMap,
+        id: "equirect-world-topography-ne-v1",
+      },
+    };
+    const config: AppConfig = {
+      ...DEFAULT_APP_CONFIG,
+      scene,
+      layers: deriveLayerEnableFlagsFromScene(scene),
+    };
+    const registry = createLayerRegistryFromConfig(config);
+    const layer = registry.getLayers().find((l) => l.id === "layer.baseMap.world");
+    const state = layer?.getState(createTimeContext(Date.now(), 0, false));
+    const data = state?.data as { kind: string; src: string } | undefined;
+    expect(data?.src).toBe("/maps/world-equirectangular-topography.jpg");
+  });
+
   it("uses selected map-family effective presentation in base map layer payload", () => {
     const base = buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers);
     const scene = {

@@ -158,7 +158,7 @@ Status: **planned**; this slice plus `docs/ROADMAP.md` **Phase 8** are the **def
 Candidate work:
 
 - geology onboarding.
-- terrain refinement.
+- terrain refinement (**shipped increment:** validated static global topography family **`equirect-world-topography-ne-v1`** in the bundled catalog, `world-equirectangular-topography.jpg`; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain aliases to Blue Marble **T**).
 - climate or vegetation substrate exploration.
 - emissive-compatible substrate planning.
 

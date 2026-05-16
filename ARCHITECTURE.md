@@ -119,7 +119,7 @@ src/assets/maps/base-map-catalog.json
 
 The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
 
-Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver.
+Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog also includes a validated static global topography family (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster); legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family.
 
 Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
 

@@ -49,6 +49,7 @@ const LEGACY_ID_ALIASES = new Map<string, string>([
   ["political-v1", "equirect-world-political-v1"],
   ["world-equirectangular-v1", CATALOG.defaultEquirectBaseMapId],
   // Backward compatibility for historical topography ids that predate Blue Marble family ids.
+  // Distinct catalog family: `equirect-world-topography-ne-v1` (static Natural Earth–lineage relief raster).
   ["equirect-world-topo-v1", "equirect-world-blue-marble-t-v1"],
   ["equirect-world-topography-v1", "equirect-world-blue-marble-t-v1"],
 ]);

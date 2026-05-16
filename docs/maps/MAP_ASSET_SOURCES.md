@@ -47,6 +47,7 @@ The current active catalog should be treated as source of truth. Known family id
 - `equirect-world-legacy-v1`
 - `equirect-world-political-v1`
 - `equirect-world-geology-v1`
+- `equirect-world-topography-ne-v1`
 - `equirect-world-blue-marble-bm-v1`
 - `equirect-world-blue-marble-t-v1`
 - `equirect-world-blue-marble-tb-v1`
@@ -190,18 +191,37 @@ Notes:
 - **`equirect-world-blue-marble-bm-v1`** / **`equirect-world-blue-marble-t-v1`:** bundled catalog sets **`capabilities.fineScaleTexture`** and **`capabilities.sunGlintDense`** for upstream overlay-readability lift—curator signals for fine-scale natural-color texture and dense open-ocean sun glint; no runtime raster sampling.
 - **`equirect-world-blue-marble-tb-v1`:** bundled catalog sets **`capabilities.bathymetryShaded`** (with **`reliefShaded`**) for upstream overlay-readability lift—curator signal for shaded bathymetry; no runtime raster sampling (see overlay-readability `capabilities` section above).
 
-## Topography family
+## equirect-world-topography-ne-v1
 
-Recent docs refer to a real topography family and month-aware topography support, but active family id should be verified against the catalog.
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
 
-Status: implemented if present in catalog.
+Variant mode: static.
 
-Role: terrain/topography substrate.
+Role: terrain / shaded relief substrate (land elevation emphasis).
 
-Notes:
+Runtime asset:
 
-- Verify current id and labels before documenting in release material.
-- Ensure legacy aliases, if any, are handled in TypeScript resolver tests rather than user-facing docs.
+```text
+public/maps/world-equirectangular-topography.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** [Natural Earth](https://www.naturalearthdata.com/) 1:10m-scale geographic data (raster or vector derivatives), exported for Libration as a single global Plate Carrée JPEG (same pipeline class as `equirect-world-political-v1`).
+- **License / usage:** Natural Earth cartographic data are **public domain**; retain “Natural Earth” attribution in product and docs per their credit guidance.
+
+### Processing notes
+
+- Full-world equirectangular, **north-up**, **5400×2700** JPEG (**2:1** width:height), **RGB** (hypsometric-style relief coloring).
+- No reprojection applied in-repo beyond export to the world extent contract (lon −180..180, lat −90..90, no padding).
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.reliefShaded`** for upstream overlay-readability lift—curator signal for strong local relief contrast competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+
+### Legacy ids (resolver aliases)
+
+Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** still **alias to** the month-aware Blue Marble topography family **`equirect-world-blue-marble-t-v1`** for backward compatibility. They are **not** aliases for this static Natural Earth–lineage family. New scenes should persist **`equirect-world-topography-ne-v1`** when selecting this raster.
 
 ## Future source candidates
 
