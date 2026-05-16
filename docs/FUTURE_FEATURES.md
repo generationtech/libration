@@ -78,7 +78,7 @@ Future work should extend these systems with **further substrate readability heu
 
 - stronger source provenance in catalog.
 - richer attribution display.
-- preview thumbnails for all families (**shipped** for all bundled catalog families including **`equirect-world-legacy-v1`**; default next queue **A** in `PLAN.md` is attribution/selector polish).
+- richer **attribution presentation** in the map selector (links, license detail, per-family provenance copy—**default next** queue **A** PR in `PLAN.md`; basic attribution line for families that declare `attribution` is **shipped**).
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.

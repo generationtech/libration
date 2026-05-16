@@ -13,7 +13,7 @@ The major runtime foundations are implemented well enough to support disciplined
 - curated base-map catalog.
 - categorized map selector and base-map presentation UI.
 - map onboarding tooling.
-- static and month-aware base-map families (including **validated** static global topography **`equirect-world-topography-ne-v1`**, shipped Natural Earth–lineage political **`equirect-world-political-v1`**, and shipped USGS public-domain–lineage geology **`equirect-world-geology-v1`**—non-transitional catalog entries with attribution and previews where catalog lists them—in the bundled catalog; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for Blue Marble **T** month-aware topography).
+- static and month-aware base-map families (including default reference **`equirect-world-legacy-v1`** with bundled preview, **validated** static global topography **`equirect-world-topography-ne-v1`**, shipped Natural Earth–lineage political **`equirect-world-political-v1`**, and shipped USGS public-domain–lineage geology **`equirect-world-geology-v1`**—non-transitional catalog entries with attribution and bundled previews where catalog lists them—in the bundled catalog; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for Blue Marble **T** month-aware topography).
 - static and derived overlays.
 - astronomical scene overlays and markers.
 - solar shading / dark-side visualization.
@@ -32,8 +32,18 @@ The current strategic objective is **twofold**: (1) continue **Phase 8 / Slice 3
 
 Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
 
+**Scheduling snapshot (post–legacy preview closure):**
+
+| Role | Name | Meaning |
+|------|------|---------|
+| **Default macro PR track** | **Phase 8 / Slice 3** (queue **A**) | What the **next merged PR** should advance unless blocked or session-scopes Slice 2 only. |
+| **Single best next PR** | **Richer attribution presentation** in the map selector | Queue **A** item **(1)** — one bounded UX vertical (`BaseMapStyleControl` + styles); Slice 4 overlap. |
+| **Composition program (medium-term)** | **Slice 2** | Illumination + overlay-readability extensions when queue **A** has no increment—queues **B** / **C** / **D**. |
+
 1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 2** and **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phases 5–9 and Phase 8 in particular).
-2. **Primary active execution slice (composition *program*):** **Slice 2 — Planetary illumination — extensions on delivered foundations** (see near-term execution slices below)—the dominant medium-term **illumination + overlay-readability extension** program. Recent **doc-finalized** closures: overlay readability six-default `perLayer` stack, eight-intrinsic substrate lift contract, **second** narrow cumulative twilight pass in `illuminationShading.ts`, **static trio bundled previews** (political, geology, Natural Earth topography). **This names the program, not every merged PR:** the **default next merged PR** is queue **A** (Phase 8 / Slice 3) when the repo shows a shippable catalog or inventory gap—see item **3**.
+2. **Primary active execution slice — two roles (do not conflate):**
+   - **Default macro PR track (next merged PR):** **Phase 8 / Slice 3** — map inventory and selector polish (queue **A** below). **All bundled catalog families have `previewThumbnailSrc`** (legacy reference preview **closed** May 2026).
+   - **Primary composition *program* (not every PR):** **Slice 2 — Planetary illumination — extensions on delivered foundations** — dominant medium-term illumination + overlay-readability work when queue **A** is empty, blocked, or explicitly out of scope. Recent **doc-finalized** closures: overlay readability six-default `perLayer` stack, eight-intrinsic substrate lift contract, **second** narrow cumulative twilight pass in `illuminationShading.ts`, static trio + **legacy** bundled previews.
 3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo + catalog; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
    - **A. Phase 8 / Slice 3 (map inventory and scientific substrate expansion):** one bounded map-inventory / substrate increment aligned with `docs/ROADMAP.md` Phase 8 and **Slice 3** below (use existing `maps:prep` / bundled catalog patterns; do not invent new architecture). **Default next PR-sized slice (inspect `base-map-catalog.json` + `public/maps/previews/`):** **(1)** richer **attribution presentation** in the map selector (Slice 4 overlap; one bounded UX vertical). **(2)** next **A**-class substrate onboarding (climate, bathymetry, vegetation, etc.) when a sourced raster and rights are ready. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`** (default reference; bundled preview `world-equirectangular-thumb.jpg`); **`equirect-world-topography-ne-v1`** (`world-equirectangular-topography.jpg`; **`reliefShaded`**; bundled preview `world-equirectangular-topography-thumb.jpg`); **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (non-transitional; bundled previews).
    - **B. Slice 2 — substrate:** ninth+ optional `BaseMapCapabilities` intrinsic + bounded penalty + tests + bundled catalog curation (**requires** a product-defensible flag name and target families in the session prompt or an existing written product note—do not invent taxonomy in code alone).
@@ -102,11 +112,11 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 Status: complete (ongoing hygiene only).
 
-Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + substrate heuristic increments (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots**, **cumulative incremental twilight transition tuning** in `illuminationShading.ts`, **static trio** **`equirect-world-topography-ne-v1`** / **`equirect-world-political-v1`** / **`equirect-world-geology-v1`** (non-transitional catalog + attribution + bundled previews), and **closed** topography preview increment are documented as **shipped** across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, `docs/maps/MAP_ASSET_SOURCES.md`, `docs/maps/MAP_ASSET_STRATEGY.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, “substrate unreadable”, “no twilight tuning”, “topography preview missing”, “political/geology still transitional placeholder”, or “geology ship raster missing” drift where the runtime matches source.
+Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + substrate heuristic increments (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 brightness dimming) + persisted presentation scalars + six default-stack `perLayer` pilots**, **cumulative incremental twilight transition tuning** in `illuminationShading.ts`, **static trio** **`equirect-world-topography-ne-v1`** / **`equirect-world-political-v1`** / **`equirect-world-geology-v1`** (non-transitional catalog + attribution + bundled previews), **legacy reference** **`equirect-world-legacy-v1`** bundled preview, and **closed** topography + legacy preview increments are documented as **shipped** across `README.md`, `ARCHITECTURE.md`, `PLAN.md`, `docs/ROADMAP.md`, `docs/FUTURE_FEATURES.md`, `docs/PROJECT_STRATEGY.md`, `docs/DEVELOPMENT_STRATEGY.md`, `docs/AI_COENGINEERING.md`, `AGENTS.md`, `docs/maps/MAP_ASSET_SOURCES.md`, `docs/maps/MAP_ASSET_STRATEGY.md`, and `.cursor/rules/050-docs-and-roadmap.mdc` — not hypothetical; avoid “grid-only pilot”, “v1 only”, “substrate unreadable”, “no twilight tuning”, “topography preview missing”, “legacy preview missing”, “political/geology still transitional placeholder”, or “geology ship raster missing” drift where the runtime matches source.
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
-Status: **primary active execution slice**.
+Status: **primary active composition program** (medium-term; **not** the default macro PR track while queue **A** has a shippable gap—see handoff above).
 
 **Implemented foundations (treat as settled; extend, do not reopen):**
 
@@ -159,7 +169,7 @@ Exit criteria:
 
 ### Slice 3: Scientific substrate expansion
 
-Status: **active (Phase 8)**—**default macro PR track** when handoff queue **A** applies (**default next merged PR:** attribution UX polish or next sourced substrate—see handoff item **3**). **Shipped** reference + static scientific substrates: **`equirect-world-legacy-v1`** (default reference; bundled preview), **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, and **`equirect-world-geology-v1`** (non-transitional where applicable; attribution + bundled previews). **Static trio preview polish:** **closed** (see closed topography preview increment). **Legacy reference preview:** **closed** (see closed legacy preview increment). Legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**. **Remaining** toward the same slice: broader selector/attribution polish, further sourced substrates (climate, bathymetry, vegetation), emissive-compatible **substrate** families (distinct from Black Marble composition input)—see `docs/ROADMAP.md` Phase 8.
+Status: **active (Phase 8)**—**default macro PR track** when handoff queue **A** applies (**default next merged PR:** **richer attribution presentation** in the map selector—queue **A** item **(1)**; next sourced substrate is item **(2)** when assets/rights exist—see handoff item **3**). **Shipped** reference + static scientific substrates: **`equirect-world-legacy-v1`** (default reference; bundled preview), **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, and **`equirect-world-geology-v1`** (non-transitional where applicable; attribution + bundled previews). **Static trio preview polish:** **closed** (see closed topography preview increment). **Legacy reference preview:** **closed** (see closed legacy preview increment). Legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**. **Remaining** toward the same slice: broader selector/attribution polish, further sourced substrates (climate, bathymetry, vegetation), emissive-compatible **substrate** families (distinct from Black Marble composition input)—see `docs/ROADMAP.md` Phase 8.
 
 Candidate work:
 
@@ -174,13 +184,13 @@ Exit criteria:
 
 ### Slice 4: Map inventory and selector polish
 
-Status: **active (overlaps Phase 8 queue A)**—not a separate default track; pick **one** bounded vertical per PR from handoff queue **A** item **3**.
+Status: **active (overlaps Phase 8 queue A)**—**hosts the default next PR** (attribution presentation); not a separate competing track.
 
 Candidate work:
 
+- **richer attribution presentation** in the map selector (**default next PR** — queue **A** item **(1)**).
 - normalize family ids, labels, and categories while catalog is still young.
 - improve selector copy for month-aware map families.
-- strengthen attribution presentation (**default queue A option 1**).
 - consider active displayed-month indication for seasonal families.
 - finalize placeholder versus validated family states.
 - validate all preview thumbnails and metadata (**all bundled families: shipped**).

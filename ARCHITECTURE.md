@@ -256,7 +256,7 @@ Stable enough for feature-forward work:
 Still future or partial:
 
 - full dynamic data lifecycle.
-- **Phase 8 base-map catalog:** **`equirect-world-legacy-v1`** (default reference) and static trio **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`** are **shipped** with committed rasters + bundled preview thumbnails. **Default next** queue **A** polish: attribution/selector UX. See `docs/maps/MAP_ASSET_SOURCES.md`.
+- **Phase 8 base-map catalog:** **`equirect-world-legacy-v1`** (default reference) and static trio **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`** are **shipped** with committed rasters + bundled **`previewThumbnailSrc`** for every bundled family (legacy thumb `world-equirectangular-thumb.jpg`, 800×400). **Default next** queue **A** PR: **richer attribution presentation** in the map selector. See `docs/maps/MAP_ASSET_SOURCES.md`.
 - live feeds.
 - gridded scientific datasets.
 - **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.

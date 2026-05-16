@@ -38,6 +38,7 @@ Current implemented areas include:
 - SceneConfig-driven map scene.
 - File-backed curated base-map catalog (optional **`capabilities`** for upstream overlay lift: **eight shipped** intrinsic hints **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**, plus presentation multipliers **`overlayOptimized`** / **`darkFriendly`**).
 - Categorized base-map selector UI with grouped substrate families.
+- Default reference legacy world substrate (**`equirect-world-legacy-v1`**, bundled preview thumbnail; main raster `world-equirectangular.jpg`).
 - Static and month-aware base-map families.
 - Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog with bundled preview thumbnail; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
 - Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
@@ -93,7 +94,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default next PR** (**queue A** = Phase 8 / Slice 3—**first:** attribution/selector polish or next sourced substrate; all bundled families have catalog previews) versus the **Slice 2** composition *program* (when **A** has no increment, is blocked, or the session scopes composition only).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**) and **single best next PR** (**richer attribution presentation** in the map selector). **Slice 2** is the composition *program* when queue **A** has no increment, is blocked, or the session scopes composition only. All bundled catalog families have **`previewThumbnailSrc`** (legacy reference preview **shipped**).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development
