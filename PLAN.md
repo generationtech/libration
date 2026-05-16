@@ -28,7 +28,9 @@ The major runtime foundations are implemented well enough to support disciplined
 
 The current strategic objective is to **extend** the delivered upstream planetary illumination and composition system (**additional** catalog/resolver substrate signals **beyond** the **shipped** eight-intrinsic overlay-lift contract (`reliefShaded` … `sunGlintDense`) and its presentation/dimming rules, **further atmospheric** refinement after cumulative shipped twilight tuning in `illuminationShading.ts`, **clouds/weather planning**) without destabilizing RenderPlan, SceneConfig authority, or execution-only backends.
 
-**Closed and doc-finalized (Slice 2 substrate increment):** optional catalog intrinsic **`sunGlintDense`** (`BaseMapCapabilities`, bounded penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`, bundled curation on Blue Marble **BM**/**T**) — the **eight-intrinsic** upstream overlay-lift contract is now the **active shipped baseline** (not partial). Next product slices in this vein are **ninth+** optional intrinsics (when justified), further twilight tuning, or weather/cloud **planning** per Slice 2 below—not reopening BM/T glint coverage.
+**Closed and doc-finalized (Slice 2 substrate increment):** optional catalog intrinsic **`sunGlintDense`** (`BaseMapCapabilities`, bounded penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`, bundled curation on Blue Marble **BM**/**T**) — the **eight-intrinsic** upstream overlay-lift contract is now the **active shipped baseline** (not partial). Next product slices in this vein are **ninth+** optional intrinsics (when justified), **optional third+** narrow twilight constants-only passes in `illuminationShading.ts` when visually justified, or weather/cloud **planning** per Slice 2 below—not reopening BM/T glint coverage.
+
+**Closed and doc-finalized (Slice 2 atmospheric increment):** **second** narrow cumulative twilight tuning pass in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts) (Gaussian sigma, civil–astro anchor chroma, `TWILIGHT_ATMOSPHERIC_ALPHA_MAX`, day-side envelope)—still one `rasterPatch`, still no SceneConfig axis; tests [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts). **Next** in this vein: deeper scattering/haze or **optional third+** constants-only passes—not reopening this second pass as missing work.
 
 ## Current goals
 
@@ -71,11 +73,11 @@ The current strategic objective is to **extend** the delivered upstream planetar
 
 **Closed increment — sun glint (documented):** optional catalog **`sunGlintDense`** (dense sun glint on open water in natural-color imagery; intrinsic penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`) with bundled curation on **`equirect-world-blue-marble-bm-v1`** and **`equirect-world-blue-marble-t-v1`**; regression coverage in `src/core/substrateOverlayReadabilityLiftScale.test.ts`. Treat as part of the settled substrate contract—not a partial rollout.
 
-### Atmospheric twilight refinement — **shipped increment** (Slice 2)
+### Atmospheric twilight refinement — **shipped; doc-finalized** (Slice 2)
 
-**Status:** **shipped** (Slice 2; cumulative narrow constants-only passes). Upstream-only tuning in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts): wider Gaussian coupling between semantic twilight anchor colors, cooler low-luminance anchor progression (horizon through astronomical anchors), bounded non-emissive atmospheric tint (`TWILIGHT_ATMOSPHERIC_ALPHA_MAX`), and a gentler day-side atmospheric envelope as altitude approaches the shared +4° daylight-clear sampling cutoff from below (tint is still zero at and above that cutoff). Still **one** planetary illumination `rasterPatch`; **no** new SceneConfig surface or backend composition policy. Tests: [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts).
+**Status:** **shipped** in runtime and **doc-finalized** for the **second** narrow cumulative pass (Slice 2). Upstream-only tuning in [`src/renderer/illuminationShading.ts`](src/renderer/illuminationShading.ts): wider Gaussian coupling between semantic twilight anchor colors, cooler low-luminance anchor progression (horizon through astronomical anchors), bounded non-emissive atmospheric tint (`TWILIGHT_ATMOSPHERIC_ALPHA_MAX` 0.172), and a gentler day-side atmospheric envelope as altitude approaches the shared +4° daylight-clear sampling cutoff from below (tint is still zero at and above that cutoff). Still **one** planetary illumination `rasterPatch`; **no** new SceneConfig surface or backend composition policy. Tests: [`src/renderer/illuminationShading.test.ts`](src/renderer/illuminationShading.test.ts).
 
-**Next frontier (same subsystem):** deeper scattering or haze modeling; optional persisted “twilight softness” only when product warrants a config axis.
+**Next frontier (same subsystem):** optional **third+** narrow constants-only passes when product warrants; deeper scattering or haze modeling; optional persisted “twilight softness” only when product warrants a config axis.
 
 ### Slice 1: Documentation alignment with source reality
 
@@ -91,7 +93,7 @@ Status: **primary active execution slice**.
 
 - solar shading / dark-side visualization.
 - coherent upstream planetary illumination composition: **one** illumination `rasterPatch`, SceneConfig-authoritative policy, renderer-agnostic execution.
-- continuous attenuation-driven twilight with civil/nautical/astronomical **semantic** anchors (not separate user-facing twilight layers); non-emissive atmospheric tint and attenuation; **cumulative incremental twilight transition tuning** shipped in `illuminationShading.ts` (see dedicated subsection above).
+- continuous attenuation-driven twilight with civil/nautical/astronomical **semantic** anchors (not separate user-facing twilight layers); non-emissive atmospheric tint and attenuation; **cumulative incremental twilight transition tuning** shipped in `illuminationShading.ts` (**second** narrow pass doc-finalized; see subsection above).
 - physically-derived polar illumination behavior from seasonal solar geometry.
 - perceptually legible **moonlight** in the same illumination raster, with presentation modes (`off` / `natural` / `enhanced` / `illustrative`) and Layers UI wiring.
 - **Emissive city / night lights:** bundled emissive composition catalog, id canonicalization, upstream per-texel sampling, `computeEmissiveNightLightsContributionLinear01` policy, perceptual luma driver (`presentation.driverExponent`), intensity control, Layers **Off / Natural / Enhanced / Illustrative**, illustrative defaults paired with moonlight; validated Black Marble ship asset (see `docs/maps/MAP_ASSET_SOURCES.md`).
@@ -100,10 +102,12 @@ Status: **primary active execution slice**.
 
 **Likely next implementation slice (Slice 2; pick one narrow vertical per phase):**
 
+With atmospheric **second pass** doc-finalized, the **most likely next code slices** are: **(1)** one new optional `BaseMapCapabilities` intrinsic + bundled catalog curation when a substrate conflict is product-identified; **(2)** an optional **third+** narrow constants-only twilight pass in `illuminationShading.ts`; or **(3)** weather/cloud **planning** (docs/design) ahead of lifecycle—**one vertical per PR**.
+
 **Primary product choices (same slice; do not mix in one PR):**
 
 - **Further substrate/readability signals:** extend catalog/resolver-only hints and presentation-derived rules beyond the **shipped** eight intrinsics **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** plus sub-1 brightness dimming and `overlayOptimized` / `darkFriendly` multipliers (still upstream; no raster sampling unless explicitly scoped).
-- **Further atmospheric refinement:** additional scattering / transition tuning on top of the **existing** continuous twilight field and cumulative shipped tuning in `illuminationShading.ts` (still one illumination `rasterPatch`; no backend composition policy; optional future SceneConfig axis for user-facing softness only if needed).
+- **Further atmospheric refinement:** optional **third+** narrow constants-only pass and/or deeper scattering / transition tuning on top of the **existing** continuous twilight field and cumulative shipped tuning in `illuminationShading.ts` (still one illumination `rasterPatch`; no backend composition policy; optional future SceneConfig axis for user-facing softness only if needed).
 
 **Shipped pilots:** `scene.overlayReadability.perLayer` supports the six stack ids above (veil + lift scalars each) after the global frame in `createLatLonGridLayer`, `createSolarAnalemmaLayer`, `createSubsolarMarkerLayer`, `createSublunarMarkerLayer`, `createCityPinsLayer`, and `createStaticEquirectRasterOverlayLayer`; normalized config omits identity-only per-layer subtrees.
 

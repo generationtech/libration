@@ -147,7 +147,7 @@ Delivered:
 - solar shading / dark-side visualization.
 - continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
 - non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
-- incremental upstream twilight transition tuning (cumulative constants-only passes in `src/renderer/illuminationShading.ts`: wider anchor color coupling, cooler low-luminance anchor progression, bounded atmospheric tint cap, gentler day-side tint envelope)—still one planetary illumination `rasterPatch`, still non-emissive modulation.
+- incremental upstream twilight transition tuning (cumulative constants-only passes in `src/renderer/illuminationShading.ts`, including a **second** narrow pass doc-finalized in `PLAN.md` / Phase 7 here: wider anchor color coupling, cooler low-luminance anchor progression, bounded atmospheric tint cap, gentler day-side tint envelope)—still one planetary illumination `rasterPatch`, still non-emissive modulation.
 - perceptually legible moonlight composition integrated into the same planetary illumination raster.
 - bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
 - scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
