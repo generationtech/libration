@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (default macro PR track = Phase 8 / Slice 3; **richer attribution presentation** in map selector **shipped**; **single best next PR** = next **A**-class substrate or Slice 4 selector polish; **Slice 2** = composition *program* when **A** has no increment, is blocked, or session scopes composition only).
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (default macro PR track = Phase 8 / Slice 3; **structured attribution presentation** in map selector **shipped**; **single best next PR** = next **A**-class substrate when raster + rights exist, else **Slice 4** month-aware selector polish before Slice 2 **B**/**C**/**D**; **Slice 2** = composition *program* when queue **A** has no shippable increment or session scopes composition only).
 
 ## Implementation intent template
 

@@ -76,8 +76,7 @@ Future work should extend these systems with **further substrate readability heu
 
 ### Map asset quality improvements
 
-- stronger source provenance in catalog.
-- richer attribution display (**shipped** in map selector: catalog `attribution`, `licenseNote`, `sourceLinks`; see `PLAN.md` closed Phase 8 increment).
+- stronger source provenance in catalog (beyond per-family `licenseNote` / `sourceLinks` already in the bundled catalog).
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.

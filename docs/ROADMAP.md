@@ -108,6 +108,7 @@ Delivered:
 
 - bundled JSON base-map catalog.
 - family ids, labels, categories, paths, previews, capabilities, defaults, and attribution.
+- structured selector attribution on all bundled families (`attribution`, optional `licenseNote`, up to two `sourceLinks`; **Source & license** block in `BaseMapStyleControl`—see Phase 8).
 - selector/editor integration.
 - per-family base-map presentation controls.
 - static and month-aware variant modes.
@@ -128,8 +129,8 @@ Remaining future work:
 
 - normalize family ids and labels while catalog is young.
 - ensure all placeholder flags match real source status.
-- strengthen attribution display.
 - document each source workflow cleanly.
+- full-screen **source attribution panel** (Layers detail remains the **Source & license** block only—see `docs/FUTURE_FEATURES.md`).
 
 ## Phase 6: Static and derived overlays
 
@@ -179,7 +180,7 @@ Goals:
 - create project-level AI working rules.
 - add Cursor project rules.
 - keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **cumulative incremental twilight transition tuning** in `illuminationShading.ts`; not stale “v1 only”, “substrate unreadable”, or “no twilight tuning” phrasing).
+- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **cumulative incremental twilight transition tuning** in `illuminationShading.ts`; **structured map selector attribution**; not stale “v1 only”, “substrate unreadable”, “no twilight tuning”, or “attribution presentation not shipped” phrasing).
 
 Exit criteria:
 
@@ -203,7 +204,7 @@ Exit criteria:
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Richer attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Single best next PR:** next sourced substrate when ready (item **(2)**) or Slice 4 month-aware selector polish.
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**); else **Slice 4** month-aware selector polish (item **(2b)**).
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -221,7 +222,6 @@ Candidate deliverables:
 - vegetation/land cover substrate.
 - additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path).
 - seasonal natural-color refinements.
-- map selector attribution and explanatory copy.
 
 ## Phase 9: Planetary scene composition and illumination — incremental extensions
 

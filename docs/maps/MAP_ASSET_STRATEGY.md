@@ -43,9 +43,9 @@ The catalog owns:
 - categories.
 - runtime paths.
 - preview paths.
-- attribution (primary credit line).
-- optional `licenseNote` (short usage or license summary for the selector).
-- optional `sourceLinks` (up to two http(s) provenance or policy links for the selector).
+- attribution (primary credit line; `maps:prep --attribution` sets this on onboarding).
+- optional `licenseNote` (short usage or license summary for the selector; **manual catalog curation** today—extend `maps:prep` when a substrate PR needs it).
+- optional `sourceLinks` (up to two http(s) provenance or policy links for the selector; **manual catalog curation** today).
 - variant mode.
 - onboarded months.
 - default presentation.
