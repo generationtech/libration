@@ -203,9 +203,13 @@ public/maps/previews/world-equirectangular-bathymetry-thumb.jpg
 
 ### Processing notes
 
-- ERDDAP decimated global grid (`z[0:16:43199][0:16:86399]`) → GDAL warp to WGS84 **−180..180** lon, **5400×2700** RGB hypsometric JPEG (**2:1**), **north-up**, lon −180..180, lat −90..90.
+- ERDDAP decimated global grid (`z[0:16:43199][0:16:86399]`) from NOAA `ETOPO_2022_v1_15s` (longitude **0..360°** in the NetCDF).
+- `gdal_translate -b 1` → GeoTIFF; assign **`EPSG:4326`** with **`-a_ullr 0 90 360 -90`** (explicit 0..360° east).
+- **Dateline roll to Libration contract:** swap raster halves so **−180°** is the left edge and **+180°** the right (`out[:, 0:W/2] = in[:, W/2:W]`, `out[:, W/2:W] = in[:, 0:W/2]`); write GeoTIFF with geotransform origin **(−180, 90)**. (A naive `gdalwarp -te -180 90 180 -90` on 0..360° source alone left the western hemisphere nodata/gray in the shipped JPEG—do not skip the roll.)
+- `gdaldem color-relief` with restrained bathymetric blue ramp → **5400×2700** RGB JPEG (**2:1**), **north-up**, lon −180..180, lat −90..90.
 - Restrained bathymetric blue ramp for ocean depths; muted land tones for elevation context (distinct from month-aware Blue Marble **TB** natural-color + bathymetry).
 - Preview thumbnail **800×400** from the ship JPEG (same pattern as other static families).
+- Regression: [`src/config/bathymetryOnboardedAsset.test.ts`](../../src/config/bathymetryOnboardedAsset.test.ts) (SOF geometry, SHA-256, decoded west-Pacific hypsometry heuristic).
 
 ### Validation performed (onboarding)
 
