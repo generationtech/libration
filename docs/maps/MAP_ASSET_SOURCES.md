@@ -49,6 +49,7 @@ The current active catalog should be treated as source of truth. Known family id
 - `equirect-world-political-v1`
 - `equirect-world-geology-v1`
 - `equirect-world-topography-ne-v1`
+- `equirect-world-bathymetry-etopo-v1`
 - `equirect-world-blue-marble-bm-v1`
 - `equirect-world-blue-marble-t-v1`
 - `equirect-world-blue-marble-tb-v1`
@@ -175,6 +176,45 @@ Known source ingredients:
 - Intended as muted, overlay-friendly political/reference substrate.
 - Bundled catalog sets **`capabilities.labelDense`** (with **`chromaticDense`**) for upstream overlay-readability lift—curator signal for dense place-name / country-label typography.
 
+## equirect-world-bathymetry-etopo-v1
+
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
+
+Variant mode: static.
+
+Role: scientific bathymetry / global relief substrate (ocean-floor depth and land elevation hypsometry).
+
+Runtime asset:
+
+```text
+public/maps/world-equirectangular-bathymetry.jpg
+```
+
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-bathymetry-thumb.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** [NOAA NCEI ETOPO 2022](https://www.ncei.noaa.gov/products/etopo-global-relief-model) 15 arc-second global relief model (ice-surface elevation), subset via NOAA ERDDAP (`ETOPO_2022_v1_15s`) and hypsometric styling in-repo.
+- **License / usage:** U.S. Government work (public domain). **Not for navigation or safety-at-sea.** Retain NOAA/NCEI attribution; do not imply NOAA endorsement of the application.
+
+### Processing notes
+
+- ERDDAP decimated global grid (`z[0:16:43199][0:16:86399]`) → GDAL warp to WGS84 **−180..180** lon, **5400×2700** RGB hypsometric JPEG (**2:1**), **north-up**, lon −180..180, lat −90..90.
+- Restrained bathymetric blue ramp for ocean depths; muted land tones for elevation context (distinct from month-aware Blue Marble **TB** natural-color + bathymetry).
+- Preview thumbnail **800×400** from the ship JPEG (same pattern as other static families).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **5400×2700** (2:1); **8-bit sRGB** JPEG.
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.bathymetryShaded`** and **`capabilities.reliefShaded`** for upstream overlay-readability lift—curator signals for shaded ocean-floor relief and land hypsometry competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+
 ## equirect-world-geology-v1
 
 Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
@@ -285,7 +325,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) preferred onboarding order** (when raster + rights exist): static **bathymetry/ocean** substrate first, then **vegetation/land cover**, then **climate normals** — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) preferred onboarding order** (when raster + rights exist): static **bathymetry/ocean** substrate (**shipped:** **`equirect-world-bathymetry-etopo-v1`**), then **vegetation/land cover**, then **climate normals** — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

@@ -32,7 +32,11 @@ const minimalValid: BaseMapCatalogFile = {
 describe("parseAndValidateBaseMapCatalog", () => {
   it("validates the shipped bundled catalog", () => {
     const r = parseAndValidateBaseMapCatalog(baseMapCatalogJson as BaseMapCatalogFile);
-    expect(r.entries.length).toBe(7);
+    expect(r.entries.length).toBe(8);
+    const bathymetry = r.definitions.find((d) => d.id === "equirect-world-bathymetry-etopo-v1");
+    expect(bathymetry?.catalogEntry.capabilities?.bathymetryShaded).toBe(true);
+    expect(bathymetry?.catalogEntry.capabilities?.reliefShaded).toBe(true);
+    expect(bathymetry?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
     const political = r.definitions.find((d) => d.id === "equirect-world-political-v1");
     expect(political?.option.licenseNote).toMatch(/public domain/i);
     expect(political?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);

@@ -445,6 +445,7 @@ describe("SceneConfig (Phase 1)", () => {
       "equirect-world-political-v1",
       "equirect-world-geology-v1",
       "equirect-world-topography-ne-v1",
+      "equirect-world-bathymetry-etopo-v1",
       "equirect-world-blue-marble-bm-v1",
       "equirect-world-blue-marble-t-v1",
       "equirect-world-blue-marble-tb-v1",
@@ -467,6 +468,9 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-topography-ne-v1")).toBe(
       "/maps/world-equirectangular-topography.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-bathymetry-etopo-v1")).toBe(
+      "/maps/world-equirectangular-bathymetry.jpg",
     );
     const july = Date.UTC(2019, 6, 15);
     expect(
@@ -546,6 +550,18 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.label).toBe("World topography (Natural Earth)");
     expect(o.transitionalPlaceholder).toBeUndefined();
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-topography-thumb.jpg");
+  });
+
+  it("ETOPO bathymetry base map is shipped as non-transitional in registry and options", () => {
+    const id = "equirect-world-bathymetry-etopo-v1" as const;
+    const asset = resolveEquirectBaseMapAsset(id);
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    expect(resolveEquirectBaseMapImageSrc(id)).toBe("/maps/world-equirectangular-bathymetry.jpg");
+    const o = getEquirectBaseMapOptionForId(id);
+    expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-bathymetry-thumb.jpg");
+    expect(o.attribution).toMatch(/NOAA NCEI ETOPO 2022/i);
+    expect(o.licenseNote).toMatch(/not for navigation/i);
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {

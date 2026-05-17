@@ -53,7 +53,7 @@ Future work should extend these systems with **further substrate readability heu
 
 - **Implemented baseline (geology):** global geologic provinces **`equirect-world-geology-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate geology styles, higher-resolution scientific linework.
 - **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
-- bathymetry.
+- **Implemented baseline (bathymetry):** global relief / ocean-floor depth **`equirect-world-bathymetry-etopo-v1`** (NOAA ETOPO 2022 lineage; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate bathymetry products (e.g. GEBCO-only styling), higher-resolution grids.
 - ocean floor / seafloor relief.
 - natural-color seasonal imagery.
 - Blue Marble variants.

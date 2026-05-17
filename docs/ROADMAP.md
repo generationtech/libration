@@ -123,6 +123,7 @@ Current families include:
 - legacy reference map (**`equirect-world-legacy-v1`**, bundled preview `world-equirectangular-thumb.jpg`).
 - political map (**`equirect-world-political-v1`**, Natural Earth–lineage shipped raster; not transitional in the bundled catalog).
 - geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog; USGS public-domain lineage).
+- global bathymetry / relief substrate (**`equirect-world-bathymetry-etopo-v1`**, shipped raster in the bundled catalog; NOAA NCEI ETOPO 2022 lineage).
 - validated static Natural Earth–lineage global topography (**`equirect-world-topography-ne-v1`**, `world-equirectangular-topography.jpg`).
 - Blue Marble / natural-color families (month-aware **BM**, **T**, **TB**; legacy ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** alias to **T** for compatibility).
 
@@ -200,14 +201,15 @@ Exit criteria:
 - **Eight-intrinsic substrate overlay-lift contract (doc-finalized):** product docs, map asset notes, and rules describe the **shipped** optional catalog intrinsics through **`sunGlintDense`** as the current baseline; future work is **ninth+** optional axes, further atmosphere, or `perLayer` rows beyond the six defaults—see `PLAN.md` Slice 2.
 - **Phase 8 / Slice 3 topography preview (closed):** **`equirect-world-topography-ne-v1`** bundled preview (`world-equirectangular-topography-thumb.jpg`, catalog `previewThumbnailSrc`, tests); see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 legacy preview (closed):** **`equirect-world-legacy-v1`** bundled preview (`world-equirectangular-thumb.jpg`, catalog `previewThumbnailSrc`, tests)—all bundled base-map families now have catalog previews; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 map inventory (rolling):** all bundled catalog families have `previewThumbnailSrc` (legacy + static trio + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** queue **A** PR: next sourced substrate (`PLAN.md` Slice 3 item **(2)**).
+- **Phase 8 / Slice 3 bathymetry (closed):** **`equirect-world-bathymetry-etopo-v1`** ship raster + preview + catalog; see `PLAN.md` closed increment.
+- **Phase 8 / Slice 3 map inventory (rolling):** all bundled catalog families have `previewThumbnailSrc` (legacy + static scientific quartet + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** queue **A** PR: next sourced substrate (`PLAN.md` Slice 3 item **(2)**; vegetation → climate).
 - **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all seven families; see `PLAN.md` closed increment.
+- **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all eight bundled families; see `PLAN.md` closed increment.
 - **Slice 2 queue D — weather/cloud planning (closed):** [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); implementation blocked on Phase 10 lifecycle; see `PLAN.md` closed increment.
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**; preferred order: bathymetry/ocean → vegetation/land cover → climate normals). Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**; preferred order: vegetation/land cover → climate normals; bathymetry **`equirect-world-bathymetry-etopo-v1`** **shipped**). Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -215,13 +217,13 @@ Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md
 - Validated static Natural Earth–lineage global topography base-map family **`equirect-world-topography-ne-v1`** (`public/maps/world-equirectangular-topography.jpg`; bundled catalog sets **`reliefShaded`** for upstream overlay lift; preview `public/maps/previews/world-equirectangular-topography-thumb.jpg`; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** scene ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 - Shipped political/reference substrate **`equirect-world-political-v1`** (`public/maps/world-equirectangular-political.jpg`; bundled catalog **without** `transitionalPlaceholder`; Natural Earth attribution; preview `public/maps/previews/world-equirectangular-political-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 - Shipped geology / geologic provinces substrate **`equirect-world-geology-v1`** (`public/maps/world-equirectangular-geology.jpg`; bundled catalog **without** `transitionalPlaceholder`; USGS public-domain attribution; preview `public/maps/previews/world-equirectangular-geology-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
+- Shipped bathymetry / global relief substrate **`equirect-world-bathymetry-etopo-v1`** (`public/maps/world-equirectangular-bathymetry.jpg`; bundled catalog **without** `transitionalPlaceholder`; NOAA NCEI ETOPO 2022 attribution; preview `public/maps/previews/world-equirectangular-bathymetry-thumb.jpg`; **`bathymetryShaded`** + **`reliefShaded`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 
 Candidate deliverables:
 
 - further map selector polish (labels, placeholder hygiene; month-aware copy and active UTC civil month indication **shipped** in Slice 4).
 - broader map selector copy and placeholder hygiene across the young catalog.
 - climate map families.
-- bathymetry/ocean substrate.
 - vegetation/land cover substrate.
 - additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path).
 - seasonal natural-color refinements.

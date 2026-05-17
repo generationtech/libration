@@ -144,6 +144,43 @@
       ]
     },
     {
+      "id": "equirect-world-bathymetry-etopo-v1",
+      "label": "World bathymetry (ETOPO 2022)",
+      "shortDescription": "Global ocean-floor depth and land elevation hypsometry from NOAA ETOPO 2022 (15 arc-second source, static composite).",
+      "category": "scientific",
+      "attribution": "NOAA NCEI ETOPO 2022 (public domain)",
+      "licenseNote": "U.S. Government work; not for navigation or safety-at-sea. Retain NOAA/NCEI attribution.",
+      "sourceLinks": [
+        {
+          "label": "ETOPO 2022 Global Relief Model",
+          "href": "https://www.ncei.noaa.gov/products/etopo-global-relief-model"
+        }
+      ],
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-bathymetry.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-bathymetry-thumb.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false,
+        "bathymetryShaded": true,
+        "reliefShaded": true
+      },
+      "recommendedRoles": [
+        "bathymetry",
+        "science"
+      ]
+    },
+    {
       "id": "equirect-world-blue-marble-bm-v1",
       "label": "Blue Marble - BM",
       "shortDescription": "NASA Blue Marble natural-color imagery with twelve onboarded monthly rasters. The scene follows instrument time (UTC civil month), not a stored month in config.",
