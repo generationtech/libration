@@ -329,7 +329,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) preferred onboarding order** (when raster + rights exist): static **bathymetry/ocean** substrate (**shipped:** **`equirect-world-bathymetry-etopo-v1`**), then **vegetation/land cover**, then **climate normals** — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover**, then **climate normals** (bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`** with dateline-roll provenance and `bathymetryOnboardedAsset.test.ts`) — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

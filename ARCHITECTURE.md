@@ -119,7 +119,7 @@ src/assets/maps/base-map-catalog.json
 
 The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
 
-Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog includes shipped static scientific substrates **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`**, and **`equirect-world-bathymetry-etopo-v1`** (Natural Earth / USGS lineages; bundled **`previewThumbnailSrc`** where catalog lists them; `docs/maps/MAP_ASSET_SOURCES.md`). Legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family (not aliases for the static NE topography family).
+Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog includes shipped static scientific substrates **`equirect-world-topography-ne-v1`** and **`equirect-world-political-v1`** (Natural Earth–lineage), **`equirect-world-geology-v1`** (USGS public-domain lineage), and **`equirect-world-bathymetry-etopo-v1`** (NOAA NCEI ETOPO 2022 lineage; −180…+180° equirect contract); each has bundled **`previewThumbnailSrc`** where the catalog lists it (`docs/maps/MAP_ASSET_SOURCES.md`). Legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family (not aliases for the static NE topography family).
 
 Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
 

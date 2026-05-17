@@ -53,8 +53,7 @@ Future work should extend these systems with **further substrate readability heu
 
 - **Implemented baseline (geology):** global geologic provinces **`equirect-world-geology-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate geology styles, higher-resolution scientific linework.
 - **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
-- **Implemented baseline (bathymetry):** global relief / ocean-floor depth **`equirect-world-bathymetry-etopo-v1`** (NOAA ETOPO 2022 lineage; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate bathymetry products (e.g. GEBCO-only styling), higher-resolution grids.
-- ocean floor / seafloor relief.
+- **Implemented baseline (bathymetry):** global relief / ocean-floor depth **`equirect-world-bathymetry-etopo-v1`** (NOAA ETOPO 2022 lineage; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate bathymetry products (e.g. GEBCO-only styling), higher-resolution grids, additional hypsometric palettes.
 - natural-color seasonal imagery.
 - Blue Marble variants.
 - **Implemented baseline (political/reference):** **`equirect-world-political-v1`** (Natural Earth–lineage shipped raster in the bundled catalog). **Future:** alternate political styles, borders-only overlay-friendly variants.
