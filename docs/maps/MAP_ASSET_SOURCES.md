@@ -52,6 +52,7 @@ The current active catalog should be treated as source of truth. Known family id
 - `equirect-world-bathymetry-etopo-v1`
 - `equirect-world-landcover-modis-v1`
 - `equirect-world-climate-koppen-beck-v1`
+- `equirect-world-population-gpw-v1`
 - `equirect-world-blue-marble-bm-v1`
 - `equirect-world-blue-marble-t-v1`
 - `equirect-world-blue-marble-tb-v1`
@@ -359,6 +360,60 @@ public/maps/previews/world-equirectangular-geology-thumb.jpg
 
 - Higher-resolution or alternate USGS/CGMW geology source if curated later (current ship asset is upscaled from a ~1200px-wide public-domain reference).
 
+
+## equirect-world-population-gpw-v1
+
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
+
+Variant mode: static.
+
+Role: scientific substrate (human population density — persons per km²).
+
+Runtime asset:
+
+```text
+public/maps/world-equirectangular-population.jpg
+```
+
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-population-thumb.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** NASA SEDAC [Gridded Population of the World, Version 4 (GPWv4): Population Density, Revision 11](https://sedac.ciesin.columbia.edu/data/set/gpw-v4-population-density-rev11), 2020 global 30 arc-second grid (`gpw_v4_population_density_adjusted_to_2015_unwpp_country_totals_rev11_2020_30_sec.tif`, WGS 84 lon −180…+180°, lat −90…+90°).
+- **Epoch:** 2020 population density (persons per km²).
+- **License / usage:** **CC BY 4.0**; cite CIESIN GPWv4 and [doi:10.7927/H49C6VHW](https://doi.org/10.7927/H49C6VHW) when redistributing or adapting; retain attribution in product and docs.
+
+### Processing notes
+
+- `gdal_calc.py` log₁₀(density + 1) on valid land cells; ocean / invalid cells treated as nodata.
+- `gdaldem color-relief` with a bounded hypsometric ramp (`population_density_clr.txt` in onboarding workspace) → RGB GeoTIFF.
+- Exported to **5400×2700** **8-bit sRGB** JPEG (quality 92), **north-up**, lon −180..+180, lat −90..+90:
+
+```bash
+gdal_translate -of JPEG -co QUALITY=92 -outsize 5400 2700 pop_rgb.tif world-equirectangular-population.jpg
+convert world-equirectangular-population.jpg -colorspace sRGB world-equirectangular-population.jpg
+```
+
+- Preview thumbnail **800×400** from the ship JPEG (ImageMagick `convert -resize 800x400!`).
+- Regression: [`src/config/populationOnboardedAsset.test.ts`](../../src/config/populationOnboardedAsset.test.ts) (SOF geometry, SHA-256, decoded Delhi / Sahara / Pacific heuristics).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **5400×2700** (2:1); **8-bit sRGB** JPEG.
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.chromaticDense`** and **`capabilities.fineScaleTexture`** for upstream overlay-readability lift—curator signals for log-scaled density ramp colors and fine urban grain competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+
+### Future refinements (same family)
+
+- Alternate GPW epochs (2015, 2025 when published) or UN WPP-adjusted variants when product-scoped.
+- Linear or perceptual ramps distinct from the current log hypsometric display.
+
 ## Blue Marble / natural-color families
 
 Known recent family ids:
@@ -427,7 +482,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover** (**shipped:** **`equirect-world-landcover-modis-v1`**), **climate normals** (**shipped:** **`equirect-world-climate-koppen-beck-v1`** with Beck Köppen–Geiger provenance and `climateNormalsOnboardedAsset.test.ts`; bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`**) — see `PLAN.md` handoff for the next sourced substrate. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) closed (shipped):** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-beck-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred next queue A backlog (when raster + rights exist):** temperature or precipitation climatology static family—see `PLAN.md` handoff. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

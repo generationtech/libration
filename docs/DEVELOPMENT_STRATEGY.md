@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (**composition baseline closed:** Slice 2 queues **B**/**C** not default next work; **default macro PR track** = **Phase 8 / queue A** when sourced static substrate or explicitly scoped polish exists; **do not** default to ninth+ intrinsics or fourth+ twilight filler PRs; queue **(2)** substrates, **third** twilight pass, **structured attribution**, **month-aware selector polish**, and queue **D** weather/cloud **planning** **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (**composition baseline closed:** Slice 2 queues **B**/**C** not default next work; **default macro PR track** = **Phase 8 / queue A** when sourced static substrate or explicitly scoped polish exists—**preferred backlog:** temperature/precipitation climatology; **if no source in session, stop**; **do not** default to ninth+ intrinsics or fourth+ twilight filler PRs; queue **(2)** substrates (land cover, bathymetry, climate normals, population GPW), **third** twilight pass, **structured attribution**, **month-aware selector polish**, and queue **D** weather/cloud **planning** **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
 
 ## Implementation intent template
 

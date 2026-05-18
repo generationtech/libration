@@ -448,6 +448,7 @@ describe("SceneConfig (Phase 1)", () => {
       "equirect-world-bathymetry-etopo-v1",
       "equirect-world-landcover-modis-v1",
       "equirect-world-climate-koppen-beck-v1",
+      "equirect-world-population-gpw-v1",
       "equirect-world-blue-marble-bm-v1",
       "equirect-world-blue-marble-t-v1",
       "equirect-world-blue-marble-tb-v1",
@@ -479,6 +480,9 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-climate-koppen-beck-v1")).toBe(
       "/maps/world-equirectangular-climate.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-population-gpw-v1")).toBe(
+      "/maps/world-equirectangular-population.jpg",
     );
     const july = Date.UTC(2019, 6, 15);
     expect(
@@ -581,6 +585,19 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.transitionalPlaceholder).toBeUndefined();
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-landcover-thumb.jpg");
     expect(o.attribution).toMatch(/NASA MODIS/i);
+    expect(o.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
+  });
+
+  it("GPW population density base map is shipped as non-transitional in registry and options", () => {
+    const id = "equirect-world-population-gpw-v1" as const;
+    const asset = resolveEquirectBaseMapAsset(id);
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    expect(resolveEquirectBaseMapImageSrc(id)).toBe("/maps/world-equirectangular-population.jpg");
+    const o = getEquirectBaseMapOptionForId(id);
+    expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-population-thumb.jpg");
+    expect(o.attribution).toMatch(/SEDAC GPWv4/i);
+    expect(o.licenseNote).toMatch(/CC BY 4\.0/i);
     expect(o.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
   });
 

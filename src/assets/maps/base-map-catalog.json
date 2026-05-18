@@ -189,7 +189,7 @@
       "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
       "sourceLinks": [
         {
-          "label": "NASA GIBS — MODIS IGBP Land Cover",
+          "label": "NASA GIBS \u2014 MODIS IGBP Land Cover",
           "href": "https://gibs.earthdata.nasa.gov/"
         },
         {
@@ -223,10 +223,10 @@
     },
     {
       "id": "equirect-world-climate-koppen-beck-v1",
-      "label": "World climate (Köppen–Geiger)",
-      "shortDescription": "Present-day Köppen–Geiger climate zones (1980–2016 ensemble; Beck et al. 2018, resampled static composite).",
+      "label": "World climate (K\u00f6ppen\u2013Geiger)",
+      "shortDescription": "Present-day K\u00f6ppen\u2013Geiger climate zones (1980\u20132016 ensemble; Beck et al. 2018, resampled static composite).",
       "category": "scientific",
-      "attribution": "Beck et al. (2018) Köppen–Geiger / GloH2O",
+      "attribution": "Beck et al. (2018) K\u00f6ppen\u2013Geiger / GloH2O",
       "licenseNote": "CC BY 4.0; cite Beck et al. (2018) Scientific Data when redistributing or adapting.",
       "sourceLinks": [
         {
@@ -234,7 +234,7 @@
           "href": "https://doi.org/10.6084/m9.figshare.6396959"
         },
         {
-          "label": "GloH2O Köppen–Geiger maps",
+          "label": "GloH2O K\u00f6ppen\u2013Geiger maps",
           "href": "https://www.gloh2o.org/koppen/"
         }
       ],
@@ -259,6 +259,47 @@
       },
       "recommendedRoles": [
         "climate",
+        "science"
+      ]
+    },
+    {
+      "id": "equirect-world-population-gpw-v1",
+      "label": "World population density (GPW)",
+      "shortDescription": "Global human population density (persons per km\u00b2, 2020; NASA SEDAC GPWv4 Rev. 11, log-scaled hypsometric display).",
+      "category": "scientific",
+      "attribution": "NASA SEDAC GPWv4 (CIESIN / Columbia University)",
+      "licenseNote": "CC BY 4.0; cite CIESIN GPWv4 and doi:10.7927/H49C6VHW when redistributing or adapting.",
+      "sourceLinks": [
+        {
+          "label": "GPWv4 Population Density, Rev. 11 (SEDAC)",
+          "href": "https://sedac.ciesin.columbia.edu/data/set/gpw-v4-population-density-rev11"
+        },
+        {
+          "label": "GPWv4 dataset DOI",
+          "href": "https://doi.org/10.7927/H49C6VHW"
+        }
+      ],
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-population.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-population-thumb.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false,
+        "chromaticDense": true,
+        "fineScaleTexture": true
+      },
+      "recommendedRoles": [
+        "population",
         "science"
       ]
     },

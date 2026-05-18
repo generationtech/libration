@@ -58,7 +58,7 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 - Blue Marble variants.
 - **Implemented baseline (political/reference):** **`equirect-world-political-v1`** (Natural Earth–lineage shipped raster in the bundled catalog). **Future:** alternate political styles, borders-only overlay-friendly variants.
 - borders-only overlay-friendly maps.
-- population density.
+- **Implemented baseline (population density):** global GPWv4 2020 density **`equirect-world-population-gpw-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate GPW epochs, WorldPop grids.
 - **Implemented baseline (land cover / vegetation):** global MODIS IGBP classification **`equirect-world-landcover-modis-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** Copernicus 100m discrete map, alternate MODIS epochs, higher-resolution products.
 - biome / ecology.
 - **Implemented baseline (Köppen–Geiger climate zones):** present-day classification **`equirect-world-climate-koppen-beck-v1`** (Beck et al. 2018; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** temperature / precipitation climatologies, alternate Köppen epochs (Beck V3), Koppen-only border variants.
