@@ -222,6 +222,47 @@
       ]
     },
     {
+      "id": "equirect-world-climate-koppen-beck-v1",
+      "label": "World climate (Köppen–Geiger)",
+      "shortDescription": "Present-day Köppen–Geiger climate zones (1980–2016 ensemble; Beck et al. 2018, resampled static composite).",
+      "category": "scientific",
+      "attribution": "Beck et al. (2018) Köppen–Geiger / GloH2O",
+      "licenseNote": "CC BY 4.0; cite Beck et al. (2018) Scientific Data when redistributing or adapting.",
+      "sourceLinks": [
+        {
+          "label": "Beck et al. (2018) dataset (Figshare)",
+          "href": "https://doi.org/10.6084/m9.figshare.6396959"
+        },
+        {
+          "label": "GloH2O Köppen–Geiger maps",
+          "href": "https://www.gloh2o.org/koppen/"
+        }
+      ],
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-climate.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-climate-thumb.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false,
+        "chromaticDense": true,
+        "fineScaleTexture": true
+      },
+      "recommendedRoles": [
+        "climate",
+        "science"
+      ]
+    },
+    {
       "id": "equirect-world-blue-marble-bm-v1",
       "label": "Blue Marble - BM",
       "shortDescription": "NASA Blue Marble natural-color imagery with twelve onboarded monthly rasters. The scene follows instrument time (UTC civil month), not a stored month in config.",

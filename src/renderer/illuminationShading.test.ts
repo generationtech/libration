@@ -85,6 +85,17 @@ describe("sampleIlluminationRgba8 (twilight-aware)", () => {
     expect(TWILIGHT_ATMOSPHERIC_ALPHA_MAX).toBeLessThan(0.22);
   });
 
+  it("keeps civil/nautical color continuity within the third-pass sigma budget", () => {
+    const sampleAltitudeSet = [-6, -12, -18] as const;
+    for (const boundary of sampleAltitudeSet) {
+      const before = sampleIlluminationRgba8(dotFromAltitudeDeg(boundary + 0.25), 1);
+      const after = sampleIlluminationRgba8(dotFromAltitudeDeg(boundary - 0.25), 1);
+      const colorDelta =
+        Math.abs(before.r - after.r) + Math.abs(before.g - after.g) + Math.abs(before.b - after.b);
+      expect(colorDelta).toBeLessThanOrEqual(20);
+    }
+  });
+
   it("keeps terminator tint in a low-luminance band after atmospheric refinement", () => {
     const horizon = sampleIlluminationRgba8(0, 1);
     const sum = horizon.r + horizon.g + horizon.b;

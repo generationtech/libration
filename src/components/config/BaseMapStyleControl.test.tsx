@@ -149,6 +149,20 @@ describe("BaseMapStyleControl", () => {
     expect(screen.getByText("Natural Earth (public domain)")).toBeInTheDocument();
   });
 
+  it("shows CC BY source link when Köppen–Geiger climate family is selected", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.selectOptions(
+      screen.getByLabelText("Map style"),
+      "equirect-world-climate-koppen-beck-v1",
+    );
+    const link = screen.getByRole("link", { name: "Beck et al. (2018) dataset (Figshare)" });
+    expect(link).toHaveAttribute("href", "https://doi.org/10.6084/m9.figshare.6396959");
+    const block = screen.getByTestId("config-base-map-source-license");
+    expect(block).toHaveTextContent(/Beck et al\. \(2018\)/);
+    expect(block).toHaveTextContent(/CC BY 4\.0/i);
+  });
+
   it("exposes licenseNote and sourceLinks on political catalog option", () => {
     const o = getEquirectBaseMapOptionForId("equirect-world-political-v1");
     expect(o.licenseNote).toMatch(/public domain/i);

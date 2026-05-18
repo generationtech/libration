@@ -61,10 +61,9 @@ Future work should extend these systems with **further substrate readability heu
 - population density.
 - **Implemented baseline (land cover / vegetation):** global MODIS IGBP classification **`equirect-world-landcover-modis-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** Copernicus 100m discrete map, alternate MODIS epochs, higher-resolution products.
 - biome / ecology.
-- climate zones.
-- Koppen-Geiger climate.
+- **Implemented baseline (Köppen–Geiger climate zones):** present-day classification **`equirect-world-climate-koppen-beck-v1`** (Beck et al. 2018; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** temperature / precipitation climatologies, alternate Köppen epochs (Beck V3), Koppen-only border variants.
 - precipitation.
-- temperature normals.
+- temperature normals (distinct raster products).
 - cloud climatology.
 - additional night-light or light-pollution **map substrate** products beyond the bundled Black Marble composition input.
 - light pollution.

@@ -73,15 +73,20 @@ const TWILIGHT_REFERENCE_ALTITUDES_DEG = {
 
 /** Maximum tint modulation contribution; this is not additional emitted alpha. */
 export const TWILIGHT_ATMOSPHERIC_ALPHA_MAX = 0.172;
-/** Wider sigma smooths band coupling (anchors remain semantic, not hard edges). */
-const TWILIGHT_COLOR_SIGMA_DEG = 4.35;
+/**
+ * Wider sigma smooths band coupling (anchors remain semantic, not hard edges).
+ * Third narrow pass (Slice 2 queue **C**): slightly wider coupling after chromatic scientific
+ * substrates shipped—reduces residual civil/nautical banding without new SceneConfig surface.
+ */
+const TWILIGHT_COLOR_SIGMA_DEG = 4.5;
 /**
  * Upper edge for the day-side tint envelope (only applies where `altitudeDeg < dayClear`).
  * Using a value slightly above {@link TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear} makes the
  * fade gentler as altitude approaches +4° from below without changing the shared daylight-clear cutoff.
+ * Third pass extends the envelope (+1.28 → +1.38) for a softer approach to the +4° cutoff.
  */
 const TWILIGHT_DAY_SIDE_TINT_CLEAR_DEG =
-  TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear + 1.28;
+  TWILIGHT_REFERENCE_ALTITUDES_DEG.dayClear + 1.38;
 
 /** Near-terminator tint (legacy name; civil band start). */
 export const TWILIGHT_R = C_HORIZON.r;

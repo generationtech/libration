@@ -32,7 +32,7 @@ const minimalValid: BaseMapCatalogFile = {
 describe("parseAndValidateBaseMapCatalog", () => {
   it("validates the shipped bundled catalog", () => {
     const r = parseAndValidateBaseMapCatalog(baseMapCatalogJson as BaseMapCatalogFile);
-    expect(r.entries.length).toBe(9);
+    expect(r.entries.length).toBe(10);
     const bathymetry = r.definitions.find((d) => d.id === "equirect-world-bathymetry-etopo-v1");
     expect(bathymetry?.catalogEntry.capabilities?.bathymetryShaded).toBe(true);
     expect(bathymetry?.catalogEntry.capabilities?.reliefShaded).toBe(true);
@@ -41,6 +41,10 @@ describe("parseAndValidateBaseMapCatalog", () => {
     expect(landcover?.catalogEntry.capabilities?.chromaticDense).toBe(true);
     expect(landcover?.catalogEntry.capabilities?.fineScaleTexture).toBe(true);
     expect(landcover?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
+    const climate = r.definitions.find((d) => d.id === "equirect-world-climate-koppen-beck-v1");
+    expect(climate?.catalogEntry.capabilities?.chromaticDense).toBe(true);
+    expect(climate?.option.licenseNote).toMatch(/CC BY 4\.0/i);
+    expect(climate?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
     const political = r.definitions.find((d) => d.id === "equirect-world-political-v1");
     expect(political?.option.licenseNote).toMatch(/public domain/i);
     expect(political?.option.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);

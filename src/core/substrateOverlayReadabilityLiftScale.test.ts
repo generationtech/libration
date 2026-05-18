@@ -197,6 +197,14 @@ describe("deriveSubstrateOverlayReadabilityLiftScale01", () => {
     expect(scale).toBeCloseTo(1 - 0.04 - 0.043, 10);
   });
 
+  it("combines chromatic and fine-scale texture like land cover and climate families at neutral presentation", () => {
+    const scale = deriveSubstrateOverlayReadabilityLiftScale01(DEFAULT_BASE_MAP_PRESENTATION, {
+      chromaticDense: true,
+      fineScaleTexture: true,
+    });
+    expect(scale).toBeCloseTo(1 - 0.05 - 0.04, 10);
+  });
+
   it("preserves more lift on dimmed bases than on bright bases for same contrast boost", () => {
     const shared = { contrast: 1.4, gamma: 1, saturation: 1 };
     const bright = deriveSubstrateOverlayReadabilityLiftScale01({

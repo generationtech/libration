@@ -201,13 +201,14 @@ equirect-world-topography-ne-v1
 equirect-world-geology-v1
 equirect-world-bathymetry-etopo-v1
 equirect-world-landcover-modis-v1
+equirect-world-climate-koppen-beck-v1
 equirect-world-blue-marble-bm-v1
 ```
 
 ## Future map directions
 
-Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, land cover **`equirect-world-landcover-modis-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
-- climate normals.
+Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, land cover **`equirect-world-landcover-modis-v1`**, climate **`equirect-world-climate-koppen-beck-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
+- additional climate normals products (temperature / precipitation climatologies, alternate Köppen epochs).
 - higher-resolution or alternate land-cover products (e.g. Copernicus 100m discrete map).
 - population.
 - night lights.

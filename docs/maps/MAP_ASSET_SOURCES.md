@@ -30,7 +30,7 @@ Optional keys on base-map catalog entries influence **upstream** overlay lift sc
 
 - `reliefShaded` — hypsometric / hillshade-style relief reads as strong local contrast.
 - `boundaryDense` — dense linework (boundaries, scientific overlays).
-- `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills, **IGBP land-cover classes** on **`equirect-world-landcover-modis-v1`**).
+- `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills, **IGBP land-cover classes** on **`equirect-world-landcover-modis-v1`**, **Köppen–Geiger climate classes** on **`equirect-world-climate-koppen-beck-v1`**).
 - `bathymetryShaded` — shaded / hypsometric ocean-floor (bathymetry) reads as strong local contrast (often with land relief; e.g. Blue Marble **TB** family in the bundled catalog).
 - `fineScaleTexture` — fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector overlays; distinct from relief hypsometry, dense linework, thematic hue bands, or bathymetry shading alone. Bundled catalog sets this on Blue Marble **BM** and **T** seasonal families and on **`equirect-world-landcover-modis-v1`** (IGBP class boundaries).
 - `sunGlintDense` — dense sun glint on open water in true-color / natural-color imagery reads as high-contrast specular sparkle competing with thin vector overlays; distinct from `bathymetryShaded` ocean-floor relief and from `fineScaleTexture` land/cloud micro-texture alone. Bundled catalog sets this on Blue Marble **BM** and **T** alongside `fineScaleTexture`.
@@ -51,6 +51,7 @@ The current active catalog should be treated as source of truth. Known family id
 - `equirect-world-topography-ne-v1`
 - `equirect-world-bathymetry-etopo-v1`
 - `equirect-world-landcover-modis-v1`
+- `equirect-world-climate-koppen-beck-v1`
 - `equirect-world-blue-marble-bm-v1`
 - `equirect-world-blue-marble-t-v1`
 - `equirect-world-blue-marble-tb-v1`
@@ -265,6 +266,57 @@ public/maps/previews/world-equirectangular-landcover-thumb.jpg
 - Higher-resolution Copernicus Global Land Cover 100m discrete map when curated with dateline-roll provenance (see queue **A** climate/vegetation notes in `PLAN.md`).
 - Alternate MODIS epochs or legend styles if product-scoped.
 
+## equirect-world-climate-koppen-beck-v1
+
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
+
+Variant mode: static.
+
+Role: scientific substrate (present-day Köppen–Geiger climate classification / long-term climate zones).
+
+Runtime asset:
+
+```text
+public/maps/world-equirectangular-climate.jpg
+```
+
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-climate-thumb.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** [Beck et al. (2018)](https://doi.org/10.1038/sdata.2018.214) present-day Köppen–Geiger classification (`Beck_KG_V1_present_0p083.tif`, ~8.3 arc-minute grid, WGS 84 lon −180…+180°, lat −90…+90°) from the Figshare archive [doi:10.6084/m9.figshare.6396959](https://doi.org/10.6084/m9.figshare.6396959) (GloH2O: [www.gloh2o.org/koppen](https://www.gloh2o.org/koppen/)).
+- **Epoch:** 1980–2016 ensemble mean classification (present map in the V1 archive).
+- **License / usage:** **CC BY 4.0**; cite Beck et al. (2018) *Scientific Data* when redistributing or adapting; retain attribution in product and docs.
+
+### Processing notes
+
+- Palette expanded to RGB and exported with GDAL from `Beck_KG_V1_present_0p083.tif` (4320×2160 native) to full-world Plate Carrée **5400×2700** JPEG (quality 92), **north-up**, lon −180..+180, lat −90..+90:
+
+```bash
+gdal_translate -expand rgb -of JPEG -co QUALITY=92 -outsize 5400 2700 \
+  Beck_KG_V1_present_0p083.tif world-equirectangular-climate.jpg
+```
+
+- Preview thumbnail **800×400** from the ship JPEG (ImageMagick `convert -resize 800x400!`).
+- Regression: [`src/config/climateNormalsOnboardedAsset.test.ts`](../../src/config/climateNormalsOnboardedAsset.test.ts) (SOF geometry, SHA-256, decoded Amazon Af / Sahara BWh / Antarctica EF color heuristics).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **5400×2700** (2:1); **8-bit sRGB** JPEG.
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.chromaticDense`** and **`capabilities.fineScaleTexture`** for upstream overlay-readability lift—curator signals for Köppen–Geiger thematic class colors and class-boundary grain competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+
+### Future refinements (same family)
+
+- Beck et al. (2023) V3 maps at 1 km or alternate periods (e.g. 1991–2020) when product-scoped.
+- Separate temperature / precipitation climatology substrates (distinct from classification zones).
+
 ## equirect-world-geology-v1
 
 Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
@@ -375,7 +427,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover** (**shipped:** **`equirect-world-landcover-modis-v1`** with GIBS/MODIS IGBP provenance and `landcoverOnboardedAsset.test.ts`), then **climate normals** (bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`**) — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover** (**shipped:** **`equirect-world-landcover-modis-v1`**), **climate normals** (**shipped:** **`equirect-world-climate-koppen-beck-v1`** with Beck Köppen–Geiger provenance and `climateNormalsOnboardedAsset.test.ts`; bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`**) — see `PLAN.md` handoff for the next sourced substrate. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 
