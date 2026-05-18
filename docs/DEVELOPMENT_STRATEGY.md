@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (default macro PR track = Phase 8 / Slice 3 when a shippable gap exists; else Slice 2 **B**/**C**; **structured attribution presentation** and **month-aware selector polish** **shipped**; queue **D** weather/cloud **planning** **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); queue **(2)** land cover, bathymetry, and climate normals **`equirect-world-climate-koppen-beck-v1`** **shipped**; **single best next PR** = next sourced static substrate when raster + rights exist, else Slice 2 **B**/**C**).
+**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (default macro PR track = **Slice 2 / queue B** while queue **A (2)** is closed; queue **A** re-opens for next sourced static substrate; **structured attribution**, **month-aware selector polish**, queue **(2)** substrates, and queue **C** third twilight pass **shipped**; queue **D** weather/cloud **planning** **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); **single best next PR** = **Slice 2 queue B** ninth+ intrinsic unless sourced raster + rights appear first).
 
 ## Implementation intent template
 
