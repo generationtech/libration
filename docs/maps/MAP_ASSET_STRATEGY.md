@@ -206,9 +206,9 @@ equirect-world-blue-marble-bm-v1
 
 ## Future map directions
 
-Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
-- climate.
-- vegetation.
+Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, land cover **`equirect-world-landcover-modis-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
+- climate normals.
+- higher-resolution or alternate land-cover products (e.g. Copernicus 100m discrete map).
 - population.
 - night lights.
 - high-contrast accessibility.

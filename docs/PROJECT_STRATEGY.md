@@ -46,7 +46,7 @@ Useful differentiation directions:
 - renderer-agnostic internals.
 - open AGPL reference implementation.
 - explicit SceneConfig and composable layers.
-- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates—including shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, and bathymetry **`equirect-world-bathymetry-etopo-v1`**—see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
+- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates—including shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, and land cover **`equirect-world-landcover-modis-v1`**—see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
 - reference-frame time model.
 - modern top-band chrome visual language.
 - planetary illumination and atmospheric composition.
@@ -179,8 +179,8 @@ The next strategic need is not another large hidden architecture migration. It i
 Likely next frontiers:
 
 1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract through **`sunGlintDense`** is **shipped and doc-finalized**, not hypothetical; cumulative twilight tuning through the **second** narrow `illuminationShading.ts` pass is likewise **doc-finalized**; geology **`equirect-world-geology-v1`** onboarding and **structured map selector attribution** are **doc-finalized**).
-2. Map inventory curation and selector polish (**default macro PR track:** Phase 8 / Slice 3; **structured attribution presentation** and **month-aware selector polish** **shipped**; **single best next PR:** next **A**-class substrate when sourced per `PLAN.md` queue **A** item **(2)**).
-3. Further scientific substrate onboarding (vegetation/land cover, climate normals, and other sourced families) and map inventory polish beyond the shipped static scientific quartet (topography, political, geology, bathymetry).
+2. Map inventory curation and selector polish (**default macro PR track:** Phase 8 / Slice 3; **structured attribution presentation** and **month-aware selector polish** **shipped**; **single best next PR:** **climate normals** substrate when sourced per `PLAN.md` queue **A** item **(2)**; land cover and bathymetry **shipped**).
+3. Further scientific substrate onboarding (**climate normals** and other sourced families) and map inventory polish beyond the shipped static scientific substrates (topography, political, geology, bathymetry, land cover).
 4. **Readability and composition extensions** (`perLayer` beyond the **six shipped** default-stack keys where product defines new rows; **further** substrate/catalog signals beyond `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` + dimming; **further** atmospheric refinement on the **existing** upstream illumination stack **after** cumulative shipped twilight tuning in `illuminationShading.ts`), and cloud/weather **implementation** after Phase 10 per [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md) (**planning closed**).
 5. Dynamic data lifecycle.
 6. Advanced scene view and projection work.

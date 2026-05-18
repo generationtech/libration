@@ -30,9 +30,9 @@ Optional keys on base-map catalog entries influence **upstream** overlay lift sc
 
 - `reliefShaded` — hypsometric / hillshade-style relief reads as strong local contrast.
 - `boundaryDense` — dense linework (boundaries, scientific overlays).
-- `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills).
+- `chromaticDense` — strong thematic or false-color hue bands (e.g. geology, political fills, **IGBP land-cover classes** on **`equirect-world-landcover-modis-v1`**).
 - `bathymetryShaded` — shaded / hypsometric ocean-floor (bathymetry) reads as strong local contrast (often with land relief; e.g. Blue Marble **TB** family in the bundled catalog).
-- `fineScaleTexture` — fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector overlays; distinct from relief hypsometry, dense linework, thematic hue bands, or bathymetry shading alone. Bundled catalog sets this on Blue Marble **BM** and **T** seasonal families.
+- `fineScaleTexture` — fine-scale photographic or sensor texture (clouds, land-cover grain) competes with thin vector overlays; distinct from relief hypsometry, dense linework, thematic hue bands, or bathymetry shading alone. Bundled catalog sets this on Blue Marble **BM** and **T** seasonal families and on **`equirect-world-landcover-modis-v1`** (IGBP class boundaries).
 - `sunGlintDense` — dense sun glint on open water in true-color / natural-color imagery reads as high-contrast specular sparkle competing with thin vector overlays; distinct from `bathymetryShaded` ocean-floor relief and from `fineScaleTexture` land/cloud micro-texture alone. Bundled catalog sets this on Blue Marble **BM** and **T** alongside `fineScaleTexture`.
 - `labelDense` — dense cartographic typography (place names, formation labels) competes with overlay annotation and fine grid ticks; distinct from `boundaryDense` linework alone. Bundled catalog sets this on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`**.
 - `etchedReliefDense` — directional etched / scribed shaded relief competes with thin vector overlays. Bundled catalog sets this on **`equirect-world-legacy-v1`** (see legacy family section below).
