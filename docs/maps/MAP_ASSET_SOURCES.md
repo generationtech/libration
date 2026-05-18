@@ -50,6 +50,7 @@ The current active catalog should be treated as source of truth. Known family id
 - `equirect-world-geology-v1`
 - `equirect-world-topography-ne-v1`
 - `equirect-world-bathymetry-etopo-v1`
+- `equirect-world-landcover-modis-v1`
 - `equirect-world-blue-marble-bm-v1`
 - `equirect-world-blue-marble-t-v1`
 - `equirect-world-blue-marble-tb-v1`
@@ -219,6 +220,51 @@ public/maps/previews/world-equirectangular-bathymetry-thumb.jpg
 
 - Bundled catalog sets **`capabilities.bathymetryShaded`** and **`capabilities.reliefShaded`** for upstream overlay-readability lift—curator signals for shaded ocean-floor relief and land hypsometry competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
 
+## equirect-world-landcover-modis-v1
+
+Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
+
+Variant mode: static.
+
+Role: scientific substrate (global land cover / vegetation classification).
+
+Runtime asset:
+
+```text
+public/maps/world-equirectangular-landcover.jpg
+```
+
+Preview thumbnail:
+
+```text
+public/maps/previews/world-equirectangular-landcover-thumb.jpg
+```
+
+### Provenance and license
+
+- **Source lineage:** [NASA GIBS](https://gibs.earthdata.nasa.gov/) `MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual` (MODIS/Terra+Aqua IGBP land cover type, annual composite), **2019-01-01** epoch, exported at **5400×2700** via WMS GetMap (EPSG:4326, BBOX −180…+180°, −90…+90°).
+- **Product reference:** [MODIS Land Cover Type Yearly L3 Global 0.05Deg CMG (MCD12C1)](https://lpdaac.usgs.gov/products/mcd12c1v061/) (upstream science product family).
+- **License / usage:** NASA imagery is generally **U.S. government work** and reusable under the [NASA Media Use Policy](https://www.nasa.gov/nasa-brand-center/images-and-media-use-policy/). Retain NASA attribution in product and docs; do not imply NASA endorsement of the application.
+
+### Processing notes
+
+- GIBS WMS GetMap PNG (RGBA) flattened to **8-bit sRGB JPEG** at quality 92; **5400×2700** (**2:1**), **north-up**, lon −180..+180, lat −90..+90 (full world extent).
+- Preview thumbnail **800×400** from the ship JPEG (same pattern as other static families).
+- Regression: [`src/config/landcoverOnboardedAsset.test.ts`](../../src/config/landcoverOnboardedAsset.test.ts) (SOF geometry, SHA-256, decoded Amazon / Sahara / Pacific color heuristics).
+
+### Validation performed (onboarding)
+
+- Raster dimensions **5400×2700** (2:1); **8-bit sRGB** JPEG.
+
+### Catalog notes
+
+- Bundled catalog sets **`capabilities.chromaticDense`** and **`capabilities.fineScaleTexture`** for upstream overlay-readability lift—curator signals for IGBP thematic class colors and class-boundary grain competing with thin vector overlays (see `substrateOverlayReadabilityLiftScale.ts`); no runtime raster sampling.
+
+### Future refinements (same family)
+
+- Higher-resolution Copernicus Global Land Cover 100m discrete map when curated with dateline-roll provenance (see queue **A** climate/vegetation notes in `PLAN.md`).
+- Alternate MODIS epochs or legend styles if product-scoped.
+
 ## equirect-world-geology-v1
 
 Status: **implemented** — static full-world equirectangular raster in the bundled catalog; not transitional.
@@ -329,7 +375,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover**, then **climate normals** (bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`** with dateline-roll provenance and `bathymetryOnboardedAsset.test.ts`) — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) preferred onboarding order** (when raster + rights exist): **vegetation/land cover** (**shipped:** **`equirect-world-landcover-modis-v1`** with GIBS/MODIS IGBP provenance and `landcoverOnboardedAsset.test.ts`), then **climate normals** (bathymetry **shipped:** **`equirect-world-bathymetry-etopo-v1`**) — see `PLAN.md` handoff and workflow there. Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

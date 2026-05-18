@@ -44,6 +44,7 @@ Current implemented areas include:
 - Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - USGS public-domain geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - NOAA NCEI ETOPO 2022–lineage global bathymetry / relief substrate (**`equirect-world-bathymetry-etopo-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder; not for navigation).
+- NASA MODIS IGBP global land cover / vegetation classification substrate (**`equirect-world-landcover-modis-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
 - Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
 - Shared family-level presentation persistence across seasonal/month-aware raster variants.
 - Map preview and **Source & license** attribution block for selected base-map families (catalog `attribution`, optional `licenseNote`, and up to two `sourceLinks`).
@@ -97,7 +98,7 @@ Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**), **primary active execution slice** (same), and **single best next PR** (next **A**-class substrate when sourced; preferred order: vegetation/land cover → climate; bathymetry **`equirect-world-bathymetry-etopo-v1`** **shipped**). **Structured attribution**, **month-aware selector polish**, and **weather/cloud planning** ([`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md)) are **shipped**. **Slice 2** is the composition *program* when queue **A** has no shippable increment—fall through to **B**/**C** (queue **D** planning closed).
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for the repo’s **default macro PR track** (**Phase 8 / Slice 3**, queue **A**), **primary active execution slice** (same), and **single best next PR** (next **A**-class substrate when sourced; preferred order: climate normals; land cover **`equirect-world-landcover-modis-v1`** and bathymetry **`equirect-world-bathymetry-etopo-v1`** **shipped**). **Structured attribution**, **month-aware selector polish**, and **weather/cloud planning** ([`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md)) are **shipped**. **Slice 2** is the composition *program* when queue **A** has no shippable increment—fall through to **B**/**C** (queue **D** planning closed).
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

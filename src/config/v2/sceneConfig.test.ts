@@ -446,6 +446,7 @@ describe("SceneConfig (Phase 1)", () => {
       "equirect-world-geology-v1",
       "equirect-world-topography-ne-v1",
       "equirect-world-bathymetry-etopo-v1",
+      "equirect-world-landcover-modis-v1",
       "equirect-world-blue-marble-bm-v1",
       "equirect-world-blue-marble-t-v1",
       "equirect-world-blue-marble-tb-v1",
@@ -471,6 +472,9 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(resolveEquirectBaseMapImageSrc("equirect-world-bathymetry-etopo-v1")).toBe(
       "/maps/world-equirectangular-bathymetry.jpg",
+    );
+    expect(resolveEquirectBaseMapImageSrc("equirect-world-landcover-modis-v1")).toBe(
+      "/maps/world-equirectangular-landcover.jpg",
     );
     const july = Date.UTC(2019, 6, 15);
     expect(
@@ -562,6 +566,18 @@ describe("SceneConfig (Phase 1)", () => {
     expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-bathymetry-thumb.jpg");
     expect(o.attribution).toMatch(/NOAA NCEI ETOPO 2022/i);
     expect(o.licenseNote).toMatch(/not for navigation/i);
+  });
+
+  it("MODIS IGBP land cover base map is shipped as non-transitional in registry and options", () => {
+    const id = "equirect-world-landcover-modis-v1" as const;
+    const asset = resolveEquirectBaseMapAsset(id);
+    expect(asset.transitionalPlaceholder).toBeUndefined();
+    expect(resolveEquirectBaseMapImageSrc(id)).toBe("/maps/world-equirectangular-landcover.jpg");
+    const o = getEquirectBaseMapOptionForId(id);
+    expect(o.transitionalPlaceholder).toBeUndefined();
+    expect(o.previewThumbnailSrc).toBe("/maps/previews/world-equirectangular-landcover-thumb.jpg");
+    expect(o.attribution).toMatch(/NASA MODIS/i);
+    expect(o.sourceLinks?.[0]?.href).toMatch(/^https:\/\//);
   });
 
   it("disabling a scene layer drops it from the layer registry", () => {

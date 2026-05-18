@@ -59,7 +59,7 @@ Future work should extend these systems with **further substrate readability heu
 - **Implemented baseline (political/reference):** **`equirect-world-political-v1`** (Natural Earth–lineage shipped raster in the bundled catalog). **Future:** alternate political styles, borders-only overlay-friendly variants.
 - borders-only overlay-friendly maps.
 - population density.
-- vegetation / land cover.
+- **Implemented baseline (land cover / vegetation):** global MODIS IGBP classification **`equirect-world-landcover-modis-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** Copernicus 100m discrete map, alternate MODIS epochs, higher-resolution products.
 - biome / ecology.
 - climate zones.
 - Koppen-Geiger climate.

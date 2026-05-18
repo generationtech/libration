@@ -200,6 +200,7 @@ equirect-world-political-v1
 equirect-world-topography-ne-v1
 equirect-world-geology-v1
 equirect-world-bathymetry-etopo-v1
+equirect-world-landcover-modis-v1
 equirect-world-blue-marble-bm-v1
 ```
 

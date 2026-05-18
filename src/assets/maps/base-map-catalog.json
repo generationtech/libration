@@ -181,6 +181,47 @@
       ]
     },
     {
+      "id": "equirect-world-landcover-modis-v1",
+      "label": "World land cover (MODIS IGBP)",
+      "shortDescription": "Global land cover / vegetation classification from NASA MODIS IGBP (annual composite, static 2019 epoch).",
+      "category": "scientific",
+      "attribution": "NASA MODIS (U.S. government work)",
+      "licenseNote": "NASA imagery is generally U.S. government work; see NASA media use policy.",
+      "sourceLinks": [
+        {
+          "label": "NASA GIBS — MODIS IGBP Land Cover",
+          "href": "https://gibs.earthdata.nasa.gov/"
+        },
+        {
+          "label": "MODIS Land Cover (LP DAAC)",
+          "href": "https://lpdaac.usgs.gov/products/mcd12c1v061/"
+        }
+      ],
+      "variantMode": "static",
+      "src": "/maps/world-equirectangular-landcover.jpg",
+      "previewThumbnailSrc": "/maps/previews/world-equirectangular-landcover-thumb.jpg",
+      "defaultPresentation": {
+        "opacity": 1,
+        "brightness": 1,
+        "contrast": 1,
+        "saturation": 1,
+        "gamma": 1
+      },
+      "capabilities": {
+        "temporal": false,
+        "overlayOptimized": false,
+        "emissiveCompatible": false,
+        "darkFriendly": false,
+        "seasonal": false,
+        "chromaticDense": true,
+        "fineScaleTexture": true
+      },
+      "recommendedRoles": [
+        "land-cover",
+        "science"
+      ]
+    },
+    {
       "id": "equirect-world-blue-marble-bm-v1",
       "label": "Blue Marble - BM",
       "shortDescription": "NASA Blue Marble natural-color imagery with twelve onboarded monthly rasters. The scene follows instrument time (UTC civil month), not a stored month in config.",

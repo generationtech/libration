@@ -1,0 +1,19 @@
+<GDAL_WMS>
+  <Service name="WMS">
+    <Version>1.1.1</Version>
+    <ServerUrl>https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?</ServerUrl>
+  </Service>
+  <Layers>MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual</Layers>
+  <SRS>EPSG:4326</SRS>
+  <ImageFormat>image/png</ImageFormat>
+  <DataWindow>
+    <UpperLeftX>-180</UpperLeftX>
+    <UpperLeftY>90</UpperLeftY>
+    <LowerRightX>180</LowerRightX>
+    <LowerRightY>-90</LowerRightY>
+    <SizeX>5400</SizeX>
+    <SizeY>2700</SizeY>
+  </DataWindow>
+  <BandsCount>3</BandsCount>
+  <ZeroBlockHttpCodes>204,404</ZeroBlockHttpCodes>
+</GDAL_WMS>

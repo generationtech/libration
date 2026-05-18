@@ -124,6 +124,7 @@ Current families include:
 - political map (**`equirect-world-political-v1`**, Natural Earth–lineage shipped raster; not transitional in the bundled catalog).
 - geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog; USGS public-domain lineage).
 - global bathymetry / relief substrate (**`equirect-world-bathymetry-etopo-v1`**, shipped raster in the bundled catalog; NOAA NCEI ETOPO 2022 lineage).
+- global land cover / vegetation substrate (**`equirect-world-landcover-modis-v1`**, shipped raster in the bundled catalog; NASA MODIS IGBP lineage).
 - validated static Natural Earth–lineage global topography (**`equirect-world-topography-ne-v1`**, `world-equirectangular-topography.jpg`).
 - Blue Marble / natural-color families (month-aware **BM**, **T**, **TB**; legacy ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** alias to **T** for compatibility).
 
@@ -209,7 +210,7 @@ Exit criteria:
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**; preferred order: vegetation/land cover → climate normals; bathymetry **`equirect-world-bathymetry-etopo-v1`** **shipped**). Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
+Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md` **Agent session handoff** queue item **A** applies (map inventory before optional Slice 2 composition micro-tuning unless a session explicitly scopes Slice 2). **Structured attribution presentation** in map selector is **shipped** (queue **A** item **(1)** closed). **Month-aware selector polish** is **shipped** (queue **A** item **(2b)** closed: Blue Marble catalog copy, active UTC civil month in `BaseMapStyleControl`, render-clock `productInstantMs`). **Single best next PR:** next **A**-class substrate when raster + rights exist (item **(2)**; preferred order: climate normals; land cover **`equirect-world-landcover-modis-v1`** and bathymetry **`equirect-world-bathymetry-etopo-v1`** **shipped**). Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -218,6 +219,7 @@ Status: planned (**in progress**). **Default next macro PR track** when `PLAN.md
 - Shipped political/reference substrate **`equirect-world-political-v1`** (`public/maps/world-equirectangular-political.jpg`; bundled catalog **without** `transitionalPlaceholder`; Natural Earth attribution; preview `public/maps/previews/world-equirectangular-political-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 - Shipped geology / geologic provinces substrate **`equirect-world-geology-v1`** (`public/maps/world-equirectangular-geology.jpg`; bundled catalog **without** `transitionalPlaceholder`; USGS public-domain attribution; preview `public/maps/previews/world-equirectangular-geology-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 - Shipped bathymetry / global relief substrate **`equirect-world-bathymetry-etopo-v1`** (`public/maps/world-equirectangular-bathymetry.jpg`; bundled catalog **without** `transitionalPlaceholder`; NOAA NCEI ETOPO 2022 attribution; preview `public/maps/previews/world-equirectangular-bathymetry-thumb.jpg`; **`bathymetryShaded`** + **`reliefShaded`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
+- Shipped land cover / vegetation substrate **`equirect-world-landcover-modis-v1`** (`public/maps/world-equirectangular-landcover.jpg`; bundled catalog **without** `transitionalPlaceholder`; NASA MODIS IGBP attribution; preview `public/maps/previews/world-equirectangular-landcover-thumb.jpg`; **`chromaticDense`** + **`fineScaleTexture`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
 
 Candidate deliverables:
 
