@@ -4,7 +4,9 @@ Libration is a local-first, renderer-agnostic world time instrument.
 
 It is a canonical reference implementation of a longitude-first global time visualization system. The product treats the world as a continuous 360 degree spatial structure, resolves one authoritative UTC instant per frame, and presents civil time through a selected reference frame without making political time zones the structural basis of the display.
 
-![Libration application screenshot](docs/images/libration-hero.png)
+![Libration application screenshot](docs/images/libration-overview1.png)
+![Libration application screenshot](docs/images/libration-overview2.png)
+![Libration application screenshot](docs/images/libration-overview3.png)
 
 ## What Libration is
 
