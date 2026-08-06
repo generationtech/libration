@@ -105,7 +105,7 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 |------|-----|--------|-----------|
 | 0 | `P10-0` | **shipped** | Planning/docs opened (this file + PLAN/ROADMAP sync). |
 | 1 | `P10-1` | **shipped** | **Core types & contracts** — TypeScript types for snapshot kinds, temporal metadata, source ids, freshness enum; pure helpers + unit tests. No network, no UI. |
-| 2 | `P10-2` | pending | **Versioned snapshot store / cache** — local persistence API (put/get/list/evict by `sourceId`+`versionId`); tests with fixture bytes. |
+| 2 | `P10-2` | **shipped** | **Versioned snapshot store / cache** — local persistence API (put/get/list/evict by `sourceId`+`versionId`); tests with fixture bytes. |
 | 3 | `P10-3` | pending | **Lifecycle manager** — per-source state machine (`idle` / `loading` / `ready` / `stale` / `error`); subscribe/unsubscribe; tests. Still no product layer. |
 | 4 | `P10-4` | pending | **Product-time resolver** — `resolveSnapshot(sourceId, productInstantMs)` against the store; nearest-valid default policy; scrub-safe (read-only); tests. |
 | 5 | `P10-5` | pending | **Acquisition adapter + periodic refresh** — async acquisition interface; periodic scheduler; manual/file import path; prove no fetch on render path with tests. May use **recorded real-format** fixtures or a narrow free HTTP sample **into the cache only**—no scene overlay. |
@@ -125,6 +125,7 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 
 - **P10-0 (shipped):** Product decisions locked; three snapshot kinds specified; in-app periodic acquisition preferred; Phase 10 exit = lifecycle only; post–Phase 10 first consumer bias = global equirect raster (clouds/IR).
 - **P10-1 (shipped):** Core contracts in `src/lifecycle/` — `DynamicSnapshotKind` (`equirectRaster` / `pointFeatures` / `tracks`), temporal meta, durable `sourceId` / `versionId`, freshness enum, resolve-result shape; pure helpers (`parseDynamicSnapshotTemporalMeta`, nearest-`validTimeMs` selection with optional `validUntilMs` window, kind-matched `buildDynamicSnapshotRecord`); tests in `dynamicSnapshotContracts.test.ts`. No network, store, manager, or UI.
+- **P10-2 (shipped):** Versioned snapshot store in `src/lifecycle/` — `DynamicSnapshotStore` API (`put` / `get` / `list` / `evict` / `clear` by durable `sourceId`+`versionId`), entry prep helpers, `MemoryDynamicSnapshotStore` default backend; tests in `dynamicSnapshotStore.test.ts` with real-format JPEG (`jpeg-js`) and GeoJSON fixture bytes. No network, manager, resolver, acquisition, or UI.
 
 ## Post–Phase 10 — Dynamic layer consumers (planned track)
 

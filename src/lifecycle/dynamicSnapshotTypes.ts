@@ -49,7 +49,7 @@ export type DynamicSnapshotFreshness =
 
 /**
  * Shared temporal metadata on every versioned snapshot.
- * Bytes / feature payloads live beside this in the store (P10-2).
+ * Bytes / feature payloads live beside this in the store (P10-2 shipped).
  */
 export type DynamicSnapshotTemporalMeta = Readonly<{
   sourceId: DynamicSourceId;
@@ -69,7 +69,7 @@ export type DynamicSnapshotTemporalMeta = Readonly<{
   licenseNote?: string;
 }>;
 
-/** Equirect raster body metadata (bytes are store-owned from P10-2). */
+/** Equirect raster body metadata (bytes are store-owned; see DynamicSnapshotStore). */
 export type EquirectRasterSnapshotBody = Readonly<{
   kind: "equirectRaster";
   /** MIME hint when known (e.g. `image/jpeg`). */

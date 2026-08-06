@@ -12,8 +12,9 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle — public contract surface (P10-1).
- * Later steps add store / manager / resolver / acquisition under this folder.
+ * Phase 10 dynamic data lifecycle — public contract surface.
+ * P10-1: types & pure helpers. P10-2: versioned snapshot store.
+ * Later steps add manager / resolver / acquisition under this folder.
  */
 
 export type {
@@ -50,3 +51,22 @@ export {
   snapshotCoversProductInstant,
   validTimeDistanceMs,
 } from "./dynamicSnapshotContracts";
+
+export type {
+  DynamicSnapshotStore,
+  DynamicSnapshotStoreEntry,
+  DynamicSnapshotStorePutResult,
+} from "./dynamicSnapshotStoreTypes";
+
+export {
+  cloneStoreEntry,
+  compareSnapshotMetaForList,
+  copyPayloadBytes,
+  prepareDynamicSnapshotStoreEntry,
+  toPutResult,
+} from "./dynamicSnapshotStore";
+
+export {
+  MemoryDynamicSnapshotStore,
+  createMemoryDynamicSnapshotStore,
+} from "./memoryDynamicSnapshotStore";
