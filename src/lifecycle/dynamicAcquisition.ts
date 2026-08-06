@@ -22,6 +22,7 @@ import { isValidDynamicSourceId } from "./dynamicSnapshotContracts";
 import type {
   DynamicAcquisitionController,
   DynamicAcquisitionControllerDeps,
+  DynamicAcquisitionFailurePolicy,
   DynamicAcquisitionImportResult,
   DynamicAcquisitionIntervalHandle,
   DynamicAcquisitionRefreshResult,
@@ -30,6 +31,10 @@ import type {
   DynamicAcquisitionStartPeriodicResult,
   DynamicSnapshotAcquisitionAdapter,
 } from "./dynamicAcquisitionTypes";
+import {
+  applyLiveAcquireFailureToLifecycle,
+  resolveLiveAcquireFailureDisposition,
+} from "./liveHttpAcquisition";
 import type { DynamicDataLifecycleManager } from "./dynamicLifecycleTypes";
 import type { DynamicSnapshotStoreEntry } from "./dynamicSnapshotStoreTypes";
 import type { DynamicSourceId } from "./dynamicSnapshotTypes";
@@ -54,6 +59,8 @@ export function createDynamicAcquisitionController(
 ): DynamicAcquisitionController {
   const { store, lifecycle } = deps;
   const nowMs = deps.nowMs ?? (() => Date.now());
+  const acquireFailurePolicy: DynamicAcquisitionFailurePolicy =
+    deps.acquireFailurePolicy ?? "error";
   const setIntervalFn: (
     handler: () => void,
     timeout: number,
@@ -65,6 +72,15 @@ export function createDynamicAcquisitionController(
     ((handle) => {
       clearInterval(handle as ReturnType<typeof setInterval>);
     });
+
+  function markAcquireFailure(sourceId: DynamicSourceId, message: string): void {
+    const snap = lifecycle.getState(sourceId);
+    const disposition = resolveLiveAcquireFailureDisposition({
+      hasUsableCachedVersion: snap.latestVersionId !== undefined,
+      policy: acquireFailurePolicy,
+    });
+    applyLiveAcquireFailureToLifecycle(lifecycle, sourceId, message, disposition);
+  }
 
   const state: MutableControllerState = {
     adapters: new Map(),
@@ -143,7 +159,7 @@ export function createDynamicAcquisitionController(
         err instanceof Error && err.message.trim().length > 0
           ? err.message.trim()
           : "acquisition threw";
-      lifecycle.markError(sourceId, message);
+      markAcquireFailure(sourceId, message);
       return { ok: false, error: message };
     }
 
@@ -154,13 +170,13 @@ export function createDynamicAcquisitionController(
     if (!acquired.ok) {
       const message =
         acquired.error.trim().length > 0 ? acquired.error.trim() : "acquire failed";
-      lifecycle.markError(sourceId, message);
+      markAcquireFailure(sourceId, message);
       return { ok: false, error: message };
     }
 
     if (acquired.entry.record.meta.sourceId !== sourceId) {
       const message = "adapter entry sourceId mismatch";
-      lifecycle.markError(sourceId, message);
+      markAcquireFailure(sourceId, message);
       return { ok: false, error: message };
     }
 

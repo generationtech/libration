@@ -316,7 +316,7 @@ Dense regional/tiled products may wait on Phase 11 (zoom/pan/tiles). Weather par
 
 ## After DLC: Live network acquisition (`DLU-*`)
 
-Status: **active** (default macro PR track). Step ids `DLU-0`…`DLU-7` in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md) (“After DLC — Live network acquisition”). **Active step:** **`DLU-2`** (shared live HTTP acquisition seam). **`DLU-0`** and **`DLU-1` shipped**.
+Status: **active** (default macro PR track). Step ids `DLU-0`…`DLU-7` in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md) (“After DLC — Live network acquisition”). **Active step:** **`DLU-3`** (live USGS earthquakes). **`DLU-0`**…**`DLU-2` shipped**.
 
 Replace fixture-only acquisition with periodic **in-app live network** acquisition for the four shipped consumers under the **same durable `sourceId`s**. No fetch inside rAF / layer constructors / RenderPlan build. Prefer free-for-personal-use feeds; paid OK when clearly valuable. Fixture/offline fallback remains acceptable when documented per step.
 
@@ -324,7 +324,7 @@ Suggested sequence:
 
 0. **`DLU-0`** — planning/docs — **shipped**.
 1. **`DLU-1`** — visibility & render readiness (incl. Canvas `tracks` dispatch; demonstrable Layers toggles) — **shipped**.
-2. **`DLU-2`** — shared live HTTP acquisition seam — **pending**.
+2. **`DLU-2`** — shared live HTTP acquisition seam — **shipped**.
 3. **`DLU-3`** — live USGS earthquakes (`usgs-earthquakes-v1`) — **pending**.
 4. **`DLU-4`** — live ISS orbital (`iss-orbital-track-v1`) — **pending**.
 5. **`DLU-5`** — live global clouds/IR (`global-clouds-ir-v1`) — **pending**.

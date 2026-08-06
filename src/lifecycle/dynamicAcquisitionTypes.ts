@@ -146,8 +146,23 @@ export type DynamicAcquisitionTimerHooks = Readonly<{
   clearIntervalFn?: (handle: DynamicAcquisitionIntervalHandle) => void;
 }>;
 
+/**
+ * How adapter acquire failures map onto the lifecycle manager.
+ *
+ * - `error` — always `markError` (P10-5 default).
+ * - `stale-when-cached` — when a prior `latestVersionId` exists, `markStale`
+ *   so scrub/resolve keep showing usable cache; otherwise `markError`.
+ *   Preferred for live HTTP adapters (DLU-2+).
+ */
+export type DynamicAcquisitionFailurePolicy = "error" | "stale-when-cached";
+
 export type DynamicAcquisitionControllerDeps = Readonly<{
   store: DynamicSnapshotStore;
   lifecycle: DynamicDataLifecycleManager;
+  /**
+   * Failure disposition when `adapter.acquire` returns `{ ok: false }`
+   * (or throws). Default `error`.
+   */
+  acquireFailurePolicy?: DynamicAcquisitionFailurePolicy;
 }> &
   DynamicAcquisitionTimerHooks;

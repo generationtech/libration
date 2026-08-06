@@ -19,6 +19,7 @@
  * DLC-2: earthquake point-features Model B layer (catalog, materializer, fixture adapter).
  * DLC-3: ISS orbital tracks Model B layer (catalog, materializer, fixture adapter).
  * DLC-4: Model A cloud participation in planetary illumination (opacity materializer + SceneConfig).
+ * DLU-2: shared live HTTP acquisition seam (fetch helpers, attribution, fixture fallback, stale policy).
  */
 
 export type {
@@ -107,6 +108,7 @@ export type {
   DynamicAcquisitionController,
   DynamicAcquisitionControllerDeps,
   DynamicAcquisitionFail,
+  DynamicAcquisitionFailurePolicy,
   DynamicAcquisitionImportResult,
   DynamicAcquisitionIntervalHandle,
   DynamicAcquisitionOk,
@@ -122,6 +124,30 @@ export {
   createDynamicAcquisitionController,
   createFixtureAcquisitionAdapter,
 } from "./dynamicAcquisition";
+
+export type {
+  ApplyAcquisitionAttributionInput,
+  LiveAcquireFailureDisposition,
+  LiveAcquireFailurePolicy,
+  LiveHttpAcquisitionAdapterOptions,
+  LiveHttpAttribution,
+  LiveHttpBytesToEntry,
+  LiveHttpFetchFail,
+  LiveHttpFetchFn,
+  LiveHttpFetchOk,
+  LiveHttpFetchOptions,
+  LiveHttpFetchResult,
+} from "./liveHttpAcquisitionTypes";
+
+export {
+  applyAcquisitionAttribution,
+  applyLiveAcquireFailureToLifecycle,
+  contentTypeMatchesAccept,
+  createLiveHttpAcquisitionAdapter,
+  fetchLiveHttpBytes,
+  normalizeHttpContentType,
+  resolveLiveAcquireFailureDisposition,
+} from "./liveHttpAcquisition";
 
 export type { DynamicEquirectSourceCatalogEntry } from "./dynamicEquirectSourceCatalog";
 

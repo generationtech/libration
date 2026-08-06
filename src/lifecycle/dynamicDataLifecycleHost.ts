@@ -63,6 +63,8 @@ export function createDynamicDataLifecycleHost(
   const acquisition = createDynamicAcquisitionController({
     store,
     lifecycle,
+    // DLU-2: prefer stale over hard error when a prior version remains usable.
+    acquireFailurePolicy: "stale-when-cached",
     nowMs: deps.nowMs,
     setIntervalFn: deps.setIntervalFn,
     clearIntervalFn: deps.clearIntervalFn,
