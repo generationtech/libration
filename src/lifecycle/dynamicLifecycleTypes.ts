@@ -27,7 +27,7 @@ import type {
  * Per-source lifecycle states.
  * Distinct from {@link DynamicSnapshotFreshness}: manager adds `idle`
  * (no active acquisition interest / reset); freshness uses `missing` for
- * resolve results when no usable snapshot is available (P10-4).
+ * resolve results when no usable snapshot is available (P10-4 shipped).
  */
 export const DYNAMIC_SOURCE_LIFECYCLE_STATES = [
   "idle",
@@ -129,7 +129,7 @@ export interface DynamicDataLifecycleManager {
   forget(sourceId: DynamicSourceId): void;
 }
 
-/** Map manager state → freshness for future resolve results (P10-4). */
+/** Map manager state → freshness for resolve results (P10-4). */
 export function lifecycleStateToFreshness(
   state: DynamicSourceLifecycleState,
 ): DynamicSnapshotFreshness {

@@ -35,7 +35,7 @@ export type DynamicSnapshotKind = (typeof DYNAMIC_SNAPSHOT_KINDS)[number];
 /**
  * Freshness surfaces for chrome / future UI — not backend policy.
  * Manager (P10-3 shipped) owns lifecycle transitions (`idle`/`loading`/…);
- * resolver (P10-4) reports these freshness values on resolve results.
+ * resolver (P10-4 shipped) reports these freshness values on resolve results.
  */
 export const DYNAMIC_SNAPSHOT_FRESHNESS_VALUES = [
   "loading",
@@ -125,8 +125,7 @@ export type DynamicSnapshotRecord = Readonly<{
 }>;
 
 /**
- * Conceptual product-time resolve result.
- * Full resolver ships in P10-4; this shape is the shared contract.
+ * Product-time resolve result (P10-4 shipped via createDynamicSnapshotResolver).
  */
 export type DynamicSnapshotResolveResult = Readonly<{
   status: "ok" | "missing" | "error";

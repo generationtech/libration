@@ -190,7 +190,7 @@ function compareNearestCandidates(
 }
 
 /**
- * Default Phase 10 product-time selection policy (pure; store/resolver wire this in P10-4):
+ * Default Phase 10 product-time selection policy (pure; wired by P10-4 resolver):
  * 1. If any candidates cover `productInstantMs` via `validUntilMs` window (or exact
  *    `validTimeMs` when no until), prefer among those by nearest `validTimeMs`.
  * 2. Otherwise pick nearest `validTimeMs` among all candidates for the same `sourceId`
