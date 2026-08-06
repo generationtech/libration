@@ -12,14 +12,27 @@
  */
 
 /**
- * DLC-3 acquisition adapter for ISS-lineage orbital tracks.
- * Returns real-format GeoJSON FeatureCollection fixtures. No network in this adapter —
- * live CelesTrak / TLE→ephemeris can replace the producer later under the same sourceId.
+ * DLC-3 / DLU-4 acquisition for ISS-lineage orbital tracks.
+ * Fixture producer remains for offline / test fallback. Live HTTP fetches
+ * CelesTrak GP (TLE) under durable sourceId `iss-orbital-track-v1`, then
+ * propagates a timed ground track via SGP4 outside rAF.
  * Never invoked from rAF / layer constructors / RenderPlan builders.
  */
 
+import {
+  degreesLat,
+  degreesLong,
+  eciToGeodetic,
+  gstime,
+  propagate,
+  twoline2satrec,
+  type EciVec3,
+  type Kilometer,
+  type SatRec,
+} from "satellite.js";
 import { buildDynamicSnapshotRecord } from "./dynamicSnapshotContracts";
 import { createFixtureAcquisitionAdapter } from "./dynamicAcquisition";
+import { createLiveHttpAcquisitionAdapter } from "./liveHttpAcquisition";
 import {
   ISS_ORBITAL_TRACK_SOURCE_ID,
   getDynamicTracksSourceCatalogEntry,
@@ -31,6 +44,35 @@ import type {
   DynamicTrack,
   DynamicTrackSample,
 } from "./dynamicSnapshotTypes";
+import type {
+  LiveHttpFetchFn,
+  LiveHttpFetchOk,
+} from "./liveHttpAcquisitionTypes";
+
+/**
+ * CelesTrak GP query for ISS (NORAD 25544) in TLE/3LE format.
+ * Free public orbital elements; durable SceneConfig id stays
+ * {@link ISS_ORBITAL_TRACK_SOURCE_ID} — never persist this URL.
+ */
+export const ISS_ORBITAL_TRACK_LIVE_FEED_URL =
+  "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE";
+
+/** Content-Types accepted from the CelesTrak TLE feed (parameter-stripped). */
+export const ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES = [
+  "text/plain",
+] as const;
+
+/** NORAD catalog number for ISS (ZARYA). */
+export const ISS_NORAD_CATALOG_NUMBER = 25544;
+
+/** Ground-track lookback before acquire time (~¾ ISS orbit). */
+export const ISS_ORBITAL_TRACK_LOOKBACK_MS = 75 * 60 * 1000;
+
+/** Ground-track lookahead after acquire time. */
+export const ISS_ORBITAL_TRACK_LOOKAHEAD_MS = 15 * 60 * 1000;
+
+/** Sample spacing along the propagated track. */
+export const ISS_ORBITAL_TRACK_SAMPLE_STEP_MS = 2 * 60 * 1000;
 
 /**
  * Approximate ISS-like ground track (~51.6° inclination) as timed Lon/Lat samples.
@@ -83,7 +125,7 @@ function buildIssOrbitalTrackFixtureGeoJson(validTimeMs: number): {
         },
         properties: {
           name: "ISS",
-          noradId: 25544,
+          noradId: ISS_NORAD_CATALOG_NUMBER,
           times,
           validTimeMs,
           type: "orbital-track",
@@ -99,7 +141,7 @@ function buildIssOrbitalTrackFixtureGeoJson(validTimeMs: number): {
       samples,
       properties: {
         name: "ISS",
-        noradId: 25544,
+        noradId: ISS_NORAD_CATALOG_NUMBER,
         type: "orbital-track",
         title: "ISS (ZARYA)",
       },
@@ -116,6 +158,265 @@ export type IssOrbitalTrackAcquireOptions = Readonly<{
   /** Stable version token prefix; default uses acquired epoch. */
   versionIdFor?: (acquiredAtMs: number) => string;
 }>;
+
+export type IssOrbitalTrackLiveAcquireOptions = IssOrbitalTrackAcquireOptions &
+  Readonly<{
+    /** Override production CelesTrak TLE URL (tests). */
+    url?: string;
+    /** Injectable fetch (tests / desktop bridge). */
+    fetchFn?: LiveHttpFetchFn;
+    /**
+     * When live HTTP fails (non-abort), fall back to the offline fixture under
+     * the same durable sourceId. Default true.
+     */
+    useFixtureFallback?: boolean;
+    /** Override lookback window for SGP4 ground-track samples (tests). */
+    lookbackMs?: number;
+    /** Override lookahead window for SGP4 ground-track samples (tests). */
+    lookaheadMs?: number;
+    /** Override sample step for SGP4 ground-track samples (tests). */
+    sampleStepMs?: number;
+  }>;
+
+export type IssTleParseOk = Readonly<{
+  ok: true;
+  name: string;
+  line1: string;
+  line2: string;
+}>;
+
+export type IssTleParseFail = Readonly<{
+  ok: false;
+  error: string;
+}>;
+
+export type IssTleParseResult = IssTleParseOk | IssTleParseFail;
+
+export type IssGroundTrackPropagateOk = Readonly<{
+  ok: true;
+  name: string;
+  samples: readonly DynamicTrackSample[];
+}>;
+
+export type IssGroundTrackPropagateFail = Readonly<{
+  ok: false;
+  error: string;
+}>;
+
+export type IssGroundTrackPropagateResult =
+  | IssGroundTrackPropagateOk
+  | IssGroundTrackPropagateFail;
+
+function isFiniteLonLat(lon: number, lat: number): boolean {
+  return (
+    Number.isFinite(lon) &&
+    Number.isFinite(lat) &&
+    lon >= -180 &&
+    lon <= 180 &&
+    lat >= -90 &&
+    lat <= 90
+  );
+}
+
+function normalizeLonDeg(lon: number): number {
+  let x = lon % 360;
+  if (x > 180) x -= 360;
+  if (x < -180) x += 360;
+  return x;
+}
+
+function isEciPosition(
+  position: EciVec3<Kilometer> | boolean,
+): position is EciVec3<Kilometer> {
+  return (
+    typeof position === "object" &&
+    position !== null &&
+    Number.isFinite(position.x) &&
+    Number.isFinite(position.y) &&
+    Number.isFinite(position.z)
+  );
+}
+
+/**
+ * Parse CelesTrak TLE / 3LE (or 2LE) text bytes into name + two element lines.
+ */
+export function parseIssTleBytes(bytes: Uint8Array): IssTleParseResult {
+  if (!(bytes instanceof Uint8Array) || bytes.byteLength === 0) {
+    return { ok: false, error: "empty tle body" };
+  }
+
+  let text: string;
+  try {
+    text = new TextDecoder().decode(bytes);
+  } catch {
+    return { ok: false, error: "failed to decode tle bytes" };
+  }
+
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trimEnd())
+    .filter((l) => l.trim().length > 0);
+
+  if (lines.length < 2) {
+    return { ok: false, error: "expected at least two TLE lines" };
+  }
+
+  let name = "ISS (ZARYA)";
+  let line1: string;
+  let line2: string;
+
+  if (lines.length >= 3 && !lines[0]!.startsWith("1 ")) {
+    name = lines[0]!.trim() || name;
+    line1 = lines[1]!;
+    line2 = lines[2]!;
+  } else {
+    line1 = lines[0]!;
+    line2 = lines[1]!;
+  }
+
+  if (!line1.startsWith("1 ") || !line2.startsWith("2 ")) {
+    return { ok: false, error: "invalid TLE line prefixes" };
+  }
+  if (line1.length < 60 || line2.length < 60) {
+    return { ok: false, error: "TLE lines too short" };
+  }
+
+  return { ok: true, name, line1, line2 };
+}
+
+/**
+ * Propagate a timed geographic ground track from TLE lines via SGP4.
+ * Runs outside rAF — call from acquisition adapters only.
+ */
+export function propagateIssGroundTrackFromTle(
+  tle: Readonly<{ name: string; line1: string; line2: string }>,
+  options: Readonly<{
+    centerTimeMs: number;
+    lookbackMs?: number;
+    lookaheadMs?: number;
+    sampleStepMs?: number;
+  }>,
+): IssGroundTrackPropagateResult {
+  const centerTimeMs = options.centerTimeMs;
+  if (!Number.isFinite(centerTimeMs)) {
+    return { ok: false, error: "invalid centerTimeMs" };
+  }
+
+  const lookbackMs =
+    options.lookbackMs !== undefined &&
+    Number.isFinite(options.lookbackMs) &&
+    options.lookbackMs >= 0
+      ? options.lookbackMs
+      : ISS_ORBITAL_TRACK_LOOKBACK_MS;
+  const lookaheadMs =
+    options.lookaheadMs !== undefined &&
+    Number.isFinite(options.lookaheadMs) &&
+    options.lookaheadMs >= 0
+      ? options.lookaheadMs
+      : ISS_ORBITAL_TRACK_LOOKAHEAD_MS;
+  const sampleStepMs =
+    options.sampleStepMs !== undefined &&
+    Number.isFinite(options.sampleStepMs) &&
+    options.sampleStepMs > 0
+      ? options.sampleStepMs
+      : ISS_ORBITAL_TRACK_SAMPLE_STEP_MS;
+
+  let satrec: SatRec;
+  try {
+    satrec = twoline2satrec(tle.line1, tle.line2);
+  } catch {
+    return { ok: false, error: "failed to initialize satrec from TLE" };
+  }
+
+  const startMs = centerTimeMs - lookbackMs;
+  const endMs = centerTimeMs + lookaheadMs;
+  const samples: DynamicTrackSample[] = [];
+
+  for (let t = startMs; t <= endMs + 1; t += sampleStepMs) {
+    const date = new Date(t);
+    const pv = propagate(satrec, date);
+    if (!isEciPosition(pv.position)) {
+      continue;
+    }
+    const gmst = gstime(date);
+    const gd = eciToGeodetic(pv.position, gmst);
+    const lonDeg = normalizeLonDeg(degreesLong(gd.longitude));
+    const latDeg = degreesLat(gd.latitude);
+    if (!isFiniteLonLat(lonDeg, latDeg)) {
+      continue;
+    }
+    samples.push({ lonDeg, latDeg, timeMs: t });
+  }
+
+  if (samples.length < 2) {
+    return { ok: false, error: "propagation yielded insufficient samples" };
+  }
+
+  return {
+    ok: true,
+    name: tle.name.trim().length > 0 ? tle.name.trim() : "ISS (ZARYA)",
+    samples,
+  };
+}
+
+function buildTracksGeoJsonPayload(options: {
+  validTimeMs: number;
+  name: string;
+  samples: readonly DynamicTrackSample[];
+  sourceUrl: string;
+  title: string;
+}): { tracks: DynamicTrack[]; payloadBytes: Uint8Array } {
+  const coordinates = options.samples.map(
+    (s) => [s.lonDeg, s.latDeg] as [number, number],
+  );
+  const times = options.samples.map((s) => s.timeMs);
+  const collection = {
+    type: "FeatureCollection" as const,
+    metadata: {
+      generated: options.validTimeMs,
+      url: options.sourceUrl,
+      title: options.title,
+      status: 200,
+      count: 1,
+    },
+    features: [
+      {
+        type: "Feature" as const,
+        id: "iss",
+        geometry: {
+          type: "LineString" as const,
+          coordinates,
+        },
+        properties: {
+          name: options.name,
+          noradId: ISS_NORAD_CATALOG_NUMBER,
+          times,
+          validTimeMs: options.validTimeMs,
+          type: "orbital-track",
+          title: options.name,
+        },
+      },
+    ],
+  };
+
+  const tracks: DynamicTrack[] = [
+    {
+      id: "iss",
+      samples: options.samples,
+      properties: {
+        name: options.name,
+        noradId: ISS_NORAD_CATALOG_NUMBER,
+        type: "orbital-track",
+        title: options.name,
+      },
+    },
+  ];
+
+  return {
+    tracks,
+    payloadBytes: new TextEncoder().encode(JSON.stringify(collection)),
+  };
+}
 
 /**
  * Produce one store-ready tracks entry for {@link ISS_ORBITAL_TRACK_SOURCE_ID}.
@@ -165,8 +466,98 @@ export function produceIssOrbitalTrackFixtureAcquisition(
 }
 
 /**
- * Fixture acquisition adapter for the DLC-3 ISS orbital tracks consumer.
- * Register with the acquisition controller outside the paint path.
+ * Map live CelesTrak TLE HTTP bytes into a store-ready tracks acquisition result
+ * (SGP4 ground track + GeoJSON payload for cache lineage).
+ */
+export function produceIssOrbitalTrackLiveAcquisitionFromFetched(
+  fetched: LiveHttpFetchOk,
+  options: IssOrbitalTrackLiveAcquireOptions = {},
+  signal?: AbortSignal,
+): DynamicAcquisitionResult {
+  if (signal?.aborted) {
+    return { ok: false, error: "aborted" };
+  }
+  const catalog = getDynamicTracksSourceCatalogEntry(ISS_ORBITAL_TRACK_SOURCE_ID);
+  if (catalog === null) {
+    return { ok: false, error: "missing catalog entry" };
+  }
+
+  const parsed = parseIssTleBytes(fetched.bytes);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error };
+  }
+
+  const acquiredAtMs = (options.nowMs ?? Date.now)();
+  if (!Number.isFinite(acquiredAtMs)) {
+    return { ok: false, error: "invalid acquiredAtMs" };
+  }
+
+  const propagated = propagateIssGroundTrackFromTle(
+    {
+      name: parsed.name,
+      line1: parsed.line1,
+      line2: parsed.line2,
+    },
+    {
+      centerTimeMs: acquiredAtMs,
+      ...(options.lookbackMs !== undefined
+        ? { lookbackMs: options.lookbackMs }
+        : {}),
+      ...(options.lookaheadMs !== undefined
+        ? { lookaheadMs: options.lookaheadMs }
+        : {}),
+      ...(options.sampleStepMs !== undefined
+        ? { sampleStepMs: options.sampleStepMs }
+        : {}),
+    },
+  );
+  if (!propagated.ok) {
+    return { ok: false, error: propagated.error };
+  }
+
+  if (signal?.aborted) {
+    return { ok: false, error: "aborted" };
+  }
+
+  const versionId =
+    options.versionIdFor?.(acquiredAtMs) ?? `iss-track-live-${acquiredAtMs}`;
+  const { tracks, payloadBytes } = buildTracksGeoJsonPayload({
+    validTimeMs: acquiredAtMs,
+    name: propagated.name,
+    samples: propagated.samples,
+    sourceUrl: fetched.responseUrl || ISS_ORBITAL_TRACK_LIVE_FEED_URL,
+    title: "ISS Orbital Track — DLU-4 live",
+  });
+
+  const record = buildDynamicSnapshotRecord(
+    {
+      sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
+      kind: "tracks",
+      versionId,
+      acquiredAtMs,
+      validTimeMs: acquiredAtMs,
+      attribution: catalog.attribution,
+      ...(catalog.licenseNote !== undefined
+        ? { licenseNote: catalog.licenseNote }
+        : {}),
+    },
+    {
+      kind: "tracks",
+      tracks,
+    },
+  );
+  if (record === null) {
+    return { ok: false, error: "invalid snapshot record" };
+  }
+  return {
+    ok: true,
+    entry: { record, payloadBytes },
+  };
+}
+
+/**
+ * Fixture acquisition adapter for the DLC-3 ISS orbital tracks consumer /
+ * offline fallback. Register with the acquisition controller outside the paint path.
  */
 export function createIssOrbitalTrackFixtureAcquisitionAdapter(
   options: IssOrbitalTrackAcquireOptions = {},
@@ -175,6 +566,60 @@ export function createIssOrbitalTrackFixtureAcquisitionAdapter(
     ISS_ORBITAL_TRACK_SOURCE_ID,
     (signal) => produceIssOrbitalTrackFixtureAcquisition(options, signal),
   );
+}
+
+/**
+ * DLU-4 live HTTP acquisition adapter for {@link ISS_ORBITAL_TRACK_SOURCE_ID}.
+ * Fetches CelesTrak TLE via the DLU-2 seam, propagates SGP4 ground track outside
+ * rAF; optional fixture fallback when offline.
+ */
+export function createIssOrbitalTrackLiveHttpAcquisitionAdapter(
+  options: IssOrbitalTrackLiveAcquireOptions = {},
+): DynamicSnapshotAcquisitionAdapter {
+  const catalog = getDynamicTracksSourceCatalogEntry(ISS_ORBITAL_TRACK_SOURCE_ID);
+  const useFixtureFallback = options.useFixtureFallback !== false;
+  const acquireOptions: IssOrbitalTrackLiveAcquireOptions = {
+    ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
+    ...(options.versionIdFor !== undefined
+      ? { versionIdFor: options.versionIdFor }
+      : {}),
+    ...(options.lookbackMs !== undefined
+      ? { lookbackMs: options.lookbackMs }
+      : {}),
+    ...(options.lookaheadMs !== undefined
+      ? { lookaheadMs: options.lookaheadMs }
+      : {}),
+    ...(options.sampleStepMs !== undefined
+      ? { sampleStepMs: options.sampleStepMs }
+      : {}),
+  };
+
+  return createLiveHttpAcquisitionAdapter({
+    sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
+    url: options.url ?? ISS_ORBITAL_TRACK_LIVE_FEED_URL,
+    acceptContentTypes: ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES,
+    ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+    attribution: {
+      ...(catalog?.attribution !== undefined
+        ? { attribution: catalog.attribution }
+        : {}),
+      ...(catalog?.licenseNote !== undefined
+        ? { licenseNote: catalog.licenseNote }
+        : {}),
+    },
+    toEntry: (fetched, signal) =>
+      produceIssOrbitalTrackLiveAcquisitionFromFetched(
+        fetched,
+        acquireOptions,
+        signal,
+      ),
+    ...(useFixtureFallback
+      ? {
+          fixtureFallback: (signal?: AbortSignal) =>
+            produceIssOrbitalTrackFixtureAcquisition(acquireOptions, signal),
+        }
+      : {}),
+  });
 }
 
 /** Scene stack row id for the DLC-3 Model B layer (SceneConfig). */

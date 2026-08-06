@@ -240,13 +240,28 @@ export type {
 
 export { createDynamicTracksMaterializer } from "./dynamicTracksMaterializer";
 
-export type { IssOrbitalTrackAcquireOptions } from "./issOrbitalTrackAcquisition";
+export type {
+  IssGroundTrackPropagateResult,
+  IssOrbitalTrackAcquireOptions,
+  IssOrbitalTrackLiveAcquireOptions,
+  IssTleParseResult,
+} from "./issOrbitalTrackAcquisition";
 
 export {
+  ISS_NORAD_CATALOG_NUMBER,
+  ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES,
+  ISS_ORBITAL_TRACK_LIVE_FEED_URL,
+  ISS_ORBITAL_TRACK_LOOKAHEAD_MS,
+  ISS_ORBITAL_TRACK_LOOKBACK_MS,
+  ISS_ORBITAL_TRACK_SAMPLE_STEP_MS,
   ORBITAL_TRACKS_SCENE_LAYER_ID,
   createIssOrbitalTrackFixtureAcquisitionAdapter,
+  createIssOrbitalTrackLiveHttpAcquisitionAdapter,
   isIssOrbitalTrackSourceId,
+  parseIssTleBytes,
   produceIssOrbitalTrackFixtureAcquisition,
+  produceIssOrbitalTrackLiveAcquisitionFromFetched,
+  propagateIssGroundTrackFromTle,
 } from "./issOrbitalTrackAcquisition";
 
 export type {

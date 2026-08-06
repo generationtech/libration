@@ -38,7 +38,7 @@ export const ISS_ORBITAL_TRACK_SOURCE_ID: DynamicSourceId = "iss-orbital-track-v
 
 /**
  * Default refresh for orbital track summaries (~60 s). Acquisition still runs outside rAF.
- * Live CelesTrak / TLE→ephemeris pipelines may tighten later under the same sourceId.
+ * Live CelesTrak TLE → SGP4 ground track under the same durable sourceId (DLU-4).
  */
 export const ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS = 60 * 1000;
 
@@ -47,9 +47,9 @@ const ISS_ORBITAL_TRACK_ENTRY: DynamicTracksSourceCatalogEntry = {
   label: "ISS orbital track",
   kind: "tracks",
   attribution:
-    "Recorded ISS-shaped GeoJSON FeatureCollection fixture (real application/geo+json timed LineString) for DLC-3 lifecycle consumer validation. Lineage stands in for free public orbital products (e.g. CelesTrak GP / TLE-derived ground tracks); live remote acquisition is a follow-up adapter swap — durable id stays iss-orbital-track-v1.",
+    "CelesTrak GP (TLE) for ISS NORAD 25544 via in-app live acquisition, propagated to a timed geographic ground track (SGP4) under durable id iss-orbital-track-v1. Offline / test sessions may fall back to a recorded ISS-shaped GeoJSON FeatureCollection fixture.",
   licenseNote:
-    "Public orbital element products (CelesTrak / space-track style) are typically redistributable with attribution. Fixture bytes are app-local test/demo content shaped like a timed GeoJSON track. Replace with live acquisition under the same sourceId when shipping production refresh.",
+    "CelesTrak GP / TLE products are free for redistribution with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content shaped like a timed GeoJSON track.",
   defaultRefreshIntervalMs: ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Time-tagged track samples in geographic lon/lat degrees (−180…+180°, −90…+90°), GeoJSON FeatureCollection with timed LineString contract.",

@@ -145,7 +145,8 @@ export interface DynamicDataLifecycleHost {
   stopEarthquakesConsumer(): void;
 
   /**
-   * DLC-3: register fixture adapter + start periodic refresh for ISS orbital tracks.
+   * DLC-3 / DLU-4: register live CelesTrak TLE→SGP4 adapter (fixture fallback) +
+   * start periodic refresh for ISS orbital tracks.
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureOrbitalTracksConsumer(options?: {
@@ -153,7 +154,7 @@ export interface DynamicDataLifecycleHost {
     runImmediately?: boolean;
   }): void;
 
-  /** Stop periodic refresh for the DLC-3 ISS orbital tracks source (keeps cache). */
+  /** Stop periodic refresh for the ISS orbital tracks source (keeps cache). */
   stopOrbitalTracksConsumer(): void;
 
   /** Stop periodic acquisition timers and revoke prepared object URLs. */
@@ -173,5 +174,10 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
    * Production omits this and uses global `fetch`.
    */
   earthquakesLiveFetchFn?: LiveHttpFetchFn;
+  /**
+   * Injectable fetch for DLU-4 ISS orbital live acquisition (tests).
+   * Production omits this and uses global `fetch`.
+   */
+  orbitalTracksLiveFetchFn?: LiveHttpFetchFn;
 }> &
   DynamicAcquisitionTimerHooks;

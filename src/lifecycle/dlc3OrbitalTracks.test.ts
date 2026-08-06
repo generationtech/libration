@@ -66,7 +66,12 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     const acquireSpy = vi.fn();
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
+    // Avoid real network in DLC-3 boundary tests: fail live fetch → fixture fallback.
+    const orbitalTracksLiveFetchFn = vi.fn(async () => {
+      throw new Error("offline-test");
+    });
     const host = createDynamicDataLifecycleHost({
+      orbitalTracksLiveFetchFn,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -101,6 +106,7 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
 
     const acquiresAfterArm = acquireSpy.mock.calls.length;
     expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
+    expect(orbitalTracksLiveFetchFn).toHaveBeenCalled();
 
     const productA = 1_700_000_000_000;
     const productB = productA + 3_600_000;
@@ -122,6 +128,9 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
 
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
     const host = createDynamicDataLifecycleHost({
+      orbitalTracksLiveFetchFn: async () => {
+        throw new Error("offline-test");
+      },
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });

@@ -12,10 +12,11 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 + DLU-3 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 + DLU-3/DLU-4 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
  * equirect / cloud-opacity / point-features / tracks materializers.
  * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
+ * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4) with fixture offline fallback.
  * TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
@@ -42,7 +43,7 @@ import {
 } from "./dynamicTracksSourceCatalog";
 import { createGlobalCloudsIrFixtureAcquisitionAdapter } from "./globalCloudsIrAcquisition";
 import { createEarthquakesLiveHttpAcquisitionAdapter } from "./earthquakesAcquisition";
-import { createIssOrbitalTrackFixtureAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
+import { createIssOrbitalTrackLiveHttpAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
 import type {
   DynamicDataLifecycleAttachment,
   DynamicDataLifecycleHost,
@@ -248,7 +249,13 @@ export function createDynamicDataLifecycleHost(
     const runImmediately = options?.runImmediately !== false;
 
     if (!orbitalTracksArmed) {
-      acquisition.registerAdapter(createIssOrbitalTrackFixtureAcquisitionAdapter());
+      acquisition.registerAdapter(
+        createIssOrbitalTrackLiveHttpAcquisitionAdapter({
+          ...(deps.orbitalTracksLiveFetchFn !== undefined
+            ? { fetchFn: deps.orbitalTracksLiveFetchFn }
+            : {}),
+        }),
+      );
       unsubOrbitalTracks?.();
       wireMaterializeOnReady(
         ISS_ORBITAL_TRACK_SOURCE_ID,
