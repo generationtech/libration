@@ -51,7 +51,12 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     const acquireSpy = vi.fn();
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
+    // Avoid real network in DLC-1 boundary tests: fail live fetch → fixture fallback.
+    const cloudsIrLiveFetchFn = vi.fn(async () => {
+      throw new Error("offline-test");
+    });
     const host = createDynamicDataLifecycleHost({
+      cloudsIrLiveFetchFn,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -63,7 +68,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
       },
     });
 
-    // Wrap refresh path: ensureGlobalCloudsIrConsumer registers fixture adapter.
+    // Wrap refresh path: ensureGlobalCloudsIrConsumer registers live adapter.
     const originalRegister = host.acquisition.registerAdapter.bind(host.acquisition);
     host.acquisition.registerAdapter = (adapter) => {
       originalRegister({
@@ -88,6 +93,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
 
     const acquiresAfterArm = acquireSpy.mock.calls.length;
     expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
+    expect(cloudsIrLiveFetchFn).toHaveBeenCalled();
 
     const productA = 1_700_000_000_000;
     const productB = productA + 3_600_000;
@@ -110,6 +116,9 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
 
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
     const host = createDynamicDataLifecycleHost({
+      cloudsIrLiveFetchFn: async () => {
+        throw new Error("offline-test");
+      },
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });

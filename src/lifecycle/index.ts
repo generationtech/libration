@@ -179,13 +179,22 @@ export {
   sampleCloudOpacity01,
 } from "./dynamicCloudOpacityMaterializer";
 
-export type { GlobalCloudsIrAcquireOptions } from "./globalCloudsIrAcquisition";
+export type {
+  GlobalCloudsIrAcquireOptions,
+  GlobalCloudsIrJpegValidateResult,
+  GlobalCloudsIrLiveAcquireOptions,
+} from "./globalCloudsIrAcquisition";
 
 export {
+  GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
+  GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
   GLOBAL_CLOUDS_IR_SCENE_LAYER_ID,
   createGlobalCloudsIrFixtureAcquisitionAdapter,
+  createGlobalCloudsIrLiveHttpAcquisitionAdapter,
   isGlobalCloudsIrSourceId,
   produceGlobalCloudsIrFixtureAcquisition,
+  produceGlobalCloudsIrLiveAcquisitionFromFetched,
+  validateGlobalCloudsIrJpegBytes,
 } from "./globalCloudsIrAcquisition";
 
 export type { DynamicPointFeaturesSourceCatalogEntry } from "./dynamicPointFeaturesSourceCatalog";

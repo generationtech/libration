@@ -49,7 +49,12 @@ describe("DLC-4 Model A cloud participation boundary", () => {
     const acquireSpy = vi.fn();
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
+    // Avoid real network: fail live fetch → fixture fallback (same durable sourceId).
+    const cloudsIrLiveFetchFn = vi.fn(async () => {
+      throw new Error("offline-test");
+    });
     const host = createDynamicDataLifecycleHost({
+      cloudsIrLiveFetchFn,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -84,6 +89,7 @@ describe("DLC-4 Model A cloud participation boundary", () => {
 
     const acquiresAfterArm = acquireSpy.mock.calls.length;
     expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
+    expect(cloudsIrLiveFetchFn).toHaveBeenCalled();
 
     const attA = host.attachForProductInstant(1_700_000_000_000);
     const attB = host.attachForProductInstant(1_700_000_000_000 + 3_600_000);
@@ -100,6 +106,9 @@ describe("DLC-4 Model A cloud participation boundary", () => {
 
   it("solar shading layer reads prepared opacity sync when Model A enabled; no resolveSnapshot", async () => {
     const host = createDynamicDataLifecycleHost({
+      cloudsIrLiveFetchFn: async () => {
+        throw new Error("offline-test");
+      },
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });

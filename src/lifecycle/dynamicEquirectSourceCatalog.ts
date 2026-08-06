@@ -41,7 +41,7 @@ export const GLOBAL_CLOUDS_IR_SOURCE_ID: DynamicSourceId = "global-clouds-ir-v1"
 
 /**
  * Default refresh for cloud/IR (~15 min). Acquisition still runs outside rAF.
- * Live feeds may tighten later per source policy.
+ * Live NASA GIBS WMS under the same durable sourceId (DLU-5).
  */
 export const GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 
@@ -50,9 +50,9 @@ const GLOBAL_CLOUDS_IR_ENTRY: DynamicEquirectSourceCatalogEntry = {
   label: "Global clouds / IR",
   kind: "equirectRaster",
   attribution:
-    "Recorded global equirect JPEG fixture (real image/jpeg) for DLC-1 lifecycle consumer validation. Lineage stands in for free global cloud/IR products (e.g. NOAA GOES full-disk IR / NASA GIBS cloud mosaics); live remote acquisition is a follow-up adapter swap — durable id stays global-clouds-ir-v1.",
+    "NASA GIBS MODIS Terra Cloud Top Temperature (Day) equirect JPEG via in-app live WMS acquisition under durable id global-clouds-ir-v1. Offline / test sessions may fall back to a recorded equirect JPEG fixture.",
   licenseNote:
-    "Fixture bytes are app-local test/demo content. Replace with a rights-cleared live feed under the same sourceId when shipping production acquisition.",
+    "NASA GIBS / Earthdata imagery is free and open for public use with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content.",
   defaultRefreshIntervalMs: GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote: "Full-world equirectangular −180…+180° longitude, −90…+90° latitude.",
 };

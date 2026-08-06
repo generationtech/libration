@@ -12,9 +12,10 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 + DLU-3/DLU-4 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 + DLU-3/DLU-4/DLU-5 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
  * equirect / cloud-opacity / point-features / tracks materializers.
+ * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback.
  * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
  * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4) with fixture offline fallback.
  * TimeContext attachments are read-only.
@@ -41,7 +42,7 @@ import {
   ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   ISS_ORBITAL_TRACK_SOURCE_ID,
 } from "./dynamicTracksSourceCatalog";
-import { createGlobalCloudsIrFixtureAcquisitionAdapter } from "./globalCloudsIrAcquisition";
+import { createGlobalCloudsIrLiveHttpAcquisitionAdapter } from "./globalCloudsIrAcquisition";
 import { createEarthquakesLiveHttpAcquisitionAdapter } from "./earthquakesAcquisition";
 import { createIssOrbitalTrackLiveHttpAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
 import type {
@@ -162,7 +163,14 @@ export function createDynamicDataLifecycleHost(
     const runImmediately = options?.runImmediately !== false;
 
     if (!cloudsIrArmed) {
-      acquisition.registerAdapter(createGlobalCloudsIrFixtureAcquisitionAdapter());
+      acquisition.registerAdapter(
+        createGlobalCloudsIrLiveHttpAcquisitionAdapter({
+          useFixtureFallback: true,
+          ...(deps.cloudsIrLiveFetchFn !== undefined
+            ? { fetchFn: deps.cloudsIrLiveFetchFn }
+            : {}),
+        }),
+      );
       unsubCloudsIr?.();
       wireMaterializeOnReady(
         GLOBAL_CLOUDS_IR_SOURCE_ID,

@@ -119,7 +119,8 @@ export interface DynamicDataLifecycleHost {
   ): DynamicDataLifecycleAttachment;
 
   /**
-   * DLC-1 / DLC-4: register fixture adapter + start periodic refresh for global clouds/IR.
+   * DLC-1 / DLC-4 / DLU-5: register live GIBS HTTP adapter (fixture fallback) +
+   * start periodic refresh for global clouds/IR.
    * Used by Model B overlay and Model A cloud participation (same durable sourceId).
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
@@ -169,6 +170,11 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   cloudOpacityMaterializer?: DynamicCloudOpacityMaterializer;
   pointFeaturesMaterializer?: DynamicPointFeaturesMaterializer;
   tracksMaterializer?: DynamicTracksMaterializer;
+  /**
+   * Injectable fetch for DLU-5 global clouds/IR live acquisition (tests).
+   * Production omits this and uses global `fetch`.
+   */
+  cloudsIrLiveFetchFn?: LiveHttpFetchFn;
   /**
    * Injectable fetch for DLU-3 earthquakes live acquisition (tests).
    * Production omits this and uses global `fetch`.
