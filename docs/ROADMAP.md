@@ -274,7 +274,7 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-1` (core types & contracts). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
+Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-2` (versioned snapshot store / cache). **`P10-1` shipped** (core types & contracts in `src/lifecycle/`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
 
 **Product lock:**
 
