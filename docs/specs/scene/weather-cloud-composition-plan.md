@@ -105,7 +105,7 @@ After this planning doc and Phase 10 foundations:
 3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
 4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
 
-**Phase 10 lifecycle complete.** **`DLC-1`…`DLC-4` shipped** (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination participation). **Default next:** **`DLU-*` live network acquisition** for those consumers (**Active: `DLU-1`**). Additional *new* `DLC-*` consumers require explicit scope. Remaining Phase 8 queue **A** deferred unless explicitly scoped.
+**Phase 10 lifecycle complete.** **`DLC-1`…`DLC-4` shipped** (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination participation). **Default next:** **`DLU-*` live network acquisition** for those consumers (**Active: `DLU-2`**). Additional *new* `DLC-*` consumers require explicit scope. Remaining Phase 8 queue **A** deferred unless explicitly scoped.
 
 ## Relationship to existing subsystems
 

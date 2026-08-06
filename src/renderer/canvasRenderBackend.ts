@@ -163,6 +163,9 @@ export class CanvasRenderBackend implements RenderBackend {
       case "points":
         this.drawPointsLayer(ctx, layer, viewport);
         break;
+      case "tracks":
+        this.drawTracksLayer(ctx, layer, viewport);
+        break;
       default:
         break;
     }
@@ -442,23 +445,6 @@ export class CanvasRenderBackend implements RenderBackend {
       );
       return;
     }
-    if (isDynamicTracksPayload(layer.data)) {
-      const w = viewport.width;
-      const h = viewport.height;
-      if (w <= 0 || h <= 0) {
-        return;
-      }
-      executeRenderPlanOnCanvas(
-        ctx,
-        buildDynamicTracksRenderPlan({
-          viewportWidthPx: w,
-          viewportHeightPx: h,
-          layerOpacity: layer.opacity,
-          payload: layer.data,
-        }),
-      );
-      return;
-    }
     if (!isCityPinsPayload(layer.data)) {
       return;
     }
@@ -471,6 +457,34 @@ export class CanvasRenderBackend implements RenderBackend {
     executeRenderPlanOnCanvas(
       ctx,
       buildCityPinsRenderPlan({
+        viewportWidthPx: w,
+        viewportHeightPx: h,
+        layerOpacity: layer.opacity,
+        payload: layer.data,
+      }),
+    );
+  }
+
+  /**
+   * Dynamic tracks (DLC-3 / DLU-1): ISS orbital paths and similar trail overlays.
+   * Dispatched on layer type `tracks` — must not be nested under `points` only.
+   */
+  private drawTracksLayer(
+    ctx: CanvasRenderingContext2D,
+    layer: RenderableLayerState,
+    viewport: Viewport,
+  ): void {
+    if (!isDynamicTracksPayload(layer.data)) {
+      return;
+    }
+    const w = viewport.width;
+    const h = viewport.height;
+    if (w <= 0 || h <= 0) {
+      return;
+    }
+    executeRenderPlanOnCanvas(
+      ctx,
+      buildDynamicTracksRenderPlan({
         viewportWidthPx: w,
         viewportHeightPx: h,
         layerOpacity: layer.opacity,
