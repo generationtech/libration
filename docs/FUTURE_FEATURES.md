@@ -45,7 +45,7 @@ The current scene system already includes:
 - solar analemma overlay.
 - semantic astronomical scene participation through the layer system.
 
-Future work may extend these systems **only with explicit product scope**—**Slice 2 queues B/C default cadence closed** (`PLAN.md`): further substrate heuristics (beyond the **eight-intrinsic** baseline), **fourth+** twilight passes, scattering/haze, optional SceneConfig twilight softness, and (when Phase 10 lifecycle exists) weather/cloud **implementation** per [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed** (queue **D**)—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
+Future work may extend these systems **only with explicit product scope**—**Slice 2 queues B/C default cadence closed** (`PLAN.md`): further substrate heuristics (beyond the **eight-intrinsic** baseline), **fourth+** twilight passes, scattering/haze, optional SceneConfig twilight softness, and weather/cloud **implementation** via `DLC-*` per [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed** (queue **D**)—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
 
 ## Maps and base-map families
 
@@ -121,7 +121,7 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 (`P10-*` steps) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—in progress (**`P10-1`**/`P10-2`/`P10-3`/`P10-4`/`P10-5`/`P10-6` types/store/manager/resolver/acquisition/shell seam shipped; next **`P10-7`**); **no** user-facing dynamic overlay until post–Phase 10 **`DLC-*`**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **default next** = **`DLC-*`** (currently **`DLC-1`**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 **First consumer bias (`DLC-1`):** global equirect raster — clouds / satellite IR (real free or justified paid source; in-app periodic acquisition).
 

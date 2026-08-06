@@ -2,11 +2,11 @@
 
 ## Status
 
-**Planning artifact — opened for Phase 10 execution.** This document is the authoritative step list and contract for the dynamic data lifecycle foundation. Implementation proceeds **one development step at a time**. Agents must update the **Development steps** status table when a step ships.
+**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation and the **`DLC-*`** consumer step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host). **Default next macro track:** first pending **`DLC-*`** step (currently **`DLC-1`**). Agents must update the **Post–Phase 10** status table when a consumer step ships.
 
-**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10).
+**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / DLC), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 complete; After Phase 10 consumers).
 
-**Related:** weather/cloud *participation* models remain in [`weather-cloud-composition-plan.md`](weather-cloud-composition-plan.md). That doc does **not** replace this lifecycle plan. User-facing weather/cloud **layers** are **out of scope for Phase 10**; they are the first **post–Phase 10** consumer track.
+**Related:** weather/cloud *participation* models remain in [`weather-cloud-composition-plan.md`](weather-cloud-composition-plan.md). That doc does **not** replace this lifecycle plan. User-facing weather/cloud **layers** were **out of scope for Phase 10**; they are the first **post–Phase 10** consumer track (`DLC-1`…).
 
 ## Product intent (locked for this phase)
 
@@ -99,7 +99,7 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 
 ## Development steps (sequence through these)
 
-**Rule:** Each agent session implements **exactly one** step—the first whose status is not `shipped`. Update this table and `PLAN.md` Slice 5 when the step completes. Do not skip ahead without explicit human scope.
+**Rule:** Phase 10 steps `P10-0`…`P10-7` are **all shipped**. Further work uses the **Post–Phase 10** `DLC-*` table—each agent session implements **exactly one** consumer step (the first whose status is not `shipped`). Update that table and `PLAN.md` Slice 5 when a step completes. Do not skip ahead without explicit human scope.
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
@@ -110,7 +110,7 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 | 4 | `P10-4` | **shipped** | **Product-time resolver** — `resolveSnapshot(sourceId, productInstantMs)` against the store; nearest-valid default policy; scrub-safe (read-only); tests. |
 | 5 | `P10-5` | **shipped** | **Acquisition adapter + periodic refresh** — async acquisition interface; periodic scheduler; manual/file import path; prove no fetch on render path with tests. May use **recorded real-format** fixtures or a narrow free HTTP sample **into the cache only**—no scene overlay. |
 | 6 | `P10-6` | **shipped** | **App shell seam** — wire lifecycle so shell/TimeContext (or equivalent) can attach manager + resolve by product time for **future** layers; still **no** user-facing dynamic overlay. Integration tests as practical. |
-| 7 | `P10-7` | pending | **Phase 10 closure** — docs mark Phase 10 complete; handoff opens **post–Phase 10 dynamic layer consumers**; sync ROADMAP/PLAN/AGENTS/README. |
+| 7 | `P10-7` | **shipped** | **Phase 10 closure** — docs mark Phase 10 complete; handoff opens **post–Phase 10 dynamic layer consumers**; sync ROADMAP/PLAN/AGENTS/README. |
 
 ### Step completion checklist (every step)
 
@@ -130,10 +130,11 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 - **P10-4 (shipped):** Product-time resolver in `src/lifecycle/` — `createDynamicSnapshotResolver` / `resolveSnapshot(sourceId, productInstantMs)` against `DynamicSnapshotStore`; nearest-`validTimeMs` default policy (optional `validUntilMs` window via existing pure helpers); optional lifecycle-manager freshness bridge; scrub-safe read-only (list/get only—no put/fetch); tests in `dynamicSnapshotResolver.test.ts`. No network, acquisition, shell seam, or UI.
 - **P10-5 (shipped):** Acquisition controller in `src/lifecycle/` — `DynamicSnapshotAcquisitionAdapter`, `createDynamicAcquisitionController` (async `refreshNow`, `startPeriodic`/`stopPeriodic` via injectable `setInterval`—never `requestAnimationFrame`), manual/file `importSnapshot` into the versioned store, lifecycle loading/ready/error transitions, `createFixtureAcquisitionAdapter` with real-format JPEG fixtures; tests in `dynamicAcquisition.test.ts` prove scrub/resolve does not invoke adapters. No shell seam, scene overlay, or UI.
 - **P10-6 (shipped):** App shell seam — `createDynamicDataLifecycleHost` wires store + lifecycle manager + product-time resolver + acquisition; `attachForProductInstant` builds a read-only `DynamicDataLifecycleAttachment` on `TimeContext` each tick (`App.tsx`); `getDynamicDataLifecycleAttachment` for future layers; tests in `dynamicDataLifecycleHost.test.ts` prove scrub resolve does not invoke adapters. Still **no** user-facing dynamic overlay or SceneConfig dynamic enablement.
+- **P10-7 (shipped):** Phase 10 closure — all `P10-1`…`P10-7` marked shipped; public barrel smoke in `phase10LifecycleClosure.test.ts` (kinds/states + compose + scrub-safe host attach); docs/handoff point default macro track to **`DLC-*`** (next **`DLC-1`** global equirect clouds/IR). Still **no** user-facing dynamic overlay in Phase 10 exit.
 
-## Post–Phase 10 — Dynamic layer consumers (planned track)
+## Post–Phase 10 — Dynamic layer consumers (active track)
 
-After `P10-7`, the default macro track becomes **consumer verticals** (still one PR at a time). Suggested order (adjust when sources/rights are confirmed):
+**Phase 10 exit criteria met.** The default macro track is now **consumer verticals** (still one PR at a time). **Active step:** `DLC-1`. Suggested order (adjust when sources/rights are confirmed):
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
@@ -146,10 +147,10 @@ Phase 11 (zoom/pan/tiles) may unlock denser regional products later; Phase 10/DL
 
 ## Success criteria (Phase 10 complete)
 
-- All steps `P10-1`…`P10-7` marked **shipped**.
-- Tests prove: store, manager states, product-time resolve, acquisition outside render.
-- Docs and handoff point to **DLC** consumer track—not Phase 8/9 filler.
-- No user-facing dynamic overlay required for Phase 10 exit.
+- All steps `P10-1`…`P10-7` marked **shipped**. ✅
+- Tests prove: store, manager states, product-time resolve, acquisition outside render. ✅ (`src/lifecycle/*` + `phase10LifecycleClosure.test.ts`)
+- Docs and handoff point to **DLC** consumer track—not Phase 8/9 filler. ✅
+- No user-facing dynamic overlay required for Phase 10 exit. ✅
 
 ## References
 

@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Libration is in a post-foundation consolidation and feature-expansion phase. **Default next track:** Phase 10 (dynamic data lifecycle); remaining Phase 8 map inventory and Phase 9 composition work are deferred until after Phase 10.
+Libration is in a post-foundation consolidation and feature-expansion phase. **Default next track:** post–Phase 10 dynamic layer consumers (`DLC-*`; next **`DLC-1`**); Phase 10 lifecycle foundation is **complete**. Remaining Phase 8 map inventory and Phase 9 composition work remain deferred until after the first DLC consumers unless explicitly scoped.
 
 The major runtime foundations are implemented well enough to support disciplined feature-forward work:
 
@@ -26,34 +26,35 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is **twofold**: (1) **treat the delivered upstream planetary illumination and composition baseline as complete** for standing incremental work—the **eight-intrinsic** substrate lift contract, **third** narrow twilight pass, overlay readability closure, and weather/cloud **planning** are **shipped**; **Slice 2 queues B and C** (standing ninth+ catalog intrinsics and fourth+ constants-only twilight passes) are **closed** as default PR tracks and reopen only with **explicit product scope** (observed readability/terminator issue, new catalog axis, or visual rationale—not agent-invented taxonomy or unbounded tuning); and (2) **execute Phase 10 / Slice 5** via sequenced **`P10-*`** steps in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (next **`P10-7`**; **`P10-1`**/`P10-2`/`P10-3`/`P10-4`/`P10-5`/`P10-6` shipped; lifecycle only—no user-facing dynamic overlay until post–Phase 10 **`DLC-*`**)—queue **A (2)** substrates (land cover, bathymetry, climate normals, **population density** **`equirect-world-population-gpw-v1`**) plus **attribution presentation** and **month-aware selector polish** are **shipped**; **remaining Phase 8 / Slice 3–4 map inventory** (next sourced static substrates, temperature/precipitation climatology, optional selector hygiene) and **Phase 9 composition extensions** are **deferred until after Phase 10**.
+The current strategic objective is **twofold**: (1) **treat the delivered upstream planetary illumination and composition baseline as complete** for standing incremental work—the **eight-intrinsic** substrate lift contract, **third** narrow twilight pass, overlay readability closure, and weather/cloud **planning** are **shipped**; **Slice 2 queues B and C** (standing ninth+ catalog intrinsics and fourth+ constants-only twilight passes) are **closed** as default PR tracks and reopen only with **explicit product scope** (observed readability/terminator issue, new catalog axis, or visual rationale—not agent-invented taxonomy or unbounded tuning); and (2) **execute post–Phase 10 `DLC-*` consumers** via sequenced steps in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (Phase 10 **`P10-0`…`P10-7` complete**; next **`DLC-1`** first global equirect clouds/IR)—queue **A (2)** substrates (land cover, bathymetry, climate normals, **population density** **`equirect-world-population-gpw-v1`**) plus **attribution presentation** and **month-aware selector polish** are **shipped**; **remaining Phase 8 / Slice 3–4 map inventory** (next sourced static substrates, temperature/precipitation climatology, optional selector hygiene) and **Phase 9 composition extensions** stay **deferred** unless explicitly scoped ahead of DLC.
 
 ### Agent session handoff (planning prompts)
 
 Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
 
-**Scheduling snapshot (Phase 10 active — next step `P10-7`; Phase 8/9 remaining deferred; Slice 2 queues B/C closed; queue A (2) closed; queue D weather planning closed; DLC consumers after `P10-7`):**
+**Scheduling snapshot (Phase 10 complete; next `DLC-1`; Phase 8/9 remaining deferred; Slice 2 queues B/C closed; queue A (2) closed; queue D weather planning closed):**
 
 | Role | Name | Meaning |
 |------|------|---------|
-| **Default macro PR track** | **Phase 10 / Slice 5** (dynamic data lifecycle) | **Next merged PR track.** Sequenced steps `P10-1`…`P10-7` in the lifecycle plan. **No** user-facing dynamic layer in Phase 10. Post–Phase 10 **DLC** consumers (first: global equirect clouds/IR). |
-| **Primary active execution slice** | **Phase 10 / Slice 5** | Dynamic data lifecycle—not Phase 8 map inventory, not Phase 9 composition, not Slice 2 **B**/**C** unless the prompt supplies product scope. |
-| **Single best next PR** | **Next pending Phase 10 step** (`P10-*`) | Implement the **first non-shipped** step in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (currently **`P10-7`**). One step per session. **Do not** ship user-facing dynamic overlays in Phase 10; **do not** default to Phase 8/9 or composition filler. |
+| **Default macro PR track** | **Post–Phase 10 `DLC-*`** (dynamic layer consumers) | **Next merged PR track.** Sequenced steps in the lifecycle plan “Post–Phase 10” table. First: **`DLC-1`** global equirect clouds/IR. Phase 10 lifecycle foundation is **shipped**. |
+| **Primary active execution slice** | **DLC consumers / Slice 5 exit** | User-facing dynamic layers that consume the shipped lifecycle—not Phase 8 map inventory, not Phase 9 composition, not Slice 2 **B**/**C** unless the prompt supplies product scope. |
+| **Single best next PR** | **Next pending `DLC-*` step** | Implement the **first non-shipped** consumer step in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (currently **`DLC-1`**). One vertical per session. Reuse Phase 10 store/resolve/acquisition; **no** fetch inside render. |
 | **Composition baseline (Slice 2)** | **Closed** (queues **B**/**C**) | **Eight-intrinsic** contract + **third** twilight pass + overlay readability + queue **D** planning **shipped**; ninth+ intrinsics / fourth+ twilight / deeper scattering reopen only with **explicit product scope**. |
-| **Map inventory (queue A)** | **Phase 8 / Slice 3 — deferred post–Phase 10** | Queue **A (2) closed** for current catalog; **remaining** sourced substrates / Slice 4 polish **resume after Phase 10** (preferred backlog then: temperature or precipitation climatology). |
-| **Phase 9 composition** | **Deferred post–Phase 10** | Readability/atmosphere extensions beyond the closed baseline—after Phase 10, or earlier only with **explicit product scope**. |
+| **Map inventory (queue A)** | **Phase 8 / Slice 3 — deferred** | Queue **A (2) closed** for current catalog; **remaining** sourced substrates / Slice 4 polish **resume** when a session scopes them ahead of or after early DLC (preferred backlog: temperature or precipitation climatology). |
+| **Phase 9 composition** | **Deferred** | Readability/atmosphere extensions beyond the closed baseline—after early DLC, or earlier only with **explicit product scope**. |
+| **Phase 10 lifecycle** | **Complete** (`P10-0`…`P10-7`) | Types, store, manager, resolver, acquisition, shell seam, docs closure — **shipped** in `src/lifecycle/`. |
 
-1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 5** and deferred **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phase 10 in particular; Phases 8–9 deferred remaining work).
+1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 5** and deferred **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phase 10 complete; After Phase 10 / `DLC-*`; Phases 8–9 deferred remaining work).
 2. **Primary active execution slice — two roles (do not conflate):**
-   - **Default macro PR track (next merged PR):** **Phase 10 / Slice 5** (dynamic data lifecycle)—see table above. **Queue A (2) closed**; remaining Phase 8 map inventory and Phase 9 composition extensions are **deferred until after Phase 10**. **Slice 2 queues B/C closed** as standing defaults (composition baseline complete). **All eleven** bundled catalog families have `previewThumbnailSrc`, **structured selector attribution**, and **month-aware selector polish** (legacy reference preview + attribution + active UTC month line **closed**).
+   - **Default macro PR track (next merged PR):** **post–Phase 10 `DLC-*`** (dynamic layer consumers)—see table above. Phase 10 lifecycle **complete**. **Queue A (2) closed**; remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. **Slice 2 queues B/C closed** as standing defaults (composition baseline complete). **All eleven** bundled catalog families have `previewThumbnailSrc`, **structured selector attribution**, and **month-aware selector polish** (legacy reference preview + attribution + active UTC month line **closed**).
    - **Composition baseline (not a standing PR queue):** **Slice 2 — Planetary illumination — delivered foundations** — **closed** for default incremental work (eight-intrinsic substrate lift, **third** twilight pass, overlay readability, queue **D** planning). Reopen ninth+ intrinsics, fourth+ twilight, or deeper atmosphere **only** when the session supplies **explicit product scope**—do not invent work to fill a cadence gap.
 3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
-   - **E. Phase 10 / Slice 5 (dynamic data lifecycle) — default next:** the **first pending** `P10-*` step in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (see Slice 5 **Active step**). One step per PR/session. **Do not** implement user-facing weather/cloud overlays during Phase 10; follow weather participation models only after lifecycle exit (`DLC-*`).
-   - **A. Phase 8 / Slice 3 (map inventory) — deferred post–Phase 10:** one bounded map-inventory / substrate increment (use existing `maps:prep` / bundled catalog patterns). **Queue status:** **(1)** richer **attribution presentation** — **shipped**; **(2b)** **Slice 4** month-aware selector polish — **shipped**; **(2)** static bathymetry, land cover, climate normals, and **population density** — **shipped**. **Queue A (2) closed** for the current catalog. **Resume after Phase 10** when a **new sourced static substrate** (raster + rights; preferred backlog: temperature/precipitation climatology) or explicitly scoped Slice 4 polish is in scope—**not** the default next PR while Phase 10 is open. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`**, **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`**, **`equirect-world-bathymetry-etopo-v1`**, **`equirect-world-landcover-modis-v1`**, **`equirect-world-climate-koppen-beck-v1`**, **`equirect-world-population-gpw-v1`**, Blue Marble families; **structured attribution** on all **eleven** bundled families; **month-aware selector** copy + active month line in `BaseMapStyleControl`.
+   - **E. Post–Phase 10 `DLC-*` (dynamic layer consumers) — default next:** the **first pending** `DLC-*` step in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (see Slice 5 **Active step** — currently **`DLC-1`**). One consumer vertical per PR/session. Reuse the shipped lifecycle (store / resolve / acquisition / shell seam); never fetch inside render.
+   - **A. Phase 8 / Slice 3 (map inventory) — deferred:** one bounded map-inventory / substrate increment (use existing `maps:prep` / bundled catalog patterns). **Queue status:** **(1)** richer **attribution presentation** — **shipped**; **(2b)** **Slice 4** month-aware selector polish — **shipped**; **(2)** static bathymetry, land cover, climate normals, and **population density** — **shipped**. **Queue A (2) closed** for the current catalog. **Resume** when a **new sourced static substrate** (raster + rights; preferred backlog: temperature/precipitation climatology) or explicitly scoped Slice 4 polish is in scope—**not** the default next PR while early `DLC-*` work is open. **Shipped (rolling on this track):** **`equirect-world-legacy-v1`**, **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`**, **`equirect-world-bathymetry-etopo-v1`**, **`equirect-world-landcover-modis-v1`**, **`equirect-world-climate-koppen-letter-v1`**, **`equirect-world-population-gpw-v1`**, Blue Marble families; **structured attribution** on all **eleven** bundled families; **month-aware selector** copy + active month line in `BaseMapStyleControl`.
    - **B. Slice 2 — substrate (closed as default track):** ninth+ optional `BaseMapCapabilities` intrinsic — **closed** unless the session supplies **explicit product scope** (defensible flag name + target families); do not invent taxonomy in code alone.
    - **C. Slice 2 — atmosphere (closed as default track):** optional **fourth+** narrow constants-only twilight pass in `illuminationShading.ts` — **closed** unless the session supplies **explicit visual/product rationale**; **third pass shipped**; avoid unbounded subjective tuning loops.
-   - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) — **shipped** (see closed increment below). **Implementation** follows Phase 10.
-4. **Anti-stall / tie-break:** prefer **E** (Phase 10 lifecycle) as the default next vertical. Queue **D** planning **shipped**—do not repeat planning PRs. **Do not** fall through to Phase 8 queue **A**, Phase 9, or Slice 2 **B**/**C** as default next work while Phase 10 is the active track—those reopen after Phase 10 or with **explicit product scope**. If the session has **no** Phase 10 scope and only asks for filler, state that briefly and stop.
+   - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) — **shipped** (see closed increment below). **Implementation** is `DLC-*`.
+4. **Anti-stall / tie-break:** prefer **E** (`DLC-*` consumers) as the default next vertical. Queue **D** planning **shipped**—do not repeat planning PRs. Phase 10 **complete**—do not reopen `P10-*`. **Do not** fall through to Phase 8 queue **A**, Phase 9, or Slice 2 **B**/**C** as default next work while early DLC is the active track—those reopen with **explicit product scope**. If the session has **no** DLC scope and only asks for filler, state that briefly and stop.
 
 **Closed and doc-finalized (Slice 2 substrate increment):** optional catalog intrinsic **`sunGlintDense`** (`BaseMapCapabilities`, bounded penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`, bundled curation on Blue Marble **BM**/**T**) — the **eight-intrinsic** upstream overlay-lift contract is now the **active shipped baseline** (not partial). **Queue B (ninth+ default cadence) closed**—see closed increment below; do not reopen BM/T glint coverage without explicit product scope (weather/cloud **planning** closed in queue **D**).
 
@@ -84,9 +85,11 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 **Closed and doc-finalized (Phase 8 / Slice 4 month-aware selector increment):** month-aware catalog copy for Blue Marble **BM**/**T**/**TB**; `variantMode` on selector options; active **UTC civil month** line in [`BaseMapStyleControl`](src/components/config/BaseMapStyleControl.tsx) when a month-aware family is selected (`formatActiveUtcCivilMonthLabel` in [`src/config/baseMapMonthResolve.ts`](src/config/baseMapMonthResolve.ts)); `productInstantMs` threaded from the render loop when the config panel is open ([`App.tsx`](src/App.tsx) → [`ConfigShell`](src/components/config/ConfigShell.tsx) → [`LayersTab`](src/components/config/LayersTab.tsx)); tests in [`BaseMapStyleControl.test.tsx`](src/components/config/BaseMapStyleControl.test.tsx) and [`baseMapMonthResolve.test.ts`](src/config/baseMapMonthResolve.test.ts). **Queue A remaining deferred post–Phase 10**—see item **3** above.
 
-**Closed and doc-finalized (Slice 2 queue D — weather/cloud planning increment):** [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md) — participation models (upstream composition vs projection-space layer vs static climatology substrate), Phase 10 lifecycle prerequisites, canonical-time and RenderPlan boundaries, explicit non-goals. **No runtime or SceneConfig changes.** **Phase 10 is now the default macro track**; implementation follows that spec once lifecycle foundations exist.
+**Closed and doc-finalized (Slice 2 queue D — weather/cloud planning increment):** [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md) — participation models (upstream composition vs projection-space layer vs static climatology substrate), Phase 10 lifecycle prerequisites, canonical-time and RenderPlan boundaries, explicit non-goals. **No runtime or SceneConfig changes.** **Phase 10 lifecycle shipped**; **implementation** is post–Phase 10 `DLC-*`.
 
-**Handoff when Phase 10 continues:** one session/PR = **one** pending `P10-*` step from [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md); update step status + Slice 5 **Active step**; do not fetch inside render; do not ship user-facing dynamic overlays until post–Phase 10 `DLC-*`. See **Slice 5** and `docs/ROADMAP.md` Phase 10.
+**Closed and doc-finalized (Phase 10 / Slice 5 — dynamic data lifecycle):** [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) steps `P10-0`…`P10-7` — core types, versioned store, lifecycle manager, product-time resolver, acquisition + periodic refresh, app shell `TimeContext` seam, docs/handoff closure; runtime in `src/lifecycle/`; closure smoke `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay in Phase 10. **Default next:** **`DLC-1`**.
+
+**Handoff when DLC continues:** one session/PR = **one** pending `DLC-*` step from [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md); update consumer step status + Slice 5 **Active step**; do not fetch inside render; reuse Phase 10 lifecycle contracts. See **Slice 5** and `docs/ROADMAP.md` After Phase 10.
 
 **Handoff when queue A resumes (post–Phase 10; next sourced substrate):** one PR — source raster + rights → `npm run maps:prep` (or GDAL/static export pipeline) → committed raster under `public/maps/` + preview → `base-map-catalog.json` row (`licenseNote` / `sourceLinks` as needed) → [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md) provenance → catalog/resolver + onboarded-asset tests. **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog after Phase 10** (when sourced): temperature or precipitation climatology static family—see `docs/maps/MAP_ASSET_STRATEGY.md`. Queues **B**/**C** remain **closed** as standing defaults.
 
@@ -94,10 +97,10 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 1. Keep architecture and docs aligned with actual runtime behavior.
 2. Preserve AI co-engineering consistency through repo rules and implementation patterns.
-3. Advance **Phase 10 / Slice 5** via sequenced `P10-*` steps in the lifecycle plan (currently **`P10-7`**).
-4. Preserve future-feature inventory without prematurely implementing it; **defer** remaining Phase 8 map inventory and Phase 9 composition extensions until after Phase 10 (unless explicitly scoped).
+3. Advance **post–Phase 10 `DLC-*`** via sequenced consumer steps in the lifecycle plan (currently **`DLC-1`**).
+4. Preserve future-feature inventory without prematurely implementing it; **defer** remaining Phase 8 map inventory and Phase 9 composition extensions unless explicitly scoped.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Preserve the **delivered** planetary composition baseline; reopen composition increments only with **explicit product scope**; ship **no** user-facing dynamic overlays until post–Phase 10 `DLC-*`; not standing filler composition or map-inventory PRs while Phase 10 `P10-*` steps remain.
+6. Preserve the **delivered** planetary composition baseline and **shipped** Phase 10 lifecycle; reopen composition increments only with **explicit product scope**; ship dynamic overlays only via **`DLC-*`**; not standing filler composition or map-inventory PRs while early DLC steps remain.
 
 ## Near-term execution slices
 
@@ -145,7 +148,7 @@ Baseline verified: overlay readability **v1 + v1.1 + derived substrate lift + su
 
 ### Slice 2: Planetary illumination — extensions on delivered foundations
 
-Status: **baseline closed** for standing incremental work (queues **B**/**C** **closed**—see handoff table). **Delivered foundations** below are settled; **re-open** composition code only with **explicit product scope** (not as default filler PRs). **Default macro track** is **Phase 10 / Slice 5** (dynamic data lifecycle). Remaining Phase 8 / Phase 9 work is **deferred until after Phase 10** (or earlier only with explicit product scope).
+Status: **baseline closed** for standing incremental work (queues **B**/**C** **closed**—see handoff table). **Delivered foundations** below are settled; **re-open** composition code only with **explicit product scope** (not as default filler PRs). **Default macro track** is post–Phase 10 **`DLC-*`** (Phase 10 lifecycle **complete**). Remaining Phase 8 / Phase 9 work is **deferred** unless explicitly scoped.
 
 **Implemented foundations (treat as settled; extend, do not reopen):**
 
@@ -161,7 +164,7 @@ Status: **baseline closed** for standing incremental work (queues **B**/**C** **
 
 **Composition increments (explicit product scope only; queues B/C closed):**
 
-**Scheduling tie-break:** use **`PLAN.md` → “Agent session handoff (planning prompts)”** first. **Do not** default to queue **B** or **C**. **Default next PR** is **Phase 10 / Slice 5** (lifecycle foundation). Remaining Phase 8 queue **A** and Phase 9 composition are **deferred post–Phase 10**. Weather/cloud **implementation** follows Phase 10—follow the **shipped** planning spec; do not reopen queue **D**.
+**Scheduling tie-break:** use **`PLAN.md` → “Agent session handoff (planning prompts)”** first. **Do not** default to queue **B** or **C**. **Default next PR** is **`DLC-1`** (first dynamic layer consumer). Remaining Phase 8 queue **A** and Phase 9 composition stay **deferred**. Weather/cloud **implementation** is `DLC-*`—follow the **shipped** planning spec; do not reopen queue **D**.
 
 When a session **explicitly scopes** composition work (not as filler), allowed narrow verticals include:
 
@@ -231,24 +234,24 @@ Exit criteria:
 
 ### Slice 5: Dynamic layer lifecycle foundation
 
-Status: **default macro track / in progress** (Phase 10). Authoritative step list: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md). Weather/cloud *participation* models: [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md).
+Status: **complete** (Phase 10 `P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md). Weather/cloud *participation* models: [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md).
 
-**Product lock (Phase 10):**
+**Product lock (Phase 10 — met):**
 
-- Exit when lifecycle API + cache + product-time binding exist with tests.
-- **No** user-facing dynamic layer in Phase 10 (consumers are post–Phase 10 / DLC track).
-- Design **three** snapshot kinds: equirect raster, point features, tracks.
-- Prefer **in-app async** periodic acquisition; buddy/sidecar only if in-app conversion is impractical.
+- Exit when lifecycle API + cache + product-time binding exist with tests. ✅
+- **No** user-facing dynamic layer in Phase 10 (consumers are post–Phase 10 / DLC track). ✅
+- Design **three** snapshot kinds: equirect raster, point features, tracks. ✅
+- Prefer **in-app async** periodic acquisition; buddy/sidecar only if in-app conversion is impractical. ✅
 - Prefer free-for-personal-use sources; paid OK when clearly valuable.
-- Snapshots resolve to **canonical product UTC** (including scrub); cold-start cache refresh OK.
+- Snapshots resolve to **canonical product UTC** (including scrub); cold-start cache refresh OK. ✅
 - First post–Phase 10 consumer bias: **global equirect raster** (clouds / satellite IR).
 
-**Active step:** `P10-7` (first pending step in the lifecycle plan table). Sessions implement **one** step only, then mark it shipped and advance this pointer.
+**Active step:** `DLC-1` (first pending post–Phase 10 consumer in the lifecycle plan table). Sessions implement **one** consumer vertical only, then mark it shipped and advance this pointer.
 
-**Development steps (summary — statuses live in the lifecycle plan):**
+**Development steps (Phase 10 — all shipped; statuses live in the lifecycle plan):**
 
 | Step | Id | Focus |
-|------|-----|--------|
+|------|-----|-------|
 | 0 | `P10-0` | Planning/docs (**shipped**) |
 | 1 | `P10-1` | Core types & contracts (**shipped**) |
 | 2 | `P10-2` | Versioned snapshot store / cache (**shipped**) |
@@ -256,13 +259,11 @@ Status: **default macro track / in progress** (Phase 10). Authoritative step lis
 | 4 | `P10-4` | Product-time resolver (**shipped**) |
 | 5 | `P10-5` | Acquisition adapter + periodic refresh (**shipped**) |
 | 6 | `P10-6` | App shell seam (no dynamic overlay UI) (**shipped**) |
-| 7 | `P10-7` | Phase 10 closure + handoff to DLC consumers |
+| 7 | `P10-7` | Phase 10 closure + handoff to DLC consumers (**shipped**) |
 
-**After Phase 10:** Dynamic layer consumers (`DLC-1`…)—first `DLC-1` global equirect raster (clouds/IR). See lifecycle plan “Post–Phase 10” table and `docs/ROADMAP.md`.
+**After Phase 10 (active):** Dynamic layer consumers (`DLC-1`…)—first `DLC-1` global equirect raster (clouds/IR). See lifecycle plan “Post–Phase 10” table and `docs/ROADMAP.md`.
 
-Exit criteria (Phase 10):
-
-- Steps `P10-1`…`P10-7` shipped; live/forecast **consumers** can integrate without fetching during render; no user-facing dynamic overlay required for exit.
+Exit criteria (Phase 10): **met** — Steps `P10-1`…`P10-7` shipped; live/forecast **consumers** can integrate without fetching during render; no user-facing dynamic overlay required for exit.
 
 ## Active architectural guardrails
 
@@ -282,9 +283,9 @@ Do not break these while implementing future work:
 
 ## Recommended next prompt pattern
 
-### Phase 10 step sequencing (preferred)
+### DLC consumer sequencing (preferred)
 
-Paste this in a **new agent session** to advance Phase 10 one step:
+Paste this in a **new agent session** to advance one post–Phase 10 consumer step:
 
 ```text
 APPROVAL HEADER:
@@ -293,14 +294,14 @@ You are approved to create lifecycle/support files needed by this phase.
 You are approved to split files when that improves architecture or maintainability.
 Do not ask for confirmation before making those edits.
 
-We are continuing Libration Phase 10 (dynamic data lifecycle).
+We are continuing Libration post–Phase 10 dynamic layer consumers (DLC).
 
 Before editing, read:
 - README.md
 - ARCHITECTURE.md
 - PLAN.md (Agent session handoff + Slice 5)
 - AGENTS.md
-- docs/ROADMAP.md (Phase 10)
+- docs/ROADMAP.md (After Phase 10)
 - docs/specs/scene/dynamic-data-lifecycle-plan.md
 - docs/specs/scene/weather-cloud-composition-plan.md
 - docs/FUTURE_FEATURES.md
@@ -309,18 +310,19 @@ Before editing, read:
 - docs/DEVELOPMENT_STRATEGY.md
 
 Task:
-Implement exactly one Phase 10 development step — the first step in
+Implement exactly one DLC development step — the first step in the
+“Post–Phase 10 — Dynamic layer consumers” table in
 docs/specs/scene/dynamic-data-lifecycle-plan.md whose Status is not "shipped".
 Do not implement later steps in this session.
 
 Constraints:
-- Phase 10 ships lifecycle only — no user-facing dynamic weather/overlay layer
+- Reuse the shipped Phase 10 lifecycle (store / resolve / acquisition / shell seam)
 - No network/fetch inside requestAnimationFrame, layer constructors, or RenderPlan build
-- Preserve RenderPlan boundary; keep SceneConfig authoritative
+- Preserve RenderPlan boundary; keep SceneConfig authoritative for enablement/source ids
 - Prefer in-app async acquisition; buddy/sidecar only if the step docs require it
 - Prefer real-format fixtures / free sources over cosmetic fake product layers
-- Add or update tests for the step boundary
-- When done: mark the step shipped in the lifecycle plan table, append Progress log,
+- Add or update tests for the consumer boundary
+- When done: mark the step shipped in the lifecycle plan DLC table, append Progress log,
   set PLAN.md Slice 5 "Active step" to the next pending id, sync ROADMAP/AGENTS if needed
 
 Return:
@@ -331,7 +333,7 @@ Return:
 - risks or follow-up work
 ```
 
-### Generic implementation prompt (non–Phase-10 work)
+### Generic implementation prompt (non–DLC work)
 
 ```text
 We are continuing Libration development.
@@ -368,9 +370,9 @@ Return:
 
 Do not start these until their phase or step is intentionally opened:
 
-- user-facing dynamic weather/cloud/radar overlays (post–Phase 10 `DLC-*`, after `P10-7`).
+- user-facing dynamic weather/cloud/radar overlays beyond the active `DLC-*` step (do not skip ahead).
 - alternate projections / zoom/pan (Phase 11).
-- remaining Phase 8 sourced substrates and Phase 9 composition extensions (deferred until after Phase 10 unless explicitly scoped).
+- remaining Phase 8 sourced substrates and Phase 9 composition extensions (deferred unless explicitly scoped).
 - public plugin system.
 - GPU backend.
 - broad preset UI.

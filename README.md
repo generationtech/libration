@@ -96,14 +96,14 @@ Start here:
 - [docs/AI_COENGINEERING.md](docs/AI_COENGINEERING.md) - how this project uses ChatGPT and Cursor.
 - [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing, onboarding strategy, and catalog **`capabilities`** roles (including overlay-readability hints).
 - [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - map source inventory and base-map **capabilities** notes (including overlay-readability catalog hints).
-- [docs/specs/scene/dynamic-data-lifecycle-plan.md](docs/specs/scene/dynamic-data-lifecycle-plan.md) - **Phase 10** dynamic data lifecycle plan and `P10-*` step tracker (lifecycle only; no user-facing dynamic overlay in Phase 10).
-- [docs/specs/scene/weather-cloud-composition-plan.md](docs/specs/scene/weather-cloud-composition-plan.md) - **shipped** planning spec for weather/cloud participation boundaries (consumers after Phase 10 / `DLC-*`).
+- [docs/specs/scene/dynamic-data-lifecycle-plan.md](docs/specs/scene/dynamic-data-lifecycle-plan.md) - **Phase 10 complete** dynamic data lifecycle contracts + `DLC-*` consumer step tracker (lifecycle shipped in `src/lifecycle/`; first consumer **`DLC-1`**).
+- [docs/specs/scene/weather-cloud-composition-plan.md](docs/specs/scene/weather-cloud-composition-plan.md) - **shipped** planning spec for weather/cloud participation boundaries (consumers via `DLC-*`).
 
 Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff”** and **`docs/specs/scene/dynamic-data-lifecycle-plan.md`**. **Default macro PR track:** Phase 10 steps `P10-*` (next **`P10-7`**; **`P10-1`**/`P10-2`/`P10-3`/`P10-4`/`P10-5`/`P10-6` types/store/manager/resolver/acquisition/shell seam shipped)—lifecycle only; **no** user-facing dynamic overlay until post–Phase 10 `DLC-*` (first bias: global equirect clouds/IR). Use the Phase 10 step prompt in `PLAN.md` to advance one step per session. **Composition baseline closed** (queues **B**/**C**). **Remaining Phase 8/9** deferred until after Phase 10. Weather/cloud **participation planning** shipped; **implementation** is `DLC-*` after `P10-7`.
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff”** and **`docs/specs/scene/dynamic-data-lifecycle-plan.md`**. **Default macro PR track:** post–Phase 10 **`DLC-*`** (next **`DLC-1`** global equirect clouds/IR). Phase 10 lifecycle (`P10-0`…`P10-7`) is **complete**. Use the DLC consumer prompt in `PLAN.md` to advance one step per session. **Composition baseline closed** (queues **B**/**C**). **Remaining Phase 8/9** deferred unless explicitly scoped. Weather/cloud **participation planning** shipped; **implementation** is `DLC-*`.
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

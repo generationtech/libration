@@ -2,7 +2,7 @@
 
 ## Status
 
-**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** Boundaries for weather/cloud **participation** (Models A/B/C). Lifecycle foundation is Phase 10 ([`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md), steps `P10-*`). User-facing weather/cloud **layers** are post–Phase 10 **`DLC-*`** (first bias: global equirect clouds/IR). This doc does **not** authorize Phase 10 to ship weather UI.
+**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** Boundaries for weather/cloud **participation** (Models A/B/C). Lifecycle foundation is Phase 10 ([`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md), steps `P10-*`). User-facing weather/cloud **layers** are **`DLC-*`** (first bias: global equirect clouds/IR; Phase 10 lifecycle **complete**). This doc does **not** authorize skipping lifecycle contracts.
 
 **Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md), [`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md) (`P10-*` / `DLC-*`), [`docs/ROADMAP.md`](../../ROADMAP.md).
 
@@ -105,7 +105,7 @@ After this planning doc and Phase 10 foundations:
 3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
 4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
 
-**Default macro PR track is Phase 10 `P10-*` steps** (lifecycle only). Weather/cloud **layer code** is **`DLC-*`** after `P10-7`. Remaining Phase 8 queue **A** deferred until after Phase 10.
+**Phase 10 lifecycle complete.** **Default macro PR track** is **`DLC-*`** (next **`DLC-1`**). Remaining Phase 8 queue **A** deferred unless explicitly scoped.
 
 ## Relationship to existing subsystems
 

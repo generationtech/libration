@@ -210,14 +210,14 @@ Exit criteria:
 - **Phase 8 / Slice 3 land cover (closed):** **`equirect-world-landcover-modis-v1`** ship raster + preview + catalog + GIBS/MODIS IGBP provenance; registration regression in `src/config/landcoverOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 population density (closed):** **`equirect-world-population-gpw-v1`** ship raster + preview + catalog + GPWv4 provenance; registration regression in `src/config/populationOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 climate normals (closed):** **`equirect-world-climate-koppen-beck-v1`** ship raster + preview + catalog + Beck Köppen–Geiger provenance; registration regression in `src/config/climateNormalsOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 map inventory (queue A (2) closed):** all **eleven** bundled catalog families have `previewThumbnailSrc` (legacy + static scientific substrates + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**remaining queue A deferred post–Phase 10**; **default next** is **Phase 10 / Slice 5**; **Slice 2 queues B/C closed** (`PLAN.md` handoff).
+- **Phase 8 / Slice 3 map inventory (queue A (2) closed):** all **eleven** bundled catalog families have `previewThumbnailSrc` (legacy + static scientific substrates + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**remaining queue A deferred**; **default next** is **`DLC-1`**; Phase 10 lifecycle **complete**; **Slice 2 queues B/C closed** (`PLAN.md` handoff).
 - **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all **eleven** bundled families; see `PLAN.md` closed increment.
 - **Slice 2 queue D — weather/cloud planning (closed):** [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); implementation blocked on Phase 10 lifecycle; see `PLAN.md` closed increment.
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**paused / deferred until after Phase 10**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume after Phase 10** per `PLAN.md` handoff—**not** the default next macro track while Phase 10 is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog after Phase 10 (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** follows Phase 10 lifecycle.
+Status: planned (**paused / deferred**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume** when scoped per `PLAN.md` handoff—**not** the default next macro track while early `DLC-*` is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** is `DLC-*` (Phase 10 lifecycle **complete**).
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -242,7 +242,7 @@ Candidate deliverables:
 
 Status: planned (**deferred until after Phase 10**; extends Phase 6 production baseline; **composition baseline closed** for standing Slice 2 **B**/**C** default cadence — **no** new rendering boundary).
 
-The subsystem **baseline is delivered** (`PLAN.md` Slice 2): readability v1 + v1.1 + **eight-intrinsic** substrate lift + presentation + **six** default-stack `perLayer` pilots + **third** twilight pass. **Further** substrate signals, atmosphere tuning, and clouds/weather reopen only with **explicit product scope**, or **after Phase 10**—not as standing default PRs while Phase 10 is the active track.
+The subsystem **baseline is delivered** (`PLAN.md` Slice 2): readability v1 + v1.1 + **eight-intrinsic** substrate lift + presentation + **six** default-stack `perLayer` pilots + **third** twilight pass. **Further** substrate signals, atmosphere tuning, and clouds/weather reopen only with **explicit product scope**, or via **`DLC-*`**—not as standing default PRs while early DLC is the active track.
 
 Candidate deliverables:
 
@@ -274,18 +274,18 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-7` (Phase 10 closure + DLC handoff). **`P10-1`** / **`P10-2`** / **`P10-3`** / **`P10-4`** / **`P10-5`** / **`P10-6`** shipped (core types & contracts; versioned snapshot store / `MemoryDynamicSnapshotStore`; lifecycle manager state machine; product-time resolver; acquisition adapter + periodic refresh + manual/file import; app shell host + `TimeContext` attachment in `src/lifecycle/` / `App.tsx`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
+Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10. **Default next track:** After Phase 10 / `DLC-*` (next **`DLC-1`**). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped.
 
-**Product lock:**
+**Product lock (met):**
 
-- Phase 10 ships **lifecycle only** (API + cache + product-time binding + tests)—**no** user-facing dynamic overlay.
-- Snapshot kinds designed up front: **equirect raster**, **point features**, **tracks**.
-- Acquisition: **in-app async periodic refresh** preferred; buddy/sidecar only if in-app conversion is impractical.
+- Phase 10 ships **lifecycle only** (API + cache + product-time binding + tests)—**no** user-facing dynamic overlay. ✅
+- Snapshot kinds designed up front: **equirect raster**, **point features**, **tracks**. ✅
+- Acquisition: **in-app async periodic refresh** preferred; buddy/sidecar only if in-app conversion is impractical. ✅
 - Sources: prefer free-for-personal-use; paid allowed when clearly valuable.
-- Time: resolve snapshots to **canonical product UTC** (including scrub); cold-start cache refresh OK.
+- Time: resolve snapshots to **canonical product UTC** (including scrub); cold-start cache refresh OK. ✅
 - Persistence of enablement/source ids: SceneConfig/presets when **consumers** ship (post–Phase 10).
 
-Deliverables (via steps `P10-1`…`P10-7`):
+Deliverables (steps `P10-1`…`P10-7` — all shipped):
 
 - core snapshot/source/freshness types.
 - versioned local snapshot store / cache.
@@ -303,7 +303,7 @@ Candidate future **consumers** (not Phase 10 itself)—see section below and lif
 
 ## After Phase 10: Dynamic layer consumers
 
-Status: **planned** (opens when `P10-7` ships). Default macro track after Phase 10. Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md).
+Status: **active** (default macro track). Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `DLC-1`.
 
 Suggested sequence:
 

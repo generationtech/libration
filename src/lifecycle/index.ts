@@ -12,12 +12,13 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle — public contract surface.
+ * Phase 10 dynamic data lifecycle — public contract surface (complete).
  * P10-1: types & pure helpers. P10-2: versioned snapshot store.
  * P10-3: per-source lifecycle manager (state machine + subscribe).
  * P10-4: product-time resolver (scrub-safe read-only resolve).
  * P10-5: acquisition adapter + periodic refresh + manual/file import.
  * P10-6: app shell host + TimeContext attachment (no dynamic overlay UI).
+ * P10-7: Phase 10 closure + handoff to post–Phase 10 `DLC-*` consumers.
  */
 
 export type {

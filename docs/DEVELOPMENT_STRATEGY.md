@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** read **`PLAN.md` → Agent session handoff** and [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Default next** = first pending **`P10-*`** step (currently **`P10-7`**); one step per session via the Phase 10 prompt in `PLAN.md`. Phase 10 = lifecycle only (no user-facing dynamic overlay). Post–`P10-7` → **`DLC-*`** consumers. Do not default to Phase 8/9 or composition filler while Phase 10 is open.
+**Planning tie-break:** read **`PLAN.md` → Agent session handoff** and [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Phase 10 lifecycle **complete**. **Default next** = first pending **`DLC-*`** step (currently **`DLC-1`**); one vertical per session via the DLC consumer prompt in `PLAN.md`. Do not default to Phase 8/9 or composition filler while early DLC is open.
 
 ## Implementation intent template
 
