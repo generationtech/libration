@@ -13,7 +13,7 @@
 
 /**
  * In-memory DynamicSnapshotStore (P10-2 default backend for tests / early wiring).
- * Disk / Tauri backends may implement the same interface later; acquisition is P10-5.
+ * Disk / Tauri backends may implement the same interface later; acquisition is P10-5 (shipped).
  */
 
 import {

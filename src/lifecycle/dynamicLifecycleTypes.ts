@@ -80,7 +80,7 @@ export type DynamicLifecycleMarkReadyOptions = Readonly<{
 
 /**
  * Per-source lifecycle state machine with subscribe / unsubscribe.
- * Callers (acquisition in P10-5, shell in P10-6) drive transitions;
+ * Callers (acquisition in P10-5 shipped, shell in P10-6) drive transitions;
  * this type does not fetch, resolve product time, or touch RenderPlan.
  */
 export interface DynamicDataLifecycleManager {

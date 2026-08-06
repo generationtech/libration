@@ -85,7 +85,7 @@ src/assets/composition/emissive-composition-catalog.json
 
 TypeScript owns validation, id canonicalization, and `resolveEmissiveCompositionAsset` / `resolveEmissiveCompositionAssetIdToCanonicalId`. Runtime does not scan `public/maps` for composition inputs.
 
-**Weather and cloud (not base-map catalog):** live or forecast weather/cloud participation is **not** onboarded through `base-map-catalog.json`. See [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](../specs/scene/dynamic-data-lifecycle-plan.md) (Phase 10 `P10-*`; consumers `DLC-*`) and [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md). **Default next** is `P10-5`. Static climatology rasters (if ever added) follow the base-map rules in this document.
+**Weather and cloud (not base-map catalog):** live or forecast weather/cloud participation is **not** onboarded through `base-map-catalog.json`. See [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](../specs/scene/dynamic-data-lifecycle-plan.md) (Phase 10 `P10-*`; consumers `DLC-*`) and [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md). **Default next** is `P10-6`. Static climatology rasters (if ever added) follow the base-map rules in this document.
 
 ## Persistence rule
 

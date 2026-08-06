@@ -16,7 +16,8 @@
  * P10-1: types & pure helpers. P10-2: versioned snapshot store.
  * P10-3: per-source lifecycle manager (state machine + subscribe).
  * P10-4: product-time resolver (scrub-safe read-only resolve).
- * Later steps add acquisition under this folder.
+ * P10-5: acquisition adapter + periodic refresh + manual/file import.
+ * Later steps add app shell seam under this folder.
  */
 
 export type {
@@ -100,3 +101,23 @@ export type {
 } from "./dynamicSnapshotResolver";
 
 export { createDynamicSnapshotResolver } from "./dynamicSnapshotResolver";
+
+export type {
+  DynamicAcquisitionController,
+  DynamicAcquisitionControllerDeps,
+  DynamicAcquisitionFail,
+  DynamicAcquisitionImportResult,
+  DynamicAcquisitionIntervalHandle,
+  DynamicAcquisitionOk,
+  DynamicAcquisitionRefreshResult,
+  DynamicAcquisitionResult,
+  DynamicAcquisitionStartPeriodicOptions,
+  DynamicAcquisitionStartPeriodicResult,
+  DynamicAcquisitionTimerHooks,
+  DynamicSnapshotAcquisitionAdapter,
+} from "./dynamicAcquisitionTypes";
+
+export {
+  createDynamicAcquisitionController,
+  createFixtureAcquisitionAdapter,
+} from "./dynamicAcquisition";
