@@ -121,7 +121,7 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 (`P10-*` steps) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—in progress (**`P10-1`**/`P10-2`/`P10-3`/`P10-4`/`P10-5` types/store/manager/resolver/acquisition shipped; next **`P10-6`**); **no** user-facing dynamic overlay until post–Phase 10 **`DLC-*`**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 (`P10-*` steps) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—in progress (**`P10-1`**/`P10-2`/`P10-3`/`P10-4`/`P10-5`/`P10-6` types/store/manager/resolver/acquisition/shell seam shipped; next **`P10-7`**); **no** user-facing dynamic overlay until post–Phase 10 **`DLC-*`**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 **First consumer bias (`DLC-1`):** global equirect raster — clouds / satellite IR (real free or justified paid source; in-app periodic acquisition).
 

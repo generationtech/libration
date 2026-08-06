@@ -12,13 +12,17 @@
  */
 
 import type { TimeContext } from "../layers/types";
+import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
 import type { OverlayReadabilityFrame } from "./overlayReadabilityFrame";
 
 export function createTimeContext(
   now: number,
   deltaMs: number,
   simulated: boolean,
-  options?: { overlayReadabilityFrame?: OverlayReadabilityFrame },
+  options?: {
+    overlayReadabilityFrame?: OverlayReadabilityFrame;
+    dynamicDataLifecycle?: DynamicDataLifecycleAttachment;
+  },
 ): TimeContext {
   return {
     now,
@@ -26,6 +30,9 @@ export function createTimeContext(
     simulated,
     ...(options?.overlayReadabilityFrame !== undefined
       ? { overlayReadabilityFrame: options.overlayReadabilityFrame }
+      : {}),
+    ...(options?.dynamicDataLifecycle !== undefined
+      ? { dynamicDataLifecycle: options.dynamicDataLifecycle }
       : {}),
   };
 }

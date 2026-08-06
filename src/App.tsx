@@ -58,6 +58,7 @@ import {
   type SubstrateOverlayReadabilityFrameInputs,
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
+import { createDynamicDataLifecycleHost } from "./lifecycle";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
@@ -115,6 +116,8 @@ export default function App() {
   const [demoTransportPaused, setDemoTransportPaused] = useState(false);
   const prevDemoTimeActiveRef = useRef(false);
   const lastRenderClockMsRef = useRef<number | null>(null);
+  /** Phase 10 shell seam: store/manager/resolver/acquisition (no dynamic overlay UI). */
+  const dynamicLifecycleHostRef = useRef(createDynamicDataLifecycleHost());
 
   const requestDemoPause = useCallback(() => {
     demoTransportActionRef.current = "pause";
@@ -347,6 +350,8 @@ export default function App() {
       );
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
+        dynamicDataLifecycle:
+          dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs),
       });
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
@@ -422,6 +427,7 @@ export default function App() {
       stopLoop?.();
       window.removeEventListener("resize", onResize);
       backend.dispose();
+      dynamicLifecycleHostRef.current.dispose();
     };
   }, []);
 

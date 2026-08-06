@@ -12,6 +12,7 @@
  */
 
 import type { OverlayReadabilityFrame } from "../core/overlayReadabilityFrame";
+import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
 
 export type LayerId = string;
 
@@ -34,6 +35,12 @@ export interface TimeContext {
    * The shell should pass a frame built with scene emissive policy so readability v1.1 can apply.
    */
   overlayReadabilityFrame?: OverlayReadabilityFrame;
+  /**
+   * When set (typically once per frame by the app shell), future dynamic layers may
+   * resolve snapshots by product time via the attached read-only seam.
+   * Must not trigger acquisition / fetch / store writes from the paint path.
+   */
+  dynamicDataLifecycle?: DynamicDataLifecycleAttachment;
 }
 
 export interface LayerState {

@@ -17,7 +17,7 @@
  * P10-3: per-source lifecycle manager (state machine + subscribe).
  * P10-4: product-time resolver (scrub-safe read-only resolve).
  * P10-5: acquisition adapter + periodic refresh + manual/file import.
- * Later steps add app shell seam under this folder.
+ * P10-6: app shell host + TimeContext attachment (no dynamic overlay UI).
  */
 
 export type {
@@ -121,3 +121,14 @@ export {
   createDynamicAcquisitionController,
   createFixtureAcquisitionAdapter,
 } from "./dynamicAcquisition";
+
+export type {
+  DynamicDataLifecycleAttachment,
+  DynamicDataLifecycleHost,
+  DynamicDataLifecycleHostDeps,
+} from "./dynamicDataLifecycleHostTypes";
+
+export {
+  createDynamicDataLifecycleHost,
+  getDynamicDataLifecycleAttachment,
+} from "./dynamicDataLifecycleHost";

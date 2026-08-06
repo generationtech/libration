@@ -274,7 +274,7 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-6` (app shell seam). **`P10-1`** / **`P10-2`** / **`P10-3`** / **`P10-4`** / **`P10-5`** shipped (core types & contracts; versioned snapshot store / `MemoryDynamicSnapshotStore`; lifecycle manager state machine; product-time resolver; acquisition adapter + periodic refresh + manual/file import in `src/lifecycle/`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
+Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-7` (Phase 10 closure + DLC handoff). **`P10-1`** / **`P10-2`** / **`P10-3`** / **`P10-4`** / **`P10-5`** / **`P10-6`** shipped (core types & contracts; versioned snapshot store / `MemoryDynamicSnapshotStore`; lifecycle manager state machine; product-time resolver; acquisition adapter + periodic refresh + manual/file import; app shell host + `TimeContext` attachment in `src/lifecycle/` / `App.tsx`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
 
 **Product lock:**
 

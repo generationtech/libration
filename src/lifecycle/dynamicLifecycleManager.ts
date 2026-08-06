@@ -93,7 +93,7 @@ type MutableRow = {
 
 /**
  * Process-local lifecycle manager. Acquisition (P10-5 shipped) and shell wiring
- * (P10-6) call transition helpers; paint / RenderPlan paths must not.
+ * (P10-6 shipped) call transition helpers; paint / RenderPlan paths must not.
  */
 export class DynamicDataLifecycleManagerImpl
   implements DynamicDataLifecycleManager
