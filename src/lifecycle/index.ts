@@ -14,7 +14,8 @@
 /**
  * Phase 10 dynamic data lifecycle — public contract surface.
  * P10-1: types & pure helpers. P10-2: versioned snapshot store.
- * Later steps add manager / resolver / acquisition under this folder.
+ * P10-3: per-source lifecycle manager (state machine + subscribe).
+ * Later steps add resolver / acquisition under this folder.
  */
 
 export type {
@@ -70,3 +71,24 @@ export {
   MemoryDynamicSnapshotStore,
   createMemoryDynamicSnapshotStore,
 } from "./memoryDynamicSnapshotStore";
+
+export type {
+  DynamicDataLifecycleManager,
+  DynamicLifecycleMarkReadyOptions,
+  DynamicLifecycleTransitionResult,
+  DynamicSourceLifecycleListener,
+  DynamicSourceLifecycleSnapshot,
+  DynamicSourceLifecycleState,
+} from "./dynamicLifecycleTypes";
+
+export {
+  DYNAMIC_SOURCE_LIFECYCLE_STATES,
+  lifecycleStateToFreshness,
+} from "./dynamicLifecycleTypes";
+
+export {
+  DynamicDataLifecycleManagerImpl,
+  createDynamicDataLifecycleManager,
+  isAllowedLifecycleTransition,
+  isDynamicSourceLifecycleState,
+} from "./dynamicLifecycleManager";

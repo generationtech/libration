@@ -34,7 +34,8 @@ export type DynamicSnapshotKind = (typeof DYNAMIC_SNAPSHOT_KINDS)[number];
 
 /**
  * Freshness surfaces for chrome / future UI — not backend policy.
- * Manager (P10-3) owns transitions; resolver (P10-4) reports these.
+ * Manager (P10-3 shipped) owns lifecycle transitions (`idle`/`loading`/…);
+ * resolver (P10-4) reports these freshness values on resolve results.
  */
 export const DYNAMIC_SNAPSHOT_FRESHNESS_VALUES = [
   "loading",
