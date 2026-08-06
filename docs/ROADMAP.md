@@ -274,7 +274,7 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment, equirect + cloud-opacity + point-features + tracks materializers). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10 itself. **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination). **Sequenced Post–Phase 10 table complete.** Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped.
+Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment, equirect + cloud-opacity + point-features + tracks materializers). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10 itself. **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination; fixture acquisition). **Default next:** **`DLU-*` live network acquisition**. Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped.
 
 **Product lock (met):**
 
@@ -303,22 +303,39 @@ Candidate future **consumers** (not Phase 10 itself)—see section below and lif
 
 ## After Phase 10: Dynamic layer consumers
 
-Status: **active** (sequenced `DLC-1`…`DLC-4` **complete**). Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** none pending in the sequenced table (additional consumers require explicit scope).
+Status: **complete** (sequenced `DLC-1`…`DLC-4` **shipped**). Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Further *new* consumers require explicit scope. **Default next track:** live acquisition (`DLU-*`) below.
 
-Suggested sequence:
+Suggested sequence (completed):
 
-1. **`DLC-1`** — first **global equirect raster** consumer (clouds / satellite IR), Model B scene layer, real free or justified paid source, SceneConfig enablement + attribution — **shipped** (`globalCloudsIr` / `global-clouds-ir-v1`).
-2. **`DLC-2`** — point-features consumer (earthquakes) — **shipped** (`earthquakes` / `usgs-earthquakes-v1`).
-3. **`DLC-3`** — tracks consumer (ISS orbital) — **shipped** (`orbitalTracks` / `iss-orbital-track-v1`).
-4. **`DLC-4`** — Model A cloud participation in planetary illumination — **shipped** (`scene.illumination.cloudParticipation` / same `global-clouds-ir-v1` opacity field; see [`weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
+1. **`DLC-1`** — first **global equirect raster** consumer (clouds / satellite IR), Model B scene layer — **shipped** (`globalCloudsIr` / `global-clouds-ir-v1`; fixture acquisition).
+2. **`DLC-2`** — point-features consumer (earthquakes) — **shipped** (`earthquakes` / `usgs-earthquakes-v1`; fixture acquisition).
+3. **`DLC-3`** — tracks consumer (ISS orbital) — **shipped** (`orbitalTracks` / `iss-orbital-track-v1`; fixture acquisition).
+4. **`DLC-4`** — Model A cloud participation in planetary illumination — **shipped** (`scene.illumination.cloudParticipation` / same `global-clouds-ir-v1`).
 
 Dense regional/tiled products may wait on Phase 11 (zoom/pan/tiles). Weather participation models remain as documented in the weather/cloud planning spec.
 
+## After DLC: Live network acquisition (`DLU-*`)
+
+Status: **active** (default macro PR track). Step ids `DLU-0`…`DLU-7` in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md) (“After DLC — Live network acquisition”). **Active step:** **`DLU-1`** (visibility & render readiness). **`DLU-0` shipped** (planning/docs).
+
+Replace fixture-only acquisition with periodic **in-app live network** acquisition for the four shipped consumers under the **same durable `sourceId`s**. No fetch inside rAF / layer constructors / RenderPlan build. Prefer free-for-personal-use feeds; paid OK when clearly valuable. Fixture/offline fallback remains acceptable when documented per step.
+
+Suggested sequence:
+
+0. **`DLU-0`** — planning/docs — **shipped**.
+1. **`DLU-1`** — visibility & render readiness (incl. Canvas `tracks` dispatch; demonstrable Layers toggles) — **pending**.
+2. **`DLU-2`** — shared live HTTP acquisition seam — **pending**.
+3. **`DLU-3`** — live USGS earthquakes (`usgs-earthquakes-v1`) — **pending**.
+4. **`DLU-4`** — live ISS orbital (`iss-orbital-track-v1`) — **pending**.
+5. **`DLU-5`** — live global clouds/IR (`global-clouds-ir-v1`) — **pending**.
+6. **`DLU-6`** — live Model A cloud participation on the same clouds source — **pending**.
+7. **`DLU-7`** — DLU closure / docs handoff — **pending**.
+
 ## Phase 11: Scene view and projection expansion
 
-Status: future.
+Status: future (after early `DLU-*` / as scoped).
 
-Supports denser regional dynamic products (tiled radar, viewport-local feeds) after Phase 10 lifecycle and early `DLC-*` global/equirect consumers.
+Supports denser regional dynamic products (tiled radar, viewport-local feeds) after Phase 10 lifecycle, `DLC-*` global/equirect consumers, and preferably after live acquisition for those consumers.
 
 Candidate deliverables:
 

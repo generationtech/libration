@@ -121,26 +121,26 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination); sequenced Post–Phase 10 table **complete**—further `DLC-*` need **explicit scope**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination); **default next track `DLU-*` live network acquisition** (**Active: `DLU-1`**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
-**First consumer (`DLC-1` — shipped):** global equirect raster — clouds / satellite IR (`globalCloudsIr`, durable source `global-clouds-ir-v1`; fixture JPEG + periodic lifecycle acquisition; live feed adapter swap is follow-up).
+**First consumer (`DLC-1` — shipped):** global equirect raster — clouds / satellite IR (`globalCloudsIr`, durable source `global-clouds-ir-v1`; fixture JPEG + periodic lifecycle acquisition; **live feed = `DLU-5`**).
 
 Candidates (consume lifecycle; prefer free-for-personal-use; paid OK when valuable):
 
 - weather radar.
-- cloud cover / satellite IR — **`DLC-1` shipped** (Model B overlay); **`DLC-4` shipped** (Model A illumination participation via `scene.illumination.cloudParticipation`).
+- cloud cover / satellite IR — **`DLC-1` shipped** (Model B overlay); **`DLC-4` shipped** (Model A illumination participation via `scene.illumination.cloudParticipation`); **live acquisition `DLU-5` / `DLU-6`**.
 - precipitation forecast.
 - temperature forecast.
 - wind fields.
 - pressure systems.
 - hurricane tracks.
 - aurora forecast.
-- earthquake feed — **`DLC-2` shipped** (`earthquakes` / `usgs-earthquakes-v1`; live USGS HTTP adapter remains a follow-up).
+- earthquake feed — **`DLC-2` shipped** (`earthquakes` / `usgs-earthquakes-v1`; **live USGS HTTP = `DLU-3`**).
 - volcano activity.
 - aircraft ADS-B feed.
 - marine AIS feed.
 - satellite live positions.
-- ISS and selected spacecraft — **`DLC-3` shipped** ISS track Model B (`orbitalTracks` / `iss-orbital-track-v1`; live CelesTrak/TLE adapter remains a follow-up; additional spacecraft remain future).
+- ISS and selected spacecraft — **`DLC-3` shipped** ISS track Model B (`orbitalTracks` / `iss-orbital-track-v1`; **live CelesTrak/TLE = `DLU-4`**; additional spacecraft remain future).
 - lightning feed.
 - wildfire smoke.
 - air quality.

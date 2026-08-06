@@ -129,7 +129,7 @@ Future work **extends** that subsystem for readability policy **beyond the shipp
 - reflected illumination.
 - emissive illumination.
 - visibility/readability policy.
-- weather/cloud **implementation** (planning **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); Phase 10 lifecycle **complete**; via `DLC-*`).
+- weather/cloud **implementation** (planning **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); Phase 10 lifecycle **complete**; layers via `DLC-*`; live feeds via `DLU-*`).
 - dynamic scene composition.
 
 ## Development strategy
@@ -170,7 +170,7 @@ Foundational systems now exist:
 - coherent upstream planetary illumination composition (twilight—including **shipped cumulative incremental transition tuning** in `illuminationShading.ts`—moonlight, emissive night lights; single illumination `rasterPatch`).
 - composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 effective brightness dimming in lift) + SceneConfig presentation scalars + **default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass per pilot layer via `scene.overlayReadability.perLayer`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
 
-The next strategic need is not another large hidden architecture migration. The **planetary composition baseline** (eight-intrinsic substrate lift, third twilight pass, overlay readability closure) is **complete** for standing incremental work—**Slice 2 queues B/C are closed** as default PR tracks. Phase 10 lifecycle is **complete**; **`DLC-1`**…**`DLC-4`** shipped (sequenced Post–Phase 10 table complete). Further dynamic consumers and **remaining Phase 8** / **Phase 9** need **explicit product scope**. Composition extensions reopen only with **explicit product scope**—not filler PRs.
+The next strategic need is not another large hidden architecture migration. The **planetary composition baseline** (eight-intrinsic substrate lift, third twilight pass, overlay readability closure) is **complete** for standing incremental work—**Slice 2 queues B/C are closed** as default PR tracks. Phase 10 lifecycle is **complete**; **`DLC-1`**…**`DLC-4`** shipped. **Default next:** **`DLU-*` live network acquisition** (**Active: `DLU-1`**). Further *new* dynamic consumers and **remaining Phase 8** / **Phase 9** need **explicit product scope**. Composition extensions reopen only with **explicit product scope**—not filler PRs.
 
 **Default sequencing for planning/discovery sessions:** when no explicit human override is given, use **`PLAN.md` → “Agent session handoff (planning prompts)”**—**do not** default to Slice 2 **B**/**C**.
 
@@ -179,13 +179,14 @@ The next strategic need is not another large hidden architecture migration. The 
 Likely next frontiers:
 
 1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract through **`sunGlintDense`** is **shipped and doc-finalized**, not hypothetical; cumulative twilight tuning through **second** and **third** narrow `illuminationShading.ts` passes is **doc-finalized**; geology **`equirect-world-geology-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**, and **structured map selector attribution** are **doc-finalized**).
-2. **Dynamic layer consumers** (**sequenced `DLC-1`…`DLC-4` complete** in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md); further consumers need explicit scope). Phase 10 lifecycle **complete**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
-3. **Map inventory** (**deferred**; resume queue **A** when a **sourced static substrate** or explicitly scoped catalog polish is available—queue **(2)** land cover, bathymetry, climate normals, and population GPW **shipped**; structured attribution and month-aware selector polish **shipped**; preferred backlog: temperature/precipitation climatology).
-4. Further scientific substrate onboarding (emissive-compatible substrates, alternate climate/terrain products) beyond shipped static families — deferred unless scoped.
-5. **Phase 9 composition extensions** (**deferred**, or earlier only with **explicit product scope**): `perLayer` beyond six defaults, ninth+ intrinsics, fourth+ twilight, deeper atmosphere.
-6. Advanced scene view and projection work.
-7. Preset system.
-8. GPU backend exploration.
+2. **Live network acquisition (`DLU-*`)** — default track in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md) (**Active: `DLU-1`**); fixture→live swaps for the four shipped consumers. Phase 10 lifecycle **complete**; **`DLC-1`…`DLC-4` complete**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+3. **New dynamic layer consumers** (explicit scope only beyond the four shipped rows).
+4. **Map inventory** (**deferred**; resume queue **A** when a **sourced static substrate** or explicitly scoped catalog polish is available—queue **(2)** land cover, bathymetry, climate normals, and population GPW **shipped**; structured attribution and month-aware selector polish **shipped**; preferred backlog: temperature/precipitation climatology).
+5. Further scientific substrate onboarding (emissive-compatible substrates, alternate climate/terrain products) beyond shipped static families — deferred unless scoped.
+6. **Phase 9 composition extensions** (**deferred**, or earlier only with **explicit product scope**): `perLayer` beyond six defaults, ninth+ intrinsics, fourth+ twilight, deeper atmosphere.
+7. Advanced scene view and projection work.
+8. Preset system.
+9. GPU backend exploration.
 
 ## Decision filter for new features
 
