@@ -135,6 +135,16 @@ export default function App() {
     [storage, userPresetsEpoch],
   );
 
+  /** Phase 10 / DLC-1: arm acquisition from config commits — never from rAF paint. */
+  const syncDynamicLifecycleConsumers = useCallback(() => {
+    const host = dynamicLifecycleHostRef.current;
+    if (derivedAppConfigRef.current.layers.globalCloudsIr) {
+      host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
+    } else {
+      host.stopGlobalCloudsIrConsumer();
+    }
+  }, []);
+
   const updateConfig = useCallback(
     (updater: (draft: LibrationConfigV2) => void) => {
       if (!ALLOW_PHASE3_MUTATIONS) {
@@ -146,12 +156,13 @@ export default function App() {
         registryRef,
         updater,
       );
+      syncDynamicLifecycleConsumers();
       if (activePresetIdRef.current !== null) {
         setIsDirtyFromPreset(true);
       }
       bumpConfigView();
     },
-    [],
+    [syncDynamicLifecycleConsumers],
   );
 
   const userPresetsUi = useMemo(
@@ -178,6 +189,7 @@ export default function App() {
         ) {
           return;
         }
+        syncDynamicLifecycleConsumers();
         setActivePresetId(id);
         setIsDirtyFromPreset(false);
         bumpConfigView();
@@ -205,8 +217,14 @@ export default function App() {
       storage,
       bumpUserPresets,
       bumpConfigView,
+      syncDynamicLifecycleConsumers,
     ],
   );
+
+  useEffect(() => {
+    // Startup: honor persisted enablement without waiting for a Layers toggle.
+    syncDynamicLifecycleConsumers();
+  }, [syncDynamicLifecycleConsumers]);
 
   useEffect(() => {
     isConfigOpenRef.current = isConfigOpen;

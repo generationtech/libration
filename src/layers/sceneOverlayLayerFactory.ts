@@ -30,14 +30,15 @@ import { createSolarShadingLayer } from "./solarShadingLayer";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
 import { createSubsolarMarkerLayer } from "./subsolarMarkerLayer";
 import { createStaticEquirectRasterOverlayLayer } from "./staticEquirectRasterOverlayLayer";
+import { createDynamicEquirectRasterOverlayLayer } from "./dynamicEquirectRasterOverlayLayer";
 import type { Layer } from "./types";
 
 type OverlayPart = { zIndex: number; opacity: number };
 
 /**
  * Creates one composited overlay from a scene row. Dispatch is by
- * {@link SceneLayerInstance#source} (e.g. `staticRaster`, `derived` product), not by layer id,
- * so additional stack rows do not require bootstrap `switch` branches.
+ * {@link SceneLayerInstance#source} (e.g. `staticRaster`, `dynamicEquirectRaster`, `derived` product),
+ * not by layer id, so additional stack rows do not require bootstrap `switch` branches.
  */
 export function createLayerForSceneOverlayInstance(
   inst: SceneLayerInstance,
@@ -54,6 +55,15 @@ export function createLayerForSceneOverlayInstance(
       opacity,
       staticEquirectOverlayReadabilityPresentation:
         config.scene.overlayReadability.perLayer?.staticEquirectOverlay,
+    });
+  }
+  if (s.kind === "dynamicEquirectRaster") {
+    return createDynamicEquirectRasterOverlayLayer({
+      sceneLayerId: inst.id,
+      sourceId: s.sourceId,
+      zIndex,
+      opacity,
+      name: inst.id === "globalCloudsIr" ? "Global clouds / IR" : undefined,
     });
   }
   if (s.kind === "derived") {

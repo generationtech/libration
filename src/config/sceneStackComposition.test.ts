@@ -25,6 +25,7 @@ const ALL: LayerEnableFlags = {
   solarShading: true,
   grid: true,
   staticEquirectOverlay: true,
+  globalCloudsIr: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation and the **`DLC-*`** consumer step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host). **Default next macro track:** first pending **`DLC-*`** step (currently **`DLC-1`**). Agents must update the **Post–Phase 10** status table when a consumer step ships.
+**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation and the **`DLC-*`** consumer step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host, equirect materializer). **`DLC-1` shipped** (Model B global clouds/IR). **Default next macro track:** first pending **`DLC-*`** step (currently **`DLC-2`**). Agents must update the **Post–Phase 10** status table when a consumer step ships.
 
 **Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / DLC), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 complete; After Phase 10 consumers).
 
@@ -131,14 +131,15 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 - **P10-5 (shipped):** Acquisition controller in `src/lifecycle/` — `DynamicSnapshotAcquisitionAdapter`, `createDynamicAcquisitionController` (async `refreshNow`, `startPeriodic`/`stopPeriodic` via injectable `setInterval`—never `requestAnimationFrame`), manual/file `importSnapshot` into the versioned store, lifecycle loading/ready/error transitions, `createFixtureAcquisitionAdapter` with real-format JPEG fixtures; tests in `dynamicAcquisition.test.ts` prove scrub/resolve does not invoke adapters. No shell seam, scene overlay, or UI.
 - **P10-6 (shipped):** App shell seam — `createDynamicDataLifecycleHost` wires store + lifecycle manager + product-time resolver + acquisition; `attachForProductInstant` builds a read-only `DynamicDataLifecycleAttachment` on `TimeContext` each tick (`App.tsx`); `getDynamicDataLifecycleAttachment` for future layers; tests in `dynamicDataLifecycleHost.test.ts` prove scrub resolve does not invoke adapters. Still **no** user-facing dynamic overlay or SceneConfig dynamic enablement.
 - **P10-7 (shipped):** Phase 10 closure — all `P10-1`…`P10-7` marked shipped; public barrel smoke in `phase10LifecycleClosure.test.ts` (kinds/states + compose + scrub-safe host attach); docs/handoff point default macro track to **`DLC-*`** (next **`DLC-1`** global equirect clouds/IR). Still **no** user-facing dynamic overlay in Phase 10 exit.
+- **DLC-1 (shipped):** First Model B global equirect clouds/IR consumer — durable source `global-clouds-ir-v1` + catalog attribution; SceneConfig row `globalCloudsIr` (`dynamicEquirectRaster`); sync equirect materializer + host `ensureGlobalCloudsIrConsumer`; fixture JPEG acquisition (real `image/jpeg`) with periodic refresh outside rAF; layer `createDynamicEquirectRasterOverlayLayer` reads prepared views only; Layers toggle; tests `dlc1GlobalCloudsIr.test.ts` / `dlc1GlobalCloudsIrScene.test.ts`. Next Active step: **`DLC-2`**.
 
 ## Post–Phase 10 — Dynamic layer consumers (active track)
 
-**Phase 10 exit criteria met.** The default macro track is now **consumer verticals** (still one PR at a time). **Active step:** `DLC-1`. Suggested order (adjust when sources/rights are confirmed):
+**Phase 10 exit criteria met.** The default macro track is now **consumer verticals** (still one PR at a time). **Active step:** `DLC-2`. Suggested order (adjust when sources/rights are confirmed):
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
-| 1 | `DLC-1` | pending | **First global equirect raster consumer** (clouds / satellite IR)—Model B scene layer; real free (or justified paid) source; SceneConfig enablement + attribution; periodic lifecycle acquisition. |
+| 1 | `DLC-1` | **shipped** | **First global equirect raster consumer** (clouds / satellite IR)—Model B scene layer; real free (or justified paid) source; SceneConfig enablement + attribution; periodic lifecycle acquisition. |
 | 2 | `DLC-2` | pending | Point-features consumer (e.g. earthquakes)—reuse lifecycle. |
 | 3 | `DLC-3` | pending | Tracks consumer (e.g. satellites/ISS or ADS-B)—reuse lifecycle. |
 | 4 | `DLC-4` | pending | Optional Model A cloud participation in planetary illumination (see weather-cloud plan)—only with explicit scope. |

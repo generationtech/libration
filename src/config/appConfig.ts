@@ -41,6 +41,8 @@ export interface LayerEnableFlags {
   grid: boolean;
   /** Phase 3: scene stack row for {@link SceneLayerInstance} `staticEquirectOverlay` (static raster URL in scene). */
   staticEquirectOverlay: boolean;
+  /** DLC-1: Model B global equirect clouds / IR (`globalCloudsIr` / `dynamicEquirectRaster`). */
+  globalCloudsIr: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -630,6 +632,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   solarShading: true,
   grid: true,
   staticEquirectOverlay: false,
+  globalCloudsIr: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

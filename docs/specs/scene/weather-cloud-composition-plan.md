@@ -105,7 +105,7 @@ After this planning doc and Phase 10 foundations:
 3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
 4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
 
-**Phase 10 lifecycle complete.** **Default macro PR track** is **`DLC-*`** (next **`DLC-1`**). Remaining Phase 8 queue **A** deferred unless explicitly scoped.
+**Phase 10 lifecycle complete.** **`DLC-1` shipped** (Model B global clouds/IR). **Default macro PR track** is **`DLC-*`** (next **`DLC-2`**). Remaining Phase 8 queue **A** deferred unless explicitly scoped.
 
 ## Relationship to existing subsystems
 

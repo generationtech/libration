@@ -12,13 +12,9 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle — public contract surface (complete).
- * P10-1: types & pure helpers. P10-2: versioned snapshot store.
- * P10-3: per-source lifecycle manager (state machine + subscribe).
- * P10-4: product-time resolver (scrub-safe read-only resolve).
- * P10-5: acquisition adapter + periodic refresh + manual/file import.
- * P10-6: app shell host + TimeContext attachment (no dynamic overlay UI).
- * P10-7: Phase 10 closure + handoff to post–Phase 10 `DLC-*` consumers.
+ * Phase 10 dynamic data lifecycle + DLC-1 equirect consumer — public contract surface.
+ * P10-1…P10-7: types, store, manager, resolver, acquisition, shell host, closure.
+ * DLC-1: global equirect clouds/IR Model B layer (catalog, materializer, fixture adapter).
  */
 
 export type {
@@ -122,6 +118,32 @@ export {
   createDynamicAcquisitionController,
   createFixtureAcquisitionAdapter,
 } from "./dynamicAcquisition";
+
+export type { DynamicEquirectSourceCatalogEntry } from "./dynamicEquirectSourceCatalog";
+
+export {
+  GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
+  GLOBAL_CLOUDS_IR_SOURCE_ID,
+  getDynamicEquirectSourceCatalogEntry,
+  listDynamicEquirectSourceCatalog,
+} from "./dynamicEquirectSourceCatalog";
+
+export type {
+  DynamicEquirectMaterializer,
+  DynamicEquirectMaterializerDeps,
+  PreparedEquirectRasterView,
+} from "./dynamicEquirectMaterializer";
+
+export { createDynamicEquirectMaterializer } from "./dynamicEquirectMaterializer";
+
+export type { GlobalCloudsIrAcquireOptions } from "./globalCloudsIrAcquisition";
+
+export {
+  GLOBAL_CLOUDS_IR_SCENE_LAYER_ID,
+  createGlobalCloudsIrFixtureAcquisitionAdapter,
+  isGlobalCloudsIrSourceId,
+  produceGlobalCloudsIrFixtureAcquisition,
+} from "./globalCloudsIrAcquisition";
 
 export type {
   DynamicDataLifecycleAttachment,

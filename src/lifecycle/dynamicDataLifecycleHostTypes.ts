@@ -12,9 +12,9 @@
  */
 
 /**
- * App shell seam contracts (P10-6).
- * Host owns store/manager/resolver/acquisition; TimeContext carries a
- * read-only attachment for product-time resolve. No scene overlay UI.
+ * App shell seam contracts (P10-6 + DLC-1 consumer hooks).
+ * Host owns store/manager/resolver/acquisition/materializer; TimeContext carries a
+ * read-only attachment for product-time resolve + sync prepared equirect views.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
 
@@ -22,6 +22,10 @@ import type {
   DynamicAcquisitionController,
   DynamicAcquisitionTimerHooks,
 } from "./dynamicAcquisitionTypes";
+import type {
+  DynamicEquirectMaterializer,
+  PreparedEquirectRasterView,
+} from "./dynamicEquirectMaterializer";
 import type {
   DynamicDataLifecycleManager,
   DynamicSourceLifecycleSnapshot,
@@ -35,7 +39,7 @@ import type {
 
 /**
  * Read-only view the shell attaches on TimeContext each tick.
- * Future layers may resolve by product time; must not acquire / fetch / put.
+ * Layers may resolve / select prepared views by product time; must not acquire / fetch / put.
  */
 export type DynamicDataLifecycleAttachment = Readonly<{
   /** Canonical product UTC for this frame (matches TimeContext.now). */
@@ -47,10 +51,17 @@ export type DynamicDataLifecycleAttachment = Readonly<{
   resolveSnapshot(
     sourceId: DynamicSourceId,
   ): Promise<DynamicSnapshotResolveResult>;
-  /** Sync per-source lifecycle state (freshness bridge for future chrome). */
+  /** Sync per-source lifecycle state (freshness bridge for chrome / layers). */
   getLifecycleState(
     sourceId: DynamicSourceId,
   ): DynamicSourceLifecycleSnapshot;
+  /**
+   * Sync prepared equirect raster for Model B layers (DLC-1).
+   * Returns null when no materialized version is available — never fetches.
+   */
+  getPreparedEquirectRaster(
+    sourceId: DynamicSourceId,
+  ): PreparedEquirectRasterView | null;
 }>;
 
 /**
@@ -62,6 +73,7 @@ export interface DynamicDataLifecycleHost {
   readonly lifecycle: DynamicDataLifecycleManager;
   readonly resolver: DynamicSnapshotResolver;
   readonly acquisition: DynamicAcquisitionController;
+  readonly materializer: DynamicEquirectMaterializer;
 
   /**
    * Build a TimeContext-attachable view bound to `productInstantMs`.
@@ -71,7 +83,19 @@ export interface DynamicDataLifecycleHost {
     productInstantMs: number,
   ): DynamicDataLifecycleAttachment;
 
-  /** Stop periodic acquisition timers; safe to call repeatedly. */
+  /**
+   * DLC-1: register fixture adapter + start periodic refresh for global clouds/IR.
+   * Idempotent. Safe to call from config/effect paths — never from rAF paint.
+   */
+  ensureGlobalCloudsIrConsumer(options?: {
+    intervalMs?: number;
+    runImmediately?: boolean;
+  }): void;
+
+  /** Stop periodic refresh for the DLC-1 clouds/IR source (keeps cache). */
+  stopGlobalCloudsIrConsumer(): void;
+
+  /** Stop periodic acquisition timers and revoke prepared object URLs. */
   dispose(): void;
 }
 
@@ -79,5 +103,6 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   /** Defaults to an in-memory store when omitted. */
   store?: DynamicSnapshotStore;
   lifecycle?: DynamicDataLifecycleManager;
+  materializer?: DynamicEquirectMaterializer;
 }> &
   DynamicAcquisitionTimerHooks;

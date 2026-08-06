@@ -600,6 +600,8 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
     grid: typeof r.grid === "boolean" ? r.grid : d.grid,
     staticEquirectOverlay:
       typeof r.staticEquirectOverlay === "boolean" ? r.staticEquirectOverlay : d.staticEquirectOverlay,
+    globalCloudsIr:
+      typeof r.globalCloudsIr === "boolean" ? r.globalCloudsIr : d.globalCloudsIr,
     cityPins: typeof r.cityPins === "boolean" ? r.cityPins : d.cityPins,
     subsolarMarker: typeof r.subsolarMarker === "boolean" ? r.subsolarMarker : d.subsolarMarker,
     sublunarMarker: typeof r.sublunarMarker === "boolean" ? r.sublunarMarker : d.sublunarMarker,
@@ -613,6 +615,7 @@ function layerFlagsEqualShallow(a: LayerEnableFlags, b: LayerEnableFlags): boole
     a.solarShading === b.solarShading &&
     a.grid === b.grid &&
     a.staticEquirectOverlay === b.staticEquirectOverlay &&
+    a.globalCloudsIr === b.globalCloudsIr &&
     a.cityPins === b.cityPins &&
     a.subsolarMarker === b.subsolarMarker &&
     a.sublunarMarker === b.sublunarMarker &&

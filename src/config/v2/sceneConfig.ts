@@ -139,6 +139,12 @@ export type LayerSourceConfig =
       metadata?: Record<string, unknown>;
     }
   | { kind: "staticRaster"; src: string; metadata?: Record<string, unknown> }
+  | {
+      /** DLC-1: Model B dynamic equirect — durable lifecycle source id (not a CDN URL). */
+      kind: "dynamicEquirectRaster";
+      sourceId: string;
+      metadata?: Record<string, unknown>;
+    }
   | { kind: "custom"; config: Record<string, unknown> };
 
 export type SceneLayerFamily =
@@ -336,6 +342,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "solarShading",
   "grid",
   "staticEquirectOverlay",
+  "globalCloudsIr",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -548,6 +555,23 @@ const STATIC_EQUIRECT: SceneLayerInstance = {
   },
 };
 
+/**
+ * DLC-1: Model B global equirect clouds / IR — lifecycle sourceId, default off.
+ * Acquisition is outside rAF; layer reads sync-prepared views only.
+ */
+const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
+  id: "globalCloudsIr",
+  family: "environment",
+  type: "environmentRaster",
+  enabled: false,
+  order: 2.5,
+  opacity: 0.45,
+  source: {
+    kind: "dynamicEquirectRaster",
+    sourceId: "global-clouds-ir-v1",
+  },
+};
+
 const CITY: SceneLayerInstance = {
   id: "cityPins",
   family: "annotation",
@@ -589,6 +613,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   SOLAR,
   GRID,
   STATIC_EQUIRECT,
+  GLOBAL_CLOUDS_IR,
   CITY,
   SUBSOLAR,
   SUBLUNAR,
@@ -609,6 +634,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "sublunarMarker";
     case "staticEquirectOverlay":
       return "staticEquirectOverlay";
+    case "globalCloudsIr":
+      return "globalCloudsIr";
     case "solarAnalemma":
       return "solarAnalemma";
     default:
@@ -661,6 +688,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     solarShading: false,
     grid: false,
     staticEquirectOverlay: false,
+    globalCloudsIr: false,
     cityPins: false,
     subsolarMarker: false,
     sublunarMarker: false,
@@ -908,6 +936,21 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = {
       kind: "staticRaster",
       src: srcT !== "" ? srcT : fallback,
+    };
+  } else if (
+    isPlainObject(sRaw) &&
+    sRaw.kind === "dynamicEquirectRaster" &&
+    typeof sRaw.sourceId === "string"
+  ) {
+    const sid = sRaw.sourceId.trim().toLowerCase();
+    const defSrc = DEFAULT_STACK.find((d) => d.id === idNorm);
+    const fallback =
+      defSrc?.source.kind === "dynamicEquirectRaster"
+        ? defSrc.source.sourceId
+        : "global-clouds-ir-v1";
+    source = {
+      kind: "dynamicEquirectRaster",
+      sourceId: sid !== "" ? sid : fallback,
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "custom") {
     source = { kind: "custom", config: isPlainObject(sRaw.config) ? { ...sRaw.config } : {} };

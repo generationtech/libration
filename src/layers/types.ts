@@ -36,8 +36,8 @@ export interface TimeContext {
    */
   overlayReadabilityFrame?: OverlayReadabilityFrame;
   /**
-   * When set (typically once per frame by the app shell), future dynamic layers may
-   * resolve snapshots by product time via the attached read-only seam.
+   * When set (typically once per frame by the app shell), dynamic layers may
+   * resolve / select prepared snapshots by product time via the attached read-only seam.
    * Must not trigger acquisition / fetch / store writes from the paint path.
    */
   dynamicDataLifecycle?: DynamicDataLifecycleAttachment;
