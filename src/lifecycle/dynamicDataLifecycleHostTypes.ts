@@ -119,9 +119,10 @@ export interface DynamicDataLifecycleHost {
   ): DynamicDataLifecycleAttachment;
 
   /**
-   * DLC-1 / DLC-4 / DLU-5: register live GIBS HTTP adapter (fixture fallback) +
-   * start periodic refresh for global clouds/IR.
-   * Used by Model B overlay and Model A cloud participation (same durable sourceId).
+   * DLC-1 / DLC-4 / DLU-5 / DLU-6: register live GIBS HTTP adapter (fixture
+   * fallback) + start periodic refresh for global clouds/IR.
+   * Used by Model B overlay and Model A cloud participation (same durable
+   * sourceId / live opacity field).
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureGlobalCloudsIrConsumer(options?: {

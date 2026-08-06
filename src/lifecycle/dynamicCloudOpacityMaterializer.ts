@@ -12,9 +12,10 @@
  */
 
 /**
- * Sync-prepared cloud opacity fields for Model A illumination participation (DLC-4).
- * Decodes equirect JPEG bytes (jpeg-js) outside the paint path; layers / plan builders
- * only sample prepared buffers. Never fetches.
+ * Sync-prepared cloud opacity fields for Model A illumination participation
+ * (DLC-4 / DLU-6 live). Decodes equirect JPEG bytes (jpeg-js) outside the paint
+ * path; layers / plan builders only sample prepared buffers. Never fetches.
+ * Live bytes arrive via the DLU-5 `global-clouds-ir-v1` acquisition adapter.
  * @see docs/specs/scene/weather-cloud-composition-plan.md (Model A)
  */
 

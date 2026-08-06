@@ -12,10 +12,11 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 + DLU-3/DLU-4/DLU-5 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1…DLC-4 + DLU-3…DLU-6 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
  * equirect / cloud-opacity / point-features / tracks materializers.
- * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback.
+ * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback;
+ * Model A cloud participation (DLU-6) consumes the same live opacity field.
  * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
  * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4) with fixture offline fallback.
  * TimeContext attachments are read-only.
@@ -166,6 +167,8 @@ export function createDynamicDataLifecycleHost(
       acquisition.registerAdapter(
         createGlobalCloudsIrLiveHttpAcquisitionAdapter({
           useFixtureFallback: true,
+          // Shared host clock → durable versionId / validTimeMs for Model A + B.
+          ...(deps.nowMs !== undefined ? { nowMs: deps.nowMs } : {}),
           ...(deps.cloudsIrLiveFetchFn !== undefined
             ? { fetchFn: deps.cloudsIrLiveFetchFn }
             : {}),

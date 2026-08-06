@@ -20,6 +20,7 @@
  * DLC-3: ISS orbital tracks Model B layer (catalog, materializer, fixture adapter).
  * DLC-4: Model A cloud participation in planetary illumination (opacity materializer + SceneConfig).
  * DLU-2: shared live HTTP acquisition seam (fetch helpers, attribution, fixture fallback, stale policy).
+ * DLU-3…DLU-6: live USGS earthquakes, ISS orbital, GIBS clouds/IR, Model A on the same opacity field.
  */
 
 export type {
