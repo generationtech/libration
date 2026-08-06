@@ -27,6 +27,7 @@ const ALL: LayerEnableFlags = {
   staticEquirectOverlay: true,
   globalCloudsIr: false,
   earthquakes: false,
+  orbitalTracks: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

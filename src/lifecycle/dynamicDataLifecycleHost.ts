@@ -12,9 +12,9 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1/DLC-2 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
- * equirect / point-features materializers. TimeContext attachments are read-only.
+ * equirect / point-features / tracks materializers. TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
 
@@ -22,6 +22,7 @@ import { createDynamicAcquisitionController } from "./dynamicAcquisition";
 import { createDynamicDataLifecycleManager } from "./dynamicLifecycleManager";
 import { createDynamicEquirectMaterializer } from "./dynamicEquirectMaterializer";
 import { createDynamicPointFeaturesMaterializer } from "./dynamicPointFeaturesMaterializer";
+import { createDynamicTracksMaterializer } from "./dynamicTracksMaterializer";
 import { createDynamicSnapshotResolver } from "./dynamicSnapshotResolver";
 import { createMemoryDynamicSnapshotStore } from "./memoryDynamicSnapshotStore";
 import {
@@ -32,8 +33,13 @@ import {
   USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
   USGS_EARTHQUAKES_SOURCE_ID,
 } from "./dynamicPointFeaturesSourceCatalog";
+import {
+  ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
+  ISS_ORBITAL_TRACK_SOURCE_ID,
+} from "./dynamicTracksSourceCatalog";
 import { createGlobalCloudsIrFixtureAcquisitionAdapter } from "./globalCloudsIrAcquisition";
 import { createEarthquakesFixtureAcquisitionAdapter } from "./earthquakesAcquisition";
+import { createIssOrbitalTrackFixtureAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
 import type {
   DynamicDataLifecycleAttachment,
   DynamicDataLifecycleHost,
@@ -65,12 +71,17 @@ export function createDynamicDataLifecycleHost(
   const pointFeaturesMaterializer =
     deps.pointFeaturesMaterializer ??
     createDynamicPointFeaturesMaterializer({ lifecycle });
+  const tracksMaterializer =
+    deps.tracksMaterializer ??
+    createDynamicTracksMaterializer({ lifecycle });
 
   let disposed = false;
   let cloudsIrArmed = false;
   let earthquakesArmed = false;
+  let orbitalTracksArmed = false;
   let unsubCloudsIr: (() => void) | undefined;
   let unsubEarthquakes: (() => void) | undefined;
+  let unsubOrbitalTracks: (() => void) | undefined;
 
   /**
    * After lifecycle marks ready, pull entry from the store into a sync materializer.
@@ -118,6 +129,9 @@ export function createDynamicDataLifecycleHost(
           sourceId,
           instant,
         );
+      },
+      getPreparedTracks(sourceId) {
+        return tracksMaterializer.selectForProductInstant(sourceId, instant);
       },
     };
   }
@@ -199,6 +213,44 @@ export function createDynamicDataLifecycleHost(
     acquisition.stopPeriodic(USGS_EARTHQUAKES_SOURCE_ID);
   }
 
+  function ensureOrbitalTracksConsumer(options?: {
+    intervalMs?: number;
+    runImmediately?: boolean;
+  }): void {
+    if (disposed) return;
+    const intervalMs =
+      options?.intervalMs !== undefined &&
+      Number.isFinite(options.intervalMs) &&
+      options.intervalMs > 0
+        ? options.intervalMs
+        : ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS;
+    const runImmediately = options?.runImmediately !== false;
+
+    if (!orbitalTracksArmed) {
+      acquisition.registerAdapter(createIssOrbitalTrackFixtureAcquisitionAdapter());
+      unsubOrbitalTracks?.();
+      wireMaterializeOnReady(
+        ISS_ORBITAL_TRACK_SOURCE_ID,
+        (entry) => tracksMaterializer.noteStoreEntry(entry),
+        (u) => {
+          unsubOrbitalTracks = u;
+        },
+      );
+      orbitalTracksArmed = true;
+    }
+
+    if (!acquisition.isPeriodicActive(ISS_ORBITAL_TRACK_SOURCE_ID)) {
+      acquisition.startPeriodic(ISS_ORBITAL_TRACK_SOURCE_ID, {
+        intervalMs,
+        runImmediately,
+      });
+    }
+  }
+
+  function stopOrbitalTracksConsumer(): void {
+    acquisition.stopPeriodic(ISS_ORBITAL_TRACK_SOURCE_ID);
+  }
+
   function dispose(): void {
     if (disposed) return;
     disposed = true;
@@ -206,11 +258,15 @@ export function createDynamicDataLifecycleHost(
     unsubCloudsIr = undefined;
     unsubEarthquakes?.();
     unsubEarthquakes = undefined;
+    unsubOrbitalTracks?.();
+    unsubOrbitalTracks = undefined;
     acquisition.stopAll();
     materializer.revokeAll();
     pointFeaturesMaterializer.clearAll();
+    tracksMaterializer.clearAll();
     cloudsIrArmed = false;
     earthquakesArmed = false;
+    orbitalTracksArmed = false;
   }
 
   return {
@@ -220,11 +276,14 @@ export function createDynamicDataLifecycleHost(
     acquisition,
     materializer,
     pointFeaturesMaterializer,
+    tracksMaterializer,
     attachForProductInstant,
     ensureGlobalCloudsIrConsumer,
     stopGlobalCloudsIrConsumer,
     ensureEarthquakesConsumer,
     stopEarthquakesConsumer,
+    ensureOrbitalTracksConsumer,
+    stopOrbitalTracksConsumer,
     dispose,
   };
 }

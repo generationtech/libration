@@ -12,11 +12,12 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle + DLC equirect / point-features consumers —
+ * Phase 10 dynamic data lifecycle + DLC equirect / point-features / tracks consumers —
  * public contract surface.
  * P10-1…P10-7: types, store, manager, resolver, acquisition, shell host, closure.
  * DLC-1: global equirect clouds/IR Model B layer (catalog, materializer, fixture adapter).
  * DLC-2: earthquake point-features Model B layer (catalog, materializer, fixture adapter).
+ * DLC-3: ISS orbital tracks Model B layer (catalog, materializer, fixture adapter).
  */
 
 export type {
@@ -172,6 +173,32 @@ export {
   isUsgsEarthquakesSourceId,
   produceEarthquakesFixtureAcquisition,
 } from "./earthquakesAcquisition";
+
+export type { DynamicTracksSourceCatalogEntry } from "./dynamicTracksSourceCatalog";
+
+export {
+  ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
+  ISS_ORBITAL_TRACK_SOURCE_ID,
+  getDynamicTracksSourceCatalogEntry,
+  listDynamicTracksSourceCatalog,
+} from "./dynamicTracksSourceCatalog";
+
+export type {
+  DynamicTracksMaterializer,
+  DynamicTracksMaterializerDeps,
+  PreparedTracksView,
+} from "./dynamicTracksMaterializer";
+
+export { createDynamicTracksMaterializer } from "./dynamicTracksMaterializer";
+
+export type { IssOrbitalTrackAcquireOptions } from "./issOrbitalTrackAcquisition";
+
+export {
+  ORBITAL_TRACKS_SCENE_LAYER_ID,
+  createIssOrbitalTrackFixtureAcquisitionAdapter,
+  isIssOrbitalTrackSourceId,
+  produceIssOrbitalTrackFixtureAcquisition,
+} from "./issOrbitalTrackAcquisition";
 
 export type {
   DynamicDataLifecycleAttachment,

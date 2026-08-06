@@ -151,6 +151,12 @@ export type LayerSourceConfig =
       sourceId: string;
       metadata?: Record<string, unknown>;
     }
+  | {
+      /** DLC-3: Model B dynamic tracks — durable lifecycle source id (not a CDN URL). */
+      kind: "dynamicTracks";
+      sourceId: string;
+      metadata?: Record<string, unknown>;
+    }
   | { kind: "custom"; config: Record<string, unknown> };
 
 export type SceneLayerFamily =
@@ -350,6 +356,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "staticEquirectOverlay",
   "globalCloudsIr",
   "earthquakes",
+  "orbitalTracks",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -596,6 +603,23 @@ const EARTHQUAKES: SceneLayerInstance = {
   },
 };
 
+/**
+ * DLC-3: Model B ISS orbital tracks — lifecycle sourceId, default off.
+ * Acquisition is outside rAF; layer reads sync-prepared views only.
+ */
+const ORBITAL_TRACKS: SceneLayerInstance = {
+  id: "orbitalTracks",
+  family: "mobility",
+  type: "astronomyVector",
+  enabled: false,
+  order: 3.6,
+  opacity: 0.95,
+  source: {
+    kind: "dynamicTracks",
+    sourceId: "iss-orbital-track-v1",
+  },
+};
+
 const CITY: SceneLayerInstance = {
   id: "cityPins",
   family: "annotation",
@@ -640,6 +664,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   GLOBAL_CLOUDS_IR,
   CITY,
   EARTHQUAKES,
+  ORBITAL_TRACKS,
   SUBSOLAR,
   SUBLUNAR,
   SOLAR_ANALEMMA_ROW,
@@ -663,6 +688,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "globalCloudsIr";
     case "earthquakes":
       return "earthquakes";
+    case "orbitalTracks":
+      return "orbitalTracks";
     case "solarAnalemma":
       return "solarAnalemma";
     default:
@@ -717,6 +744,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     staticEquirectOverlay: false,
     globalCloudsIr: false,
     earthquakes: false,
+    orbitalTracks: false,
     cityPins: false,
     subsolarMarker: false,
     sublunarMarker: false,
@@ -993,6 +1021,21 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
         : "usgs-earthquakes-v1";
     source = {
       kind: "dynamicPointFeatures",
+      sourceId: sid !== "" ? sid : fallback,
+    };
+  } else if (
+    isPlainObject(sRaw) &&
+    sRaw.kind === "dynamicTracks" &&
+    typeof sRaw.sourceId === "string"
+  ) {
+    const sid = sRaw.sourceId.trim().toLowerCase();
+    const defSrc = DEFAULT_STACK.find((d) => d.id === idNorm);
+    const fallback =
+      defSrc?.source.kind === "dynamicTracks"
+        ? defSrc.source.sourceId
+        : "iss-orbital-track-v1";
+    source = {
+      kind: "dynamicTracks",
       sourceId: sid !== "" ? sid : fallback,
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "custom") {

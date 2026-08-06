@@ -32,6 +32,7 @@ import { createSubsolarMarkerLayer } from "./subsolarMarkerLayer";
 import { createStaticEquirectRasterOverlayLayer } from "./staticEquirectRasterOverlayLayer";
 import { createDynamicEquirectRasterOverlayLayer } from "./dynamicEquirectRasterOverlayLayer";
 import { createDynamicPointFeaturesOverlayLayer } from "./dynamicPointFeaturesOverlayLayer";
+import { createDynamicTracksOverlayLayer } from "./dynamicTracksOverlayLayer";
 import type { Layer } from "./types";
 
 type OverlayPart = { zIndex: number; opacity: number };
@@ -39,7 +40,7 @@ type OverlayPart = { zIndex: number; opacity: number };
 /**
  * Creates one composited overlay from a scene row. Dispatch is by
  * {@link SceneLayerInstance#source} (e.g. `staticRaster`, `dynamicEquirectRaster`,
- * `dynamicPointFeatures`, `derived` product), not by layer id, so additional stack rows
+ * `dynamicPointFeatures`, `dynamicTracks`, `derived` product), not by layer id, so additional stack rows
  * do not require bootstrap `switch` branches.
  */
 export function createLayerForSceneOverlayInstance(
@@ -75,6 +76,15 @@ export function createLayerForSceneOverlayInstance(
       zIndex,
       opacity,
       name: inst.id === "earthquakes" ? "Earthquakes" : undefined,
+    });
+  }
+  if (s.kind === "dynamicTracks") {
+    return createDynamicTracksOverlayLayer({
+      sceneLayerId: inst.id,
+      sourceId: s.sourceId,
+      zIndex,
+      opacity,
+      name: inst.id === "orbitalTracks" ? "ISS orbital track" : undefined,
     });
   }
   if (s.kind === "derived") {

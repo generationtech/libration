@@ -121,7 +121,7 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`** / **`DLC-2`** shipped (Model B clouds/IR + earthquakes); **default next** = **`DLC-*`** (currently **`DLC-3`**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`** / **`DLC-2`** / **`DLC-3`** shipped (Model B clouds/IR + earthquakes + ISS tracks); **default next** = **`DLC-*`** (currently **`DLC-4`**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 **First consumer (`DLC-1` — shipped):** global equirect raster — clouds / satellite IR (`globalCloudsIr`, durable source `global-clouds-ir-v1`; fixture JPEG + periodic lifecycle acquisition; live feed adapter swap is follow-up).
 
@@ -140,7 +140,7 @@ Candidates (consume lifecycle; prefer free-for-personal-use; paid OK when valuab
 - aircraft ADS-B feed.
 - marine AIS feed.
 - satellite live positions.
-- ISS and selected spacecraft.
+- ISS and selected spacecraft — **`DLC-3` shipped** ISS track Model B (`orbitalTracks` / `iss-orbital-track-v1`; live CelesTrak/TLE adapter remains a follow-up; additional spacecraft remain future).
 - lightning feed.
 - wildfire smoke.
 - air quality.

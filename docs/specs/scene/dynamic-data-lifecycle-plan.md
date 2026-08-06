@@ -2,7 +2,7 @@
 
 ## Status
 
-**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation and the **`DLC-*`** consumer step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host, equirect + point-features materializers). **`DLC-1` shipped** (Model B global clouds/IR). **`DLC-2` shipped** (Model B earthquakes point-features). **Default next macro track:** first pending **`DLC-*`** step (currently **`DLC-3`**). Agents must update the **Post–Phase 10** status table when a consumer step ships.
+**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation and the **`DLC-*`** consumer step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host, equirect + point-features + tracks materializers). **`DLC-1` shipped** (Model B global clouds/IR). **`DLC-2` shipped** (Model B earthquakes point-features). **`DLC-3` shipped** (Model B ISS orbital tracks). **Default next macro track:** first pending **`DLC-*`** step (currently **`DLC-4`**). Agents must update the **Post–Phase 10** status table when a consumer step ships.
 
 **Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / DLC), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 complete; After Phase 10 consumers).
 
@@ -133,16 +133,17 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 - **P10-7 (shipped):** Phase 10 closure — all `P10-1`…`P10-7` marked shipped; public barrel smoke in `phase10LifecycleClosure.test.ts` (kinds/states + compose + scrub-safe host attach); docs/handoff point default macro track to **`DLC-*`** (next **`DLC-1`** global equirect clouds/IR). Still **no** user-facing dynamic overlay in Phase 10 exit.
 - **DLC-1 (shipped):** First Model B global equirect clouds/IR consumer — durable source `global-clouds-ir-v1` + catalog attribution; SceneConfig row `globalCloudsIr` (`dynamicEquirectRaster`); sync equirect materializer + host `ensureGlobalCloudsIrConsumer`; fixture JPEG acquisition (real `image/jpeg`) with periodic refresh outside rAF; layer `createDynamicEquirectRasterOverlayLayer` reads prepared views only; Layers toggle; tests `dlc1GlobalCloudsIr.test.ts` / `dlc1GlobalCloudsIrScene.test.ts`. Next Active step: **`DLC-2`**.
 - **DLC-2 (shipped):** Point-features earthquakes consumer — durable source `usgs-earthquakes-v1` + catalog attribution; SceneConfig row `earthquakes` (`dynamicPointFeatures`); sync point-features materializer + host `ensureEarthquakesConsumer`; USGS-shaped GeoJSON FeatureCollection fixture (real `application/geo+json`) with periodic refresh outside rAF; layer `createDynamicPointFeaturesOverlayLayer` reads prepared views only; Layers toggle; tests `dlc2Earthquakes.test.ts` / `dlc2EarthquakesScene.test.ts`. Next Active step: **`DLC-3`**.
+- **DLC-3 (shipped):** Tracks ISS orbital consumer — durable source `iss-orbital-track-v1` + catalog attribution; SceneConfig row `orbitalTracks` (`dynamicTracks`); sync tracks materializer + host `ensureOrbitalTracksConsumer`; ISS-shaped GeoJSON timed LineString FeatureCollection fixture (real `application/geo+json`) with periodic refresh outside rAF; layer `createDynamicTracksOverlayLayer` reads prepared views only; Layers toggle; tests `dlc3OrbitalTracks.test.ts` / `dlc3OrbitalTracksScene.test.ts`. Next Active step: **`DLC-4`**.
 
 ## Post–Phase 10 — Dynamic layer consumers (active track)
 
-**Phase 10 exit criteria met.** The default macro track is now **consumer verticals** (still one PR at a time). **Active step:** `DLC-3`. Suggested order (adjust when sources/rights are confirmed):
+**Phase 10 exit criteria met.** The default macro track is now **consumer verticals** (still one PR at a time). **Active step:** `DLC-4`. Suggested order (adjust when sources/rights are confirmed):
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
 | 1 | `DLC-1` | **shipped** | **First global equirect raster consumer** (clouds / satellite IR)—Model B scene layer; real free (or justified paid) source; SceneConfig enablement + attribution; periodic lifecycle acquisition. |
 | 2 | `DLC-2` | **shipped** | Point-features consumer (e.g. earthquakes)—reuse lifecycle. |
-| 3 | `DLC-3` | pending | Tracks consumer (e.g. satellites/ISS or ADS-B)—reuse lifecycle. |
+| 3 | `DLC-3` | **shipped** | Tracks consumer (e.g. satellites/ISS or ADS-B)—reuse lifecycle. |
 | 4 | `DLC-4` | pending | Optional Model A cloud participation in planetary illumination (see weather-cloud plan)—only with explicit scope. |
 
 Phase 11 (zoom/pan/tiles) may unlock denser regional products later; Phase 10/DLC assume equirect / global-or-simple-region first.

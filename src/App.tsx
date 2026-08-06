@@ -148,6 +148,11 @@ export default function App() {
     } else {
       host.stopEarthquakesConsumer();
     }
+    if (derivedAppConfigRef.current.layers.orbitalTracks) {
+      host.ensureOrbitalTracksConsumer({ runImmediately: true });
+    } else {
+      host.stopOrbitalTracksConsumer();
+    }
   }, []);
 
   const updateConfig = useCallback(

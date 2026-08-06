@@ -13,6 +13,7 @@
 
 import { isCityPinsPayload } from "../layers/cityPinsPayload";
 import { isDynamicPointFeaturesPayload } from "../layers/dynamicPointFeaturesPayload";
+import { isDynamicTracksPayload } from "../layers/dynamicTracksPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
@@ -37,6 +38,7 @@ import {
 } from "./renderPlan/sceneSubsolarSublunarMarkersPlan";
 import { buildCityPinsRenderPlan } from "./renderPlan/sceneCityPinsPlan";
 import { buildDynamicPointFeaturesRenderPlan } from "./renderPlan/sceneDynamicPointFeaturesPlan";
+import { buildDynamicTracksRenderPlan } from "./renderPlan/sceneDynamicTracksPlan";
 import { buildSceneTextOverlayRenderPlan } from "./renderPlan/sceneTextOverlayPlan";
 import type { RenderBackend } from "./RenderBackend";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
@@ -426,6 +428,23 @@ export class CanvasRenderBackend implements RenderBackend {
       executeRenderPlanOnCanvas(
         ctx,
         buildDynamicPointFeaturesRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          layerOpacity: layer.opacity,
+          payload: layer.data,
+        }),
+      );
+      return;
+    }
+    if (isDynamicTracksPayload(layer.data)) {
+      const w = viewport.width;
+      const h = viewport.height;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildDynamicTracksRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
           layerOpacity: layer.opacity,

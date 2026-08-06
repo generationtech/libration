@@ -45,6 +45,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   staticEquirectOverlay: true,
   globalCloudsIr: false,
   earthquakes: false,
+  orbitalTracks: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
@@ -96,7 +97,7 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(9);
+    expect(v2.scene?.layers).toHaveLength(10);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,

@@ -12,7 +12,7 @@
  */
 
 /**
- * App shell seam contracts (P10-6 + DLC-1/DLC-2 consumer hooks).
+ * App shell seam contracts (P10-6 + DLC-1/DLC-2/DLC-3 consumer hooks).
  * Host owns store/manager/resolver/acquisition/materializers; TimeContext carries a
  * read-only attachment for product-time resolve + sync prepared views.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
@@ -30,6 +30,10 @@ import type {
   DynamicPointFeaturesMaterializer,
   PreparedPointFeaturesView,
 } from "./dynamicPointFeaturesMaterializer";
+import type {
+  DynamicTracksMaterializer,
+  PreparedTracksView,
+} from "./dynamicTracksMaterializer";
 import type {
   DynamicDataLifecycleManager,
   DynamicSourceLifecycleSnapshot,
@@ -73,6 +77,11 @@ export type DynamicDataLifecycleAttachment = Readonly<{
   getPreparedPointFeatures(
     sourceId: DynamicSourceId,
   ): PreparedPointFeaturesView | null;
+  /**
+   * Sync prepared tracks for Model B layers (DLC-3).
+   * Returns null when no materialized version is available — never fetches.
+   */
+  getPreparedTracks(sourceId: DynamicSourceId): PreparedTracksView | null;
 }>;
 
 /**
@@ -86,6 +95,7 @@ export interface DynamicDataLifecycleHost {
   readonly acquisition: DynamicAcquisitionController;
   readonly materializer: DynamicEquirectMaterializer;
   readonly pointFeaturesMaterializer: DynamicPointFeaturesMaterializer;
+  readonly tracksMaterializer: DynamicTracksMaterializer;
 
   /**
    * Build a TimeContext-attachable view bound to `productInstantMs`.
@@ -119,6 +129,18 @@ export interface DynamicDataLifecycleHost {
   /** Stop periodic refresh for the DLC-2 earthquakes source (keeps cache). */
   stopEarthquakesConsumer(): void;
 
+  /**
+   * DLC-3: register fixture adapter + start periodic refresh for ISS orbital tracks.
+   * Idempotent. Safe to call from config/effect paths — never from rAF paint.
+   */
+  ensureOrbitalTracksConsumer(options?: {
+    intervalMs?: number;
+    runImmediately?: boolean;
+  }): void;
+
+  /** Stop periodic refresh for the DLC-3 ISS orbital tracks source (keeps cache). */
+  stopOrbitalTracksConsumer(): void;
+
   /** Stop periodic acquisition timers and revoke prepared object URLs. */
   dispose(): void;
 }
@@ -129,5 +151,6 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   lifecycle?: DynamicDataLifecycleManager;
   materializer?: DynamicEquirectMaterializer;
   pointFeaturesMaterializer?: DynamicPointFeaturesMaterializer;
+  tracksMaterializer?: DynamicTracksMaterializer;
 }> &
   DynamicAcquisitionTimerHooks;

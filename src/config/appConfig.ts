@@ -45,6 +45,8 @@ export interface LayerEnableFlags {
   globalCloudsIr: boolean;
   /** DLC-2: Model B earthquake point features (`earthquakes` / `dynamicPointFeatures`). */
   earthquakes: boolean;
+  /** DLC-3: Model B ISS orbital tracks (`orbitalTracks` / `dynamicTracks`). */
+  orbitalTracks: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -636,6 +638,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   staticEquirectOverlay: false,
   globalCloudsIr: false,
   earthquakes: false,
+  orbitalTracks: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
