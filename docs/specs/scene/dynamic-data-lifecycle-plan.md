@@ -2,11 +2,11 @@
 
 ## Status
 
-**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation, the **`DLC-*`** consumer step tracker, and the **`DLU-*` live acquisition** step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host, equirect + cloud-opacity + point-features + tracks materializers). **`DLC-1` shipped** (Model B global clouds/IR). **`DLC-2` shipped** (Model B earthquakes point-features). **`DLC-3` shipped** (Model B ISS orbital tracks). **`DLC-4` shipped** (Model A cloud participation in planetary illumination). **Sequenced Post–Phase 10 table (`DLC-1`…`DLC-4`) complete.** **Default macro track:** **`DLU-*` live network acquisition** for the four shipped consumers (fixture → live adapter under the same durable `sourceId`s; **`DLU-1`/`DLU-2`/`DLU-3`/`DLU-4`/`DLU-5`/`DLU-6` shipped**; **Active: `DLU-7`**). Additional *new* dynamic consumers still need **explicit scope** (see `docs/FUTURE_FEATURES.md`); remaining Phase 8 / Phase 9 stay deferred unless scoped. Agents must update the **`DLU-*`** status table (and Progress log) when a live-acquisition step ships.
+**Phase 10 complete (`P10-0`…`P10-7` shipped).** This document remains the authoritative contract for the dynamic data lifecycle foundation, the **`DLC-*`** consumer step tracker, and the **`DLU-*` live acquisition** step tracker. Runtime lives in `src/lifecycle/` (types, store, manager, resolver, acquisition, app shell host, equirect + cloud-opacity + point-features + tracks materializers). **`DLC-1` shipped** (Model B global clouds/IR). **`DLC-2` shipped** (Model B earthquakes point-features). **`DLC-3` shipped** (Model B ISS orbital tracks). **`DLC-4` shipped** (Model A cloud participation in planetary illumination). **Sequenced Post–Phase 10 table (`DLC-1`…`DLC-4`) complete.** **`DLU-*` live network acquisition complete** (`DLU-0`…`DLU-7` shipped) for the four consumers under durable `sourceId`s (live HTTP + fixture offline fallback; no fetch in render). **Active step: none pending.** Further *new* dynamic consumers need **explicit scope** (see `docs/FUTURE_FEATURES.md`); remaining Phase 8 / Phase 9 / Phase 11 stay deferred unless scoped.
 
-**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / **Active step `DLU-*`**), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 complete; After Phase 10 consumers; **After DLC — live acquisition**).
+**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 — DLU exit / next frontiers), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 complete; After Phase 10 consumers; **After DLC — live acquisition complete**).
 
-**Related:** weather/cloud *participation* models remain in [`weather-cloud-composition-plan.md`](weather-cloud-composition-plan.md). That doc does **not** replace this lifecycle plan. User-facing weather/cloud **layers** were **out of scope for Phase 10**; they shipped as **`DLC-1`…`DLC-4`**. Live HTTP (or equivalent) under those durable ids is **`DLU-*`**.
+**Related:** weather/cloud *participation* models remain in [`weather-cloud-composition-plan.md`](weather-cloud-composition-plan.md). That doc does **not** replace this lifecycle plan. User-facing weather/cloud **layers** were **out of scope for Phase 10**; they shipped as **`DLC-1`…`DLC-4`**. Live HTTP (or equivalent) under those durable ids is **`DLU-*`** (**complete**).
 
 ## Product intent (locked for this phase)
 
@@ -99,7 +99,7 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 
 ## Development steps (sequence through these)
 
-**Rule:** Phase 10 steps `P10-0`…`P10-7` are **all shipped**. Consumer verticals `DLC-1`…`DLC-4` are **all shipped**. Further default work uses the **After DLC — Live network acquisition** `DLU-*` table—each agent session implements **exactly one** live-acquisition step (the first whose status is not `shipped`). Update that table and `PLAN.md` Slice 5 when a step completes. Do not skip ahead without explicit human scope. New scene consumers beyond the four shipped rows still need explicit `DLC-*` (or equivalent) scope—not invented as filler during `DLU-*`.
+**Rule:** Phase 10 steps `P10-0`…`P10-7` are **all shipped**. Consumer verticals `DLC-1`…`DLC-4` are **all shipped**. Live acquisition steps `DLU-0`…`DLU-7` are **all shipped**. There is **no pending `DLU-*` Active step**. New scene consumers beyond the four shipped rows need explicit `DLC-*` (or equivalent) scope. Do not invent filler `DLC-*` / composition / map-inventory PRs without product scope.
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
@@ -142,10 +142,11 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 - **DLU-4 (shipped):** Live ISS orbital track — `createIssOrbitalTrackLiveHttpAcquisitionAdapter` fetches CelesTrak GP TLE (`CATNR=25544`) under durable `iss-orbital-track-v1` via the DLU-2 live HTTP seam, propagates a timed geographic ground track (SGP4 / satellite.js) outside rAF, fixture offline fallback; host `ensureOrbitalTracksConsumer` registers the live adapter; tests `dlu4IssOrbitalLiveAcquisition.test.ts`. Active step **`DLU-5`**.
 - **DLU-5 (shipped):** Live global clouds/IR — `createGlobalCloudsIrLiveHttpAcquisitionAdapter` fetches NASA GIBS WMS `MODIS_Terra_Cloud_Top_Temp_Day` equirect JPEG under durable `global-clouds-ir-v1` via the DLU-2 live HTTP seam (fixture offline fallback); host `ensureGlobalCloudsIrConsumer` registers the live adapter; JPEG SOI validate outside rAF; tests `dlu5GlobalCloudsIrLiveAcquisition.test.ts`. Active step **`DLU-6`**.
 - **DLU-6 (shipped):** Live Model A cloud participation — `scene.illumination.cloudParticipation` consumes the live `global-clouds-ir-v1` opacity field (same host arming / cloud-opacity materializer as DLU-5); host threads shared `nowMs` into the clouds live adapter for version/validTime consistency; illumination `rasterPatch` updates when live clouds refresh; tests `dlu6CloudParticipationLiveAcquisition.test.ts`. Active step **`DLU-7`**.
+- **DLU-7 (shipped):** DLU closure — live track complete for the four consumers; offline/fixture fallback + next frontiers documented below; public smoke `dlu7LiveAcquisitionClosure.test.ts` (host arms all three live adapters with fixture fallback when offline; scrub resolve does not re-fetch; Model A opacity on the same clouds sourceId); README/PLAN/ROADMAP/AGENTS/strategy docs synced. **Active step: none pending.**
 
 ## Post–Phase 10 — Dynamic layer consumers (complete)
 
-**Phase 10 exit criteria met.** The sequenced consumer verticals `DLC-1`…`DLC-4` are **shipped**. Additional *new* consumers (volcanoes, lightning, radar families, etc.) require **explicit scope**. Live network refresh for the shipped four is **`DLU-*`** (below)—not a fifth `DLC-*` id.
+**Phase 10 exit criteria met.** The sequenced consumer verticals `DLC-1`…`DLC-4` are **shipped**. Additional *new* consumers (volcanoes, lightning, radar families, etc.) require **explicit scope**. Live network refresh for the shipped four is **`DLU-*` (complete below)**—not a fifth `DLC-*` id.
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
@@ -156,20 +157,20 @@ Paid HTTP APIs are allowed later when valuable; they still enter through the sam
 
 Phase 11 (zoom/pan/tiles) may unlock denser regional products later; Phase 10/DLC/`DLU` assume equirect / global-or-simple-region first.
 
-## After DLC — Live network acquisition (`DLU-*`) (active track)
+## After DLC — Live network acquisition (`DLU-*`) (complete)
 
-**Product intent:** Replace fixture-only acquisition adapters with **periodic in-app live (network) acquisition** for the **already shipped** consumers, keeping durable SceneConfig `sourceId`s and the Phase 10 lifecycle boundary (no fetch in rAF / layer constructors / RenderPlan build). Fixture adapters remain acceptable as offline / test fallbacks when a step documents that policy.
+**Product intent (met):** Replace fixture-only acquisition adapters with **periodic in-app live (network) acquisition** for the **already shipped** consumers, keeping durable SceneConfig `sourceId`s and the Phase 10 lifecycle boundary (no fetch in rAF / layer constructors / RenderPlan build). Fixture adapters remain the **offline / test fallback** (see policy below).
 
 **In-scope consumers (do not invent new scene rows in this track):**
 
-| Scene / config surface | Durable `sourceId` | Snapshot kind |
-|------------------------|--------------------|---------------|
-| Layers `globalCloudsIr` (Model B) | `global-clouds-ir-v1` | `equirectRaster` |
-| Layers `earthquakes` | `usgs-earthquakes-v1` | `pointFeatures` |
-| Layers `orbitalTracks` | `iss-orbital-track-v1` | `tracks` |
-| `scene.illumination.cloudParticipation` (Model A) | same `global-clouds-ir-v1` opacity field | cloud-opacity materializer on equirect |
+| Scene / config surface | Durable `sourceId` | Snapshot kind | Live feed (shipped) |
+|------------------------|--------------------|---------------|---------------------|
+| Layers `globalCloudsIr` (Model B) | `global-clouds-ir-v1` | `equirectRaster` | NASA GIBS WMS `MODIS_Terra_Cloud_Top_Temp_Day` JPEG (`DLU-5`) |
+| Layers `earthquakes` | `usgs-earthquakes-v1` | `pointFeatures` | USGS `all_day.geojson` (`DLU-3`) |
+| Layers `orbitalTracks` | `iss-orbital-track-v1` | `tracks` | CelesTrak GP TLE → SGP4 ground track (`DLU-4`) |
+| `scene.illumination.cloudParticipation` (Model A) | same `global-clouds-ir-v1` opacity field | cloud-opacity materializer on equirect | same live clouds feed (`DLU-5`/`DLU-6`) |
 
-**Rule:** each agent session implements **exactly one** `DLU-*` step — the first whose Status is not `shipped`. Update this table, Progress log, and `PLAN.md` Slice 5 **Active step** when a step completes.
+**Rule (historical):** each agent session implemented **exactly one** `DLU-*` step — the first whose Status was not `shipped`. The table is now fully shipped; **Active step: none pending.**
 
 | Step | Id | Status | Objective |
 |------|-----|--------|-----------|
@@ -180,9 +181,33 @@ Phase 11 (zoom/pan/tiles) may unlock denser regional products later; Phase 10/DL
 | 4 | `DLU-4` | **shipped** | **Live ISS orbital track** — swap / add production acquisition for `iss-orbital-track-v1` (CelesTrak / TLE→ephemeris or equivalent free feed) under the same durable id; Layers `orbitalTracks` shows a live (or regularly refreshed) ground track when enabled. Depends on `DLU-1` draw path. |
 | 5 | `DLU-5` | **shipped** | **Live global clouds / IR** — swap / add production acquisition for `global-clouds-ir-v1` (rights-cleared free equirect cloud/IR mosaic or justified paid source) under the same durable id; Layers `globalCloudsIr` shows live (or regularly refreshed) equirect when enabled. |
 | 6 | `DLU-6` | **shipped** | **Live Model A cloud participation** — ensure `scene.illumination.cloudParticipation` consumes the **live** `global-clouds-ir-v1` opacity field (same materializer / host arming); verify illumination `rasterPatch` updates when live clouds refresh; tests at materializer + illumination boundary. |
-| 7 | `DLU-7` | pending | **DLU closure** — mark live track complete for the four consumers; sync README/PLAN/ROADMAP/AGENTS; document offline/fixture fallback and next frontiers (new `DLC-*` consumers or Phase 11). |
+| 7 | `DLU-7` | **shipped** | **DLU closure** — mark live track complete for the four consumers; sync README/PLAN/ROADMAP/AGENTS; document offline/fixture fallback and next frontiers (new `DLC-*` consumers or Phase 11). |
 
-### DLU step completion checklist (every step)
+### Offline / fixture fallback policy (shipped)
+
+| Rule | Behavior |
+|------|----------|
+| Default host wiring | `createDynamicDataLifecycleHost` registers **live** adapters with `useFixtureFallback: true` (clouds/IR, earthquakes, ISS). |
+| When live HTTP fails (non-abort) | Adapter returns the recorded real-format fixture under the **same durable `sourceId`** (JPEG / GeoJSON / ISS-shaped track). |
+| Abort | Fixture fallback is **not** invoked on abort (DLU-2 seam). |
+| Prior cache | Acquisition controller uses `acquireFailurePolicy: "stale-when-cached"` — prefer a prior ready version over a hard error when refresh fails. |
+| Resolve / paint | Never fetches; layers and illumination read sync prepared views / store resolve only. |
+| Tests | Per-source fallback covered in `dlu3`…`dlu6` tests; track closure smoke in `dlu7LiveAcquisitionClosure.test.ts` (all three adapters offline → fixture → scrub-safe). |
+
+Catalog copy on each source entry also notes offline/test fixture fallback (`dynamicEquirectSourceCatalog`, `dynamicPointFeaturesSourceCatalog`, `dynamicTracksSourceCatalog`).
+
+### Next frontiers (after DLU)
+
+There is **no standing `DLU-*` Active step**. Prefer **explicit product scope** for the next PR:
+
+1. **New `DLC-*` consumers** — additional scene products beyond the four shipped rows (volcanoes, lightning, radar families, additional spacecraft, etc.; see [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md)). Reuse Phase 10 lifecycle + DLU-2 live HTTP seam; prefer live adapters with fixture offline fallback from the start when practical.
+2. **Phase 11** — scene view / zoom / pan / tiles (unlocks denser regional dynamic products).
+3. **Remaining Phase 8 queue A** — next sourced static substrate (preferred backlog: temperature/precipitation climatology) or scoped selector polish.
+4. **Phase 9 composition** — readability/atmosphere extensions beyond the closed baseline (explicit visual/product rationale only).
+
+Do **not** invent filler `DLC-*` ids, reopen closed Slice 2 queues **B**/**C**, or treat Phase 8/9 as default cadence without scope.
+
+### DLU step completion checklist (historical)
 
 1. Implement only that step’s objective.
 2. Add/adjust tests at the lifecycle / acquisition / layer / RenderPlan boundary as appropriate.
@@ -198,17 +223,17 @@ Phase 11 (zoom/pan/tiles) may unlock denser regional products later; Phase 10/DL
 - Docs and handoff point to **DLC** consumer track—not Phase 8/9 filler. ✅
 - No user-facing dynamic overlay required for Phase 10 exit. ✅
 
-## Success criteria (DLU live acquisition — in progress)
+## Success criteria (DLU live acquisition — complete)
 
-- All steps `DLU-1`…`DLU-7` marked **shipped**.
-- Shipped consumers refresh from live (or documented rights-cleared) network sources under the same durable ids when online.
-- No fetch inside rAF / layer constructors / RenderPlan build.
-- Offline / fixture fallback policy documented and tested where applicable.
+- All steps `DLU-1`…`DLU-7` marked **shipped**. ✅
+- Shipped consumers refresh from live (or documented rights-cleared) network sources under the same durable ids when online. ✅
+- No fetch inside rAF / layer constructors / RenderPlan build. ✅
+- Offline / fixture fallback policy documented and tested where applicable. ✅ (`dlu2`…`dlu7` tests + policy section above)
 
 ## References
 
 - [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) — layers must not fetch during render.
-- [`PLAN.md`](../../../PLAN.md) — Slice 5; agent handoff; **Active step `DLU-*`**.
-- [`docs/ROADMAP.md`](../../ROADMAP.md) — Phase 10; post–Phase 10 consumers; After DLC live acquisition; Phases 11–13.
+- [`PLAN.md`](../../../PLAN.md) — Slice 5; agent handoff; DLU exit / next frontiers.
+- [`docs/ROADMAP.md`](../../ROADMAP.md) — Phase 10; post–Phase 10 consumers; After DLC live acquisition (complete); Phases 11–13.
 - [`weather-cloud-composition-plan.md`](weather-cloud-composition-plan.md) — Model A/B/C for weather specifically.
 - [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md) — dynamic layer backlog.

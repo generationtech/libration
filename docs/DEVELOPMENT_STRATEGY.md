@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** read **`PLAN.md` → Agent session handoff** and [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Phase 10 lifecycle **complete**; **`DLC-1`**…**`DLC-4`** shipped. **Default next:** **`DLU-*` live network acquisition** (**Active: `DLU-7`**; one step per session via the DLU prompt in `PLAN.md`). Further *new* `DLC-*` or Phase 8/9 resume only with **explicit scope**. Do not invent filler composition PRs.
+**Planning tie-break:** read **`PLAN.md` → Agent session handoff** and [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Phase 10 lifecycle **complete**; **`DLC-1`**…**`DLC-4`** shipped; **`DLU-*` complete** (`DLU-0`…`DLU-7`; **Active: none pending**). Prefer an **explicitly scoped** new `DLC-*` or sourced Phase 8 substrate. Do not invent filler composition PRs.
 
 ## Implementation intent template
 

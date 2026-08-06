@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Libration is in a post-foundation consolidation and feature-expansion phase. **Default macro track: `DLU-*` live network acquisition** for the four shipped dynamic consumers (clouds/IR, earthquakes, ISS tracks, Model A cloud participation). Phase 10 lifecycle and sequenced **`DLC-1`…`DLC-4`** are **complete** (fixture-backed consumers). Remaining Phase 8 map inventory and Phase 9 composition work remain deferred unless explicitly scoped.
+Libration is in a post-foundation consolidation and feature-expansion phase. Phase 10 lifecycle, sequenced **`DLC-1`…`DLC-4`** consumers, and **`DLU-*` live network acquisition** (`DLU-0`…`DLU-7`) are **complete** for the four shipped dynamic consumers (clouds/IR, earthquakes, ISS tracks, Model A cloud participation — live HTTP + fixture offline fallback). **No standing `DLU-*` Active step.** Next work needs **explicit product scope** (new `DLC-*`, Phase 8 queue A resume, Phase 9, or Phase 11). Remaining Phase 8 map inventory and Phase 9 composition work remain deferred unless explicitly scoped.
 
 The major runtime foundations are implemented well enough to support disciplined feature-forward work:
 
@@ -26,37 +26,38 @@ The major runtime foundations are implemented well enough to support disciplined
 - Canvas backend execution.
 - AI co-engineering rules and Cursor project rules.
 
-The current strategic objective is **twofold**: (1) **treat the delivered upstream planetary illumination and composition baseline as complete** for standing incremental work—the **eight-intrinsic** substrate lift contract, **third** narrow twilight pass, overlay readability closure, and weather/cloud **planning** are **shipped**; **Slice 2 queues B and C** (standing ninth+ catalog intrinsics and fourth+ constants-only twilight passes) are **closed** as default PR tracks and reopen only with **explicit product scope** (observed readability/terminator issue, new catalog axis, or visual rationale—not agent-invented taxonomy or unbounded tuning); and (2) **execute `DLU-*` live network acquisition** via sequenced steps in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) (Phase 10 **`P10-0`…`P10-7` complete**; **`DLC-1`**…**`DLC-4`** shipped; **Active step `DLU-7`**)—queue **A (2)** substrates (land cover, bathymetry, climate normals, **population density** **`equirect-world-population-gpw-v1`**) plus **attribution presentation** and **month-aware selector polish** are **shipped**; **remaining Phase 8 / Slice 3–4 map inventory** (next sourced static substrates, temperature/precipitation climatology, optional selector hygiene) and **Phase 9 composition extensions** stay **deferred** unless explicitly scoped ahead of or after DLU.
+The current strategic objective is **twofold**: (1) **treat the delivered upstream planetary illumination and composition baseline as complete** for standing incremental work—the **eight-intrinsic** substrate lift contract, **third** narrow twilight pass, overlay readability closure, and weather/cloud **planning** are **shipped**; **Slice 2 queues B and C** (standing ninth+ catalog intrinsics and fourth+ constants-only twilight passes) are **closed** as default PR tracks and reopen only with **explicit product scope** (observed readability/terminator issue, new catalog axis, or visual rationale—not agent-invented taxonomy or unbounded tuning); and (2) **treat `DLU-*` live network acquisition as complete** (`DLU-0`…`DLU-7` shipped in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md); Phase 10 **`P10-0`…`P10-7` complete**; **`DLC-1`**…**`DLC-4`** shipped; **Active step: none pending**)—queue **A (2)** substrates (land cover, bathymetry, climate normals, **population density** **`equirect-world-population-gpw-v1`**) plus **attribution presentation** and **month-aware selector polish** are **shipped**; **remaining Phase 8 / Slice 3–4 map inventory** (next sourced static substrates, temperature/precipitation climatology, optional selector hygiene) and **Phase 9 composition extensions** stay **deferred** unless explicitly scoped.
 
 ### Agent session handoff (planning prompts)
 
 Use this subsection as the **scheduling tie-break** when a new session pastes the standard **planning/discovery starting prompt** and must choose a **single PR-sized** next slice without extra human steering.
 
-**Scheduling snapshot (Phase 10 complete; `DLC-1`…`DLC-4` shipped; **`DLU-*` active**; Phase 8/9 remaining deferred; Slice 2 queues B/C closed; queue A (2) closed; queue D weather planning closed):**
+**Scheduling snapshot (Phase 10 complete; `DLC-1`…`DLC-4` shipped; **`DLU-*` complete**; Phase 8/9 remaining deferred; Slice 2 queues B/C closed; queue A (2) closed; queue D weather planning closed):**
 
 | Role | Name | Meaning |
 |------|------|---------|
-| **Default macro PR track** | **`DLU-*` live network acquisition** | Sequenced steps in the lifecycle plan “After DLC — Live network acquisition” table. Swap fixture acquisition for live HTTP (or equivalent) under the same durable ids for clouds/IR, earthquakes, ISS tracks, and Model A cloud participation. **Active step: `DLU-7`**. |
-| **Primary active execution slice** | **Live acquisition / Slice 5 exit** | Make shipped dynamic Layers toggles refresh from the network (after visibility readiness)—not Phase 8 map inventory, not Phase 9 composition, not Slice 2 **B**/**C** unless the prompt supplies product scope. |
-| **Single best next PR** | **`DLU-7`** | DLU closure — mark live track complete for the four consumers; document offline/fixture fallback and next frontiers; sync README/PLAN/ROADMAP/AGENTS. Reuse Phase 10 store/resolve/acquisition; **no** fetch inside render. |
+| **Default macro PR track** | **Explicit-scope next** | No standing `DLU-*` Active step. Prefer a **human-scoped** new `DLC-*` consumer, Phase 8 queue A substrate, Phase 9 composition extension, or Phase 11 view work — not invented filler. |
+| **Primary active execution slice** | **Post-DLU frontiers** | Live feeds for the four shipped consumers are done; next vertical needs product scope (see lifecycle plan “Next frontiers”). |
+| **Single best next PR** | **Scoped choice** | When no human override: prefer an **explicitly named** new `DLC-*` from `docs/FUTURE_FEATURES.md`, else a sourced Phase 8 substrate (temperature/precipitation climatology backlog), else defer — do not invent composition filler. |
 | **Composition baseline (Slice 2)** | **Closed** (queues **B**/**C**) | **Eight-intrinsic** contract + **third** twilight pass + overlay readability + queue **D** planning **shipped**; ninth+ intrinsics / fourth+ twilight / deeper scattering reopen only with **explicit product scope**. |
-| **Map inventory (queue A)** | **Phase 8 / Slice 3 — deferred** | Queue **A (2) closed** for current catalog; **remaining** sourced substrates / Slice 4 polish **resume** when a session scopes them ahead of or after DLU (preferred backlog: temperature or precipitation climatology). |
-| **Phase 9 composition** | **Deferred** | Readability/atmosphere extensions beyond the closed baseline—after early DLU, or earlier only with **explicit product scope**. |
+| **Map inventory (queue A)** | **Phase 8 / Slice 3 — deferred** | Queue **A (2) closed** for current catalog; **remaining** sourced substrates / Slice 4 polish **resume** when a session scopes them (preferred backlog: temperature or precipitation climatology). |
+| **Phase 9 composition** | **Deferred** | Readability/atmosphere extensions beyond the closed baseline—only with **explicit product scope**. |
 | **Phase 10 lifecycle** | **Complete** (`P10-0`…`P10-7`) | Types, store, manager, resolver, acquisition, shell seam, docs closure — **shipped** in `src/lifecycle/`. |
-| **DLC consumers** | **Complete** (`DLC-1`…`DLC-4`) | Fixture-backed Model B/A consumers shipped; live feeds are **`DLU-*`**. |
+| **DLC consumers** | **Complete** (`DLC-1`…`DLC-4`) | Model B/A consumers shipped; live feeds via **`DLU-*` (complete)**. |
+| **DLU live acquisition** | **Complete** (`DLU-0`…`DLU-7`) | Live HTTP + fixture offline fallback for the four durable `sourceId`s; closure smoke `dlu7LiveAcquisitionClosure.test.ts`. |
 
-1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 5** and deferred **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phase 10 complete; After Phase 10 / `DLC-*`; **After DLC / `DLU-*`**; Phases 8–9 deferred remaining work).
+1. **Source of truth:** this `PLAN.md` file (**Current strategic objective**, **Agent session handoff**, **Slice 5** and deferred **Slice 3** near-term sections) plus `docs/ROADMAP.md` (Phase 10 complete; After Phase 10 / `DLC-*`; **After DLC / `DLU-*` complete**; Phases 8–9 deferred remaining work).
 2. **Primary active execution slice — two roles (do not conflate):**
-   - **Default macro PR track (next merged PR):** **`DLU-*` live network acquisition**—see table above. Phase 10 lifecycle **complete**. Sequenced **`DLC-1`…`DLC-4` complete**. **Queue A (2) closed**; remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. **Slice 2 queues B/C closed** as standing defaults (composition baseline complete). **All eleven** bundled catalog families have `previewThumbnailSrc`, **structured selector attribution**, and **month-aware selector polish** (legacy reference preview + attribution + active UTC month line **closed**).
+   - **Default macro PR track (next merged PR):** **explicit-scope** work after DLU exit—see table above. Phase 10 lifecycle **complete**. Sequenced **`DLC-1`…`DLC-4` complete**. **`DLU-0`…`DLU-7` complete**. **Queue A (2) closed**; remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. **Slice 2 queues B/C closed** as standing defaults (composition baseline complete). **All eleven** bundled catalog families have `previewThumbnailSrc`, **structured selector attribution**, and **month-aware selector polish** (legacy reference preview + attribution + active UTC month line **closed**).
    - **Composition baseline (not a standing PR queue):** **Slice 2 — Planetary illumination — delivered foundations** — **closed** for default incremental work (eight-intrinsic substrate lift, **third** twilight pass, overlay readability, queue **D** planning). Reopen ninth+ intrinsics, fourth+ twilight, or deeper atmosphere **only** when the session supplies **explicit product scope**—do not invent work to fill a cadence gap.
 3. **Prioritized default queue for the *next* PR-sized slice** (inspect repo; pick the **first** item that is still a real, shippable gap; **one vertical per PR**):
-   - **E. `DLU-*` live network acquisition (default):** first pending step in the lifecycle plan `DLU-*` table (**Active: `DLU-7`**). Reuse the shipped lifecycle; never fetch inside render; keep durable `sourceId`s. Prefer **E** until `DLU-7` closes.
-   - **F. New `DLC-*` consumers — explicit scope only:** additional scene products beyond the four shipped rows (see [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md)).
-   - **A. Phase 8 / Slice 3 (map inventory) — deferred:** one bounded map-inventory / substrate increment (use existing `maps:prep` / bundled catalog patterns). **Queue status:** **(1)** richer **attribution presentation** — **shipped**; **(2b)** **Slice 4** month-aware selector polish — **shipped**; **(2)** static bathymetry, land cover, climate normals, and **population density** — **shipped**. **Queue A (2) closed** for the current catalog. **Resume** when a **new sourced static substrate** (raster + rights; preferred backlog: temperature/precipitation climatology) or explicitly scoped Slice 4 polish is in scope—**not** the default next PR while `DLU-*` is open.
+   - **E. `DLU-*` live network acquisition — complete:** all steps `DLU-0`…`DLU-7` shipped; **Active step: none pending**. Do not reopen `DLU-*` as filler.
+   - **F. New `DLC-*` consumers — explicit scope only:** additional scene products beyond the four shipped rows (see [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md)). Prefer live adapters + fixture offline fallback via the DLU-2 seam.
+   - **A. Phase 8 / Slice 3 (map inventory) — deferred:** one bounded map-inventory / substrate increment (use existing `maps:prep` / bundled catalog patterns). **Queue status:** **(1)** richer **attribution presentation** — **shipped**; **(2b)** **Slice 4** month-aware selector polish — **shipped**; **(2)** static bathymetry, land cover, climate normals, and **population density** — **shipped**. **Queue A (2) closed** for the current catalog. **Resume** when a **new sourced static substrate** (raster + rights; preferred backlog: temperature/precipitation climatology) or explicitly scoped Slice 4 polish is in scope.
    - **B. Slice 2 — substrate (closed as default track):** ninth+ optional `BaseMapCapabilities` intrinsic — **closed** unless the session supplies **explicit product scope** (defensible flag name + target families); do not invent taxonomy in code alone.
    - **C. Slice 2 — atmosphere (closed as default track):** optional **fourth+** narrow constants-only twilight pass in `illuminationShading.ts` — **closed** unless the session supplies **explicit visual/product rationale**; **third pass shipped**; avoid unbounded subjective tuning loops.
-   - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) — **shipped** (see closed increment below). **Implementation** is `DLC-*` / live via `DLU-*`.
-4. **Anti-stall / tie-break:** prefer the first pending **`DLU-*`** step. Queue **D** planning **shipped**—do not repeat planning PRs. Phase 10 **complete**—do not reopen `P10-*`. Sequenced **`DLC-1`…`DLC-4` complete**—do not invent filler `DLC-*` during live acquisition. **Do not** fall through to Phase 8 queue **A**, Phase 9, or Slice 2 **B**/**C** as default filler—those reopen with **explicit product scope**.
+   - **D. Precursor docs:** weather/cloud **planning** (lifecycle prerequisites; doc-focused) — **shipped** (see closed increment below). **Implementation** is `DLC-*` / live via `DLU-*` (**both complete** for the four consumers).
+4. **Anti-stall / tie-break:** prefer an **explicitly scoped** new **`DLC-*`** or sourced Phase 8 substrate over invented work. Queue **D** planning **shipped**—do not repeat planning PRs. Phase 10 **complete**—do not reopen `P10-*`. Sequenced **`DLC-1`…`DLC-4` complete**; **`DLU-*` complete**—do not invent filler `DLC-*` / `DLU-*`. **Do not** fall through to Phase 8 queue **A**, Phase 9, or Slice 2 **B**/**C** as default filler—those reopen with **explicit product scope**.
 
 **Closed and doc-finalized (Slice 2 substrate increment):** optional catalog intrinsic **`sunGlintDense`** (`BaseMapCapabilities`, bounded penalty in `intrinsicSubstrateReadabilityCatalogPenalty01`, bundled curation on Blue Marble **BM**/**T**) — the **eight-intrinsic** upstream overlay-lift contract is now the **active shipped baseline** (not partial). **Queue B (ninth+ default cadence) closed**—see closed increment below; do not reopen BM/T glint coverage without explicit product scope (weather/cloud **planning** closed in queue **D**).
 
@@ -113,9 +114,11 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 **Closed and doc-finalized (DLU-6 — live Model A cloud participation):** `scene.illumination.cloudParticipation` consumes the live `global-clouds-ir-v1` opacity field (same host arming / cloud-opacity materializer as DLU-5); host threads shared `nowMs` into the clouds live adapter; illumination `rasterPatch` updates when live clouds refresh; tests [`src/lifecycle/dlu6CloudParticipationLiveAcquisition.test.ts`](src/lifecycle/dlu6CloudParticipationLiveAcquisition.test.ts). **`DLU-6` shipped**; **Active step: `DLU-7`**.
 
-**Handoff when DLU continues:** one session/PR = **one** `DLU-*` step (first pending in the lifecycle plan table); update step status + Slice 5 **Active step**; do not fetch inside render; keep durable `sourceId`s. See **Slice 5** and `docs/ROADMAP.md` After DLC.
+**Closed and doc-finalized (DLU-7 — DLU closure):** live track complete for the four consumers; offline/fixture fallback + next frontiers documented in the lifecycle plan; closure smoke [`src/lifecycle/dlu7LiveAcquisitionClosure.test.ts`](src/lifecycle/dlu7LiveAcquisitionClosure.test.ts); README/PLAN/ROADMAP/AGENTS/strategy docs synced. **`DLU-7` shipped**; **Active step: none pending**.
 
-**Handoff when a new DLC consumer is scoped:** one session/PR = **one** explicitly scoped additional consumer (sequenced `DLC-1`…`DLC-4` are shipped); prefer finishing early `DLU-*` first unless the human overrides; update consumer step status if a new id is added; do not fetch inside render; reuse Phase 10 lifecycle contracts.
+**Handoff when DLU continues:** N/A — **`DLU-0`…`DLU-7` complete**; do not invent further `DLU-*` steps without product scope.
+
+**Handoff when a new DLC consumer is scoped:** one session/PR = **one** explicitly scoped additional consumer (sequenced `DLC-1`…`DLC-4` are shipped); update consumer step status if a new id is added; do not fetch inside render; reuse Phase 10 lifecycle + DLU-2 live HTTP seam (prefer live + fixture offline fallback).
 
 **Handoff when queue A resumes (post–Phase 10; next sourced substrate):** one PR — source raster + rights → `npm run maps:prep` (or GDAL/static export pipeline) → committed raster under `public/maps/` + preview → `base-map-catalog.json` row (`licenseNote` / `sourceLinks` as needed) → [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md) provenance → catalog/resolver + onboarded-asset tests. **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog after Phase 10** (when sourced): temperature or precipitation climatology static family—see `docs/maps/MAP_ASSET_STRATEGY.md`. Queues **B**/**C** remain **closed** as standing defaults.
 
@@ -123,10 +126,10 @@ Use this subsection as the **scheduling tie-break** when a new session pastes th
 
 1. Keep architecture and docs aligned with actual runtime behavior.
 2. Preserve AI co-engineering consistency through repo rules and implementation patterns.
-3. Advance **`DLU-*` live network acquisition** via sequenced steps in the lifecycle plan (**Active: `DLU-7`**; `DLC-1`…`DLC-4` complete; `DLU-1`…`DLU-6` shipped).
+3. Prefer **explicitly scoped** next work after DLU exit (new `DLC-*`, Phase 8 substrate, Phase 9, or Phase 11)—**`DLU-0`…`DLU-7` complete**; `DLC-1`…`DLC-4` complete.
 4. Preserve future-feature inventory without prematurely implementing it; **defer** remaining Phase 8 map inventory and Phase 9 composition extensions unless explicitly scoped.
 5. Avoid reopening settled foundations unless a real architectural mismatch exists.
-6. Preserve the **delivered** planetary composition baseline and **shipped** Phase 10 lifecycle + DLC consumers; reopen composition increments only with **explicit product scope**; ship live feeds via **`DLU-*`**; not standing filler composition or map-inventory PRs while DLU steps remain.
+6. Preserve the **delivered** planetary composition baseline and **shipped** Phase 10 lifecycle + DLC consumers + DLU live feeds; reopen composition increments only with **explicit product scope**; not standing filler composition or map-inventory PRs.
 
 ## Near-term execution slices
 
@@ -190,7 +193,7 @@ Status: **baseline closed** for standing incremental work (queues **B**/**C** **
 
 **Composition increments (explicit product scope only; queues B/C closed):**
 
-**Scheduling tie-break:** use **`PLAN.md` → “Agent session handoff (planning prompts)”** first. **Do not** default to queue **B** or **C**. Default next is **`DLU-*`**. Sequenced **`DLC-1`…`DLC-4` complete**. Remaining Phase 8 queue **A** and Phase 9 composition stay **deferred**. Weather/cloud **live acquisition** continues via `DLU-*`—follow the lifecycle plan; do not reopen queue **D**.
+**Scheduling tie-break:** use **`PLAN.md` → “Agent session handoff (planning prompts)”** first. **Do not** default to queue **B** or **C**. **`DLU-*` complete** (`DLU-0`…`DLU-7`); prefer an **explicitly scoped** new `DLC-*` or sourced Phase 8 substrate. Sequenced **`DLC-1`…`DLC-4` complete**. Remaining Phase 8 queue **A** and Phase 9 composition stay **deferred**. Do not reopen queue **D**.
 
 When a session **explicitly scopes** composition work (not as filler), allowed narrow verticals include:
 
@@ -272,7 +275,7 @@ Status: **complete** (Phase 10 `P10-0`…`P10-7` shipped). Authoritative contrac
 - Snapshots resolve to **canonical product UTC** (including scrub); cold-start cache refresh OK. ✅
 - First post–Phase 10 consumer bias: **global equirect raster** (clouds / satellite IR).
 
-**Active step:** **`DLU-7`** (DLU closure / docs handoff). `DLU-0`…`DLU-6` shipped. See lifecycle plan “After DLC — Live network acquisition”.
+**Active step:** **none pending** (`DLU-0`…`DLU-7` shipped). See lifecycle plan “After DLC — Live network acquisition” (complete) and “Next frontiers”.
 
 **Development steps (Phase 10 — all shipped; statuses live in the lifecycle plan):**
 
@@ -289,11 +292,11 @@ Status: **complete** (Phase 10 `P10-0`…`P10-7` shipped). Authoritative contrac
 
 **After Phase 10 (complete):** Dynamic layer consumers (`DLC-1`…`DLC-4`) shipped (clouds/IR + earthquakes + ISS tracks + Model A illumination; fixture acquisition).
 
-**After DLC (active):** Live network acquisition (`DLU-0`…`DLU-7`) — **`DLU-0`**…**`DLU-6` shipped**; next **`DLU-7`**. See lifecycle plan and `docs/ROADMAP.md`.
+**After DLC (complete):** Live network acquisition (`DLU-0`…`DLU-7`) — **all shipped**. Offline/fixture fallback + next frontiers documented in the lifecycle plan. See `docs/ROADMAP.md`.
 
 Exit criteria (Phase 10): **met** — Steps `P10-1`…`P10-7` shipped; live/forecast **consumers** can integrate without fetching during render; no user-facing dynamic overlay required for exit.
 
-Exit criteria (DLU): pending — Steps `DLU-1`…`DLU-7` ship live (or documented rights-cleared) acquisition for the four consumers under durable ids; no fetch in render.
+Exit criteria (DLU): **met** — Steps `DLU-1`…`DLU-7` ship live (or documented rights-cleared) acquisition for the four consumers under durable ids; no fetch in render; offline/fixture fallback documented and tested.
 
 ## Active architectural guardrails
 
@@ -313,9 +316,11 @@ Do not break these while implementing future work:
 
 ## Recommended next prompt pattern
 
-### DLU live acquisition sequencing (preferred)
+### DLU live acquisition sequencing (historical — track complete)
 
-Paste this in a **new agent session** to advance one live-acquisition step:
+**`DLU-0`…`DLU-7` are shipped.** Do not paste this to invent further `DLU-*` steps. Prefer the DLC consumer prompt (explicit new consumer) or a human-scoped Phase 8/9/11 intent.
+
+Historical prompt (kept for reference):
 
 ```text
 APPROVAL HEADER:
