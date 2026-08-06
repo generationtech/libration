@@ -2,9 +2,9 @@
 
 ## Status
 
-**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** This document records boundaries, prerequisites, and sequencing for future weather and cloud participation in Libration. It does **not** authorize runtime implementation, new SceneConfig axes, or backend composition policy. **Default next PR** remains Phase 8 queue **A(2)** substrate onboarding when raster + rights exist; Slice 2 **B**/**C** when **A** is blocked; weather/cloud **code** waits on Phase 10.
+**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** This document records boundaries, prerequisites, and sequencing for future weather and cloud participation in Libration. It does **not** authorize runtime implementation, new SceneConfig axes, or backend composition policy. **Default next PR** is **Phase 10 / Slice 5** (dynamic data lifecycle) per `PLAN.md`; remaining Phase 8 queue **A** and Slice 2 **B**/**C** are **not** default filler; weather/cloud **code** follows Phase 10 lifecycle foundations.
 
-**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 2), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phases 6, 9, 10).
+**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / Phase 10), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 next; Phases 8–9 remaining deferred).
 
 ## Purpose
 
@@ -105,7 +105,7 @@ After this planning doc and Phase 10 foundations:
 3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
 4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
 
-**Default macro PR track remains Phase 8** when queue **A** has a shippable substrate gap; weather/cloud **code** does not jump ahead of lifecycle unless session-scoped.
+**Default macro PR track is Phase 10 / Slice 5** (lifecycle); remaining Phase 8 queue **A** is **deferred until after Phase 10**. Weather/cloud **code** does not jump ahead of lifecycle foundations unless session-scoped.
 
 ## Relationship to existing subsystems
 

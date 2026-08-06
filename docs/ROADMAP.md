@@ -210,14 +210,14 @@ Exit criteria:
 - **Phase 8 / Slice 3 land cover (closed):** **`equirect-world-landcover-modis-v1`** ship raster + preview + catalog + GIBS/MODIS IGBP provenance; registration regression in `src/config/landcoverOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 population density (closed):** **`equirect-world-population-gpw-v1`** ship raster + preview + catalog + GPWv4 provenance; registration regression in `src/config/populationOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3 climate normals (closed):** **`equirect-world-climate-koppen-beck-v1`** ship raster + preview + catalog + Beck Köppen–Geiger provenance; registration regression in `src/config/climateNormalsOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 map inventory (queue A (2) closed):** all **eleven** bundled catalog families have `previewThumbnailSrc` (legacy + static scientific substrates + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**default next** **Phase 8 / queue A** when sourced substrate or explicit scope exists; **Slice 2 queues B/C closed** (`PLAN.md` handoff).
+- **Phase 8 / Slice 3 map inventory (queue A (2) closed):** all **eleven** bundled catalog families have `previewThumbnailSrc` (legacy + static scientific substrates + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**remaining queue A deferred post–Phase 10**; **default next** is **Phase 10 / Slice 5**; **Slice 2 queues B/C closed** (`PLAN.md` handoff).
 - **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
 - **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all **eleven** bundled families; see `PLAN.md` closed increment.
 - **Slice 2 queue D — weather/cloud planning (closed):** [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); implementation blocked on Phase 10 lifecycle; see `PLAN.md` closed increment.
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**in progress**; queue **A (2)** **closed** for current catalog). **Default next macro PR track:** **Phase 8 / queue A** (sourced static substrate or explicitly scoped polish) per `PLAN.md` handoff—**Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-beck-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred next backlog (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—implementation blocked on Phase 10.
+Status: planned (**paused / deferred until after Phase 10**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume after Phase 10** per `PLAN.md` handoff—**not** the default next macro track while Phase 10 is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog after Phase 10 (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** follows Phase 10 lifecycle.
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -235,14 +235,14 @@ Candidate deliverables:
 - further map selector polish (labels, placeholder hygiene; month-aware copy and active UTC civil month indication **shipped** in Slice 4).
 - broader map selector copy and placeholder hygiene across the young catalog.
 - additional climate products (**shipped baseline:** **`equirect-world-climate-koppen-beck-v1`**; **future:** temperature/precipitation climatologies, alternate Köppen epochs).
-- additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path).
-- seasonal natural-color refinements.
+- additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path) — **deferred post–Phase 10**.
+- seasonal natural-color refinements — **deferred post–Phase 10**.
 
 ## Phase 9: Planetary scene composition and illumination — incremental extensions
 
-Status: planned (**extends** Phase 6 production baseline; **composition baseline closed** for standing Slice 2 **B**/**C** default cadence — **no** new rendering boundary).
+Status: planned (**deferred until after Phase 10**; extends Phase 6 production baseline; **composition baseline closed** for standing Slice 2 **B**/**C** default cadence — **no** new rendering boundary).
 
-The subsystem **baseline is delivered** (`PLAN.md` Slice 2): readability v1 + v1.1 + **eight-intrinsic** substrate lift + presentation + **six** default-stack `perLayer` pilots + **third** twilight pass. **Further** substrate signals, atmosphere tuning, and clouds/weather reopen only with **explicit product scope** or Phase 10 prerequisites—not as standing default PRs.
+The subsystem **baseline is delivered** (`PLAN.md` Slice 2): readability v1 + v1.1 + **eight-intrinsic** substrate lift + presentation + **six** default-stack `perLayer` pilots + **third** twilight pass. **Further** substrate signals, atmosphere tuning, and clouds/weather reopen only with **explicit product scope**, or **after Phase 10**—not as standing default PRs while Phase 10 is the active track.
 
 Candidate deliverables:
 
@@ -274,7 +274,7 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: future.
+Status: **next / default macro PR track** (scheduling opened per `PLAN.md`; **implementation not started** in the docs-only reorder). Remaining Phase 8 map inventory and Phase 9 composition extensions are **deferred until after this phase**.
 
 Candidate deliverables:
 

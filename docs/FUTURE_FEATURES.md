@@ -121,7 +121,7 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-Blocked until dynamic data lifecycle exists (Phase 10). Participation boundaries and sequencing: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+Blocked until dynamic data lifecycle exists (Phase 10 — now the **default next** track per `PLAN.md`; implementation not started until a Phase 10 vertical is scoped). Participation boundaries and sequencing: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 Candidates:
 
