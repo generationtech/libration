@@ -38,7 +38,7 @@ export const USGS_EARTHQUAKES_SOURCE_ID: DynamicSourceId = "usgs-earthquakes-v1"
 
 /**
  * Default refresh for earthquake summaries (~5 min). Acquisition still runs outside rAF.
- * Live USGS GeoJSON feeds may tighten later under the same sourceId.
+ * Live USGS `all_day.geojson` under the same durable sourceId (DLU-3).
  */
 export const USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -47,9 +47,9 @@ const USGS_EARTHQUAKES_ENTRY: DynamicPointFeaturesSourceCatalogEntry = {
   label: "Earthquakes",
   kind: "pointFeatures",
   attribution:
-    "Recorded USGS Earthquake Hazards Program GeoJSON FeatureCollection fixture (real application/geo+json) for DLC-2 lifecycle consumer validation. Lineage stands in for the free USGS real-time feeds (e.g. all_day.geojson); live remote acquisition is a follow-up adapter swap — durable id stays usgs-earthquakes-v1.",
+    "USGS Earthquake Hazards Program real-time GeoJSON (all_day.geojson) via in-app live acquisition under durable id usgs-earthquakes-v1. Offline / test sessions may fall back to a recorded USGS-shaped FeatureCollection fixture.",
   licenseNote:
-    "USGS earthquake products are U.S. Government work / public domain. Fixture bytes are app-local test/demo content shaped like the public GeoJSON feed. Replace with live USGS acquisition under the same sourceId when shipping production refresh.",
+    "USGS earthquake products are U.S. Government work / public domain. Live feed URL is not persisted in SceneConfig — only the durable sourceId is.",
   defaultRefreshIntervalMs: USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Point features in geographic lon/lat degrees (−180…+180°, −90…+90°), USGS GeoJSON FeatureCollection contract.",

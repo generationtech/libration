@@ -22,6 +22,7 @@ import type {
   DynamicAcquisitionController,
   DynamicAcquisitionTimerHooks,
 } from "./dynamicAcquisitionTypes";
+import type { LiveHttpFetchFn } from "./liveHttpAcquisitionTypes";
 import type {
   DynamicEquirectMaterializer,
   PreparedEquirectRasterView,
@@ -131,7 +132,8 @@ export interface DynamicDataLifecycleHost {
   stopGlobalCloudsIrConsumer(): void;
 
   /**
-   * DLC-2: register fixture adapter + start periodic refresh for earthquakes.
+   * DLC-2 / DLU-3: register live USGS HTTP adapter (fixture fallback) + start
+   * periodic refresh for earthquakes.
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureEarthquakesConsumer(options?: {
@@ -139,7 +141,7 @@ export interface DynamicDataLifecycleHost {
     runImmediately?: boolean;
   }): void;
 
-  /** Stop periodic refresh for the DLC-2 earthquakes source (keeps cache). */
+  /** Stop periodic refresh for the earthquakes source (keeps cache). */
   stopEarthquakesConsumer(): void;
 
   /**
@@ -166,5 +168,10 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   cloudOpacityMaterializer?: DynamicCloudOpacityMaterializer;
   pointFeaturesMaterializer?: DynamicPointFeaturesMaterializer;
   tracksMaterializer?: DynamicTracksMaterializer;
+  /**
+   * Injectable fetch for DLU-3 earthquakes live acquisition (tests).
+   * Production omits this and uses global `fetch`.
+   */
+  earthquakesLiveFetchFn?: LiveHttpFetchFn;
 }> &
   DynamicAcquisitionTimerHooks;

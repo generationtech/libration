@@ -205,13 +205,22 @@ export type {
 
 export { createDynamicPointFeaturesMaterializer } from "./dynamicPointFeaturesMaterializer";
 
-export type { EarthquakesAcquireOptions } from "./earthquakesAcquisition";
+export type {
+  EarthquakesAcquireOptions,
+  EarthquakesLiveAcquireOptions,
+  UsgsEarthquakesGeoJsonParseResult,
+} from "./earthquakesAcquisition";
 
 export {
   EARTHQUAKES_SCENE_LAYER_ID,
+  USGS_EARTHQUAKES_LIVE_ACCEPT_CONTENT_TYPES,
+  USGS_EARTHQUAKES_LIVE_FEED_URL,
   createEarthquakesFixtureAcquisitionAdapter,
+  createEarthquakesLiveHttpAcquisitionAdapter,
   isUsgsEarthquakesSourceId,
+  parseUsgsEarthquakesGeoJsonBytes,
   produceEarthquakesFixtureAcquisition,
+  produceEarthquakesLiveAcquisitionFromFetched,
 } from "./earthquakesAcquisition";
 
 export type { DynamicTracksSourceCatalogEntry } from "./dynamicTracksSourceCatalog";
