@@ -482,7 +482,7 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) closed (shipped):** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Remaining queue A deferred until after Phase 10.** **Preferred queue A backlog after Phase 10 (when raster + rights exist):** temperature or precipitation climatology static family—see `PLAN.md` handoff (**default next** is Phase 10 lifecycle, not substrate onboarding). Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+**Queue A (2) closed (shipped):** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Remaining queue A deferred until after Phase 10.** **Preferred queue A backlog after Phase 10 (when raster + rights exist):** temperature or precipitation climatology static family—see `PLAN.md` handoff (**default next** is Phase 10 `P10-*`, not substrate onboarding). Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

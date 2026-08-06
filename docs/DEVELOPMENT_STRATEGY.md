@@ -26,7 +26,7 @@ Each work unit should have:
 - documentation updates.
 - explicit non-goals.
 
-**Planning tie-break:** for “what PR next” without extra steering, read **`PLAN.md` → “Agent session handoff (planning prompts)”** scheduling snapshot (**composition baseline closed:** Slice 2 queues **B**/**C** not default next work; **default macro PR track** = **Phase 10 / Slice 5** dynamic data lifecycle; **remaining Phase 8 / queue A** and **Phase 9** deferred until after Phase 10; **do not** default to sourced-substrate, ninth+ intrinsic, or fourth+ twilight filler PRs while Phase 10 is open; queue **(2)** substrates (land cover, bathymetry, climate normals, population GPW), **third** twilight pass, **structured attribution**, **month-aware selector polish**, and queue **D** weather/cloud **planning** **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
+**Planning tie-break:** read **`PLAN.md` → Agent session handoff** and [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Default next** = first pending **`P10-*`** step (currently **`P10-1`**); one step per session via the Phase 10 prompt in `PLAN.md`. Phase 10 = lifecycle only (no user-facing dynamic overlay). Post–`P10-7` → **`DLC-*`** consumers. Do not default to Phase 8/9 or composition filler while Phase 10 is open.
 
 ## Implementation intent template
 

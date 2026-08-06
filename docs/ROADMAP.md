@@ -274,32 +274,51 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **next / default macro PR track** (scheduling opened per `PLAN.md`; **implementation not started** in the docs-only reorder). Remaining Phase 8 map inventory and Phase 9 composition extensions are **deferred until after this phase**.
+Status: **active** (default macro track). Authoritative step list and contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). **Next step:** `P10-1` (core types & contracts). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred until after Phase 10**.
 
-Candidate deliverables:
+**Product lock:**
 
-- lifecycle manager.
-- acquisition modes.
-- cache policies.
-- versioned snapshots.
-- loading/stale/error states.
-- playback/scrubbing readiness.
-- live and forecast data preparation.
+- Phase 10 ships **lifecycle only** (API + cache + product-time binding + tests)—**no** user-facing dynamic overlay.
+- Snapshot kinds designed up front: **equirect raster**, **point features**, **tracks**.
+- Acquisition: **in-app async periodic refresh** preferred; buddy/sidecar only if in-app conversion is impractical.
+- Sources: prefer free-for-personal-use; paid allowed when clearly valuable.
+- Time: resolve snapshots to **canonical product UTC** (including scrub); cold-start cache refresh OK.
+- Persistence of enablement/source ids: SceneConfig/presets when **consumers** ship (post–Phase 10).
 
-Candidate future layers:
+Deliverables (via steps `P10-1`…`P10-7`):
 
-- weather.
-- clouds.
-- radar.
-- aircraft.
-- shipping.
-- earthquakes or volcanoes.
-- aurora forecasts.
-- satellite paths.
+- core snapshot/source/freshness types.
+- versioned local snapshot store / cache.
+- lifecycle manager (loading/ready/stale/error).
+- product-time resolver (scrub-safe, no fetch-in-render).
+- acquisition adapter + periodic refresh (+ manual/file import).
+- app shell seam for future layers.
+- docs closure and handoff to consumer track.
+
+Candidate future **consumers** (not Phase 10 itself)—see section below and lifecycle plan `DLC-*`:
+
+- weather / clouds / radar (first bias: global equirect clouds / satellite IR).
+- aircraft / shipping / satellites.
+- earthquakes / volcanoes / lightning / wildfire smoke / air quality / aurora.
+
+## After Phase 10: Dynamic layer consumers
+
+Status: **planned** (opens when `P10-7` ships). Default macro track after Phase 10. Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md).
+
+Suggested sequence:
+
+1. **`DLC-1`** — first **global equirect raster** consumer (clouds / satellite IR), Model B scene layer, real free or justified paid source, SceneConfig enablement + attribution.
+2. **`DLC-2`** — point-features consumer (e.g. earthquakes).
+3. **`DLC-3`** — tracks consumer (e.g. satellites/ISS or ADS-B).
+4. **`DLC-4`** — optional Model A cloud participation in planetary illumination (explicit scope; see [`weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
+
+Dense regional/tiled products may wait on Phase 11 (zoom/pan/tiles). Weather participation models remain as documented in the weather/cloud planning spec.
 
 ## Phase 11: Scene view and projection expansion
 
 Status: future.
+
+Supports denser regional dynamic products (tiled radar, viewport-local feeds) after Phase 10 lifecycle and early `DLC-*` global/equirect consumers.
 
 Candidate deliverables:
 
@@ -315,6 +334,8 @@ Candidate deliverables:
 
 Status: future.
 
+Should include dynamic-layer enablement and durable source ids once `DLC-*` SceneConfig exists (full refresh of live caches on preset apply/startup is acceptable).
+
 Candidate deliverables:
 
 - named partial config presets.
@@ -322,7 +343,7 @@ Candidate deliverables:
 - last-write-wins semantics.
 - preset stacks.
 - narrow appearance presets.
-- scene/layer presets.
+- scene/layer presets (including dynamic sources when shipped).
 - export/import of presets.
 
 ## Phase 13: Renderer expansion

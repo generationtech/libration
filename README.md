@@ -96,13 +96,14 @@ Start here:
 - [docs/AI_COENGINEERING.md](docs/AI_COENGINEERING.md) - how this project uses ChatGPT and Cursor.
 - [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing, onboarding strategy, and catalog **`capabilities`** roles (including overlay-readability hints).
 - [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - map source inventory and base-map **capabilities** notes (including overlay-readability catalog hints).
-- [docs/specs/scene/weather-cloud-composition-plan.md](docs/specs/scene/weather-cloud-composition-plan.md) - **shipped** planning spec for weather/cloud participation boundaries (no runtime; implementation after Phase 10).
+- [docs/specs/scene/dynamic-data-lifecycle-plan.md](docs/specs/scene/dynamic-data-lifecycle-plan.md) - **Phase 10** dynamic data lifecycle plan and `P10-*` step tracker (lifecycle only; no user-facing dynamic overlay in Phase 10).
+- [docs/specs/scene/weather-cloud-composition-plan.md](docs/specs/scene/weather-cloud-composition-plan.md) - **shipped** planning spec for weather/cloud participation boundaries (consumers after Phase 10 / `DLC-*`).
 
 Note:
 
 - The prior large spec archive was intentionally retired during documentation consolidation.
 - Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff (planning prompts)”** for scheduling. **Composition baseline closed:** Slice 2 queues **B**/**C** (standing ninth+ intrinsics / fourth+ twilight) are **not** default next work—the **eight-intrinsic** contract and **third** twilight pass are **shipped**. **Default macro PR track:** **Phase 10 / Slice 5** (dynamic data lifecycle). **Remaining Phase 8** sourced substrates / polish and **Phase 9** composition extensions are **deferred until after Phase 10** (**preferred Phase 8 backlog after that:** temperature/precipitation climatology). **Do not** recommend composition filler or map-inventory PRs as the default while Phase 10 is open. Land cover, bathymetry, climate normals, population density (**`equirect-world-population-gpw-v1`**), structured attribution, month-aware selector polish, and **weather/cloud planning** ([`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md)) are **shipped**.
+- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff”** and **`docs/specs/scene/dynamic-data-lifecycle-plan.md`**. **Default macro PR track:** Phase 10 steps `P10-*` (next **`P10-1`**)—lifecycle only; **no** user-facing dynamic overlay until post–Phase 10 `DLC-*` (first bias: global equirect clouds/IR). Use the Phase 10 step prompt in `PLAN.md` to advance one step per session. **Composition baseline closed** (queues **B**/**C**). **Remaining Phase 8/9** deferred until after Phase 10. Weather/cloud **participation planning** shipped; **implementation** is `DLC-*` after `P10-7`.
 - New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
 
 ## Development

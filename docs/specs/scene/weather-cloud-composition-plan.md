@@ -2,9 +2,9 @@
 
 ## Status
 
-**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** This document records boundaries, prerequisites, and sequencing for future weather and cloud participation in Libration. It does **not** authorize runtime implementation, new SceneConfig axes, or backend composition policy. **Default next PR** is **Phase 10 / Slice 5** (dynamic data lifecycle) per `PLAN.md`; remaining Phase 8 queue **A** and Slice 2 **B**/**C** are **not** default filler; weather/cloud **code** follows Phase 10 lifecycle foundations.
+**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** Boundaries for weather/cloud **participation** (Models A/B/C). Lifecycle foundation is Phase 10 ([`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md), steps `P10-*`). User-facing weather/cloud **layers** are post–Phase 10 **`DLC-*`** (first bias: global equirect clouds/IR). This doc does **not** authorize Phase 10 to ship weather UI.
 
-**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md) (Agent session handoff, Slice 5 / Phase 10), [`docs/ROADMAP.md`](../../ROADMAP.md) (Phase 10 next; Phases 8–9 remaining deferred).
+**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md), [`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md) (`P10-*` / `DLC-*`), [`docs/ROADMAP.md`](../../ROADMAP.md).
 
 ## Purpose
 
@@ -105,7 +105,7 @@ After this planning doc and Phase 10 foundations:
 3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
 4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
 
-**Default macro PR track is Phase 10 / Slice 5** (lifecycle); remaining Phase 8 queue **A** is **deferred until after Phase 10**. Weather/cloud **code** does not jump ahead of lifecycle foundations unless session-scoped.
+**Default macro PR track is Phase 10 `P10-*` steps** (lifecycle only). Weather/cloud **layer code** is **`DLC-*`** after `P10-7`. Remaining Phase 8 queue **A** deferred until after Phase 10.
 
 ## Relationship to existing subsystems
 

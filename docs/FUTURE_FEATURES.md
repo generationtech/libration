@@ -121,12 +121,14 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-Blocked until dynamic data lifecycle exists (Phase 10 — now the **default next** track per `PLAN.md`; implementation not started until a Phase 10 vertical is scoped). Participation boundaries and sequencing: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 (`P10-*` steps) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—in progress; **no** user-facing dynamic overlay until post–Phase 10 **`DLC-*`**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
-Candidates:
+**First consumer bias (`DLC-1`):** global equirect raster — clouds / satellite IR (real free or justified paid source; in-app periodic acquisition).
+
+Candidates (consume lifecycle; prefer free-for-personal-use; paid OK when valuable):
 
 - weather radar.
-- cloud cover.
+- cloud cover / satellite IR.
 - precipitation forecast.
 - temperature forecast.
 - wind fields.
