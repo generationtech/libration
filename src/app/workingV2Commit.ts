@@ -41,6 +41,7 @@ const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "grid",
   "staticEquirectOverlay",
   "globalCloudsIr",
+  "earthquakes",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -124,6 +125,9 @@ function sceneLayerSourceEqual(a: SceneLayerInstance["source"], b: SceneLayerIns
     return a.src === b.src && shallowRecordEqual(a.metadata, b.metadata);
   }
   if (a.kind === "dynamicEquirectRaster" && b.kind === "dynamicEquirectRaster") {
+    return a.sourceId === b.sourceId && shallowRecordEqual(a.metadata, b.metadata);
+  }
+  if (a.kind === "dynamicPointFeatures" && b.kind === "dynamicPointFeatures") {
     return a.sourceId === b.sourceId && shallowRecordEqual(a.metadata, b.metadata);
   }
   if (a.kind === "custom" && b.kind === "custom") {

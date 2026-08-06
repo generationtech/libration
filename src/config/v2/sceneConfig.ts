@@ -145,6 +145,12 @@ export type LayerSourceConfig =
       sourceId: string;
       metadata?: Record<string, unknown>;
     }
+  | {
+      /** DLC-2: Model B dynamic point features — durable lifecycle source id (not a CDN URL). */
+      kind: "dynamicPointFeatures";
+      sourceId: string;
+      metadata?: Record<string, unknown>;
+    }
   | { kind: "custom"; config: Record<string, unknown> };
 
 export type SceneLayerFamily =
@@ -343,6 +349,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "grid",
   "staticEquirectOverlay",
   "globalCloudsIr",
+  "earthquakes",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -572,6 +579,23 @@ const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   },
 };
 
+/**
+ * DLC-2: Model B earthquake point features — lifecycle sourceId, default off.
+ * Acquisition is outside rAF; layer reads sync-prepared views only.
+ */
+const EARTHQUAKES: SceneLayerInstance = {
+  id: "earthquakes",
+  family: "annotation",
+  type: "annotationPoints",
+  enabled: false,
+  order: 3.5,
+  opacity: 0.95,
+  source: {
+    kind: "dynamicPointFeatures",
+    sourceId: "usgs-earthquakes-v1",
+  },
+};
+
 const CITY: SceneLayerInstance = {
   id: "cityPins",
   family: "annotation",
@@ -615,6 +639,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   STATIC_EQUIRECT,
   GLOBAL_CLOUDS_IR,
   CITY,
+  EARTHQUAKES,
   SUBSOLAR,
   SUBLUNAR,
   SOLAR_ANALEMMA_ROW,
@@ -636,6 +661,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "staticEquirectOverlay";
     case "globalCloudsIr":
       return "globalCloudsIr";
+    case "earthquakes":
+      return "earthquakes";
     case "solarAnalemma":
       return "solarAnalemma";
     default:
@@ -689,6 +716,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     grid: false,
     staticEquirectOverlay: false,
     globalCloudsIr: false,
+    earthquakes: false,
     cityPins: false,
     subsolarMarker: false,
     sublunarMarker: false,
@@ -950,6 +978,21 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
         : "global-clouds-ir-v1";
     source = {
       kind: "dynamicEquirectRaster",
+      sourceId: sid !== "" ? sid : fallback,
+    };
+  } else if (
+    isPlainObject(sRaw) &&
+    sRaw.kind === "dynamicPointFeatures" &&
+    typeof sRaw.sourceId === "string"
+  ) {
+    const sid = sRaw.sourceId.trim().toLowerCase();
+    const defSrc = DEFAULT_STACK.find((d) => d.id === idNorm);
+    const fallback =
+      defSrc?.source.kind === "dynamicPointFeatures"
+        ? defSrc.source.sourceId
+        : "usgs-earthquakes-v1";
+    source = {
+      kind: "dynamicPointFeatures",
       sourceId: sid !== "" ? sid : fallback,
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "custom") {

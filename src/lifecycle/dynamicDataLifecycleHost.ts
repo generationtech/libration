@@ -12,32 +12,39 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1/DLC-2 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
- * equirect materializer. TimeContext attachments are read-only.
+ * equirect / point-features materializers. TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
 
 import { createDynamicAcquisitionController } from "./dynamicAcquisition";
 import { createDynamicDataLifecycleManager } from "./dynamicLifecycleManager";
 import { createDynamicEquirectMaterializer } from "./dynamicEquirectMaterializer";
+import { createDynamicPointFeaturesMaterializer } from "./dynamicPointFeaturesMaterializer";
 import { createDynamicSnapshotResolver } from "./dynamicSnapshotResolver";
 import { createMemoryDynamicSnapshotStore } from "./memoryDynamicSnapshotStore";
 import {
   GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
   GLOBAL_CLOUDS_IR_SOURCE_ID,
 } from "./dynamicEquirectSourceCatalog";
+import {
+  USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
+  USGS_EARTHQUAKES_SOURCE_ID,
+} from "./dynamicPointFeaturesSourceCatalog";
 import { createGlobalCloudsIrFixtureAcquisitionAdapter } from "./globalCloudsIrAcquisition";
+import { createEarthquakesFixtureAcquisitionAdapter } from "./earthquakesAcquisition";
 import type {
   DynamicDataLifecycleAttachment,
   DynamicDataLifecycleHost,
   DynamicDataLifecycleHostDeps,
 } from "./dynamicDataLifecycleHostTypes";
+import type { DynamicSourceId } from "./dynamicSnapshotTypes";
 import type { TimeContext } from "../layers/types";
 
 /**
  * Create a process-local lifecycle host for the app shell.
- * Does not start periodic refresh until {@link DynamicDataLifecycleHost.ensureGlobalCloudsIrConsumer}.
+ * Does not start periodic refresh until consumer ensure* methods are called.
  */
 export function createDynamicDataLifecycleHost(
   deps: DynamicDataLifecycleHostDeps = {},
@@ -55,28 +62,37 @@ export function createDynamicDataLifecycleHost(
   const materializer =
     deps.materializer ??
     createDynamicEquirectMaterializer({ lifecycle });
+  const pointFeaturesMaterializer =
+    deps.pointFeaturesMaterializer ??
+    createDynamicPointFeaturesMaterializer({ lifecycle });
 
   let disposed = false;
   let cloudsIrArmed = false;
+  let earthquakesArmed = false;
   let unsubCloudsIr: (() => void) | undefined;
+  let unsubEarthquakes: (() => void) | undefined;
 
   /**
-   * After lifecycle marks ready, pull bytes from the store into the sync materializer.
+   * After lifecycle marks ready, pull entry from the store into a sync materializer.
    * Runs outside rAF (async microtask from acquisition completion).
    */
-  function wireMaterializeOnReady(sourceId: typeof GLOBAL_CLOUDS_IR_SOURCE_ID): void {
-    unsubCloudsIr?.();
-    unsubCloudsIr = lifecycle.subscribe(sourceId, (snap) => {
+  function wireMaterializeOnReady(
+    sourceId: DynamicSourceId,
+    onEntry: (entry: NonNullable<Awaited<ReturnType<typeof store.get>>>) => void,
+    setUnsub: (unsub: (() => void) | undefined) => void,
+  ): void {
+    const unsub = lifecycle.subscribe(sourceId, (snap) => {
       if (snap.state !== "ready" || snap.latestVersionId === undefined) {
         return;
       }
       const versionId = snap.latestVersionId;
       void store.get(sourceId, versionId).then((entry) => {
         if (entry !== null) {
-          materializer.noteStoreEntry(entry);
+          onEntry(entry);
         }
       });
     });
+    setUnsub(unsub);
   }
 
   function attachForProductInstant(
@@ -97,6 +113,12 @@ export function createDynamicDataLifecycleHost(
       getPreparedEquirectRaster(sourceId) {
         return materializer.selectForProductInstant(sourceId, instant);
       },
+      getPreparedPointFeatures(sourceId) {
+        return pointFeaturesMaterializer.selectForProductInstant(
+          sourceId,
+          instant,
+        );
+      },
     };
   }
 
@@ -115,7 +137,14 @@ export function createDynamicDataLifecycleHost(
 
     if (!cloudsIrArmed) {
       acquisition.registerAdapter(createGlobalCloudsIrFixtureAcquisitionAdapter());
-      wireMaterializeOnReady(GLOBAL_CLOUDS_IR_SOURCE_ID);
+      unsubCloudsIr?.();
+      wireMaterializeOnReady(
+        GLOBAL_CLOUDS_IR_SOURCE_ID,
+        (entry) => materializer.noteStoreEntry(entry),
+        (u) => {
+          unsubCloudsIr = u;
+        },
+      );
       cloudsIrArmed = true;
     }
 
@@ -132,14 +161,56 @@ export function createDynamicDataLifecycleHost(
     acquisition.stopPeriodic(GLOBAL_CLOUDS_IR_SOURCE_ID);
   }
 
+  function ensureEarthquakesConsumer(options?: {
+    intervalMs?: number;
+    runImmediately?: boolean;
+  }): void {
+    if (disposed) return;
+    const intervalMs =
+      options?.intervalMs !== undefined &&
+      Number.isFinite(options.intervalMs) &&
+      options.intervalMs > 0
+        ? options.intervalMs
+        : USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS;
+    const runImmediately = options?.runImmediately !== false;
+
+    if (!earthquakesArmed) {
+      acquisition.registerAdapter(createEarthquakesFixtureAcquisitionAdapter());
+      unsubEarthquakes?.();
+      wireMaterializeOnReady(
+        USGS_EARTHQUAKES_SOURCE_ID,
+        (entry) => pointFeaturesMaterializer.noteStoreEntry(entry),
+        (u) => {
+          unsubEarthquakes = u;
+        },
+      );
+      earthquakesArmed = true;
+    }
+
+    if (!acquisition.isPeriodicActive(USGS_EARTHQUAKES_SOURCE_ID)) {
+      acquisition.startPeriodic(USGS_EARTHQUAKES_SOURCE_ID, {
+        intervalMs,
+        runImmediately,
+      });
+    }
+  }
+
+  function stopEarthquakesConsumer(): void {
+    acquisition.stopPeriodic(USGS_EARTHQUAKES_SOURCE_ID);
+  }
+
   function dispose(): void {
     if (disposed) return;
     disposed = true;
     unsubCloudsIr?.();
     unsubCloudsIr = undefined;
+    unsubEarthquakes?.();
+    unsubEarthquakes = undefined;
     acquisition.stopAll();
     materializer.revokeAll();
+    pointFeaturesMaterializer.clearAll();
     cloudsIrArmed = false;
+    earthquakesArmed = false;
   }
 
   return {
@@ -148,9 +219,12 @@ export function createDynamicDataLifecycleHost(
     resolver,
     acquisition,
     materializer,
+    pointFeaturesMaterializer,
     attachForProductInstant,
     ensureGlobalCloudsIrConsumer,
     stopGlobalCloudsIrConsumer,
+    ensureEarthquakesConsumer,
+    stopEarthquakesConsumer,
     dispose,
   };
 }

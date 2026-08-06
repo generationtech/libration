@@ -135,13 +135,18 @@ export default function App() {
     [storage, userPresetsEpoch],
   );
 
-  /** Phase 10 / DLC-1: arm acquisition from config commits — never from rAF paint. */
+  /** Phase 10 / DLC: arm acquisition from config commits — never from rAF paint. */
   const syncDynamicLifecycleConsumers = useCallback(() => {
     const host = dynamicLifecycleHostRef.current;
     if (derivedAppConfigRef.current.layers.globalCloudsIr) {
       host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
     } else {
       host.stopGlobalCloudsIrConsumer();
+    }
+    if (derivedAppConfigRef.current.layers.earthquakes) {
+      host.ensureEarthquakesConsumer({ runImmediately: true });
+    } else {
+      host.stopEarthquakesConsumer();
     }
   }, []);
 

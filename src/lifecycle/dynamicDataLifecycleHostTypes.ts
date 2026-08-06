@@ -12,9 +12,9 @@
  */
 
 /**
- * App shell seam contracts (P10-6 + DLC-1 consumer hooks).
- * Host owns store/manager/resolver/acquisition/materializer; TimeContext carries a
- * read-only attachment for product-time resolve + sync prepared equirect views.
+ * App shell seam contracts (P10-6 + DLC-1/DLC-2 consumer hooks).
+ * Host owns store/manager/resolver/acquisition/materializers; TimeContext carries a
+ * read-only attachment for product-time resolve + sync prepared views.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
 
@@ -26,6 +26,10 @@ import type {
   DynamicEquirectMaterializer,
   PreparedEquirectRasterView,
 } from "./dynamicEquirectMaterializer";
+import type {
+  DynamicPointFeaturesMaterializer,
+  PreparedPointFeaturesView,
+} from "./dynamicPointFeaturesMaterializer";
 import type {
   DynamicDataLifecycleManager,
   DynamicSourceLifecycleSnapshot,
@@ -62,6 +66,13 @@ export type DynamicDataLifecycleAttachment = Readonly<{
   getPreparedEquirectRaster(
     sourceId: DynamicSourceId,
   ): PreparedEquirectRasterView | null;
+  /**
+   * Sync prepared point features for Model B layers (DLC-2).
+   * Returns null when no materialized version is available — never fetches.
+   */
+  getPreparedPointFeatures(
+    sourceId: DynamicSourceId,
+  ): PreparedPointFeaturesView | null;
 }>;
 
 /**
@@ -74,6 +85,7 @@ export interface DynamicDataLifecycleHost {
   readonly resolver: DynamicSnapshotResolver;
   readonly acquisition: DynamicAcquisitionController;
   readonly materializer: DynamicEquirectMaterializer;
+  readonly pointFeaturesMaterializer: DynamicPointFeaturesMaterializer;
 
   /**
    * Build a TimeContext-attachable view bound to `productInstantMs`.
@@ -95,6 +107,18 @@ export interface DynamicDataLifecycleHost {
   /** Stop periodic refresh for the DLC-1 clouds/IR source (keeps cache). */
   stopGlobalCloudsIrConsumer(): void;
 
+  /**
+   * DLC-2: register fixture adapter + start periodic refresh for earthquakes.
+   * Idempotent. Safe to call from config/effect paths — never from rAF paint.
+   */
+  ensureEarthquakesConsumer(options?: {
+    intervalMs?: number;
+    runImmediately?: boolean;
+  }): void;
+
+  /** Stop periodic refresh for the DLC-2 earthquakes source (keeps cache). */
+  stopEarthquakesConsumer(): void;
+
   /** Stop periodic acquisition timers and revoke prepared object URLs. */
   dispose(): void;
 }
@@ -104,5 +128,6 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   store?: DynamicSnapshotStore;
   lifecycle?: DynamicDataLifecycleManager;
   materializer?: DynamicEquirectMaterializer;
+  pointFeaturesMaterializer?: DynamicPointFeaturesMaterializer;
 }> &
   DynamicAcquisitionTimerHooks;

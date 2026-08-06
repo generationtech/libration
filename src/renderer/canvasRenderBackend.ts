@@ -12,6 +12,7 @@
  */
 
 import { isCityPinsPayload } from "../layers/cityPinsPayload";
+import { isDynamicPointFeaturesPayload } from "../layers/dynamicPointFeaturesPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
@@ -35,6 +36,7 @@ import {
   buildSublunarMarkerRenderPlan,
 } from "./renderPlan/sceneSubsolarSublunarMarkersPlan";
 import { buildCityPinsRenderPlan } from "./renderPlan/sceneCityPinsPlan";
+import { buildDynamicPointFeaturesRenderPlan } from "./renderPlan/sceneDynamicPointFeaturesPlan";
 import { buildSceneTextOverlayRenderPlan } from "./renderPlan/sceneTextOverlayPlan";
 import type { RenderBackend } from "./RenderBackend";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
@@ -379,8 +381,8 @@ export class CanvasRenderBackend implements RenderBackend {
   }
 
   /**
-   * Point markers: subsolar/sublunar/city pins. Geometry and labels for city pins are emitted as
-   * {@link RenderPlan} (path2d + text); execution is mechanical.
+   * Point markers: subsolar/sublunar/dynamic point-features/city pins. Geometry and labels
+   * are emitted as {@link RenderPlan} (path2d + text); execution is mechanical.
    */
   private drawPointsLayer(
     ctx: CanvasRenderingContext2D,
@@ -411,6 +413,23 @@ export class CanvasRenderBackend implements RenderBackend {
           illuminatedFraction: layer.data.illuminatedFraction,
           waxing: layer.data.waxing,
           readability: layer.data.readability ?? null,
+        }),
+      );
+      return;
+    }
+    if (isDynamicPointFeaturesPayload(layer.data)) {
+      const w = viewport.width;
+      const h = viewport.height;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildDynamicPointFeaturesRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          layerOpacity: layer.opacity,
+          payload: layer.data,
         }),
       );
       return;

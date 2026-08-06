@@ -76,6 +76,9 @@ export function isSceneLayerCompositionEligible(inst: SceneLayerInstance): boole
   if (inst.source.kind === "dynamicEquirectRaster") {
     return typeof inst.source.sourceId === "string" && inst.source.sourceId.trim() !== "";
   }
+  if (inst.source.kind === "dynamicPointFeatures") {
+    return typeof inst.source.sourceId === "string" && inst.source.sourceId.trim() !== "";
+  }
   if (inst.source.kind === "derived") {
     return COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS.has(inst.source.product);
   }

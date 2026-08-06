@@ -12,9 +12,11 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle + DLC-1 equirect consumer — public contract surface.
+ * Phase 10 dynamic data lifecycle + DLC equirect / point-features consumers —
+ * public contract surface.
  * P10-1…P10-7: types, store, manager, resolver, acquisition, shell host, closure.
  * DLC-1: global equirect clouds/IR Model B layer (catalog, materializer, fixture adapter).
+ * DLC-2: earthquake point-features Model B layer (catalog, materializer, fixture adapter).
  */
 
 export type {
@@ -144,6 +146,32 @@ export {
   isGlobalCloudsIrSourceId,
   produceGlobalCloudsIrFixtureAcquisition,
 } from "./globalCloudsIrAcquisition";
+
+export type { DynamicPointFeaturesSourceCatalogEntry } from "./dynamicPointFeaturesSourceCatalog";
+
+export {
+  USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
+  USGS_EARTHQUAKES_SOURCE_ID,
+  getDynamicPointFeaturesSourceCatalogEntry,
+  listDynamicPointFeaturesSourceCatalog,
+} from "./dynamicPointFeaturesSourceCatalog";
+
+export type {
+  DynamicPointFeaturesMaterializer,
+  DynamicPointFeaturesMaterializerDeps,
+  PreparedPointFeaturesView,
+} from "./dynamicPointFeaturesMaterializer";
+
+export { createDynamicPointFeaturesMaterializer } from "./dynamicPointFeaturesMaterializer";
+
+export type { EarthquakesAcquireOptions } from "./earthquakesAcquisition";
+
+export {
+  EARTHQUAKES_SCENE_LAYER_ID,
+  createEarthquakesFixtureAcquisitionAdapter,
+  isUsgsEarthquakesSourceId,
+  produceEarthquakesFixtureAcquisition,
+} from "./earthquakesAcquisition";
 
 export type {
   DynamicDataLifecycleAttachment,

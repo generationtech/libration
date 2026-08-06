@@ -43,6 +43,8 @@ export interface LayerEnableFlags {
   staticEquirectOverlay: boolean;
   /** DLC-1: Model B global equirect clouds / IR (`globalCloudsIr` / `dynamicEquirectRaster`). */
   globalCloudsIr: boolean;
+  /** DLC-2: Model B earthquake point features (`earthquakes` / `dynamicPointFeatures`). */
+  earthquakes: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -633,6 +635,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   grid: true,
   staticEquirectOverlay: false,
   globalCloudsIr: false,
+  earthquakes: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
