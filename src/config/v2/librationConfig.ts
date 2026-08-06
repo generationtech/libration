@@ -62,6 +62,7 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   cloneSceneConfig,
   deriveLayerEnableFlagsFromScene,
+  isCloudParticipationPresentationMode,
   isEmissiveNightLightsPresentationMode,
   isMoonlightPresentationMode,
   normalizeSceneConfig,
@@ -1044,7 +1045,9 @@ export function assertIsNormalizedLibrationConfig(
     ill.moonlight === null ||
     !isMoonlightPresentationMode((ill.moonlight as { mode?: unknown }).mode) ||
     typeof (ill as { emissiveNightLights?: unknown }).emissiveNightLights !== "object" ||
-    (ill as { emissiveNightLights?: unknown }).emissiveNightLights === null
+    (ill as { emissiveNightLights?: unknown }).emissiveNightLights === null ||
+    typeof (ill as { cloudParticipation?: unknown }).cloudParticipation !== "object" ||
+    (ill as { cloudParticipation?: unknown }).cloudParticipation === null
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination");
   }
@@ -1066,6 +1069,29 @@ export function assertIsNormalizedLibrationConfig(
     !Number.isFinite((enl.presentation as { driverExponent: number }).driverExponent)
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.emissiveNightLights");
+  }
+  const cp = (
+    ill as {
+      cloudParticipation?: {
+        mode?: unknown;
+        sourceId?: unknown;
+        presentation?: unknown;
+      };
+    }
+  ).cloudParticipation;
+  if (
+    typeof cp !== "object" ||
+    cp === null ||
+    !isCloudParticipationPresentationMode(cp.mode) ||
+    typeof cp.sourceId !== "string" ||
+    cp.sourceId.trim() === "" ||
+    cp.sourceId.includes("://") ||
+    typeof cp.presentation !== "object" ||
+    cp.presentation === null ||
+    typeof (cp.presentation as { intensity?: unknown }).intensity !== "number" ||
+    !Number.isFinite((cp.presentation as { intensity: number }).intensity)
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.illumination.cloudParticipation");
   }
   const ovr = (sc as SceneConfig).overlayReadability;
   if (

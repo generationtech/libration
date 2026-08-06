@@ -263,6 +263,9 @@ export class CanvasRenderBackend implements RenderBackend {
       emissiveCompositionAssetId,
       emissivePresentationIntensity,
       emissiveDriverExponent,
+      cloudParticipationMode,
+      cloudParticipationIntensity,
+      cloudOpacityRaster,
     } = layer.data;
     const moonlightPolicy = getMoonlightPolicy(moonlightMode ?? DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE);
 
@@ -302,6 +305,9 @@ export class CanvasRenderBackend implements RenderBackend {
         emissiveRaster,
         emissivePresentationIntensity,
         emissiveDriverExponent,
+        cloudParticipationMode,
+        cloudOpacityRaster,
+        cloudParticipationIntensity,
       }),
     );
   }

@@ -12,12 +12,13 @@
  */
 
 /**
- * Phase 10 dynamic data lifecycle + DLC equirect / point-features / tracks consumers —
+ * Phase 10 dynamic data lifecycle + DLC equirect / point-features / tracks / Model A cloud —
  * public contract surface.
  * P10-1…P10-7: types, store, manager, resolver, acquisition, shell host, closure.
  * DLC-1: global equirect clouds/IR Model B layer (catalog, materializer, fixture adapter).
  * DLC-2: earthquake point-features Model B layer (catalog, materializer, fixture adapter).
  * DLC-3: ISS orbital tracks Model B layer (catalog, materializer, fixture adapter).
+ * DLC-4: Model A cloud participation in planetary illumination (opacity materializer + SceneConfig).
  */
 
 export type {
@@ -138,6 +139,19 @@ export type {
 } from "./dynamicEquirectMaterializer";
 
 export { createDynamicEquirectMaterializer } from "./dynamicEquirectMaterializer";
+
+export type {
+  CloudOpacitySampleBuffer,
+  DynamicCloudOpacityMaterializer,
+  DynamicCloudOpacityMaterializerDeps,
+  PreparedCloudOpacityView,
+} from "./dynamicCloudOpacityMaterializer";
+
+export {
+  createDynamicCloudOpacityMaterializer,
+  decodeJpegBytesToCloudOpacityBuffer,
+  sampleCloudOpacity01,
+} from "./dynamicCloudOpacityMaterializer";
 
 export type { GlobalCloudsIrAcquireOptions } from "./globalCloudsIrAcquisition";
 

@@ -22,6 +22,8 @@ import {
   computeEmissiveNightLightsContributionLinear01,
   type EmissiveNightLightsPresentationMode,
 } from "../core/emissiveNightLightsPolicy";
+import { computeCloudSolarAttenuation01 } from "../core/cloudParticipationPolicy";
+import type { CloudParticipationPresentationMode } from "../core/cloudParticipationPolicy";
 import { getMoonlightPolicy, type MoonlightPolicy } from "../core/moonlightPolicy";
 import {
   illuminationNightVeil01FromSolarAltitudeDeg,
@@ -236,6 +238,15 @@ export interface EmissiveIlluminationInputs {
   presentationIntensity?: number;
 }
 
+/** Per-texel Model A cloud participation input resolved upstream of {@link sampleIlluminationRgba8}. */
+export interface CloudIlluminationInputs {
+  /** Prepared cloud opacity 0..1 at this lon/lat. */
+  opacity01: number;
+  cloudMode: CloudParticipationPresentationMode;
+  /** Scene `presentation.intensity`; defaults to 1 when omitted. */
+  presentationIntensity?: number;
+}
+
 /**
  * Max additive RGB boost per channel at contribution 1 (bounded city-glow read).
  * Tuned for NASA Black Marble 2016 1° grayscale onboarded asset (low global mean, high urban tail).
@@ -243,6 +254,13 @@ export interface EmissiveIlluminationInputs {
 const EMISSIVE_ADDITIVE_SCALE = 150;
 const EMISSIVE_WARM_G = 0.9;
 const EMISSIVE_WARM_B = 0.62;
+
+/** Max day-side soft cloud veil alpha contribution (straight alpha, before layer opacity). */
+const CLOUD_DAY_VEIL_ALPHA_MAX = 0.28;
+/** Extra night-side darken boost from thick clouds (multiplies into darkness alpha). */
+const CLOUD_NIGHT_DARKEN_BOOST_MAX = 0.22;
+/** Soft cool-gray cloud veil RGB (non-emissive attenuation tint). */
+const CLOUD_VEIL_RGB = { r: 48, g: 54, b: 68 } as const;
 
 /**
  * RGBA for one shading pixel given subsolar geometry dot product and layer opacity.
@@ -253,6 +271,7 @@ export function sampleIlluminationRgba8(
   moonlight?: MoonlightSamplingInputs,
   moonlightPolicy: MoonlightPolicy = ILLUSTRATIVE_MOONLIGHT,
   emissive?: EmissiveIlluminationInputs,
+  cloud?: CloudIlluminationInputs,
 ): IlluminationRgba8 {
   const op = layerOpacity;
   let r = 0;
@@ -274,17 +293,33 @@ export function sampleIlluminationRgba8(
         )
       : 0;
   const nightStrength = illuminationNightVeil01FromSolarAltitudeDeg(altDeg);
-  const darknessAlpha = nightStrength * NIGHT_DARKEN * op;
+  const cloudAttenuation =
+    cloud && cloud.cloudMode !== "off"
+      ? computeCloudSolarAttenuation01({
+          opacity01: cloud.opacity01,
+          mode: cloud.cloudMode,
+          presentationIntensity: cloud.presentationIntensity,
+        })
+      : 0;
+  const cloudNightBoost = cloudAttenuation * nightStrength * CLOUD_NIGHT_DARKEN_BOOST_MAX;
+  const darknessAlpha = nightStrength * NIGHT_DARKEN * op + cloudNightBoost * op;
   const tintStrength = atmosphericTintStrength(altDeg);
   const moonlightVisibility = lunarStrengthRaw * smoothstep(0.45, 0.95, nightStrength);
   const moonlightContribution = moonlightVisibility * moonlightPolicy.secondaryCoolIntensity;
-  const baselineTransmittance = 1 - darknessAlpha;
+  const baselineTransmittance = 1 - Math.min(1, darknessAlpha);
   const moonlightTransmittanceLift =
-    darknessAlpha * moonlightVisibility * moonlightPolicy.secondaryTransmittanceLiftMax;
-  const combinedAlpha = Math.max(
+    Math.min(1, darknessAlpha) *
+    moonlightVisibility *
+    moonlightPolicy.secondaryTransmittanceLiftMax;
+  let combinedAlpha = Math.max(
     0,
     1 - Math.min(1, baselineTransmittance + moonlightTransmittanceLift),
   );
+  // Day-side soft cloud veil (Model A): reduce solar transmittance under thick clouds.
+  const dayClear01 = 1 - nightStrength;
+  const cloudDayVeil =
+    cloudAttenuation * dayClear01 * CLOUD_DAY_VEIL_ALPHA_MAX * op;
+  combinedAlpha = Math.min(1, combinedAlpha + cloudDayVeil);
 
   if (combinedAlpha > 0) {
     const twilightTint = continuousTwilightOverlayRgb(altDeg);
@@ -293,6 +328,12 @@ export function sampleIlluminationRgba8(
     r = Math.min(255, attenuationColor.r + moonlightPolicy.coolTintR * moonCoolScale);
     g = Math.min(255, attenuationColor.g + moonlightPolicy.coolTintG * moonCoolScale);
     b = Math.min(255, attenuationColor.b + moonlightPolicy.coolTintB * moonCoolScale);
+    if (cloudDayVeil > 0.001) {
+      const cloudMix = Math.min(1, cloudDayVeil / Math.max(combinedAlpha, 1e-6));
+      r = Math.round(r + (CLOUD_VEIL_RGB.r - r) * cloudMix);
+      g = Math.round(g + (CLOUD_VEIL_RGB.g - g) * cloudMix);
+      b = Math.round(b + (CLOUD_VEIL_RGB.b - b) * cloudMix);
+    }
     a = combinedAlpha;
 
     if (emissive && emissive.emissiveMode !== "off") {

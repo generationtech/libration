@@ -123,6 +123,9 @@ function createDerivedOverlayByProduct(
         emissiveCompositionAssetId: config.scene.illumination.emissiveNightLights.assetId,
         emissivePresentationIntensity: config.scene.illumination.emissiveNightLights.presentation.intensity,
         emissiveDriverExponent: config.scene.illumination.emissiveNightLights.presentation.driverExponent,
+        cloudParticipationMode: config.scene.illumination.cloudParticipation.mode,
+        cloudParticipationSourceId: config.scene.illumination.cloudParticipation.sourceId,
+        cloudParticipationIntensity: config.scene.illumination.cloudParticipation.presentation.intensity,
       });
     case "latLonGrid":
       return createLatLonGridLayer({

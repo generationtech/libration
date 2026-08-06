@@ -138,7 +138,11 @@ export default function App() {
   /** Phase 10 / DLC: arm acquisition from config commits — never from rAF paint. */
   const syncDynamicLifecycleConsumers = useCallback(() => {
     const host = dynamicLifecycleHostRef.current;
-    if (derivedAppConfigRef.current.layers.globalCloudsIr) {
+    const scene = derivedAppConfigRef.current.scene;
+    const cloudsIrOverlay = derivedAppConfigRef.current.layers.globalCloudsIr;
+    const cloudParticipationOn =
+      scene.illumination.cloudParticipation.mode !== "off";
+    if (cloudsIrOverlay || cloudParticipationOn) {
       host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
     } else {
       host.stopGlobalCloudsIrConsumer();

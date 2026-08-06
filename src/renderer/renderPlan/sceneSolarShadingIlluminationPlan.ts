@@ -12,13 +12,22 @@
  */
 
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
+import type { CloudParticipationPresentationMode } from "../../core/cloudParticipationPolicy";
 import type { EmissiveNightLightsPresentationMode } from "../../core/emissiveNightLightsPolicy";
 import type { MoonlightPolicy } from "../../core/moonlightPolicy";
+import {
+  DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY,
+} from "../../core/cloudParticipationPresentationDefaults";
 import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../../core/emissiveNightLightsPresentationDefaults";
-import { DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE } from "../../core/sceneIlluminationPresentationDefaults";
+import {
+  DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
+  DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
+} from "../../core/sceneIlluminationPresentationDefaults";
+import type { CloudOpacitySampleBuffer } from "../../lifecycle/dynamicCloudOpacityMaterializer";
+import { sampleCloudOpacity01 } from "../../lifecycle/dynamicCloudOpacityMaterializer";
 import type { EmissiveRasterSampleBuffer } from "../emissiveIlluminationRaster";
 import { sampleEquirectEmissiveRadianceLinear01 } from "../emissiveIlluminationRaster";
 import { sampleIlluminationRgba8 } from "../illuminationShading";
@@ -53,6 +62,15 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   emissivePresentationIntensity?: number;
   /** Scene `presentation.driverExponent`; omitted defaults per {@link DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT}. */
   emissiveDriverExponent?: number;
+  /**
+   * When omitted, defaults to {@link DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE} (`off`).
+   * Sampling still yields zero modulation when `cloudOpacityRaster` is null.
+   */
+  cloudParticipationMode?: CloudParticipationPresentationMode;
+  /** Prepared cloud opacity field; when null/omitted, Model A contribution is zero. */
+  cloudOpacityRaster?: CloudOpacitySampleBuffer | null;
+  /** Scene `cloudParticipation.presentation.intensity`; omitted defaults to 1. */
+  cloudParticipationIntensity?: number;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -81,6 +99,11 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
     options.emissivePresentationIntensity ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
   const emissiveDriverExponent =
     options.emissiveDriverExponent ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
+  const cloudMode =
+    options.cloudParticipationMode ?? DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE;
+  const cloudOpacityRaster = options.cloudOpacityRaster ?? null;
+  const cloudParticipationIntensity =
+    options.cloudParticipationIntensity ?? DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY;
   let p = 0;
   for (let j = 0; j < sh; j++) {
     const latDeg = 90 - ((j + 0.5) / sh) * 180;
@@ -109,6 +132,14 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
               presentationIntensity: emissivePresentationIntensity,
             }
           : undefined;
+      const cloudInputs =
+        cloudMode !== "off" && cloudOpacityRaster
+          ? {
+              opacity01: sampleCloudOpacity01(cloudOpacityRaster, lonDeg, latDeg),
+              cloudMode,
+              presentationIntensity: cloudParticipationIntensity,
+            }
+          : undefined;
       const { r, g, b, a } = sampleIlluminationRgba8(
         solarDot,
         op,
@@ -118,6 +149,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
         },
         options.moonlightPolicy,
         emissiveInputs,
+        cloudInputs,
       );
       rgba[p++] = r;
       rgba[p++] = g;

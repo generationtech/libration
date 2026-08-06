@@ -17,15 +17,20 @@ import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../core/emissiveNightLightsPresentationDefaults";
+import { DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY } from "../core/cloudParticipationPresentationDefaults";
 import {
+  DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
   DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
   DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
 } from "../core/sceneIlluminationPresentationDefaults";
+import type { CloudParticipationPresentationMode } from "../core/cloudParticipationPolicy";
 import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
+import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
+import { GLOBAL_CLOUDS_IR_SOURCE_ID } from "../lifecycle/dynamicEquirectSourceCatalog";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { SOLAR_SHADING_KIND, type SolarShadingPayload } from "./solarShadingPayload";
 
@@ -34,8 +39,9 @@ const SOLAR_SHADING_ID = "layer.solarShading.dayNight";
 const updatePolicy: UpdatePolicy = { type: "perFrame" };
 
 /**
- * Solar day/night shading over the equirectangular base map (no live data).
- * State uses current time from {@link TimeContext}.
+ * Solar day/night shading over the equirectangular base map.
+ * Model A cloud participation reads a lifecycle-prepared opacity buffer from TimeContext
+ * (never acquires / fetches on this path).
  */
 export function createSolarShadingLayer(
   options: {
@@ -53,6 +59,10 @@ export function createSolarShadingLayer(
     emissiveCompositionAssetId?: string;
     emissivePresentationIntensity?: number;
     emissiveDriverExponent?: number;
+    /** DLC-4 Model A; omitted defaults to `off`. */
+    cloudParticipationMode?: CloudParticipationPresentationMode;
+    cloudParticipationSourceId?: string;
+    cloudParticipationIntensity?: number;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -66,6 +76,12 @@ export function createSolarShadingLayer(
     options.emissivePresentationIntensity ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY;
   const emissiveDriverExponent =
     options.emissiveDriverExponent ?? DEFAULT_EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT;
+  const cloudParticipationMode =
+    options.cloudParticipationMode ?? DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE;
+  const cloudParticipationSourceId =
+    options.cloudParticipationSourceId ?? GLOBAL_CLOUDS_IR_SOURCE_ID;
+  const cloudParticipationIntensity =
+    options.cloudParticipationIntensity ?? DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY;
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
@@ -77,6 +93,12 @@ export function createSolarShadingLayer(
       const { latDeg, lonDeg } = subsolarPoint(time.now);
       const { latDeg: moonLatDeg, lonDeg: moonLonDeg } = sublunarPoint(time.now);
       const phase = approximateLunarPhase(time.now);
+      let cloudOpacityRaster: SolarShadingPayload["cloudOpacityRaster"] = null;
+      if (cloudParticipationMode !== "off") {
+        const attachment = getDynamicDataLifecycleAttachment(time);
+        const prepared = attachment?.getPreparedCloudOpacity(cloudParticipationSourceId);
+        cloudOpacityRaster = prepared?.buffer ?? null;
+      }
       const data: SolarShadingPayload = {
         kind: SOLAR_SHADING_KIND,
         subsolarLatDeg: latDeg,
@@ -89,6 +111,10 @@ export function createSolarShadingLayer(
         emissiveCompositionAssetId,
         emissivePresentationIntensity,
         emissiveDriverExponent,
+        cloudParticipationMode,
+        cloudParticipationSourceId,
+        cloudParticipationIntensity,
+        cloudOpacityRaster,
       };
       return {
         visible: true,

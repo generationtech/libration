@@ -162,6 +162,70 @@ describe("SceneConfig (Phase 1)", () => {
     );
   });
 
+  it("normalizes cloudParticipation Model A subtree (defaults off; clamps; rejects URLs)", () => {
+    const green = buildDefaultSceneConfigFromLayerFlags(DEFAULT_LAYERS);
+    expect(green.illumination.cloudParticipation.mode).toBe("off");
+    expect(green.illumination.cloudParticipation.sourceId).toBe("global-clouds-ir-v1");
+    expect(green.illumination.cloudParticipation.presentation.intensity).toBe(1);
+
+    const ok = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          moonlight: { mode: "natural" },
+          cloudParticipation: {
+            mode: "enhanced",
+            sourceId: "global-clouds-ir-v1",
+            presentation: { intensity: 1.5 },
+          },
+        },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(ok.illumination.cloudParticipation.mode).toBe("enhanced");
+    expect(ok.illumination.cloudParticipation.presentation.intensity).toBe(1.5);
+
+    const clamped = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: {
+          cloudParticipation: {
+            mode: "natural",
+            sourceId: "https://cdn.example/clouds.jpg",
+            presentation: { intensity: 99 },
+          },
+        },
+      } as unknown as Parameters<typeof normalizeSceneConfig>[0],
+      DEFAULT_LAYERS,
+    );
+    expect(clamped.illumination.cloudParticipation.sourceId).toBe("global-clouds-ir-v1");
+    expect(clamped.illumination.cloudParticipation.presentation.intensity).toBe(2);
+
+    const missing = normalizeSceneConfig(
+      {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        orderingMode: "user",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+        illumination: { moonlight: { mode: "natural" } },
+      },
+      DEFAULT_LAYERS,
+    );
+    expect(missing.illumination.cloudParticipation.mode).toBe("off");
+  });
+
   it("normalizes overlay readability presentation and clamps out-of-range values", () => {
     const scene = normalizeSceneConfig(
       {

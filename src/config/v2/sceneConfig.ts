@@ -43,6 +43,16 @@ import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_INTENSITY,
 } from "../../core/emissiveNightLightsPresentationDefaults";
 import {
+  CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MAX,
+  CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MIN,
+  DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY,
+} from "../../core/cloudParticipationPresentationDefaults";
+import {
+  isCloudParticipationPresentationMode,
+  type CloudParticipationPresentationMode,
+} from "../../core/cloudParticipationPolicy";
+import {
+  DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
   DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
   DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
 } from "../../core/sceneIlluminationPresentationDefaults";
@@ -59,6 +69,9 @@ import {
   type MoonlightPresentationMode,
 } from "../../core/moonlightPolicy";
 
+/** Durable lifecycle source for Model A cloud participation (same as DLC-1 Model B). */
+export const DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID = "global-clouds-ir-v1";
+
 export {
   DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID as DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   isEmissiveNightLightsPresentationMode,
@@ -66,6 +79,11 @@ export {
 };
 export { isMoonlightPresentationMode, type MoonlightPresentationMode };
 export {
+  isCloudParticipationPresentationMode,
+  type CloudParticipationPresentationMode,
+};
+export {
+  DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
   DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
   DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE,
 } from "../../core/sceneIlluminationPresentationDefaults";
@@ -245,9 +263,26 @@ export type SceneEmissiveNightLightsConfig = {
   presentation: SceneEmissiveNightLightsPresentationConfig;
 };
 
+export type SceneCloudParticipationPresentationConfig = {
+  /** Scales Model A cloud attenuation; clamped 0..2; default 1. */
+  intensity: number;
+};
+
+export type SceneCloudParticipationConfig = {
+  mode: CloudParticipationPresentationMode;
+  /**
+   * Durable lifecycle source id (equirect raster). Default {@link DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID}
+   * (same fixture / feed as DLC-1 Model B).
+   */
+  sourceId: string;
+  presentation: SceneCloudParticipationPresentationConfig;
+};
+
 export type SceneIlluminationConfig = {
   moonlight: SceneMoonlightConfig;
   emissiveNightLights: SceneEmissiveNightLightsConfig;
+  /** DLC-4 Model A: modulate planetary illumination from lifecycle-prepared cloud opacity. */
+  cloudParticipation: SceneCloudParticipationConfig;
 };
 
 /**
@@ -412,10 +447,78 @@ function normalizeSceneEmissiveNightLightsInput(raw: unknown): SceneEmissiveNigh
   return { mode, assetId, presentation };
 }
 
+export const DEFAULT_CLOUD_PARTICIPATION_PRESENTATION: SceneCloudParticipationPresentationConfig =
+  Object.freeze({
+    intensity: DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY,
+  });
+
+export function clampCloudParticipationPresentationIntensity(n: number): number {
+  if (!Number.isFinite(n)) {
+    return DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY;
+  }
+  return Math.max(
+    CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MIN,
+    Math.min(CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MAX, n),
+  );
+}
+
+function normalizeSceneCloudParticipationPresentationInput(
+  input: unknown,
+): SceneCloudParticipationPresentationConfig {
+  if (!isPlainObject(input)) {
+    return { ...DEFAULT_CLOUD_PARTICIPATION_PRESENTATION };
+  }
+  const intensityRaw = input.intensity;
+  const intensity =
+    typeof intensityRaw === "number" && Number.isFinite(intensityRaw)
+      ? clampCloudParticipationPresentationIntensity(intensityRaw)
+      : DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY;
+  return { intensity };
+}
+
+function normalizeCloudParticipationSourceId(raw: unknown): string {
+  if (typeof raw !== "string") {
+    return DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID;
+  }
+  const trimmed = raw.trim();
+  // Durable semantic ids only — reject URLs / empty.
+  if (trimmed === "" || trimmed.includes("://") || /\s/.test(trimmed)) {
+    return DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID;
+  }
+  return trimmed;
+}
+
+/**
+ * Missing `cloudParticipation` → mode off (legacy illumination unchanged).
+ * Unknown modes / bad source ids fall back to defaults.
+ */
+export function normalizeSceneCloudParticipationInput(
+  input: unknown,
+): SceneCloudParticipationConfig {
+  if (!isPlainObject(input)) {
+    return {
+      mode: DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
+      sourceId: DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID,
+      presentation: { ...DEFAULT_CLOUD_PARTICIPATION_PRESENTATION },
+    };
+  }
+  const mode = isCloudParticipationPresentationMode(input.mode)
+    ? input.mode
+    : DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE;
+  const sourceId = normalizeCloudParticipationSourceId(
+    "sourceId" in input ? input.sourceId : undefined,
+  );
+  const presentation = normalizeSceneCloudParticipationPresentationInput(
+    "presentation" in input ? input.presentation : undefined,
+  );
+  return { mode, sourceId, presentation };
+}
+
 /**
  * Persisted scenes without `illumination` keep prior moonlight appearance (`illustrative`).
  * Missing `emissiveNightLights` under `illumination` normalizes like a greenfield subtree:
  * {@link DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE}.
+ * Missing `cloudParticipation` normalizes to {@link DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE} (`off`).
  * {@link buildDefaultSceneConfigFromLayerFlags} uses illustrative moonlight and illustrative emissive night lights.
  */
 export function normalizeSceneIlluminationInput(
@@ -424,13 +527,23 @@ export function normalizeSceneIlluminationInput(
   const legacyMoon = (): SceneMoonlightConfig => ({ mode: DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE });
   const emptyEmissive = (): SceneEmissiveNightLightsConfig =>
     normalizeSceneEmissiveNightLightsInput(undefined);
+  const emptyCloud = (): SceneCloudParticipationConfig =>
+    normalizeSceneCloudParticipationInput(undefined);
 
   if (!("illumination" in input)) {
-    return { moonlight: legacyMoon(), emissiveNightLights: emptyEmissive() };
+    return {
+      moonlight: legacyMoon(),
+      emissiveNightLights: emptyEmissive(),
+      cloudParticipation: emptyCloud(),
+    };
   }
   const ill = input.illumination;
   if (!isPlainObject(ill)) {
-    return { moonlight: legacyMoon(), emissiveNightLights: emptyEmissive() };
+    return {
+      moonlight: legacyMoon(),
+      emissiveNightLights: emptyEmissive(),
+      cloudParticipation: emptyCloud(),
+    };
   }
   let moonlight: SceneMoonlightConfig = legacyMoon();
   const ml = ill.moonlight;
@@ -442,7 +555,10 @@ export function normalizeSceneIlluminationInput(
   const emissiveNightLights = normalizeSceneEmissiveNightLightsInput(
     "emissiveNightLights" in ill ? ill.emissiveNightLights : undefined,
   );
-  return { moonlight, emissiveNightLights };
+  const cloudParticipation = normalizeSceneCloudParticipationInput(
+    "cloudParticipation" in ill ? ill.cloudParticipation : undefined,
+  );
+  return { moonlight, emissiveNightLights, cloudParticipation };
 }
 
 function normalizeOverlayReadabilityPresentationFields(
@@ -729,6 +845,11 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
         assetId: DEFAULT_EMISSIVE_COMPOSITION_ASSET_ID,
         presentation: { ...DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION },
       },
+      cloudParticipation: {
+        mode: DEFAULT_SCENE_CLOUD_PARTICIPATION_PRESENTATION_MODE,
+        sourceId: DEFAULT_CLOUD_PARTICIPATION_SOURCE_ID,
+        presentation: { ...DEFAULT_CLOUD_PARTICIPATION_PRESENTATION },
+      },
     },
     overlayReadability: {
       presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
@@ -821,6 +942,11 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
         mode: scene.illumination.emissiveNightLights.mode,
         assetId: scene.illumination.emissiveNightLights.assetId,
         presentation: { ...scene.illumination.emissiveNightLights.presentation },
+      },
+      cloudParticipation: {
+        mode: scene.illumination.cloudParticipation.mode,
+        sourceId: scene.illumination.cloudParticipation.sourceId,
+        presentation: { ...scene.illumination.cloudParticipation.presentation },
       },
     },
     overlayReadability: {

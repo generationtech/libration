@@ -15,7 +15,12 @@ import {
   isEmissiveNightLightsPresentationMode,
   type EmissiveNightLightsPresentationMode,
 } from "../core/emissiveNightLightsPolicy";
+import {
+  isCloudParticipationPresentationMode,
+  type CloudParticipationPresentationMode,
+} from "../core/cloudParticipationPolicy";
 import { isMoonlightPresentationMode, type MoonlightPresentationMode } from "../core/moonlightPolicy";
+import type { CloudOpacitySampleBuffer } from "../lifecycle/dynamicCloudOpacityMaterializer";
 
 export const SOLAR_SHADING_KIND = "solarShading" as const;
 
@@ -39,11 +44,29 @@ export interface SolarShadingPayload {
   emissivePresentationIntensity: number;
   /** From `scene.illumination.emissiveNightLights.presentation.driverExponent` (0.35..1). */
   emissiveDriverExponent: number;
+  /** DLC-4 Model A: scene `illumination.cloudParticipation.mode`. */
+  cloudParticipationMode: CloudParticipationPresentationMode;
+  /** Durable lifecycle source id for prepared cloud opacity (not a URL). */
+  cloudParticipationSourceId: string;
+  /** From `scene.illumination.cloudParticipation.presentation.intensity` (0..2). */
+  cloudParticipationIntensity: number;
+  /**
+   * Sync-prepared opacity buffer from the lifecycle materializer (null when off / cold).
+   * Never fetched in layer constructors or RenderPlan builders.
+   */
+  cloudOpacityRaster: CloudOpacitySampleBuffer | null;
 }
 
 export function isSolarShadingPayload(data: unknown): data is SolarShadingPayload {
   if (data === null || typeof data !== "object") return false;
   const o = data as Record<string, unknown>;
+  const cloudRasterOk =
+    o.cloudOpacityRaster === null ||
+    (typeof o.cloudOpacityRaster === "object" &&
+      o.cloudOpacityRaster !== null &&
+      typeof (o.cloudOpacityRaster as { width?: unknown }).width === "number" &&
+      typeof (o.cloudOpacityRaster as { height?: unknown }).height === "number" &&
+      (o.cloudOpacityRaster as { opacityU8?: unknown }).opacityU8 instanceof Uint8Array);
   return (
     o.kind === SOLAR_SHADING_KIND &&
     typeof o.subsolarLatDeg === "number" &&
@@ -60,6 +83,13 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.emissivePresentationIntensity === "number" &&
     Number.isFinite(o.emissivePresentationIntensity) &&
     typeof o.emissiveDriverExponent === "number" &&
-    Number.isFinite(o.emissiveDriverExponent)
+    Number.isFinite(o.emissiveDriverExponent) &&
+    typeof o.cloudParticipationMode === "string" &&
+    isCloudParticipationPresentationMode(o.cloudParticipationMode) &&
+    typeof o.cloudParticipationSourceId === "string" &&
+    o.cloudParticipationSourceId.trim() !== "" &&
+    typeof o.cloudParticipationIntensity === "number" &&
+    Number.isFinite(o.cloudParticipationIntensity) &&
+    cloudRasterOk
   );
 }

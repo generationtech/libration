@@ -12,15 +12,17 @@
  */
 
 /**
- * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3 consumer wiring).
+ * App shell seam host (P10-6 + DLC-1/DLC-2/DLC-3/DLC-4 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
- * equirect / point-features / tracks materializers. TimeContext attachments are read-only.
+ * equirect / cloud-opacity / point-features / tracks materializers.
+ * TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
  */
 
 import { createDynamicAcquisitionController } from "./dynamicAcquisition";
 import { createDynamicDataLifecycleManager } from "./dynamicLifecycleManager";
 import { createDynamicEquirectMaterializer } from "./dynamicEquirectMaterializer";
+import { createDynamicCloudOpacityMaterializer } from "./dynamicCloudOpacityMaterializer";
 import { createDynamicPointFeaturesMaterializer } from "./dynamicPointFeaturesMaterializer";
 import { createDynamicTracksMaterializer } from "./dynamicTracksMaterializer";
 import { createDynamicSnapshotResolver } from "./dynamicSnapshotResolver";
@@ -68,6 +70,9 @@ export function createDynamicDataLifecycleHost(
   const materializer =
     deps.materializer ??
     createDynamicEquirectMaterializer({ lifecycle });
+  const cloudOpacityMaterializer =
+    deps.cloudOpacityMaterializer ??
+    createDynamicCloudOpacityMaterializer({ lifecycle });
   const pointFeaturesMaterializer =
     deps.pointFeaturesMaterializer ??
     createDynamicPointFeaturesMaterializer({ lifecycle });
@@ -124,6 +129,9 @@ export function createDynamicDataLifecycleHost(
       getPreparedEquirectRaster(sourceId) {
         return materializer.selectForProductInstant(sourceId, instant);
       },
+      getPreparedCloudOpacity(sourceId) {
+        return cloudOpacityMaterializer.selectForProductInstant(sourceId, instant);
+      },
       getPreparedPointFeatures(sourceId) {
         return pointFeaturesMaterializer.selectForProductInstant(
           sourceId,
@@ -154,7 +162,10 @@ export function createDynamicDataLifecycleHost(
       unsubCloudsIr?.();
       wireMaterializeOnReady(
         GLOBAL_CLOUDS_IR_SOURCE_ID,
-        (entry) => materializer.noteStoreEntry(entry),
+        (entry) => {
+          materializer.noteStoreEntry(entry);
+          cloudOpacityMaterializer.noteStoreEntry(entry);
+        },
         (u) => {
           unsubCloudsIr = u;
         },
@@ -262,6 +273,7 @@ export function createDynamicDataLifecycleHost(
     unsubOrbitalTracks = undefined;
     acquisition.stopAll();
     materializer.revokeAll();
+    cloudOpacityMaterializer.clearAll();
     pointFeaturesMaterializer.clearAll();
     tracksMaterializer.clearAll();
     cloudsIrArmed = false;
@@ -275,6 +287,7 @@ export function createDynamicDataLifecycleHost(
     resolver,
     acquisition,
     materializer,
+    cloudOpacityMaterializer,
     pointFeaturesMaterializer,
     tracksMaterializer,
     attachForProductInstant,

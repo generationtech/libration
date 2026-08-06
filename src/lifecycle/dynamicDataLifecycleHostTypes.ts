@@ -27,6 +27,10 @@ import type {
   PreparedEquirectRasterView,
 } from "./dynamicEquirectMaterializer";
 import type {
+  DynamicCloudOpacityMaterializer,
+  PreparedCloudOpacityView,
+} from "./dynamicCloudOpacityMaterializer";
+import type {
   DynamicPointFeaturesMaterializer,
   PreparedPointFeaturesView,
 } from "./dynamicPointFeaturesMaterializer";
@@ -71,6 +75,13 @@ export type DynamicDataLifecycleAttachment = Readonly<{
     sourceId: DynamicSourceId,
   ): PreparedEquirectRasterView | null;
   /**
+   * Sync prepared cloud opacity field for Model A illumination (DLC-4).
+   * Returns null when no materialized version is available — never fetches.
+   */
+  getPreparedCloudOpacity(
+    sourceId: DynamicSourceId,
+  ): PreparedCloudOpacityView | null;
+  /**
    * Sync prepared point features for Model B layers (DLC-2).
    * Returns null when no materialized version is available — never fetches.
    */
@@ -94,6 +105,7 @@ export interface DynamicDataLifecycleHost {
   readonly resolver: DynamicSnapshotResolver;
   readonly acquisition: DynamicAcquisitionController;
   readonly materializer: DynamicEquirectMaterializer;
+  readonly cloudOpacityMaterializer: DynamicCloudOpacityMaterializer;
   readonly pointFeaturesMaterializer: DynamicPointFeaturesMaterializer;
   readonly tracksMaterializer: DynamicTracksMaterializer;
 
@@ -106,7 +118,8 @@ export interface DynamicDataLifecycleHost {
   ): DynamicDataLifecycleAttachment;
 
   /**
-   * DLC-1: register fixture adapter + start periodic refresh for global clouds/IR.
+   * DLC-1 / DLC-4: register fixture adapter + start periodic refresh for global clouds/IR.
+   * Used by Model B overlay and Model A cloud participation (same durable sourceId).
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureGlobalCloudsIrConsumer(options?: {
@@ -150,6 +163,7 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
   store?: DynamicSnapshotStore;
   lifecycle?: DynamicDataLifecycleManager;
   materializer?: DynamicEquirectMaterializer;
+  cloudOpacityMaterializer?: DynamicCloudOpacityMaterializer;
   pointFeaturesMaterializer?: DynamicPointFeaturesMaterializer;
   tracksMaterializer?: DynamicTracksMaterializer;
 }> &

@@ -168,6 +168,7 @@ describe("LayersTab base-map presentation persistence", () => {
       scene: {
         ...defaultLibrationConfigV2().scene!,
         illumination: {
+          ...defaultLibrationConfigV2().scene!.illumination,
           moonlight: { mode: "natural" },
           emissiveNightLights: {
             mode: "natural",
@@ -210,6 +211,7 @@ describe("LayersTab base-map presentation persistence", () => {
       scene: {
         ...defaultLibrationConfigV2().scene!,
         illumination: {
+          ...defaultLibrationConfigV2().scene!.illumination,
           moonlight: { mode: "natural" },
           emissiveNightLights: {
             mode: "illustrative",
@@ -245,6 +247,7 @@ describe("LayersTab base-map presentation persistence", () => {
       scene: {
         ...defaultLibrationConfigV2().scene!,
         illumination: {
+          ...defaultLibrationConfigV2().scene!.illumination,
           moonlight: { mode: "natural" },
           emissiveNightLights: {
             mode: "enhanced",

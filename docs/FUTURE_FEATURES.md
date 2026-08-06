@@ -121,14 +121,14 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`** / **`DLC-2`** / **`DLC-3`** shipped (Model B clouds/IR + earthquakes + ISS tracks); **default next** = **`DLC-*`** (currently **`DLC-4`**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination); sequenced Post–Phase 10 table **complete**—further `DLC-*` need **explicit scope**. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 **First consumer (`DLC-1` — shipped):** global equirect raster — clouds / satellite IR (`globalCloudsIr`, durable source `global-clouds-ir-v1`; fixture JPEG + periodic lifecycle acquisition; live feed adapter swap is follow-up).
 
 Candidates (consume lifecycle; prefer free-for-personal-use; paid OK when valuable):
 
 - weather radar.
-- cloud cover / satellite IR — **`DLC-1` shipped** (Model B overlay; Model A illumination participation remains `DLC-4`).
+- cloud cover / satellite IR — **`DLC-1` shipped** (Model B overlay); **`DLC-4` shipped** (Model A illumination participation via `scene.illumination.cloudParticipation`).
 - precipitation forecast.
 - temperature forecast.
 - wind fields.
