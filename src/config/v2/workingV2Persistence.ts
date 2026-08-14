@@ -211,7 +211,25 @@ export function loadPersistedWorkingV2(storage: Storage): LibrationConfigV2 | nu
   return reviveLibrationConfigV2FromUnknown(parsed);
 }
 
+/**
+ * When true, {@link persistWorkingV2} is a no-op. Used only by DEV visual-scenario
+ * sessions so fixture runs cannot overwrite the user's ordinary working document.
+ * Production never sets this flag.
+ */
+let workingV2PersistenceSuppressed = false;
+
+export function setWorkingV2PersistenceSuppressed(suppressed: boolean): void {
+  workingV2PersistenceSuppressed = suppressed;
+}
+
+export function isWorkingV2PersistenceSuppressed(): boolean {
+  return workingV2PersistenceSuppressed;
+}
+
 export function persistWorkingV2(storage: Storage | null, doc: LibrationConfigV2): void {
+  if (workingV2PersistenceSuppressed) {
+    return;
+  }
   if (!storage) {
     return;
   }

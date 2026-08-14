@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { getActiveAppConfig } from "../displayPresets";
 import { DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG, DEFAULT_PIN_PRESENTATION } from "../appConfig";
 import {
@@ -22,8 +22,10 @@ import {
 import persistenceSource from "./workingV2Persistence.ts?raw";
 import {
   loadPersistedWorkingV2,
+  persistWorkingV2,
   reviveLibrationConfigV2FromUnknown,
   resolveStartupWorkingV2,
+  setWorkingV2PersistenceSuppressed,
   WORKING_V2_LOCAL_STORAGE_KEY,
 } from "./workingV2Persistence";
 
@@ -74,6 +76,9 @@ function assertSourceImportsNoRenderer(source: string, label: string): void {
 const ALLOWED_PERSISTED_TOP_KEYS = ["chrome", "data", "geography", "layers", "meta", "pins", "scene"];
 
 describe("workingV2Persistence", () => {
+  afterEach(() => {
+    setWorkingV2PersistenceSuppressed(false);
+  });
   describe("startup / load", () => {
     it("loads a valid stored v2 document on startup", () => {
       const stored = normalizeLibrationConfig(defaultLibrationConfigV2());
@@ -163,6 +168,22 @@ describe("workingV2Persistence", () => {
       expect(keys).toEqual([...ALLOWED_PERSISTED_TOP_KEYS]);
       expect(parsed).not.toHaveProperty("isConfigOpen");
       expect(parsed).not.toHaveProperty("activeTab");
+    });
+
+    it("persistWorkingV2 writes when suppression is off and is a no-op when on", () => {
+      const mem = makeMemoryStorage();
+      const doc = normalizeLibrationConfig(defaultLibrationConfigV2());
+      persistWorkingV2(mem, doc);
+      expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).not.toBeNull();
+
+      mem.clear();
+      setWorkingV2PersistenceSuppressed(true);
+      persistWorkingV2(mem, doc);
+      expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).toBeNull();
+
+      setWorkingV2PersistenceSuppressed(false);
+      persistWorkingV2(mem, doc);
+      expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).not.toBeNull();
     });
   });
 

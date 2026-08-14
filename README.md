@@ -66,6 +66,7 @@ npm run fonts:prep             # regenerate the bundled font manifest
 | [`docs/STATE.md`](docs/STATE.md) | Current development state and next action |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Approved future direction |
 | [`docs/WORKFLOW.md`](docs/WORKFLOW.md) | How work items are executed |
+| [`docs/VISUAL_VERIFICATION.md`](docs/VISUAL_VERIFICATION.md) | Cursor-native visual verification |
 | [`docs/decisions/`](docs/decisions/) | Why the durable choices were made |
 | [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md) | Product thesis and design principles |
 | [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative and future ideas |
@@ -75,9 +76,7 @@ npm run fonts:prep             # regenerate the bundled font manifest
 | [`AGENTS.md`](AGENTS.md) | Entry contract for AI coding agents |
 | [`docs/history/`](docs/history/) | Archived planning and execution records |
 
-Reading order for someone new: this file, then `ARCHITECTURE.md`, then `docs/IMPLEMENTATION.md`. For current work: `AGENTS.md`, then `docs/STATE.md`.
-
-`docs/VISUAL_VERIFICATION.md` is reserved; it will be created by work item LIB-001.
+Reading order for someone new: this file, then `ARCHITECTURE.md`, then `docs/IMPLEMENTATION.md`. For current work: `AGENTS.md`, then `docs/STATE.md`. For visual changes: `docs/VISUAL_VERIFICATION.md`.
 
 ## Licensing
 

@@ -25,7 +25,7 @@ Then, for ordinary implementation, read [`ARCHITECTURE.md`](ARCHITECTURE.md) and
 | Configuration or persistence | Implementation §7; Cursor rule `020` |
 | Time or display modes | Implementation §8; ADR 0004 |
 | Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`; ADR 0005 |
-| Visual changes | After M4: `docs/VISUAL_VERIFICATION.md` (does not exist yet; created by [`LIB-001`](docs/work/LIB-001-cursor-native-visual-verification.md)) |
+| Visual changes | [`docs/VISUAL_VERIFICATION.md`](docs/VISUAL_VERIFICATION.md); Implementation §2 (DEV scenario seed); Cursor rule `060` |
 
 Read the source before editing it. Documentation describes the system; the source is the system.
 
@@ -41,6 +41,7 @@ One kind of truth, one owner. See [`docs/WORKFLOW.md`](docs/WORKFLOW.md) for exe
 | [`docs/STATE.md`](docs/STATE.md) | Current development state |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Approved future direction |
 | [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative ideas |
+| [`docs/VISUAL_VERIFICATION.md`](docs/VISUAL_VERIFICATION.md) | Cursor-native visual verification procedure |
 | [`docs/work/`](docs/work/) | Individual work items |
 | [`docs/history/`](docs/history/) | Archived planning — never current truth |
 

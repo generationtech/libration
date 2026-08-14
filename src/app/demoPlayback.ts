@@ -53,6 +53,28 @@ export function resolvedDemoStartUnixMs(startIsoUtc: string): number {
 }
 
 /**
+ * Seed a paused demo session frozen at `startIsoUtc`. Used by development visual scenarios so a
+ * reload yields the same product instant. Pause is runtime-only; it is not persisted.
+ */
+export function createPausedDemoPlaybackState(
+  startIsoUtc: string,
+  realNowMs: number,
+  speedMultiplier: number,
+): DemoPlaybackState {
+  const startMs = resolvedDemoStartUnixMs(startIsoUtc);
+  return {
+    session: {
+      realAnchorMs: realNowMs,
+      demoAnchorMs: startMs,
+      lastSpeed: speedMultiplier,
+      lastStartIsoUtc: startIsoUtc,
+    },
+    paused: true,
+    pausedDemoNowMs: startMs,
+  };
+}
+
+/**
  * After a frame computes `next` from {@link computeEffectiveRenderTimeMs}, freeze the clock at
  * `effectiveDemoNowMs` without mutating config.
  */

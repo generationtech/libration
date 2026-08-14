@@ -17,6 +17,11 @@ import App from "./App";
 import { loadBundledFontFaces } from "./renderer/canvas/bundledFontFaceLoader";
 
 async function bootstrap(): Promise<void> {
+  if (import.meta.env.DEV) {
+    const { applyVisualScenarioFromLocation } = await import("./dev/visualScenarios");
+    applyVisualScenarioFromLocation(window.location.search);
+  }
+
   await loadBundledFontFaces().catch((err: unknown) => {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line no-console -- startup diagnostic only

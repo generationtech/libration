@@ -1,0 +1,29 @@
+/*
+ * DEV-only visual-scenario indicator. Loaded only via src/dev/visualScenarios.ts
+ * (dynamic import under import.meta.env.DEV). Not a canvas/scene style.
+ */
+
+.visual-scenario-banner {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 40;
+  max-width: min(42rem, calc(100vw - 1rem));
+  margin: 0;
+  padding: 0.3rem 0.5rem;
+  pointer-events: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: #f4f1e8;
+  background: rgba(18, 22, 28, 0.82);
+  border: 1px solid rgba(244, 241, 232, 0.28);
+  border-radius: 4px;
+}
+
+.visual-scenario-banner--error {
+  color: #3b0d0d;
+  background: rgba(255, 214, 102, 0.95);
+  border-color: #8a6d00;
+}

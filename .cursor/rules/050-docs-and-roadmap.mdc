@@ -17,6 +17,7 @@ One kind of truth, one owner. Update only the owner whose durable truth changed.
 | `docs/ROADMAP.md` | Approved future direction |
 | `docs/FUTURE_FEATURES.md` | Speculative ideas |
 | `docs/WORKFLOW.md` | Development ratchet |
+| `docs/VISUAL_VERIFICATION.md` | Cursor-native visual verification procedure |
 | `docs/work/` | Task-specific execution |
 | `docs/DEVELOPMENT_LOG.md` | Concise completion chronology |
 | `docs/decisions/` | Why durable choices were made |

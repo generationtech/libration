@@ -1,0 +1,11 @@
+---
+description: Point visual-impacting renderer/layer/CSS edits at the visual-verification procedure.
+globs: src/renderer/**,src/layers/**,src/App.tsx,src/App.css,src/components/config/**
+alwaysApply: false
+---
+
+# Visual verification
+
+If this change can alter rendered output, follow [`docs/VISUAL_VERIFICATION.md`](docs/VISUAL_VERIFICATION.md) before completing the work item.
+
+Use the development `?scenario=` fixtures and Cursor’s built-in browser. Do not invent screenshot, pixel-diff, or external browser-automation tooling.

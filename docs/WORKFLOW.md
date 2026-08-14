@@ -94,7 +94,7 @@ Run `npm run build` when the change touches build configuration, dependencies, a
 
 ### Visual verification
 
-If a work item can alter rendered output, it cannot be completed without the visual-verification process once `docs/VISUAL_VERIFICATION.md` exists. That file is created by [`LIB-001`](work/LIB-001-cursor-native-visual-verification.md) (modernization M4). Until then, record visual impact under **Not verified** rather than inventing a process.
+If a work item can alter rendered output, it cannot be completed without following [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md). Record actual scenario, viewport, browser, inspected properties, and result in the work-item completion record. “Looks fine” is not evidence. If visual verification was required but could not be performed, do not mark the item complete.
 
 ### Documentation
 

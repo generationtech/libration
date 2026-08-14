@@ -45,9 +45,14 @@ import {
   applyDemoPlaybackReset,
   applyDemoPlaybackResume,
   computeEffectiveRenderTimeMs,
+  createPausedDemoPlaybackState,
   isDemoTimeActive,
   type DemoPlaybackState,
 } from "./app/demoPlayback";
+import {
+  getVisualScenarioRuntime,
+  INACTIVE_VISUAL_SCENARIO_RUNTIME,
+} from "./dev/visualScenarioRuntime";
 import { ConfigShell } from "./components/config/ConfigShell";
 import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
 import { getEquirectBaseMapCatalogEntry } from "./config/baseMapAssetResolve";
@@ -83,6 +88,9 @@ function isTextEntryElement(target: EventTarget | null): boolean {
 }
 
 export default function App() {
+  const scenarioRuntime = import.meta.env.DEV
+    ? getVisualScenarioRuntime()
+    : INACTIVE_VISUAL_SCENARIO_RUNTIME;
   const [, bumpConfigView] = useReducer((n: number) => n + 1, 0);
   const [userPresetsEpoch, setUserPresetsEpoch] = useState(0);
   const bumpUserPresets = useCallback(() => setUserPresetsEpoch((n) => n + 1), []);
@@ -98,8 +106,12 @@ export default function App() {
   activePresetIdRef.current = activePresetId;
 
   const workingV2Ref = useRef<LibrationConfigV2>(
-    resolveStartupWorkingV2(getLocalStorageIfAvailable(), () =>
-      appConfigToV2(getActiveAppConfig()),
+    resolveStartupWorkingV2(
+      scenarioRuntime.kind === "applied" ? null : getLocalStorageIfAvailable(),
+      () =>
+        scenarioRuntime.kind === "applied"
+          ? scenarioRuntime.config
+          : appConfigToV2(getActiveAppConfig()),
     ),
   );
   const derivedAppConfigRef = useRef<AppConfig>(
@@ -109,12 +121,22 @@ export default function App() {
   const registryRef = useRef<LayerRegistry>(
     createLayerRegistryFromConfig(derivedAppConfigRef.current),
   );
-  const demoPlaybackRef = useRef<DemoPlaybackState | null>(null);
+  const demoPlaybackRef = useRef<DemoPlaybackState | null>(
+    scenarioRuntime.kind === "applied"
+      ? createPausedDemoPlaybackState(
+          scenarioRuntime.startIsoUtc,
+          Date.now(),
+          scenarioRuntime.config.data.demoTime.speedMultiplier,
+        )
+      : null,
+  );
   const demoTransportActionRef = useRef<
     "pause" | "resume" | "reset" | null
   >(null);
-  const [demoTransportPaused, setDemoTransportPaused] = useState(false);
-  const prevDemoTimeActiveRef = useRef(false);
+  const [demoTransportPaused, setDemoTransportPaused] = useState(
+    scenarioRuntime.kind === "applied",
+  );
+  const prevDemoTimeActiveRef = useRef(scenarioRuntime.kind === "applied");
   const lastRenderClockMsRef = useRef<number | null>(null);
   /** Phase 10 shell seam: store/manager/resolver/acquisition (no dynamic overlay UI). */
   const dynamicLifecycleHostRef = useRef(createDynamicDataLifecycleHost());
@@ -465,6 +487,26 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {import.meta.env.DEV && scenarioRuntime.kind === "applied" ? (
+        <div
+          className="visual-scenario-banner"
+          data-visual-scenario={scenarioRuntime.id}
+          data-visual-scenario-status="applied"
+          role="status"
+        >
+          scenario: {scenarioRuntime.id} · {scenarioRuntime.startIsoUtc} · persistence isolated
+        </div>
+      ) : null}
+      {import.meta.env.DEV && scenarioRuntime.kind === "unknown" ? (
+        <div
+          className="visual-scenario-banner visual-scenario-banner--error"
+          data-visual-scenario-status="unknown"
+          role="alert"
+        >
+          unknown scenario “{scenarioRuntime.requestedId}” — ordinary startup; the requested
+          scenario was not applied
+        </div>
+      ) : null}
       <div className="app-main">
         <canvas ref={canvasRef} className="render-canvas" aria-hidden />
       </div>

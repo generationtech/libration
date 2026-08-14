@@ -66,6 +66,20 @@ Configuration is seeded by `resolveStartupWorkingV2(storage, buildFallback)` in 
 
 Normalization is unconditional on both paths, so the working document is always in canonical form before anything else reads it.
 
+### Development-only visual scenarios
+
+In the Vite development server only (`import.meta.env.DEV`), `src/main.tsx` may apply `?scenario=<id>` **before** mounting `<App />`. Detection is centralized in `src/dev/visualScenarios.ts`. The registry builds a normalized `LibrationConfigV2` from `defaultLibrationConfigV2()` plus named overrides, with demo time enabled at a documented UTC instant and live dynamic feeds forced off.
+
+`src/App.tsx` (the shell, not the renderer) then:
+
+1. Passes `null` storage into `resolveStartupWorkingV2` so persisted user configuration cannot contaminate the fixture.
+2. Seeds `demoPlaybackRef` with `createPausedDemoPlaybackState`, so the product instant is the scenario UTC and stays frozen across reloads.
+3. Shows a small HTML banner with the scenario id and UTC (or a visible unknown-id error). Banner CSS is imported from the same DEV-only module. The Canvas backend, layers, and `RenderPlan` do not see the query string.
+
+While a scenario is applied, `persistWorkingV2` is a no-op (`setWorkingV2PersistenceSuppressed`), so fixture edits do not overwrite `libration.workingConfigV2.v1`. Unknown ids do not suppress persistence and do not substitute another scenario.
+
+Production builds never import the registry (the dynamic import sits inside the DEV branch) and ignore `?scenario=`. Procedure: [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md).
+
 The layer registry is then built by `createLayerRegistryFromConfig` (`src/app/bootstrap.ts`), which asks `planSceneStackComposition(config.scene)` for the resolved base-map part and ordered overlay parts, registers the base-map layer, and registers one layer per enabled overlay instance through `createLayerForSceneOverlayInstance`. Layers do not decide their own stacking; composition order, opacity, and `zIndex` come from the scene plan.
 
 Two startup effects then run:
@@ -334,7 +348,7 @@ All mutation goes through `commitWorkingV2Update` in `src/app/workingV2Commit.ts
 
 Normalizing on both sides of the updater means a caller cannot leave the document in a non-canonical state, and normalization is idempotent by construction. `replaceWorkingV2FromSnapshot` takes the same path for preset loads.
 
-Applying a commit does four things: swap the working document, re-derive `AppConfig`, conditionally rebuild the layer registry, and persist to `localStorage`.
+Applying a commit does four things: swap the working document, re-derive `AppConfig`, conditionally rebuild the layer registry, and persist to `localStorage`. Persistence is skipped when a DEV visual scenario is active (see §2).
 
 ### Registry rebuild predicates
 
@@ -496,6 +510,7 @@ Not a defect list. These are places where the code is doing something subtle for
 | Path | Responsibility |
 |------|----------------|
 | `src/main.tsx`, `src/App.tsx` | Entry point and application shell: refs, frame loop, wiring |
+| `src/dev/` | Development-only visual-scenario registry and process-local session (not a product subsystem) |
 | `src/app/` | Bootstrap (registry construction), render loop, render bridge, config commit path, demo playback, preset lifecycle |
 | `src/config/` | Resolvers, defaults, catalogs (base map, presentation), chrome and hour-marker configuration, semantic planning inputs |
 | `src/config/v2/` | `LibrationConfigV2`, `SceneConfig`, normalization, `localStorage` persistence, user presets |
@@ -521,7 +536,7 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 ## 14. Where to read next
 
 - [`ARCHITECTURE.md`](../ARCHITECTURE.md) — the boundaries and invariants this implementation must preserve.
-- [`docs/STATE.md`](STATE.md) — current development state and next action.
+- [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md) — Cursor-native visual verification procedure.
 - [`docs/decisions/`](decisions/) — why the durable choices were made.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.

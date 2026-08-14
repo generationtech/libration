@@ -42,7 +42,7 @@ Observable outcomes. A criterion is met or it is not.
 - Full suite: yes (`npm test`)
 - Type-check: yes (`npx tsc --noEmit`)
 - Build: no / yes — why
-- Visual verification: no / required once `docs/VISUAL_VERIFICATION.md` exists
+- Visual verification: no / required — if required, follow [`docs/VISUAL_VERIFICATION.md`](../VISUAL_VERIFICATION.md)
 
 ## Documentation impact
 
@@ -62,7 +62,7 @@ Fill only when completing.
 
 **Visual verification**
 
-Not applicable / evidence / deferred to M4 process.
+Not applicable / evidence in the format from [`docs/VISUAL_VERIFICATION.md`](../VISUAL_VERIFICATION.md).
 
 **Not verified**
 

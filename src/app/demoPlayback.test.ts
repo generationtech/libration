@@ -21,6 +21,7 @@ import {
   applyDemoPlaybackReset,
   applyDemoPlaybackResume,
   computeEffectiveRenderTimeMs,
+  createPausedDemoPlaybackState,
   isDemoTimeActive,
   parseUtcIsoToUnixMs,
   resolvedDemoStartUnixMs,
@@ -204,6 +205,18 @@ describe("demoPlayback", () => {
   it("applyDemoPlaybackReset returns null when demo time is inactive", () => {
     expect(applyDemoPlaybackReset(100, DEFAULT_DATA_CONFIG)).toBeNull();
     expect(applyDemoPlaybackReset(100, demoData({ enabled: false }))).toBeNull();
+  });
+
+  it("createPausedDemoPlaybackState freezes the product instant at the configured start", () => {
+    const startIso = "2026-03-20T12:00:00.000Z";
+    const start = resolvedDemoStartUnixMs(startIso);
+    const d = demoData({ startIsoUtc: startIso, speedMultiplier: 60 });
+    const paused = createPausedDemoPlaybackState(startIso, 9_000_000, 60);
+    expect(paused.paused).toBe(true);
+    expect(paused.pausedDemoNowMs).toBe(start);
+    const later = computeEffectiveRenderTimeMs(9_000_000 + 60_000, d, paused);
+    expect(later.nowMs).toBe(start);
+    expect(later.simulated).toBe(true);
   });
 
   it("speed change while paused updates session speed without advancing demo clock", () => {
