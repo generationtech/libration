@@ -1,19 +1,19 @@
 # Development state
 
 Updated: 2026-08-14
-Status: BLOCKED
+Status: AWAITING SCOPE
 
 ## Active work item
 
-[LIB-001](work/LIB-001-cursor-native-visual-verification.md) — Cursor-native visual verification (blocked)
+None
 
 ## Last completed
 
-Modernization M0–M3 (reconnaissance, target design, current-truth documentation, development ratchet).
+[LIB-001](work/LIB-001-cursor-native-visual-verification.md) — Cursor-native visual verification (modernization M4)
 
 ## Blockers
 
-1. Cursor built-in browser MCP (`cursor-ide-browser`) is not available in this agent session. LIB-001 implementation is in place; M4 still requires actual Cursor-browser inspection of the four canonical scenarios. See the work item **Blocker** section.
+None
 
 ## Known failing verification
 
@@ -21,8 +21,8 @@ Modernization M0–M3 (reconnaissance, target design, current-truth documentatio
 
 ## Awaiting human decision
 
-Enable Cursor Browser Automation (Browser Tab), or authorize resuming LIB-001 in a session where that MCP is available. Do not authorize M5 until LIB-001 is complete.
+Modernization M5 (repository/documentation reconciliation, including the known test-glob failure) requires explicit human authorization. Do not create or self-approve an M5 work item.
 
 ## Next action
 
-Resume LIB-001 visual inspection only: open the four `?scenario=` URLs plus ordinary `http://localhost:1420/` in Cursor’s built-in browser. Do not start M5. Do not expand scope.
+Stop. M5 may be authorized separately; it is not active.

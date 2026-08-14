@@ -3,12 +3,12 @@
 | Field | Value |
 |-------|-------|
 | ID | LIB-001 |
-| Status | blocked |
+| Status | complete |
 | Created | 2026-08-14 |
 | Approved | 2026-08-14 (modernization M4, authorized at program level) |
-| Completed | |
+| Completed | 2026-08-14 |
 
-Human-authorized modernization stage M4. Implementation of the scenario mechanism and documentation is in place. The item is **blocked** on Cursor Browser inspection, which this agent session could not perform.
+Human-authorized modernization stage M4. Complete.
 
 ## Objective
 
@@ -68,28 +68,11 @@ Establish a Cursor-native way to verify visual changes against the running appli
 - `docs/IMPLEMENTATION.md` §2 (DEV-only startup branch)
 - `docs/STATE.md` and `docs/DEVELOPMENT_LOG.md` on completion
 
-## Blocker
-
-Cursor’s built-in Agent Browser (`cursor-ide-browser` MCP: `browser_navigate`, `browser_snapshot`, `browser_take_screenshot`) is **not available in this agent session**. `GetMcpTools` returned no MCP servers; calling `browser_navigate` failed with “MCP server does not exist: cursor-ide-browser.”
-
-M4 requires that those tools actually inspect the four canonical scenarios. HTML fetch of `http://localhost:1420/?scenario=baseline` only proves the Vite shell (`#root`); the canvas scene and scenario banner are client-rendered and were not visually inspected.
-
-**Resume:** in a local Agent chat with **Settings → Tools & MCP → Browser Automation → Browser Tab** enabled, inspect:
-
-1. `http://localhost:1420/?scenario=baseline`
-2. `http://localhost:1420/?scenario=terminator`
-3. `http://localhost:1420/?scenario=night`
-4. `http://localhost:1420/?scenario=readability`
-5. Reload at least one scenario
-6. `http://localhost:1420/` without `?scenario=`
-
-Use 1920×1080 CSS pixels if the browser can be sized; otherwise report the achieved viewport. Then complete this item. Do not start M5 until this item is `complete`.
-
 ## Completion record
 
 **Implementation summary**
 
-DEV-only `?scenario=<id>` is applied once from `src/main.tsx` before mount. `src/dev/visualScenarios.ts` resolves a named fixture to a normalized `LibrationConfigV2` plus paused demo time. `src/App.tsx` seeds ordinary `resolveStartupWorkingV2(null, …)` and `createPausedDemoPlaybackState`. `persistWorkingV2` is a no-op while a scenario is applied. Unknown ids fail visibly and do not substitute another scenario. Canonical scenarios: `baseline`, `terminator`, `night`, `readability`. Procedure: `docs/VISUAL_VERIFICATION.md`.
+DEV-only `?scenario=<id>` is applied once from `src/main.tsx` before mount. `src/dev/visualScenarios.ts` resolves a named fixture to a normalized `LibrationConfigV2` plus paused demo time. `src/App.tsx` seeds ordinary `resolveStartupWorkingV2(null, …)` and `createPausedDemoPlaybackState`. `persistWorkingV2` is a no-op while a scenario is applied. Unknown ids fail visibly and do not substitute another scenario. Canonical scenarios: `baseline`, `terminator`, `night`, `readability`. During visual inspection the `night` UTC was corrected from `18:00` to `06:00` so the Americas are actually in night. Procedure: `docs/VISUAL_VERIFICATION.md`.
 
 **Commands run**
 
@@ -97,7 +80,6 @@ DEV-only `?scenario=<id>` is applied once from `src/main.tsx` before mount. `src
 - `npx tsc --noEmit` — clean
 - `npm test` — 1 failed / 1494 passed / 163 files (same known M5 failure)
 - `npm run build` — succeeded; production JS/CSS contain no scenario registry, banner copy, or `visual-scenario-banner` rules
-- `curl http://localhost:1420/?scenario=baseline` — HTTP 200 Vite shell only (not visual inspection)
 
 **Actual results**
 
@@ -105,18 +87,66 @@ Known pre-existing failure unchanged: `src/App.configPhase2.test.ts` / `src/rend
 
 **Visual verification**
 
-Not performed. Cursor built-in browser MCP was not available in this session. Dev server was running at `http://localhost:1420/` (HMR picked up the new modules).
+Browser: Cursor in-editor Browser (`cursor-ide-browser`), tab `90d956`.
+
+Viewport: CDP `Emulation.setDeviceMetricsOverride` set `window.innerWidth`×`innerHeight` to **1920×1080**. The webview pane’s canvas client size remained ~673×770 CSS pixels; screenshots show that pane (often a North-America crop of the equirectangular scene). Exact physical 1920×1080 paint was **not** achieved.
+
+Visual verification:
+- Scenario: baseline
+- Viewport: JS 1920×1080; canvas client ~673×770
+- Browser: Cursor built-in browser
+- Inspected: banner `scenario: baseline · 2030-06-15T12:00:00.000Z · persistence isolated`; satellite substrate; top hour/NATO chrome; bottom HUD June 15 2030 / 8:00:00 AM; grid; city pins (LA 5:00:00 AM, Knoxville/NY 8:00:00 AM); terminator; Config launcher
+- Result: PASS
+- Observations: no unexpected clipping of chrome vs scene; city labels legible; frozen UTC represented in pin times and HUD
+
+Visual verification:
+- Scenario: terminator
+- Viewport: same as above
+- Browser: Cursor built-in browser
+- Inspected: banner `scenario: terminator · 2026-03-20T12:00:00.000Z · persistence isolated`; solar day/night split through North America; twilight gradient; grid; city times still 5:00/8:00 AM at 12:00 UTC; chrome/scene layout
+- Result: PASS
+- Observations: terminator visible as a soft vertical night/day boundary; no seam break in the inspected crop; chrome reserved space intact
+
+Visual verification:
+- Scenario: night (after UTC correction)
+- Viewport: same as above
+- Browser: Cursor built-in browser
+- Inspected: banner `scenario: night · 2026-12-21T06:00:00.000Z · persistence isolated`; dark-side Americas; yellow urban emissive lights; city times LA 10:00:00 PM / Knoxville & NY 1:00:00 AM; grid; chrome
+- Result: PASS after correction
+- Observations: first inspection at 18:00 UTC showed Americas in afternoon daylight (LA 10:00 AM / NY 1:00 PM), which did not meet the scenario’s night-side purpose. UTC changed to 06:00. Reinspection showed dark land, city lights, and night civil times.
+
+Visual verification:
+- Scenario: readability
+- Viewport: same as above
+- Browser: Cursor built-in browser
+- Inspected: banner `scenario: readability · 2026-06-21T12:00:00.000Z · persistence isolated`; Köppen chromatic substrate (distinct color blocks, not satellite); grid; city pins with contrast treatment over yellow/green/blue fills; terminator on the west coast; chrome
+- Result: PASS
+- Observations: labels remained readable over the dense climate coloring; no clipping of chrome; analemma/subsolar not confirmed in the North-America-centered crop
+
+Reload/repeatability (`baseline`): navigating again to `?scenario=baseline` returned the same banner, UTC, satellite substrate, and frozen 5:00/8:00 AM pin times. Persisted ordinary political map did not replace it.
+
+Invalid ID `?scenario=does-not-exist`: yellow banner `unknown scenario “does-not-exist” — ordinary startup; the requested scenario was not applied`; live wall-clock pin times (~4:34 PM LA); no `data-visual-scenario` id; did not masquerade as another named scenario.
+
+Persistence isolation (live):
+1. Ordinary `http://localhost:1420/` had no banner; map style was World (legacy, shaded).
+2. Changed Map style to World political; reload ordinary still showed tan political land and city lights (live ~4:36 PM).
+3. `?scenario=baseline` showed satellite legacy map and frozen 2030-06-15 12:00 UTC, not political.
+4. In baseline, changed Map style to World topography.
+5. Returned to ordinary `http://localhost:1420/`: still World political (tan land, city lights, live ~4:37 PM); topography did not persist. Config combobox confirmed `World political`.
+6. Restored Map style to World (legacy, shaded) so the user’s prior ordinary setting was not left altered.
+
+Normal-mode regression: after all scenario work, `http://localhost:1420/` had no scenario banner, live pin times (~4:38:59 PM), restored satellite/legacy substrate, intact top chrome and grid, Config launcher present.
 
 **Not verified**
 
-- Actual rendered output of the four canonical scenarios
-- Viewport 1920×1080 CSS pixels
-- Reload repeatability in a browser
-- Normal-mode visual regression after scenario use
-- Interactive persistence isolation in a live browser (unit tests cover the persistence boundary)
+- Exact physical 1920×1080 CSS-pixel paint of the webview (JS metrics were overridden; canvas client stayed ~673×770)
+- Full-globe framing in screenshots (pane showed a North-America crop of the equirectangular map)
+- Analemma and subsolar/sublunar markers in the `readability` crop
+- Astronomical precision of terminator geometry beyond qualitative inspection
+- Production runtime with `?scenario=` (bundle inspection only)
 
 **Discovered, not done**
 
-- Cursor Browser Automation is not enabled (or not exposed) in this agent session; required for M4 completion
-- Production CSS previously included unused banner rules when they lived in `App.css`; moved to `src/dev/visualScenarioBanner.css` imported only from the DEV registry
 - Pre-existing M5 items unchanged (test glob, Data-tab copy, package name, `index.html` title, scratch files)
+- Cursor Browser pane does not physically match `Emulation.setDeviceMetricsOverride` canvas layout size
+- City-pin labels for nearby cities (Knoxville/New York) can sit close together in the inspected crop; not an M4 defect

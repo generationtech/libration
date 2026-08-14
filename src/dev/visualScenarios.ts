@@ -37,7 +37,7 @@ export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
 export const VISUAL_SCENARIO_UTC = {
   baseline: "2030-06-15T12:00:00.000Z",
   terminator: "2026-03-20T12:00:00.000Z",
-  night: "2026-12-21T18:00:00.000Z",
+  night: "2026-12-21T06:00:00.000Z",
   readability: "2026-06-21T12:00:00.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
@@ -123,7 +123,7 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     id: "night",
     startIsoUtc: VISUAL_SCENARIO_UTC.night,
     purpose:
-      "Winter-solstice 18:00 UTC with the Americas in night so emissive lights and dark-side composition are visible.",
+      "Winter-solstice 06:00 UTC (subsolar near 90°E) with the Americas in night so emissive lights and dark-side composition are visible.",
     buildConfig: () =>
       withDemoAt(VISUAL_SCENARIO_UTC.night, (draft) => {
         draft.layers.solarShading = true;
