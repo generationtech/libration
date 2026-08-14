@@ -538,7 +538,8 @@ export const DEFAULT_GEOGRAPHY_CONFIG: GeographyConfig = {
 };
 
 /**
- * Product data domain (v2 `data`): local, config-authoritative only — no live network in current phases.
+ * Product data domain (v2 `data`): local, config-authoritative time and data mode.
+ * Live network feeds are scene-layer sources (Layers), not this domain.
  */
 export type DataMode = "static" | "demo";
 
@@ -569,9 +570,9 @@ export const DEFAULT_DEMO_TIME_CONFIG: DemoTimeConfig = {
 };
 
 export interface DataConfig {
-  /** Offline / built-in sources vs illustrative demo sequences (still non-networked). */
+  /** Offline / built-in sources vs illustrative demo sequences. */
   mode: DataMode;
-  /** Reserved for future on-map or chrome captions sourced from the data domain (no live feeds yet). */
+  /** Reserved for future on-map or chrome captions sourced from the data domain. */
   showDataAnnotations: boolean;
   /** Demo playback parameters; ignored at runtime unless {@link mode} is `"demo"` and `enabled` is true. */
   demoTime: DemoTimeConfig;
@@ -584,8 +585,8 @@ export const DEFAULT_DATA_CONFIG: DataConfig = {
 };
 
 /**
- * Authoritative runtime configuration (Phase 1). Portable LibrationConfig v2 maps to this shape in
- * `config/v2/librationConfig.ts`; production code does not load v2 yet.
+ * Derived runtime configuration. Portable LibrationConfig v2 is the persisted document;
+ * this shape is the runtime view produced by `v2ToAppConfig`.
  */
 export interface AppConfig {
   /**

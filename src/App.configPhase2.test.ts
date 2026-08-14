@@ -25,11 +25,14 @@ import {
 import { resolveStartupWorkingV2 } from "./config/v2/workingV2Persistence";
 import type { Viewport } from "./renderer/types";
 
-const rendererSources = import.meta.glob<string>("./renderer/**/*.{ts,tsx}", {
-  eager: true,
-  query: "?raw",
-  import: "default",
-});
+const rendererSources = import.meta.glob<string>(
+  ["./renderer/**/*.{ts,tsx}", "!./renderer/**/*.test.{ts,tsx}"],
+  {
+    eager: true,
+    query: "?raw",
+    import: "default",
+  },
+);
 
 function sortLayerIds(registry: ReturnType<typeof createLayerRegistryFromConfig>): string[] {
   return [...registry.getLayers().map((l) => l.id)].sort();
@@ -107,5 +110,31 @@ describe("LibrationConfig v2 Phase 2 (shell ownership)", () => {
       assertNoV2ImportInSource(source, path);
     }
     assertNoV2ImportInSource(bootstrapSource, "./app/bootstrap.ts");
+  });
+
+  it("production renderer glob excludes test files", () => {
+    const testPaths = Object.keys(rendererSources).filter((p) =>
+      /\.test\.(ts|tsx)$/.test(p),
+    );
+    expect(testPaths).toEqual([]);
+    expect(Object.keys(rendererSources).length).toBeGreaterThan(0);
+  });
+
+  it("rejects a production-shaped v2 import in renderer source", () => {
+    expect(() =>
+      assertNoV2ImportInSource(
+        `import { buildDefaultSceneConfigFromLayerFlags } from "../config/v2/sceneConfig";\n`,
+        "synthetic-production.ts",
+      ),
+    ).toThrow(/Unexpected v2 import in synthetic-production\.ts:1/);
+  });
+
+  it("does not treat a commented v2 import as a production violation", () => {
+    expect(() =>
+      assertNoV2ImportInSource(
+        `// import { x } from "../config/v2/sceneConfig";\nconst ok = 1;\n`,
+        "synthetic-comment.ts",
+      ),
+    ).not.toThrow();
   });
 });

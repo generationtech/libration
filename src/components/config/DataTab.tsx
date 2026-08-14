@@ -53,7 +53,8 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
           Data
         </h2>
         <p className="config-section__hint">
-          Local configuration only. No live network feeds, subscriptions, or background refresh.
+          Local product data and demo time. Live cloud, earthquake, and ISS feeds are optional Layers
+          overlays — off by default, with bundled fixtures when a live fetch is unavailable.
         </p>
         <ConfigControlRow label="Mode">
           <select

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-001](work/LIB-001-cursor-native-visual-verification.md) — Cursor-native visual verification (modernization M4)
+[LIB-002](work/LIB-002-modernization-reconciliation.md) — Modernization reconciliation and green baseline (modernization M5)
 
 ## Blockers
 
@@ -17,12 +17,12 @@ None
 
 ## Known failing verification
 
-1. `src/App.configPhase2.test.ts` — false positive: glob includes `*.test.ts`; tripped by `src/renderer/dlu1VisibilityRenderReadiness.test.ts`. Production boundary intact. Remediation: modernization **M5** (do not fix earlier). Suite baseline: 1 failed / 1494 passed / 163 files.
+None
 
 ## Awaiting human decision
 
-Modernization M5 (repository/documentation reconciliation, including the known test-glob failure) requires explicit human authorization. Do not create or self-approve an M5 work item.
+Modernization M6 (terminal modernization audit) requires explicit human authorization. Do not create or self-approve an M6 work item.
 
 ## Next action
 
-Stop. M5 may be authorized separately; it is not active.
+Stop. M6 may be authorized separately; it is not active.

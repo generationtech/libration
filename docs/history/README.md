@@ -1,6 +1,6 @@
 # Historical documents
 
-> **HISTORICAL — archived 2026-08-14.** Everything in this directory describes past execution, planning, or reasoning. It is **not** a source of current development state. Documents are preserved verbatim apart from a banner at the top, so they contain identifiers, status claims, and scheduling language that were accurate only when written. Current development state will be owned by `docs/STATE.md` after modernization M3.
+> **HISTORICAL — archived 2026-08-14.** Everything in this directory describes past execution, planning, or reasoning. It is **not** a source of current development state. Documents are preserved verbatim apart from a banner at the top, so they contain identifiers, status claims, and scheduling language that were accurate only when written. Current development state is owned by [`docs/STATE.md`](../STATE.md).
 
 These files exist because the reasoning in them is valuable even though their status claims are not. When you need to know *why* something was built the way it was, and the answer is not in the code or in [`docs/decisions/`](../decisions/), it is probably here.
 

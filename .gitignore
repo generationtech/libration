@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 .tmp
+.tmp-lc-png
+.staging/
 dist
 dist-ssr
 *.local

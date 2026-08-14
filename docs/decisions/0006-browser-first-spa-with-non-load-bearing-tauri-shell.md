@@ -5,7 +5,7 @@
 
 ## Context
 
-The repository was scaffolded from a Tauri template. It still carries the evidence: `src-tauri/` with a Cargo manifest, `tauri.conf.json`, capabilities and icons; `@tauri-apps/api` and `@tauri-apps/plugin-opener` as dependencies; a `tauri` npm script; a dev server pinned to port 1420 with `strictPort` because a desktop shell expects a known port; and scaffold names (`tauri-app`) still present in `package.json` and the Tauri configuration.
+The repository was scaffolded from a Tauri template. It still carries the evidence: `src-tauri/` with a Cargo manifest, `tauri.conf.json`, capabilities and icons; `@tauri-apps/api` and `@tauri-apps/plugin-opener` as dependencies; a `tauri` npm script; a dev server pinned to port 1420 with `strictPort` because a desktop shell expects a known port. The npm package name and HTML/Tauri product titles were later aligned to Libration; the Rust crate name and bundle identifier remain scaffold values (`tauri-app` / `com.user.tauri-app`).
 
 Documentation described Libration as a desktop application, which created a reasonable but incorrect impression that the desktop shell was structurally required.
 

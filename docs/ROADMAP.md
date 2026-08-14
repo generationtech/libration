@@ -20,11 +20,9 @@ An idea on this page is direction, not permission to start — except items list
 
 ## Approved, not started
 
-| Item | Theme |
-|------|--------|
-| [`LIB-001`](work/LIB-001-cursor-native-visual-verification.md) | Cursor-native visual verification (modernization M4) |
+None.
 
-Remaining modernization after LIB-001 (M5 repository reconciliation, M6 terminal audit) is program-approved but is not a work item until a human authorizes it. Do not start M5 or M6 from this page.
+Remaining modernization (M6 terminal audit) is program-approved but is not a work item until a human authorizes it. Do not start M6 from this page.
 
 ---
 
@@ -34,7 +32,7 @@ These themes are the product’s intended future shape. They become work only wh
 
 ### Visual verification and contributor workflow
 
-Install a Cursor-browser verification path so visual changes can be completed against the running application, then keep that path as the default for visually impacting work. LIB-001 is the approved first slice.
+Keep the Cursor-native verification path as the default for visually impacting work. Procedure: [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md).
 
 ### Map inventory (Phase 8 remainder)
 

@@ -34,7 +34,7 @@ The repository contains a configured Tauri 2 shell in `src-tauri/` (Cargo manife
 
 The accurate statement is therefore: the shell exists and is configured for desktop packaging, but it is **not load-bearing** in the current application architecture. The application behaves identically whether loaded through Vite in a browser or through the Tauri webview. Whether the shell should become load-bearing — for filesystem-backed caching, native menus, or packaged distribution — is an open product question, not a settled one. See [ADR 0006](decisions/0006-browser-first-spa-with-non-load-bearing-tauri-shell.md).
 
-Note that `tauri.conf.json` still carries scaffold values (`productName` and window `title` of `tauri-app`), and `package.json` is still named `tauri-app`. These are cosmetic scaffold leftovers, not architectural signals.
+The npm package name is `libration`. `index.html` and `tauri.conf.json` (`productName` and window `title`) identify the application as Libration. The Tauri Rust crate name (`tauri-app`) and bundle identifier (`com.user.tauri-app`) remain scaffold leftovers; they are not architectural signals.
 
 ### Offline behaviour
 
@@ -470,11 +470,11 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation |
+| Layers | Scene stack toggles, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
 | Geography | Base-map family selection and presentation, projection-adjacent settings |
-| Data | Time mode, demo-time controls, dynamic data sources |
+| Data | Time mode and demo-time controls |
 | General | Application-level settings, presets |
 
 Every edit routes through `updateConfig` → `commitWorkingV2Update`, so the panel cannot bypass normalization or persistence. Changes are saved immediately; there is no explicit save action.
