@@ -96,7 +96,7 @@ A good slice has a clear objective, changes one architectural area, has exit cri
 
 A bad slice mixes unrelated UI, runtime, configuration, and documentation changes; moves product semantics into the backend; adds duplicate configuration surfaces; silently changes persisted semantics; or implements future capability by hardcoding special cases.
 
-Execution mechanics — how a work item is defined, approved, verified, and closed — will be owned by `docs/WORKFLOW.md` once modernization M3 creates it.
+Execution mechanics — how a work item is defined, approved, verified, and closed — are owned by [`docs/WORKFLOW.md`](WORKFLOW.md).
 
 ## Decision filter for new features
 

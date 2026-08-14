@@ -7,7 +7,7 @@ Scope of ownership:
 - This document owns current implementation truth: entry points, control flow, module responsibilities, and the concrete behaviour of each subsystem.
 - [`ARCHITECTURE.md`](../ARCHITECTURE.md) owns the durable boundaries and invariants that this implementation is required to respect. Where an invariant is relevant here, it is linked rather than restated.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) owns product intent.
-- Current development state and next work will be owned by `docs/STATE.md` (reserved; created in modernization M3). This document deliberately contains no status, phase, or scheduling information.
+- [`docs/STATE.md`](STATE.md) owns current development state. This document deliberately contains no status, phase, or scheduling information.
 
 Everything below was established by reading the source at the time of writing. Where the code contains a transitional or surprising arrangement, that is described as it is, not as it ought to be.
 
@@ -521,6 +521,7 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 ## 14. Where to read next
 
 - [`ARCHITECTURE.md`](../ARCHITECTURE.md) — the boundaries and invariants this implementation must preserve.
+- [`docs/STATE.md`](STATE.md) — current development state and next action.
 - [`docs/decisions/`](decisions/) — why the durable choices were made.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.

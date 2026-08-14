@@ -1,388 +1,61 @@
-> **TRANSITIONAL — modernization in progress (2026-08-14).** This is the pre-modernization roadmap, retained temporarily and unchanged apart from this banner. It mixes completed phase history with future direction, and its status claims are **not** an authoritative statement of current development state.
->
-> It will be **rewritten** in modernization M3 to own strategic direction and approved future work only. The completed phase history it contains is preserved verbatim in [`docs/history/ROADMAP-2026-08.md`](history/ROADMAP-2026-08.md); this copy remains in place so the future-direction material stays available to that rewrite.
->
-> Until then: for what exists today read [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); for durable architecture read [`ARCHITECTURE.md`](../ARCHITECTURE.md); for product intent read [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md). Do not treat any "Active", "shipped", or "next" claim below as current.
->
-> Plain-text mentions of `PLAN.md`, `docs/AI_COENGINEERING.md`, and `docs/DEVELOPMENT_STRATEGY.md` below refer to documents now archived under [`docs/history/`](history/). Those mentions are left as written because this document is transitional and will be replaced. Links that M2's own moves would have broken have been repointed at the archive. A handful of relative link paths in this document were already wrong before modernization and are left alone.
->
-> One substantive correction was made: a climate base-map id that never existed in the catalog was corrected to `equirect-world-climate-koppen-beck-v1`. The uncorrected text is preserved verbatim in the archived copy.
+# Roadmap
+
+This document owns **strategic future direction** and **approved but not started work**.
+
+It does not own active work, completed work, historical execution, or speculative ideas.
+
+| Kind of truth | Owner |
+|---------------|--------|
+| Current development state | [`docs/STATE.md`](STATE.md) |
+| How work is executed | [`docs/WORKFLOW.md`](WORKFLOW.md) |
+| Speculative / unapproved ideas | [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) |
+| What exists today | [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md) |
+| Completed execution history | [`docs/history/`](history/), [`docs/DEVELOPMENT_LOG.md`](DEVELOPMENT_LOG.md) |
+
+Phase names below (8, 9, 11–13) are continuity labels from the pre-modernization plan. They are **not** a status mechanism. Nothing here is scheduled by phase number.
+
+An idea on this page is direction, not permission to start — except items listed as **approved work items**.
 
 ---
 
-# Roadmap
+## Approved, not started
 
-## Purpose
+| Item | Theme |
+|------|--------|
+| [`LIB-001`](work/LIB-001-cursor-native-visual-verification.md) | Cursor-native visual verification (modernization M4) |
 
-This roadmap records completed phases and planned future phases.
+Remaining modernization after LIB-001 (M5 repository reconciliation, M6 terminal audit) is program-approved but is not a work item until a human authorizes it. Do not start M5 or M6 from this page.
 
-It is intentionally phase-oriented rather than issue-oriented. Detailed current tasks live in `PLAN.md`.
+---
 
-## Phase 0: Initial public foundation
+## Strategic direction
 
-Status: complete.
+These themes are the product’s intended future shape. They become work only when a human approves a `docs/work/LIB-###` item. Details and extras live in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md).
 
-Delivered:
+### Visual verification and contributor workflow
 
-- Tauri, React, TypeScript desktop app foundation.
-- local-first app shell.
-- initial world-time visualization.
-- AGPL licensing.
-- public-release documentation.
-- baseline test infrastructure.
+Install a Cursor-browser verification path so visual changes can be completed against the running application, then keep that path as the default for visually impacting work. LIB-001 is the approved first slice.
 
-## Phase 1: RenderPlan architecture
+### Map inventory (Phase 8 remainder)
 
-Status: complete enough for current Canvas path.
+Further curated static substrates when a raster and rights exist. The preferred next family, when sourced, is a temperature or precipitation climatology. Selector polish and additional climate/night-light/seasonal families remain unapproved until scoped. Live weather is not base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
-Delivered:
+### Composition extensions (Phase 9)
 
-- renderer-neutral render intent model.
-- executor/backend separation.
-- Canvas backend implementation.
-- text, rect, line, path, gradient, raster patch, and image primitives.
-- bridge modules for Canvas-specific realization.
-- backend resource lifecycle reporting for raster image failures.
+Deepen the existing upstream illumination and overlay-readability model: per-layer readability for stack rows that do not yet have it, further substrate heuristics, atmospheric scattering beyond current twilight constants, additional weather/cloud products that reuse the lifecycle contract. No new rendering boundary. Each slice needs explicit product scope.
 
-Remaining future work:
+### Scene view and projection (Phase 11)
 
-- reduce transitional backend-native path payloads.
-- expand primitive coverage only when needed.
-- prepare for GPU backend after product semantics are fully upstream.
+Zoom, pan, viewport clipping, tiles, alternate projections, globe or perspective view, pointer inspection. Unlocks denser regional dynamic products. Not approved as a work item.
 
-## Phase 2: Structured chrome and top-band model
+### Presets (Phase 12)
 
-Status: complete for supported production path.
+Named partial presets, application order, last-write-wins, export/import, including dynamic-source enablement. A user-preset persistence seam already exists; a full composable preset system does not. Not approved as a work item.
 
-Delivered:
+### Renderer evolution (Phase 13)
 
-- top chrome as screen-space layout.
-- reserved scene viewport below chrome.
-- structured `chrome.layout.hourMarkers`.
-- semantic hour-marker planner.
-- hour-marker layout.
-- text and procedural realization adapters.
-- text, analog clock, radial line, and radial wedge realization families.
-- top-band display formatting that does not move canonical time.
-- hour-marker editor extraction and axis organization.
-- removal of stale flat hour-marker persistence.
+GPU feasibility, backend capability matrix, performance instrumentation, renderer-independent visual tests. The `RenderPlan` boundary is the prerequisite. Not approved as a work item.
 
-Remaining future work:
+### Further dynamic-data consumers
 
-- polish appearance controls.
-- add user-facing clarity for reference-frame and display-format modes.
-- revisit accessibility and high-contrast controls.
-
-## Phase 3: Font and glyph subsystem
-
-Status: implemented and usable.
-
-Delivered:
-
-- font asset preprocessing.
-- generated font asset database and manifest.
-- runtime font registry.
-- Canvas font loading and registration.
-- typography role resolution.
-- procedural glyph emission through RenderPlan-compatible primitives.
-
-Remaining future work:
-
-- font management UI polish.
-- additional bundled font curation.
-- optional user font import only if it can preserve durable identity and licensing clarity.
-
-## Phase 4: SceneConfig foundation
-
-Status: complete.
-
-Delivered:
-
-- authoritative `SceneConfig`.
-- projection id.
-- view mode.
-- base map config.
-- ordered layer stack.
-- deterministic ordering.
-- scene-authoritative runtime rebuild behavior.
-- compatibility from older scene-relevant booleans where needed.
-
-Remaining future work:
-
-- keep legacy compatibility from creeping back into active authoring paths.
-- continue strengthening tests around config normalization and migration.
-
-## Phase 5: Curated base-map catalog
-
-Status: complete enough for feature-forward map work.
-
-Delivered:
-
-- bundled JSON base-map catalog.
-- family ids, labels, categories, paths, previews, capabilities, defaults, and attribution.
-- structured selector attribution on all bundled families (`attribution`, optional `licenseNote`, up to two `sourceLinks`; **Source & license** block in `BaseMapStyleControl`—see Phase 8).
-- month-aware selector polish: Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line when config is open (see Phase 8 / Slice 4).
-- selector/editor integration.
-- per-family base-map presentation controls.
-- static and month-aware variant modes.
-- product-time month resolution.
-- missing month fallback.
-- runtime image failure fallback.
-- `maps:prep` onboarding workflow.
-
-Current families include:
-
-- legacy reference map (**`equirect-world-legacy-v1`**, bundled preview `world-equirectangular-thumb.jpg`).
-- political map (**`equirect-world-political-v1`**, Natural Earth–lineage shipped raster; not transitional in the bundled catalog).
-- geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog; USGS public-domain lineage).
-- global bathymetry / relief substrate (**`equirect-world-bathymetry-etopo-v1`**, shipped raster in the bundled catalog; NOAA NCEI ETOPO 2022 lineage).
-- global land cover / vegetation substrate (**`equirect-world-landcover-modis-v1`**, shipped raster in the bundled catalog; NASA MODIS IGBP lineage).
-- present-day Köppen–Geiger climate zones substrate (**`equirect-world-climate-koppen-beck-v1`**, shipped raster in the bundled catalog; Beck et al. 2018 / GloH2O lineage, CC BY 4.0).
-- global population density substrate (**`equirect-world-population-gpw-v1`**, shipped raster in the bundled catalog; NASA SEDAC GPWv4 Rev. 11 lineage, CC BY 4.0).
-- validated static Natural Earth–lineage global topography (**`equirect-world-topography-ne-v1`**, `world-equirectangular-topography.jpg`).
-- Blue Marble / natural-color families (month-aware **BM**, **T**, **TB**; legacy ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** alias to **T** for compatibility).
-
-Remaining future work:
-
-- normalize family ids and labels while catalog is young.
-- ensure all placeholder flags match real source status.
-- document each source workflow cleanly.
-- full-screen **source attribution panel** (Layers detail remains the **Source & license** block only—see `docs/FUTURE_FEATURES.md`).
-
-## Phase 6: Static and derived overlays
-
-Status: partially complete for the full static/derived overlay roadmap; **upstream planetary illumination composition (twilight, moonlight, emissive night lights, single `rasterPatch`) is delivered** and should be treated as a coherent subsystem (see `ARCHITECTURE.md`, `PLAN.md`). **Overlay readability** (v1 + v1.1 + **derived substrate lift** + **substrate heuristic increments** — sub-1 brightness dimming + optional catalog **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** — + **SceneConfig presentation scalars** + **per-layer pilots** for **default stack rows** — `perLayer.grid`, `perLayer.solarAnalemma`, `perLayer.subsolarMarker`, `perLayer.sublunarMarker`, `perLayer.cityPins`, `perLayer.staticEquirectOverlay`) is a **completed milestone** within this phase; broader overlay/editor and astronomical depth remain future work.
-
-Delivered:
-
-- static raster overlay path.
-- source-driven overlay construction.
-- generalized semantic participation for supported rows.
-- derived layer source model.
-- solar analemma ground-track overlay.
-- subsolar marker.
-- sublunar marker.
-- solar shading / dark-side visualization.
-- continuous attenuation-driven twilight transitions driven by surface solar altitude (civil, nautical, astronomical retained as semantic anchors), encoded in the same planetary illumination raster as day/night rather than a separate user-facing twilight layer.
-- non-emissive atmospheric tint and attenuation composition replacing earlier glow-style twilight behavior.
-- incremental upstream twilight transition tuning (cumulative constants-only passes in `src/renderer/illuminationShading.ts`, including **second** and **third** narrow passes doc-finalized in `PLAN.md` / Phase 7 here: wider anchor color coupling, cooler low-luminance anchor progression, bounded atmospheric tint cap, gentler day-side tint envelope, third-pass sigma/day-edge refinement)—still one planetary illumination `rasterPatch`, still non-emissive modulation.
-- perceptually legible moonlight composition integrated into the same planetary illumination raster.
-- bounded cool secondary lunar illumination field with phase, night-eligibility, and local incidence participation.
-- scene-level `scene.illumination.moonlight.mode` (`off` / `natural` / `enhanced` / `illustrative`) adjusts composition policy only while preserving renderer/backend boundaries.
-- scene-level `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, `presentation` intensity and driver exponent) for upstream emissive radiance (not a base-map selection); `assetId` canonicalizes through the bundled emissive composition catalog; greenfield default mode is **`illustrative`** (with illustrative moonlight; persisted explicit modes are preserved); Layers UI exposes **Off / Natural / Enhanced / Illustrative** plus night-light intensity and faint-light lift; validated NASA Black Marble 2016 1° JPEG is the shipped default asset (`docs/maps/MAP_ASSET_SOURCES.md`).
-- physically-derived polar illumination behavior from seasonal solar geometry.
-- astronomical scene participation integrated into the layered scene system.
-- **Overlay readability (v1 + v1.1 + substrate + substrate heuristic increments + SceneConfig presentation + default-stack per-layer pilots):** solar night-veil–aligned hints on lat/lon grid, solar analemma polyline, subsolar/sublunar markers, city pins (per-pin combined veil), and static full-viewport equirect raster overlays (global combined veil → merged `imageBlit` cssFilter upstream, or pilots per defaulted row below); **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it (`getOverlayReadabilityFrameOrCompute` in layers); v1.1 folds **emissive night-light policy** (mode + presentation) into the combined veil without emissive raster sampling; **substrate-aware** `substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities` modulates overlay lift upstream, including optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** intrinsic hints and **sub-1 effective brightness** dimming in penalty derivation; **persisted** `scene.overlayReadability.presentation` scales combined veil and substrate lift after the derived frame; optional **`perLayer`** keys **`grid`**, **`solarAnalemma`**, **`subsolarMarker`**, **`sublunarMarker`**, **`cityPins`**, **`staticEquirectOverlay`** apply the same scalars again for those layers only.
-- **Catalog curation (substrate lift):** bundled `base-map-catalog.json` marks **`bathymetryShaded`** on **`equirect-world-blue-marble-tb-v1`** (with **`reliefShaded`**) as the curator signal for shaded bathymetry competing with overlays, **`fineScaleTexture`** and **`sunGlintDense`** on Blue Marble **BM**/**T** for fine-scale natural-color texture and dense open-ocean sun glint, **`chromaticDense`** and **`fineScaleTexture`** on **`equirect-world-landcover-modis-v1`** and **`equirect-world-climate-koppen-beck-v1`** for thematic class colors and boundary grain, **`chromaticDense`** and **`fineScaleTexture`** on **`equirect-world-population-gpw-v1`** for log-scaled density ramp and urban grain, **`labelDense`** on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** (alongside **`chromaticDense`** / boundary+chromatic hints) for dense cartographic typography, **`etchedReliefDense`** on **`equirect-world-legacy-v1`** for packaged etched shaded relief, and **`reliefShaded`** on **`equirect-world-topography-ne-v1`** for the static Natural Earth–lineage global topography raster—no runtime raster sampling.
-
-Remaining future work:
-
-- **Readability extensions (future):** `perLayer` pilots for scene stack rows **beyond** the **six** defaulted ids (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) when additional rows ship with the same readability contract; **further** substrate heuristics beyond the shipped presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** + sub-1 brightness dimming rules (still upstream, no backend policy).
-- **further** atmospheric scattering and transition refinement beyond cumulative incremental twilight tuning in the existing continuous twilight field.
-- weather/cloud **upstream participation** in planetary composition (ties to Phase 10 lifecycle when opened; **planning shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)).
-- active solar-position synchronization along astronomical reference trajectories.
-- richer derived astronomical overlays.
-- overlay editor refinement.
-- opacity and ordering UX.
-- source and presentation separation in all new layer types.
-
-## Phase 7: Documentation and AI co-engineering consolidation
-
-Status: active.
-
-Goals:
-
-- consolidate docs.
-- preserve future feature inventory.
-- create project-level AI working rules.
-- add Cursor project rules.
-- keep future sessions from re-solving settled architecture.
-- keep agent-facing and plan docs aligned with shipped subsystems (e.g. overlay readability …; **cumulative incremental twilight transition tuning** in `illuminationShading.ts`; **structured map selector attribution**; population density **`equirect-world-population-gpw-v1`**; **weather/cloud planning** in `docs/specs/scene/weather-cloud-composition-plan.md`; not stale “v1 only”, “substrate unreadable”, “no twilight tuning”, “weather/cloud planning not shipped”, “population density not shipped”, or “attribution presentation not shipped” phrasing).
-
-Exit criteria:
-
-- docs can onboard a future chat session.
-- Cursor receives persistent project rules.
-- roadmap and future-feature backlog are explicit.
-- stale historical docs are clearly marked historical.
-
-**Completed milestones (rolling):**
-
-- **Atmospheric twilight refinement (incremental):** docs and maturity describe shipped upstream-only **cumulative** tuning in `illuminationShading.ts` (anchor coupling, tint cap, day-side envelope across narrow constants-only passes; **second pass** widened Gaussian sigma, deepened low-luminance anchor chroma, `TWILIGHT_ATMOSPHERIC_ALPHA_MAX` 0.172, day envelope to `dayClear`+1.28°; **third pass** sigma 4.5, day envelope to `dayClear`+1.38°); **further** scattering/haze and optional persisted softness remain future (`PLAN.md` Slice 2, Phase 6/9).
-- **Overlay readability + substrate catalog (shipped baseline, doc-finalized):** docs describe `scene.overlayReadability.presentation`, default-stack `perLayer` keys (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`), and the **eight-intrinsic** substrate lift rules (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 brightness dimming, `overlayOptimized` / `darkFriendly`). Curator notes live in [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md) and [`docs/maps/MAP_ASSET_STRATEGY.md`](docs/maps/MAP_ASSET_STRATEGY.md). **Next** readability work is **additional** optional catalog/resolver substrate signals **beyond** that eight-flag intrinsic set (plus presentation multipliers) and **`perLayer` coverage for stack rows beyond the six defaults** when product-ready (Phase 6 “remaining” extensions).
-- **Substrate intrinsic `labelDense` (Slice 2 shipped):** optional `capabilities.labelDense` on **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
-- **Substrate intrinsic `etchedReliefDense` (Slice 2 shipped):** optional `capabilities.etchedReliefDense` on **`equirect-world-legacy-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
-- **Substrate intrinsic `sunGlintDense` (Slice 2 shipped):** optional `capabilities.sunGlintDense` on **`equirect-world-blue-marble-bm-v1`** and **`equirect-world-blue-marble-t-v1`** in the bundled catalog; intrinsic penalty in `src/core/substrateOverlayReadabilityLiftScale.ts`; tests in `src/core/substrateOverlayReadabilityLiftScale.test.ts`.
-- **Eight-intrinsic substrate overlay-lift contract (doc-finalized):** product docs, map asset notes, and rules describe the **shipped** optional catalog intrinsics through **`sunGlintDense`** as the **complete** substrate-readability baseline; **Slice 2 queue B default cadence closed**—ninth+ axes reopen only with explicit product scope.
-- **Slice 2 queue B — default substrate-increment cadence (closed):** standing ninth+ `BaseMapCapabilities` intrinsics are **not** the default next PR; see `PLAN.md` closed increment.
-- **Slice 2 queue C — default twilight-increment cadence (closed):** standing fourth+ constants-only twilight passes are **not** the default next PR; cumulative tuning through the **third** pass is the complete incremental twilight baseline; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 topography preview (closed):** **`equirect-world-topography-ne-v1`** bundled preview (`world-equirectangular-topography-thumb.jpg`, catalog `previewThumbnailSrc`, tests); see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 legacy preview (closed):** **`equirect-world-legacy-v1`** bundled preview (`world-equirectangular-thumb.jpg`, catalog `previewThumbnailSrc`, tests)—all bundled base-map families now have catalog previews; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 bathymetry (closed):** **`equirect-world-bathymetry-etopo-v1`** ship raster + preview + catalog + ETOPO dateline-roll provenance; registration regression in `src/config/bathymetryOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 land cover (closed):** **`equirect-world-landcover-modis-v1`** ship raster + preview + catalog + GIBS/MODIS IGBP provenance; registration regression in `src/config/landcoverOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 population density (closed):** **`equirect-world-population-gpw-v1`** ship raster + preview + catalog + GPWv4 provenance; registration regression in `src/config/populationOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 climate normals (closed):** **`equirect-world-climate-koppen-beck-v1`** ship raster + preview + catalog + Beck Köppen–Geiger provenance; registration regression in `src/config/climateNormalsOnboardedAsset.test.ts`; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3 map inventory (queue A (2) closed):** all **eleven** bundled catalog families have `previewThumbnailSrc` (legacy + static scientific substrates + Blue Marble) and **structured attribution** in the selector (**Source & license** block; catalog `licenseNote` + `sourceLinks`)—**remaining queue A deferred**; sequenced **`DLC-1`…`DLC-4` complete**; Phase 10 lifecycle **complete**; **Slice 2 queues B/C closed** (`PLAN.md` handoff).
-- **Phase 8 / Slice 4 month-aware selector (closed):** Blue Marble catalog copy, `variantMode` on selector options, active UTC civil month line in `BaseMapStyleControl`, `productInstantMs` from render loop when config is open; see `PLAN.md` closed increment.
-- **Phase 8 / Slice 3–4 attribution presentation (closed):** richer attribution in `BaseMapStyleControl` + catalog fields on all **eleven** bundled families; see `PLAN.md` closed increment.
-- **Slice 2 queue D — weather/cloud planning (closed):** [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); implementation blocked on Phase 10 lifecycle; see `PLAN.md` closed increment.
-
-## Phase 8: Map inventory and scientific substrate expansion
-
-Status: planned (**paused / deferred**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume** when scoped per `PLAN.md` handoff—**not** the default next macro track while early `DLC-*` is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-beck-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** is `DLC-*` (Phase 10 lifecycle **complete**).
-
-**Rolling delivered (Slice 3 / Phase 8):**
-
-- Default reference substrate **`equirect-world-legacy-v1`** (`public/maps/world-equirectangular.jpg`; preview `public/maps/previews/world-equirectangular-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Validated static Natural Earth–lineage global topography base-map family **`equirect-world-topography-ne-v1`** (`public/maps/world-equirectangular-topography.jpg`; bundled catalog sets **`reliefShaded`** for upstream overlay lift; preview `public/maps/previews/world-equirectangular-topography-thumb.jpg`; legacy **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** scene ids remain resolver aliases for **`equirect-world-blue-marble-t-v1`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped political/reference substrate **`equirect-world-political-v1`** (`public/maps/world-equirectangular-political.jpg`; bundled catalog **without** `transitionalPlaceholder`; Natural Earth attribution; preview `public/maps/previews/world-equirectangular-political-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped geology / geologic provinces substrate **`equirect-world-geology-v1`** (`public/maps/world-equirectangular-geology.jpg`; bundled catalog **without** `transitionalPlaceholder`; USGS public-domain attribution; preview `public/maps/previews/world-equirectangular-geology-thumb.jpg`). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped bathymetry / global relief substrate **`equirect-world-bathymetry-etopo-v1`** (`public/maps/world-equirectangular-bathymetry.jpg`; bundled catalog **without** `transitionalPlaceholder`; NOAA NCEI ETOPO 2022 attribution; preview `public/maps/previews/world-equirectangular-bathymetry-thumb.jpg`; **`bathymetryShaded`** + **`reliefShaded`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped land cover / vegetation substrate **`equirect-world-landcover-modis-v1`** (`public/maps/world-equirectangular-landcover.jpg`; bundled catalog **without** `transitionalPlaceholder`; NASA MODIS IGBP attribution; preview `public/maps/previews/world-equirectangular-landcover-thumb.jpg`; **`chromaticDense`** + **`fineScaleTexture`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped Köppen–Geiger climate zones substrate **`equirect-world-climate-koppen-beck-v1`** (`public/maps/world-equirectangular-climate.jpg`; bundled catalog **without** `transitionalPlaceholder`; Beck et al. 2018 CC BY 4.0 attribution; preview `public/maps/previews/world-equirectangular-climate-thumb.jpg`; **`chromaticDense`** + **`fineScaleTexture`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-- Shipped GPWv4 population density substrate **`equirect-world-population-gpw-v1`** (`public/maps/world-equirectangular-population.jpg`; bundled catalog **without** `transitionalPlaceholder`; NASA SEDAC GPWv4 CC BY 4.0 attribution; preview `public/maps/previews/world-equirectangular-population-thumb.jpg`; **`chromaticDense`** + **`fineScaleTexture`**). See [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md).
-
-Candidate deliverables:
-
-- further map selector polish (labels, placeholder hygiene; month-aware copy and active UTC civil month indication **shipped** in Slice 4).
-- broader map selector copy and placeholder hygiene across the young catalog.
-- additional climate products (**shipped baseline:** **`equirect-world-climate-koppen-beck-v1`**; **future:** temperature/precipitation climatologies, alternate Köppen epochs).
-- additional night-light or emissive-compatible **substrate** families (distinct from the composition-input Black Marble path) — **deferred post–Phase 10**.
-- seasonal natural-color refinements — **deferred post–Phase 10**.
-
-## Phase 9: Planetary scene composition and illumination — incremental extensions
-
-Status: planned (**deferred until after Phase 10**; extends Phase 6 production baseline; **composition baseline closed** for standing Slice 2 **B**/**C** default cadence — **no** new rendering boundary).
-
-The subsystem **baseline is delivered** (`PLAN.md` Slice 2): readability v1 + v1.1 + **eight-intrinsic** substrate lift + presentation + **six** default-stack `perLayer` pilots + **third** twilight pass. **Further** substrate signals, atmosphere tuning, and clouds/weather reopen only with **explicit product scope**, or via **`DLC-*`**—not as standing default PRs while early DLC is the active track.
-
-Candidate deliverables:
-
-- **Readability extensions:** `perLayer` readability for scene stack rows **beyond** those six defaulted ids when product-defined; finer semantics when multiple overlay rows share one pilot key (e.g. static equirect); **further** substrate heuristics beyond presentation + `overlayOptimized` / `darkFriendly` + **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** + sub-1 brightness dimming when product needs them.
-- higher-fidelity atmospheric scattering, glow, and transition tuning on top of the existing continuous attenuation-driven twilight model (cumulative incremental non-emissive twilight tuning is already shipped in `illuminationShading.ts`; deeper fidelity remains).
-- weather/cloud participation in planetary composition (after Phase 10 lifecycle; follows [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed**).
-- composition-aware day/night illumination nuances tied to overlays and substrate.
-- blending modes, masking, and clipping **only when justified** by readability or data participation needs (not as an open-ended backend compositor).
-- optional **additional** emissive or radiance contributors beyond the dedicated Black Marble path if product scope requires them.
-
-Architectural direction:
-
-- atmospheric attenuation, reflected illumination, and emissive illumination already participate in one coherent upstream planetary composition model; Phase 9 **deepens and widens** that model.
-- composition semantics remain upstream.
-- RenderPlan remains the rendering boundary.
-- backend remains unaware of planetary composition policy.
-- future weather/cloud systems should participate in scene composition rather than acting as isolated overlays.
-
-Delivered in Phase 6 (emissive MVP and integration **complete** for current scope):
-
-- typed emissive presentation modes, deterministic solar-altitude visibility gate, moonlight coexistence scaling, and `scene.illumination.emissiveNightLights` normalization.
-- bundled emissive composition catalog plus resolver (`resolveEmissiveCompositionAssetIdToCanonicalId`); unknown or blank `assetId` values canonicalize to the catalog default.
-- emissive radiance sampled into the same upstream planetary illumination raster as solar/twilight/moonlight when mode is not `off` and the resolved raster decodes; otherwise contribution is zero; Layers tab mode control; onboarded asset validation (dimensions + SHA-256) in CI; perceptual luma driver via `presentation.driverExponent`.
-
-Remaining under Phase 9 (**composition expansion**, not baseline emissive or settled overlay readability **v1 + v1.1 + substrate lift + substrate heuristic increments + presentation scalars + six default-stack `perLayer` pilots** delivery):
-
-- readability extensions (`perLayer` beyond the shipped six defaults where needed; finer multi-row static-raster semantics; **further** substrate modeling beyond the shipped presentation + dimming + `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` + `overlayOptimized` / `darkFriendly` model).
-- **further** weather/cloud **implementation** (planning in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)), **further** atmospheric refinement beyond cumulative shipped twilight tuning, and optional higher-resolution or alternate-year emissive assets when curated.
-
-## Phase 10: Dynamic data lifecycle
-
-Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment, equirect + cloud-opacity + point-features + tracks materializers). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10 itself. **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination; fixture acquisition). **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. Next dynamic work needs **explicit scope** (new `DLC-*` or Phase 11).
-
-**Product lock (met):**
-
-- Phase 10 ships **lifecycle only** (API + cache + product-time binding + tests)—**no** user-facing dynamic overlay. ✅
-- Snapshot kinds designed up front: **equirect raster**, **point features**, **tracks**. ✅
-- Acquisition: **in-app async periodic refresh** preferred; buddy/sidecar only if in-app conversion is impractical. ✅
-- Sources: prefer free-for-personal-use; paid allowed when clearly valuable.
-- Time: resolve snapshots to **canonical product UTC** (including scrub); cold-start cache refresh OK. ✅
-- Persistence of enablement/source ids: SceneConfig/presets when **consumers** ship (post–Phase 10).
-
-Deliverables (steps `P10-1`…`P10-7` — all shipped):
-
-- core snapshot/source/freshness types.
-- versioned local snapshot store / cache.
-- lifecycle manager (loading/ready/stale/error).
-- product-time resolver (scrub-safe, no fetch-in-render).
-- acquisition adapter + periodic refresh (+ manual/file import).
-- app shell seam for future layers.
-- docs closure and handoff to consumer track.
-
-Candidate future **consumers** (not Phase 10 itself)—see section below and lifecycle plan `DLC-*`:
-
-- weather / clouds / radar (first bias: global equirect clouds / satellite IR).
-- aircraft / shipping / satellites.
-- earthquakes / volcanoes / lightning / wildfire smoke / air quality / aurora.
-
-## After Phase 10: Dynamic layer consumers
-
-Status: **complete** (sequenced `DLC-1`…`DLC-4` **shipped**). Step ids `DLC-1`… in [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md). Further *new* consumers require explicit scope. Live acquisition for the four shipped rows is **`DLU-*` (complete)** below.
-
-Suggested sequence (completed):
-
-1. **`DLC-1`** — first **global equirect raster** consumer (clouds / satellite IR), Model B scene layer — **shipped** (`globalCloudsIr` / `global-clouds-ir-v1`; fixture acquisition).
-2. **`DLC-2`** — point-features consumer (earthquakes) — **shipped** (`earthquakes` / `usgs-earthquakes-v1`; fixture acquisition).
-3. **`DLC-3`** — tracks consumer (ISS orbital) — **shipped** (`orbitalTracks` / `iss-orbital-track-v1`; fixture acquisition).
-4. **`DLC-4`** — Model A cloud participation in planetary illumination — **shipped** (`scene.illumination.cloudParticipation` / same `global-clouds-ir-v1`).
-
-Dense regional/tiled products may wait on Phase 11 (zoom/pan/tiles). Weather participation models remain as documented in the weather/cloud planning spec.
-
-## After DLC: Live network acquisition (`DLU-*`)
-
-Status: **complete** (`DLU-0`…`DLU-7` **shipped**). Step ids in [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md) (“After DLC — Live network acquisition”). **Active step: none pending.** Offline/fixture fallback and next frontiers documented in that plan.
-
-Periodic **in-app live network** acquisition for the four shipped consumers under the **same durable `sourceId`s**. No fetch inside rAF / layer constructors / RenderPlan build. Fixture/offline fallback when live HTTP fails (non-abort); `stale-when-cached` on refresh failure.
-
-Completed sequence:
-
-0. **`DLU-0`** — planning/docs — **shipped**.
-1. **`DLU-1`** — visibility & render readiness (incl. Canvas `tracks` dispatch; demonstrable Layers toggles) — **shipped**.
-2. **`DLU-2`** — shared live HTTP acquisition seam — **shipped**.
-3. **`DLU-3`** — live USGS earthquakes (`usgs-earthquakes-v1`) — **shipped**.
-4. **`DLU-4`** — live ISS orbital (`iss-orbital-track-v1`) — **shipped**.
-5. **`DLU-5`** — live global clouds/IR (`global-clouds-ir-v1`) — **shipped**.
-6. **`DLU-6`** — live Model A cloud participation on the same clouds source — **shipped**.
-7. **`DLU-7`** — DLU closure / docs handoff — **shipped** (`dlu7LiveAcquisitionClosure.test.ts`).
-
-## Phase 11: Scene view and projection expansion
-
-Status: future (after DLU complete / as scoped).
-
-Supports denser regional dynamic products (tiled radar, viewport-local feeds) after Phase 10 lifecycle, `DLC-*` global/equirect consumers, and preferably after live acquisition for those consumers.
-
-Candidate deliverables:
-
-- zoom and pan.
-- viewport clipping.
-- tile readiness.
-- alternate projections.
-- globe or perspective view.
-- scene interaction.
-- inverse projection for hover/click inspection.
-
-## Phase 12: Preset system
-
-Status: future.
-
-Should include dynamic-layer enablement and durable source ids once `DLC-*` SceneConfig exists (full refresh of live caches on preset apply/startup is acceptable).
-
-Candidate deliverables:
-
-- named partial config presets.
-- explicit preset application order.
-- last-write-wins semantics.
-- preset stacks.
-- narrow appearance presets.
-- scene/layer presets (including dynamic sources when shipped).
-- export/import of presets.
-
-## Phase 13: Renderer expansion
-
-Status: future.
-
-Candidate deliverables:
-
-- GPU renderer feasibility study.
-- backend capability matrix.
-- performance instrumentation.
-- renderer-independent visual tests where practical.
-- bare-metal NVIDIA path only after upstream contracts are stable.
+New feeds (radar, volcanoes, lightning, additional spacecraft, and so on) reuse [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md). The seam existing is not scope.

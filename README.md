@@ -63,6 +63,9 @@ npm run fonts:prep             # regenerate the bundled font manifest
 |----------|------|
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Durable boundaries and invariants |
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the current code actually works |
+| [`docs/STATE.md`](docs/STATE.md) | Current development state and next action |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Approved future direction |
+| [`docs/WORKFLOW.md`](docs/WORKFLOW.md) | How work items are executed |
 | [`docs/decisions/`](docs/decisions/) | Why the durable choices were made |
 | [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md) | Product thesis and design principles |
 | [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative and future ideas |
@@ -72,9 +75,9 @@ npm run fonts:prep             # regenerate the bundled font manifest
 | [`AGENTS.md`](AGENTS.md) | Entry contract for AI coding agents |
 | [`docs/history/`](docs/history/) | Archived planning and execution records |
 
-Reading order for someone new: this file, then `ARCHITECTURE.md`, then `docs/IMPLEMENTATION.md`.
+Reading order for someone new: this file, then `ARCHITECTURE.md`, then `docs/IMPLEMENTATION.md`. For current work: `AGENTS.md`, then `docs/STATE.md`.
 
-Documentation modernization is in progress. `docs/STATE.md` (current development state), `docs/ROADMAP.md` in its rewritten form, `docs/WORKFLOW.md`, and `docs/VISUAL_VERIFICATION.md` are reserved and not yet created; `docs/ROADMAP.md` currently holds transitional pre-modernization content.
+`docs/VISUAL_VERIFICATION.md` is reserved; it will be created by work item LIB-001.
 
 ## Licensing
 

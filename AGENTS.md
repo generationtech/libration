@@ -6,51 +6,50 @@ Entry contract for AI coding agents working in the Libration repository.
 
 A renderer-agnostic, longitude-first world time and global scene instrument. It is a precision time instrument with a composable scene system, not a generic map viewer.
 
-## Documentation ownership
+## Reading sequence
 
-One kind of truth, one owner. Read the owner; do not reconstruct its content from another document.
+1. This file.
+2. [`docs/STATE.md`](docs/STATE.md) — current status, active item, next action.
+3. The active work item in `docs/work/`, if any.
 
-| Document | Owns |
-|----------|------|
-| [`README.md`](README.md) | What Libration is, how to run and verify it, where to read more |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Durable boundaries and invariants, with rationale |
-| [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the current code actually works |
-| [`docs/decisions/`](docs/decisions/) | Why durable choices were made |
-| [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md) | Product thesis, positioning, design principles |
-| [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative and future ideas — not approved work |
-| [`docs/maps/`](docs/maps/) | Asset provenance, licensing, curation policy |
-| [`docs/specs/scene/`](docs/specs/scene/) | Specialized subsystem contracts and planning specs |
-| [`docs/history/`](docs/history/) | Archived planning and execution records — never current truth |
+Those three decide whether you may implement anything. Repository documentation and the active work item govern implementation. External chat history does not.
 
-**Reserved, not yet created.** These are modernization targets. Do not invent them, and do not create competing surfaces for what they will own:
+If `docs/STATE.md` is **AWAITING SCOPE**, or there is no approved item, **stop**. Draft a `proposed` item only if asked. Never self-approve work. Never start [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) ideas.
 
-- `docs/STATE.md` — current development state and next actionable work.
-- `docs/WORKFLOW.md` — how work items are defined, executed, and completed.
-- `docs/VISUAL_VERIFICATION.md` — how visual changes are verified against the running application.
-- `docs/ROADMAP.md` currently holds transitional pre-modernization content and will be rewritten.
-
-## Required reading by task type
-
-Always: `README.md` and `ARCHITECTURE.md`.
+Then, for ordinary implementation, read [`ARCHITECTURE.md`](ARCHITECTURE.md) and the relevant parts of [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md).
 
 | Task | Also read |
 |------|-----------|
-| Any code change | `docs/IMPLEMENTATION.md` for the affected subsystem |
-| Rendering, chrome, or layout | `docs/IMPLEMENTATION.md` §4–5, ADRs 0001 and 0002 |
-| Scene, layers, base maps | `docs/IMPLEMENTATION.md` §6 and §10, `docs/maps/` |
-| Time or display modes | `docs/IMPLEMENTATION.md` §8, ADR 0004 |
-| Configuration or persistence | `docs/IMPLEMENTATION.md` §7 |
-| Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`, ADR 0005 |
-| Product direction | `docs/PROJECT_STRATEGY.md` |
+| Rendering, chrome, layout | Implementation §4–5; ADRs 0001–0002; Cursor rule `010` |
+| Scene, layers, base maps | Implementation §6, §10; `docs/maps/`; Cursor rule `030` |
+| Configuration or persistence | Implementation §7; Cursor rule `020` |
+| Time or display modes | Implementation §8; ADR 0004 |
+| Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`; ADR 0005 |
+| Visual changes | After M4: `docs/VISUAL_VERIFICATION.md` (does not exist yet; created by [`LIB-001`](docs/work/LIB-001-cursor-native-visual-verification.md)) |
 
 Read the source before editing it. Documentation describes the system; the source is the system.
 
-## Non-negotiable architecture rules
+## Documentation ownership
 
-These are stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md). In short:
+One kind of truth, one owner. See [`docs/WORKFLOW.md`](docs/WORKFLOW.md) for execution. In short:
+
+| Document | Owns |
+|----------|------|
+| [`README.md`](README.md) | What it is, how to run it |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Durable boundaries and invariants |
+| [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the current code works |
+| [`docs/STATE.md`](docs/STATE.md) | Current development state |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Approved future direction |
+| [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative ideas |
+| [`docs/work/`](docs/work/) | Individual work items |
+| [`docs/history/`](docs/history/) | Archived planning — never current truth |
+
+## Architecture in short
+
+Stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md):
 
 1. Product semantics resolve upstream of rendering.
-2. `RenderPlan` is the hard rendering boundary; backends execute resolved primitives only.
+2. `RenderPlan` is the hard rendering boundary.
 3. Backends must not inspect configuration to decide product behaviour.
 4. `SceneConfig` is authoritative for scene content.
 5. Chrome is screen-space and reserves layout before the scene viewport.
@@ -62,32 +61,6 @@ These are stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md). In shor
 
 ## How to operate
 
-- **Stay in scope.** Implement the task that was asked for. Do not broaden into adjacent refactors because the code is nearby.
-- **Change the smallest responsible boundary.** When fixing a bug, identify the root cause and state which boundary the fix belongs to.
-- **Test behaviour changes.** Add or adjust tests at the boundary that changed — normalization, resolver, plan builder, layer, lifecycle. Never weaken an assertion to make a suite pass.
-- **Update the owning document** when behaviour or architecture changes, in the same change. Update only the document that owns the changed truth.
-- **Report honestly.** Files changed, what changed, why, tests run, tests not run and why, risks and follow-ups. Do not claim tests passed unless you ran them. A summary that says "complete" without test evidence is incomplete.
+Stay in the active item’s scope. Change the smallest responsible boundary. Test behaviour changes; never weaken an assertion to pass. Update only the document that owns the changed truth. Report commands actually run and their actual results.
 
-## When to stop rather than invent
-
-Stop and ask for direction when:
-
-- the correct architectural boundary is unclear;
-- a change would affect persisted user configuration;
-- a backend change appears to need product knowledge;
-- a test failure reveals documentation and source disagreeing;
-- two sources of truth appear to exist;
-- the work requires a new model rather than a patch;
-- there is no explicitly scoped task and you would have to choose one.
-
-The last case matters. Absence of an assigned task is not an invitation to generate plausible work. Ask.
-
-## Anti-patterns
-
-- Redesigning a subsystem while implementing a feature in it.
-- Adding a configuration field while continuing to derive behaviour from the old one.
-- Making a backend decide anything about product meaning.
-- Fetching, decoding, or doing I/O inside the render path.
-- Repeating another document's facts "for convenience" — link instead.
-- Treating archived history as current state.
-- Using chat history as project memory. Decisions belong in the repository.
+Stop when the boundary is unclear, persisted configuration would change, a backend seems to need product knowledge, docs and source disagree, two sources of truth appear, or there is no approved work.

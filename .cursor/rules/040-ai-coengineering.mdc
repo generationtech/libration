@@ -1,29 +1,14 @@
 ---
-description: Rules for Cursor implementation behavior in the Libration co-engineering workflow.
-globs:
+description: Durable co-engineering constraints for implementation work.
 alwaysApply: true
 ---
 
 # AI co-engineering rule
 
-For multi-file implementation work, follow the requested phase.
+Work only the authorized scope. Do not silently expand it. Only a human may move a work item from `proposed` to `approved`.
 
-Do:
+Inspect source before editing. Keep architecture and product decisions out of implementation convenience. Do not move product semantics into backend code.
 
-- inspect relevant source before editing.
-- keep changes narrow and coherent.
-- preserve existing architecture unless the task explicitly changes it.
-- add tests for behavior changes.
-- update docs when behavior or architecture changes.
-- summarize changed files and tests.
+Report actual verification. Never claim tests passed unless they were run. Never weaken assertions to make a suite pass.
 
-Do not:
-
-- ask for confirmation after an approval header has authorized multi-file edits.
-- invent broad architecture not grounded in docs.
-- silently weaken tests.
-- claim tests passed unless they were run.
-- move semantics into backend code.
-- use chat history as a substitute for repo docs.
-
-When fixing a bug, report the root cause and the boundary where the fix belongs.
+Stop when work is blocked, scope is missing, or `docs/STATE.md` is AWAITING SCOPE.
