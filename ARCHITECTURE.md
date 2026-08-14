@@ -1,274 +1,277 @@
-# Libration Architecture
+# Libration architecture
 
-## Purpose
+This document owns Libration's **durable architecture**: the boundaries, invariants, and structural commitments that implementation work is required to preserve.
 
-This document is the durable architectural reference for Libration.
+It deliberately contains no status, no maturity assessment, no feature ledger, and no roadmap position.
 
-It defines the system boundaries that future implementation work must preserve. More tactical status and sequencing lives in `PLAN.md` and `docs/ROADMAP.md`.
+- How the current code actually works: [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md)
+- Why specific durable choices were made: [`docs/decisions/`](docs/decisions/)
+- What the product is for: [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md)
 
-## Architectural identity
+Each invariant below is stated as **boundary**, **rationale**, and **consequence**, because an invariant without its rationale is a rule people route around, and an invariant without its consequences is a rule people underestimate.
+
+---
+
+## 1. Architectural identity
 
 Libration is a renderer-agnostic, longitude-first world time and global scene instrument.
 
-The product is built around five architectural commitments:
+Five commitments define the system:
 
 1. Time is canonicalized as UTC instants.
 2. Spatial structure is longitude-first, not timezone-first.
 3. Product meaning is resolved upstream of rendering.
-4. Rendering intent is expressed as backend-neutral `RenderPlan`.
+4. Rendering intent is expressed as a backend-neutral `RenderPlan`.
 5. Backends execute resolved plans and do not own product semantics.
 
-## System pipeline
+Everything else in this document follows from these.
 
-All visual output follows this shape:
+---
+
+## 2. The pipeline
+
+All visual output follows one shape:
 
 ```mermaid
 flowchart LR
     IN[Config, Time, Assets] --> RES[Resolvers]
-    RES --> SEM[Semantic Planning]
+    RES --> SEM[Semantic planning]
     SEM --> LAY[Layout]
-    LAY --> ADA[Realization Adapters]
+    LAY --> ADA[Realization adapters]
     ADA --> RP[RenderPlan]
     RP --> EX[Executor]
     EX --> BE[Backend]
 ```
 
-The RenderPlan boundary is hard.
+Upstream of `RenderPlan`, code may know about time, map families, chrome meaning, scene layers, fonts, glyph kinds, and user configuration.
 
-Upstream systems may know about time, map families, chrome meaning, scene layers, fonts, glyph kinds, and user configuration.
+Downstream of `RenderPlan`, code may know about surfaces, drawing APIs, caches, image resources, font registration, and primitive execution.
 
-Backends may know about surfaces, drawing APIs, caches, image resources, font registration, and primitive execution.
+Nothing may know about both.
 
-Backends must not decide product behavior.
+---
 
-## Top-level subsystems
+## 3. Time invariants
 
-### App shell
+### 3.1 One authoritative UTC instant per frame
 
-The app shell owns:
+**Boundary.** Each frame resolves exactly one canonical product instant. Every downstream computation — geometry, astronomy, asset resolution, data selection, labels — derives from that single value.
 
-- UI state.
-- config loading and saving.
-- preset application when implemented.
-- render-loop orchestration.
-- editor surfaces.
-- runtime wiring between time context, scene config, chrome config, and renderer.
+**Rationale.** Libration is a time instrument before it is a map. If two parts of a frame can disagree about what time it is, the instrument is not merely imprecise, it is incoherent: the terminator, the tape, the pins, and the readout would each be telling a slightly different truth. A single instant makes every frame internally consistent by construction rather than by discipline.
 
-The app shell must not become a home for low-level product rules that belong in config normalization, resolvers, planners, or specs.
+**Consequence.** No code downstream of the frame's time resolution may call a wall clock. Anything needing time takes it from the frame's time context. Introducing a second clock is not a performance shortcut; it is a correctness regression.
 
-### Core time model
+See [ADR 0004](docs/decisions/0004-one-canonical-utc-instant-per-frame.md).
 
-The product uses one authoritative instant per frame.
+### 3.2 Display modes format; they do not mutate
 
-Display modes format that instant and its derived civil presentation. They must not mutate the canonical instant.
+**Boundary.** Display mode, reference civil zone, reference city, and label style change **presentation only**. They never change the canonical instant.
 
-The reference-frame model separates:
+**Rationale.** Civil time is a projection of an instant, not a competing definition of it. Users switch between 12-hour, 24-hour, UTC-style, and reference-city framings to read the same moment differently. If any of those switches perturbed the underlying clock, the display would be self-referential.
 
-- canonical UTC instant.
-- selected reference civil zone.
-- read-point meridian.
-- civil display projection.
-- top-band label format.
+**Consequence.** A formatting change must never feed back into time resolution. Chrome geometry that depends on civil time derives it from the canonical instant plus a zone, not from a formatted string. Reference city selection contributes a meridian for spatial registration, not a clock.
 
-Changing local 12 hour, local 24 hour, UTC style labels, or reference city presentation must not create a second product clock.
+### 3.3 Demo time replaces the source; it does not add one
 
-Demo mode is the intentional exception when it supplies a separate configured time source.
+**Boundary.** Demo mode is the single sanctioned exception to real-time operation. It substitutes the time source and is otherwise indistinguishable downstream except for an explicit `simulated` flag.
 
-### Display chrome
+**Rationale.** Deterministic and accelerated time is genuinely necessary — for demonstration, for reviewing seasonal and diurnal behaviour, and for reasoning about the illumination model. The way to provide it without violating 3.1 is substitution, not addition.
 
-Display chrome is screen-space instrument content.
+**Consequence.** Demo time is configured, not ad hoc. Nothing downstream branches on demo mode to alter product behaviour.
 
-Current top chrome includes:
+---
 
-- hour marker entries.
-- tickmark tape.
-- NATO structural zone row.
-- reserved vertical layout above the scene viewport.
+## 4. Rendering invariants
 
-Display chrome is not a scene layer. It does not participate in map projection or scene layer ordering.
+### 4.1 `RenderPlan` is a hard boundary
 
-Top-band hour markers are configured through `chrome.layout.hourMarkers` only. Runtime behavior is derived by resolver, semantic planner, layout, and realization adapter.
+**Boundary.** `RenderPlan` is the complete, backend-neutral description of what to draw: an ordered list of primitives. It is the only thing a backend receives.
 
-### Scene system
+**Rationale.** The product's rendering intent is elaborate and its drawing surface is replaceable. Keeping intent in a declarative structure means the meaning of a frame can be inspected, tested, and reasoned about without a canvas, and a future backend inherits correct behaviour rather than reimplementing it.
 
-The scene system owns projection-space content under the chrome.
+**Consequence.** A plan is fully testable without rendering — plan-level tests are the primary way geometry is verified. A second backend requires no product-side changes. Conversely, any product decision that reaches a backend has escaped the boundary and must be moved upstream.
 
-SceneConfig is authoritative for:
+See [ADR 0001](docs/decisions/0001-renderplan-as-the-renderer-boundary.md).
 
-- `projectionId`.
-- `viewMode`.
-- `baseMap`.
-- ordered `layers[]`.
+### 4.2 Backends execute; they do not decide
 
-The scene system composes:
+**Boundary.** A backend receives resolved intent. It must not inspect `SceneConfig` or any product configuration to decide product behaviour. It must not implement asset-resolution policy, decide fonts, glyph kinds, or layer semantics, and must not own layout.
 
-- foundational base map.
-- static overlays.
-- derived overlays.
-- future dynamic and data-driven layers.
+**Rationale.** Every product rule that leaks into a backend is a rule that must be reimplemented, identically, in every future backend — and that will silently diverge.
 
-Scene composition is deterministic. Base map remains beneath overlays. Overlay order is user-controlled through layer order, with equal-order ties preserving document array order.
+**Consequence.** Backend bridges translate shared intent into backend-native calls and nothing more. Backends may report **concrete resource events** (an image URL failed to load, a font failed to register), because those are facts about the drawing surface. They may not choose a replacement. Fallback is policy, and policy is upstream.
 
-### Map asset system
+### 4.3 Draw order is resolved upstream
 
-Base-map inventory is declared in the bundled JSON catalog:
+**Boundary.** `RenderPlan` items are drawn in array order. There is no z-sorting or compositing in the executor.
 
-```text
-src/assets/maps/base-map-catalog.json
-```
+**Rationale.** Ordering is a product decision — which overlay occludes which — and belongs where the product is modelled. A sorting executor would create a second, weaker place to express ordering.
 
-The app does not scan `public/maps` at runtime and does not fetch a remote catalog.
+**Consequence.** Scene composition resolves the full order before plan construction. Ties preserve document order, so layer ordering is deterministic and reproducible.
 
-Persisted config stores base-map family ids, not concrete raster paths. Month-aware families resolve concrete rasters from product time through the catalog-backed resolver. The catalog includes shipped static scientific substrates **`equirect-world-topography-ne-v1`** and **`equirect-world-political-v1`** (Natural Earth–lineage), **`equirect-world-geology-v1`** (USGS public-domain lineage), **`equirect-world-bathymetry-etopo-v1`** (NOAA NCEI ETOPO 2022 lineage; −180…+180° equirect contract), and **`equirect-world-landcover-modis-v1`** (NASA MODIS IGBP land cover lineage; GIBS 2019 epoch); each has bundled **`previewThumbnailSrc`** where the catalog lists it (`docs/maps/MAP_ASSET_SOURCES.md`). Legacy ids **`equirect-world-topography-v1`** and **`equirect-world-topo-v1`** remain resolver aliases for the Blue Marble **T** month-aware family (not aliases for the static NE topography family).
+### 4.4 Composition happens upstream, not in the backend
 
-Map assets are geospatial substrates. They must satisfy the projection contract and must never define spatial truth.
+**Boundary.** There is no generalized compositor and no backend-owned blend policy. Where multiple physical effects contribute to one visual result, they are combined upstream into a single primitive.
 
-### Layer engine
+**Rationale.** A general compositor would be a second, weaker place to express product meaning, and it would push physically-motivated decisions into a layer that cannot reason about them.
 
-Layers describe what exists in the projection-space scene.
+**Consequence.** Planetary illumination — solar geometry, twilight, moonlight, emissive night lights, optional cloud participation — resolves to **one** `rasterPatch`. The backend decodes images and blits pixels; it has no illumination concepts at all.
 
-A layer may be static, derived, or future data-driven. It produces time-resolved layer state. RenderPlan builders convert that state into drawing intent.
+See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-rasterpatch.md).
 
-Layers must not fetch live data during rendering. Future live feeds belong in a lifecycle system that prepares versioned data snapshots before render execution.
+---
 
-**Dynamic data lifecycle (Phase 10 — complete):** the app shell owns a process-local `DynamicDataLifecycleHost` (`createDynamicDataLifecycleHost` in `src/lifecycle/`) bundling the versioned store, lifecycle manager, product-time resolver, acquisition controller, equirect materializer, cloud-opacity materializer, point-features materializer, and tracks materializer. Each tick it may attach a read-only `DynamicDataLifecycleAttachment` on `TimeContext` (`attachForProductInstant(productInstantMs)`) so layers can `resolveSnapshot(sourceId)` / `getLifecycleState(sourceId)` / `getPreparedEquirectRaster(sourceId)` / `getPreparedCloudOpacity(sourceId)` / `getPreparedPointFeatures(sourceId)` / `getPreparedTracks(sourceId)` against **canonical product UTC**—scrub-safe (store list/get + sync prepared views only; never acquisition, put, or fetch from the paint / RenderPlan path). Production wires this in `App.tsx`; `getDynamicDataLifecycleAttachment` reads the attachment when present. Phase 10 shipped lifecycle only; **`DLC-1` shipped** Model B `globalCloudsIr` / `global-clouds-ir-v1`; **`DLC-2` shipped** Model B `earthquakes` / `usgs-earthquakes-v1`; **`DLC-3` shipped** Model B `orbitalTracks` / `iss-orbital-track-v1`; **`DLC-4` shipped** Model A `scene.illumination.cloudParticipation` (same clouds/IR opacity → one illumination `rasterPatch`). Sequenced Post–Phase 10 table complete. **`DLU-2` shipped** shared live HTTP acquisition seam (`fetchLiveHttpBytes` / `createLiveHttpAcquisitionAdapter`, attribution + fixture fallback, host `acquireFailurePolicy: "stale-when-cached"`); **`DLU-3` shipped** live USGS earthquakes under `usgs-earthquakes-v1` (fixture offline fallback); **`DLU-4` shipped** live ISS orbital under `iss-orbital-track-v1` (CelesTrak TLE→SGP4, fixture offline fallback); **`DLU-5` shipped** live NASA GIBS clouds/IR under `global-clouds-ir-v1` (fixture offline fallback); **`DLU-6` shipped** live Model A cloud participation on the same opacity field; **`DLU-7` shipped** (live track closure; offline/fixture fallback documented) — still no fetch in render.
+## 5. Chrome invariants
 
-### Planetary illumination composition
+### 5.1 Chrome is screen-space
 
-Planetary illumination is a **coherent upstream subsystem**: dedicated modules resolve solar geometry, continuous twilight (attenuation and atmospheric tint), moonlight policy, and optional emissive night-light radiance from bundled catalogs into a **single** planetary illumination raster that becomes one `rasterPatch` in the RenderPlan for the Solar shading execution path.
+**Boundary.** Display chrome is instrument content in screen space. It is not a scene layer, does not participate in map projection, and does not enter scene layer ordering.
 
-Twilight coloring and non-emissive atmospheric tint live in upstream sampling (`src/renderer/illuminationShading.ts`); semantic civil/nautical/astronomical anchors inform a **continuous** field. **Shipped cumulative incremental tuning** (constants-only, more than one narrow refinement—including **second** and **third** narrow passes doc-finalized in `PLAN.md` / `docs/ROADMAP.md`: wider Gaussian sigma, cooler civil–astro anchors, `TWILIGHT_ATMOSPHERIC_ALPHA_MAX` 0.172, day-side envelope through `dayClear`+1.38°, third-pass sigma 4.5°) widens anchor color coupling, nudges the bounded atmospheric tint budget, and softens the day-side envelope below the shared +4° daylight-clear cutoff—without new SceneConfig axes, layers, or backend policy. **Further** scattering or user-facing softness remains future work (see `PLAN.md` Slice 2).
+**Rationale.** Chrome is the instrument's frame of reference. Making it a scene layer would subject the reading surface to projection, camera, and layer-ordering concerns that have nothing to do with reading time.
 
-There is **no generalized compositor abstraction** and **no backend-owned composition policy**: composition remains specialized upstream code with deterministic tables and sampling; the Canvas backend only decodes images when executing primitives and does not interpret illumination modes or layer semantics.
+**Consequence.** Chrome and scene are separate rendering passes over the same surface. Chrome elements are positioned in CSS pixels, even when their position is *derived* from longitude.
 
-### Overlay readability (composition-aware: v1 + v1.1 + derived substrate lift + SceneConfig presentation + per-layer pilots)
+### 5.2 Chrome reserves layout before the scene viewport is resolved
 
-The app shell may attach **one** `OverlayReadabilityFrame` per tick on `TimeContext` so participating layers call `getOverlayReadabilityFrameOrCompute` instead of each recomputing coarse samples from `now`. The frame exposes **subsolar-only** `nightVeil01At` / `globalNightVeil01` (aligned with `illuminationNightVeil01FromSolarAltitudeDeg`) plus **v1.1** `readabilityVeil01At` / `globalReadabilityVeil01`: the same solar field, deterministically augmented by **emissive night-light policy** (`mode`, `presentation.intensity`, `presentation.driverExponent` from normalized SceneConfig) as `globalEmissiveLegibilityPressure01` — **no emissive raster sampling** in the readability path. **Substrate-aware lift (post–v1.1, derived):** `substrateOverlayReadabilityLiftScale01` (0.35–1) comes from **effective** base-map presentation (`resolveEffectiveBaseMapPresentation` + `scene.baseMap`) and optional catalog `capabilities`: `overlayOptimized` scales presentation-derived penalty; `darkFriendly` slightly relaxes it; `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, and `sunGlintDense` add small **intrinsic** attenuation at neutral presentation when curated in the catalog; brightness **below** default reduces presentation-derived penalty so dimmed bases retain overlay lift. No raster sampling. **Scene presentation scaling:** normalized `scene.overlayReadability.presentation` (`readabilityVeilScale01`, `overlayLiftMultiplier01`) post-processes the derived combined veil and substrate lift scale in the shell after `computeOverlayReadabilityFrameFromTimeMs` (defaults preserve v1 + v1.1 + substrate-only behavior). **Per-layer pilots:** optional `scene.overlayReadability.perLayer` keys **`grid`**, **`solarAnalemma`**, **`subsolarMarker`**, **`sublunarMarker`**, **`cityPins`**, and **`staticEquirectOverlay`** apply the same veil/lift scalars again in the corresponding layer constructors via `applySceneOverlayReadabilityPresentationToFrame` after the shell frame (identity values are omitted on normalize). Selected derived overlays attach **derived-only** `OverlayReadabilityHints` using the **combined** readability veil for `nightVeil01` plus optional `overlayReadabilityLiftScale01` from the frame. Reference and custom **city pins** carry the combined signal **per pin** (`readabilityNightVeil01` on each `CityPinEntry`) and payload-level `overlayReadabilityLiftScale01`. **Static full-viewport equirect raster overlays** attach the **global** combined veil on `EquirectangularRasterPayload.readability`; `buildBaseRasterMapRenderPlan` merges `overlayReadabilityCssFilterAppend` with presentation-derived `cssFilter` on the single `imageBlit`. RenderPlan builders adjust vector stroke widths and RGBA alphas using `effectiveOverlayReadabilityLiftVeil01` (veil × lift scale); the backend continues to execute primitives mechanically. Further optional readability axes (per-layer tuning for additional **custom** scene stack rows not yet covered by the default `perLayer` map; **further** substrate/catalog signals beyond the shipped presentation + dimming + `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense` model) remain future work when product-ready (see `PLAN.md` Slice 2 and `docs/ROADMAP.md` Phase 6 / Phase 9).
+**Boundary.** Chrome computes its reserved height first. The scene viewport is the full viewport minus that reservation.
 
-**Phase closure:** v1, v1.1, **derived substrate-aware overlay lift**, **SceneConfig presentation scaling** (`scene.overlayReadability.presentation`: `readabilityVeilScale01`, `overlayLiftMultiplier01`), and **per-layer pilots** for **default stack rows** (`perLayer.grid`, `perLayer.solarAnalemma`, `perLayer.subsolarMarker`, `perLayer.sublunarMarker`, `perLayer.cityPins`, `perLayer.staticEquirectOverlay` — same scalars after the shell frame) are **production-complete**; the shell supplies emissive policy, effective base-map presentation, catalog `capabilities`, and normalized presentation into `computeOverlayReadabilityFrameFromTimeMs` (presentation applied on the derived frame) each tick (`App.tsx` → `TimeContext.overlayReadabilityFrame`). **`getOverlayReadabilityFrameOrCompute` fallback** (no pre-attached frame): still subsolar-only for emissive/substrate/presentation inputs—production uses the shell-attached frame.
+**Rationale.** Chrome height is content-dependent — it varies with typography, marker size, and configured rows. The scene must be laid out against a known reservation, and the map is shortened rather than occluded so that the full longitude span stays visible.
 
-**Fully implemented for this phase:** persisted keys, normalization + clamps, Layers controls + reset, `sceneRuntimeAffectingEqual` / registry invalidation parity with other scene presentation deltas, `assertIsNormalizedLibrationConfig` coverage, pilot per-layer keys for all **default** readability stack rows above, and **substrate readability heuristic extensions**: sub-1 effective brightness reduces presentation-derived lift attenuation; optional catalog **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** add small intrinsic penalties at neutral presentation (`src/core/substrateOverlayReadabilityLiftScale.ts`, bundled catalog).
+**Consequence.** The frame order is fixed: chrome state, then scene input, then scene render, then chrome render. Chrome cannot depend on scene layout, because the dependency runs the other way.
 
-**Future (not partial):** per-layer readability for **custom** stack rows **outside** the defaulted `perLayer` product map; **distinct per-row readability** when multiple static equirect layers need different tuning than a single **`staticEquirectOverlay`** pilot affords; further catalog/resolver substrate heuristics **beyond** the shipped **eight-intrinsic** contract (`reliefShaded` … `sunGlintDense`) plus `overlayOptimized` / `darkFriendly` presentation multipliers and sub-1 brightness dimming; optional improvement so the `OrCompute` fallback could accept the same inputs as the shell (only if a real caller needs it).
+### 5.3 Structural longitude and civil time are separate coordinate models
 
-### RenderPlan system
+**Boundary.** The fixed 15° structural columns and the time-phased civil hour tape are distinct coordinate systems that coexist in the top band. They must not be unified.
 
-RenderPlan is the shared declarative rendering contract.
+**Rationale.** This is the longitude-first thesis made visible. Structural columns are geography and register exactly with the map. The phased tape is civil time and slides continuously against an anchored read point. Civil offsets are not multiples of 15° and political zones do not follow meridians, so any attempt to make one grid serve both purposes must falsify one of them.
 
-Current primitive categories include:
+**Consequence.** Two independent x-derivations exist by design. See [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md#5-chrome-coordinate-model) before modifying top-band geometry.
 
-- text.
-- rect.
-- line.
-- path.
-- gradients.
-- raster patches.
-- image blits.
+### 5.4 Persisted chrome state is single-sourced and derived at runtime
 
-Path and clip payloads should move toward descriptor-backed intent. Backend-native objects are transitional only where still required.
+**Boundary.** Hour-marker persisted state lives under `chrome.layout.hourMarkers` and nowhere else. Runtime content and behaviour are derived from it, not duplicated into parallel persisted axes.
 
-### Backend system
+**Rationale.** Parallel persisted representations of the same concept drift, and reconciling them becomes indefinite work.
 
-The current backend is Canvas.
+**Consequence.** Text and procedural glyph realizations both flow through the same resolver → semantic plan → layout → adapter → `RenderPlan` path. Adding a realization means adding an adapter, not a persistence axis.
 
-Canvas-specific code belongs behind bridges such as:
+---
 
-- `canvasTextFontBridge`.
-- `canvasPaintBridge`.
-- `canvasPathBridge`.
-- Canvas font loading and registration helpers.
+## 6. Scene and spatial invariants
 
-Future backends must consume the same upstream render intent and must not require product-specific branching inside the backend.
+### 6.1 Projection defines spatial truth; base maps do not
 
-Backend resource lifecycle reporting is allowed only for concrete resource events. For example, the backend may report that a raster image URL failed to load. It must not decide which map family or fallback raster should be used.
+**Boundary.** Geographic position is defined by the projection. A base map is a substrate that must satisfy the projection contract.
 
-## Configuration architecture
+**Rationale.** Overlays, markers, pins, and derived tracks must be correct relative to each other and to geography. If the raster defined truth, every overlay would inherit that raster's registration errors, and swapping substrates would silently move everything.
 
-`LibrationConfigV2` is the authoritative persisted application config.
+**Consequence.** All scene geometry is expressed in geographic or projection-aware coordinates before rendering. A substrate whose registration cannot be corrected to the projection contract is not eligible for inclusion, regardless of how good it looks.
 
-Important config domains:
+### 6.2 Scene view and projection are separate concepts
 
-- chrome layout and top-band controls.
-- structured hour-marker configuration.
-- scene config (including `scene.illumination` and `scene.overlayReadability` — global `presentation` plus optional **`perLayer` pilots (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`)** — for overlay legibility scaling upstream of RenderPlan hints).
-- map presentation overrides.
-- future preset and partial-patch systems.
+**Boundary.** What is being projected and how the viewer is looking at it are distinct.
 
-Normalization must preserve user intent, backfill defaults, clamp unsupported values, and avoid reintroducing removed compatibility surfaces.
+**Rationale.** Keeping them separate is what allows viewing behaviour to change without redefining spatial truth.
 
-Config stores durable semantic ids, not transient file paths or derived runtime values.
+**Consequence.** Month-aware base-map switching is **asset resolution**, not camera behaviour. Camera-like features affect the view, not the projection contract.
 
-## Scene architecture invariants
+### 6.3 `SceneConfig` is authoritative for scene content
 
-These rules are non-negotiable:
+**Boundary.** `SceneConfig` owns projection, view mode, base map, and the ordered layer list. Nothing else may define scene composition.
 
-1. Projection defines spatial truth.
-2. Base maps do not define spatial truth.
-3. All scene geometry is defined in geographic or projection-aware coordinates before rendering.
-4. Scene view and projection are separate concepts.
-5. Base map families are selected by durable catalog ids.
-6. Month-aware map switching is asset resolution, not camera behavior.
-7. Layer ordering is deterministic.
-8. Composition belongs upstream of backend execution.
+**Rationale.** One authoritative model makes composition deterministic and reproducible, and makes presets meaningful.
 
-## Chrome architecture invariants
+**Consequence.** Runtime structures such as the layer registry are **derived** from `SceneConfig`. When it changes in a composition-relevant way, the derived structure is rebuilt rather than patched.
 
-These rules are non-negotiable:
+### 6.4 Durable semantic ids, never resolved paths
 
-1. Chrome is screen-space, not projection-space.
-2. Chrome reserves layout before scene viewport resolution.
-3. Display modes format presentation and must not mutate canonical time.
-4. Hour-marker persisted state lives under `chrome.layout.hourMarkers`.
-5. Runtime content and behavior are derived, not duplicated into parallel persisted axes.
-6. Text and procedural glyph realizations flow through the same RenderPlan boundary.
+**Boundary.** Configuration persists durable semantic identifiers — base-map family ids, composition asset ids, dynamic source ids. It never persists resolved raster paths, month-specific filenames, feed URLs, or derived runtime values.
 
-## Renderer invariants
+**Rationale.** Resolved values are a function of time, catalog contents, and the asset pipeline, all of which change. A persisted path is a saved configuration that breaks when any of them does.
 
-These rules are non-negotiable:
+**Consequence.** A configuration saved in one month resolves correctly in another. Assets can be re-derived, re-encoded, or relocated without invalidating user state. Month-aware families resolve concrete rasters from the canonical product instant at runtime.
 
-1. Backend receives resolved render intent.
-2. Backend does not inspect SceneConfig to decide product behavior.
-3. Backend does not implement month-aware map policy.
-4. Backend does not decide fonts, glyph kinds, layer semantics, or layout.
-5. Backend bridges translate shared intent into backend-native calls only.
-6. Resource failure reporting is event reporting, not product fallback policy.
+### 6.5 Asset inventory is catalog-driven
 
-## Current implementation maturity
+**Boundary.** Base-map inventory is declared in a bundled catalog. The application does not scan asset directories at runtime and does not fetch a remote catalog.
 
-Stable enough for feature-forward work:
+**Rationale.** Inventory carries semantics that a directory listing cannot express: family identity, month-awareness, projection contract, attribution, licensing, and readability capabilities. Scanning would infer a weaker model from filenames and make the shipped set non-deterministic.
 
-- RenderPlan boundary.
-- Canvas backend execution.
-- top-band semantic hour-marker path.
-- SceneConfig authority.
-- curated base-map catalog.
-- static and month-aware base maps.
-- shipped Natural Earth–lineage political base map **`equirect-world-political-v1`** in the bundled catalog (non-transitional); shipped USGS public-domain–lineage geology base map **`equirect-world-geology-v1`** in the bundled catalog (non-transitional); shipped NOAA ETOPO bathymetry **`equirect-world-bathymetry-etopo-v1`** and NASA MODIS IGBP land cover **`equirect-world-landcover-modis-v1`** in the bundled catalog (non-transitional).
-- static overlays.
-- derived solar analemma overlay.
-- solar shading: a continuous, attenuation-driven solar-altitude illumination field (with civil, nautical, and astronomical thresholds retained as semantic anchors) is encoded into the same upstream planetary illumination raster as day/night; twilight is not a separate user-facing layer; composition is **non-emissive** (attenuation + atmospheric tint, not glow); the backend only executes the resulting `rasterPatch` without twilight-specific semantics.
-- **cumulative incremental twilight transition tuning** (upstream only, `illuminationShading.ts`): constants-only refinements across narrow passes—smoother Gaussian coupling between anchor colors, cooler low-luminance terminator progression, capped atmospheric tint modulation, gentler day-side fade below +4° daylight clear—still one `rasterPatch`; no persisted twilight-softness controls in this slice (second pass doc-finalized; see `PLAN.md` Slice 2).
-- perceptually tuned lunar secondary illumination: moon phase, lunar altitude, and surface incidence contribute a bounded directional night-side field (cool additive RGB in the raster plus a secondary transmittance lift on the darken mask) inside the same upstream planetary illumination raster, without backend moonlight semantics or additional render-layer kind. Presentation strength is selected by `scene.illumination.moonlight.mode` (`off`, `natural`, `enhanced`, `illustrative`), resolved into a deterministic upstream policy table before sampling; the RenderPlan stays a single `rasterPatch` and the backend remains unaware of the mode.
-- emissive night lights (human-made radiance) are **implemented** as upstream planetary composition inputs, not as a generic overlay or backend blend mode. Configuration lives under `scene.illumination.emissiveNightLights` (`mode`, durable `assetId`, and normalized `presentation` with **intensity** and **driverExponent** for user-facing tuning resolved upstream). `assetId` is canonicalized against a **bundled emissive composition catalog** (separate from the base-map catalog); unknown or blank ids resolve to the catalog default id. The Scene **Layers** UI exposes **Off / Natural / Enhanced / Illustrative** for `mode` plus intensity and faint-light lift controls; new scenes default **`illustrative`** for emissive night lights (with **`illustrative`** moonlight). When mode is not `off` and the resolved raster decodes, `sampleIlluminationRgba8` samples emissive luma per texel (with configurable luma lift), applies `computeEmissiveNightLightsContributionLinear01` (solar-altitude gate, moonlight coexistence, mode policy, presentation intensity), and adds bounded warm RGB on top of the existing twilight/moonlight field—still one planetary illumination `rasterPatch`; no separate RenderPlan primitive and no Canvas-specific night-light semantics beyond mechanical image decode for the composition input.
-- polar illumination behavior emerges from real solar geometry and seasonal axial tilt rather than special-case rendering rules.
-- map presentation controls.
-- map selector **month-aware UX** (Blue Marble catalog copy; active UTC civil month line in `BaseMapStyleControl` from render-clock `productInstantMs` when config is open—not persisted in SceneConfig).
-- map onboarding tooling.
-- **weather/cloud participation planning** ([`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md), **doc-only milestone**; queue **D** closed; **no runtime**).
-- **dynamic data lifecycle** (Phase 10 **complete** — [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md); `P10-0`…`P10-7`; runtime in `src/lifecycle/`; no user-facing dynamic overlay in Phase 10 exit).
-- derived overlay readability (**v1 + v1.1 + substrate lift + persisted `scene.overlayReadability.presentation` + default-stack `perLayer` pilots**, **milestone complete**): grid, analemma, subsolar/sublunar markers, city pins, and static equirect raster overlays (global combined veil → merged `imageBlit` cssFilter, or `perLayer` pass per defaulted row below) scale resolved draw intent upstream (no backend composition policy). v1.1 adds emissive **policy** pressure only (no emissive texture sampling in the readability frame). **Substrate-aware lift scale** derives from effective base-map presentation, **sub-1 brightness dimming** (more lift when the base is dimmed), and catalog `capabilities`: **`overlayOptimized`** / **`darkFriendly`** multiply presentation-derived penalty; **eight** optional intrinsic hints (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) add bounded neutral-presentation penalties (combined intrinsic cap in `substrateOverlayReadabilityLiftScale.ts`). **Presentation** scales the derived combined veil and substrate lift in the shell (Layers tab). **`PerLayer` entries** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) optionally apply the same veil/lift scalars again after the shell frame when non-identity. Production path: **one** `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it; layers call `getOverlayReadabilityFrameOrCompute` (fallback computes from `now` if omitted).
+**Consequence.** Adding a family is a curation step producing a catalog entry, not a file drop. Provenance and licensing have a definite home.
 
-Still future or partial:
+See [ADR 0003](docs/decisions/0003-bundled-base-map-catalog-with-durable-family-ids.md).
 
-- **Phase 8 base-map catalog:** **`equirect-world-legacy-v1`** (default reference) and static scientific substrates **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`**, **`equirect-world-bathymetry-etopo-v1`**, **`equirect-world-landcover-modis-v1`**, **`equirect-world-climate-koppen-beck-v1`**, and **`equirect-world-population-gpw-v1`** are **shipped** with committed rasters + bundled **`previewThumbnailSrc`** for every **eleven** bundled families (legacy thumb `world-equirectangular-thumb.jpg`, 800×400). **Structured attribution** (`attribution`, optional `licenseNote`, up to two `sourceLinks`) and **month-aware selector polish** (Blue Marble `shortDescription` copy; active UTC civil month line; `variantMode` on selector options; render-clock `productInstantMs` in config UI) are **shipped** in `BaseMapStyleControl` (catalog-only fields; month is not persisted in SceneConfig). **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; **Active: none pending**) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md); sequenced **`DLC-1`…`DLC-4` complete**. Phase 10 lifecycle **complete**. Queue **A (2)** **closed**; **remaining Phase 8/9** deferred unless explicitly scoped; **Slice 2 queues B/C closed**. Next dynamic / map work needs **explicit product scope**. See `PLAN.md` handoff.
-- live feeds for shipped dynamic consumers (**`DLU-*` complete**; network under durable `sourceId`s with fixture offline fallback).
-- gridded scientific datasets.
-- **extended** composition-aware overlay readability: **`perLayer` pilots beyond the defaulted six ids** when new stack rows ship; **further** substrate modeling beyond the shipped presentation + dimming + intrinsic catalog flags (`overlayOptimized`, `darkFriendly`, `reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`) and future capability axes; **still** without backend policy.
-- further dynamic overlays / weather products beyond shipped `DLC-1`…`DLC-4` (explicit scope; lifecycle plan + [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md)).
-- **further** atmospheric transition, scattering, or haze refinement beyond **cumulative shipped** twilight tuning in `illuminationShading.ts` on the same continuous field (optional future SceneConfig “twilight softness” only if product warrants it).
-- advanced blending, masking, and **additional** emissive or radiance contributors beyond the dedicated night-lights path (only if product scope justifies them; not a generic multi-pass compositor in the backend).
-- further tuning of emissive radiance encoding (true linear radiance vs display-encoded JPEG) and optional higher-resolution Black Marble variants.
-- alternate projections.
-- zoom, pan, tiling, globe view, and camera interaction.
-- broad preset system.
-- public extension/plugin model.
+---
+
+## 7. Data invariants
+
+### 7.1 No network access in the render path
+
+**Boundary.** No fetch, decode, or I/O occurs inside the animation frame, layer construction, or `RenderPlan` building.
+
+**Rationale.** A frame must be a pure function of resolved state. Latency or failure inside the paint path produces stalls, torn frames, and non-deterministic output, and makes rendering untestable.
+
+**Consequence.** Acquisition is a separate, periodic, asynchronous concern. Decoding happens during materialization. Layers read prepared views synchronously and contribute nothing when no view exists.
+
+### 7.2 Dynamic data binds to product time
+
+**Boundary.** Snapshot selection is driven by the canonical product instant, not by wall clock and not by arrival order.
+
+**Rationale.** Otherwise time-travel and demo playback would show data from the wrong moment while the rest of the frame showed the right one — reintroducing the incoherence that 3.1 exists to prevent.
+
+**Consequence.** Snapshots are versioned and carry an explicit valid time. Changing product time re-selects among cached versions and never triggers acquisition.
+
+See [ADR 0005](docs/decisions/0005-dynamic-data-acquisition-outside-the-render-path.md).
+
+### 7.3 Readability is derived, never sampled
+
+**Boundary.** Overlay legibility adjustments are computed upstream from known state — solar geometry, illumination policy, substrate presentation and declared capabilities. The rendered image is never read back to decide them.
+
+**Rationale.** Sampling the framebuffer would make presentation depend on the backend, create a feedback loop between drawing and deciding what to draw, and impose a readback cost per frame. Deriving from policy keeps the decision in the same place as the rest of product meaning, and keeps it testable without rendering.
+
+**Consequence.** Substrates declare capability hints in the catalog rather than being measured. Layers receive derived hints and adjust resolved draw intent. The backend remains unaware that readability exists.
+
+See [ADR 0007](docs/decisions/0007-overlay-readability-derived-not-sampled.md).
+
+---
+
+## 8. Configuration invariants
+
+### 8.1 One authoritative persisted document
+
+**Boundary.** `LibrationConfigV2` is the authoritative persisted application configuration. Runtime configuration views are derived from it and are never a second source of truth.
+
+**Rationale.** Two writable representations of the same state diverge.
+
+**Consequence.** All mutation flows through one commit path. Derived views are recomputed, never edited.
+
+### 8.2 Normalization is total and idempotent
+
+**Boundary.** Every persisted document is normalized: defaults backfilled, unsupported values clamped, durable ids canonicalized against their catalogs, identity-valued optional entries dropped. Normalizing a normalized document changes nothing.
+
+**Rationale.** Configuration arrives from older versions, from presets, from user edits, and from partially-written storage. Downstream code should never have to ask whether a field is present or plausible.
+
+**Consequence.** Normalization must preserve user intent wherever it is representable — it corrects, it does not overwrite. It must not reintroduce compatibility surfaces that were deliberately removed.
+
+---
+
+## 9. Platform posture
+
+Libration's application architecture is currently **browser-first**: React, TypeScript, Vite, Canvas 2D, and browser `localStorage`. A configured Tauri shell exists in the repository for desktop packaging and integration, but the application does not depend on Tauri APIs for any behaviour.
+
+This is a description of the current architecture, not a commitment about the future. Whether the shell becomes load-bearing is an open product question. Nothing in this document should be read as deprecating desktop packaging.
+
+See [ADR 0006](docs/decisions/0006-browser-first-spa-with-non-load-bearing-tauri-shell.md) and [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md#1-application-and-platform-model).
+
+---
+
+## 10. Applying these invariants
+
+When a change appears to require violating an invariant, the usual cause is that a product decision is being made at the wrong layer. The productive question is not "may I make an exception" but "where does this decision belong."
+
+Two useful checks:
+
+- **If a backend needs to know it, it is in the wrong place.** Move the decision upstream and let the backend receive a resolved primitive.
+- **If it must be persisted, persist the semantic id, not the resolved value.**
+
+Changes that genuinely alter a boundary are architecture changes. They belong in an ADR under [`docs/decisions/`](docs/decisions/), with this document updated in the same change.

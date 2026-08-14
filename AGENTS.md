@@ -1,133 +1,93 @@
 # AGENTS.md
 
-## Purpose
+Entry contract for AI coding agents working in the Libration repository.
 
-This file gives AI coding agents persistent project context for Libration.
+## What Libration is
 
-It is intentionally concise. Human-readable strategy and specification detail lives in the documentation set. Cursor-specific rules live under `.cursor/rules/`.
+A renderer-agnostic, longitude-first world time and global scene instrument. It is a precision time instrument with a composable scene system, not a generic map viewer.
 
-**Planning / discovery sessions:** after `README.md` and `ARCHITECTURE.md`, read **`PLAN.md` → “Agent session handoff (planning prompts)”** (scheduling snapshot table) and **`docs/ROADMAP.md`** phase status before recommending the next PR-sized slice. **Map substrates (shipped):** **`equirect-world-legacy-v1`** (default reference; bundled preview **closed**), **`equirect-world-topography-ne-v1`**, **`equirect-world-political-v1`**, **`equirect-world-geology-v1`**, **`equirect-world-bathymetry-etopo-v1`** (NOAA ETOPO 2022; registration test `bathymetryOnboardedAsset.test.ts`), **`equirect-world-landcover-modis-v1`** (NASA MODIS IGBP; registration test `landcoverOnboardedAsset.test.ts`), **`equirect-world-climate-koppen-beck-v1`** (Beck Köppen–Geiger present; registration test `climateNormalsOnboardedAsset.test.ts`), **`equirect-world-population-gpw-v1`** (NASA SEDAC GPWv4; registration test `populationOnboardedAsset.test.ts`); **structured selector attribution** on all eleven bundled families (`attribution`, optional `licenseNote`, `sourceLinks`; **Source & license** in `BaseMapStyleControl`); **month-aware selector polish** (Blue Marble catalog copy, `variantMode` on options, active UTC civil month line from render-clock `productInstantMs` in config UI—not SceneConfig). Legacy scene ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** → **`equirect-world-blue-marble-t-v1`**. **Scheduling:** **composition baseline closed** (Slice 2 queues **B**/**C**); **Phase 10 lifecycle complete** (`P10-0`…`P10-7`); **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination); **`DLU-*` live network acquisition complete** (`DLU-0`…`DLU-7` shipped; **Active: none pending**); **remaining Phase 8 / queue A** and **Phase 9** deferred unless explicitly scoped; queue **D** weather/cloud **planning** **shipped**. Next work needs **explicit product scope** (new `DLC-*`, Phase 8 substrate, Phase 9, or Phase 11)—paste the DLC prompt from `PLAN.md` when scoping a **new** consumer id.
+## Documentation ownership
 
-## Project identity
+One kind of truth, one owner. Read the owner; do not reconstruct its content from another document.
 
-Libration is a renderer-agnostic, longitude-first world time and global scene instrument.
+| Document | Owns |
+|----------|------|
+| [`README.md`](README.md) | What Libration is, how to run and verify it, where to read more |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Durable boundaries and invariants, with rationale |
+| [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the current code actually works |
+| [`docs/decisions/`](docs/decisions/) | Why durable choices were made |
+| [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md) | Product thesis, positioning, design principles |
+| [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative and future ideas — not approved work |
+| [`docs/maps/`](docs/maps/) | Asset provenance, licensing, curation policy |
+| [`docs/specs/scene/`](docs/specs/scene/) | Specialized subsystem contracts and planning specs |
+| [`docs/history/`](docs/history/) | Archived planning and execution records — never current truth |
 
-The product is not a generic map viewer. It is a precision time instrument with a composable scene system.
+**Reserved, not yet created.** These are modernization targets. Do not invent them, and do not create competing surfaces for what they will own:
 
-## Required reading before substantial edits
+- `docs/STATE.md` — current development state and next actionable work.
+- `docs/WORKFLOW.md` — how work items are defined, executed, and completed.
+- `docs/VISUAL_VERIFICATION.md` — how visual changes are verified against the running application.
+- `docs/ROADMAP.md` currently holds transitional pre-modernization content and will be rewritten.
 
-Before making architectural or multi-file edits, read:
+## Required reading by task type
 
-- `README.md`
-- `ARCHITECTURE.md`
-- `PLAN.md`
-- `docs/DEVELOPMENT_STRATEGY.md`
-- `docs/ROADMAP.md`
-- `docs/PROJECT_STRATEGY.md`
-- `docs/FUTURE_FEATURES.md`
-- relevant source files in `src/`
+Always: `README.md` and `ARCHITECTURE.md`.
 
-For map or scene work, also read:
+| Task | Also read |
+|------|-----------|
+| Any code change | `docs/IMPLEMENTATION.md` for the affected subsystem |
+| Rendering, chrome, or layout | `docs/IMPLEMENTATION.md` §4–5, ADRs 0001 and 0002 |
+| Scene, layers, base maps | `docs/IMPLEMENTATION.md` §6 and §10, `docs/maps/` |
+| Time or display modes | `docs/IMPLEMENTATION.md` §8, ADR 0004 |
+| Configuration or persistence | `docs/IMPLEMENTATION.md` §7 |
+| Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`, ADR 0005 |
+| Product direction | `docs/PROJECT_STRATEGY.md` |
 
-- `docs/maps/MAP_ASSET_STRATEGY.md`
-- `docs/maps/MAP_ASSET_SOURCES.md`
+Read the source before editing it. Documentation describes the system; the source is the system.
 
 ## Non-negotiable architecture rules
 
-1. Product semantics must be resolved upstream of rendering.
-2. `RenderPlan` is the hard rendering boundary.
-3. Backends execute resolved primitives only.
-4. Backends must not inspect config to decide product behavior.
-5. SceneConfig is authoritative for scene content.
-6. Chrome is screen-space and separate from scene layers.
-7. Projection defines spatial truth.
-8. Base maps are substrates, not positional truth.
-9. Persist durable semantic ids, not derived runtime paths.
-10. Keep code phase-scoped and testable.
+These are stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md). In short:
 
-## Time model rules
+1. Product semantics resolve upstream of rendering.
+2. `RenderPlan` is the hard rendering boundary; backends execute resolved primitives only.
+3. Backends must not inspect configuration to decide product behaviour.
+4. `SceneConfig` is authoritative for scene content.
+5. Chrome is screen-space and reserves layout before the scene viewport.
+6. Projection defines spatial truth; base maps are substrates.
+7. One canonical UTC instant per frame; display modes format, never mutate.
+8. Persist durable semantic ids, never resolved paths or URLs.
+9. No network access in the render path.
+10. Illumination composes upstream into one `rasterPatch`.
 
-- There is one authoritative UTC instant per frame.
-- Display modes format or project time presentation.
-- Display modes must not mutate the canonical instant.
-- Reference city or civil zone selection changes presentation, not the underlying clock.
-- Demo mode is the intentional exception when configured.
+## How to operate
 
-## Scene and map rules
+- **Stay in scope.** Implement the task that was asked for. Do not broaden into adjacent refactors because the code is nearby.
+- **Change the smallest responsible boundary.** When fixing a bug, identify the root cause and state which boundary the fix belongs to.
+- **Test behaviour changes.** Add or adjust tests at the boundary that changed — normalization, resolver, plan builder, layer, lifecycle. Never weaken an assertion to make a suite pass.
+- **Update the owning document** when behaviour or architecture changes, in the same change. Update only the document that owns the changed truth.
+- **Report honestly.** Files changed, what changed, why, tests run, tests not run and why, risks and follow-ups. Do not claim tests passed unless you ran them. A summary that says "complete" without test evidence is incomplete.
 
-- Persist `scene.baseMap.id` as a family id.
-- Do not persist concrete month raster paths.
-- Do not add map families by TypeScript source edits when catalog onboarding is appropriate.
-- Use `npm run maps:prep -- --update-catalog` for curated source TIFF onboarding.
-- Do not runtime-scan `public/maps`.
-- Month-aware behavior must be explicit in the catalog.
-- Product time drives month-aware base-map resolution.
-- Backend raster load failure reporting is allowed, but fallback policy belongs upstream.
-- **Map selector attribution:** catalog-only `attribution`, optional `licenseNote`, and `sourceLinks` (not persisted in SceneConfig); **Source & license** block in `BaseMapStyleControl`. **`maps:prep`** still emits primary `attribution` only—add `licenseNote` / `sourceLinks` manually or extend tooling when onboarding families.
-- **Planetary illumination (twilight):** continuous non-emissive twilight in one upstream `rasterPatch`; **shipped cumulative incremental transition tuning** (constants-only, narrow passes; **second** and **third** passes doc-finalized—see `PLAN.md` Slice 2 / `docs/ROADMAP.md` Phase 7) lives in `src/renderer/illuminationShading.ts` (no SceneConfig axis in that slice). **Queue C default cadence closed**—fourth+ constants passes reopen only with explicit product scope; deeper atmosphere/scattering and optional persisted “twilight softness” remain future when product-scoped (`PLAN.md` Slice 2).
-- **Overlay readability stack (v1 + v1.1 + derived substrate lift + persisted `scene.overlayReadability.presentation` + six default-stack `perLayer` pilots):** derived upstream (RenderPlan hints + merged `cssFilter` where applicable); the shell attaches one `OverlayReadabilityFrame` per tick on `TimeContext` with subsolar veil, emissive **policy**, **substrate lift scale** (`substrateOverlayReadabilityLiftScale01` from effective base-map presentation + catalog `capabilities`, including optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** intrinsic hints and **sub-1 brightness** dimming), then applies normalized presentation (`readabilityVeilScale01`, `overlayLiftMultiplier01`) before hints. **`perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`) optionally repeat those scalars per row (identity omitted on normalize). **Shipped substrate catalog contract:** **eight** optional intrinsics through **`sunGlintDense`**—**queue B default cadence closed** (see `PLAN.md` Slice 2). **Future (explicit scope only):** readability keys for stack rows beyond those defaults; ninth+ intrinsics only when product-scoped—not standing default PRs.
-- **Dynamic data lifecycle (Phase 10 — complete):** [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](docs/specs/scene/dynamic-data-lifecycle-plan.md) — `P10-0`…`P10-7` **shipped**; runtime in `src/lifecycle/`; three snapshot kinds; in-app periodic acquisition; product-time binding; shell seam. **`DLC-1` shipped:** Model B `globalCloudsIr` / `global-clouds-ir-v1` (live NASA GIBS JPEG via **`DLU-5`** + fixture offline fallback + equirect materializer; no fetch in render). **`DLC-2` shipped:** Model B `earthquakes` / `usgs-earthquakes-v1` (live USGS GeoJSON via **`DLU-3`** + fixture offline fallback + point-features materializer; no fetch in render). **`DLC-3` shipped:** Model B `orbitalTracks` / `iss-orbital-track-v1` (live CelesTrak TLE→SGP4 via **`DLU-4`** + fixture offline fallback + tracks materializer; no fetch in render). **`DLC-4` shipped:** Model A `scene.illumination.cloudParticipation` (same live `global-clouds-ir-v1` opacity field via **`DLU-5`/`DLU-6`** → one illumination `rasterPatch`; no fetch in render). **Weather/cloud participation planning:** [`docs/specs/scene/weather-cloud-composition-plan.md`](docs/specs/scene/weather-cloud-composition-plan.md). Sequenced **`DLC-1`…`DLC-4` complete**. **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; **Active: none pending**); further *new* consumers need explicit scope; not Phase 8/9 filler.
+## When to stop rather than invent
 
-## Cursor and ChatGPT workflow rules
+Stop and ask for direction when:
 
-For large changes:
+- the correct architectural boundary is unclear;
+- a change would affect persisted user configuration;
+- a backend change appears to need product knowledge;
+- a test failure reveals documentation and source disagreeing;
+- two sources of truth appear to exist;
+- the work requires a new model rather than a patch;
+- there is no explicitly scoped task and you would have to choose one.
 
-1. Start with an implementation intent.
-2. Keep phases narrow.
-3. Identify files likely to change.
-4. State success criteria.
-5. Require tests.
-6. Require a final changed-files summary.
-7. Avoid broad opportunistic refactors.
+The last case matters. Absence of an assigned task is not an invitation to generate plausible work. Ask.
 
-For bug fixes:
+## Anti-patterns
 
-1. State root cause.
-2. Patch the smallest responsible boundary.
-3. Add or adjust regression tests.
-4. Avoid papering over architectural mismatches.
-
-## Test expectations
-
-Run the narrowest meaningful tests first, then broader tests when the change is architectural.
-
-Common commands:
-
-```bash
-npm test
-npm run test
-npm run build
-npm run maps:prep -- --help
-npm run fonts:prep
-```
-
-Use the commands that actually exist in `package.json`.
-
-## Documentation expectations
-
-When behavior changes, update docs in the same change.
-
-Update:
-
-- `README.md` when public capability bullets change.
-- `PLAN.md` for current execution direction.
-- `ARCHITECTURE.md` for durable architecture changes.
-- `docs/ROADMAP.md` for phase status.
-- `docs/FUTURE_FEATURES.md` when preserving or adding future ideas.
-- `docs/PROJECT_STRATEGY.md` and `docs/AI_COENGINEERING.md` when shipped scope or strategy summaries change.
-- map docs when onboarding or changing asset workflows or **base-map `capabilities` consumed upstream** (`docs/maps/MAP_ASSET_SOURCES.md`, `docs/maps/MAP_ASSET_STRATEGY.md`).
-
-Do not create sprawling speculative spec files unless they provide durable architectural value.
-
-## Output expectations for AI edits
-
-Report:
-
-- files changed.
-- what changed.
-- why it changed.
-- tests run.
-- tests not run and why.
-- risks or follow-up work.
-
-Do not claim tests passed unless they were actually run.
+- Redesigning a subsystem while implementing a feature in it.
+- Adding a configuration field while continuing to derive behaviour from the old one.
+- Making a backend decide anything about product meaning.
+- Fetching, decoding, or doing I/O inside the render path.
+- Repeating another document's facts "for convenience" — link instead.
+- Treating archived history as current state.
+- Using chat history as project memory. Decisions belong in the repository.

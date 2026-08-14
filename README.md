@@ -1,146 +1,85 @@
 # Libration
 
-Libration is a local-first, renderer-agnostic world time instrument.
+Libration is a longitude-first world time instrument.
 
-It is a canonical reference implementation of a longitude-first global time visualization system. The product treats the world as a continuous 360 degree spatial structure, resolves one authoritative UTC instant per frame, and presents civil time through a selected reference frame without making political time zones the structural basis of the display.
+It treats the world as a continuous 360° spatial structure rather than a set of political zones: one authoritative UTC instant is resolved per frame, the globe is presented as an equirectangular strip, and civil time is read against that strip through a selected reference frame. Political time zones are shown, but they are not the structural basis of the display.
 
 ![Libration application screenshot](docs/images/libration-overview1.png)
 ![Libration application screenshot](docs/images/libration-overview2.png)
 ![Libration application screenshot](docs/images/libration-overview3.png)
 
-## What Libration is
+## What it does
 
-Libration is a precision-rendered desktop application for visualizing world time, map context, and future global scene layers.
+The window is a single canvas with two parts.
 
-Core product traits:
+**Screen-space chrome** across the top is the instrument: 24 fixed 15° structural longitude columns, a NATO structural-zone letter row, a tick tape, and a row of circular hour markers that slides continuously with civil time against an anchored read point. A readout runs along the bottom.
 
-- Longitude-first structural model with 24 fixed 15 degree sectors.
-- One authoritative UTC instant per frame.
-- Reference-frame presentation for user-facing civil time.
-- Screen-space display chrome separated from projection-space scene content.
-- Renderer-agnostic `RenderPlan` pipeline.
-- Curated, projection-valid map assets.
-- SceneConfig-driven base map and layer composition.
-- AGPL-3.0 user-freedom licensing.
+**Projection-space scene** below it is the world: a selectable base map with eleven curated substrate families — natural-colour, topographic, political, geological, bathymetric, land cover, climate, population — three of them month-aware, plus overlays for a graticule, city pins, the solar analemma, and subsolar and sublunar markers.
 
-Libration is independently developed and is not affiliated with any existing commercial time-map product.
+Over all of it sits **planetary illumination**: day and night, continuous twilight with atmospheric tint, moonlight varying with lunar phase and altitude, and emissive human-made night lights, all composed upstream into a single raster. Polar behaviour follows real solar geometry, so midnight sun and polar night simply happen.
 
-## Current capabilities
+Three **live data feeds** can be enabled — cloud and infrared imagery, earthquakes, and the ISS ground track — each with an offline fixture fallback, and none of them touching the render path.
 
-Current implemented areas include:
+Configuration is a six-tab panel toggled with the `C` key, persisted to browser storage as you change it.
 
-- Tauri, React, TypeScript, Vite desktop app.
-- Structured `LibrationConfigV2` persistence and normalization.
-- Top-band display chrome with hour markers, tickmark tape, and NATO structural zone row.
-- Structured hour-marker configuration under `chrome.layout.hourMarkers`.
-- Text and procedural hour-marker realizations.
-- Bundled font asset registry and Canvas font realization.
-- Renderer-neutral `RenderPlan` primitives for text, rects, lines, paths, gradients, image blits, and raster patches.
-- Canvas backend execution through bridge modules.
-- SceneConfig-driven map scene.
-- File-backed curated base-map catalog (optional **`capabilities`** for upstream overlay lift: **eight shipped** intrinsic hints **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**, plus presentation multipliers **`overlayOptimized`** / **`darkFriendly`**).
-- Categorized base-map selector UI with grouped substrate families and per-family **Source & license** attribution (catalog `attribution`, optional `licenseNote`, up to two `sourceLinks`).
-- Default reference legacy world substrate (**`equirect-world-legacy-v1`**, bundled preview thumbnail; main raster `world-equirectangular.jpg`).
-- Static and month-aware base-map families.
-- Validated static global shaded-relief topography substrate (**`equirect-world-topography-ne-v1`**, Natural Earth–lineage raster in the bundled catalog with bundled preview thumbnail; historical ids **`equirect-world-topography-v1`** / **`equirect-world-topo-v1`** remain resolver aliases for the month-aware Blue Marble **T** family).
-- Natural Earth–lineage political/reference substrate (**`equirect-world-political-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
-- USGS public-domain geology / geologic provinces substrate (**`equirect-world-geology-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
-- NOAA NCEI ETOPO 2022–lineage global bathymetry / relief substrate (**`equirect-world-bathymetry-etopo-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder; not for navigation).
-- NASA MODIS IGBP global land cover / vegetation classification substrate (**`equirect-world-landcover-modis-v1`**, shipped raster in the bundled catalog with attribution and preview thumbnail; not a transitional placeholder).
-- NASA SEDAC GPWv4 global population density substrate (**`equirect-world-population-gpw-v1`**, shipped raster in the bundled catalog with CC BY 4.0 attribution and preview thumbnail; not a transitional placeholder).
-- Beck et al. (2018) present-day Köppen–Geiger climate zones substrate (**`equirect-world-climate-koppen-beck-v1`**, shipped raster in the bundled catalog with CC BY 4.0 attribution and preview thumbnail; not a transitional placeholder).
-- Per-family base-map presentation controls for brightness, contrast, gamma, and saturation.
-- Shared family-level presentation persistence across seasonal/month-aware raster variants.
-- Map preview and **Source & license** attribution block for selected base-map families (catalog `attribution`, optional `licenseNote`, and up to two `sourceLinks`).
-- Month-aware base-map selector copy and **active UTC civil month** indication for Blue Marble families (follows instrument time via render clock; not stored in SceneConfig).
-- Static and derived scene overlays.
-- Solar analemma ground-track overlay.
-- Coherent **upstream planetary illumination** subsystem: SceneConfig-resolved policy composes solar day/night, twilight, moonlight, and emissive inputs into **one** `rasterPatch` for the Solar shading path (no backend-side composition branching).
-- Solar day/night shading on the “Solar shading” layer, implemented as a continuous, attenuation-driven solar-altitude illumination field using civil/nautical/astronomical thresholds as semantic anchors.
-- Twilight composition integrated directly into the same upstream planetary illumination raster as day/night (not a separate user-facing twilight layer).
-- Upstream twilight field: **shipped** cumulative incremental transition tuning in `src/renderer/illuminationShading.ts` (smoother anchor coupling, cooler terminator progression, gentler day-side atmospheric envelope; **second** and **third** narrow constants-only passes doc-finalized in `PLAN.md` / `docs/ROADMAP.md`; still one `rasterPatch`; non-emissive only).
-- Non-emissive twilight behavior: atmospheric tint and attenuation modulate substrate visibility rather than adding artificial glow.
-- Perceptually tuned lunar secondary illumination in the same upstream planetary illumination raster: moon phase, lunar altitude, and surface incidence gate a bounded cool additive field plus a secondary transmittance lift on the night mask, giving a broad directional moonlit read near high lunar incidence while daylight/early twilight stay strongly suppressed and new moon / moon-below-horizon stay effectively unchanged.
-- Emissive night lights (NASA Black Marble–based composition raster) sampled upstream into that same planetary illumination raster, with presentation modes **Off / Natural / Enhanced / Illustrative** under Scene layers (default **Illustrative** alongside default **Illustrative** moonlight); durable `assetId` is catalog-backed and not surfaced as a base-map family. Layers also expose **intensity** and **faint-light lift** (driver exponent) tuning under `scene.illumination.emissiveNightLights.presentation`, persisted with the scene.
-- Polar illumination behavior derived from real seasonal solar geometry and Earth axial tilt.
-- **Derived overlay readability (v1 + v1.1 + substrate lift + persisted SceneConfig presentation + six default-stack `perLayer` pilots, production-complete):** lat/lon grid, solar analemma, subsolar/sublunar markers, and reference/custom **city pins** use `OverlayReadabilityHints` / per-pin `readabilityNightVeil01` from `OverlayReadabilityFrame` (subsolar night veil; **v1.1** folds emissive **policy** from `scene.illumination.emissiveNightLights` into `readabilityVeil01At` / `globalReadabilityVeil01`; no emissive texture sampling). **Substrate lift:** `substrateOverlayReadabilityLiftScale01` (0.35–1) from **effective** base-map presentation + catalog `capabilities`, computed in the shell each tick—attenuates merged `cssFilter` and vector stroke/alpha lift when the base map is already visually strong (no base-map pixel sampling); **below-default brightness** preserves more lift on dimmed bases; optional catalog **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`** apply small neutral-presentation attenuation for relief-rich, linework-dense, strong thematic-hue, shaded-bathymetry, fine-scale sensor/photographic texture, dense cartographic typography, directional etched/scribed shaded-relief art, or dense open-ocean sun glint in natural-color imagery. **Scene presentation (persisted):** `scene.overlayReadability.presentation.readabilityVeilScale01` (0–1.5) and `overlayLiftMultiplier01` (0.65–1.35), defaults 1, normalize with the scene; Layers exposes sliders + reset. **`PerLayer` tuning:** `scene.overlayReadability.perLayer` keys **`grid`**, **`solarAnalemma`**, **`subsolarMarker`**, **`sublunarMarker`**, **`cityPins`**, and **`staticEquirectOverlay`** repeat the same veil/lift scalars for those stack rows only after the global presentation (Layers exposes pilot controls + reset per row; identity-only subtrees omitted on normalize). **Static equirect raster overlays** use the global combined veil + lift scale unless a static-equirect pilot is set; `buildBaseRasterMapRenderPlan` merges presentation `cssFilter` with the readability fragment. **One** `OverlayReadabilityFrame` per tick on `TimeContext`; layers use `getOverlayReadabilityFrameOrCompute` (fallback without a shell frame remains subsolar-only for policy/substrate/presentation—production attaches the frame).
-- Canvas backend execution remains renderer-agnostic and only consumes the resulting `rasterPatch`.
-- Runtime base-map image load failure fallback.
-- **Dynamic data lifecycle (Phase 10 complete) + `DLC-1`…`DLC-4` consumers + `DLU-*` live acquisition (complete):** process-local lifecycle host (store / manager / resolver / acquisition / equirect + cloud-opacity + point-features + tracks materializers); SceneConfig rows `globalCloudsIr` (`global-clouds-ir-v1`), `earthquakes` (`usgs-earthquakes-v1`), and `orbitalTracks` (`iss-orbital-track-v1`); Model A `scene.illumination.cloudParticipation` modulates the planetary illumination raster from the same clouds/IR opacity field; Layers toggles / illumination controls; live USGS / CelesTrak ISS / NASA GIBS clouds/IR + Model A on the same opacity field (`DLU-0`…`DLU-7` shipped; fixture offline fallback when live HTTP fails); layers and illumination read sync-prepared views only (no fetch in render).
+## Platform posture
 
-## Architecture in one sentence
+Libration currently runs as a **browser-first single-page application**: React, TypeScript, Vite, Canvas 2D, and browser `localStorage`.
 
-Libration resolves product meaning upstream through configuration, resolvers, semantic planners, layout, and realization adapters, then emits backend-neutral render plans that the backend executes mechanically.
+A configured **Tauri 2 shell is present** in `src-tauri/` for desktop packaging and integration, but it is **not currently load-bearing** — no application code imports Tauri APIs, and the application behaves identically in a plain browser. Whether the shell becomes load-bearing is an open question, not a settled one. See [ADR 0006](docs/decisions/0006-browser-first-spa-with-non-load-bearing-tauri-shell.md).
 
-```mermaid
-flowchart LR
-    CFG[Config and Time Context] --> RES[Resolvers]
-    RES --> SEM[Semantic Planning]
-    SEM --> LAY[Layout]
-    LAY --> ADA[Adapters]
-    ADA --> RP[RenderPlan]
-    RP --> EX[Executor]
-    EX --> BE[Backend]
-```
+The application works fully offline. Maps, fonts, and fallback data are bundled.
 
-## Documentation map
-
-Start here:
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) - stable system architecture.
-- [PLAN.md](PLAN.md) - current phase, immediate priorities, and next execution slices.
-- [AGENTS.md](AGENTS.md) - persistent AI co-engineering rules for ChatGPT and Cursor.
-- [docs/PROJECT_STRATEGY.md](docs/PROJECT_STRATEGY.md) - product and project strategy.
-- [docs/DEVELOPMENT_STRATEGY.md](docs/DEVELOPMENT_STRATEGY.md) - implementation criteria and engineering rules.
-- [docs/ROADMAP.md](docs/ROADMAP.md) - completed and planned phases.
-- [docs/FUTURE_FEATURES.md](docs/FUTURE_FEATURES.md) - retained feature backlog.
-- [docs/AI_COENGINEERING.md](docs/AI_COENGINEERING.md) - how this project uses ChatGPT and Cursor.
-- [docs/maps/MAP_ASSET_STRATEGY.md](docs/maps/MAP_ASSET_STRATEGY.md) - map sourcing, onboarding strategy, and catalog **`capabilities`** roles (including overlay-readability hints).
-- [docs/maps/MAP_ASSET_SOURCES.md](docs/maps/MAP_ASSET_SOURCES.md) - map source inventory and base-map **capabilities** notes (including overlay-readability catalog hints).
-- [docs/specs/scene/dynamic-data-lifecycle-plan.md](docs/specs/scene/dynamic-data-lifecycle-plan.md) - **Phase 10 complete** dynamic data lifecycle contracts + `DLC-*` consumer tracker + **`DLU-*` live acquisition complete** (lifecycle shipped in `src/lifecycle/`; **`DLC-1`**…**`DLC-4`** shipped; **`DLU-0`…`DLU-7` shipped**; **Active: none pending**).
-- [docs/specs/scene/weather-cloud-composition-plan.md](docs/specs/scene/weather-cloud-composition-plan.md) - **shipped** planning spec for weather/cloud participation boundaries (consumers via `DLC-*`; live feeds via `DLU-*`).
-
-Note:
-
-- The prior large spec archive was intentionally retired during documentation consolidation.
-- Durable architecture intent now lives primarily in `ARCHITECTURE.md`, `PLAN.md`, the roadmap, and the focused strategy documents.
-- **AI planning / discovery sessions:** after the docs above, read **`PLAN.md` → “Agent session handoff”** and **`docs/specs/scene/dynamic-data-lifecycle-plan.md`**. Sequenced post–Phase 10 **`DLC-1`…`DLC-4` complete**. **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; **Active: none pending**). Next work needs **explicit product scope** (new `DLC-*`, Phase 8 substrate, Phase 9, or Phase 11). Phase 10 lifecycle (`P10-0`…`P10-7`) is **complete**. **Composition baseline closed** (queues **B**/**C**). **Remaining Phase 8/9** deferred unless explicitly scoped. Weather/cloud **participation planning** shipped; Model A/B cloud **layers** shipped via `DLC-1`/`DLC-4`; live feeds via `DLU-*`.
-- New specs should only be reintroduced when they provide durable contract value rather than duplicating implementation detail.
-
-## Development
-
-Install dependencies:
+## Running it
 
 ```bash
 npm install
-```
-
-Run the app:
-
-```bash
 npm run dev
 ```
 
-Run tests:
+The dev server runs at **http://localhost:1420** on a fixed port. Open it in a browser; no Rust toolchain is needed.
+
+Press `C` to open the configuration panel, `Escape` to close it.
+
+## Verifying it
 
 ```bash
-npm test
+npm test           # Vitest suite
+npm run build      # tsc type-check, then production build
 ```
 
-Prepare map assets:
+Tests are colocated with the modules they cover. Because rendering intent is a declarative `RenderPlan`, most visual geometry is verified at plan level rather than against pixels.
+
+## Asset tooling
 
 ```bash
-npm run maps:prep -- --help
+npm run maps:prep -- --help    # onboard a curated base-map family
+npm run fonts:prep             # regenerate the bundled font manifest
 ```
 
-Prepare font assets:
+## Documentation
 
-```bash
-npm run fonts:prep
-```
+| Document | Owns |
+|----------|------|
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Durable boundaries and invariants |
+| [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | How the current code actually works |
+| [`docs/decisions/`](docs/decisions/) | Why the durable choices were made |
+| [`docs/PROJECT_STRATEGY.md`](docs/PROJECT_STRATEGY.md) | Product thesis and design principles |
+| [`docs/FUTURE_FEATURES.md`](docs/FUTURE_FEATURES.md) | Speculative and future ideas |
+| [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md) | Asset provenance, licensing, processing |
+| [`docs/maps/MAP_ASSET_STRATEGY.md`](docs/maps/MAP_ASSET_STRATEGY.md) | Map curation and onboarding policy |
+| [`docs/specs/scene/dynamic-data-lifecycle.md`](docs/specs/scene/dynamic-data-lifecycle.md) | Dynamic-data contract |
+| [`AGENTS.md`](AGENTS.md) | Entry contract for AI coding agents |
+| [`docs/history/`](docs/history/) | Archived planning and execution records |
+
+Reading order for someone new: this file, then `ARCHITECTURE.md`, then `docs/IMPLEMENTATION.md`.
+
+Documentation modernization is in progress. `docs/STATE.md` (current development state), `docs/ROADMAP.md` in its rewritten form, `docs/WORKFLOW.md`, and `docs/VISUAL_VERIFICATION.md` are reserved and not yet created; `docs/ROADMAP.md` currently holds transitional pre-modernization content.
 
 ## Licensing
 
-Libration is licensed under the GNU Affero General Public License v3.0.
+Libration is licensed under the **GNU Affero General Public License v3.0**.
 
 The AGPL preserves the freedom to inspect, study, modify, share, and benefit from improvements to the software, including when the software is used over a network.
+
+Libration is independently developed and is not affiliated with any existing commercial time-map product.

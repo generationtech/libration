@@ -1,10 +1,12 @@
 # Weather and cloud participation — planning spec
 
-## Status
+## What this document is
 
-**Planning artifact (Slice 2 queue D) — shipped; doc-finalized.** Boundaries for weather/cloud **participation** (Models A/B/C). Lifecycle foundation is Phase 10 ([`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md), steps `P10-*`). User-facing weather/cloud **layers** are **`DLC-*`** (first bias: global equirect clouds/IR; Phase 10 lifecycle **complete**; **`DLC-1`/`DLC-4` shipped**). Live network acquisition for those consumers is **`DLU-*`**. This doc does **not** authorize skipping lifecycle contracts.
+A **planning-only** specification. It defines where weather and cloud data may sit architecturally, and what must be true before any weather product is implemented. It is not a record of what exists.
 
-**Authoritative scheduling:** [`PLAN.md`](../../../PLAN.md), [`dynamic-data-lifecycle-plan.md`](dynamic-data-lifecycle-plan.md) (`P10-*` / `DLC-*` / **`DLU-*`**), [`docs/ROADMAP.md`](../../ROADMAP.md).
+Cloud data already participates in the scene in two of the roles described below; what is currently implemented is documented in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md) and the lifecycle contract is in [`dynamic-data-lifecycle.md`](dynamic-data-lifecycle.md). This document remains useful for the weather products that do **not** yet exist — radar, precipitation, wind, pressure — because the architectural questions it answers apply to each of them.
+
+This document does not authorize skipping the lifecycle contract, and it does not schedule anything.
 
 ## Purpose
 
@@ -13,8 +15,8 @@ Libration is a precision time instrument with **upstream planetary illumination 
 This spec answers:
 
 1. Where weather/cloud semantics **may** live relative to SceneConfig, resolvers, composition, layers, and backends.
-2. What **must** ship before implementation (Phase 10 lifecycle).
-3. What this planning slice **explicitly excludes**.
+2. What **must** be true before implementation.
+3. What is **explicitly excluded**.
 
 ## Architectural anchors (non-negotiable)
 
@@ -26,8 +28,8 @@ From [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and project rules:
 | SceneConfig is authoritative for scene content | Future enablement uses **durable semantic ids** and normalized scene subtrees—not ad hoc URLs or backend flags. |
 | Composition policy is upstream | Attenuation, tint, and radiance participation are resolved before `RenderPlan`; backends execute primitives only. |
 | No generalized compositor in the backend | No multi-pass Canvas compositor; no backend-owned weather policy. |
-| Layers must not fetch during render | Acquisition, cache, stale/error, and versioned snapshots belong in **Phase 10 lifecycle**, prepared before layer state / RenderPlan build. |
-| Base maps are substrates, not positional truth | Weather/cloud are **not** base-map families unless product explicitly scopes a static climatology **substrate** (Phase 8 pattern)—distinct from live or forecast **participation**. |
+| Layers must not fetch during render | Acquisition, cache, stale/error, and versioned snapshots belong in the **dynamic data lifecycle**, prepared before layer state / RenderPlan build. |
+| Base maps are substrates, not positional truth | Weather/cloud are **not** base-map families unless product explicitly scopes a static climatology **substrate**—distinct from live or forecast **participation**. |
 
 ## Participation models (future; choose per product slice)
 
@@ -67,20 +69,20 @@ Weather and cloud can appear in more than one architectural role. Implementation
 - Uses existing overlay-readability catalog hints where curated (`fineScaleTexture`, etc.).
 - **Out of scope** for live/forecast participation; no lifecycle required beyond static asset validation.
 
-**Distinction:** Model C is Phase 8 queue **A**; Models A and B depend on Phase 10.
+**Distinction:** Model C is map curation. Models A and B depend on the dynamic data lifecycle.
 
 ## Prerequisites (hard dependencies)
 
-Implementation PRs for live or forecast weather/cloud (Models A and B) **must not** start until:
+Implementation of live or forecast weather/cloud (Models A and B) depends on:
 
-### 1. Phase 10 — Dynamic layer lifecycle foundation
+### 1. The dynamic data lifecycle
 
-[`PLAN.md`](../../../PLAN.md) Slice 5 / [`docs/ROADMAP.md`](../../ROADMAP.md) Phase 10 deliver at minimum:
+Contract in [`dynamic-data-lifecycle.md`](dynamic-data-lifecycle.md). At minimum it must provide:
 
-- Lifecycle manager and acquisition modes (manual import, scheduled refresh, or other product-defined modes).
-- Cache policies and **versioned state snapshots** bound to product time (and playback head when applicable).
-- Loading, stale, and error surfaces **upstream** of render execution.
-- Playback and scrubbed-time readiness so time scrub does not trigger fetch-in-render.
+- a lifecycle manager and acquisition modes (manual import, scheduled refresh, or other product-defined modes);
+- cache policies and **versioned snapshots** bound to product time;
+- loading, stale, and error surfaces **upstream** of render execution;
+- readiness for scrubbed and simulated time, so moving time does not trigger a fetch in render.
 
 ### 2. Data contract for prepared snapshots
 
@@ -96,16 +98,15 @@ Before coding composition or layers, define per product slice:
 
 When implementation opens, add **narrow** normalized subtrees—for example under `scene.layers[]` for Model B or `scene.illumination.*` for Model A—via explicit schema migration tests. Do not infer behavior from chrome or display-mode fields.
 
-## Sequencing (recommended implementation order)
+## Sequencing (recommended shape for any weather product)
 
-After this planning doc and Phase 10 foundations:
+Once the lifecycle prerequisites hold, a new weather product should proceed as:
 
-1. **Lifecycle MVP** — snapshot attach, stale/error, no network in render loop.
-2. **One bounded layer or composition vertical** — e.g. single global cloud-opacity field **or** one radar layer family—not both in one PR.
-3. **Overlay readability pass** — only if visual conflict with default stack is demonstrated.
-4. **Additional products** — precipitation, wind, etc., each as catalog/lifecycle + layer or composition slice.
+1. **One bounded vertical** — a single layer family **or** a single composition contribution, not both in one change.
+2. **Overlay readability pass** — only if visual conflict with the default stack is actually demonstrated.
+3. **Additional products** — precipitation, wind, and so on, each as its own catalog, lifecycle, and layer-or-composition slice.
 
-**Phase 10 lifecycle complete.** **`DLC-1`…`DLC-4` shipped** (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination participation). **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; Model A consumes the live clouds opacity field). Additional *new* `DLC-*` consumers require explicit scope. Remaining Phase 8 queue **A** deferred unless explicitly scoped.
+Each new product is a product decision requiring explicit scope. The existence of a working seam is not scope.
 
 ## Relationship to existing subsystems
 
@@ -119,15 +120,14 @@ After this planning doc and Phase 10 foundations:
 
 ## Explicit non-goals (this planning slice and immediate follow-ons)
 
-Do **not** implement as part of queue **D** or the first weather/cloud code PR without reopening planning:
+Do **not** implement any of the following as part of a first weather/cloud change without reopening planning:
 
-- SceneConfig keys for weather/cloud in this doc-only PR.
 - Backend composition policy or Canvas-specific weather blending.
-- Generalized multi-pass compositor abstraction.
+- A generalized multi-pass compositor abstraction.
 - Live HTTP fetch during `requestAnimationFrame`, layer constructors, or RenderPlan build.
-- Public plugin or third-party feed registry.
-- Radar/temperature/wind **families** bundled without lifecycle and rights review.
-- Replacing or re-deriving baseline twilight, moonlight, emissive, or eight-intrinsic substrate readability.
+- A public plugin or third-party feed registry.
+- Radar, temperature, or wind **families** bundled without lifecycle and rights review.
+- Replacing or re-deriving the existing twilight, moonlight, emissive, or substrate-readability models.
 
 ## Candidate future products (backlog pointer)
 
@@ -138,11 +138,11 @@ Retained in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md) — dynamic la
 - Product semantics resolved upstream; tests at resolver, composition, layer-state, or RenderPlan builder boundaries.
 - Canonical UTC instant unchanged by display formatting; weather validity documented relative to product instant.
 - Backend tests prove absence of SceneConfig inspection for weather behavior.
-- Docs updated per [`.cursor/rules/050-docs-and-roadmap.mdc`](../../../.cursor/rules/050-docs-and-roadmap.mdc).
+- Documentation updated in the document that owns the changed truth, per [`AGENTS.md`](../../../AGENTS.md).
 
 ## References
 
-- [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) — Planetary illumination composition; layer engine; renderer invariants.
-- [`PLAN.md`](../../../PLAN.md) — Slice 2 (composition program), Slice 5 (lifecycle), handoff queue **D**.
-- [`docs/ROADMAP.md`](../../ROADMAP.md) — Phases 6, 9, 10.
-- [`docs/AI_COENGINEERING.md`](../../AI_COENGINEERING.md) — anti-pattern: live weather inside render.
+- [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) — illumination composition, layer engine, renderer invariants.
+- [`dynamic-data-lifecycle.md`](dynamic-data-lifecycle.md) — the contract any live weather product must satisfy.
+- [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md) — what the scene and illumination subsystems currently do.
+- [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md) — candidate weather products.

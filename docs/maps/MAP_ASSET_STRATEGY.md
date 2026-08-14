@@ -73,7 +73,7 @@ Rules (aligned with base maps):
 - persist **durable semantic family ids** only (no concrete month paths or ad hoc URLs in config).
 - satisfy the same equirectangular world contract as base maps until projection support expands.
 - resolve through a **bundled catalog** (`src/assets/composition/emissive-composition-catalog.json` for emissive inputs), not runtime directory scans.
-- non-emissive twilight and day/night sampling are upstream **constants-only** tuning in `illuminationShading.ts` (cumulative narrow passes; see `PLAN.md`), not additional catalog rasters.
+- non-emissive twilight and day/night sampling are upstream **constants-only** tuning in `illuminationShading.ts`, not additional catalog rasters.
 
 Emissive night-light families are **not** exposed as selectable base maps; they are sampled inside the planetary illumination pipeline and emitted through the same single illumination `rasterPatch` contract as solar and lunar composition. The first validated ship asset is **NASA Black Marble 2016** (1° grayscale JPEG) at `public/maps/composition/equirect-world-night-lights-viirs-v1.jpg`, documented under `docs/maps/MAP_ASSET_SOURCES.md`.
 
@@ -85,7 +85,7 @@ src/assets/composition/emissive-composition-catalog.json
 
 TypeScript owns validation, id canonicalization, and `resolveEmissiveCompositionAsset` / `resolveEmissiveCompositionAssetIdToCanonicalId`. Runtime does not scan `public/maps` for composition inputs.
 
-**Weather and cloud (not base-map catalog):** live or forecast weather/cloud participation is **not** onboarded through `base-map-catalog.json`. See [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](../specs/scene/dynamic-data-lifecycle-plan.md) (Phase 10 complete; **`DLC-1` shipped**; consumers `DLC-*`) and [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md). **Default next** is `DLC-2`. Static climatology rasters (if ever added) follow the base-map rules in this document.
+**Weather and cloud (not base-map catalog):** live or forecast weather/cloud participation is **not** onboarded through `base-map-catalog.json`. See [`docs/specs/scene/dynamic-data-lifecycle.md`](../specs/scene/dynamic-data-lifecycle.md) and [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md). Static climatology rasters, if ever added, follow the base-map rules in this document.
 
 ## Persistence rule
 
@@ -207,8 +207,8 @@ equirect-world-blue-marble-bm-v1
 
 ## Future map directions
 
-Candidate future families (beyond shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, land cover **`equirect-world-landcover-modis-v1`**, climate **`equirect-world-climate-koppen-beck-v1`**, population **`equirect-world-population-gpw-v1`**, Blue Marble month-aware families, and legacy reference **`equirect-world-legacy-v1`** with bundled preview):
-- additional climate normals products (**preferred next queue A backlog:** temperature / precipitation climatologies; **shipped baseline:** Köppen–Geiger present **`equirect-world-climate-koppen-beck-v1`**; **future:** alternate Köppen epochs).
+Candidate future families, beyond those already in the bundled catalog (listed in [`docs/IMPLEMENTATION.md`](../IMPLEMENTATION.md#10-map-and-substrate-model), with per-asset provenance in [`MAP_ASSET_SOURCES.md`](MAP_ASSET_SOURCES.md)):
+- additional climate products: temperature and precipitation climatologies are the strongest backlog candidates; alternate Köppen epochs beyond the present-day classification are also possible.
 - higher-resolution or alternate land-cover products (e.g. Copernicus 100m discrete map).
 - alternate GPW population density epochs or display ramps for **`equirect-world-population-gpw-v1`** when product-scoped.
 - night lights.

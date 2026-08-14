@@ -1,3 +1,9 @@
+> **HISTORICAL — archived 2026-08-14.** This document describes past execution, planning, or reasoning and is **not** a source of current development state. It is preserved verbatim, including identifiers, status claims, and scheduling language that were accurate only when written. Current development state will be owned by `docs/STATE.md` after modernization M3.
+>
+> This is the complete original Phase 10 lifecycle plan, including the `P10-*`, `DLC-*`, and `DLU-*` step tables, the per-step progress log, and the step-completion checklists. The **still-valid contract material** (snapshot kinds, temporal metadata, product-time binding, acquisition modes, failure and offline policy) was carried forward into [`docs/specs/scene/dynamic-data-lifecycle.md`](../specs/scene/dynamic-data-lifecycle.md). This archive is the record of **how the subsystem was built**; the successor document is the record of **what it currently guarantees**.
+
+---
+
 # Dynamic data lifecycle — Phase 10 plan
 
 ## Status

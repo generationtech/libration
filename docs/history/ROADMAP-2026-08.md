@@ -1,12 +1,6 @@
-> **TRANSITIONAL — modernization in progress (2026-08-14).** This is the pre-modernization roadmap, retained temporarily and unchanged apart from this banner. It mixes completed phase history with future direction, and its status claims are **not** an authoritative statement of current development state.
+> **HISTORICAL — archived 2026-08-14.** This document describes past execution, planning, or reasoning and is **not** a source of current development state. It is preserved verbatim, including identifiers, status claims, and scheduling language that were accurate only when written. Current development state will be owned by `docs/STATE.md` after modernization M3.
 >
-> It will be **rewritten** in modernization M3 to own strategic direction and approved future work only. The completed phase history it contains is preserved verbatim in [`docs/history/ROADMAP-2026-08.md`](history/ROADMAP-2026-08.md); this copy remains in place so the future-direction material stays available to that rewrite.
->
-> Until then: for what exists today read [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); for durable architecture read [`ARCHITECTURE.md`](../ARCHITECTURE.md); for product intent read [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md). Do not treat any "Active", "shipped", or "next" claim below as current.
->
-> Plain-text mentions of `PLAN.md`, `docs/AI_COENGINEERING.md`, and `docs/DEVELOPMENT_STRATEGY.md` below refer to documents now archived under [`docs/history/`](history/). Those mentions are left as written because this document is transitional and will be replaced. Links that M2's own moves would have broken have been repointed at the archive. A handful of relative link paths in this document were already wrong before modernization and are left alone.
->
-> One substantive correction was made: a climate base-map id that never existed in the catalog was corrected to `equirect-world-climate-koppen-beck-v1`. The uncorrected text is preserved verbatim in the archived copy.
+> This is the complete pre-modernization roadmap, including the phase model (Phases 0–13), the `DLC-*` / `DLU-*` tracks, and their completion records. It is the authoritative record of **what was built and in what order**. `docs/ROADMAP.md` will be rewritten in modernization M3 to own strategic direction and approved future work only; this archive retains the historical phase detail that the rewritten roadmap deliberately drops.
 
 ---
 
@@ -229,7 +223,7 @@ Exit criteria:
 
 ## Phase 8: Map inventory and scientific substrate expansion
 
-Status: planned (**paused / deferred**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume** when scoped per `PLAN.md` handoff—**not** the default next macro track while early `DLC-*` is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-beck-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** is `DLC-*` (Phase 10 lifecycle **complete**).
+Status: planned (**paused / deferred**; queue **A (2)** **closed** for current catalog). **Remaining** sourced substrates and selector polish **resume** when scoped per `PLAN.md` handoff—**not** the default next macro track while early `DLC-*` is open. **Slice 2 queues B/C closed** (composition baseline complete). **Structured attribution presentation** and **month-aware selector polish** **shipped** (queue **A** items **(1)** and **(2b)** closed). **Queue (2) shipped:** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Preferred backlog (when sourced):** temperature or precipitation climatology static family. Queue **D** weather/cloud **planning** **shipped**—**implementation** is `DLC-*` (Phase 10 lifecycle **complete**).
 
 **Rolling delivered (Slice 3 / Phase 8):**
 
@@ -286,7 +280,7 @@ Remaining under Phase 9 (**composition expansion**, not baseline emissive or set
 
 ## Phase 10: Dynamic data lifecycle
 
-Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment, equirect + cloud-opacity + point-features + tracks materializers). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10 itself. **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination; fixture acquisition). **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. Next dynamic work needs **explicit scope** (new `DLC-*` or Phase 11).
+Status: **complete** (`P10-0`…`P10-7` shipped). Authoritative contracts: [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Runtime in `src/lifecycle/` (types, versioned store / `MemoryDynamicSnapshotStore`, lifecycle manager, product-time resolver, acquisition + periodic refresh + manual/file import, app shell host + `TimeContext` attachment, equirect + cloud-opacity + point-features + tracks materializers). Closure smoke: `phase10LifecycleClosure.test.ts`. **No** user-facing dynamic overlay shipped in Phase 10 itself. **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination; fixture acquisition). **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`). Remaining Phase 8 map inventory and Phase 9 composition extensions stay **deferred** unless explicitly scoped. Next dynamic work needs **explicit scope** (new `DLC-*` or Phase 11).
 
 **Product lock (met):**
 
@@ -315,7 +309,7 @@ Candidate future **consumers** (not Phase 10 itself)—see section below and lif
 
 ## After Phase 10: Dynamic layer consumers
 
-Status: **complete** (sequenced `DLC-1`…`DLC-4` **shipped**). Step ids `DLC-1`… in [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md). Further *new* consumers require explicit scope. Live acquisition for the four shipped rows is **`DLU-*` (complete)** below.
+Status: **complete** (sequenced `DLC-1`…`DLC-4` **shipped**). Step ids `DLC-1`… in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md). Further *new* consumers require explicit scope. Live acquisition for the four shipped rows is **`DLU-*` (complete)** below.
 
 Suggested sequence (completed):
 
@@ -328,7 +322,7 @@ Dense regional/tiled products may wait on Phase 11 (zoom/pan/tiles). Weather par
 
 ## After DLC: Live network acquisition (`DLU-*`)
 
-Status: **complete** (`DLU-0`…`DLU-7` **shipped**). Step ids in [`docs/history/dynamic-data-lifecycle-execution-2026-08.md`](history/dynamic-data-lifecycle-execution-2026-08.md) (“After DLC — Live network acquisition”). **Active step: none pending.** Offline/fixture fallback and next frontiers documented in that plan.
+Status: **complete** (`DLU-0`…`DLU-7` **shipped**). Step ids in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md) (“After DLC — Live network acquisition”). **Active step: none pending.** Offline/fixture fallback and next frontiers documented in that plan.
 
 Periodic **in-app live network** acquisition for the four shipped consumers under the **same durable `sourceId`s**. No fetch inside rAF / layer constructors / RenderPlan build. Fixture/offline fallback when live HTTP fails (non-abort); `stale-when-cached` on refresh failure.
 

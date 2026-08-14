@@ -1,67 +1,39 @@
-# Future Features
+# Future features
 
 ## Purpose
 
 This document preserves the future-feature inventory that has accumulated during Libration development.
 
-It is not a commitment to implement everything. It is a retention and planning document so good ideas are not lost when a phase intentionally defers them.
+It is not a commitment to implement anything. It is a retention document so that good ideas are not lost when they are deliberately deferred.
 
-## Feature status vocabulary
+**It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-- Candidate: worth considering later.
-- Planned: likely future work, but not current.
-- Blocked: depends on another architecture phase.
-- Rejected: intentionally not desired.
-- Implemented: available in the product.
+## Status vocabulary
 
-## Implemented map UI foundations
+- **Candidate** — worth considering later.
+- **Planned** — a likely direction, not current work.
+- **Blocked** — depends on architecture that does not exist yet.
+- **Rejected** — intentionally not desired.
 
-The current map configuration UI already includes:
-
-- categorized base-map selector groups.
-- curated substrate taxonomy.
-- map preview card for the selected base-map family.
-- attribution display for the selected base-map family (**Source & license** block: credit line, optional `licenseNote`, up to two external `sourceLinks` from the bundled catalog).
-- month-aware family catalog copy and **active UTC civil month** indication for Blue Marble families in `BaseMapStyleControl` (render-clock `productInstantMs`; not persisted in SceneConfig).
-- per-family base-map presentation controls.
-- shared presentation persistence across seasonal/month-aware raster variants.
-- bundled catalog **`capabilities`** consumed upstream for overlay lift (optional intrinsics include **`reliefShaded`**, **`boundaryDense`**, **`chromaticDense`**, **`bathymetryShaded`**, **`fineScaleTexture`**, **`labelDense`**, **`etchedReliefDense`**, **`sunGlintDense`**—curator metadata; e.g. Blue Marble TB sets **`bathymetryShaded`** with **`reliefShaded`**; Blue Marble **BM**/**T** set **`fineScaleTexture`** and **`sunGlintDense`**; **`equirect-world-political-v1`** and **`equirect-world-geology-v1`** set **`labelDense`** alongside chromatic/boundary hints (shipped non-transitional families); legacy world sets **`etchedReliefDense`** for packaged etched shaded relief; static Natural Earth–lineage topography **`equirect-world-topography-ne-v1`** sets **`reliefShaded`**).
-
-Future map and scene UX work should extend these foundations rather than replacing them.
-
-## Implemented astronomical and illumination foundations
-
-The current scene system already includes:
-
-- solar shading / dark-side visualization with a continuous attenuation-driven twilight illumination field in the same planetary illumination raster (civil/nautical/astronomical thresholds retained as semantic anchors, not rendered boundaries; backend execution remains a plain raster blit with no twilight-specific semantics).
-- **incremental twilight transition tuning** (upstream-only constants in `src/renderer/illuminationShading.ts`): cumulative narrow passes (first + **second** doc-finalized pass)—smoother anchor color coupling, bounded non-emissive atmospheric tint cap, gentler day-side tint envelope below +4° daylight clear—still no separate twilight layer, still one `rasterPatch`.
-- non-emissive atmospheric twilight composition using attenuation and tint modulation rather than additive glow.
-- **moonlight** in the same raster: presentation modes (`off` / `natural` / `enhanced` / `illustrative`) resolved upstream; Layers UI integration.
-- emissive night lights as a **composition input** (catalog-backed `assetId`, policy-driven sampling into the same illumination raster, Layers **Off / Natural / Enhanced / Illustrative** for `mode`, plus **presentation** intensity and luma-lift exponent / perceptual driver; shipped NASA Black Marble 2016 reference asset). Future refinements: optional asset picker, intensity curves, alternate resolutions or years—without moving semantics into the backend.
-- **Overlay readability (v1 + v1.1 + derived substrate lift + SceneConfig presentation + default-stack per-layer pilots):** `OverlayReadabilityFrame` on `TimeContext` (one per tick from the shell): **v1** subsolar night veil on grid, analemma, subsolar/sublunar markers, city pins, and static equirect rasters; **v1.1** adds deterministic emissive **policy-only** legibility pressure from `scene.illumination.emissiveNightLights` into `readabilityVeil01At` / `globalReadabilityVeil01` (no emissive texture sampling in the readability path); **substrate lift scale** on the same frame (`substrateOverlayReadabilityLiftScale01`) from effective base-map presentation + catalog `capabilities` (`overlayOptimized`, `darkFriendly`, optional **`reliefShaded`** / **`boundaryDense`** / **`chromaticDense`** / **`bathymetryShaded`** / **`fineScaleTexture`** / **`labelDense`** / **`etchedReliefDense`** / **`sunGlintDense`**, plus **sub-1 effective brightness** reducing presentation-derived attenuation); **`scene.overlayReadability.presentation`** scales combined veil and lift in the shell before hints; **`perLayer` keys (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`)** optionally repeat those scalars per layer (**identity subtrees omitted** on normalize); vector stroke/alpha scaling resolved upstream.
-- seasonal polar illumination behavior emerging from solar geometry and axial tilt.
-- subsolar marker.
-- sublunar marker.
-- solar analemma overlay.
-- semantic astronomical scene participation through the layer system.
-
-Future work may extend these systems **only with explicit product scope**—**Slice 2 queues B/C default cadence closed** (`PLAN.md`): further substrate heuristics (beyond the **eight-intrinsic** baseline), **fourth+** twilight passes, scattering/haze, optional SceneConfig twilight softness, and weather/cloud **implementation** via `DLC-*` per [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md)—**planning closed** (queue **D**)—not by re-deriving baseline twilight/moonlight/emissive or the settled overlay readability **`perLayer` defaults** for `grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, and `staticEquirectOverlay`.
+Several sections describe extensions to subsystems that already exist. Those subsystems are described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md), and work in those areas should **extend** them rather than introduce parallel mechanisms — see design principles 7 and 8 in [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md).
 
 ## Maps and base-map families
 
 ### Candidate curated map families
 
-- **Implemented baseline (geology):** global geologic provinces **`equirect-world-geology-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate geology styles, higher-resolution scientific linework.
-- **Implemented baseline (static terrain):** global shaded-relief / elevation emphasis **`equirect-world-topography-ne-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
-- **Implemented baseline (bathymetry):** global relief / ocean-floor depth **`equirect-world-bathymetry-etopo-v1`** (NOAA ETOPO 2022 lineage; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate bathymetry products (e.g. GEBCO-only styling), higher-resolution grids, additional hypsometric palettes.
+Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md#10-map-and-substrate-model); the entries below are extensions beyond them.
+
+- geology: alternate styles, higher-resolution scientific linework.
+- terrain: higher-resolution or alternate-source terrain, month-aware DEM families, neutral terrain-only palettes.
+- bathymetry: alternate products such as GEBCO-only styling, higher-resolution grids, additional hypsometric palettes.
 - natural-color seasonal imagery.
-- Blue Marble variants.
-- **Implemented baseline (political/reference):** **`equirect-world-political-v1`** (Natural Earth–lineage shipped raster in the bundled catalog). **Future:** alternate political styles, borders-only overlay-friendly variants.
+- further Blue Marble variants.
+- political: alternate styles, borders-only overlay-friendly variants.
 - borders-only overlay-friendly maps.
-- **Implemented baseline (population density):** global GPWv4 2020 density **`equirect-world-population-gpw-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** alternate GPW epochs, WorldPop grids.
-- **Implemented baseline (land cover / vegetation):** global MODIS IGBP classification **`equirect-world-landcover-modis-v1`** (see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** Copernicus 100m discrete map, alternate MODIS epochs, higher-resolution products.
+- population density: alternate GPW epochs, WorldPop grids.
+- land cover: Copernicus 100 m discrete map, alternate MODIS epochs, higher-resolution products.
 - biome / ecology.
-- **Implemented baseline (Köppen–Geiger climate zones):** present-day classification **`equirect-world-climate-koppen-beck-v1`** (Beck et al. 2018; see [`docs/maps/MAP_ASSET_SOURCES.md`](docs/maps/MAP_ASSET_SOURCES.md)). **Future:** temperature / precipitation climatologies, alternate Köppen epochs (Beck V3), Koppen-only border variants.
+- climate: temperature and precipitation climatologies, alternate Köppen epochs (Beck V3), Köppen border-only variants.
 - precipitation.
 - temperature normals (distinct raster products).
 - cloud climatology.
@@ -75,12 +47,10 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Map asset quality improvements
 
-- stronger source provenance in catalog (beyond per-family `licenseNote` / `sourceLinks` already in the bundled catalog).
+- stronger source provenance in the catalog, beyond per-family `licenseNote` and `sourceLinks`.
 - clear placeholder versus sourced status.
 - map source processing notes.
 - validation checklists per family.
-- ~~month-aware family explanation in UI.~~ **Shipped:** Blue Marble catalog `shortDescription` copy and `variantMode` on selector options.
-- ~~active displayed-month indication for seasonal families.~~ **Shipped:** `Displaying: <month> (UTC civil month N)` in `BaseMapStyleControl` when a month-aware family is selected (`productInstantMs` from render loop).
 - fixed-month override for comparison or demonstration.
 - presentation presets per map role.
 
@@ -121,33 +91,29 @@ Future work may extend these systems **only with explicit product scope**—**Sl
 
 ### Dynamic and live layers
 
-**Lifecycle foundation:** Phase 10 **complete** (`P10-0`…`P10-7`) in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md)—runtime in `src/lifecycle/`; **`DLC-1`**…**`DLC-4`** shipped (Model B clouds/IR + earthquakes + ISS tracks + Model A illumination); **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; **Active: none pending**). Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+New consumers reuse the existing lifecycle subsystem; its contract, and the sources already wired, are in [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md). Weather participation models are explored in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
-**First consumer (`DLC-1` — shipped):** global equirect raster — clouds / satellite IR (`globalCloudsIr`, durable source `global-clouds-ir-v1`; fixture JPEG + periodic lifecycle acquisition; **live NASA GIBS feed = `DLU-5` shipped**).
-
-Candidates (consume lifecycle; prefer free-for-personal-use; paid OK when valuable):
+Adding any of these is a product decision requiring explicit scope, not a consequence of the seam supporting it. Prefer free-for-personal-use sources; paid sources are acceptable when the benefit is clear.
 
 - weather radar.
-- cloud cover / satellite IR — **`DLC-1` shipped** (Model B overlay); **`DLC-4` shipped** (Model A illumination participation via `scene.illumination.cloudParticipation`); **live acquisition `DLU-5` / `DLU-6` shipped**.
 - precipitation forecast.
 - temperature forecast.
 - wind fields.
 - pressure systems.
 - hurricane tracks.
 - aurora forecast.
-- earthquake feed — **`DLC-2` shipped** (`earthquakes` / `usgs-earthquakes-v1`; **live USGS HTTP = `DLU-3` shipped**).
 - volcano activity.
 - aircraft ADS-B feed.
 - marine AIS feed.
 - satellite live positions.
-- ISS and selected spacecraft — **`DLC-3` shipped** ISS track Model B (`orbitalTracks` / `iss-orbital-track-v1`; **live CelesTrak/TLE = `DLU-4` shipped**; additional spacecraft remain future).
+- spacecraft beyond the ISS.
 - lightning feed.
 - wildfire smoke.
 - air quality.
 
 ## Composition and visual systems
 
-Baseline planetary illumination (solar + continuous twilight + moonlight + optional emissive night lights → **one** upstream `rasterPatch`) is **implemented**. Upstream overlay **substrate lift** consumes bundled catalog **`capabilities`**: **eight** optional intrinsic hints through **`sunGlintDense`** (see `docs/maps/MAP_ASSET_SOURCES.md` and `src/core/substrateOverlayReadabilityLiftScale.ts`), plus `overlayOptimized` / `darkFriendly` presentation multipliers—**implemented**, not speculative. **Doc-finalized:** BM/T **`sunGlintDense`** curation and cumulative twilight through the **third** pass complete the **composition baseline**; **Slice 2 queues B/C default cadence closed** (`PLAN.md`). Backlog items below are **explicit-scope** futures (ninth+ intrinsics, fourth+ twilight, deeper scattering/haze, etc.)—not standing default PRs or re-litigation of shipped baselines.
+Planetary illumination and overlay readability are existing upstream subsystems; see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md#6-scene-and-layer-architecture). Everything below extends them and requires explicit product scope. None of it is standing work, and none of it should be read as reopening a settled baseline.
 
 ### Planned or candidate composition features
 
@@ -157,9 +123,9 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 - geometric clipping.
 - viewport clipping.
 - composition-aware day/night illumination.
-- atmospheric scattering and haze refinement, or **optional fourth+** narrow constants-only twilight passes (cumulative incremental upstream tuning through **second** and **third** passes is **shipped** in `src/renderer/illuminationShading.ts`; deeper work remains open).
+- atmospheric scattering and haze, or further narrow tuning passes in `src/renderer/illuminationShading.ts` beyond the current constants.
 - shadow and glow effects expressed upstream as RenderPlan intent.
-- **Overlay readability extensions beyond** v1 + v1.1 + substrate lift + presentation + six default-stack `perLayer` pilots + the **shipped** eight-intrinsic substrate heuristic set (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 brightness dimming): `perLayer` contracts for additional stack rows where justified; finer multi-row semantics (e.g. separate pilots per static-raster row); **additional** optional catalog or resolver heuristics (ninth+ intrinsic axes or presentation rules when product-defined).
+- overlay-readability extensions beyond the current model: per-layer readability contracts for stack rows that do not have one; finer multi-row semantics, such as separate tuning per static-raster row; additional catalog or resolver substrate heuristics beyond the current intrinsic hints.
 - active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.
@@ -167,9 +133,9 @@ Baseline planetary illumination (solar + continuous twilight + moonlight + optio
 ### Day/night product ideas
 
 - scientifically grounded day/night and twilight attenuation.
-- configurable twilight softness (not persisted under cumulative shipped constants-only tuning; future SceneConfig axis if product adds it).
-- optional **additional** night-light data products layered as future composition or substrate inputs (beyond current Black Marble path).
-- stronger emissive **readability** presets tied to overlay density or zoom when those modes exist.
+- configurable twilight softness as a persisted scene axis, if the product ever warrants exposing it.
+- additional night-light data products as composition or substrate inputs.
+- emissive readability presets tied to overlay density or zoom, once those modes exist.
 - seasonal illumination effects.
 - solar altitude shading.
 - reference-time comparison modes.
@@ -278,7 +244,6 @@ Candidates:
 Candidates:
 
 - stronger Cursor rules.
-- local architecture decision records.
 - docs freshness checklist.
 - source validation scripts.
 - map catalog validation command.
@@ -297,7 +262,7 @@ These are larger future directions, not near-term tasks:
 
 - wallboard or appliance mode.
 - presentation mode.
-- browser version.
+- packaged desktop distribution through the Tauri shell.
 - hosted dashboard mode only if AGPL/network implications are intentional.
 - local network display endpoint.
 - OBS/streaming background mode.

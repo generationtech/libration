@@ -1,3 +1,9 @@
+> **HISTORICAL — archived 2026-08-14.** This document describes past execution, planning, or reasoning and is **not** a source of current development state. It is preserved verbatim, including identifiers, status claims, and scheduling language that were accurate only when written. Current development state will be owned by `docs/STATE.md` after modernization M3.
+>
+> Superseded by: `ARCHITECTURE.md` (durable architectural constraints) and — after M3 — `docs/WORKFLOW.md` (engineering workflow and definition of done).
+
+---
+
 # Development Strategy
 
 ## Purpose

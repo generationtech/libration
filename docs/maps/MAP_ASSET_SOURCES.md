@@ -96,7 +96,7 @@ public/maps/composition/equirect-world-night-lights-viirs-v1.jpg
 
 - Raster dimensions **3600×1800** (2:1); **8-bit grayscale** JPEG; file decodes in browser tooling used by the app (`Image` + canvas `getImageData`).
 - Statistical spot-check: global mean luminance is very low with a **high upper tail** (urban cores to sensor saturation), consistent with night-lights products — downstream composition uses **sRGB-linear luma** then a bounded **perceptual lift** (`pow` with scene `presentation.driverExponent`, default aligned with `EMISSIVE_JPEG_LUMA_TO_COMPOSITION_DRIVER_EXPONENT` in `emissiveIlluminationRaster.ts`) so 8-bit JPEG mid-tones remain visible after policy gains; see `illuminationShading` emissive additive scale and `scene.illumination.emissiveNightLights.presentation`. CI decodes the same bytes with `jpeg-js` in `emissiveBlackMarbleDecodeAndSampling.integration.test.ts` (city vs ocean radiance and `sampleIlluminationRgba8` RGB delta).
-- Non-emissive twilight and day/night sampling are **not** separate map products; constants-only tuning accrues in `illuminationShading.ts` (see `PLAN.md` / `ARCHITECTURE.md`).
+- Non-emissive twilight and day/night sampling are **not** separate map products; their tuning lives as constants in `illuminationShading.ts` (see [`ARCHITECTURE.md`](../../ARCHITECTURE.md) and [`docs/IMPLEMENTATION.md`](../IMPLEMENTATION.md)).
 - CI regression: `src/renderer/emissiveBlackMarbleOnboardedAsset.test.ts` (Node) parses JPEG SOF for **3600×1800** and locks **SHA-256** of the shipped file; update the expected digest when intentionally replacing the bytes.
 
 ### Known limitations
@@ -264,7 +264,7 @@ public/maps/previews/world-equirectangular-landcover-thumb.jpg
 
 ### Future refinements (same family)
 
-- Higher-resolution Copernicus Global Land Cover 100m discrete map when curated with dateline-roll provenance (see queue **A** climate/vegetation notes in `PLAN.md`).
+- Higher-resolution Copernicus Global Land Cover 100 m discrete map, when curated with dateline-roll provenance.
 - Alternate MODIS epochs or legend styles if product-scoped.
 
 ## equirect-world-climate-koppen-beck-v1
@@ -482,7 +482,9 @@ Historical scene ids **`equirect-world-topography-v1`** and **`equirect-world-to
 
 Candidate datasets should be evaluated for redistribution rights, projection suitability, and visual fit.
 
-**Queue A (2) closed (shipped):** land cover **`equirect-world-landcover-modis-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**. **Remaining queue A deferred until after Phase 10.** **Preferred queue A backlog after Phase 10 (when raster + rights exist):** temperature or precipitation climatology static family—see `PLAN.md` handoff (**default next** is Phase 10 `P10-*`, not substrate onboarding). Live or forecast weather/cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
+Families already onboarded are documented in the sections above. The strongest remaining backlog candidate, when a raster with acceptable rights exists, is a **temperature or precipitation climatology** static family.
+
+Live or forecast weather and cloud participation is **not** base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](../specs/scene/weather-cloud-composition-plan.md).
 
 Possible categories:
 

@@ -1,83 +1,64 @@
-# Project Strategy
+# Project strategy
 
-## Purpose
+This document owns Libration's **product intent**: what the project is trying to become, what it is deliberately not trying to become, and how future feature work should be judged.
 
-This document captures the product and project strategy for Libration.
-
-It explains what the project is trying to become, what it is not trying to become, and how future feature work should be judged.
+It contains no implementation status and no scheduling. For what exists today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); for the boundaries that intent must respect see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 ## Product thesis
 
-Libration is a precision world time instrument evolving into a scientifically grounded planetary scene instrument, not merely a decorative map.
+Libration is a precision world time instrument evolving into a scientifically grounded planetary scene instrument, not a decorative map.
 
-Its differentiating ideas are:
+Its differentiating ideas:
 
-- longitude-first structure.
-- continuous global time visualization.
-- canonical UTC instant per frame.
-- reference-frame civil presentation.
-- renderer-agnostic architecture.
-- composable projection-space scene.
-- planetary illumination and composition.
-- local-first desktop use.
-- public, inspectable, user-freedom-preserving implementation.
+- longitude-first structure;
+- continuous global time visualization;
+- one canonical UTC instant per frame;
+- reference-frame civil presentation;
+- renderer-agnostic architecture;
+- a composable projection-space scene;
+- planetary illumination and composition;
+- local-first use;
+- a public, inspectable, user-freedom-preserving implementation.
 
-## Product positioning
+## Positioning
 
-Libration should feel like an instrument:
+Libration should feel like an instrument: stable, legible, precise, calm, deliberate, and configurable without becoming chaotic.
 
-- stable.
-- legible.
-- precise.
-- calm.
-- deliberate.
-- configurable without becoming chaotic.
-
-The product may gain many scene layers and visual modes over time, but the core display must remain understandable.
+The product may gain many scene layers and visual modes over time. The core display must remain understandable regardless.
 
 ## Independence and differentiation
 
-Libration is independently developed.
+Libration is independently developed and is not affiliated with any existing commercial time-map product.
 
-The project should retain general world-time-map utility while differentiating its implementation, architecture, visual language, and feature set.
+The project should retain general world-time-map utility while differentiating its implementation, architecture, visual language, and feature set. Useful directions:
 
-Useful differentiation directions:
-
-- renderer-agnostic internals.
-- open AGPL reference implementation.
-- explicit SceneConfig and composable layers.
-- curated scientific and cartographic map families (incremental **bundled-catalog** onboarding for validated substrates—including shipped static topography **`equirect-world-topography-ne-v1`**, political **`equirect-world-political-v1`**, geology **`equirect-world-geology-v1`**, bathymetry **`equirect-world-bathymetry-etopo-v1`**, land cover **`equirect-world-landcover-modis-v1`**, climate normals **`equirect-world-climate-koppen-beck-v1`**, and population density **`equirect-world-population-gpw-v1`**—see `PLAN.md` Slice 3 and `docs/ROADMAP.md` Phase 8).
-- reference-frame time model.
-- modern top-band chrome visual language.
-- planetary illumination and atmospheric composition.
-- future data overlays and playback features.
+- renderer-agnostic internals;
+- an open AGPL reference implementation;
+- explicit scene configuration and composable layers;
+- curated scientific and cartographic map families, onboarded through the bundled catalog;
+- the reference-frame time model;
+- a modern top-band chrome visual language;
+- planetary illumination and atmospheric composition;
+- data overlays and playback;
 - local-first power-user workflows.
 
-Avoid cloning the look or exact interaction patterns of existing commercial products.
+Avoid cloning the look or the exact interaction patterns of existing commercial products.
 
-## Open source strategy
+## Open-source strategy
 
-Libration is intended to be a serious public reference implementation.
+Libration is intended to be a serious public reference implementation. The AGPL supports inspection, modification, sharing, downstream freedom, and network-use reciprocity.
 
-The AGPL license supports:
+Documentation and architecture should stay clear enough that future contributors and future AI sessions can work safely without external context.
 
-- user inspection.
-- modification.
-- sharing.
-- downstream freedom.
-- network-use reciprocity.
-
-The project should keep docs, rules, and architecture clear enough that future contributors and future AI sessions can work safely.
-
-## Product design principles
+## Design principles
 
 ### 1. Time clarity over cleverness
 
-The product must never confuse the canonical instant, the selected reference frame, and the visual presentation mode.
+Never confuse the canonical instant, the selected reference frame, and the visual presentation mode.
 
 ### 2. Spatial truth is projection truth
 
-Maps are visual substrates. Projection math and geographic coordinates define placement.
+Maps are visual substrates. Projection mathematics and geographic coordinates define placement.
 
 ### 3. Instrument first, layer platform second
 
@@ -85,108 +66,37 @@ Layer richness matters, but it must not undermine the core time instrument.
 
 ### 4. Curated, not random
 
-Map families and overlays should be selected, sourced, validated, and named intentionally.
+Map families and overlays are selected, sourced, validated, and named intentionally. Availability is not a reason to include something.
 
 ### 5. Configurable without mode chaos
 
-Expose powerful controls through coherent axes:
-
-- time and reference frame.
-- chrome display.
-- scene and map selection.
-- layer composition.
-- presets when implemented.
+Expose powerful controls through coherent axes — time and reference frame, chrome display, scene and map selection, layer composition, presets — rather than accumulating independent switches.
 
 ### 6. Future backends must remain possible
 
-Canvas is the current backend. The architecture should keep a future GPU or bare-metal renderer plausible.
+Canvas is the current backend. The architecture should keep a future GPU or bare-metal renderer plausible without a product-side rewrite.
 
 ### 7. Scientific grounding over arbitrary effects
 
-Atmospheric transitions, twilight behavior, planetary illumination, **moonlight, and emissive city-light composition** should emerge from:
+Atmospheric transitions, twilight, planetary illumination, moonlight, and emissive city-light composition should emerge from real solar geometry, lunar geometry, physically-inspired attenuation, and coherent upstream composition policy.
 
-- real solar geometry.
-- lunar geometry.
-- physically-inspired attenuation.
-- coherent upstream composition policy.
-
-Further refinement (**readability extensions after** shipped v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (catalog `reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 brightness dimming) + presentation scalars + **six default-stack `perLayer` pilots**, clouds/weather, scattering) **extends** this upstream model rather than replacing it with backend-owned effects.
-
-Avoid:
-
-- arbitrary glow effects.
-- backend-specific visual tricks.
-- disconnected visual layers.
-- composition logic implemented inside backend execution.
+Avoid arbitrary glow effects, backend-specific visual tricks, disconnected visual layers, and composition logic implemented inside backend execution.
 
 ### 8. Planetary composition over isolated overlays
 
-The scene system includes a **coherent upstream planetary illumination composition path** (solar, twilight, moonlight, optional emissive night lights → one `rasterPatch`), not merely a pile of unrelated overlays.
+The scene system is a coherent upstream illumination composition path, not a pile of unrelated overlays. Future work should **extend** that subsystem — readability policy, atmosphere, weather and clouds, dynamic composition — rather than adding parallel effects that do not participate in it.
 
-Future work **extends** that subsystem for readability policy **beyond the shipped global presentation + six default `perLayer` keys + substrate heuristic increments** (`reliefShaded`, `boundaryDense`, `chromaticDense`, `bathymetryShaded`, `fineScaleTexture`, `labelDense`, `etchedReliefDense`, `sunGlintDense`, presentation dimming in lift), atmosphere, and (when lifecycle exists) weather and clouds. Systems should participate coherently in:
+Systems that affect appearance should participate coherently in atmospheric attenuation, reflected illumination, emissive illumination, visibility and readability policy, and dynamic scene composition.
 
-- atmospheric attenuation.
-- reflected illumination.
-- emissive illumination.
-- visibility/readability policy.
-- weather/cloud **implementation** (planning **shipped** in [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md); Phase 10 lifecycle **complete**; layers via `DLC-*`; live feeds via `DLU-*`).
-- dynamic scene composition.
+## How work should be shaped
 
-## Development strategy
+Product intent is delivered through narrow, coherent slices.
 
-The project should evolve through phase-scoped slices.
+A good slice has a clear objective, changes one architectural area, has exit criteria, adds or updates tests, updates the documentation that owns the changed truth, and leaves the codebase cleaner than it found it.
 
-A good phase:
+A bad slice mixes unrelated UI, runtime, configuration, and documentation changes; moves product semantics into the backend; adds duplicate configuration surfaces; silently changes persisted semantics; or implements future capability by hardcoding special cases.
 
-- has a clear objective.
-- updates one architectural area at a time.
-- has exit criteria.
-- adds or updates tests.
-- updates docs.
-- leaves the codebase cleaner than it found it.
-
-A bad phase:
-
-- mixes unrelated UI, runtime, config, and docs changes.
-- moves product semantics into the backend.
-- adds duplicate config surfaces.
-- silently changes persisted semantics.
-- implements future capability by hardcoding special cases.
-
-## Current strategic position
-
-The project has passed the initial foundation threshold.
-
-Foundational systems now exist:
-
-- RenderPlan pipeline.
-- Canvas backend boundary.
-- structured chrome.
-- SceneConfig.
-- curated map catalog.
-- map onboarding.
-- static and derived overlays.
-- month-aware map families.
-- coherent upstream planetary illumination composition (twilight—including **shipped cumulative incremental transition tuning** in `illuminationShading.ts`—moonlight, emissive night lights; single illumination `rasterPatch`).
-- composition-aware **overlay readability** (v1 + v1.1 + derived substrate lift + **substrate heuristic increments** (`reliefShaded` / `boundaryDense` / `chromaticDense` / `bathymetryShaded` / `fineScaleTexture` / `labelDense` / `etchedReliefDense` / `sunGlintDense`, sub-1 effective brightness dimming in lift) + SceneConfig presentation scalars + **default-stack `perLayer` pilots** (`grid`, `solarAnalemma`, `subsolarMarker`, `sublunarMarker`, `cityPins`, `staticEquirectOverlay`): night veil + emissive policy + presentation/catalog lift + user veil/lift multipliers on selected overlays; optional **second** veil/lift pass per pilot layer via `scene.overlayReadability.perLayer`; one `OverlayReadabilityFrame` per tick on `TimeContext` when the shell attaches it).
-
-The next strategic need is not another large hidden architecture migration. The **planetary composition baseline** (eight-intrinsic substrate lift, third twilight pass, overlay readability closure) is **complete** for standing incremental work—**Slice 2 queues B/C are closed** as default PR tracks. Phase 10 lifecycle is **complete**; **`DLC-1`**…**`DLC-4`** shipped; **`DLU-*` live acquisition complete** (`DLU-0`…`DLU-7`; **Active: none pending**). Further *new* dynamic consumers and **remaining Phase 8** / **Phase 9** / **Phase 11** need **explicit product scope**. Composition extensions reopen only with **explicit product scope**—not filler PRs.
-
-**Default sequencing for planning/discovery sessions:** when no explicit human override is given, use **`PLAN.md` → “Agent session handoff (planning prompts)”**—**do not** default to Slice 2 **B**/**C**.
-
-## Strategic next frontiers
-
-Likely next frontiers:
-
-1. Documentation, rules, and co-engineering reliability (Phase 7 rolling hygiene; keep shipped vs future language aligned—for example the **eight-intrinsic** substrate overlay-lift contract through **`sunGlintDense`** is **shipped and doc-finalized**, not hypothetical; cumulative twilight tuning through **second** and **third** narrow `illuminationShading.ts` passes is **doc-finalized**; geology **`equirect-world-geology-v1`**, climate normals **`equirect-world-climate-koppen-letter-v1`**, population density **`equirect-world-population-gpw-v1`**, and **structured map selector attribution** are **doc-finalized**).
-2. **Live network acquisition (`DLU-*`) — complete** (`DLU-0`…`DLU-7` in [`docs/specs/scene/dynamic-data-lifecycle-plan.md`](specs/scene/dynamic-data-lifecycle-plan.md); **Active: none pending**). Live HTTP + fixture offline fallback for the four shipped consumers. Weather participation models: [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
-3. **New dynamic layer consumers** (explicit scope only beyond the four shipped rows).
-4. **Map inventory** (**deferred**; resume queue **A** when a **sourced static substrate** or explicitly scoped catalog polish is available—queue **(2)** land cover, bathymetry, climate normals, and population GPW **shipped**; structured attribution and month-aware selector polish **shipped**; preferred backlog: temperature/precipitation climatology).
-5. Further scientific substrate onboarding (emissive-compatible substrates, alternate climate/terrain products) beyond shipped static families — deferred unless scoped.
-6. **Phase 9 composition extensions** (**deferred**, or earlier only with **explicit product scope**): `perLayer` beyond six defaults, ninth+ intrinsics, fourth+ twilight, deeper atmosphere.
-7. Advanced scene view and projection work.
-8. Preset system.
-9. GPU backend exploration.
+Execution mechanics — how a work item is defined, approved, verified, and closed — will be owned by `docs/WORKFLOW.md` once modernization M3 creates it.
 
 ## Decision filter for new features
 
@@ -194,10 +104,10 @@ Before implementing a feature, answer:
 
 1. Does it strengthen the core world time instrument?
 2. Does it belong in chrome, scene, config, lifecycle, or backend?
-3. Does it preserve RenderPlan separation?
+3. Does it preserve the `RenderPlan` separation?
 4. Does it preserve projection correctness?
-5. Does it need durable config, or is it derived?
-6. Does it need docs and tests now?
-7. Is it phase-sized?
+5. Does it need durable configuration, or is it derived?
+6. Does it need documentation and tests now?
+7. Is it appropriately sized?
 
-If the answer is unclear, write a planning doc or implementation intent before editing.
+If the answer is unclear, write a planning document or an implementation intent before editing.

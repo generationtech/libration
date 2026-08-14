@@ -1,0 +1,21 @@
+# Architecture decision records
+
+Durable architectural decisions, with the reasoning that produced them.
+
+An ADR belongs here when a future developer could plausibly reconsider the decision without knowing why it was made, and the rationale can be grounded in the repository. Ordinary implementation choices do not get an ADR.
+
+| # | Decision |
+|---|----------|
+| [0001](0001-renderplan-as-the-renderer-boundary.md) | `RenderPlan` as the hard renderer boundary |
+| [0002](0002-single-upstream-planetary-illumination-rasterpatch.md) | Planetary illumination composes upstream into one `rasterPatch` |
+| [0003](0003-bundled-base-map-catalog-with-durable-family-ids.md) | Bundled base-map catalog with durable family ids |
+| [0004](0004-one-canonical-utc-instant-per-frame.md) | One canonical UTC instant per frame |
+| [0005](0005-dynamic-data-acquisition-outside-the-render-path.md) | Dynamic data acquired outside the render path, bound to product time |
+| [0006](0006-browser-first-spa-with-non-load-bearing-tauri-shell.md) | Browser-first SPA with a non-load-bearing Tauri shell |
+| [0007](0007-overlay-readability-derived-not-sampled.md) | Overlay readability derived upstream, not sampled |
+
+Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
+
+Records 0001–0007 were written during documentation modernization in August 2026. The decisions themselves are older and are evidenced in the source; the records reconstruct rationale from the code, its comments, and the archived planning material in [`docs/history/`](../history/). Where rationale could only be inferred rather than evidenced, the record says so or the decision was left without an ADR.
+
+Superseding a decision means adding a new record and marking the old one superseded, not editing the old one.

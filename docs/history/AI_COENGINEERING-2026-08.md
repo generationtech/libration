@@ -1,3 +1,9 @@
+> **HISTORICAL — archived 2026-08-14.** This document describes past execution, planning, or reasoning and is **not** a source of current development state. It is preserved verbatim, including identifiers, status claims, and scheduling language that were accurate only when written. Current development state will be owned by `docs/STATE.md` after modernization M3.
+>
+> Superseded by: `AGENTS.md` (agent entry contract) and — after M3 — `docs/WORKFLOW.md` (work-item execution). This document assumed one specific division of labour between an external planning model and an in-editor implementation model; the successor workflow does not assume that division.
+
+---
+
 # AI Co-engineering
 
 ## Purpose
