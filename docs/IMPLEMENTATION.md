@@ -282,7 +282,7 @@ The base map is separate; it is the foundational part of the composition, not an
 | Lat/lon grid | `latLonGridLayer.ts`, `equirectGridPayload.ts` | |
 | City pins | `cityPinsLayer.ts`, `cityPinsPayload.ts` | Carries per-pin readability veil. |
 | Subsolar / sublunar markers | `subsolarMarkerLayer.ts`, `sublunarMarkerLayer.ts` | |
-| Solar analemma | `solarAnalemmaLayer.ts` | Derived ground track. |
+| Solar analemma | `solarAnalemmaLayer.ts` | Derived ground track. Default samples the year-long subsolar locus at the canonical instant’s UTC time-of-day so today’s vertex coincides with the live subsolar point. Optional `source.parameters.utcHour` freezes that integer hour at `:00:00.000`. |
 | Static equirect overlay | `staticEquirectRasterOverlayLayer.ts` | Full-viewport raster overlay. |
 | Dynamic equirect raster | `dynamicEquirectRasterOverlayLayer.ts` | Reads prepared views only. |
 | Dynamic point features | `dynamicPointFeaturesOverlayLayer.ts` | |
@@ -393,7 +393,7 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 
 - the month raster for month-aware base-map families, through the catalog-backed resolver;
 - subsolar and sublunar points, solar altitude, lunar phase and altitude, and hence the whole illumination field;
-- the analemma ground track;
+- the analemma ground track (default: UTC time-of-day of the instant; optional frozen `utcHour`);
 - which dynamic snapshot is resolved for each source.
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.

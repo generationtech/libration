@@ -126,7 +126,6 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 - atmospheric scattering and haze, or further narrow tuning passes in `src/renderer/illuminationShading.ts` beyond the current constants.
 - shadow and glow effects expressed upstream as RenderPlan intent.
 - overlay-readability extensions beyond the current model: per-layer readability contracts for stack rows that do not have one; finer multi-row semantics, such as separate tuning per static-raster row; additional catalog or resolver substrate heuristics beyond the current intrinsic hints.
-- active solar-position synchronization along analemma trajectories.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.
 

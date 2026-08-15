@@ -50,7 +50,7 @@ export interface LayerEnableFlags {
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
-  /** Phase 4: year-long subsolar locus at fixed UTC hour (scene product `solarAnalemmaGroundTrack`). */
+  /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */
   solarAnalemma: boolean;
 }
 

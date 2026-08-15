@@ -9,9 +9,7 @@ None
 
 ## Last completed
 
-[LIB-002](work/LIB-002-modernization-reconciliation.md) — Modernization reconciliation and green baseline
-
-The repository modernization programme is finished: its terminal audit passed on 2026-08-14 and closed it. Modernization no longer governs what work is selected, and it is not a phase that continues. See [`docs/DEVELOPMENT_LOG.md`](DEVELOPMENT_LOG.md).
+[LIB-003](work/LIB-003-solar-analemma-follow-sun.md) — Solar analemma follows the live subsolar point
 
 ## Blockers
 
@@ -27,4 +25,4 @@ Which ordinary Libration work to propose or approve next.
 
 ## Next action
 
-Stop. A human proposes or approves a `docs/work/LIB-###` item — the next identifier is LIB-003 — following [`docs/WORKFLOW.md`](WORKFLOW.md). Direction candidates live in [`docs/ROADMAP.md`](ROADMAP.md).
+Stop. A human proposes or approves a `docs/work/LIB-###` item — the next identifier is LIB-004 — following [`docs/WORKFLOW.md`](WORKFLOW.md). Direction candidates live in [`docs/ROADMAP.md`](ROADMAP.md).

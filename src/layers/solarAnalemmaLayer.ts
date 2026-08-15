@@ -28,17 +28,18 @@ const SOLAR_ANALEMMA_LAYER_ID = "layer.solarAnalemma.groundTrack";
 
 const updatePolicy: UpdatePolicy = { type: "perFrame" };
 
-function parseUtcHour(options: { utcHour?: number }): number {
+function parseUtcHour(options: { utcHour?: number }): number | undefined {
   const h = options.utcHour;
   if (typeof h !== "number" || !Number.isFinite(h)) {
-    return 12;
+    return undefined;
   }
   return Math.max(0, Math.min(23, Math.floor(h)));
 }
 
 /**
- * Year-long locus of the subsolar point at a fixed UTC hour each day (ground-track / equation-of-time
+ * Year-long locus of the subsolar point at one UTC clock time each day (ground-track / equation-of-time
  * geometry on the equirect map), using the same sun model as solar shading.
+ * Default sampling follows the canonical instant's UTC time-of-day; `utcHour` freezes an integer hour.
  */
 export function createSolarAnalemmaLayer(
   options: {

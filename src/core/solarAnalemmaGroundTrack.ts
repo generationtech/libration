@@ -32,20 +32,44 @@ export function daysInGregorianYear(y: number): number {
   return isGregorianLeapYear(y) ? 366 : 365;
 }
 
+function utcAnalemmaSampleClock(
+  utcMs: number,
+  utcHour: number | undefined,
+): { hour: number; minute: number; second: number; millisecond: number } {
+  if (typeof utcHour === "number" && Number.isFinite(utcHour)) {
+    return {
+      hour: Math.max(0, Math.min(23, Math.floor(utcHour))),
+      minute: 0,
+      second: 0,
+      millisecond: 0,
+    };
+  }
+  const d = new Date(utcMs);
+  return {
+    hour: d.getUTCHours(),
+    minute: d.getUTCMinutes(),
+    second: d.getUTCSeconds(),
+    millisecond: d.getUTCMilliseconds(),
+  };
+}
+
 /**
- * Locus of the subsolar point on one UTC hour each day for a full year (a closed loop on the globe
+ * Locus of the subsolar point at one UTC clock time each day for a full year (a closed loop on the globe
  * in equirectangular space, related to the equation of time; not the sky analemma at a fixed place).
  * Uses the same mean solar model as {@link subsolarPoint}.
+ *
+ * When `utcHour` is omitted, the clock time is the UTC time-of-day of `utcMs` (hour through millisecond),
+ * so the current calendar day's vertex coincides with {@link subsolarPoint} at `utcMs`.
+ * When `utcHour` is set, each day is sampled at that integer hour at `:00:00.000`.
  */
-export function sampleSolarAnalemmaGroundTrack(utcMs: number, utcHour: number): GroundTrackPointDeg[] {
+export function sampleSolarAnalemmaGroundTrack(utcMs: number, utcHour?: number): GroundTrackPointDeg[] {
   const d = new Date(utcMs);
   const y = d.getUTCFullYear();
-  const h0 = Number.isFinite(utcHour) ? utcHour : 12;
-  const hour = Math.max(0, Math.min(23, Math.floor(h0)));
+  const { hour, minute, second, millisecond } = utcAnalemmaSampleClock(utcMs, utcHour);
   const n = daysInGregorianYear(y);
   const out: GroundTrackPointDeg[] = [];
   for (let k = 1; k <= n; k += 1) {
-    const t = Date.UTC(y, 0, k, hour, 0, 0, 0);
+    const t = Date.UTC(y, 0, k, hour, minute, second, millisecond);
     out.push(subsolarPoint(t));
   }
   return out;

@@ -53,6 +53,39 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     }
   });
 
+  it("follows the canonical time-of-day when analemma utcHour is unset", () => {
+    const inst: SceneLayerInstance = {
+      id: "solarAnalemma",
+      family: "astronomy",
+      type: "astronomyVector",
+      enabled: true,
+      order: 0,
+      source: {
+        kind: "derived",
+        product: "solarAnalemmaGroundTrack",
+      },
+    };
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: 3, opacity: 1 },
+      DEFAULT_APP_CONFIG,
+    );
+    const dawn = Date.UTC(2026, 11, 21, 6, 0, 0, 0);
+    const noon = Date.UTC(2026, 11, 21, 12, 0, 0, 0);
+    const stDawn = layer!.getState(createTimeContext(dawn, 0, true));
+    const stNoon = layer!.getState(createTimeContext(noon, 0, true));
+    expect(isEquirectangularPolylinePayload(stDawn.data)).toBe(true);
+    expect(isEquirectangularPolylinePayload(stNoon.data)).toBe(true);
+    if (!isEquirectangularPolylinePayload(stDawn.data) || !isEquirectangularPolylinePayload(stNoon.data)) {
+      return;
+    }
+    const d = new Date(dawn);
+    const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
+    const dayStart = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+    const i = Math.round((dayStart - yearStart) / 86400000);
+    expect(stDawn.data.points[i]!.lonDeg).not.toBeCloseTo(stNoon.data.points[i]!.lonDeg, 1);
+  });
+
   it("passes normalized scene illumination defaults into solar shading payload", () => {
     const inst: SceneLayerInstance = {
       id: "solarShading",
