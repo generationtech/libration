@@ -22,3 +22,5 @@ None
 ## Next action
 
 No approved work. Stop.
+
+The Eclipse System is the preferred candidate for a future architecture/development discussion. It is not approved, not a work item, and not active. Product intent: [`FUTURE_FEATURES.md`](FUTURE_FEATURES.md#eclipse-system).

@@ -8,6 +8,8 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
+The preferred next product-development direction after LIB-011 is the [Eclipse System](#eclipse-system). That preference is not approval. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
+
 ## Status vocabulary
 
 - **Candidate** — worth considering later.
@@ -15,7 +17,200 @@ It is not a commitment to implement anything. It is a retention document so that
 - **Blocked** — depends on architecture that does not exist yet.
 - **Rejected** — intentionally not desired.
 
-Several sections describe extensions to subsystems that already exist. Those subsystems are described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md), and work in those areas should **extend** them rather than introduce parallel mechanisms — see design principles 7 and 8 in [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md).
+Several sections describe extensions to subsystems that already exist. Those subsystems are described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md), and work in those areas should **extend** them rather than introduce parallel mechanisms — see design principles 7–9 in [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md).
+
+## Moon, Sun-Moon-Earth, and observer astronomy
+
+This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. Nothing in this family is approved, active, scheduled, or architecturally frozen. Ranking below is future-work preference only: it is not permission to start, and it is not a `LIB-###` decomposition.
+
+Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md) (**AWAITING SCOPE**). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
+
+### Ranking
+
+| Rank | Role | Entry |
+|------|------|--------|
+| 1 | Preferred next direction | [Eclipse System](#eclipse-system) |
+| 2 | High-value follow-on / enabler | [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry) |
+| 3 | High-value follow-on | [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth) |
+| 4 | High-value follow-on | [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships) |
+| 5 | Later Moon enhancement | [Earth-Moon distance, perigee, and apogee](#earth-moon-distance-perigee-and-apogee) |
+| 6 | Later Moon enhancement | [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation) |
+| 7 | Longer-term product direction | [Astronomical Events](#astronomical-events) |
+| 8 | Longer-term product direction | [Accessible versus technical terminology](#accessible-versus-technical-terminology) |
+
+### Visual-design principle
+
+Apply design principle 9 in [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md): the default map should remain beautiful and usable as an ambient display. Do not add large map-spanning geometry merely because it can be calculated. Large geographic effects should earn their visual footprint by communicating important geographic information. Prefer small decorations on existing geometry when possible.
+
+For this family, distinguish three roles:
+
+| Role | Suitable for continuous display? | Examples in this family |
+|------|----------------------------------|-------------------------|
+| **Ambient astronomy** | Yes | Sun and Moon glyphs, phase, libration, lunar locus, solar analemma, illumination |
+| **Explanatory astronomy** | Optional | Lunar horizon, nodes, altitude/azimuth, distance information |
+| **Event astronomy** | Only when something unusual is approaching or occurring | Eclipse forecast bands, live eclipse alignment, dramatic beam/shadow visualization |
+
+The point is to keep Libration an instrument, not a cluttered astronomy diagram.
+
+### Eclipse System
+
+**Planned** as the strongest current candidate for the **next** product-development effort after LIB-011. Still **pending**, **unapproved**, **not a LIB item**, **not active**, and **not architecturally frozen**.
+
+The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, algorithms, data sources, rendering primitives, and work-item slices are **not** decided here.
+
+#### Forecasting
+
+Libration should eventually forecast upcoming eclipses at the authoritative product time:
+
+- **Solar:** total, partial, and annular where supported/appropriate; hybrid later if justified.
+- **Lunar:** total and partial; penumbral later if justified.
+
+Forecasting is **global**. An eclipse should be known and displayable whether or not it is visible from the configured reference city. Reference-city circumstances are additional observer-specific information, not a filter on whether the global event exists.
+
+Users should eventually be able to configure how far in advance eclipse visualization appears. Examples worth keeping, not a frozen control set: off; short advance warning; several days; one or more weeks; longer horizons.
+
+#### Solar versus lunar map effects
+
+Do not assume lunar eclipses should use the same path metaphor as solar eclipses.
+
+- **Solar eclipse:** moving shadow / path geometry on Earth — a path, strip, or band; path of totality or annularity where applicable; broader partial-eclipse region; centerline and/or boundaries where useful; movement and progression during the event. These should be configurable so users can choose how much eclipse geography appears.
+- **Lunar eclipse:** Earth-shadow interaction with the Moon, plus the terrestrial region from which the eclipsed Moon is observable. Consider Moon-above-horizon / visibility geometry for that observability region. Lunar visibility geometry ([below](#lunar-visibility-and-moonlight-geometry)) may later become useful infrastructure for that region.
+
+#### Live-event alignment decoration
+
+During an eclipse, Libration should become more visually expressive, using the existing Sun and Moon visual language rather than inventing an unrelated HUD.
+
+The desired dramatic gesture is a projected **beam / alignment effect** across the map — informally a **“Mars Attacks”** visual — while remaining grounded in the actual eclipse geometry, not an arbitrary glow.
+
+Conceptual behaviour to preserve, not a rendering design:
+
+- **Solar:** Moon/Sun alignment visually connected to the active terrestrial shadow footprint or path.
+- **Lunar:** emphasize the Sun → Earth → Moon shadow-axis relationship, rather than pretending there is a narrow terrestrial lunar-eclipse path.
+
+#### Configuration richness
+
+The eventual system is expected to be highly configurable. Dimensions worth preserving, without freezing a schema: system on/off; eclipse types; forecast horizon; forecast paths/bands; partial regions; centerlines; boundaries; labels; event prominence; live alignment effects; beam/alignment decoration; reference-city information; event-specific presentation choices.
+
+#### Reference-city eclipse circumstances
+
+Observer-specific information for the configured reference city may eventually include: visible / not visible; local event start, maximum, and end; eclipse magnitude; obscuration where applicable; Sun/Moon altitude; other useful local circumstances. Global event existence must not depend on that visibility.
+
+Use the same authoritative reference city already used by chrome and by LIB-011. Do not invent a separate eclipse observer location.
+
+#### How a future eclipse effort should begin
+
+Eclipse, solar, and lunar fundamentals may already exist from earlier development. A future eclipse effort **must first inventory the repository** and then choose architecture against this product intent. It must **not** start from an assumption that this backlog has already selected algorithms, catalogs, caches, persistence, configuration, UI, or rendering.
+
+Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
+
+Intentionally **not** decided here: eclipse algorithms; ephemeris implementation; external data providers; authoritative catalogs; caching; persistence; exact configuration schema or UI; exact rendering primitives or path representation; forecast-calculation architecture; an events framework; LIB decomposition; implementation phases.
+
+Related inventory pointer: the [derived overlays](#derived-overlays) list below points here rather than keeping a separate one-liner.
+
+### Lunar visibility and moonlight geometry
+
+**Candidate.** Strong follow-on / enabling feature. Related to, but not the same as, the Eclipse System. May later help describe the terrestrial region from which an eclipsed Moon is observable.
+
+Expose the geometry behind Moon visibility and the existing moonlight / solar-shading behaviour, rather than inventing an unrelated night-side effect. Current moonlight already participates in the upstream illumination raster; see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
+
+Related but distinct concepts:
+
+- **Lunar horizon boundary.** A precise geographic boundary separating locations where the Moon is above the horizon from those where it is below. Attractive because it is geometrically meaningful, visually lightweight, conceptually related to the solar terminator, and useful for understanding Moon visibility.
+- **Moonlight participation.** Optionally expose the geometry that determines where the existing moonlight contribution can actually participate. Integrate with current solar shading / moonlight behaviour.
+- **Lunar illumination / intensity contours.** Configurable boundaries for meaningful moonlight intensity or illumination thresholds. Not assumed to be required in a first realization.
+
+Preserve an expectation of **options**, without freezing controls: off; boundary line; line plus subtle region; illumination contours; styling choices.
+
+This is explanatory astronomy. A default ambient map should not be forced to show it.
+
+### Reference-city Moon altitude and azimuth
+
+**Candidate.** High-value follow-on. Observer information for the existing reference-city concept — the same city already used by chrome time presentation and by LIB-011 observer-oriented libration. Do not create a separate Moon observer location.
+
+At minimum, preserve: Moon altitude; Moon azimuth; compass direction; above/below horizon state.
+
+Possible later extensions: Moon rise time; Moon set time; rise/set direction; additional observer circumstances. The existing [sunrise/sunset for selected city](#time-and-reference-frame-features) idea remains a sibling, not a replacement.
+
+Two independently configurable presentation modes are desired:
+
+- **Inspectable / detail presentation.** A richer Moon information surface, tooltip, or inspection view. Possible contents, not a frozen list: altitude; azimuth; above/below horizon; phase; illumination percentage; distance; rise/set information.
+- **Persistent chrome presentation.** Optional compact always-visible status associated with the reference city. Conceptual example only, not syntax or placement: `☾ +38° · SE`. Related chrome inventory: [status readouts](#display-chrome) and [current reference city readout](#display-chrome).
+
+A possible later sibling is equivalent **Sun** altitude/azimuth information. That is not a complete solar-observer design and should not expand this item into one.
+
+### Lunar nodes and eclipse relationships
+
+**Candidate.** High-value follow-on. Nodes should help explain **why** eclipse conditions arise, not merely add orbital trivia.
+
+The explanatory relationship to preserve:
+
+```
+lunar locus
+    → nodal crossing
+    → Sun/Moon phase alignment near a node
+    → eclipse possibility
+```
+
+The lunar locus is a natural candidate surface on which node crossings could eventually be represented. The ~18.6-year nodal regression is already visually apparent through changes in lunar-locus geometry (major versus minor standstill amplitude); node decorations should be able to speak to that cycle.
+
+Potential configurable decorations, without freezing glyphs or rendering: off/on; ascending node; descending node; symbols; labels; node-related annotations; proximity-to-node emphasis; eclipse-relevance emphasis.
+
+Prefer restrained decorations over additional large map-spanning lines. This is explanatory astronomy that may become more prominent when eclipse-relevant.
+
+Lunar **standstill envelopes** remain a separate unapproved derived-overlay idea, related to the same nodal cycle, not absorbed into the Eclipse System.
+
+### Earth-Moon distance, perigee, and apogee
+
+**Candidate.** Later Moon enhancement.
+
+Potential information: current Earth–Moon distance; apparent angular diameter; approaching/receding state; perigee; apogee; timing relative to the nearest perigee/apogee; position within the anomalistic cycle.
+
+**Do not** automatically resize the production Moon glyph according to physical distance. The existing user-selected Moon glyph size is a presentation control with clear semantics. Distance variation should be communicated through information and/or optional event decoration.
+
+Default future product presentation should favor familiar terminology such as **Supermoon** and **Micromoon** where appropriate, while keeping precise astronomical values available. Colloquial labels such as “supermoon” may not have a single universally binding astronomical threshold; Libration must eventually define and document whatever classification it uses rather than treating the term as a fundamental celestial state.
+
+A product-wide accessible-versus-technical terminology preference, if ever introduced, should apply here; see [Accessible versus technical terminology](#accessible-versus-technical-terminology).
+
+### Symbolic lunar surface and face orientation
+
+**Candidate.** Later Moon enhancement. This refines the earlier “apparent lunar orientation / lunar north rotation” backlog idea. LIB-011 shipped map-versus-observer **libration-marker** orientation; that marker-frame rotation is **not** this item.
+
+Preferred first realization: a **symbolic** lunar surface, not a photographic texture. Conceptually a small number of recognizable simplified maria / surface features so that actual apparent movement of the lunar face becomes visible.
+
+The purpose is not lunar cartography. The purpose is to let the observer perceive libration rocking, apparent face orientation, and lunar-north / sky orientation.
+
+Preserve independence among:
+
+1. phase;
+2. libration indicator (ring / crosshair / off);
+3. symbolic lunar surface detail.
+
+A future user should be able to use these together or independently. Complements, and must not replace, the existing optical-libration mark.
+
+Reuse the observer-frame foundation established by LIB-011 rather than creating a competing orientation model.
+
+Prefer an experimental / DEV visual exploration before committing to production surface detail.
+
+### Astronomical Events
+
+**Candidate.** Longer-term architectural / product direction. Not a framework, not an implementation plan, and **not** a reason to generalize the Eclipse System into an events platform on the way in.
+
+Conceptual purpose: determine what noteworthy astronomical events are approaching, active, or recently passed at Libration’s authoritative / simulated **product time**.
+
+Directional examples, not committed scope: solar eclipses; lunar eclipses; notable perigee / full-Moon combinations; solstices / equinoxes; conjunctions; meteor-shower peaks; other future astronomical events.
+
+**Events must follow product time.** If the user accelerates demo time by months or years, future event behaviour should eventually arrive, activate, and pass according to simulated time. Do not tie event detection to wall-clock time. See the time model in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md) and [ADR 0004](decisions/0004-one-canonical-utc-instant-per-frame.md).
+
+### Accessible versus technical terminology
+
+**Candidate.** Longer-term product-wide presentation preference. Recorded here because distance / perigee / apogee and eclipse language will need it; not a complete terminology-system design.
+
+Conceptually two styles:
+
+- **Accessible / familiar** — the normal / default experience (for example Supermoon, Micromoon, everyday eclipse wording).
+- **Technical / precision-oriented** — more exact terminology, quantities, units, and distinctions.
+
+Do not settle the preference name, schema, or complete consequences now.
 
 ## Maps and base-map families
 
@@ -79,10 +274,14 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - solar subpoint.
 - lunar subpoint.
 - moon phase beyond the existing sublunar-marker phase representation.
-- **Apparent lunar orientation / lunar north rotation** (candidate; not current work). Richer visualization of the Moon’s apparent face: surface/maria orientation, an explicit lunar-north reference, or a detailed oriented Moon disc. The libration marker already has a map vs observer reference-frame setting (observer-oriented rotates the libration displacement and crosshair axes using the chrome reference city). That marker-frame rotation is not this item. Complements, and must not replace, the existing X/Y optical-libration mark. Requires its own approved LIB item.
+- **Symbolic lunar surface / apparent face orientation** — see [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation). Replaces the earlier “apparent lunar orientation / lunar north rotation” one-liner. LIB-011 marker-frame rotation is not this item.
 - analemma variants.
 - equinox and solstice reference overlays.
-- eclipse path overlays.
+- **Eclipse System** — see [Eclipse System](#eclipse-system). Replaces the earlier “eclipse path overlays” one-liner. Preferred next direction; not approved.
+- lunar horizon / moonlight-participation / illumination-contour geometry — see [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry).
+- lunar standstill envelopes (related to the nodal cycle already visible as lunar-locus amplitude change; not a production control today). See also [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).
+- lunar nodes on or near the lunar locus — see [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).
+- Earth-Moon distance / perigee / apogee presentation — see [Earth-Moon distance, perigee, and apogee](#earth-moon-distance-perigee-and-apogee). Do not auto-resize the Moon glyph.
 - great-circle paths.
 - antipode markers.
 - local noon/midnight curves.
@@ -125,7 +324,7 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 - viewport clipping.
 - composition-aware day/night illumination.
 - atmospheric scattering and haze, or further narrow tuning passes in `src/renderer/illuminationShading.ts` beyond the current constants.
-- shadow and glow effects expressed upstream as RenderPlan intent.
+- shadow and glow effects expressed upstream as RenderPlan intent. Dramatic eclipse alignment / beam decoration is a separate event-astronomy idea; see [Eclipse System](#eclipse-system).
 - overlay-readability extensions beyond the current model: per-layer readability contracts for stack rows that do not have one; finer multi-row semantics, such as separate tuning per static-raster row; additional catalog or resolver substrate heuristics beyond the current intrinsic hints.
 - per-layer contrast/brightness/saturation/gamma where appropriate.
 - high-contrast accessibility mode.
@@ -156,7 +355,7 @@ Candidates:
 - Winkel Tripel.
 - projection switcher.
 - inverse projection for pointer hover.
-- click-to-inspect lat/lon/time.
+- click-to-inspect lat/lon/time. A richer Moon inspection surface is a separate idea; see [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth).
 - viewport clipping.
 - tile preparation.
 - high-resolution map assets.
@@ -177,7 +376,8 @@ Candidates:
 - future time preview.
 - compare two reference cities.
 - meeting-planning mode.
-- sunrise/sunset for selected city.
+- sunrise/sunset for selected city. See also [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth) for Moon altitude, azimuth, and possible later rise/set information using the same reference city.
+- Moon altitude / azimuth / compact chrome status for the reference city — see [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth).
 - civil-date boundary visualization.
 - date-line explanation aids.
 - leap second and time standard notes if ever needed.
@@ -197,8 +397,8 @@ Candidates:
 - NATO row visibility and styling controls.
 - tickmark density controls.
 - bottom information bar expansion.
-- status readouts.
-- current reference city readout.
+- status readouts. A compact always-visible Moon altitude/azimuth chip associated with the reference city is one candidate; see [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth).
+- current reference city readout. Reuse the same authoritative city; do not add a second observer location for Moon or eclipse information.
 - selected map/source readout.
 - layer legend area.
 
@@ -267,6 +467,7 @@ These are larger future directions, not near-term tasks:
 - local network display endpoint.
 - OBS/streaming background mode.
 - kiosk mode.
-- educational mode explaining longitude, time, seasons, and projection.
+- educational mode explaining longitude, time, seasons, and projection. Explanatory astronomical overlays should still follow the [visual-design principle](#visual-design-principle).
+- astronomical events following product time — see [Astronomical Events](#astronomical-events). Longer-term direction, not a framework to build before or instead of the Eclipse System.
 - mission-control style scene packs.
 - personal travel/world-clock dashboard.

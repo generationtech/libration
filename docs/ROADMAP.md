@@ -28,17 +28,23 @@ None.
 
 These themes are the product’s intended future shape. They become work only when a human approves a `docs/work/LIB-###` item. Details and extras live in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md).
 
+### Preferred next development direction
+
+Moon visual development through [LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) is complete. No LIB work is active or approved.
+
+The strongest candidate for the **next** product-development effort is an **Eclipse System** (global forecasting plus live-event visualization). That preference is **not approval**. There is no eclipse work item, no selected architecture, and no implementation decomposition. A future session should begin by inventorying existing solar/lunar capability in the repository, then deciding architecture against the product intent in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#eclipse-system). Other lunar and Sun–Moon–Earth ideas in that family remain unapproved backlog.
+
 ### Visual verification and contributor workflow
 
 Keep the Cursor-native verification path as the default for visually impacting work. Procedure: [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md).
 
 ### Map inventory (Phase 8 remainder)
 
-Further curated static substrates when a raster and rights exist. The preferred next family, when sourced, is a temperature or precipitation climatology. Selector polish and additional climate/night-light/seasonal families remain unapproved until scoped. Live weather is not base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
+Further curated static substrates when a raster and rights exist. When map-inventory work is opened, the preferred next family, if sourced, is a temperature or precipitation climatology. Selector polish and additional climate/night-light/seasonal families remain unapproved until scoped. Live weather is not base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
 ### Derived astronomical overlays
 
-Time-relative geographic overlays that reuse the existing solar and lunar models rather than adding a second ephemeris. Analemma variants, eclipse paths, standstills, and related ideas remain unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). [LIB-006](work/LIB-006-experimental-lunar-locus.md) completed the lunar-locus experiment; [LIB-007](work/LIB-007-lunar-locus.md) shipped the production overlay.
+Time-relative geographic overlays remain a strategic theme. The lunar-locus experiment and production overlay are complete ([LIB-006](work/LIB-006-experimental-lunar-locus.md), [LIB-007](work/LIB-007-lunar-locus.md)). Remaining ideas in this theme stay unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). Where a new overlay can be derived from existing solar and lunar models, prefer that over a second ephemeris; **eclipse architecture is not decided** and must not be read as already committed to that reuse. The preferred next slice of this theme is the Eclipse System, recorded above.
 
 ### Composition extensions (Phase 9)
 

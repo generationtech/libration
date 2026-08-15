@@ -88,6 +88,16 @@ The scene system is a coherent upstream illumination composition path, not a pil
 
 Systems that affect appearance should participate coherently in atmospheric attenuation, reflected illumination, emissive illumination, visibility and readability policy, and dynamic scene composition.
 
+### 9. Ambient display over astronomy-diagram clutter
+
+The default map should remain beautiful and usable as an ambient display.
+
+Astronomical features belong in one of three roles: **ambient** (suitable for continuous display), **explanatory** (optional geometry or information that explains why the scene looks as it does), or **event** (effects justified because something unusual is approaching or occurring). Event effects may be more visually expressive, but they must still be geometrically grounded — principle 7 is not suspended for drama.
+
+Do not add large map-spanning geometry merely because it can be calculated. Large geographic effects should earn their visual footprint by communicating important geographic information. Prefer small decorations on existing geometry when possible.
+
+Family-specific application: [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#visual-design-principle).
+
 ## How work should be shaped
 
 Product intent is delivered through narrow, coherent slices.
