@@ -64,6 +64,7 @@ import {
   type SubstrateOverlayReadabilityFrameInputs,
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
+import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import { createDynamicDataLifecycleHost } from "./lifecycle";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
@@ -405,6 +406,7 @@ export default function App() {
       );
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
+        eclipseFrame: resolveEclipseFrame(clockNowMs),
         dynamicDataLifecycle:
           dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs),
       });

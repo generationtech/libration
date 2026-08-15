@@ -30,9 +30,11 @@ import {
   EQUIRECT_BASE_MAP_OPTIONS,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
+  applyLayerEnableFlagsToScene,
   applyLunarGroundTrackColorToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
+  applySolarEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
@@ -55,6 +57,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   sublunarMarker: true,
   lunarGroundTrack: true,
   lunarLocus: true,
+  solarEclipse: false,
   solarAnalemma: true,
 };
 
@@ -103,7 +106,7 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(12);
+    expect(v2.scene?.layers).toHaveLength(13);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
@@ -891,6 +894,7 @@ describe("SceneConfig (Phase 1)", () => {
       sublunarMarker: false,
       lunarGroundTrack: true,
       lunarLocus: true,
+      solarEclipse: false,
       solarAnalemma: false,
     };
     const v2 = normalizeLibrationConfig({
@@ -1104,5 +1108,60 @@ describe("SceneConfig (Phase 1)", () => {
     expect(analemma?.source.kind === "derived" ? analemma.source.parameters?.strokeThickness : undefined).toBe(
       "normal",
     );
+  });
+});
+
+describe("solar eclipse scene presentation", () => {
+  it("defaults the layer off with central line/band/partial on", () => {
+    const v2 = defaultLibrationConfigV2();
+    expect(v2.layers.solarEclipse).toBe(false);
+    const row = v2.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.enabled).toBe(false);
+    expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe(
+      "solarEclipseLiveFootprint",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showCentralLine : undefined).toBe(
+      true,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showCentralBand : undefined).toBe(
+      true,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showPartialRegion : undefined).toBe(
+      true,
+    );
+  });
+
+  it("persists independent presentation toggles", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      layers: { ...base.layers, solarEclipse: true },
+      scene: applySolarEclipsePresentationToScene(
+        applyLayerEnableFlagsToScene(base.scene!, { ...base.layers, solarEclipse: true }),
+        { showCentralLine: false, showCentralBand: true, showPartialRegion: false },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    expect(round.layers.solarEclipse).toBe(true);
+    const row = round.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showCentralLine : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showCentralBand : undefined).toBe(
+      true,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showPartialRegion : undefined).toBe(
+      false,
+    );
+  });
+
+  it("normalizes a missing solarEclipse layer flag to off", () => {
+    const { solarEclipse: _drop, ...legacyLayers } = DEFAULT_APP_CONFIG.layers;
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: legacyLayers,
+    } as LibrationConfigV2);
+    expect(v2.layers.solarEclipse).toBe(false);
   });
 });

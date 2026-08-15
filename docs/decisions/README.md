@@ -13,6 +13,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0005](0005-dynamic-data-acquisition-outside-the-render-path.md) | Dynamic data acquired outside the render path, bound to product time |
 | [0006](0006-browser-first-spa-with-non-load-bearing-tauri-shell.md) | Browser-first SPA with a non-load-bearing Tauri shell |
 | [0007](0007-overlay-readability-derived-not-sampled.md) | Overlay readability derived upstream, not sampled |
+| [0008](0008-bundled-nasa-solar-eclipse-authority.md) | Bundled NASA solar eclipse authority independent of ambient astronomy |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

@@ -94,4 +94,10 @@ Eclipse authority selected: bundled NASA/Espenak–Meeus Five Millennium Canon/C
 
 Verified: documentation/research checks; `npx tsc --noEmit` clean; `npm test` 174 files / 1631 passed / 0 failed. Visual verification not applicable.
 
+## 2026-08-15 — LIB-014 complete
+
+E1 solar eclipse live footprint: bundled NASA Besselian authority v1 (454 events, 1900–2100), product-UTC lookup, geographic reduction, production overlay through `equirectRegionOverlay`/`RenderPlan`. Master default off. DEV scenarios `solar-eclipse-total|annular|partial|dateline`. ADR 0008.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 180 files / 1662 passed / 0 failed; `npm run build` succeeded with no eclipse scenario ids in `dist/`. Cursor Browser: four eclipse scenarios, 3600× demo progression on 2024 total, ordinary startup.
+
 

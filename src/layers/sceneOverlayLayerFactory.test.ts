@@ -20,6 +20,7 @@ import {
 } from "../core/sceneIlluminationPresentationDefaults";
 import { createTimeContext } from "../core/time";
 import { isEquirectangularPolylinePayload } from "./equirectPolylinePayload";
+import { isEquirectRegionOverlayPayload } from "./equirectRegionPayload";
 import { isLunarGroundTrackPayload } from "./lunarGroundTrackPayload";
 import { isLunarLocusPayload } from "./lunarLocusPayload";
 import { createLayerForSceneOverlayInstance } from "./sceneOverlayLayerFactory";
@@ -112,6 +113,30 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
       expect(st.data.moonlightMode).toBe(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE);
       expect(st.data.emissiveNightLightsMode).toBe(DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE);
     }
+  });
+
+  it("builds solar eclipse live footprint from product parameters", () => {
+    const inst: SceneLayerInstance = {
+      id: "solarEclipse",
+      family: "astronomy",
+      type: "astronomyVector",
+      enabled: true,
+      order: 0,
+      source: {
+        kind: "derived",
+        product: "solarEclipseLiveFootprint",
+        parameters: { showCentralLine: true, showCentralBand: true, showPartialRegion: true },
+      },
+    };
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: 3, opacity: 1 },
+      DEFAULT_APP_CONFIG,
+    );
+    expect(layer?.id).toBe("layer.solarEclipse.liveFootprint");
+    const utc = Date.UTC(2024, 3, 8, 18, 17, 15, 0);
+    const st = layer!.getState(createTimeContext(utc, 0, true));
+    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
   });
 
   it("returns null for unknown derived product", () => {

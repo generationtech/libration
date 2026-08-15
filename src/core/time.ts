@@ -14,6 +14,7 @@
 import type { TimeContext } from "../layers/types";
 import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
 import type { OverlayReadabilityFrame } from "./overlayReadabilityFrame";
+import type { EclipseFrame } from "./eclipse/solarEclipseTypes";
 
 export function createTimeContext(
   now: number,
@@ -22,6 +23,7 @@ export function createTimeContext(
   options?: {
     overlayReadabilityFrame?: OverlayReadabilityFrame;
     dynamicDataLifecycle?: DynamicDataLifecycleAttachment;
+    eclipseFrame?: EclipseFrame;
   },
 ): TimeContext {
   return {
@@ -34,6 +36,7 @@ export function createTimeContext(
     ...(options?.dynamicDataLifecycle !== undefined
       ? { dynamicDataLifecycle: options.dynamicDataLifecycle }
       : {}),
+    ...(options?.eclipseFrame !== undefined ? { eclipseFrame: options.eclipseFrame } : {}),
   };
 }
 

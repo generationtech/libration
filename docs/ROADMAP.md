@@ -30,9 +30,9 @@ These themes are the product’s intended future shape. They become work only wh
 
 ### Preferred next development direction
 
-Moon visual development through [LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) is complete. Eclipse architecture reconnaissance ([LIB-012](work/LIB-012-eclipse-system-architecture.md)) and eclipse authority selection ([LIB-013](work/LIB-013-eclipse-authority-evaluation.md)) are complete. No LIB work is active or approved.
+Moon visual development through [LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) is complete. Eclipse architecture ([LIB-012](work/LIB-012-eclipse-system-architecture.md)), authority selection ([LIB-013](work/LIB-013-eclipse-authority-evaluation.md)), and E1 live solar footprint ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md)) are complete. No LIB work is active or approved.
 
-The strongest candidate for the **next** product-development effort remains the **Eclipse System**. Intended structure and selected authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Product intent: [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#eclipse-system). Implementation is **not** approved. No implementation slice (E1–E6) is an approved work item. Other lunar and Sun–Moon–Earth ideas in that family remain unapproved backlog.
+The strongest candidate for the **next** product-development effort is **E2 — solar eclipse forecast window**. Intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Product intent: [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#eclipse-system). E2+ implementation is **not** approved. Other lunar and Sun–Moon–Earth ideas in that family remain unapproved backlog.
 
 ### Visual verification and contributor workflow
 
@@ -44,7 +44,7 @@ Further curated static substrates when a raster and rights exist. When map-inven
 
 ### Derived astronomical overlays
 
-Time-relative geographic overlays remain a strategic theme. The lunar-locus experiment and production overlay are complete ([LIB-006](work/LIB-006-experimental-lunar-locus.md), [LIB-007](work/LIB-007-lunar-locus.md)). Remaining ideas in this theme stay unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). Where a new overlay can be derived from existing solar and lunar models, prefer that over a second ephemeris. Eclipse architecture (LIB-012) and authority selection (LIB-013) require a bundled NASA/Espenak–Meeus authority rather than the visualization-grade Sun/Moon models; see [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). That selection is not implementation approval. The preferred next slice of this theme is the Eclipse System, recorded above.
+Time-relative geographic overlays remain a strategic theme. The lunar-locus experiment and production overlay are complete ([LIB-006](work/LIB-006-experimental-lunar-locus.md), [LIB-007](work/LIB-007-lunar-locus.md)). E1 solar eclipse live footprint is production ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md)). Remaining ideas in this theme stay unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). Where a new overlay can be derived from existing solar and lunar models, prefer that over a second ephemeris. Eclipse event truth uses the bundled NASA/Espenak–Meeus authority, not the visualization-grade Sun/Moon models; see [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) and [ADR 0008](decisions/0008-bundled-nasa-solar-eclipse-authority.md). The preferred next slice of this theme is E2 (forecast window), recorded above.
 
 ### Composition extensions (Phase 9)
 

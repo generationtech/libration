@@ -33,6 +33,7 @@ const ALL: LayerEnableFlags = {
   sublunarMarker: true,
   lunarGroundTrack: true,
   lunarLocus: true,
+  solarEclipse: false,
   solarAnalemma: true,
 };
 
@@ -167,6 +168,29 @@ describe("planSceneStackComposition", () => {
     expect(
       planSceneStackComposition(s).overlays.some((o) => o.layerId === "staticEquirectOverlay"),
     ).toBe(false);
+  });
+
+  it("includes solar eclipse between the static overlay and city pins when enabled", () => {
+    expect(
+      planSceneStackComposition(buildDefaultSceneConfigFromLayerFlags(ALL)).overlays.some(
+        (o) => o.layerId === "solarEclipse",
+      ),
+    ).toBe(false);
+    const enabled = sceneWith(undefined, (rows) =>
+      rows.map((L) => (L.id === "solarEclipse" ? { ...L, enabled: true } : L)),
+    );
+    expect(planSceneStackComposition(enabled).overlays.map((o) => o.layerId)).toEqual([
+      "solarShading",
+      "grid",
+      "staticEquirectOverlay",
+      "solarEclipse",
+      "cityPins",
+      "subsolarMarker",
+      "lunarGroundTrack",
+      "lunarLocus",
+      "sublunarMarker",
+      "solarAnalemma",
+    ]);
   });
 
   it("skips disabled stack rows without creating z-index gaps in the plan", () => {

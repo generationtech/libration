@@ -199,7 +199,7 @@ See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-raster
 
 **Consequence.** Adding a family is a curation step producing a catalog entry, not a file drop. Provenance and licensing have a definite home.
 
-See [ADR 0003](docs/decisions/0003-bundled-base-map-catalog-with-durable-family-ids.md).
+See [ADR 0003](docs/decisions/0003-bundled-base-map-catalog-with-durable-family-ids.md). The same posture applies to the bundled solar eclipse authority: versioned NASA-derived JSON, no runtime fetch, independent of ambient Sun/Moon astronomy ([ADR 0008](docs/decisions/0008-bundled-nasa-solar-eclipse-authority.md)).
 
 ---
 

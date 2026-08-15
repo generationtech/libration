@@ -1,0 +1,2 @@
+# Full NASA GSFC dump (~6 MB). Download when regenerating; do not commit.
+eclipse_besselian_from_mysqldump2.csv

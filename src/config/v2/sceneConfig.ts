@@ -34,6 +34,12 @@ import {
 } from "../../core/astronomyOverlayStrokeAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
+  DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND,
+  DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE,
+  DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION,
+  normalizeSolarEclipsePresentation,
+} from "../../core/eclipse/solarEclipseAppearance";
+import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
   type SublunarMarkerAppearance,
@@ -424,6 +430,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "grid",
   "staticEquirectOverlay",
   "globalCloudsIr",
+  "solarEclipse",
   "earthquakes",
   "orbitalTracks",
   "cityPins",
@@ -738,6 +745,24 @@ const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   },
 };
 
+/** Live NASA-derived solar eclipse footprint. Default off (event overlay; no forecast in E1). */
+const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
+  id: "solarEclipse",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 2.7,
+  source: {
+    kind: "derived",
+    product: "solarEclipseLiveFootprint",
+    parameters: {
+      showCentralLine: DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE,
+      showCentralBand: DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND,
+      showPartialRegion: DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION,
+    },
+  },
+};
+
 /**
  * DLC-2: Model B earthquake point features — lifecycle sourceId, default off.
  * Acquisition is outside rAF; layer reads sync-prepared views only.
@@ -859,6 +884,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   GRID,
   STATIC_EQUIRECT,
   GLOBAL_CLOUDS_IR,
+  SOLAR_ECLIPSE_ROW,
   CITY,
   EARTHQUAKES,
   ORBITAL_TRACKS,
@@ -889,6 +915,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "staticEquirectOverlay";
     case "globalCloudsIr":
       return "globalCloudsIr";
+    case "solarEclipse":
+      return "solarEclipse";
     case "earthquakes":
       return "earthquakes";
     case "orbitalTracks":
@@ -951,6 +979,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     grid: false,
     staticEquirectOverlay: false,
     globalCloudsIr: false,
+    solarEclipse: false,
     earthquakes: false,
     orbitalTracks: false,
     cityPins: false,
@@ -1091,6 +1120,39 @@ export function applySublunarMarkerAppearanceToScene(
       return {
         ...row,
         source: withNormalizedSublunarPointParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
+export function solarEclipsePresentationFromScene(scene: SceneConfig) {
+  const row = scene.layers.find((l) => l.id === "solarEclipse");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return normalizeSolarEclipsePresentation(params);
+}
+
+export function applySolarEclipsePresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<{
+    showCentralLine: boolean;
+    showCentralBand: boolean;
+    showPartialRegion: boolean;
+  }>,
+): SceneConfig {
+  const current = solarEclipsePresentationFromScene(scene);
+  const next = normalizeSolarEclipsePresentation({ ...current, ...patch });
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "solarEclipse" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSolarEclipseParameters({
           ...row.source,
           parameters: { ...(row.source.parameters ?? {}), ...next },
         }),
@@ -1383,6 +1445,20 @@ function withNormalizedSolarAnalemmaParameters(source: LayerSourceConfig): Layer
   };
 }
 
+function withNormalizedSolarEclipseParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "solarEclipseLiveFootprint") {
+    return source;
+  }
+  const p = normalizeSolarEclipsePresentation(source.parameters);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...p,
+    },
+  };
+}
+
 function defaultSourceForLayerId(id: string): LayerSourceConfig {
   const m = new Map<string, LayerSourceConfig>(
     DEFAULT_STACK.map((s) => [s.id, s.source] as const),
@@ -1526,6 +1602,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   source = withNormalizedSublunarPointParameters(source);
   source = withNormalizedSublunarLocusParameters(source);
   source = withNormalizedSolarAnalemmaParameters(source);
+  source = withNormalizedSolarEclipseParameters(source);
   let opacity: number | undefined;
   if (typeof raw.opacity === "number" && Number.isFinite(raw.opacity)) {
     opacity = clampOpacity(raw.opacity);

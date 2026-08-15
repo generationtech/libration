@@ -31,6 +31,7 @@ import { createLatLonGridLayer } from "./latLonGridLayer";
 import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
 import { createLunarLocusLayer } from "./lunarLocusLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
+import { createSolarEclipseLayer } from "./solarEclipseLayer";
 import { createSolarShadingLayer } from "./solarShadingLayer";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
 import { createSubsolarMarkerLayer } from "./subsolarMarkerLayer";
@@ -46,6 +47,7 @@ import {
   normalizeAstronomyPathThicknessId,
   type AstronomyPathThicknessId,
 } from "../core/astronomyOverlayStrokeAppearance";
+import { normalizeSolarEclipsePresentation } from "../core/eclipse/solarEclipseAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
 import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
@@ -249,6 +251,12 @@ function createDerivedOverlayByProduct(
         ),
         strokeThickness: astronomyPathThicknessFromOptionalParameters(source.parameters),
         solarAnalemmaReadabilityPresentation: config.scene.overlayReadability.perLayer?.solarAnalemma,
+      });
+    case "solarEclipseLiveFootprint":
+      return createSolarEclipseLayer({
+        zIndex,
+        opacity,
+        presentation: normalizeSolarEclipsePresentation(source.parameters),
       });
     default:
       return null;

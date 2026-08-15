@@ -242,6 +242,27 @@ describe("resolveVisualScenarioSession", () => {
     }
   });
 
+  it("seeds solar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {
+    for (const id of [
+      "solar-eclipse-total",
+      "solar-eclipse-annular",
+      "solar-eclipse-partial",
+      "solar-eclipse-dateline",
+    ] as const) {
+      const config = VISUAL_SCENARIOS[id].buildConfig();
+      expect(config.layers.solarEclipse).toBe(true);
+      expect(config.layers.solarShading).toBe(true);
+      expect(config.layers.subsolarMarker).toBe(true);
+      expect(config.layers.sublunarMarker).toBe(true);
+      expect(config.layers.lunarGroundTrack).toBe(false);
+      expect(config.layers.lunarLocus).toBe(false);
+      expect(config.layers.solarAnalemma).toBe(false);
+      expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC[id]);
+      const row = config.scene?.layers.find((l) => l.id === "solarEclipse");
+      expect(row?.enabled).toBe(true);
+    }
+  });
+
   it("seeds lunar-locus with the production overlay, Moon marker, track off, and analemma off", () => {
     const config = VISUAL_SCENARIOS["lunar-locus"].buildConfig();
     expect(config.layers.sublunarMarker).toBe(true);
@@ -354,5 +375,6 @@ describe("development-only containment in the entry point", () => {
     expect(importIdx).toBeGreaterThan(devIdx);
     expect(mainSource).not.toMatch(/lunarLocusExperiment/);
     expect(mainSource).not.toMatch(/dev\/lunarLocusPlan/);
+    expect(mainSource).not.toMatch(/solar-eclipse-total/);
   });
 });

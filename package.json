@@ -9,6 +9,7 @@
     "test": "vitest run",
     "fonts:prep": "tsx tools/fonts/prepareFonts.ts",
     "maps:prep": "tsx tools/maps/prepareBaseMapFamily.ts",
+    "eclipse:prep": "tsx tools/eclipse/generateSolarEclipseAuthority.ts",
     "preview": "vite preview",
     "tauri": "tauri"
   },

@@ -266,10 +266,10 @@ The registry is **rebuilt, not mutated**, when composition-relevant configuratio
 
 ### The default scene stack
 
-`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the twelve known overlay ids, in canonical order:
+`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the thirteen known overlay ids, in canonical order:
 
 ```
-solarShading, grid, staticEquirectOverlay, globalCloudsIr, earthquakes,
+solarShading, grid, staticEquirectOverlay, globalCloudsIr, solarEclipse, earthquakes,
 orbitalTracks, cityPins, subsolarMarker, lunarGroundTrack, lunarLocus, sublunarMarker, solarAnalemma
 ```
 
@@ -286,6 +286,7 @@ The base map is separate; it is the foundational part of the composition, not an
 | Subsolar / sublunar markers | `subsolarMarkerLayer.ts`, `sublunarMarkerLayer.ts` | The Moon glyph is a symbolic map marker, not an angular-scale Moon. Optical libration (Meeus ch. 53, no physical libration) is computed in `lunarOpticalLibration.ts` from the same truncated lunar series as `sublunarPoint`. Payload fields `librationLongitudeDeg` / `librationLatitudeDeg` plus `appearance` drive a displaced internal **ring** (default) or **crosshair**. **Map-oriented** presentation keeps longitude east = right and latitude north = up. **Observer-oriented** (default) rotates that displacement — and the crosshair axes — by χ = C − q (Meeus lunar-axis position angle minus parallactic angle) for the terrestrial observer. Observer coordinates come only from chrome `displayTime.topBandAnchor` when it is a known catalog `fixedCity` (`resolveReferenceCityObserverLocation`); they are not stored on the Moon row. If orientation is observer-oriented, “use reference city” is on, and no valid city is resolved, presentation falls back to map-oriented (χ = 0) rather than inventing a location. Below-horizon geometry is still computed. Ring geometry stays circular; observer rotation is visible there only as a rotated displacement. Contrast is a two-pass stroke: a slightly wider automatic under-stroke (dark `18,26,40` or light `236,240,246` from WCAG relative luminance of the user color, threshold 0.179) then the user-selected foreground (`#c5d4e8` default). The under-stroke is not user-configurable and does not recolor by phase region. Display amplification (`librationMotionScale`) scales the glyph offset only. Size tokens `small` / `normal` / `large` / `extraLarge` scale disc, phase, and indicator together; `normal` is the historical radius (`min(7.5, max(3.8, width×0.0046))`). Moon size does not change the Sun glyph. Libration defaults **on**. Phase astronomy is unchanged. |
 | Lunar ground track | `lunarGroundTrackLayer.ts` | Time-windowed trajectory of `sublunarPoint` around `TimeContext.now`. Default 24 h past + 24 h future at 10-minute samples; extents persist on `source.parameters.pastHours` / `futureHours` (`6` / `12` / `24` / `48` / `72`). Stroke RGB identities persist as `pastColor` / `futureColor` (`#rrggbb`, default `#aacdf0`). Past is quieter than future via plan-builder alpha; unlabeled 6-hour ticks. Default off. Independent of the sublunar marker. |
 | Lunar locus | `lunarLocusLayer.ts` | Compact sublunar figure: `sublunarPoint` sampled once per **mean lunar day** (derived from the lunar model’s GMST and mean-longitude rates, ≈24 h 50 m 28.3 s) for 28 points spanning ≈27.3 days, starting at `TimeContext.now` (`k = 0…+27`). Residual `(δlon, lat)` is interpolated with an **open** centripetal Catmull-Rom whose neighbors outside that window (`k = −1` and `k = +28`) supply real tangents. The displayed path is cropped near one sidereal month after the current Moon (~26.4 mean lunar days). Endpoints are not welded: the locus is approximately periodic, not exactly periodic, and the Moon glyph is the cycle seam. Strokes that fall inside the Moon disc are trimmed as presentation only (trim radius follows the configured Moon size). The plan draws an open polyline of unwrapped longitudes plus ±360° copies so a figure near ±180° stays associated with the Moon. Line-only. Stroke RGB identity persists as `source.parameters.strokeColor` (default `#1c2638`); thickness token `thin` / `normal` / `thick` multiplies the veil-aware base width `1.2 + 0.95 × veil`. Independent of Solar analemma styling. Non-current samples memoized per 1-second product-time bucket; `k = 0` is always live `sublunarPoint(now)`. Default off. Independent of the Moon marker, lunar ground track, and solar analemma. Vertical extent follows the lunar model (major- vs minor-standstill epochs differ without a standstill switch). |
+| Solar eclipses | `solarEclipseLayer.ts` | NASA-derived live solar footprint (E1). Default **off**. When product UTC is inside an active solar event, emits generic lat/lon fills and strokes (`equirectRegionOverlay`): penumbral/partial region, umbral or antumbral central band, and central line. Partial-only events emit the partial region only — no fabricated centerline or central band. Hybrid events keep subtype `hybrid`; the live band follows Besselian `L2′` (umbra vs antumbra). Presentation parameters `showCentralLine` / `showCentralBand` / `showPartialRegion` default **on**. Canvas sees no eclipse astronomy. |
 | Solar analemma | `solarAnalemmaLayer.ts` | Derived ground track. Default samples the year-long subsolar locus at the canonical instant’s UTC time-of-day so today’s vertex coincides with the live subsolar point. Optional `source.parameters.utcHour` freezes that integer hour at `:00:00.000`. Stroke RGB identity persists as `source.parameters.strokeColor` (default `#ffc878`); thickness token `thin` / `normal` / `thick` multiplies the same veil-aware base width as the lunar locus. Independent of Lunar locus styling. |
 | Static equirect overlay | `staticEquirectRasterOverlayLayer.ts` | Full-viewport raster overlay. |
 | Dynamic equirect raster | `dynamicEquirectRasterOverlayLayer.ts` | Reads prepared views only. |
@@ -306,6 +307,29 @@ The pieces:
 Polar behaviour (midnight sun, polar night) is not special-cased. It emerges from real solar geometry and seasonal axial tilt.
 
 The backend sees one `rasterPatch` and knows nothing about any of this. See [ADR 0002](decisions/0002-single-upstream-planetary-illumination-rasterpatch.md).
+
+### Solar eclipse live footprint
+
+Production flow (E1, [LIB-014](work/LIB-014-solar-eclipse-live-footprint.md)):
+
+```
+bundled authority JSON
+  → EclipseAuthority (parse, provenance, binary-search lookup)
+  → EclipseEventService.resolveEclipseFrame(TimeContext.now)
+  → Besselian evaluation + geographic reduction
+  → solar eclipse layer (semantic lat/lon regions)
+  → equirectRegionOverlay RenderPlan (seam unwrap + ±360° copies)
+  → Canvas (path fill/stroke only)
+```
+
+- **Asset:** `src/assets/eclipse/solar-eclipse-authority-v1.json` (`authorityId` `nasa-espenak-meeus-5mcse-solar`, `authorityVersion` `1`). 454 solar events, 1900-01-01T00:00:00.000Z inclusive through 2101-01-01T00:00:00.000Z exclusive.
+- **Ingest:** `npm run eclipse:prep` reads the NASA GSFC Besselian CSV (SHA-256 pinned; file is gitignored) and writes the JSON. Runtime never fetches NASA and never parses HTML/PDF.
+- **Outside the span:** `EclipseFrame.support` is `{ supported: false, reason: "outside-authority-range" }`. That is not the same as a supported instant with no active eclipse (geometry absent, `supported: true`).
+- **Product time:** every evaluation uses the frame’s canonical UTC (`TimeContext.now` / `eclipseFrame`). No `Date.now()` in eclipse math. Pause freezes geometry; accelerated demo and direct UTC jumps re-evaluate immediately.
+- **Wrap:** `src/renderer/renderPlan/equirectSeamRegion.ts` unwraps short-arc longitudes and emits world copies so a dateline-crossing ring does not span the map. Polar rings whose unwrapped longitude span exceeds 270° close through the nearer pole.
+- **Illumination raster is not the eclipse overlay.** Umbra/antumbra/penumbra are authority geometry, not a hack of `sampleIlluminationRgba8`.
+
+See [ADR 0008](decisions/0008-bundled-nasa-solar-eclipse-authority.md) and [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md).
 
 ### Overlay readability
 
@@ -401,6 +425,7 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 - the analemma ground track (default: UTC time-of-day of the instant; optional frozen `utcHour`);
 - the lunar ground track (past/future window around the instant; same `sublunarPoint` as the Moon marker);
 - the lunar locus (mean-lunar-day samples of the same `sublunarPoint` across one orbital cycle, with the instant as the cycle seam);
+- solar eclipse authority lookup and live geographic footprint (NASA Besselian evaluation at that UTC; unsupported outside 1900–2100);
 - which dynamic snapshot is resolved for each source.
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.
@@ -477,7 +502,7 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles (including lunar ground track and lunar locus), Moon size and libration presentation (ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale), independent Lunar locus and Solar analemma stroke color/thickness, past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
+| Layers | Scene stack toggles (including lunar ground track, lunar locus, and Solar eclipses), independent eclipse central-line / central-band / partial-region checkboxes, Moon size and libration presentation (ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale), independent Lunar locus and Solar analemma stroke color/thickness, past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
 | Geography | Base-map family selection and presentation, projection-adjacent settings |
@@ -521,7 +546,7 @@ Not a defect list. These are places where the code is doing something subtle for
 | `src/app/` | Bootstrap (registry construction), render loop, render bridge, config commit path, demo playback, preset lifecycle |
 | `src/config/` | Resolvers, defaults, catalogs (base map, presentation), chrome and hour-marker configuration, semantic planning inputs |
 | `src/config/v2/` | `LibrationConfigV2`, `SceneConfig`, normalization, `localStorage` persistence, user presets |
-| `src/core/` | Product logic independent of rendering: time and civil projection, solar and lunar geometry, projection maths, illumination policies, overlay-readability frame, substrate lift model |
+| `src/core/` | Product logic independent of rendering: time and civil projection, solar and lunar geometry, eclipse authority and Besselian geography, projection maths, illumination policies, overlay-readability frame, substrate lift model |
 | `src/layers/` | Layer contracts, registry, factory, and one module per layer with its payload type |
 | `src/lifecycle/` | Dynamic data: contracts, store, manager, resolver, acquisition (live HTTP and fixture), source catalogs, materializers, app-shell host |
 | `src/renderer/` | Chrome layout and rendering, illumination sampling, realization adapters, scene viewport layout, backend interface |
@@ -531,9 +556,9 @@ Not a defect list. These are places where the code is doing something subtle for
 | `src/typography/` | Font descriptors, metrics, ink measurement |
 | `src/color/` | Colour space helpers |
 | `src/components/config/` | Configuration panel shell, tab strip, and the six tab implementations |
-| `src/assets/` | Bundled catalogs (base maps, emissive composition) and the generated font manifest |
+| `src/assets/` | Bundled catalogs (base maps, emissive composition, solar eclipse authority) and the generated font manifest |
 | `src/data/` | Static reference data (cities) |
-| `tools/` | `maps:prep` and `fonts:prep` asset preparation |
+| `tools/` | `maps:prep`, `fonts:prep`, and `eclipse:prep` asset preparation |
 | `src-tauri/` | Tauri desktop shell (present, not load-bearing) |
 
 Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover.
@@ -547,6 +572,6 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 - [`docs/decisions/`](decisions/) — why the durable choices were made.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.
-- [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — intended Eclipse System structure and selected authority (not current behaviour; implementation not started).
+- [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — Eclipse System architecture; E1 solar live footprint is production, E2+ remain unapproved.
 - [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md) — asset provenance and licensing.
 - [`docs/history/`](history/) — how the system was built, for when the *why* is not in the code.

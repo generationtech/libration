@@ -12,6 +12,7 @@
  */
 
 import type { OverlayReadabilityFrame } from "../core/overlayReadabilityFrame";
+import type { EclipseFrame } from "../core/eclipse/solarEclipseTypes";
 import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
 
 export type LayerId = string;
@@ -35,6 +36,11 @@ export interface TimeContext {
    * The shell should pass a frame built with scene emissive policy so readability v1.1 can apply.
    */
   overlayReadabilityFrame?: OverlayReadabilityFrame;
+  /**
+   * When set (typically once per frame by the app shell), eclipse layers reuse
+   * this via {@link TimeContext.eclipseFrame} instead of each calling the event service.
+   */
+  eclipseFrame?: EclipseFrame;
   /**
    * When set (typically once per frame by the app shell), dynamic layers may
    * resolve / select prepared snapshots by product time via the attached read-only seam.

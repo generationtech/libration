@@ -36,6 +36,10 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-track",
   "lunar-locus",
   "moon-libration",
+  "solar-eclipse-total",
+  "solar-eclipse-annular",
+  "solar-eclipse-partial",
+  "solar-eclipse-dateline",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -48,6 +52,10 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-track": "2026-01-16T22:00:00.000Z",
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
   "moon-libration": "2021-12-10T00:00:00.000Z",
+  "solar-eclipse-total": "2024-04-08T18:17:15.000Z",
+  "solar-eclipse-annular": "2023-10-14T17:59:27.300Z",
+  "solar-eclipse-partial": "2022-10-25T11:00:06.900Z",
+  "solar-eclipse-dateline": "2016-03-09T01:57:09.400Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
@@ -206,6 +214,34 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
       "Production Moon glyph with optical-libration ring; observer-oriented by default. Optional DEV librationEpoch, observerCity, librationOrientation, librationStyle.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["moon-libration"], applyMoonLibrationScene),
   },
+  "solar-eclipse-total": {
+    id: "solar-eclipse-total",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-total"],
+    purpose: "Production solar eclipse overlay at 2024 Apr 08 greatest eclipse (total).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-total"], applySolarEclipseScene),
+  },
+  "solar-eclipse-annular": {
+    id: "solar-eclipse-annular",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-annular"],
+    purpose: "Production solar eclipse overlay at 2023 Oct 14 greatest eclipse (annular).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-annular"], applySolarEclipseScene),
+  },
+  "solar-eclipse-partial": {
+    id: "solar-eclipse-partial",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-partial"],
+    purpose: "Production solar eclipse overlay at 2022 Oct 25 greatest eclipse (partial-only).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-partial"], applySolarEclipseScene),
+  },
+  "solar-eclipse-dateline": {
+    id: "solar-eclipse-dateline",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-dateline"],
+    purpose: "Production solar eclipse overlay at 2016 Mar 09 (Pacific / dateline-adjacent total).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-dateline"], applySolarEclipseScene),
+  },
 };
 
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
@@ -221,6 +257,18 @@ function applyLunarLocusScene(draft: LibrationConfigV2): void {
 function applyMoonLibrationScene(draft: LibrationConfigV2): void {
   draft.layers.solarShading = true;
   draft.layers.grid = true;
+  draft.layers.sublunarMarker = true;
+  draft.layers.lunarGroundTrack = false;
+  draft.layers.lunarLocus = false;
+  draft.layers.solarAnalemma = false;
+  draft.layers.cityPins = false;
+}
+
+function applySolarEclipseScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.solarEclipse = true;
+  draft.layers.subsolarMarker = true;
   draft.layers.sublunarMarker = true;
   draft.layers.lunarGroundTrack = false;
   draft.layers.lunarLocus = false;

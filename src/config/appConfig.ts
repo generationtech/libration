@@ -60,6 +60,11 @@ export interface LayerEnableFlags {
    * (scene product `sublunarLocus`). Default off.
    */
   lunarLocus: boolean;
+  /**
+   * NASA-derived live solar eclipse footprint (scene product `solarEclipseLiveFootprint`).
+   * Default off.
+   */
+  solarEclipse: boolean;
   /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */
   solarAnalemma: boolean;
 }
@@ -655,6 +660,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   sublunarMarker: true,
   lunarGroundTrack: false,
   lunarLocus: false,
+  solarEclipse: false,
   solarAnalemma: false,
 };
 

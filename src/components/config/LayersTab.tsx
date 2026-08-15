@@ -32,6 +32,7 @@ import {
   applyLunarGroundTrackExtentToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
+  applySolarEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
@@ -43,6 +44,7 @@ import {
   LUNAR_GROUND_TRACK_EXTENT_HOURS,
   setBaseMapPresentationForMapId,
   solarAnalemmaStrokeFromScene,
+  solarEclipsePresentationFromScene,
   sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
@@ -88,6 +90,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "sublunarMarker",
   "lunarGroundTrack",
   "lunarLocus",
+  "solarEclipse",
   "solarAnalemma",
 ];
 
@@ -162,6 +165,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     sublunarMarker: "Sublunar marker",
     lunarGroundTrack: "Lunar ground track",
     lunarLocus: "Lunar locus",
+    solarEclipse: "Solar eclipses",
     solarAnalemma: "Solar analemma (ground track)",
   };
   return map[key];
@@ -173,6 +177,9 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   }
   if (key === "lunarLocus") {
     return "Shows the Moon's compact sublunar figure traced over one mean-lunar-day sampling cycle.";
+  }
+  if (key === "solarEclipse") {
+    return "Shows the NASA-derived live solar eclipse footprint when an eclipse is active at product time. Default off.";
   }
   return undefined;
 }
@@ -484,6 +491,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
     observerLocation === null;
   const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
+  const eclipsePresentation = solarEclipsePresentationFromScene(scene);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1372,6 +1380,87 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </ConfigControlRow>
           );
         })}
+        <ConfigControlRow label="Eclipse central line">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipsePresentation.showCentralLine}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse central line"
+            title="Central eclipse path (path of totality or annularity). Ignored for partial-only events."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showCentralLine = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        showCentralLine,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse central band">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipsePresentation.showCentralBand}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse central band"
+            title="Live umbral or antumbral footprint. Not drawn for partial-only events."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showCentralBand = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        showCentralBand,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse partial region">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipsePresentation.showPartialRegion}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse partial region"
+            title="Broader penumbral / partial-eclipse footprint."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showPartialRegion = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        showPartialRegion,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
         <ConfigControlRow label="Lunar ground track past">
           <select
             className="config-input"
