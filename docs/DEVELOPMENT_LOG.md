@@ -88,4 +88,10 @@ Eclipse System reconnaissance and architecture: inventory of existing solar/luna
 
 Verified: documentation/process checks; `npx tsc --noEmit` clean; `npm test` 174 files / 1631 passed / 0 failed. Visual verification not applicable.
 
+## 2026-08-15 — LIB-013 complete
+
+Eclipse authority selected: bundled NASA/Espenak–Meeus Five Millennium Canon/Catalog (solar Besselian polynomials + lunar catalog events) behind one offline `EclipseAuthority`; span 1900–2100; explicit outside-range state. Recorded in `docs/specs/scene/eclipse-system.md` §22. No production eclipse behaviour. No E1 LIB created.
+
+Verified: documentation/research checks; `npx tsc --noEmit` clean; `npm test` 174 files / 1631 passed / 0 failed. Visual verification not applicable.
+
 

@@ -8,7 +8,7 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-The preferred next product-development direction after LIB-011 is the [Eclipse System](#eclipse-system). Reconnaissance and intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). That architecture is awaiting human review; it is not implementation approval. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
+The preferred next product-development direction after LIB-011 is the [Eclipse System](#eclipse-system). Intended structure and selected authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Implementation is not approved. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
 
 ## Status vocabulary
 
@@ -21,7 +21,7 @@ Several sections describe extensions to subsystems that already exist. Those sub
 
 ## Moon, Sun-Moon-Earth, and observer astronomy
 
-This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md); that document is awaiting human review. No eclipse **implementation** item is approved, active, or scheduled. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E1–E6.
+This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure and [LIB-013](work/LIB-013-eclipse-authority-evaluation.md) selected the bundled NASA/Espenak–Meeus authority in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). No eclipse **implementation** item is approved, active, or scheduled. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E1–E6.
 
 Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
 
@@ -54,9 +54,9 @@ The point is to keep Libration an instrument, not a cluttered astronomy diagram.
 
 ### Eclipse System
 
-**Planned** as the strongest current candidate for the **next** product-development effort after LIB-011. Architecture reconnaissance is complete ([LIB-012](work/LIB-012-eclipse-system-architecture.md)); intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Implementation remains **unapproved**, **not a LIB item**, and **not active**. Human review of the architecture (including the recorded authority/precision decisions) is required before any implementation slice.
+**Planned** as the strongest current candidate for the **next** product-development effort after LIB-011. Architecture reconnaissance ([LIB-012](work/LIB-012-eclipse-system-architecture.md)) and authority selection ([LIB-013](work/LIB-013-eclipse-authority-evaluation.md)) are complete; intended structure and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Implementation remains **unapproved**, **not a LIB item**, and **not active**. A separate human-authorized E1 work item is required before any production eclipse behaviour.
 
-The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, algorithms, data sources, rendering primitives, and work-item slices are **not** decided here.
+The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, rendering primitives, and work-item slices are **not** decided here. Authority source, span, and precision posture are recorded in the architecture spec.
 
 #### Forecasting
 
@@ -101,9 +101,9 @@ Use the same authoritative reference city already used by chrome and by LIB-011.
 
 Repository inventory and intended structure are in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
 
-A future implementation LIB may start only after human review of that architecture and explicit approval of a slice (recommended first slice: E1, solar event truth and live geographic footprint).
+A future implementation LIB may start only after explicit approval of a slice (recommended first slice: E1, solar event truth and live geographic footprint against the selected NASA/Espenak–Meeus Besselian authority).
 
-Intentionally **not** decided here: exact configuration schema or UI; exact rendering primitives; catalog vendor/format; colors and beam styling. Authority, offline span, precision posture, first-release types, layer structure, and related choices are recorded as **recommendations** in the architecture spec and still require human approval.
+Intentionally **not** decided here: exact configuration schema or UI; exact rendering primitives; colors and beam styling. Authority, offline span, precision posture, first-release types, and layer structure are recorded in the architecture spec; implementation still requires a human-authorized LIB.
 
 Related inventory pointer: the [derived overlays](#derived-overlays) list below points here rather than keeping a separate one-liner.
 

@@ -2,13 +2,13 @@
 
 ## What this document is
 
-A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md). It records how Libration currently intends to structure an Eclipse System, after a repository inventory of existing solar/lunar capability.
+A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration currently intends to structure an Eclipse System, including the selected offline eclipse authority.
 
 It is **not** approval to implement. It is **not** a record of what the product does today. Current behaviour remains in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md).
 
-Human review of the [open decisions](#15-human-decisions-required-before-implementation) is required before any implementation slice is authorized.
+Authority vendor, format, span, precision posture, and the `EclipseAuthority` contract are selected below. Remaining [open decisions](#19-open-human-decisions-required-before-implementation) are presentation/sequencing. An implementation slice (recommended: E1) still requires a separate human-authorized work item.
 
-This document does not freeze configuration schema, UI, colors, cone shapes, animation, catalog vendor, or exact numeric thresholds beyond the user-controlled forecast horizon.
+This document does not freeze configuration schema, UI, colors, cone shapes, animation, or exact numeric thresholds beyond the user-controlled forecast horizon.
 
 ---
 
@@ -231,13 +231,13 @@ They **are** sufficient to keep: Sun/Moon glyphs, illumination, analemma, lunar 
 | Complexity | Low | High | Medium (ingest + interpolate) | Medium |
 | Product expectation | Instrument, not a toy path | Almanac-like | Almanac-like where catalog exists | Visualization-grade grounded in a real authority |
 
-**Recommendation: D**, with these constraints:
+**Selection (LIB-013): D**, with a concrete NASA/Espenak–Meeus bundled authority. See [§22](#22-eclipse-authority-selected).
 
 - Do **not** use option A for product truth.
-- Prefer a **bundled, offline** eclipse authority (computed Besselian-style elements, or a versioned event/element catalog stored in the repo) so demo time, local-first use, and “no network in the render path” all hold.
+- The authority is a **bundled, offline**, versioned asset so demo time, local-first use, and “no network in the render path” all hold.
 - Do **not** replace `subsolarPoint` / `sublunarPoint` in this programme.
-- Live alignment geometry follows the **eclipse authority**, not the ambient glyphs, so a dramatic beam is tied to the footprint even if the visualization-grade Moon marker is slightly offset.
-- Exact catalog format, vendor, date span, and whether Libration later grows a B-class generator remain [human decisions](#15-human-decisions-required-before-implementation). Later research (outside this item) must cover licence, provenance, and a declared coverage window.
+- Live alignment geometry follows the **eclipse authority**, not the ambient glyphs.
+- Do **not** grow a B-class runtime ephemeris or bundle JPL kernels for eclipse truth.
 
 Option A would violate design principle 7 (scientific grounding). A live network catalog as the only source would violate local-first posture and demo-time coverage.
 
@@ -558,7 +558,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 ### E1 — Solar event truth and live geographic footprint
 
 - **Goal:** Adopt the approved authority; resolve whether a solar eclipse is active at product UTC; emit centerline and/or umbral/partial footprint at `T` for that event; DEV scene at a known total solar eclipse.
-- **Dependencies:** Human decisions on authority, offline span, and precision posture.
+- **Dependencies:** Authority selected in [§22](#22-eclipse-authority-selected). Human authorization of an E1 work item. No further authority-research phase.
 - **User-visible:** On a frozen known instant, a scientifically grounded solar footprint/path on the map. Ambient Sun/Moon unchanged.
 - **Principal risks:** Authority licence/coverage; dateline-crossing regions; disagreement with ambient Moon marker.
 - **Completion evidence:** Independent fixture tests for that event; plan-builder tests; Cursor visual verification of the DEV scene.
@@ -603,7 +603,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
 
-E1 is the recommended first implementation slice after human review. Penumbral lunar and hybrid-as-first-class remain accommodated in the model but are not required to complete E1–E3 unless the authority emits them cheaply.
+E1 is the recommended first implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E1–E3 may consume those types when cheap, without a second catalog.
 
 ---
 
@@ -611,23 +611,17 @@ E1 is the recommended first implementation slice after human review. Penumbral l
 
 Ordinary coding choices (file names, token values, Catmull-Rom vs polyline density) are **not** listed.
 
-### D1 — Event authority
+### D1 — Event authority — **decided (LIB-013)**
 
-- **Options:** A current models; B new internal ephemeris; C catalog/elements only; D hybrid (recommended).
-- **Recommend:** **D**, bundled offline authority for event/geometry truth; current models stay ambient.
-- **Consequence:** First slice includes an ingest or generator boundary. Ambient Sun/Moon may not sit exactly on the eclipse axis.
+Hybrid option **D**: NASA/Espenak–Meeus Five Millennium Canon/Catalog as bundled offline authority; current models stay ambient. Details: [§22](#22-eclipse-authority-selected).
 
-### D2 — Offline coverage
+### D2 — Offline coverage — **decided (LIB-013)**
 
-- **Options:** Offline-only bundled span; network catalog with fixture fallback; compute-any-date internal model.
-- **Recommend:** **Offline bundled span** as the product minimum (local-first, demo time, no render-path fetch). Document behaviour **outside** the span (no events, visible degraded state — exact UX later).
-- **Consequence:** Later research must pick span and licence. Demo years outside the span will not invent eclipses.
+Bundled span **1900-01-01T00:00:00.000Z ≤ T < 2101-01-01T00:00:00.000Z**. Outside that interval: explicit unsupported/outside-authority-range; never invent paths from ambient astronomy.
 
-### D3 — Precision posture
+### D3 — Precision posture — **decided (LIB-013)**
 
-- **Options:** Toy visualization; scientifically grounded instrument (city generally right side of totality band, contacts ~minute-class); almanac/survey replacement.
-- **Recommend:** **Scientifically grounded instrument**, not a survey product. State this in the implementing item’s docs.
-- **Consequence:** Independent fixtures are mandatory; pixel-perfect NASA path overlays are not.
+Scientifically grounded instrument matching NASA Canon maps at world-map scale, not a survey or lunar-limb product. Numeric tolerances in [§22.3](#223-precision-target).
 
 ### D4 — First-release types
 
@@ -657,23 +651,22 @@ Ordinary coding choices (file names, token values, Catmull-Rom vs polyline densi
 
 - **Options:** Move glyphs onto eclipse axis during events; leave offset; hide ambient Moon during solar eclipse.
 - **Recommend:** **Leave ambient models unchanged**; alignment/beam uses authority geometry. Do not hide the Moon unless a later product item says so.
-- **Consequence:** Possible small glyph/footprint disagreement; documented, not treated as a rendering bug.
+- **Consequence:** LIB-013 measured ~0.006° Sun / ~0.03°–0.42° Moon vs NASA at selected instants (world-map ~1 px). Sublunar vs umbra (~20°) is geometry, not model error. Not treated as a rendering bug. See [§22.12](#2212-ambient-glyph-offset).
 
 ---
 
 ## 20. Intentionally not predetermined
 
 - Exact configuration schema and control layout.
-- Catalog vendor, file format, and year coverage.
-- Besselian vs other element representations (authority adapter hides this).
 - Numeric imminent thresholds.
 - Colors, opacities, gradients, cone/beam shape, animation.
-- Whether hybrid is a stored subtype or inferred per instant along the path.
-- Whether lunar penumbral events are shown in E3.
+- Whether E1 presents hybrid solar events as a distinct subtype or as umbral/antumbral geometry already implied by Besselian `L2`.
+- Whether lunar penumbral events are shown in E3 (the authority classifies them).
 - Chrome vs inspectable-panel placement for observer circumstances.
 - Extracting a shared `surfaceDotProduct(lat, lon, subpoint)` helper (good cleanup, not an architecture decision).
 - Adding Sun RA/Dec exports before they have a caller.
 - Any change to illumination composition.
+- Exact on-disk encoding of the derived authority asset (JSON vs compact binary) — not the source or contract.
 
 ---
 
@@ -683,7 +676,252 @@ Ordinary coding choices (file names, token values, Catmull-Rom vs polyline densi
 |-------|--------|
 | Product intent (why/what) | [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system) |
 | Strategic pointer | [`docs/ROADMAP.md`](../../ROADMAP.md) |
-| Intended structure (how, pending review) | **This file** |
+| Intended structure (how, pending implementation) | **This file** |
+| Eclipse authority selection | **This file, [§22](#22-eclipse-authority-selected)** |
 | Current code behaviour | [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md) |
 | Durable invariants | [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) |
-| This reconnaissance item | [`docs/work/LIB-012-eclipse-system-architecture.md`](../../work/LIB-012-eclipse-system-architecture.md) |
+| Architecture reconnaissance | [`docs/work/LIB-012-eclipse-system-architecture.md`](../../work/LIB-012-eclipse-system-architecture.md) |
+| Authority evaluation | [`docs/work/LIB-013-eclipse-authority-evaluation.md`](../../work/LIB-013-eclipse-authority-evaluation.md) |
+
+---
+
+## 22. Eclipse authority (selected)
+
+Selected by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). This is the stable boundary E1 should consume. It is not implementation approval.
+
+### 22.1 Chosen approach
+
+One versioned offline **`EclipseAuthority`** with **separate solar and lunar backing data**.
+
+| Role | Source | What it supplies | Local math |
+|------|--------|------------------|------------|
+| Solar event truth + time-parameterized shadow | NASA GSFC Five Millennium Canon/Catalog of Solar Eclipses (Espenak & Meeus), VSOP87 + ELP-2000/82, bundled **Besselian polynomial elements** | Existence, type (P/A/T/H), greatest-eclipse TD, ΔT, gamma, magnitude, GE lat/lon, path width/duration, polynomial `x,y,d,l1,l2,μ,tan f1, tan f2`, `t0`, validity window | Evaluate polynomials at UTC; convert Besselian shadow to geographic centerline, umbra/antumbra footprint, penumbral limits, and Earth-contact times using the standard algorithm (Chauvenet 1891; *Explanatory Supplement* 1974; Meeus 1989). |
+| Lunar event truth + shadow state | NASA GSFC Five Millennium Catalog of Lunar Eclipses (Espenak & Meeus), same ephemerides, **Danjon** shadow enlargement | Existence, type (N/P/T), greatest-eclipse TD, ΔT, gamma, penumbral/umbral magnitudes, phase durations (P4−P1, U4−U1, U3−U2), zenith lat/lon at greatest eclipse | Derive P1/U1/U2/greatest/U3/U4/P4 by symmetry about greatest eclipse from NASA durations; interpolate Moon–shadow-axis separation from gamma + durations; draw circular umbra/penumbra. Moon-up region uses existing spherical geometry (E3). |
+| Ambient Sun/Moon | Current `subsolarPoint` / `sublunarPoint` | Glyphs, illumination, analemma, tracks, locus, libration | Unchanged. |
+| Common boundary | `EclipseAuthority` → `EclipseEventService` | Lookup, metadata, outside-range state | No network in the render path. |
+
+**Deliberately not used** as eclipse-event authority: Libration’s truncated Sun/Moon models; a runtime JPL DE440/DE441 kernel; VSOP87/ELP recomputed in the browser; USNO year-by-year Almanac pages; EclipseWise.com as a redistribution source; precomputed path polylines/KML as the source of truth (derived samples may be cached later).
+
+Solar and lunar datasets differ. Consumers see one interface.
+
+### 22.2 Provenance and licensing
+
+Primary publications (NASA Technical Publications; reproduction freely granted with acknowledgment):
+
+- Espenak, F. & Meeus, J., *Five Millennium Canon of Solar Eclipses: −1999 to +3000*, NASA/TP-2006-214141.
+- Espenak, F. & Meeus, J., *Five Millennium Catalog of Solar Eclipses: −1999 to +3000*, NASA/TP-2009-214174.
+- Espenak, F. & Meeus, J., *Five Millennium Canon of Lunar Eclipses: −1999 to +3000*, NASA/TP-2009-214172 (canon) / NASA/TP-2009-214173 (catalog).
+- Host: [https://eclipse.gsfc.nasa.gov/](https://eclipse.gsfc.nasa.gov/). Besselian CSV listed from the solar catalog index (dated 2014 Apr 11 on that page). Copyright note: [https://eclipse.gsfc.nasa.gov/SEpubs/copyright.html](https://eclipse.gsfc.nasa.gov/SEpubs/copyright.html).
+
+Ephemerides inside those reductions: VSOP87 (Bretagnon & Francou 1988, *Astron. Astrophys.* 202, 309); ELP-2000/82 (Chapront-Touzé & Chapront 1983, *Astron. Astrophys.* 124, 50) with lunar acceleration \(ṅ = -25.858''/\mathrm{cy}^2\) (Chapront, Chapront-Touzé & Francou 2002). ΔT: Morrison & Stephenson (2004) historically; observed 1955–publication; extrapolated afterward.
+
+NASA states that NASA material is not protected by copyright unless noted, and **permission is freely granted to reproduce** the eclipse data with acknowledgment. Required credit (use both lines if space allows; the first is the catalog’s stated form):
+
+> Eclipse Predictions by Fred Espenak and Jean Meeus (NASA's GSFC)
+
+> Eclipse map/figure/table/predictions courtesy of Fred Espenak, NASA/Goddard Space Flight Center, from eclipse.gsfc.nasa.gov.
+
+Do **not** copy tables from Meeus, *Elements of Solar Eclipses 1951–2200* (Willmann-Bell, 1989) — that book is a cited algorithm reference, not a redistributable dataset. Do **not** scrape EclipseWise.com as the import source; newer personal-site material may not carry the NASA TP reproduction grant. E1 must import from NASA GSFC / the NASA TPs (or a byte-for-byte copy of those files recorded with provenance).
+
+Algorithm references (not bundled data): Chauvenet, *Manual of Spherical and Practical Astronomy*, vol. 1 (1891, public domain); *Explanatory Supplement to the Astronomical Ephemeris and the American Ephemeris and Nautical Almanac* (HMSO, 1974), the method NASA itself cites; Meeus 1989 as a worked restatement.
+
+### 22.3 Precision target
+
+Posture: **match the NASA Canon/Catalog at consumer world-map scale**, not replace IERS/USNO survey products or lunar-limb graze predictions. NASA path pages themselves omit centre-of-figure and lunar-limb profile.
+
+Grounded tolerances for tests against **the same authority version** (not against a different ephemeris):
+
+| Quantity | Target vs NASA Canon/Catalog | Why |
+|----------|------------------------------|-----|
+| Greatest-eclipse time | ≤ 5 s | Polynomial evaluation; catalog times are to 1 s. |
+| Solar central-line position at mid-eclipse | ≤ 10 km | ~0.5 px on a 1920-px world map; umbral width is typically 50–250 km. |
+| Solar central-line near sunrise/sunset limits | ≤ 25 km | Geometry is ill-conditioned at the terminator. |
+| Path width at greatest eclipse | ≤ 5 km | Width is in the catalog; Besselian `L2` should reproduce it. |
+| Solar local contacts (E4) | ≤ 15 s | Same elements; minute-class from LIB-012 is a floor, not the ceiling. |
+| Lunar contact times | ≤ 1 min | NASA publishes durations to 0.1 min; contacts are derived by symmetry about greatest eclipse. |
+| Lunar magnitudes | exact catalog values | Do not re-derive from ambient astronomy. |
+
+A user comparing Libration’s path to NASA GSFC Canon maps at global scale should **not** see an obvious displacement. Lunar-limb and ΔT-update discrepancies of a few kilometres versus later EclipseWise/USNO bulletins are accepted and must not be treated as renderer bugs.
+
+Modern ΔT (1955–present) is observational; 1 s of ΔT ≈ 0.46 km of longitude at the equator. The 2006/2009 Canon’s extrapolated ΔT for 2024 (74 s in the catalog dump vs 70.6 s on later NASA element pages) is a few kilometres — inside the table above. Pin catalog ΔT in authority v1; refreshing ΔT is a version bump.
+
+### 22.4 Offline span and outside-span behaviour
+
+**Bundled authority interval:** `1900-01-01T00:00:00.000Z` inclusive to `2101-01-01T00:00:00.000Z` exclusive.
+
+Rationale: Gregorian throughout; ΔT observationally anchored for most of the window; ~454 solar + ~457 lunar events (NASA century totals 228+224 solar for 1901–2100 and 229+228 lunar, plus the 1900 events); data volume is small; covers historical 20th-century demos and the rest of the 21st century. Wider Canon coverage (−1999 to +3000, 11 898 solar + 12 064 lunar) is cheap in bytes but adds Julian-calendar rules and large ΔT gores (NASA plots longitude-uncertainty gores before year 1 and after 2300). 1800–2200 is a plausible later widening, not the v1 contract.
+
+**Outside-span contract:** `EclipseAuthority` reports `supported: false` (or equivalent) for that UTC. `EclipseEventService` returns no events and an **explicit outside-authority-range** state. Presentation may later show a diagnostic. **Never** fall back to `subsolarPoint` / `sublunarPoint` / phase screening and draw a path as if it were authoritative.
+
+### 22.5 Data volume and distribution
+
+Estimates for the **1900–2100** derived asset (do not add files in this item):
+
+| Content | Order of size |
+|---------|----------------|
+| Solar event metadata | ~50 KB |
+| Solar Besselian polynomials | ~100–150 KB |
+| Lunar event/contact/magnitude/gamma | ~50 KB |
+| Combined derived JSON | ~150–250 KB uncompressed; well under 100 KB gzip |
+| Full 5 000-year Besselian CSV (source, not necessarily shipped) | ~2–3 MB |
+
+Prefer a **durable static asset** (catalog pattern of ADR 0003), not huge JS literals. Trivial next to base-map rasters; fine for Vite/npm bundle, startup, and offline. Do **not** ship DE440s (~31 MB) or DE441 (~3 GB) for this feature.
+
+Precomputed path polylines (e.g. 180 samples × centerline+limits × ~450 solar events) are ~1–2 MB and **cannot** answer arbitrary-UTC footprints without a second time index. Besselian elements dominate that design.
+
+### 22.6 Versioning and updates
+
+Authority data is versioned **independently** of application semantics.
+
+Conceptual workflow (not implemented here):
+
+1. Record the NASA source files and retrieval date in provenance metadata.
+2. A development-time generation script filters to the bundled span and emits a derived static asset plus a manifest (`authorityId`, `sourceVersion`, `generatedAt`, `supportedUtcRange`, license note).
+3. Commit the derived asset, not an ad-hoc hand edit of coefficients.
+4. Diagnostics/about may display authority id/version.
+5. Tests pin `authorityVersion` and compare against published NASA numbers for the [verification fixtures](#2211-verification-fixtures).
+6. If a later NASA/ΔT revision shifts a path, bump the authority version and update fixtures. Do not silently treat the shift as a renderer regression.
+
+Runtime never fetches NASA. Regenerating is a development action.
+
+### 22.7 Arbitrary product time
+
+The catalog is a static, time-addressable table. Lookup does not depend on wall-clock scheduling or incremental stepping. Large year jumps, accelerated demo time, pause, and seeks into mid-eclipse all use the same function of product UTC: discover overlapping events, then evaluate geometry at `T`. Cache invalidation on large jumps follows LIB-012 §7.
+
+### 22.8 Event discovery
+
+`EclipseEventService` queries `EclipseAuthority` with product UTC `T` and horizon `H`:
+
+- the event whose global interval contains `T` (active);
+- the next event with `globalStart > T`;
+- all events whose global interval intersects `(T, T+H]`;
+- filters: solar / lunar / subtype.
+
+Implementation: a **sorted array of events by `globalStart`**, binary search, plus stored `globalEnd` so intersection is a short linear scan from the insertion point (n ≈ 900; an interval tree is unnecessary). Deterministic; no per-frame season hunting.
+
+Solar `globalStart`/`globalEnd` should be **derived at ingest** from Besselian Earth-penumbra contacts (or `tmin`/`tmax` as a conservative bound). Lunar contacts come from catalog durations about greatest eclipse.
+
+### 22.9 Time-parameterized geometry
+
+**Solar.** At any UTC in the element validity window (`t0 ± 3` hours in NASA’s least-squares fit; use `tmin`/`tmax` when present):
+
+\[
+a(t) = a_0 + a_1 t + a_2 t^2 + a_3 t^3,\quad t = t_1 - t_0\ \text{(hours of TDT)}
+\]
+
+for \(a \in \{x, y, d, l_1, l_2, \mu\}\). Then the standard Besselian reduction gives shadow-axis intersection, umbral/antumbral radius on the fundamental plane (`L2`; sign distinguishes umbra vs antumbra), penumbral radius (`L1`), cone angles (`f1`,`f2`), and geographic limits. That is the live footprint for E1 — not a single maximum-eclipse polyline.
+
+**Lunar.** No solar-style terrestrial path. At UTC `T`, interpolate the Moon’s fundamental-plane offset from gamma at greatest eclipse and the contact timetable; compare to umbral/penumbral radii implied by NASA magnitudes (Danjon enlargement already in those magnitudes). Penetration state drives E3 decoration. Terrestrial Moon-up geometry is spherical `lunarDot` (existing pattern), not a Besselian footprint.
+
+### 22.10 Reference-city extensibility
+
+The same solar Besselian elements are the classical input to **local circumstances** (first/maximum/last contact, totality/annularity contacts, magnitude, obscuration, Sun altitude). E4 should reuse this authority; it must not introduce a second ephemeris.
+
+Lunar local circumstances are simpler: global contacts are the same everywhere; visibility is Moon-above-horizon at the shared reference city (`resolveReferenceCityObserverLocation`). Altitude can use the existing spherical/hour-angle pattern. No second observer.
+
+### 22.11 Verification fixtures
+
+Recommended independent-truth anchors for later tests (NASA GSFC Canon/Catalog / element pages). Do not add fixtures in this item.
+
+**Solar**
+
+| Event | Type | Why |
+|-------|------|-----|
+| 2024 Apr 08 | Total | Recent well-known path; NASA Besselian + path table (GE 18:17:18.3 UT, 25°17.2′N 104°08.3′W on the later element page; catalog dump uses ΔT = 74 s). |
+| 2017 Aug 21 | Total | Well-known US path; GE 18:26:40 TD, 37°N 88°W (catalog). |
+| 2023 Oct 14 | Annular | Americas annular; GE 18:00:41 TD, 11°N 83°W. |
+| 2022 Oct 25 | Partial | No umbra on Earth; GE 11:01:20 TD, 62°N 77°E. |
+| 2021 Dec 04 | Total | Polar / high-γ (γ = −0.9526), 77°S 46°W. |
+| 2016 Mar 09 | Total | Western Pacific (10°N 149°E); dateline-adjacent path for seam tests. |
+| 2023 Apr 20 | Hybrid | Authority emits `H`; 10°S 126°E. |
+
+**Lunar**
+
+| Event | Type | Why |
+|-------|------|-----|
+| 2022 May 16 | Total | Deep umbral magnitude 1.4137; zenith 19°S 64°W. |
+| 2018 Jan 31 | Total | Well-known; zenith 17°N 161°E. |
+| 2008 Aug 16 | Partial | Umbral magnitude 0.8076; zenith 13°S 43°E. |
+| 2021 May 26 | Total (grazing) | Umbral magnitude 1.0095; near-miss totality. |
+| 2015 Apr 04 | Total | Zenith 5°S 179°W — dateline. |
+
+Useful published truths: type, TD/UT of greatest eclipse, ΔT, gamma, magnitudes, durations/contacts, GE/zenith coordinates, solar path width and central duration, Besselian polynomials for solar events.
+
+### 22.12 Ambient glyph offset
+
+Compared at published greatest-eclipse instants using current production series vs NASA equatorial coordinates / lunar zenith points (research computation in LIB-013; models were not changed):
+
+- **Sun:** ~0.006° (~0.7 km) vs NASA 2024 Apr 08 Sun RA/Dec — imperceptible.
+- **Moon:** ~0.03°–0.42° (~4–46 km) vs NASA lunar-eclipse zenith points; ~0.20° (~23 km) vs NASA Moon RA/Dec at 2024 TSE.
+- **Sun–Moon relative (2024 TSE):** Libration 0.43° vs NASA 0.35°. Residual misalignment ~0.08°.
+- **Moon glyph vs umbral GE point:** ~20° on 2024 Apr 08. That is **geometry**, not model error: the umbra is where the Sun is ~70° up, not the sublunar/subsolar zenith.
+
+On the current full-world map (~5 px/degree at 1920 px), lunar error is about a pixel. **Risk: small but acceptable; not a visually obvious wrong path.** Keep D8: do not authority-align glyphs in E1. A later product item may optionally snap glyphs to authority positions during an active eclipse if a beam makes the residual noticeable.
+
+### 22.13 Authority contract (conceptual)
+
+Minimal surface E1 may rely on. Names are conceptual.
+
+**Metadata**
+
+- `authorityId` (durable semantic id)
+- `authorityVersion`
+- `source` / `sourceVersion` (NASA TP ids + retrieval/generation date)
+- `supportedUtcRange` `{ startMs, endMs }`
+- `licenseNote` / attribution string
+
+**Lookup**
+
+- `isSupported(utcMs) → boolean`
+- `getEvent(id)`
+- `eventsIntersecting(startMs, endMs, filter?)`
+- `activeEvent(utcMs, filter?)`
+- `nextEventAfter(utcMs, filter?)`
+
+**Solar event**
+
+- identity: durable id, catalog number, Saros, kind=`solar`, subtype=`partial|annular|total|hybrid`
+- `greatestEclipseTdtMs`, `deltaTSeconds`, `gamma`, `magnitude`
+- `globalStartMs` / `globalEndMs` (Earth-penumbra contacts, derived)
+- Besselian set: `t0TdtHours`, coefficients for `x,y,d,l1,l2,mu`, `tanF1`, `tanF2`, `tMin`, `tMax`
+- `geometryAt(utcMs) →` shadow axis / central point (if any) / umbra or antumbra footprint / penumbral footprint / path limits, or empty if `T` is outside the element window
+
+**Lunar event**
+
+- identity: durable id, catalog number, Saros, kind=`lunar`, subtype=`penumbral|partial|total`
+- `greatestEclipseTdtMs`, `deltaTSeconds`, `gamma`, `penumbralMagnitude`, `umbralMagnitude`
+- contacts P1/U1/U2/U3/U4/P4 (U2/U3 omitted when not total; U1/U4 omitted when penumbral-only)
+- zenith lat/lon at greatest eclipse
+- `geometryAt(utcMs) →` umbral/penumbral penetration state (and radii) at the Moon
+
+**Outside range**
+
+- `isSupported` is false; lookups return empty plus an explicit unsupported-range indicator. No ambient fallback.
+
+No presentation configuration lives here.
+
+### 22.14 E1 inputs
+
+E1 can implement solar event truth and a live geographic footprint **without another research phase**. It should:
+
+1. Ingest NASA GSFC solar catalog metadata + Besselian polynomials for 1900–2100 into a versioned `EclipseAuthority` asset.
+2. Implement polynomial evaluation + standard Besselian→geographic geometry in `src/core/` (or `src/core/eclipse/`), upstream of layers.
+3. Resolve whether a solar eclipse is active at product UTC and emit centerline and/or umbral/partial footprint at `T`.
+4. Pin tests to authority version and the solar fixtures in [§22.11](#2211-verification-fixtures).
+5. Leave ambient Sun/Moon unchanged; leave lunar consumption to E3 (the lunar contract is already selected).
+
+### 22.15 Candidate comparison (summary)
+
+| Criterion | A Precomputed paths/catalog only | B Besselian + local geometry | C JPL DE runtime | D Hybrid catalog + local geometry (**selected**) |
+|-----------|----------------------------------|------------------------------|------------------|--------------------------------------------------|
+| Authority quality | High at tabulated instants | High; same NASA reduction | Highest possible | High (NASA) + local time function |
+| Solar path at arbitrary UTC | Weak unless densely sampled | Native | Native, expensive | Native via Besselian |
+| Lunar | Catalog metadata | N/A as solar method | Native | Catalog + simple shadow |
+| Offline / bundle size | Medium–large if sampled | ~100–250 KB | 31 MB–3 GB | ~150–250 KB |
+| Browser / demo time | OK | OK | Heavy | OK |
+| Implementation complexity | Low ingest, weak live geometry | Medium | High (SPK + Earth orientation + shadows) | Medium |
+| Licensing | NASA OK if from GSFC; third-party KML often unclear | NASA OK | NAIF kernels redistributable unmodified; still overkill | NASA OK |
+| Local circumstances later | Needs extra data | Same elements | Yes | Same elements |
+| Winner | No — static max-eclipse paths fail E1 live footprint | Solar half of D | Overkill vs instrument posture | **Yes** |
+
+Uncertainty: NASA GSFC site copies of the mysqldump CSV vs later per-event ELP2000-85 pages differ by a few seconds of ΔT; v1 pins the Canon/Catalog dump. Lunar contacts from duration symmetry vs unpublished lunar Besselian polynomials: difference expected ≪ 1 min; acceptable. JPL would beat Canon on absolute modern accuracy by kilometres at most — below world-map noticeability and above justified complexity.
