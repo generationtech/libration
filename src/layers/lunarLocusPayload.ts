@@ -19,7 +19,7 @@ export const LUNAR_LOCUS_KIND = "lunarLocus" as const;
 
 export interface LunarLocusPayload {
   kind: typeof LUNAR_LOCUS_KIND;
-  /** Closed smooth polyline in unwrapped geographic degrees (lon0 + residual). */
+  /** Open one-cycle polyline in unwrapped geographic degrees (lon0 + residual); seam at the current Moon. */
   readonly points: readonly SublunarPointDeg[];
   readability?: OverlayReadabilityHints;
 }

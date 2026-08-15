@@ -13,7 +13,8 @@
 
 /**
  * Compact lunar locus: {@link sublunarPoint} sampled once per mean lunar day
- * across approximately one lunar orbital cycle, centered on the canonical instant.
+ * across approximately one lunar orbital cycle, with the canonical instant as
+ * the cycle seam (k = 0 is the current Moon).
  */
 
 import {
@@ -26,27 +27,20 @@ import {
 
 const MS_PER_DAY = 86_400_000;
 
-/** Inclusive rendered sample count: k = −13 … +14 (current Moon is k = 0). */
+/** Inclusive rendered sample count: k = 0 … +27 (current Moon is k = 0, the cycle seam). */
 export const LUNAR_LOCUS_SAMPLE_COUNT = 28;
 
-/** Mean-lunar-day offsets before the canonical instant. */
-export const LUNAR_LOCUS_PAST_STEPS = 13;
+/** Mean-lunar-day offsets before the canonical instant (none: the Moon is the seam). */
+export const LUNAR_LOCUS_PAST_STEPS = 0;
 
 /** Mean-lunar-day offsets after the canonical instant. */
-export const LUNAR_LOCUS_FUTURE_STEPS = 14;
+export const LUNAR_LOCUS_FUTURE_STEPS = 27;
 
-/**
- * Extra past samples for Catmull-Rom neighbors, including one prefix span
- * (k = −14 → −13) so the one-cycle join can match the approach into k = −13.
- * Not part of the rendered sample window.
- */
-export const LUNAR_LOCUS_PAST_TANGENT_SUPPORT = 2;
+/** Extra past sample so the first span has a real Catmull-Rom p0 (k = −1). */
+export const LUNAR_LOCUS_PAST_TANGENT_SUPPORT = 1;
 
-/** Extra future sample so the last rendered span has a real p3 (k = +15). */
+/** Extra future sample so the last interpolated span has a real p3 (k = +28). */
 export const LUNAR_LOCUS_FUTURE_TANGENT_SUPPORT = 1;
-
-/** Prefix spans interpolated before k = −13 for join correspondence. */
-const LUNAR_LOCUS_PREFIX_SPANS = 1;
 
 /** Centripetal Catmull-Rom subdivisions per sample span. */
 export const LUNAR_LOCUS_INTERP_SUBDIVISIONS = 12;
@@ -145,7 +139,7 @@ function cacheKey(utcMs: number): string {
 }
 
 function computeSamples(utcMs: number, cadenceMs: number): Omit<CachedLocus, "key"> {
-  const kMin = -LUNAR_LOCUS_PAST_STEPS;
+  const kMin = LUNAR_LOCUS_PAST_STEPS === 0 ? 0 : -LUNAR_LOCUS_PAST_STEPS;
   const kMax = LUNAR_LOCUS_FUTURE_STEPS;
   const currentIndex = LUNAR_LOCUS_PAST_STEPS;
   const reference = sublunarPoint(utcMs);
@@ -192,9 +186,9 @@ function withLiveCurrent(cached: CachedLocus, utcMs: number): LunarLocusGeometry
 }
 
 /**
- * Sample {@link sublunarPoint} at k = −13 … +14 mean lunar days from `utcMs`.
- * The k = 0 sample is always the live canonical instant (same function as the Moon marker).
- * Other samples are memoized per 1-second product-time bucket.
+ * Sample {@link sublunarPoint} at k = 0 … +27 mean lunar days from `utcMs`.
+ * The k = 0 sample is always the live canonical instant (same function as the Moon marker)
+ * and is the cycle seam. Other samples are memoized per 1-second product-time bucket.
  */
 export function sampleLunarLocus(utcMs: number): LunarLocusGeometry {
   const key = cacheKey(utcMs);
@@ -261,15 +255,6 @@ function hypot2(a: ResidualPt, b: ResidualPt): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-function lerpPt(a: ResidualPt, b: ResidualPt, t: number): ResidualPt {
-  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-}
-
-function smoothstep01(t: number): number {
-  const x = Math.max(0, Math.min(1, t));
-  return x * x * (3 - 2 * x);
-}
-
 function residualAtOffset(
   utcMs: number,
   cadenceMs: number,
@@ -315,16 +300,15 @@ function centripetalSegment(p0: ResidualPt, p1: ResidualPt, p2: ResidualPt, p3: 
 }
 
 /**
- * Smooth polyline through residual (δlon, lat), plotted as unwrapped
+ * Open smooth polyline through residual (δlon, lat), plotted as unwrapped
  * geographic longitudes `lon0 + δlon` so a compact figure near ±180° stays continuous.
  *
- * Catmull-Rom is **open** with real neighbors outside the rendered window
- * (`k = −15, −14` and `k = +15`). The path is cropped near one sidereal month
- * after `k = −13` (the closest same-direction return, not an earlier figure-8
- * near-miss) and the last interpolated span is merged onto the matching
- * approach into the start so the slowly evolving figure can close without
- * treating the merely-near first/last samples as consecutive control points.
- * Does not resample {@link sublunarPoint} more densely in time.
+ * The displayed cycle starts at the current Moon (k = 0) and is cropped at the
+ * closest same-direction return after one sidereal month. Endpoints are not
+ * welded: the locus is approximately periodic, not exactly periodic, and the
+ * Moon glyph is the natural seam. Catmull-Rom neighbors outside the rendered
+ * window (`k = −1` and `k = +28`) provide real tangents. Does not resample
+ * {@link sublunarPoint} more densely in time.
  */
 export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): SublunarPointDeg[] {
   const n = geometry.samples.length;
@@ -352,11 +336,8 @@ export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): Sub
     return residualAtOffset(utcMs, cadenceMs, lon0, k);
   };
   const subdiv = LUNAR_LOCUS_INTERP_SUBDIVISIONS;
-  const prefixSpans = Math.min(LUNAR_LOCUS_PREFIX_SPANS, LUNAR_LOCUS_PAST_TANGENT_SUPPORT - 1);
   const out: ResidualPt[] = [];
-  const iStart = -prefixSpans;
-  const iEnd = n - 1;
-  for (let i = iStart; i < iEnd; i += 1) {
+  for (let i = 0; i < n - 1; i += 1) {
     const p0 = ctrl(i - 1);
     const p1 = ctrl(i);
     const p2 = ctrl(i + 1);
@@ -365,18 +346,17 @@ export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): Sub
       out.push(centripetalSegment(p0, p1, p2, p3, s / subdiv));
     }
   }
-  out.push(ctrl(iEnd));
-  const startIdx = prefixSpans * subdiv;
-  const start = out[startIdx];
+  out.push(ctrl(n - 1));
+  const start = out[0];
   if (start === undefined) {
     return residual.map((p) => ({ latDeg: p.y, lonDeg: lon0 + p.x }));
   }
-  const startNext = out[startIdx + 1] ?? start;
+  const startNext = out[1] ?? start;
   const startOut = { x: startNext.x - start.x, y: startNext.y - start.y };
   const periodSteps = meanLunarDaysPerSiderealMonth();
-  const expectedIdx = startIdx + periodSteps * subdiv;
+  const expectedIdx = periodSteps * subdiv;
   const window = subdiv;
-  const searchFrom = Math.max(startIdx + subdiv * 2, Math.floor(expectedIdx - window));
+  const searchFrom = Math.max(subdiv * 2, Math.floor(expectedIdx - window));
   const searchTo = Math.min(out.length - 1, Math.ceil(expectedIdx + window));
   let bestI = Math.min(out.length - 1, Math.max(searchFrom, Math.round(expectedIdx)));
   let bestD = Infinity;
@@ -387,8 +367,7 @@ export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): Sub
       continue;
     }
     const incoming = { x: p.x - prev.x, y: p.y - prev.y };
-    const align = incoming.x * startOut.x + incoming.y * startOut.y;
-    if (align < 0) {
+    if (incoming.x * startOut.x + incoming.y * startOut.y < 0) {
       continue;
     }
     const d = hypot2(p, start);
@@ -400,19 +379,6 @@ export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): Sub
   if (!Number.isFinite(bestD)) {
     bestI = Math.min(out.length - 1, Math.max(searchFrom, Math.round(expectedIdx)));
   }
-  const blendN = Math.min(subdiv, Math.max(0, bestI - startIdx));
-  if (blendN >= 2 && startIdx + 1 >= blendN) {
-    for (let j = 0; j < blendN; j += 1) {
-      const t = smoothstep01((j + 1) / blendN);
-      const retIdx = bestI - blendN + 1 + j;
-      const sIdx = startIdx - blendN + 1 + j;
-      const a = out[retIdx];
-      const b = out[sIdx];
-      if (a !== undefined && b !== undefined) {
-        out[retIdx] = lerpPt(a, b, t);
-      }
-    }
-  }
-  const cropped = out.slice(startIdx, bestI + 1);
+  const cropped = out.slice(0, bestI + 1);
   return cropped.map((p) => ({ latDeg: p.y, lonDeg: lon0 + p.x }));
 }

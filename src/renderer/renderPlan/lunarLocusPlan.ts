@@ -34,15 +34,63 @@ export interface LunarLocusRenderPlanOptions {
 
 const WORLD_COPIES_DEG = [-360, 0, 360] as const;
 
-function strokeRgba(css: string, alpha: number): string {
-  const px = parseCssColorToRgba8888(css);
-  if (!px) {
-    return `rgba(28, 38, 56, ${alpha})`;
-  }
-  return `rgba(${px.r}, ${px.g}, ${px.b}, ${alpha})`;
+/** Same disc radius as `buildSublunarMarkerRenderPlan` (opaque Moon glyph). */
+function sublunarDiscRadiusPx(viewportWidthPx: number): number {
+  return Math.min(7.5, Math.max(3.8, viewportWidthPx * 0.0046));
 }
 
-function pushWrappedClosedPolyline(
+function dist2(x0: number, y0: number, x1: number, y1: number): number {
+  return Math.hypot(x1 - x0, y1 - y0);
+}
+
+/**
+ * Move an endpoint that lies inside the Moon disc onto the circle along the segment,
+ * slightly inside the visible radius. Fully interior segments are dropped.
+ */
+function clipSegmentToMoonFootprint(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  cx: number,
+  cy: number,
+  r: number,
+): { x0: number; y0: number; x1: number; y1: number } | null {
+  const d0 = dist2(x0, y0, cx, cy);
+  const d1 = dist2(x1, y1, cx, cy);
+  if (d0 < r && d1 < r) {
+    return null;
+  }
+  if (d0 >= r && d1 >= r) {
+    return { x0, y0, x1, y1 };
+  }
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  const fx = x0 - cx;
+  const fy = y0 - cy;
+  const a = dx * dx + dy * dy;
+  const b = 2 * (fx * dx + fy * dy);
+  const c = fx * fx + fy * fy - r * r;
+  const disc = b * b - 4 * a * c;
+  if (!(a > 0) || disc < 0) {
+    return { x0, y0, x1, y1 };
+  }
+  const s = Math.sqrt(disc);
+  const tA = (-b - s) / (2 * a);
+  const tB = (-b + s) / (2 * a);
+  const t = tA >= 0 && tA <= 1 ? tA : tB >= 0 && tB <= 1 ? tB : null;
+  if (t === null) {
+    return { x0, y0, x1, y1 };
+  }
+  const xi = x0 + t * dx;
+  const yi = y0 + t * dy;
+  if (d0 < r) {
+    return { x0: xi, y0: yi, x1, y1 };
+  }
+  return { x0, y0, x1: xi, y1: yi };
+}
+
+function pushWrappedOpenPolyline(
   items: RenderPlan["items"],
   points: LunarLocusPayload["points"],
   w: number,
@@ -54,30 +102,55 @@ function pushWrappedClosedPolyline(
     return;
   }
   const n = points.length;
+  const moonLon = points[0]!.lonDeg;
+  const moonLat = points[0]!.latDeg;
+  const moonR = sublunarDiscRadiusPx(w) * 0.75;
   for (const offset of WORLD_COPIES_DEG) {
-    for (let i = 0; i < n; i += 1) {
-      const i1 = (i + 1) % n;
+    const moonX = equirectXFromUnwrappedLon(moonLon + offset, w);
+    const moonY = parallelYFromLatitudeDeg(moonLat, h);
+    const moonOnScreen =
+      Number.isFinite(moonX) &&
+      Number.isFinite(moonY) &&
+      moonX > -moonR * 2 &&
+      moonX < w + moonR * 2 &&
+      moonY > -moonR * 2 &&
+      moonY < h + moonR * 2;
+    for (let i = 0; i < n - 1; i += 1) {
       const x0 = equirectXFromUnwrappedLon(points[i]!.lonDeg + offset, w);
-      const x1 = equirectXFromUnwrappedLon(points[i1]!.lonDeg + offset, w);
+      const x1 = equirectXFromUnwrappedLon(points[i + 1]!.lonDeg + offset, w);
       const y0 = parallelYFromLatitudeDeg(points[i]!.latDeg, h);
-      const y1 = parallelYFromLatitudeDeg(points[i1]!.latDeg, h);
+      const y1 = parallelYFromLatitudeDeg(points[i + 1]!.latDeg, h);
       if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
         continue;
       }
       if (Math.abs(x1 - x0) >= w * 0.5) {
         continue;
       }
-      const bothLeft = x0 < 0 && x1 < 0;
-      const bothRight = x0 > w && x1 > w;
+      let sx0 = x0;
+      let sy0 = y0;
+      let sx1 = x1;
+      let sy1 = y1;
+      if (moonOnScreen) {
+        const clipped = clipSegmentToMoonFootprint(x0, y0, x1, y1, moonX, moonY, moonR);
+        if (clipped === null) {
+          continue;
+        }
+        sx0 = clipped.x0;
+        sy0 = clipped.y0;
+        sx1 = clipped.x1;
+        sy1 = clipped.y1;
+      }
+      const bothLeft = sx0 < 0 && sx1 < 0;
+      const bothRight = sx0 > w && sx1 > w;
       if (bothLeft || bothRight) {
         continue;
       }
       const line: RenderLineItem = {
         kind: "line",
-        x1: x0,
-        y1: y0,
-        x2: x1,
-        y2: y1,
+        x1: sx0,
+        y1: sy0,
+        x2: sx1,
+        y2: sy1,
         stroke,
         strokeWidthPx,
       };
@@ -86,9 +159,18 @@ function pushWrappedClosedPolyline(
   }
 }
 
+function strokeRgba(css: string, alpha: number): string {
+  const px = parseCssColorToRgba8888(css);
+  if (!px) {
+    return `rgba(28, 38, 56, ${alpha})`;
+  }
+  return `rgba(${px.r}, ${px.g}, ${px.b}, ${alpha})`;
+}
+
 /**
- * Builds a {@link RenderPlan} for the lunar locus: closed line only, no sample markers.
+ * Builds a {@link RenderPlan} for the lunar locus: open one-cycle line only, no sample markers.
  * Stroke width matches the solar analemma construction; color is lunar, not solar-warm.
+ * The two cycle ends terminate inside the Moon glyph footprint (presentation trim).
  */
 export function buildLunarLocusRenderPlan(options: LunarLocusRenderPlanOptions): RenderPlan {
   const w = options.viewportWidthPx;
@@ -109,6 +191,6 @@ export function buildLunarLocusRenderPlan(options: LunarLocusRenderPlanOptions):
   const strokeW = 1.2 + 0.95 * veil;
   const stroke = strokeRgba(DEFAULT_LUNAR_LOCUS_STROKE_RGB, strokeA);
   const items: RenderPlan["items"] = [];
-  pushWrappedClosedPolyline(items, options.payload.points, w, h, stroke, strokeW);
+  pushWrappedOpenPolyline(items, options.payload.points, w, h, stroke, strokeW);
   return { items };
 }

@@ -94,7 +94,7 @@ describe("buildLunarLocusRenderPlan", () => {
       payload: payload({
         points: [
           { latDeg: 0, lonDeg: 0 },
-          { latDeg: 1, lonDeg: 2 },
+          { latDeg: 8, lonDeg: 16 },
         ],
       }),
     });
@@ -130,6 +130,65 @@ describe("buildLunarLocusRenderPlan", () => {
     expect(src).not.toMatch(/meanLunarDay/);
     expect(src).not.toMatch(/standstill/i);
     expect(src).not.toMatch(/mean lunar/i);
+  });
+
+  it("emits an open polyline, not a last-to-first closing span", () => {
+    const plan = buildLunarLocusRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        points: [
+          { latDeg: 0, lonDeg: 0 },
+          { latDeg: 0, lonDeg: 20 },
+          { latDeg: 20, lonDeg: 20 },
+          { latDeg: 20, lonDeg: 0 },
+        ],
+      }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines).toHaveLength(3);
+  });
+
+  it("does not emit a remote closure chord on the production Moon-anchored locus", () => {
+    resetLunarLocusCacheForTests();
+    const points = interpolateLunarLocusPolyline(sampleLunarLocus(Date.parse(LUNAR_LOCUS_EPOCH_UTC.recent)));
+    const w = 1888;
+    const h = 944;
+    const plan = buildLunarLocusRenderPlan({
+      viewportWidthPx: w,
+      viewportHeightPx: h,
+      layerOpacity: 1,
+      payload: payload({ points }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(100);
+    const first = points[0]!;
+    const last = points[points.length - 1]!;
+    const firstX = ((first.lonDeg + 180) / 360) * w;
+    const lastX = ((last.lonDeg + 180) / 360) * w;
+    const firstY = ((90 - first.latDeg) / 180) * h;
+    const lastY = ((90 - last.latDeg) / 180) * h;
+    const moonR = Math.min(7.5, Math.max(3.8, w * 0.0046));
+    const near = (x0: number, y0: number, x1: number, y1: number) => Math.hypot(x1 - x0, y1 - y0) < 0.35;
+    let joinsRawEnds = false;
+    let exposesRawEnd = false;
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      const aFirst = near(item.x1, item.y1, firstX, firstY) || near(item.x2, item.y2, firstX, firstY);
+      const aLast = near(item.x1, item.y1, lastX, lastY) || near(item.x2, item.y2, lastX, lastY);
+      if (aFirst && aLast) {
+        joinsRawEnds = true;
+      }
+      if (aFirst || aLast) {
+        exposesRawEnd = true;
+      }
+    }
+    expect(joinsRawEnds).toBe(false);
+    expect(Math.hypot(lastX - firstX, lastY - firstY)).toBeLessThan(moonR);
+    expect(exposesRawEnd).toBe(false);
   });
 
   it("preserves wrapped-copy geometry without long or reversed world spans", () => {

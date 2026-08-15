@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-14
+Updated: 2026-08-15
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-008](work/LIB-008-fix-lunar-locus-zigzag.md) — Fix lunar locus moving zigzag
+[LIB-009](work/LIB-009-eliminate-lunar-locus-residual-cusp.md) — Eliminate lunar locus residual cusp
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. No approved next item.
+Await human scope. Do not start work.

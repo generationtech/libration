@@ -64,4 +64,10 @@ Lunar locus no longer forces Catmull-Rom closure through the merely-near `k = �
 
 Verified: `npx tsc --noEmit` clean; `npm test` 170 files / 1576 passed / 0 failed; `npm run build` succeeded. Cursor Browser at 1920×1080: `?scenario=lunar-locus` recent (pre-fix kink visible, then gone), standstill, minor, baseline; interpolator month sweep at 6 h steps.
 
+## 2026-08-15 — LIB-009 complete
+
+Lunar locus is no longer forced into a false remote closure. The displayed cycle is an open one-sidereal-month path whose seam is the current Moon; a small quasi-periodic endpoint mismatch stays under the Moon glyph instead of traveling as a hook opposite it.
+
+Verified: focused lunar-locus tests 40 passed; `npx tsc --noEmit` clean; `npm test` 170 files / 1581 passed / 0 failed; `npm run build` succeeded. Cursor Browser at inner 1920×1080: `?scenario=lunar-locus` recent/standstill/minor/baseline plus accelerated demo at 86400×.
+
 
