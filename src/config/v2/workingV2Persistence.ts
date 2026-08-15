@@ -37,6 +37,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "lunarGroundTrack",
   "solarAnalemma",
 ];
 

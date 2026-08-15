@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-003](work/LIB-003-solar-analemma-follow-sun.md) — Solar analemma follows the live subsolar point
+[LIB-005](work/LIB-005-lunar-ground-track-stroke-colors.md) — Lunar ground track past and future stroke colors
 
 ## Blockers
 
@@ -19,10 +19,6 @@ None
 
 None
 
-## Awaiting human decision
-
-Which ordinary Libration work to propose or approve next.
-
 ## Next action
 
-Stop. A human proposes or approves a `docs/work/LIB-###` item — the next identifier is LIB-004 — following [`docs/WORKFLOW.md`](WORKFLOW.md). Direction candidates live in [`docs/ROADMAP.md`](ROADMAP.md).
+Stop. No approved work item. Draft a proposed item only if asked.

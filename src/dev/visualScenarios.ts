@@ -30,6 +30,7 @@ export const VISUAL_SCENARIO_IDS = [
   "terminator",
   "night",
   "readability",
+  "lunar-track",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -39,6 +40,7 @@ export const VISUAL_SCENARIO_UTC = {
   terminator: "2026-03-20T12:00:00.000Z",
   night: "2026-12-21T06:00:00.000Z",
   readability: "2026-06-21T12:00:00.000Z",
+  "lunar-track": "2026-01-16T22:00:00.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** Chromatic Köppen–Geiger substrate used by the readability scenario. */
@@ -151,6 +153,21 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
             },
           };
         }
+      }),
+  },
+  "lunar-track": {
+    id: "lunar-track",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-track"],
+    purpose:
+      "Sublunar ground track with past and future extents, Moon marker on, analemma off, for seam and alignment checks.",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["lunar-track"], (draft) => {
+        draft.layers.solarShading = true;
+        draft.layers.grid = true;
+        draft.layers.sublunarMarker = true;
+        draft.layers.lunarGroundTrack = true;
+        draft.layers.solarAnalemma = false;
+        draft.layers.cityPins = false;
       }),
   },
 };

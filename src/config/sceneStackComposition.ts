@@ -54,6 +54,7 @@ const COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS = new Set<string>([
   "referenceAndCustomCityPins",
   "subsolarPoint",
   "sublunarPoint",
+  "sublunarGroundTrack",
   "solarAnalemmaGroundTrack",
 ]);
 

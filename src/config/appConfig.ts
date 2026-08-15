@@ -50,6 +50,11 @@ export interface LayerEnableFlags {
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
+  /**
+   * Geographic trajectory of the sublunar point around the canonical product time
+   * (scene product `sublunarGroundTrack`). Default off.
+   */
+  lunarGroundTrack: boolean;
   /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */
   solarAnalemma: boolean;
 }
@@ -643,6 +648,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
+  lunarGroundTrack: false,
   solarAnalemma: false,
 };
 

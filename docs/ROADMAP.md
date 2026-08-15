@@ -36,6 +36,10 @@ Keep the Cursor-native verification path as the default for visually impacting w
 
 Further curated static substrates when a raster and rights exist. The preferred next family, when sourced, is a temperature or precipitation climatology. Selector polish and additional climate/night-light/seasonal families remain unapproved until scoped. Live weather is not base-map onboarding; see [`docs/specs/scene/weather-cloud-composition-plan.md`](specs/scene/weather-cloud-composition-plan.md).
 
+### Derived astronomical overlays
+
+Time-relative geographic overlays that reuse the existing solar and lunar models rather than adding a second ephemeris. Analemma variants, eclipse paths, standstills, and related ideas remain unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md).
+
 ### Composition extensions (Phase 9)
 
 Deepen the existing upstream illumination and overlay-readability model: per-layer readability for stack rows that do not yet have it, further substrate heuristics, atmospheric scattering beyond current twilight constants, additional weather/cloud products that reuse the lifecycle contract. No new rendering boundary. Each slice needs explicit product scope.

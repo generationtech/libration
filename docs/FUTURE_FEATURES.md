@@ -78,7 +78,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - solar shading / dark-side visualization (continuous solar-altitude twilight gradient encoded in the same upstream illumination raster, with civil/nautical/astronomical thresholds retained as semantic anchors, not a separate twilight layer).
 - solar subpoint.
 - lunar subpoint.
-- moon phase and ground track.
+- moon phase beyond the existing sublunar-marker phase representation.
 - analemma variants.
 - equinox and solstice reference overlays.
 - eclipse path overlays.

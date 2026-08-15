@@ -264,11 +264,11 @@ The registry is **rebuilt, not mutated**, when composition-relevant configuratio
 
 ### The default scene stack
 
-`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the ten known overlay ids, in canonical order:
+`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the eleven known overlay ids, in canonical order:
 
 ```
 solarShading, grid, staticEquirectOverlay, globalCloudsIr, earthquakes,
-orbitalTracks, cityPins, subsolarMarker, sublunarMarker, solarAnalemma
+orbitalTracks, cityPins, subsolarMarker, lunarGroundTrack, sublunarMarker, solarAnalemma
 ```
 
 The base map is separate; it is the foundational part of the composition, not an entry in this list.
@@ -282,6 +282,7 @@ The base map is separate; it is the foundational part of the composition, not an
 | Lat/lon grid | `latLonGridLayer.ts`, `equirectGridPayload.ts` | |
 | City pins | `cityPinsLayer.ts`, `cityPinsPayload.ts` | Carries per-pin readability veil. |
 | Subsolar / sublunar markers | `subsolarMarkerLayer.ts`, `sublunarMarkerLayer.ts` | |
+| Lunar ground track | `lunarGroundTrackLayer.ts` | Time-windowed trajectory of `sublunarPoint` around `TimeContext.now`. Default 24 h past + 24 h future at 10-minute samples; extents persist on `source.parameters.pastHours` / `futureHours` (`6` / `12` / `24` / `48` / `72`). Stroke RGB identities persist as `pastColor` / `futureColor` (`#rrggbb`, default `#aacdf0`). Past is quieter than future via plan-builder alpha; unlabeled 6-hour ticks. Default off. Independent of the sublunar marker. |
 | Solar analemma | `solarAnalemmaLayer.ts` | Derived ground track. Default samples the year-long subsolar locus at the canonical instant’s UTC time-of-day so today’s vertex coincides with the live subsolar point. Optional `source.parameters.utcHour` freezes that integer hour at `:00:00.000`. |
 | Static equirect overlay | `staticEquirectRasterOverlayLayer.ts` | Full-viewport raster overlay. |
 | Dynamic equirect raster | `dynamicEquirectRasterOverlayLayer.ts` | Reads prepared views only. |
@@ -394,6 +395,7 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 - the month raster for month-aware base-map families, through the catalog-backed resolver;
 - subsolar and sublunar points, solar altitude, lunar phase and altitude, and hence the whole illumination field;
 - the analemma ground track (default: UTC time-of-day of the instant; optional frozen `utcHour`);
+- the lunar ground track (past/future window around the instant; same `sublunarPoint` as the Moon marker);
 - which dynamic snapshot is resolved for each source.
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.
@@ -470,7 +472,7 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
+| Layers | Scene stack toggles (including lunar ground track), past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
 | Geography | Base-map family selection and presentation, projection-adjacent settings |

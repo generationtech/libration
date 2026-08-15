@@ -269,3 +269,43 @@ describe("LayersTab base-map presentation persistence", () => {
     });
   });
 });
+
+describe("LayersTab lunar ground track stroke colors", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("updates independent past and future colors on the scene row", () => {
+    function Harness() {
+      const [config, setConfig] = useState(() => normalizeLibrationConfig(defaultLibrationConfigV2()));
+      const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
+        setConfig((prev) => {
+          const draft = normalizeLibrationConfig(prev);
+          updater(draft);
+          return normalizeLibrationConfig(draft);
+        });
+      }, []);
+      const row = config.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+      const params = row?.source.kind === "derived" ? row.source.parameters : {};
+      return (
+        <>
+          <LayersTab config={config} updateConfig={updateConfig} />
+          <pre data-testid="lunar-params">{JSON.stringify(params)}</pre>
+        </>
+      );
+    }
+    render(<Harness />);
+    const past = screen.getByLabelText("Lunar ground track past color") as HTMLInputElement;
+    const future = screen.getByLabelText("Lunar ground track future color") as HTMLInputElement;
+    expect(past.value).toBe("#aacdf0");
+    expect(future.value).toBe("#aacdf0");
+    fireEvent.change(past, { target: { value: "#ff0000" } });
+    fireEvent.change(future, { target: { value: "#00ff00" } });
+    const params = JSON.parse(screen.getByTestId("lunar-params").textContent ?? "{}") as {
+      pastColor?: string;
+      futureColor?: string;
+    };
+    expect(params.pastColor).toBe("#ff0000");
+    expect(params.futureColor).toBe("#00ff00");
+  });
+});

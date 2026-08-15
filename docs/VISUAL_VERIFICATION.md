@@ -78,6 +78,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `terminator` | `2026-03-20T12:00:00.000Z` | Near March equinox at 12:00 UTC (subsolar near 0°); solar shading on | Terminator geometry, twilight, seam/continuity, geographic illumination |
 | `night` | `2026-12-21T06:00:00.000Z` | Near December solstice at 06:00 UTC (subsolar near 90°E; Americas in night); illustrative moonlight and emissive night lights | Dark-side composition, night lights, readability over dark substrate |
 | `readability` | `2026-06-21T12:00:00.000Z` | Köppen–Geiger climate substrate (`equirect-world-climate-koppen-beck-v1`) plus grid, city pins, subsolar/sublunar markers, solar shading, and analemma | Labels/overlays, contrast, clutter, chrome/scene interaction, clipping |
+| `lunar-track` | `2026-01-16T22:00:00.000Z` | Lunar ground track on (24 h past + 24 h future), sublunar marker on, analemma off, grid on; Moon near 170°W at high southern latitude so a dateline crossing and latitude excursion are in view | Lunar track alignment, past/future styling, seam/wrap, overlay readability |
 
 Adding a scenario requires a work item. Do not grow this set casually.
 

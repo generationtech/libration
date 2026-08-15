@@ -134,6 +134,7 @@ describe("resolveVisualScenarioSession", () => {
     expect(config.layers.grid).toBe(true);
     expect(config.layers.cityPins).toBe(true);
     expect(config.layers.solarAnalemma).toBe(false);
+    expect(config.layers.lunarGroundTrack).toBe(false);
   });
 
   it("keeps solar shading on for terminator and night", () => {
@@ -147,6 +148,20 @@ describe("resolveVisualScenarioSession", () => {
     expect(config.layers.solarAnalemma).toBe(true);
     expect(config.layers.grid).toBe(true);
     expect(config.layers.cityPins).toBe(true);
+  });
+
+  it("enables the lunar ground track with the Moon marker and without the analemma", () => {
+    const config = VISUAL_SCENARIOS["lunar-track"].buildConfig();
+    expect(config.layers.lunarGroundTrack).toBe(true);
+    expect(config.layers.sublunarMarker).toBe(true);
+    expect(config.layers.solarAnalemma).toBe(false);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["lunar-track"]);
+    const row = config.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastHours : undefined).toBe(24);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureHours : undefined).toBe(24);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
   });
 });
 

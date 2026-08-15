@@ -30,6 +30,7 @@ import {
   EQUIRECT_BASE_MAP_OPTIONS,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
+  applyLunarGroundTrackColorToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
   resolveEquirectBaseMapAsset,
@@ -49,6 +50,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
+  lunarGroundTrack: true,
   solarAnalemma: true,
 };
 
@@ -97,7 +99,7 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(10);
+    expect(v2.scene?.layers).toHaveLength(11);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
@@ -825,5 +827,107 @@ describe("SceneConfig (Phase 1)", () => {
       DEFAULT_LAYERS,
     );
     expect(norm.baseMap.presentation).toEqual(def.baseMap.presentation);
+  });
+
+  it("inserts lunarGroundTrack off with 24 h extents when the stack row is missing", () => {
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: { ...DEFAULT_APP_CONFIG.layers },
+      scene: {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+      } as unknown as LibrationConfigV2["scene"],
+    } as LibrationConfigV2);
+    const row = v2.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(row).toBeDefined();
+    expect(row?.enabled).toBe(false);
+    expect(row?.source.kind === "derived" && row.source.product).toBe("sublunarGroundTrack");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastHours : undefined).toBe(24);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureHours : undefined).toBe(24);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
+    expect(v2.layers.lunarGroundTrack).toBe(false);
+  });
+
+  it("clamps invalid lunar ground track extents and round-trips valid ones", () => {
+    const enabled = {
+      ...DEFAULT_APP_CONFIG.layers,
+      lunarGroundTrack: true,
+    };
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: enabled,
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(enabled),
+        layers: buildDefaultSceneConfigFromLayerFlags(enabled).layers.map((row) =>
+          row.id === "lunarGroundTrack" && row.source.kind === "derived"
+            ? {
+                ...row,
+                enabled: true,
+                source: {
+                  ...row.source,
+                  parameters: { pastHours: 13, futureHours: 48 },
+                },
+              }
+            : row,
+        ),
+      },
+    });
+    const row = v2.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastHours : undefined).toBe(24);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureHours : undefined).toBe(48);
+    expect(v2.layers.lunarGroundTrack).toBe(true);
+    const round = normalizeLibrationConfig(v2);
+    const row2 = round.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(row2?.source.kind === "derived" ? row2.source.parameters?.futureHours : undefined).toBe(48);
+  });
+
+  it("canonicalizes lunar ground track stroke colors and round-trips them", () => {
+    const enabled = {
+      ...DEFAULT_APP_CONFIG.layers,
+      lunarGroundTrack: true,
+    };
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: enabled,
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(enabled),
+        layers: buildDefaultSceneConfigFromLayerFlags(enabled).layers.map((row) =>
+          row.id === "lunarGroundTrack" && row.source.kind === "derived"
+            ? {
+                ...row,
+                enabled: true,
+                source: {
+                  ...row.source,
+                  parameters: {
+                    pastHours: 24,
+                    futureHours: 24,
+                    pastColor: "not-a-color",
+                    futureColor: "#F00",
+                  },
+                },
+              }
+            : row,
+        ),
+      },
+    });
+    const row = v2.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#ff0000");
+    const painted = {
+      ...v2,
+      scene: applyLunarGroundTrackColorToScene(v2.scene!, "pastColor", "#00ff00"),
+    };
+    const paintedRow = painted.scene?.layers.find((l) => l.id === "lunarGroundTrack");
+    expect(paintedRow?.source.kind === "derived" ? paintedRow.source.parameters?.pastColor : undefined).toBe(
+      "#00ff00",
+    );
+    expect(paintedRow?.source.kind === "derived" ? paintedRow.source.parameters?.futureColor : undefined).toBe(
+      "#ff0000",
+    );
   });
 });

@@ -28,10 +28,15 @@ import {
   OVERLAY_READABILITY_VEIL_SCALE_MAX,
   OVERLAY_READABILITY_VEIL_SCALE_MIN,
   applyLayerEnableFlagsToScene,
+  applyLunarGroundTrackColorToScene,
+  applyLunarGroundTrackExtentToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
   deriveLayerEnableFlagsFromScene,
   getBaseMapPresentationForMapId,
+  lunarGroundTrackColorsFromScene,
+  lunarGroundTrackExtentsFromScene,
+  LUNAR_GROUND_TRACK_EXTENT_HOURS,
   setBaseMapPresentationForMapId,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
@@ -58,6 +63,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
+  "lunarGroundTrack",
   "solarAnalemma",
 ];
 
@@ -130,9 +136,17 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     cityPins: "City pins",
     subsolarMarker: "Subsolar marker",
     sublunarMarker: "Sublunar marker",
+    lunarGroundTrack: "Lunar ground track",
     solarAnalemma: "Solar analemma (ground track)",
   };
   return map[key];
+}
+
+function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
+  if (key === "lunarGroundTrack") {
+    return "Shows the geographic path of the point on Earth directly beneath the Moon around the current product time.";
+  }
+  return undefined;
 }
 
 function isIdentityOverlayReadabilityPresentation(
@@ -432,6 +446,8 @@ export type LayersTabProps = {
 export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabProps) {
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
+  const lunarExtents = lunarGroundTrackExtentsFromScene(scene);
+  const lunarColors = lunarGroundTrackColorsFromScene(scene);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1300,6 +1316,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                 disabled={!mutable}
                 tabIndex={mutable ? 0 : -1}
                 aria-label={labelForLayer(key)}
+                title={titleForLayer(key)}
                 onChange={
                   mutable && updateConfig
                     ? (e) => {
@@ -1319,6 +1336,124 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </ConfigControlRow>
           );
         })}
+        <ConfigControlRow label="Lunar ground track past">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar ground track past extent"
+            title="How far before the current product time to draw the track."
+            value={String(lunarExtents.pastHours)}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const hours = Number(e.currentTarget.value);
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarGroundTrackExtentToScene(
+                        baseScene,
+                        "pastHours",
+                        hours,
+                      );
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LUNAR_GROUND_TRACK_EXTENT_HOURS.map((h) => (
+              <option key={`past-${h}`} value={h}>
+                {h} h
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar ground track future">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar ground track future extent"
+            title="How far after the current product time to draw the track."
+            value={String(lunarExtents.futureHours)}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const hours = Number(e.currentTarget.value);
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarGroundTrackExtentToScene(
+                        baseScene,
+                        "futureHours",
+                        hours,
+                      );
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LUNAR_GROUND_TRACK_EXTENT_HOURS.map((h) => (
+              <option key={`future-${h}`} value={h}>
+                {h} h
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar ground track past color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar ground track past color"
+            title="Color of the track before the current product time."
+            value={lunarColors.pastColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const color = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarGroundTrackColorToScene(
+                        baseScene,
+                        "pastColor",
+                        color,
+                      );
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar ground track future color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar ground track future color"
+            title="Color of the track after the current product time."
+            value={lunarColors.futureColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const color = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarGroundTrackColorToScene(
+                        baseScene,
+                        "futureColor",
+                        color,
+                      );
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
       </section>
     </div>
   );

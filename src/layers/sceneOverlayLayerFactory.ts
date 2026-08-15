@@ -25,6 +25,7 @@ import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import { resolveMoonlightPresentationMode } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
+import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
 import { createSolarShadingLayer } from "./solarShadingLayer";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
@@ -106,6 +107,31 @@ function utcHourFromOptionalParameters(
   return undefined;
 }
 
+function lunarExtentHoursFromOptionalParameters(
+  parameters: Readonly<Record<string, unknown>> | undefined,
+  key: "pastHours" | "futureHours",
+): number | undefined {
+  if (!parameters) {
+    return undefined;
+  }
+  const h = parameters[key];
+  if (typeof h === "number" && Number.isFinite(h)) {
+    return h;
+  }
+  return undefined;
+}
+
+function lunarStrokeCssFromOptionalParameters(
+  parameters: Readonly<Record<string, unknown>> | undefined,
+  key: "pastColor" | "futureColor",
+): string | undefined {
+  if (!parameters) {
+    return undefined;
+  }
+  const c = parameters[key];
+  return typeof c === "string" ? c : undefined;
+}
+
 function createDerivedOverlayByProduct(
   source: Extract<SceneLayerInstance["source"], { kind: "derived" }>,
   part: OverlayPart,
@@ -160,6 +186,15 @@ function createDerivedOverlayByProduct(
         zIndex,
         opacity,
         sublunarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.sublunarMarker,
+      });
+    case "sublunarGroundTrack":
+      return createLunarGroundTrackLayer({
+        zIndex,
+        opacity,
+        pastHours: lunarExtentHoursFromOptionalParameters(source.parameters, "pastHours"),
+        futureHours: lunarExtentHoursFromOptionalParameters(source.parameters, "futureHours"),
+        pastColor: lunarStrokeCssFromOptionalParameters(source.parameters, "pastColor"),
+        futureColor: lunarStrokeCssFromOptionalParameters(source.parameters, "futureColor"),
       });
     case "solarAnalemmaGroundTrack":
       return createSolarAnalemmaLayer({

@@ -177,6 +177,7 @@ describe("displayPresets", () => {
     const ids = new Set(registry.getLayers().map((l) => l.id));
     expect(ids.has("layer.points.subsolar")).toBe(true);
     expect(ids.has("layer.points.sublunar")).toBe(true);
+    expect(ids.has("layer.lunarGroundTrack.sublunar")).toBe(false);
     expect(ids.has("layer.points.referenceCities")).toBe(false);
   });
 

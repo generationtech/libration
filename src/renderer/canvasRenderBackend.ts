@@ -18,6 +18,7 @@ import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
 import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
+import { isLunarGroundTrackPayload } from "../layers/lunarGroundTrackPayload";
 import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
 import { resolveEmissiveCompositionAsset } from "../config/emissiveCompositionAssetResolve";
@@ -29,6 +30,7 @@ import { executeRenderPlanOnCanvas } from "./renderPlan/canvasRenderPlanExecutor
 import { buildBaseRasterMapRenderPlan } from "./renderPlan/sceneBaseRasterMapPlan";
 import { buildEquirectangularGridOverlayRenderPlan } from "./renderPlan/equirectGridOverlayPlan";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./renderPlan/equirectPolylineOverlayPlan";
+import { buildLunarGroundTrackRenderPlan } from "./renderPlan/lunarGroundTrackPlan";
 import type { EmissiveRasterSampleBuffer } from "./emissiveIlluminationRaster";
 import { rgbaBufferFromHtmlImage } from "./emissiveIlluminationRaster";
 import { buildSolarShadingIlluminationRenderPlan } from "./renderPlan/sceneSolarShadingIlluminationPlan";
@@ -356,6 +358,18 @@ export class CanvasRenderBackend implements RenderBackend {
           closed,
           layerOpacity: layer.opacity,
           readability: readability ?? null,
+        }),
+      );
+      return;
+    }
+    if (isLunarGroundTrackPayload(layer.data)) {
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildLunarGroundTrackRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          layerOpacity: layer.opacity,
+          payload: layer.data,
         }),
       );
     }

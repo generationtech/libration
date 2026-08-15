@@ -31,6 +31,7 @@ const ALL: LayerEnableFlags = {
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
+  lunarGroundTrack: true,
   solarAnalemma: true,
 };
 
@@ -87,6 +88,7 @@ describe("planSceneStackComposition", () => {
       "staticEquirectOverlay",
       "cityPins",
       "subsolarMarker",
+      "lunarGroundTrack",
       "sublunarMarker",
       "solarAnalemma",
     ]);

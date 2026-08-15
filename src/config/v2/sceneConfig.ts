@@ -17,6 +17,16 @@
  */
 import type { LayerEnableFlags } from "../appConfig";
 import {
+  DEFAULT_LUNAR_GROUND_TRACK_FUTURE_HOURS,
+  DEFAULT_LUNAR_GROUND_TRACK_PAST_HOURS,
+  normalizeLunarGroundTrackExtentHours,
+} from "../../core/lunarGroundTrack";
+import {
+  DEFAULT_LUNAR_GROUND_TRACK_FUTURE_COLOR,
+  DEFAULT_LUNAR_GROUND_TRACK_PAST_COLOR,
+  normalizeLunarGroundTrackStrokeCss,
+} from "../../core/lunarGroundTrackAppearance";
+import {
   BASE_MAP_OPTION_CATEGORY_ORDER,
   DEFAULT_EQUIRECT_BASE_MAP_ID as DEFAULT_EQUIRECT_BASE_MAP_ID_VALUE,
   EQUIRECT_BASE_MAP_OPTIONS,
@@ -120,6 +130,18 @@ export {
   type SceneOverlayCompositePart,
   type SceneStackCompositionPlan,
 } from "../sceneStackComposition";
+export {
+  LUNAR_GROUND_TRACK_EXTENT_HOURS,
+  DEFAULT_LUNAR_GROUND_TRACK_PAST_HOURS,
+  DEFAULT_LUNAR_GROUND_TRACK_FUTURE_HOURS,
+  type LunarGroundTrackExtentHours,
+} from "../../core/lunarGroundTrack";
+export {
+  DEFAULT_LUNAR_GROUND_TRACK_STROKE_COLOR,
+  DEFAULT_LUNAR_GROUND_TRACK_PAST_COLOR,
+  DEFAULT_LUNAR_GROUND_TRACK_FUTURE_COLOR,
+  normalizeLunarGroundTrackStrokeCss,
+} from "../../core/lunarGroundTrackAppearance";
 
 export const DEFAULT_SCENE_PROJECTION_ID = "equirectangular";
 export const DEFAULT_SCENE_VIEW_MODE = "fullWorldFixed" as const;
@@ -394,6 +416,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "orbitalTracks",
   "cityPins",
   "subsolarMarker",
+  "lunarGroundTrack",
   "sublunarMarker",
   "solarAnalemma",
 ] as const;
@@ -754,6 +777,24 @@ const SUBSOLAR: SceneLayerInstance = {
   source: { kind: "derived", product: "subsolarPoint" },
 };
 
+const LUNAR_GROUND_TRACK_ROW: SceneLayerInstance = {
+  id: "lunarGroundTrack",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 4.5,
+  source: {
+    kind: "derived",
+    product: "sublunarGroundTrack",
+    parameters: {
+      pastHours: DEFAULT_LUNAR_GROUND_TRACK_PAST_HOURS,
+      futureHours: DEFAULT_LUNAR_GROUND_TRACK_FUTURE_HOURS,
+      pastColor: DEFAULT_LUNAR_GROUND_TRACK_PAST_COLOR,
+      futureColor: DEFAULT_LUNAR_GROUND_TRACK_FUTURE_COLOR,
+    },
+  },
+};
+
 const SUBLUNAR: SceneLayerInstance = {
   id: "sublunarMarker",
   family: "astronomy",
@@ -782,6 +823,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   EARTHQUAKES,
   ORBITAL_TRACKS,
   SUBSOLAR,
+  LUNAR_GROUND_TRACK_ROW,
   SUBLUNAR,
   SOLAR_ANALEMMA_ROW,
 ];
@@ -796,6 +838,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "cityPins";
     case "subsolarMarker":
       return "subsolarMarker";
+    case "lunarGroundTrack":
+      return "lunarGroundTrack";
     case "sublunarMarker":
       return "sublunarMarker";
     case "staticEquirectOverlay":
@@ -868,6 +912,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     orbitalTracks: false,
     cityPins: false,
     subsolarMarker: false,
+    lunarGroundTrack: false,
     sublunarMarker: false,
     solarAnalemma: false,
   };
@@ -902,6 +947,82 @@ export function applyLayerEnableFlagsToScene(
       visible: layers.baseMap,
     },
     layers: nextLayers,
+  };
+}
+
+export function lunarGroundTrackExtentsFromScene(scene: SceneConfig): {
+  pastHours: number;
+  futureHours: number;
+} {
+  const row = scene.layers.find((l) => l.id === "lunarGroundTrack");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return {
+    pastHours: normalizeLunarGroundTrackExtentHours(params?.pastHours),
+    futureHours: normalizeLunarGroundTrackExtentHours(params?.futureHours),
+  };
+}
+
+export function lunarGroundTrackColorsFromScene(scene: SceneConfig): {
+  pastColor: string;
+  futureColor: string;
+} {
+  const row = scene.layers.find((l) => l.id === "lunarGroundTrack");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return {
+    pastColor: normalizeLunarGroundTrackStrokeCss(params?.pastColor),
+    futureColor: normalizeLunarGroundTrackStrokeCss(params?.futureColor),
+  };
+}
+
+export function applyLunarGroundTrackExtentToScene(
+  scene: SceneConfig,
+  which: "pastHours" | "futureHours",
+  hours: unknown,
+): SceneConfig {
+  const nextHours = normalizeLunarGroundTrackExtentHours(hours);
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "lunarGroundTrack" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSublunarGroundTrackParameters({
+          ...row.source,
+          parameters: {
+            ...(row.source.parameters ?? {}),
+            [which]: nextHours,
+          },
+        }),
+      };
+    }),
+  };
+}
+
+export function applyLunarGroundTrackColorToScene(
+  scene: SceneConfig,
+  which: "pastColor" | "futureColor",
+  color: unknown,
+): SceneConfig {
+  const nextColor = normalizeLunarGroundTrackStrokeCss(color);
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "lunarGroundTrack" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSublunarGroundTrackParameters({
+          ...row.source,
+          parameters: {
+            ...(row.source.parameters ?? {}),
+            [which]: nextColor,
+          },
+        }),
+      };
+    }),
   };
 }
 
@@ -1027,6 +1148,26 @@ function normalizeBaseMap(input: unknown, fallbacks: LayerEnableFlags): BaseMapC
     presentationByMapId,
     ...(opacity !== undefined ? { opacity } : { opacity: 1 }),
     ...(styleVariant !== undefined ? { styleVariant } : {}),
+  };
+}
+
+function withNormalizedSublunarGroundTrackParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "sublunarGroundTrack") {
+    return source;
+  }
+  const pastHours = normalizeLunarGroundTrackExtentHours(source.parameters?.pastHours);
+  const futureHours = normalizeLunarGroundTrackExtentHours(source.parameters?.futureHours);
+  const pastColor = normalizeLunarGroundTrackStrokeCss(source.parameters?.pastColor);
+  const futureColor = normalizeLunarGroundTrackStrokeCss(source.parameters?.futureColor);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      pastHours,
+      futureHours,
+      pastColor,
+      futureColor,
+    },
   };
 }
 
@@ -1169,6 +1310,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   } else {
     source = defaultSourceForLayerId(idNorm);
   }
+  source = withNormalizedSublunarGroundTrackParameters(source);
   let opacity: number | undefined;
   if (typeof raw.opacity === "number" && Number.isFinite(raw.opacity)) {
     opacity = clampOpacity(raw.opacity);

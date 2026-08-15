@@ -498,6 +498,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       ["Static equirect overlay", "staticEquirectOverlay"],
       ["Subsolar marker", "subsolarMarker"],
       ["Sublunar marker", "sublunarMarker"],
+      ["Lunar ground track", "lunarGroundTrack"],
       ["Solar analemma (ground track)", "solarAnalemma"],
     ] as const satisfies ReadonlyArray<readonly [string, keyof LayerEnableFlags]>,
   )(

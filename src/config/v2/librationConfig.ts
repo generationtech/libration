@@ -610,6 +610,7 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
     cityPins: typeof r.cityPins === "boolean" ? r.cityPins : d.cityPins,
     subsolarMarker: typeof r.subsolarMarker === "boolean" ? r.subsolarMarker : d.subsolarMarker,
     sublunarMarker: typeof r.sublunarMarker === "boolean" ? r.sublunarMarker : d.sublunarMarker,
+    lunarGroundTrack: typeof r.lunarGroundTrack === "boolean" ? r.lunarGroundTrack : d.lunarGroundTrack,
     solarAnalemma: typeof r.solarAnalemma === "boolean" ? r.solarAnalemma : d.solarAnalemma,
   };
 }
@@ -626,6 +627,7 @@ function layerFlagsEqualShallow(a: LayerEnableFlags, b: LayerEnableFlags): boole
     a.cityPins === b.cityPins &&
     a.subsolarMarker === b.subsolarMarker &&
     a.sublunarMarker === b.sublunarMarker &&
+    a.lunarGroundTrack === b.lunarGroundTrack &&
     a.solarAnalemma === b.solarAnalemma
   );
 }

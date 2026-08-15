@@ -140,6 +140,23 @@ describe("createLayerRegistryFromConfig", () => {
     expect(registry.getLayers().some((l) => l.id === "layer.solarAnalemma.groundTrack")).toBe(true);
   });
 
+  it("registers lunar ground track when enabled and omits it when disabled", () => {
+    const on = { ...DEFAULT_APP_CONFIG.layers, lunarGroundTrack: true };
+    const off = { ...DEFAULT_APP_CONFIG.layers, lunarGroundTrack: false };
+    const onReg = createLayerRegistryFromConfig({
+      ...DEFAULT_APP_CONFIG,
+      layers: on,
+      scene: buildDefaultSceneConfigFromLayerFlags(on),
+    });
+    const offReg = createLayerRegistryFromConfig({
+      ...DEFAULT_APP_CONFIG,
+      layers: off,
+      scene: buildDefaultSceneConfigFromLayerFlags(off),
+    });
+    expect(onReg.getLayers().some((l) => l.id === "layer.lunarGroundTrack.sublunar")).toBe(true);
+    expect(offReg.getLayers().some((l) => l.id === "layer.lunarGroundTrack.sublunar")).toBe(false);
+  });
+
   it("omits solar shading when solarShading is disabled in config", () => {
     const layers = { ...DEFAULT_APP_CONFIG.layers, solarShading: false };
     const config: AppConfig = {

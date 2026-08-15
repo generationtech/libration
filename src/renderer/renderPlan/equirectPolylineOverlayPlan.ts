@@ -17,6 +17,11 @@ import {
   effectiveOverlayReadabilityLiftVeil01,
 } from "../../layers/overlayReadabilityHints";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
+import {
+  adjustPairToShortStripPath,
+  equirectXFromUnwrappedLon,
+  unwrappedLongitudes,
+} from "./equirectSeamPath";
 
 export interface EquirectangularPolylineOverlayPlanOptions {
   viewportWidthPx: number;
@@ -25,45 +30,6 @@ export interface EquirectangularPolylineOverlayPlanOptions {
   closed: boolean;
   layerOpacity: number;
   readability?: OverlayReadabilityHints | null;
-}
-
-function shortLonDeltaDeg(a: number, b: number): number {
-  return (((b - a) + 540) % 360) - 180;
-}
-
-function unwrappedLongitudes(lons: readonly number[]): number[] {
-  if (lons.length === 0) {
-    return [];
-  }
-  const u: number[] = [lons[0]!];
-  for (let i = 1; i < lons.length; i += 1) {
-    u.push(u[i - 1]! + shortLonDeltaDeg(lons[i - 1]!, lons[i]!));
-  }
-  return u;
-}
-
-function equirectXFromUnwrappedLon(uDeg: number, w: number): number {
-  return ((uDeg + 180) / 360) * w;
-}
-
-function adjustPairToShortStripPath(x0: number, x1: number, w: number): { x0: number; x1: number } {
-  let a = x0;
-  let b = x1;
-  let d = b - a;
-  if (d > w * 0.5) {
-    b -= w;
-  } else if (d < -w * 0.5) {
-    b += w;
-  }
-  a = ((a % w) + w) % w;
-  b = ((b % w) + w) % w;
-  d = b - a;
-  if (d > w * 0.5) {
-    b -= w;
-  } else if (d < -w * 0.5) {
-    b += w;
-  }
-  return { x0: a, x1: b };
 }
 
 export function buildEquirectangularPolylineOverlayRenderPlan(
