@@ -20,42 +20,83 @@ import canvasBackendSource from "../renderer/canvasRenderBackend.ts?raw";
 
 const TOTAL_UTC = Date.parse("2024-04-08T18:17:15.000Z");
 const PARTIAL_UTC = Date.parse("2022-10-25T11:00:06.900Z");
-const QUIET_UTC = Date.parse("2024-04-01T00:00:00.000Z");
+const FORECAST_UTC = Date.parse("2024-04-03T18:00:00.000Z");
+const QUIET_UTC = Date.parse("2024-01-15T00:00:00.000Z");
+const HORIZON_7D = 7 * 86_400_000;
+
+function fillCount(data: unknown): number {
+  return isEquirectRegionOverlayPayload(data) ? data.fills.length : -1;
+}
+
+function strokeCount(data: unknown): number {
+  return isEquirectRegionOverlayPayload(data) ? data.strokes.length : -1;
+}
 
 describe("solar eclipse layer", () => {
-  it("emits no region primitives when the layer would be empty (no active eclipse)", () => {
-    const layer = createSolarEclipseLayer();
+  it("emits no region primitives when there is no eclipse and no forecast", () => {
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 0 } });
     const st = layer.getState(createTimeContext(QUIET_UTC, 0, true));
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+    expect(fillCount(st.data)).toBe(0);
+    expect(strokeCount(st.data)).toBe(0);
+  });
+
+  it("emits forecast corridor and no live umbra several days before 2024-04-08", () => {
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 7 } });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: HORIZON_7D });
+    const st = layer.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }),
+    );
+    expect(frame.activeSolar).toBeNull();
+    expect(frame.upcomingSolar[0]?.id).toBe("nasa-5mcse-solar-9561");
+    expect(fillCount(st.data)).toBeGreaterThan(0);
+    expect(strokeCount(st.data)).toBeGreaterThan(0);
     if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills).toEqual([]);
-      expect(st.data.strokes).toEqual([]);
+      expect(st.data.fills.some((f) => f.fill.includes("0.42"))).toBe(false);
     }
   });
 
-  it("emits partial, umbral band, and centerline at 2024 greatest eclipse", () => {
-    const layer = createSolarEclipseLayer();
-    const frame = resolveEclipseFrame(TOTAL_UTC);
+  it("emits live primitives plus corridor context when the event is active and horizon is on", () => {
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 7 } });
+    const frame = resolveEclipseFrame(TOTAL_UTC, { horizonMs: HORIZON_7D });
+    const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
+    expect(frame.activeSolar?.id).toBe("nasa-5mcse-solar-9561");
+    expect(fillCount(st.data)).toBeGreaterThan(2);
+    expect(strokeCount(st.data)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("emits partial, umbral band, and centerline at 2024 greatest eclipse with live-only horizon", () => {
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 0 } });
+    const frame = resolveEclipseFrame(TOTAL_UTC, { horizonMs: 0 });
     const st = layer.getState(
       createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }),
     );
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+    expect(fillCount(st.data)).toBe(2);
+    expect(strokeCount(st.data)).toBe(1);
     if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills.length).toBe(2);
-      expect(st.data.strokes.length).toBe(1);
       expect(st.data.fills[0]!.ring.length).toBeGreaterThan(4);
       expect(st.data.fills[1]!.ring.length).toBeGreaterThan(4);
     }
   });
 
   it("omits central band and centerline for a partial-only event", () => {
-    const layer = createSolarEclipseLayer();
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 0 } });
     const st = layer.getState(createTimeContext(PARTIAL_UTC, 0, true));
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
-    if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills).toHaveLength(1);
-      expect(st.data.strokes).toEqual([]);
-    }
+    expect(fillCount(st.data)).toBe(1);
+    expect(strokeCount(st.data)).toBe(0);
+  });
+
+  it("emits a partial forecast region and no corridor for an upcoming partial-only event", () => {
+    const utc = Date.parse("2022-10-20T11:00:00.000Z");
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 7 } });
+    const frame = resolveEclipseFrame(utc, { horizonMs: HORIZON_7D });
+    const st = layer.getState(createTimeContext(utc, 0, true, { eclipseFrame: frame }));
+    expect(frame.upcomingSolar[0]?.subtype).toBe("partial");
+    expect(frame.forecastSelections[0]?.geometry.corridorBands).toEqual([]);
+    expect(fillCount(st.data)).toBeGreaterThan(0);
+    expect(strokeCount(st.data)).toBe(0);
   });
 
   it("honors independent presentation toggles", () => {
@@ -64,13 +105,41 @@ describe("solar eclipse layer", () => {
         showCentralLine: false,
         showCentralBand: false,
         showPartialRegion: true,
+        showForecastCorridor: false,
+        showForecastPartialRegion: false,
+        forecastHorizonDays: 0,
       },
     });
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
-    if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills).toHaveLength(1);
-      expect(st.data.strokes).toEqual([]);
-    }
+    expect(fillCount(st.data)).toBe(1);
+    expect(strokeCount(st.data)).toBe(0);
+  });
+
+  it("emits nothing when forecast toggles are off and there is no live event", () => {
+    const layer = createSolarEclipseLayer({
+      presentation: {
+        showForecastCorridor: false,
+        showForecastPartialRegion: false,
+        showCentralLine: false,
+        forecastHorizonDays: 7,
+      },
+    });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: HORIZON_7D });
+    const st = layer.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }),
+    );
+    expect(fillCount(st.data)).toBe(0);
+    expect(strokeCount(st.data)).toBe(0);
+  });
+
+  it("drops forecast primitives when the horizon no longer includes the event", () => {
+    const layer = createSolarEclipseLayer({ presentation: { forecastHorizonDays: 1 } });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: 86_400_000 });
+    const st = layer.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }),
+    );
+    expect(frame.upcomingSolar).toEqual([]);
+    expect(fillCount(st.data)).toBe(0);
   });
 });
 
@@ -79,6 +148,7 @@ describe("Canvas eclipse containment", () => {
     expect(canvasBackendSource).not.toMatch(/eclipse/i);
     expect(canvasBackendSource).not.toMatch(/besselian/i);
     expect(canvasBackendSource).not.toMatch(/umbra|antumbra|penumbra/i);
+    expect(canvasBackendSource).not.toMatch(/forecast/i);
     expect(canvasBackendSource).toMatch(/isEquirectRegionOverlayPayload/);
   });
 });

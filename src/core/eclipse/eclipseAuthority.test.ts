@@ -17,9 +17,12 @@ import {
   eclipseAuthoritySupport,
   getSolarEclipseEventById,
   isUtcWithinEclipseAuthority,
+  nextSolarEclipseAfter,
   parseSolarEclipseAuthorityAsset,
   SOLAR_ECLIPSE_AUTHORITY_METADATA,
   SOLAR_ECLIPSE_EVENTS,
+  solarEclipsesIntersecting,
+  solarEclipsesUpcomingInHorizon,
 } from "./eclipseAuthority";
 
 const SPAN_START = Date.UTC(1900, 0, 1, 0, 0, 0, 0);
@@ -110,6 +113,31 @@ describe("eclipse authority lookup", () => {
 
     expect(activeSolarEclipseAt(total!.globalStartMs - 1)).toBeNull();
     expect(activeSolarEclipseAt(total!.globalEndMs + 1)).toBeNull();
+  });
+
+  it("finds the next eclipse after T and range-intersects without a full scan", () => {
+    const total = getSolarEclipseEventById("nasa-5mcse-solar-9561")!;
+    const before = total.globalStartMs - 86_400_000;
+    expect(nextSolarEclipseAfter(before)?.id).toBe(total.id);
+    expect(nextSolarEclipseAfter(total.globalEndMs)?.id).not.toBe(total.id);
+
+    const week = solarEclipsesUpcomingInHorizon(before, 7 * 86_400_000);
+    expect(week.map((e) => e.id)).toEqual([total.id]);
+
+    const year = solarEclipsesUpcomingInHorizon(Date.parse("2023-10-01T00:00:00.000Z"), 365 * 86_400_000);
+    expect(year.length).toBeGreaterThan(1);
+    for (let i = 1; i < year.length; i += 1) {
+      expect(year[i]!.globalStartMs).toBeGreaterThan(year[i - 1]!.globalStartMs);
+    }
+
+    const none = solarEclipsesUpcomingInHorizon(before, 0);
+    expect(none).toEqual([]);
+
+    const start = performance.now();
+    for (let i = 0; i < 1000; i += 1) {
+      solarEclipsesIntersecting(before + i * 86_400_000, before + i * 86_400_000 + 30 * 86_400_000);
+    }
+    expect(performance.now() - start).toBeLessThan(50);
   });
 
   it("looks up 1000 instants without scanning the whole catalog each time", () => {

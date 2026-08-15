@@ -65,6 +65,8 @@ import {
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
+import { solarEclipsePresentationFromScene } from "./config/v2/sceneConfig";
+import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
 import { createDynamicDataLifecycleHost } from "./lifecycle";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
@@ -404,9 +406,13 @@ export default function App() {
         substrate,
         scene.overlayReadability.presentation,
       );
+      const eclipsePresentation = solarEclipsePresentationFromScene(scene);
+      const eclipseHorizonMs = derivedAppConfigRef.current.layers.solarEclipse
+        ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
+        : 0;
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
-        eclipseFrame: resolveEclipseFrame(clockNowMs),
+        eclipseFrame: resolveEclipseFrame(clockNowMs, { horizonMs: eclipseHorizonMs }),
         dynamicDataLifecycle:
           dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs),
       });

@@ -100,4 +100,10 @@ E1 solar eclipse live footprint: bundled NASA Besselian authority v1 (454 events
 
 Verified: `npx tsc --noEmit` clean; `npm test` 180 files / 1662 passed / 0 failed; `npm run build` succeeded with no eclipse scenario ids in `dist/`. Cursor Browser: four eclipse scenarios, 3600× demo progression on 2024 total, ordinary startup.
 
+## 2026-08-15 — LIB-015 complete
+
+E2 solar eclipse forecast window: product-UTC range lookup, durable horizon (default 7 days; 0 = live-only), cached event corridor distinct from the live E1 footprint, representative GE partial forecast, nearest-event emphasis. ADR 0009. No E3+.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 181 files / 1682 passed / 0 failed; `npm run build` succeeded with no forecast scenario ids in `dist/`. Cursor Browser: forecast total/annular/partial/multiple, dateline live-only, 2024 jump into active+corridor, 3600× motion and pause, ordinary startup.
+
 

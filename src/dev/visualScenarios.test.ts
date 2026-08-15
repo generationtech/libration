@@ -260,7 +260,33 @@ describe("resolveVisualScenarioSession", () => {
       expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC[id]);
       const row = config.scene?.layers.find((l) => l.id === "solarEclipse");
       expect(row?.enabled).toBe(true);
+      expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
+        0,
+      );
     }
+  });
+
+  it("seeds forecast scenarios with a production overlay several days before NASA events", () => {
+    const total = VISUAL_SCENARIOS["solar-eclipse-forecast"].buildConfig();
+    expect(total.layers.solarEclipse).toBe(true);
+    expect(total.data.demoTime.startIsoUtc).toBe("2024-04-03T18:00:00.000Z");
+    const totalRow = total.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(totalRow?.source.kind === "derived" ? totalRow.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
+
+    const annular = VISUAL_SCENARIOS["solar-eclipse-forecast-annular"].buildConfig();
+    expect(annular.data.demoTime.startIsoUtc).toBe("2023-10-09T18:00:00.000Z");
+
+    const partial = VISUAL_SCENARIOS["solar-eclipse-forecast-partial"].buildConfig();
+    expect(partial.data.demoTime.startIsoUtc).toBe("2022-10-20T11:00:00.000Z");
+
+    const multiple = VISUAL_SCENARIOS["solar-eclipse-forecast-multiple"].buildConfig();
+    expect(multiple.data.demoTime.startIsoUtc).toBe("2023-10-01T00:00:00.000Z");
+    const multiRow = multiple.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(multiRow?.source.kind === "derived" ? multiRow.source.parameters?.forecastHorizonDays : undefined).toBe(
+      365,
+    );
   });
 
   it("seeds lunar-locus with the production overlay, Moon marker, track off, and analemma off", () => {

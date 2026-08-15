@@ -34,8 +34,11 @@ import {
 } from "../../core/astronomyOverlayStrokeAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
+  DEFAULT_SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
   DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND,
   DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE,
+  DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_CORRIDOR,
+  DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_PARTIAL_REGION,
   DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION,
   normalizeSolarEclipsePresentation,
 } from "../../core/eclipse/solarEclipseAppearance";
@@ -745,7 +748,7 @@ const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   },
 };
 
-/** Live NASA-derived solar eclipse footprint. Default off (event overlay; no forecast in E1). */
+/** NASA-derived solar eclipse overlay: live footprint plus optional forecast corridor. Default off. */
 const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "solarEclipse",
   family: "astronomy",
@@ -759,6 +762,9 @@ const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
       showCentralLine: DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE,
       showCentralBand: DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND,
       showPartialRegion: DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION,
+      showForecastCorridor: DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_CORRIDOR,
+      showForecastPartialRegion: DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_PARTIAL_REGION,
+      forecastHorizonDays: DEFAULT_SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
     },
   },
 };
@@ -1140,6 +1146,9 @@ export function applySolarEclipsePresentationToScene(
     showCentralLine: boolean;
     showCentralBand: boolean;
     showPartialRegion: boolean;
+    showForecastCorridor: boolean;
+    showForecastPartialRegion: boolean;
+    forecastHorizonDays: number;
   }>,
 ): SceneConfig {
   const current = solarEclipsePresentationFromScene(scene);

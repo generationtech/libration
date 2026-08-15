@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-014](work/LIB-014-solar-eclipse-live-footprint.md) — Solar eclipse event truth and live geographic footprint (E1)
+[LIB-015](work/LIB-015-solar-eclipse-forecast.md) — Solar eclipse forecast window and upcoming-event progression (E2)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. No approved work item. E2 (solar eclipse forecast window) is the preferred next Eclipse System slice and is **not** approved.
+Await human authorization for E3 (lunar eclipse event truth and visibility geometry). Do not start E3 or create an E3 work item.

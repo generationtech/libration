@@ -74,6 +74,10 @@ import {
   type SublunarMarkerSizeId,
 } from "../../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
+import {
+  forecastHorizonLabel,
+  SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
+} from "../../core/eclipse/solarEclipseAppearance";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 
@@ -179,7 +183,7 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
     return "Shows the Moon's compact sublunar figure traced over one mean-lunar-day sampling cycle.";
   }
   if (key === "solarEclipse") {
-    return "Shows the NASA-derived live solar eclipse footprint when an eclipse is active at product time. Default off.";
+    return "Shows NASA-derived solar eclipse geography: the live footprint when an eclipse is active, and forecast path/region for upcoming events inside the forecast horizon. Default off.";
   }
   return undefined;
 }
@@ -1380,6 +1384,36 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </ConfigControlRow>
           );
         })}
+        <ConfigControlRow label="Eclipse forecast horizon">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Eclipse forecast horizon"
+            title="How far ahead of product time to show upcoming solar eclipse geography. Off / Live only keeps the live footprint only."
+            value={String(eclipsePresentation.forecastHorizonDays)}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const forecastHorizonDays = Number(e.currentTarget.value);
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        forecastHorizonDays,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS.map((days) => (
+              <option key={`eclipse-horizon-${days}`} value={days}>
+                {forecastHorizonLabel(days)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
         <ConfigControlRow label="Eclipse central line">
           <input
             type="checkbox"
@@ -1389,7 +1423,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             disabled={!mutable}
             tabIndex={mutable ? 0 : -1}
             aria-label="Eclipse central line"
-            title="Central eclipse path (path of totality or annularity). Ignored for partial-only events."
+            title="Central eclipse path (path of totality or annularity) for live and forecast geography. Ignored for partial-only events."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -1416,7 +1450,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             disabled={!mutable}
             tabIndex={mutable ? 0 : -1}
             aria-label="Eclipse central band"
-            title="Live umbral or antumbral footprint. Not drawn for partial-only events."
+            title="Live umbral or antumbral footprint at the current product time. Not drawn for partial-only events."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -1443,7 +1477,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             disabled={!mutable}
             tabIndex={mutable ? 0 : -1}
             aria-label="Eclipse partial region"
-            title="Broader penumbral / partial-eclipse footprint."
+            title="Live penumbral / partial-eclipse footprint at the current product time."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -1453,6 +1487,60 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                         draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
                       draft.scene = applySolarEclipsePresentationToScene(baseScene, {
                         showPartialRegion,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse forecast corridor">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipsePresentation.showForecastCorridor}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse forecast corridor"
+            title="Event-long central eclipse corridor (where totality or annularity sweeps). Distinct from the live umbra. Not drawn for partial-only events."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showForecastCorridor = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        showForecastCorridor,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse forecast partial region">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipsePresentation.showForecastPartialRegion}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse forecast partial region"
+            title="Representative greatest-eclipse partial footprint for upcoming events. Not the event-long swept penumbra."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showForecastPartialRegion = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
+                        showForecastPartialRegion,
                       });
                       draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
                     });

@@ -4,7 +4,7 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). Current behaviour for that slice lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E2+), which still require a separate human-authorized work item.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E3+), which still require a separate human-authorized work item.
 
 Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs).
 
@@ -371,6 +371,8 @@ Visual prominence may depend on time-to-event. That is **presentation**, not eve
 
 Keep three layers of meaning separate.
 
+The **live** umbra/antumbra at T is a compact moving footprint. The NASA-style continental strip is a different quantity: the **event corridor** swept by the central eclipse over the valid interval. E2 caches that corridor per event ([ADR 0009](../../decisions/0009-cached-solar-eclipse-event-corridor.md)). Do not substitute a scaled-up live oval for the corridor.
+
 ### Astronomical geometry
 
 Shadow axis, umbra/antumbra/penumbra, contacts, type, magnitude. Owned by the eclipse authority + geometry module in `src/core/` (or a dedicated `src/core/eclipse/` tree). Evaluated at UTC.
@@ -466,7 +468,7 @@ One **Eclipse System** subtree on the persisted document (scene-adjacent), becau
 
 **Recommendation:** global `EclipseEventService` feeding **two** presentation layers (`solarEclipse`, `lunarEclipse`), with a shared config root for master enable, types, and horizon. Do not start a generic events framework.
 
-E1 followed existing overlay patterns: `source.kind === "derived"` product `solarEclipseLiveFootprint`, presentation parameters on the row, factory dispatch by product. A `LayerEnableFlags.solarEclipse` compatibility flag exists (default off), matching other stack overlays. Forecast horizon and a shared Eclipse System config subtree remain E2/E6.
+E1 followed existing overlay patterns: `source.kind === "derived"` product `solarEclipseLiveFootprint`, presentation parameters on the row, factory dispatch by product. A `LayerEnableFlags.solarEclipse` compatibility flag exists (default off), matching other stack overlays. E2 added `forecastHorizonDays` (default 7; `0` = live only) plus `showForecastCorridor` / `showForecastPartialRegion` on the same row. A shared Eclipse System config subtree remains E6 if lunar presentation needs a common root.
 
 ---
 
@@ -474,7 +476,7 @@ E1 followed existing overlay patterns: `source.kind === "derived"` product `sola
 
 Production eclipse implementation must be inspected in Cursor’s in-editor Browser per [`docs/VISUAL_VERIFICATION.md`](../../VISUAL_VERIFICATION.md). Scenarios are DEV-only, startup/reload, paused demo UTC, persistence isolated, no scenario ids in layers/`RenderPlan`/Canvas.
 
-**Do not add scenarios in this architecture item.** E1 added production-backed DEV scenes `solar-eclipse-total`, `solar-eclipse-annular`, `solar-eclipse-partial`, and `solar-eclipse-dateline` (catalog in [`docs/VISUAL_VERIFICATION.md`](../../VISUAL_VERIFICATION.md)). Forecast and lunar scenes belong to later slices.
+**Do not add scenarios in this architecture item.** E1 added production-backed DEV scenes `solar-eclipse-total`, `solar-eclipse-annular`, `solar-eclipse-partial`, and `solar-eclipse-dateline`. E2 added `solar-eclipse-forecast`, `solar-eclipse-forecast-annular`, `solar-eclipse-forecast-partial`, and `solar-eclipse-forecast-multiple` (catalog in [`docs/VISUAL_VERIFICATION.md`](../../VISUAL_VERIFICATION.md)). Lunar scenes belong to later slices.
 
 Future scenes will need **deterministic authority data** (fixed event id or bundled elements) plus ordinary config, not a parallel renderer. Suggested scene families and the data each needs:
 
@@ -564,13 +566,14 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Authority licence/coverage; dateline-crossing regions; disagreement with ambient Moon marker.
 - **Completion evidence:** Independent fixture tests for that event; plan-builder tests; Cursor visual verification of the DEV scene.
 
-### E2 — Solar forecast window and progression
+### E2 — Solar forecast window and progression — **implemented (LIB-015)**
 
 - **Goal:** Upcoming events inside the horizon show path/band before first contact; as `T` enters the event, geometry progresses; after last contact it clears.
 - **Dependencies:** E1.
-- **User-visible:** Demo time approaching an eclipse reveals the path, then live motion, then removal.
+- **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
+- **User-visible:** Demo time approaching an eclipse reveals the event corridor, then live motion along it, then removal of the live footprint when the event ends.
 - **Principal risks:** Cache vs acceleration; horizon config without a frozen schema explosion (minimal horizon control only).
-- **Completion evidence:** Time-lifecycle tests; visual upcoming → active → gone.
+- **Completion evidence:** Time-lifecycle tests; corridor tests vs NASA fixtures; visual upcoming → active → gone.
 
 ### E3 — Lunar event truth and visibility geometry
 
@@ -604,7 +607,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
 
-E1 is production. E2 is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E2–E3 may consume those types when cheap, without a second catalog.
+E1 is production. E2 is production. E3 is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 may consume lunar types when cheap, without a second solar catalog.
 
 ---
 
@@ -628,9 +631,9 @@ Scientifically grounded instrument matching NASA Canon maps at world-map scale, 
 
 Solar total, annular, and partial are production. Hybrid is preserved as event subtype when the NASA data provides it; E1 live presentation uses the same central-event machinery with umbra vs antumbra from `L2′`, not a hybrid-specific renderer. Lunar types remain E3.
 
-### D5 — First visible slice — **decided (LIB-014)**
+### D5 — First visible slice — **decided (LIB-014 / LIB-015)**
 
-E1 live solar footprint at known NASA events. Forecast (E2) remains unapproved.
+E1 live solar footprint at known NASA events. E2 solar forecast window and cached event corridor. Lunar remains E3.
 
 ### D6 — Service vs layers
 
@@ -654,7 +657,7 @@ E1 live solar footprint at known NASA events. Forecast (E2) remains unapproved.
 
 ## 20. Intentionally not predetermined
 
-- Exact configuration schema and control layout beyond E1’s four checkboxes.
+- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls.
 - Numeric imminent thresholds.
 - Colors, opacities, gradients, cone/beam shape, animation beyond E1’s restrained production tokens.
 - Whether lunar penumbral events are shown in E3 (the authority classifies them).
@@ -678,6 +681,7 @@ E1 live solar footprint at known NASA events. Forecast (E2) remains unapproved.
 | Architecture reconnaissance | [`docs/work/LIB-012-eclipse-system-architecture.md`](../../work/LIB-012-eclipse-system-architecture.md) |
 | Authority evaluation | [`docs/work/LIB-013-eclipse-authority-evaluation.md`](../../work/LIB-013-eclipse-authority-evaluation.md) |
 | E1 live solar footprint | [`docs/work/LIB-014-solar-eclipse-live-footprint.md`](../../work/LIB-014-solar-eclipse-live-footprint.md) |
+| E2 solar forecast window | [`docs/work/LIB-015-solar-eclipse-forecast.md`](../../work/LIB-015-solar-eclipse-forecast.md) |
 
 ---
 
@@ -786,7 +790,7 @@ The catalog is a static, time-addressable table. Lookup does not depend on wall-
 
 ### 22.8 Event discovery
 
-`EclipseEventService` queries `EclipseAuthority` with product UTC `T` and horizon `H`:
+`EclipseEventService` queries `EclipseAuthority` with product UTC `T` and horizon `H` (implemented, [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md)):
 
 - the event whose global interval contains `T` (active);
 - the next event with `globalStart > T`;

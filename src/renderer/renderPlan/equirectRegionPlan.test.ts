@@ -87,4 +87,29 @@ describe("equirect region RenderPlan", () => {
       expect(Math.max(...x) - Math.min(...x)).toBeLessThan(180);
     }
   });
+
+  it("projects a dateline-crossing thin corridor without a world-spanning fill", () => {
+    const ring = [
+      { latDeg: 8, lonDeg: 170 },
+      { latDeg: 10, lonDeg: 175 },
+      { latDeg: 12, lonDeg: -178 },
+      { latDeg: 14, lonDeg: -170 },
+      { latDeg: 12, lonDeg: -168 },
+      { latDeg: 10, lonDeg: -176 },
+      { latDeg: 8, lonDeg: 176 },
+      { latDeg: 6, lonDeg: 172 },
+      { latDeg: 8, lonDeg: 170 },
+    ];
+    const descriptors = equirectRingToPathDescriptors(ring, 360, 180);
+    expect(descriptors.length).toBeGreaterThan(0);
+    for (const d of descriptors) {
+      const px: number[] = [];
+      for (const c of d.commands) {
+        if (c.kind === "moveTo" || c.kind === "lineTo") {
+          px.push(c.x);
+        }
+      }
+      expect(Math.max(...px) - Math.min(...px)).toBeLessThan(120);
+    }
+  });
 });

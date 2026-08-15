@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { applyLayerEnableFlagsToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
+import { applyLayerEnableFlagsToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
 import {
   assertIsNormalizedLibrationConfig,
   defaultLibrationConfigV2,
@@ -40,6 +40,10 @@ export const VISUAL_SCENARIO_IDS = [
   "solar-eclipse-annular",
   "solar-eclipse-partial",
   "solar-eclipse-dateline",
+  "solar-eclipse-forecast",
+  "solar-eclipse-forecast-annular",
+  "solar-eclipse-forecast-partial",
+  "solar-eclipse-forecast-multiple",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -56,6 +60,10 @@ export const VISUAL_SCENARIO_UTC = {
   "solar-eclipse-annular": "2023-10-14T17:59:27.300Z",
   "solar-eclipse-partial": "2022-10-25T11:00:06.900Z",
   "solar-eclipse-dateline": "2016-03-09T01:57:09.400Z",
+  "solar-eclipse-forecast": "2024-04-03T18:00:00.000Z",
+  "solar-eclipse-forecast-annular": "2023-10-09T18:00:00.000Z",
+  "solar-eclipse-forecast-partial": "2022-10-20T11:00:00.000Z",
+  "solar-eclipse-forecast-multiple": "2023-10-01T00:00:00.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
@@ -219,28 +227,65 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-total"],
     purpose: "Production solar eclipse overlay at 2024 Apr 08 greatest eclipse (total).",
     buildConfig: () =>
-      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-total"], applySolarEclipseScene),
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-total"], applySolarEclipseLiveScene),
   },
   "solar-eclipse-annular": {
     id: "solar-eclipse-annular",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-annular"],
     purpose: "Production solar eclipse overlay at 2023 Oct 14 greatest eclipse (annular).",
     buildConfig: () =>
-      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-annular"], applySolarEclipseScene),
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-annular"], applySolarEclipseLiveScene),
   },
   "solar-eclipse-partial": {
     id: "solar-eclipse-partial",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-partial"],
     purpose: "Production solar eclipse overlay at 2022 Oct 25 greatest eclipse (partial-only).",
     buildConfig: () =>
-      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-partial"], applySolarEclipseScene),
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-partial"], applySolarEclipseLiveScene),
   },
   "solar-eclipse-dateline": {
     id: "solar-eclipse-dateline",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-dateline"],
     purpose: "Production solar eclipse overlay at 2016 Mar 09 (Pacific / dateline-adjacent total).",
     buildConfig: () =>
-      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-dateline"], applySolarEclipseScene),
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-dateline"], applySolarEclipseLiveScene),
+  },
+  "solar-eclipse-forecast": {
+    id: "solar-eclipse-forecast",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-forecast"],
+    purpose:
+      "Upcoming 2024 Apr 08 total solar eclipse five days before greatest eclipse (7-day forecast horizon).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-forecast"], applySolarEclipseForecastScene),
+  },
+  "solar-eclipse-forecast-annular": {
+    id: "solar-eclipse-forecast-annular",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-forecast-annular"],
+    purpose: "Upcoming 2023 Oct 14 annular solar eclipse five days before greatest eclipse.",
+    buildConfig: () =>
+      withDemoAt(
+        VISUAL_SCENARIO_UTC["solar-eclipse-forecast-annular"],
+        applySolarEclipseForecastScene,
+      ),
+  },
+  "solar-eclipse-forecast-partial": {
+    id: "solar-eclipse-forecast-partial",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-forecast-partial"],
+    purpose: "Upcoming 2022 Oct 25 partial-only solar eclipse (no fabricated central corridor).",
+    buildConfig: () =>
+      withDemoAt(
+        VISUAL_SCENARIO_UTC["solar-eclipse-forecast-partial"],
+        applySolarEclipseForecastScene,
+      ),
+  },
+  "solar-eclipse-forecast-multiple": {
+    id: "solar-eclipse-forecast-multiple",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-forecast-multiple"],
+    purpose: "365-day forecast horizon containing more than one upcoming solar eclipse.",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-forecast-multiple"], (draft) => {
+        applySolarEclipseForecastScene(draft, 365);
+      }),
   },
 };
 
@@ -274,6 +319,23 @@ function applySolarEclipseScene(draft: LibrationConfigV2): void {
   draft.layers.lunarLocus = false;
   draft.layers.solarAnalemma = false;
   draft.layers.cityPins = false;
+}
+
+function applySolarEclipseLiveScene(draft: LibrationConfigV2): void {
+  applySolarEclipseScene(draft);
+  if (draft.scene) {
+    draft.scene = applySolarEclipsePresentationToScene(draft.scene, { forecastHorizonDays: 0 });
+  }
+}
+
+function applySolarEclipseForecastScene(
+  draft: LibrationConfigV2,
+  forecastHorizonDays: 7 | 365 = 7,
+): void {
+  applySolarEclipseScene(draft);
+  if (draft.scene) {
+    draft.scene = applySolarEclipsePresentationToScene(draft.scene, { forecastHorizonDays });
+  }
 }
 
 function parseSearchParams(search: string): URLSearchParams {

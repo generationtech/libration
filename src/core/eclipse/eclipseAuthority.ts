@@ -225,10 +225,12 @@ export function activeSolarEclipseAt(utcMs: number): SolarEclipseEvent | null {
   return null;
 }
 
+/**
+ * First solar event with globalStartMs > utcMs. Works for any UTC (including
+ * outside the authority span) so a truncated forecast window can still ask
+ * “what is next in the catalog?”
+ */
 export function nextSolarEclipseAfter(utcMs: number): SolarEclipseEvent | null {
-  if (!isUtcWithinEclipseAuthority(utcMs)) {
-    return null;
-  }
   const events = SOLAR_ECLIPSE_EVENTS;
   let lo = 0;
   let hi = events.length;
@@ -241,4 +243,57 @@ export function nextSolarEclipseAfter(utcMs: number): SolarEclipseEvent | null {
     }
   }
   return events[lo] ?? null;
+}
+
+/**
+ * Events whose [globalStart, globalEnd] overlaps [startMs, endMs], in catalog order.
+ * Binary search plus a short linear scan — not a full catalog walk.
+ */
+export function solarEclipsesIntersecting(startMs: number, endMs: number): SolarEclipseEvent[] {
+  if (!(endMs >= startMs)) {
+    return [];
+  }
+  const events = SOLAR_ECLIPSE_EVENTS;
+  let lo = 0;
+  let hi = events.length - 1;
+  let lastLe = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (events[mid]!.globalStartMs <= endMs) {
+      lastLe = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  if (lastLe < 0) {
+    return [];
+  }
+  const out: SolarEclipseEvent[] = [];
+  for (let i = lastLe; i >= 0; i -= 1) {
+    const e = events[i]!;
+    if (e.globalEndMs < startMs) {
+      break;
+    }
+    if (e.globalStartMs <= endMs && e.globalEndMs >= startMs) {
+      out.push(e);
+    }
+  }
+  out.reverse();
+  return out;
+}
+
+/**
+ * Upcoming solar events whose global start lies in (utcMs, utcMs + horizonMs].
+ */
+export function solarEclipsesUpcomingInHorizon(
+  utcMs: number,
+  horizonMs: number,
+): SolarEclipseEvent[] {
+  if (!(horizonMs > 0)) {
+    return [];
+  }
+  const endMs = utcMs + horizonMs;
+  const intersecting = solarEclipsesIntersecting(utcMs + 1, endMs);
+  return intersecting.filter((e) => e.globalStartMs > utcMs && e.globalStartMs <= endMs);
 }

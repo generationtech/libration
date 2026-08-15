@@ -1112,7 +1112,7 @@ describe("SceneConfig (Phase 1)", () => {
 });
 
 describe("solar eclipse scene presentation", () => {
-  it("defaults the layer off with central line/band/partial on", () => {
+  it("defaults the layer off with live and forecast presentation on and a 7-day horizon", () => {
     const v2 = defaultLibrationConfigV2();
     expect(v2.layers.solarEclipse).toBe(false);
     const row = v2.scene?.layers.find((l) => l.id === "solarEclipse");
@@ -1129,6 +1129,15 @@ describe("solar eclipse scene presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.showPartialRegion : undefined).toBe(
       true,
     );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showForecastCorridor : undefined).toBe(
+      true,
+    );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showForecastPartialRegion : undefined,
+    ).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
   });
 
   it("persists independent presentation toggles", () => {
@@ -1138,7 +1147,7 @@ describe("solar eclipse scene presentation", () => {
       layers: { ...base.layers, solarEclipse: true },
       scene: applySolarEclipsePresentationToScene(
         applyLayerEnableFlagsToScene(base.scene!, { ...base.layers, solarEclipse: true }),
-        { showCentralLine: false, showCentralBand: true, showPartialRegion: false },
+        { showCentralLine: false, showCentralBand: true, showPartialRegion: false, forecastHorizonDays: 30, showForecastCorridor: false },
       ),
     };
     const round = normalizeLibrationConfig(painted);
@@ -1154,6 +1163,12 @@ describe("solar eclipse scene presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.showPartialRegion : undefined).toBe(
       false,
     );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
+      30,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showForecastCorridor : undefined).toBe(
+      false,
+    );
   });
 
   it("normalizes a missing solarEclipse layer flag to off", () => {
@@ -1163,5 +1178,43 @@ describe("solar eclipse scene presentation", () => {
       layers: legacyLayers,
     } as LibrationConfigV2);
     expect(v2.layers.solarEclipse).toBe(false);
+  });
+
+  it("normalizes a missing forecast horizon to 7 days and snaps unknown values", () => {
+    const base = defaultLibrationConfigV2();
+    const stripped = {
+      ...base,
+      scene: {
+        ...base.scene!,
+        layers: base.scene!.layers.map((l) => {
+          if (l.id !== "solarEclipse" || l.source.kind !== "derived") {
+            return l;
+          }
+          const {
+            forecastHorizonDays: _drop,
+            showForecastCorridor: _c,
+            showForecastPartialRegion: _p,
+            ...parameters
+          } = l.source.parameters ?? {};
+          return { ...l, source: { ...l.source, parameters } };
+        }),
+      },
+    };
+    const v2 = normalizeLibrationConfig(stripped);
+    const next = v2.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(next?.source.kind === "derived" ? next.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
+    expect(next?.source.kind === "derived" ? next.source.parameters?.showForecastCorridor : undefined).toBe(
+      true,
+    );
+    const snapped = normalizeLibrationConfig({
+      ...base,
+      scene: applySolarEclipsePresentationToScene(base.scene!, { forecastHorizonDays: 12 }),
+    });
+    const snappedRow = snapped.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(
+      snappedRow?.source.kind === "derived" ? snappedRow.source.parameters?.forecastHorizonDays : undefined,
+    ).toBe(14);
   });
 });
