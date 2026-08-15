@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-006](work/LIB-006-experimental-lunar-locus.md) — Experimental lunar locus (compact lunar-day sampling)
+[LIB-007](work/LIB-007-lunar-locus.md) — Production lunar locus overlay
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. No approved work item. Draft a proposed item only if asked.
+Stop. No approved next item.

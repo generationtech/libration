@@ -38,7 +38,7 @@ Further curated static substrates when a raster and rights exist. The preferred 
 
 ### Derived astronomical overlays
 
-Time-relative geographic overlays that reuse the existing solar and lunar models rather than adding a second ephemeris. Analemma variants, eclipse paths, standstills, and related ideas remain unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). [LIB-006](work/LIB-006-experimental-lunar-locus.md) completed a development-only lunar-locus experiment; it does not approve a production lunar analemma or locus overlay.
+Time-relative geographic overlays that reuse the existing solar and lunar models rather than adding a second ephemeris. Analemma variants, eclipse paths, standstills, and related ideas remain unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md). [LIB-006](work/LIB-006-experimental-lunar-locus.md) completed the lunar-locus experiment; [LIB-007](work/LIB-007-lunar-locus.md) shipped the production overlay.
 
 ### Composition extensions (Phase 9)
 

@@ -21,6 +21,7 @@ import {
 import { createTimeContext } from "../core/time";
 import { isEquirectangularPolylinePayload } from "./equirectPolylinePayload";
 import { isLunarGroundTrackPayload } from "./lunarGroundTrackPayload";
+import { isLunarLocusPayload } from "./lunarLocusPayload";
 import { createLayerForSceneOverlayInstance } from "./sceneOverlayLayerFactory";
 import { isSolarShadingPayload } from "./solarShadingPayload";
 
@@ -151,6 +152,33 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     if (isLunarGroundTrackPayload(st.data)) {
       expect(st.data.pastColor).toBe("#ff0000");
       expect(st.data.futureColor).toBe("#00aa00");
+    }
+  });
+
+  it("builds lunar locus from product sublunarLocus", () => {
+    const inst: SceneLayerInstance = {
+      id: "lunarLocus",
+      family: "astronomy",
+      type: "astronomyVector",
+      enabled: true,
+      order: 0,
+      source: {
+        kind: "derived",
+        product: "sublunarLocus",
+      },
+    };
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: 4, opacity: 0.7 },
+      DEFAULT_APP_CONFIG,
+    );
+    expect(layer?.id).toBe("layer.lunarLocus.sublunar");
+    const time = createTimeContext(Date.UTC(2026, 0, 16, 22, 0, 0, 0), 0, true);
+    const st = layer!.getState(time);
+    expect(st.opacity).toBe(0.7);
+    expect(isLunarLocusPayload(st.data)).toBe(true);
+    if (isLunarLocusPayload(st.data)) {
+      expect(st.data.points.length).toBeGreaterThan(50);
     }
   });
 });

@@ -55,6 +55,11 @@ export interface LayerEnableFlags {
    * (scene product `sublunarGroundTrack`). Default off.
    */
   lunarGroundTrack: boolean;
+  /**
+   * Compact sublunar figure sampled once per mean lunar day over one orbital cycle
+   * (scene product `sublunarLocus`). Default off.
+   */
+  lunarLocus: boolean;
   /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */
   solarAnalemma: boolean;
 }
@@ -649,6 +654,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   subsolarMarker: true,
   sublunarMarker: true,
   lunarGroundTrack: false,
+  lunarLocus: false,
   solarAnalemma: false,
 };
 

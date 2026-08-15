@@ -417,6 +417,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "cityPins",
   "subsolarMarker",
   "lunarGroundTrack",
+  "lunarLocus",
   "sublunarMarker",
   "solarAnalemma",
 ] as const;
@@ -795,6 +796,15 @@ const LUNAR_GROUND_TRACK_ROW: SceneLayerInstance = {
   },
 };
 
+const LUNAR_LOCUS_ROW: SceneLayerInstance = {
+  id: "lunarLocus",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 4.75,
+  source: { kind: "derived", product: "sublunarLocus" },
+};
+
 const SUBLUNAR: SceneLayerInstance = {
   id: "sublunarMarker",
   family: "astronomy",
@@ -824,6 +834,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   ORBITAL_TRACKS,
   SUBSOLAR,
   LUNAR_GROUND_TRACK_ROW,
+  LUNAR_LOCUS_ROW,
   SUBLUNAR,
   SOLAR_ANALEMMA_ROW,
 ];
@@ -840,6 +851,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "subsolarMarker";
     case "lunarGroundTrack":
       return "lunarGroundTrack";
+    case "lunarLocus":
+      return "lunarLocus";
     case "sublunarMarker":
       return "sublunarMarker";
     case "staticEquirectOverlay":
@@ -913,6 +926,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     cityPins: false,
     subsolarMarker: false,
     lunarGroundTrack: false,
+    lunarLocus: false,
     sublunarMarker: false,
     solarAnalemma: false,
   };

@@ -611,6 +611,7 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
     subsolarMarker: typeof r.subsolarMarker === "boolean" ? r.subsolarMarker : d.subsolarMarker,
     sublunarMarker: typeof r.sublunarMarker === "boolean" ? r.sublunarMarker : d.sublunarMarker,
     lunarGroundTrack: typeof r.lunarGroundTrack === "boolean" ? r.lunarGroundTrack : d.lunarGroundTrack,
+    lunarLocus: typeof r.lunarLocus === "boolean" ? r.lunarLocus : d.lunarLocus,
     solarAnalemma: typeof r.solarAnalemma === "boolean" ? r.solarAnalemma : d.solarAnalemma,
   };
 }
@@ -628,6 +629,7 @@ function layerFlagsEqualShallow(a: LayerEnableFlags, b: LayerEnableFlags): boole
     a.subsolarMarker === b.subsolarMarker &&
     a.sublunarMarker === b.sublunarMarker &&
     a.lunarGroundTrack === b.lunarGroundTrack &&
+    a.lunarLocus === b.lunarLocus &&
     a.solarAnalemma === b.solarAnalemma
   );
 }

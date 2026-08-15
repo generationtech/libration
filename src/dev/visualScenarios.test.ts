@@ -32,6 +32,7 @@ import {
 } from "./visualScenarios";
 import {
   getVisualScenarioRuntime,
+  getVisualScenarioExtraOverlayLayer,
   resetVisualScenarioRuntime,
 } from "./visualScenarioRuntime";
 
@@ -164,9 +165,10 @@ describe("resolveVisualScenarioSession", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
   });
 
-  it("seeds lunar-locus with the Moon marker, track off, and analemma off", () => {
+  it("seeds lunar-locus with the production overlay, Moon marker, track off, and analemma off", () => {
     const config = VISUAL_SCENARIOS["lunar-locus"].buildConfig();
     expect(config.layers.sublunarMarker).toBe(true);
+    expect(config.layers.lunarLocus).toBe(true);
     expect(config.layers.lunarGroundTrack).toBe(false);
     expect(config.layers.solarAnalemma).toBe(false);
     expect(config.layers.grid).toBe(true);
@@ -191,6 +193,7 @@ describe("resolveVisualScenarioSession", () => {
     expect(minor.kind).toBe("applied");
     if (minor.kind === "applied") {
       expect(minor.startIsoUtc).toBe("2015-09-16T12:00:00.000Z");
+      expect(minor.config.layers.lunarLocus).toBe(true);
     }
   });
 });
@@ -214,6 +217,19 @@ describe("applyVisualScenarioFromLocation", () => {
     const mem = makeMemoryStorage();
     persistWorkingV2(mem, VISUAL_SCENARIOS.baseline.buildConfig());
     expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).not.toBeNull();
+  });
+
+  it("does not install an experiment extra overlay for lunar-locus", () => {
+    const session = applyVisualScenarioFromLocation("?scenario=lunar-locus");
+    expect(session.kind).toBe("applied");
+    expect(
+      getVisualScenarioExtraOverlayLayer({
+        utcMs: Date.parse(VISUAL_SCENARIO_UTC["lunar-locus"]),
+        viewportWidthPx: 1920,
+        viewportHeightPx: 1080,
+        layers: [],
+      }),
+    ).toBeNull();
   });
 });
 
@@ -260,6 +276,6 @@ describe("development-only containment in the entry point", () => {
     expect(devIdx).toBeGreaterThanOrEqual(0);
     expect(importIdx).toBeGreaterThan(devIdx);
     expect(mainSource).not.toMatch(/lunarLocusExperiment/);
-    expect(mainSource).not.toMatch(/lunarLocusPlan/);
+    expect(mainSource).not.toMatch(/dev\/lunarLocusPlan/);
   });
 });

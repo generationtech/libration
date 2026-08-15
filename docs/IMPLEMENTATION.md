@@ -78,7 +78,7 @@ In the Vite development server only (`import.meta.env.DEV`), `src/main.tsx` may 
 
 While a scenario is applied, `persistWorkingV2` is a no-op (`setWorkingV2PersistenceSuppressed`), so fixture edits do not overwrite `libration.workingConfigV2.v1`. Unknown ids do not suppress persistence and do not substitute another scenario.
 
-A DEV scenario may also install a process-local extra overlay builder (`setVisualScenarioExtraOverlayBuilder` in `src/dev/visualScenarioRuntime.ts`). The shell appends an upstream-resolved `resolvedRenderPlan` vector layer (drawn below the sublunar marker). The Canvas backend executes the already-resolved primitives and does not interpret the experiment. Production never installs a builder. `lunar-locus` is a development-only experiment (`src/dev/lunarLocusExperiment.ts`, `src/dev/lunarLocusPlan.ts`); it is not a `SceneConfig` stack row and has no Layers-tab control.
+A DEV scenario may also install a process-local extra overlay builder (`setVisualScenarioExtraOverlayBuilder` in `src/dev/visualScenarioRuntime.ts`). The shell appends an upstream-resolved `resolvedRenderPlan` vector layer (drawn below the sublunar marker) when a builder is present. Production never installs a builder. `lunar-locus` enables the production Lunar locus scene row rather than that extra-overlay path.
 
 Production builds never import the registry (the dynamic import sits inside the DEV branch) and ignore `?scenario=`. Procedure: [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md).
 
@@ -266,11 +266,11 @@ The registry is **rebuilt, not mutated**, when composition-relevant configuratio
 
 ### The default scene stack
 
-`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the eleven known overlay ids, in canonical order:
+`SCENE_STACK_LAYER_IDS` in `src/config/v2/sceneConfig.ts` defines the twelve known overlay ids, in canonical order:
 
 ```
 solarShading, grid, staticEquirectOverlay, globalCloudsIr, earthquakes,
-orbitalTracks, cityPins, subsolarMarker, lunarGroundTrack, sublunarMarker, solarAnalemma
+orbitalTracks, cityPins, subsolarMarker, lunarGroundTrack, lunarLocus, sublunarMarker, solarAnalemma
 ```
 
 The base map is separate; it is the foundational part of the composition, not an entry in this list.
@@ -285,6 +285,7 @@ The base map is separate; it is the foundational part of the composition, not an
 | City pins | `cityPinsLayer.ts`, `cityPinsPayload.ts` | Carries per-pin readability veil. |
 | Subsolar / sublunar markers | `subsolarMarkerLayer.ts`, `sublunarMarkerLayer.ts` | |
 | Lunar ground track | `lunarGroundTrackLayer.ts` | Time-windowed trajectory of `sublunarPoint` around `TimeContext.now`. Default 24 h past + 24 h future at 10-minute samples; extents persist on `source.parameters.pastHours` / `futureHours` (`6` / `12` / `24` / `48` / `72`). Stroke RGB identities persist as `pastColor` / `futureColor` (`#rrggbb`, default `#aacdf0`). Past is quieter than future via plan-builder alpha; unlabeled 6-hour ticks. Default off. Independent of the sublunar marker. |
+| Lunar locus | `lunarLocusLayer.ts` | Compact sublunar figure: `sublunarPoint` sampled once per **mean lunar day** (derived from the lunar model’s GMST and mean-longitude rates, ≈24 h 50 m 28.3 s) for 28 points spanning ≈27.3 days, centered on `TimeContext.now` (`k = −13…+14`). Residual `(δlon, lat)` is interpolated with a closed centripetal Catmull-Rom (12 subdivisions per span); the plan draws unwrapped longitudes plus ±360° copies so a figure near ±180° stays associated with the Moon. Line-only; solar-analemma stroke width (`1.2 + 0.95 × veil`) and the Moon marker's new-moon disc RGB `#1c2638`. Non-current samples memoized per 1-second product-time bucket; `k = 0` is always live `sublunarPoint(now)`. Default off. Independent of the Moon marker, lunar ground track, and solar analemma. Vertical extent follows the lunar model (major- vs minor-standstill epochs differ without a standstill switch). |
 | Solar analemma | `solarAnalemmaLayer.ts` | Derived ground track. Default samples the year-long subsolar locus at the canonical instant’s UTC time-of-day so today’s vertex coincides with the live subsolar point. Optional `source.parameters.utcHour` freezes that integer hour at `:00:00.000`. |
 | Static equirect overlay | `staticEquirectRasterOverlayLayer.ts` | Full-viewport raster overlay. |
 | Dynamic equirect raster | `dynamicEquirectRasterOverlayLayer.ts` | Reads prepared views only. |
@@ -398,6 +399,7 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 - subsolar and sublunar points, solar altitude, lunar phase and altitude, and hence the whole illumination field;
 - the analemma ground track (default: UTC time-of-day of the instant; optional frozen `utcHour`);
 - the lunar ground track (past/future window around the instant; same `sublunarPoint` as the Moon marker);
+- the lunar locus (mean-lunar-day samples of the same `sublunarPoint` across one orbital cycle, centered on the instant);
 - which dynamic snapshot is resolved for each source.
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.
@@ -474,7 +476,7 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles (including lunar ground track), past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
+| Layers | Scene stack toggles (including lunar ground track and lunar locus), past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
 | Geography | Base-map family selection and presentation, projection-adjacent settings |

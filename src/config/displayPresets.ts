@@ -161,6 +161,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     } as const;
     return {
@@ -188,6 +189,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       subsolarMarker: true,
       sublunarMarker: true,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     } as const;
     return {
@@ -215,6 +217,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     } as const;
     return {

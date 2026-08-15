@@ -306,6 +306,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const a: typeof base = {
@@ -339,6 +340,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const b: typeof a = {
@@ -370,6 +372,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const b: typeof base = {
@@ -398,6 +401,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const b: typeof base = {
@@ -426,6 +430,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: true,
     });
     const b: typeof base = {
@@ -454,6 +459,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: true,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const b: typeof base = {
@@ -482,6 +488,7 @@ describe("commitWorkingV2Update", () => {
       subsolarMarker: false,
       sublunarMarker: false,
       lunarGroundTrack: false,
+      lunarLocus: false,
       solarAnalemma: false,
     });
     const b: typeof base = {

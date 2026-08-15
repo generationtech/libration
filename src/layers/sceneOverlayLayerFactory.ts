@@ -26,6 +26,7 @@ import { resolveMoonlightPresentationMode } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
 import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
+import { createLunarLocusLayer } from "./lunarLocusLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
 import { createSolarShadingLayer } from "./solarShadingLayer";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
@@ -195,6 +196,11 @@ function createDerivedOverlayByProduct(
         futureHours: lunarExtentHoursFromOptionalParameters(source.parameters, "futureHours"),
         pastColor: lunarStrokeCssFromOptionalParameters(source.parameters, "pastColor"),
         futureColor: lunarStrokeCssFromOptionalParameters(source.parameters, "futureColor"),
+      });
+    case "sublunarLocus":
+      return createLunarLocusLayer({
+        zIndex,
+        opacity,
       });
     case "solarAnalemmaGroundTrack":
       return createSolarAnalemmaLayer({

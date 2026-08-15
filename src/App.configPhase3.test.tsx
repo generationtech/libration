@@ -499,6 +499,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       ["Subsolar marker", "subsolarMarker"],
       ["Sublunar marker", "sublunarMarker"],
       ["Lunar ground track", "lunarGroundTrack"],
+      ["Lunar locus", "lunarLocus"],
       ["Solar analemma (ground track)", "solarAnalemma"],
     ] as const satisfies ReadonlyArray<readonly [string, keyof LayerEnableFlags]>,
   )(

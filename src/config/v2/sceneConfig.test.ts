@@ -51,6 +51,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   subsolarMarker: true,
   sublunarMarker: true,
   lunarGroundTrack: true,
+  lunarLocus: true,
   solarAnalemma: true,
 };
 
@@ -99,7 +100,7 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(11);
+    expect(v2.scene?.layers).toHaveLength(12);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
@@ -850,6 +851,58 @@ describe("SceneConfig (Phase 1)", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
     expect(v2.layers.lunarGroundTrack).toBe(false);
+  });
+
+  it("inserts lunarLocus off when the stack row is missing", () => {
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: { ...DEFAULT_APP_CONFIG.layers },
+      scene: {
+        version: 1,
+        projectionId: "equirectangular",
+        viewMode: "fullWorldFixed",
+        baseMap: { id: DEFAULT_EQUIRECT_BASE_MAP_ID, visible: true },
+        layers: [],
+      } as unknown as LibrationConfigV2["scene"],
+    } as LibrationConfigV2);
+    const row = v2.scene?.layers.find((l) => l.id === "lunarLocus");
+    expect(row).toBeDefined();
+    expect(row?.enabled).toBe(false);
+    expect(row?.source.kind === "derived" && row.source.product).toBe("sublunarLocus");
+    expect(v2.layers.lunarLocus).toBe(false);
+  });
+
+  it("normalizes a missing lunarLocus layer flag to off", () => {
+    expect(DEFAULT_APP_CONFIG.layers.lunarLocus).toBe(false);
+    const { lunarLocus: _drop, ...legacyLayers } = DEFAULT_APP_CONFIG.layers;
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: legacyLayers,
+    } as LibrationConfigV2);
+    expect(v2.layers.lunarLocus).toBe(false);
+  });
+
+  it("keeps lunarLocus independent of the Moon marker and lunar ground track", () => {
+    const enabled = {
+      ...DEFAULT_APP_CONFIG.layers,
+      sublunarMarker: false,
+      lunarGroundTrack: true,
+      lunarLocus: true,
+      solarAnalemma: false,
+    };
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: enabled,
+      scene: buildDefaultSceneConfigFromLayerFlags(enabled),
+    });
+    expect(v2.layers.sublunarMarker).toBe(false);
+    expect(v2.layers.lunarGroundTrack).toBe(true);
+    expect(v2.layers.lunarLocus).toBe(true);
+    expect(v2.layers.solarAnalemma).toBe(false);
+    const round = normalizeLibrationConfig(v2);
+    expect(round.layers.lunarLocus).toBe(true);
+    expect(round.layers.sublunarMarker).toBe(false);
+    expect(round.layers.lunarGroundTrack).toBe(true);
   });
 
   it("clamps invalid lunar ground track extents and round-trips valid ones", () => {

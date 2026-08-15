@@ -52,4 +52,10 @@ Development-only lunar-day locus experiment: sampling `sublunarPoint` at the mod
 
 Verified: `npx tsc --noEmit` clean; `npm test` 169 files / 1545 passed / 0 failed; `npm run build` succeeded with no `lunar-locus` in `dist/`. Cursor Browser at 1920×1080: `lunar-locus` glyph dots and dots-line, geographic mode, standstill/minor epochs, `lunar-track` weave comparison, `readability` solar analemma, `baseline`, ordinary startup.
 
+## 2026-08-14 — LIB-007 complete
+
+Production Lunar locus overlay: mean-lunar-day samples of `sublunarPoint` (~24 h 50 m 28 s, 28 points, ~27.3-day cycle) as a line-only compact figure. Layers toggle default off. Stroke matches solar-analemma weight in lunar `#6e849e`. DEV `lunar-locus` uses the production layer.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 170 files / 1560 passed / 0 failed; `npm run build` succeeded with no experiment selectors in `dist/`. Cursor Browser at 1920×1080: recent/standstill/minor/baseline epochs, animation/pause, night substrate, analemma+ground-track coexistence, disabled, ordinary startup.
+
 

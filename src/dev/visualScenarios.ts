@@ -19,13 +19,7 @@ import {
   type LibrationConfigV2,
 } from "../config/v2/librationConfig";
 import { setWorkingV2PersistenceSuppressed } from "../config/v2/workingV2Persistence";
-import {
-  LUNAR_LOCUS_EPOCH_UTC,
-  type LunarLocusEpochId,
-  type LunarLocusMode,
-  type LunarLocusTreatment,
-} from "./lunarLocusExperiment";
-import { buildLunarLocusRenderPlan } from "./lunarLocusPlan";
+import { LUNAR_LOCUS_EPOCH_UTC, type LunarLocusEpochId } from "../core/lunarLocus";
 import {
   setVisualScenarioExtraOverlayBuilder,
   setVisualScenarioRuntime,
@@ -184,7 +178,7 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     id: "lunar-locus",
     startIsoUtc: VISUAL_SCENARIO_UTC["lunar-locus"],
     purpose:
-      "Development-only lunar-day locus experiment: Moon marker on, ground track off, analemma off.",
+      "Production lunar locus overlay: Moon marker on, locus on, ground track off, analemma off.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["lunar-locus"], applyLunarLocusScene),
   },
 };
@@ -194,6 +188,7 @@ function applyLunarLocusScene(draft: LibrationConfigV2): void {
   draft.layers.grid = true;
   draft.layers.sublunarMarker = true;
   draft.layers.lunarGroundTrack = false;
+  draft.layers.lunarLocus = true;
   draft.layers.solarAnalemma = false;
   draft.layers.cityPins = false;
 }
@@ -208,20 +203,6 @@ export function parseLunarLocusEpochId(raw: string | null): LunarLocusEpochId {
     return raw;
   }
   return "recent";
-}
-
-export function parseLunarLocusMode(raw: string | null): LunarLocusMode {
-  if (raw === "geographic" || raw === "residual" || raw === "glyph") {
-    return raw;
-  }
-  return "glyph";
-}
-
-export function parseLunarLocusTreatment(raw: string | null): LunarLocusTreatment {
-  if (raw === "dots" || raw === "dots-line") {
-    return raw;
-  }
-  return "dots";
 }
 
 export function isVisualScenarioId(id: string): id is VisualScenarioId {
@@ -290,20 +271,6 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   setVisualScenarioRuntime(session);
   setWorkingV2PersistenceSuppressed(session.kind === "applied");
   setVisualScenarioExtraOverlayBuilder(null);
-  if (session.kind === "applied" && session.id === "lunar-locus") {
-    const params = parseSearchParams(search);
-    const mode = parseLunarLocusMode(params.get("locusMode"));
-    const treatment = parseLunarLocusTreatment(params.get("locusTreatment"));
-    setVisualScenarioExtraOverlayBuilder(({ utcMs, viewportWidthPx, viewportHeightPx }) =>
-      buildLunarLocusRenderPlan({
-        utcMs,
-        viewportWidthPx,
-        viewportHeightPx,
-        mode,
-        treatment,
-      }),
-    );
-  }
   if (session.kind === "unknown") {
     console.error(
       `[libration] Unknown visual scenario "${session.requestedId}". Ordinary startup; the requested scenario was not applied.`,

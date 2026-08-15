@@ -157,6 +157,23 @@ describe("createLayerRegistryFromConfig", () => {
     expect(offReg.getLayers().some((l) => l.id === "layer.lunarGroundTrack.sublunar")).toBe(false);
   });
 
+  it("registers lunar locus when enabled and omits it when disabled", () => {
+    const on = { ...DEFAULT_APP_CONFIG.layers, lunarLocus: true };
+    const off = { ...DEFAULT_APP_CONFIG.layers, lunarLocus: false };
+    const onReg = createLayerRegistryFromConfig({
+      ...DEFAULT_APP_CONFIG,
+      layers: on,
+      scene: buildDefaultSceneConfigFromLayerFlags(on),
+    });
+    const offReg = createLayerRegistryFromConfig({
+      ...DEFAULT_APP_CONFIG,
+      layers: off,
+      scene: buildDefaultSceneConfigFromLayerFlags(off),
+    });
+    expect(onReg.getLayers().some((l) => l.id === "layer.lunarLocus.sublunar")).toBe(true);
+    expect(offReg.getLayers().some((l) => l.id === "layer.lunarLocus.sublunar")).toBe(false);
+  });
+
   it("omits solar shading when solarShading is disabled in config", () => {
     const layers = { ...DEFAULT_APP_CONFIG.layers, solarShading: false };
     const config: AppConfig = {

@@ -55,6 +55,7 @@ const COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS = new Set<string>([
   "subsolarPoint",
   "sublunarPoint",
   "sublunarGroundTrack",
+  "sublunarLocus",
   "solarAnalemmaGroundTrack",
 ]);
 

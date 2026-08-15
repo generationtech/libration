@@ -64,6 +64,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "subsolarMarker",
   "sublunarMarker",
   "lunarGroundTrack",
+  "lunarLocus",
   "solarAnalemma",
 ];
 
@@ -137,6 +138,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     subsolarMarker: "Subsolar marker",
     sublunarMarker: "Sublunar marker",
     lunarGroundTrack: "Lunar ground track",
+    lunarLocus: "Lunar locus",
     solarAnalemma: "Solar analemma (ground track)",
   };
   return map[key];
@@ -145,6 +147,9 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
 function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   if (key === "lunarGroundTrack") {
     return "Shows the geographic path of the point on Earth directly beneath the Moon around the current product time.";
+  }
+  if (key === "lunarLocus") {
+    return "Shows the Moon's compact sublunar figure traced over one mean-lunar-day sampling cycle.";
   }
   return undefined;
 }
