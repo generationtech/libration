@@ -547,5 +547,6 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 - [`docs/decisions/`](decisions/) — why the durable choices were made.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.
+- [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — intended Eclipse System structure (not current behaviour; awaiting human review).
 - [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md) — asset provenance and licensing.
 - [`docs/history/`](history/) — how the system was built, for when the *why* is not in the code.

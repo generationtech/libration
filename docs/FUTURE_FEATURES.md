@@ -8,7 +8,7 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-The preferred next product-development direction after LIB-011 is the [Eclipse System](#eclipse-system). That preference is not approval. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
+The preferred next product-development direction after LIB-011 is the [Eclipse System](#eclipse-system). Reconnaissance and intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). That architecture is awaiting human review; it is not implementation approval. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
 
 ## Status vocabulary
 
@@ -21,9 +21,9 @@ Several sections describe extensions to subsystems that already exist. Those sub
 
 ## Moon, Sun-Moon-Earth, and observer astronomy
 
-This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. Nothing in this family is approved, active, scheduled, or architecturally frozen. Ranking below is future-work preference only: it is not permission to start, and it is not a `LIB-###` decomposition.
+This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md); that document is awaiting human review. No eclipse **implementation** item is approved, active, or scheduled. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E1–E6.
 
-Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md) (**AWAITING SCOPE**). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
+Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
 
 ### Ranking
 
@@ -54,7 +54,7 @@ The point is to keep Libration an instrument, not a cluttered astronomy diagram.
 
 ### Eclipse System
 
-**Planned** as the strongest current candidate for the **next** product-development effort after LIB-011. Still **pending**, **unapproved**, **not a LIB item**, **not active**, and **not architecturally frozen**.
+**Planned** as the strongest current candidate for the **next** product-development effort after LIB-011. Architecture reconnaissance is complete ([LIB-012](work/LIB-012-eclipse-system-architecture.md)); intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Implementation remains **unapproved**, **not a LIB item**, and **not active**. Human review of the architecture (including the recorded authority/precision decisions) is required before any implementation slice.
 
 The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, algorithms, data sources, rendering primitives, and work-item slices are **not** decided here.
 
@@ -97,13 +97,13 @@ Observer-specific information for the configured reference city may eventually i
 
 Use the same authoritative reference city already used by chrome and by LIB-011. Do not invent a separate eclipse observer location.
 
-#### How a future eclipse effort should begin
+#### How implementation should begin
 
-Eclipse, solar, and lunar fundamentals may already exist from earlier development. A future eclipse effort **must first inventory the repository** and then choose architecture against this product intent. It must **not** start from an assumption that this backlog has already selected algorithms, catalogs, caches, persistence, configuration, UI, or rendering.
+Repository inventory and intended structure are in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
 
-Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
+A future implementation LIB may start only after human review of that architecture and explicit approval of a slice (recommended first slice: E1, solar event truth and live geographic footprint).
 
-Intentionally **not** decided here: eclipse algorithms; ephemeris implementation; external data providers; authoritative catalogs; caching; persistence; exact configuration schema or UI; exact rendering primitives or path representation; forecast-calculation architecture; an events framework; LIB decomposition; implementation phases.
+Intentionally **not** decided here: exact configuration schema or UI; exact rendering primitives; catalog vendor/format; colors and beam styling. Authority, offline span, precision posture, first-release types, layer structure, and related choices are recorded as **recommendations** in the architecture spec and still require human approval.
 
 Related inventory pointer: the [derived overlays](#derived-overlays) list below points here rather than keeping a separate one-liner.
 
@@ -277,7 +277,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - **Symbolic lunar surface / apparent face orientation** — see [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation). Replaces the earlier “apparent lunar orientation / lunar north rotation” one-liner. LIB-011 marker-frame rotation is not this item.
 - analemma variants.
 - equinox and solstice reference overlays.
-- **Eclipse System** — see [Eclipse System](#eclipse-system). Replaces the earlier “eclipse path overlays” one-liner. Preferred next direction; not approved.
+- **Eclipse System** — see [Eclipse System](#eclipse-system). Replaces the earlier “eclipse path overlays” one-liner. Preferred next direction; architecture in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md); implementation not approved.
 - lunar horizon / moonlight-participation / illumination-contour geometry — see [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry).
 - lunar standstill envelopes (related to the nodal cycle already visible as lunar-locus amplitude change; not a production control today). See also [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).
 - lunar nodes on or near the lunar locus — see [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).
