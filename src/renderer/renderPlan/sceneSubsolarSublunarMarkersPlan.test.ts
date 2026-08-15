@@ -12,6 +12,9 @@
  */
 
 import { describe, expect, it, vi, type Mock } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
 import {
   buildSubsolarMarkerRenderPlan,
@@ -158,6 +161,147 @@ describe("buildSublunarMarkerRenderPlan", () => {
     expect(quarter.items.some((i) => i.kind === "line")).toBe(true);
   });
 
+  it("omits the libration mark when disabled and keeps the previous phase-only order", () => {
+    const off = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.5,
+      waxing: true,
+      appearance: {
+        size: "normal",
+        librationEnabled: false,
+        librationStyle: "ring",
+        librationColor: "#c5d4e8",
+        librationThickness: "normal",
+        librationMotionScale: "normal",
+      },
+    });
+    const on = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.5,
+      waxing: true,
+      librationLongitudeDeg: 0,
+      librationLatitudeDeg: 0,
+    });
+    expect(on.items.length).toBe(off.items.length + 2);
+    expect(off.items[off.items.length - 1]).toMatchObject({
+      kind: "path2d",
+      stroke: "rgba(255, 255, 255, 0.38)",
+    });
+  });
+
+  it("emits a clipped ring at disc center for zero libration", () => {
+    const plan = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      librationLongitudeDeg: 0,
+      librationLatitudeDeg: 0,
+    });
+    const ring = plan.items.filter((i) => i.kind === "path2d" && "clip" in i && i.clip);
+    expect(ring.length).toBeGreaterThanOrEqual(2);
+    const indicator = ring[ring.length - 1];
+    expect(indicator).toMatchObject({
+      kind: "path2d",
+      stroke: expect.stringMatching(/197,\s*212,\s*232/),
+      clip: { clipPathKind: "descriptor" },
+    });
+  });
+
+  it("emits a clipped crosshair path in crosshair mode", () => {
+    const plan = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.5,
+      waxing: true,
+      librationLongitudeDeg: 4,
+      librationLatitudeDeg: 3,
+      appearance: {
+        size: "normal",
+        librationEnabled: true,
+        librationStyle: "crosshair",
+        librationColor: "#c5d4e8",
+        librationThickness: "normal",
+        librationMotionScale: "normal",
+      },
+    });
+    const marks = plan.items.filter((i) => i.kind === "path2d" && i.clip);
+    expect(marks.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("scales the disc with Moon size without changing Sun radius", () => {
+    const normal = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 1888,
+      viewportHeightPx: 944,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.5,
+      waxing: true,
+      appearance: {
+        size: "normal",
+        librationEnabled: false,
+        librationStyle: "ring",
+        librationColor: "#c5d4e8",
+        librationThickness: "normal",
+        librationMotionScale: "normal",
+      },
+    });
+    const large = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 1888,
+      viewportHeightPx: 944,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.5,
+      waxing: true,
+      appearance: {
+        size: "large",
+        librationEnabled: false,
+        librationStyle: "ring",
+        librationColor: "#c5d4e8",
+        librationThickness: "normal",
+        librationMotionScale: "normal",
+      },
+    });
+    const sun = buildSubsolarMarkerRenderPlan({
+      viewportWidthPx: 1888,
+      viewportHeightPx: 944,
+      lonDeg: 0,
+      latDeg: 0,
+    });
+    const nFill = normal.items[1];
+    const lFill = large.items[1];
+    const sFill = sun.items[0];
+    expect(nFill?.kind).toBe("radialGradientFill");
+    expect(lFill?.kind).toBe("radialGradientFill");
+    expect(sFill?.kind).toBe("radialGradientFill");
+    if (
+      nFill?.kind === "radialGradientFill" &&
+      lFill?.kind === "radialGradientFill" &&
+      sFill?.kind === "radialGradientFill"
+    ) {
+      expect(nFill.clipR).toBe(7.5);
+      expect(lFill.clipR).toBeCloseTo(7.5 * 1.42, 5);
+      expect(sFill.clipR).toBe(Math.min(9, Math.max(4.5, 1888 * 0.0055)) * 2.4);
+    }
+  });
+
+  it("keeps astronomy out of the canvas backend", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const src = readFileSync(join(here, "../canvasRenderBackend.ts"), "utf8");
+    expect(src).not.toMatch(/opticalLunarLibration/);
+    expect(src).not.toMatch(/moonEcliptic/);
+    expect(src).not.toMatch(/librationMotionScale/);
+  });
 });
 
 describe("executeRenderPlanOnCanvas subsolar + sublunar marker plans", () => {

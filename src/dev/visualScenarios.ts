@@ -34,6 +34,7 @@ export const VISUAL_SCENARIO_IDS = [
   "readability",
   "lunar-track",
   "lunar-locus",
+  "moon-libration",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -45,7 +46,23 @@ export const VISUAL_SCENARIO_UTC = {
   readability: "2026-06-21T12:00:00.000Z",
   "lunar-track": "2026-01-16T22:00:00.000Z",
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
+  "moon-libration": "2021-12-10T00:00:00.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
+
+/** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
+export const MOON_LIBRATION_EPOCH_UTC = {
+  diagonal: "2021-12-10T00:00:00.000Z",
+  zero: "2021-08-03T00:00:00.000Z",
+  lonEast: "2023-01-28T00:00:00.000Z",
+  lonWest: "2020-04-01T00:00:00.000Z",
+  latNorth: "2022-09-08T00:00:00.000Z",
+  latSouth: "2020-07-25T00:00:00.000Z",
+  new: "2021-07-10T00:00:00.000Z",
+  quarter: "2022-10-03T00:00:00.000Z",
+  full: "2021-09-21T00:00:00.000Z",
+} as const;
+
+export type MoonLibrationEpochId = keyof typeof MOON_LIBRATION_EPOCH_UTC;
 
 /** Chromatic Köppen–Geiger substrate used by the readability scenario. */
 export const READABILITY_BASE_MAP_ID = "equirect-world-climate-koppen-beck-v1";
@@ -181,6 +198,13 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
       "Production lunar locus overlay: Moon marker on, locus on, ground track off, analemma off.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["lunar-locus"], applyLunarLocusScene),
   },
+  "moon-libration": {
+    id: "moon-libration",
+    startIsoUtc: VISUAL_SCENARIO_UTC["moon-libration"],
+    purpose:
+      "Production Moon glyph with optical-libration ring at a combined longitude/latitude displacement.",
+    buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["moon-libration"], applyMoonLibrationScene),
+  },
 };
 
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
@@ -189,6 +213,16 @@ function applyLunarLocusScene(draft: LibrationConfigV2): void {
   draft.layers.sublunarMarker = true;
   draft.layers.lunarGroundTrack = false;
   draft.layers.lunarLocus = true;
+  draft.layers.solarAnalemma = false;
+  draft.layers.cityPins = false;
+}
+
+function applyMoonLibrationScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.sublunarMarker = true;
+  draft.layers.lunarGroundTrack = false;
+  draft.layers.lunarLocus = false;
   draft.layers.solarAnalemma = false;
   draft.layers.cityPins = false;
 }
@@ -203,6 +237,13 @@ export function parseLunarLocusEpochId(raw: string | null): LunarLocusEpochId {
     return raw;
   }
   return "recent";
+}
+
+export function parseMoonLibrationEpochId(raw: string | null): MoonLibrationEpochId {
+  if (raw && raw in MOON_LIBRATION_EPOCH_UTC) {
+    return raw as MoonLibrationEpochId;
+  }
+  return "diagonal";
 }
 
 export function isVisualScenarioId(id: string): id is VisualScenarioId {
@@ -248,6 +289,17 @@ export function resolveVisualScenarioSession(
       id: "lunar-locus",
       startIsoUtc,
       config: withDemoAt(startIsoUtc, applyLunarLocusScene),
+    };
+  }
+  if (requested === "moon-libration") {
+    const params = parseSearchParams(input.search);
+    const epoch = parseMoonLibrationEpochId(params.get("librationEpoch"));
+    const startIsoUtc = MOON_LIBRATION_EPOCH_UTC[epoch];
+    return {
+      kind: "applied",
+      id: "moon-libration",
+      startIsoUtc,
+      config: withDemoAt(startIsoUtc, applyMoonLibrationScene),
     };
   }
   const definition = VISUAL_SCENARIOS[requested];

@@ -24,6 +24,16 @@ import {
 import type { RenderLineItem, RenderPlan, RenderRadialGradientFillItem } from "./renderPlanTypes";
 import { circlePath2D, circlePathDescriptor } from "./circlePath2D";
 import { clipPayloadDescriptor, createPath2DItem } from "./pathItemFactories";
+import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
+import {
+  DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+  librationCrosshairArmPx,
+  librationDisplayOffsetPx,
+  librationRingRadiusPx,
+  librationStrokeWidthPx,
+  sublunarMarkerRadiusPx,
+  type SublunarMarkerAppearance,
+} from "../../core/sublunarMarkerAppearance";
 
 function mapLatToY(latDeg: number, viewportHeightPx: number): number {
   return ((90 - latDeg) / 180) * viewportHeightPx;
@@ -117,6 +127,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
 
 /**
  * Sub-lunar disc + halo + terminator (same model as legacy backend; phase inputs are plain numbers).
+ * Optional optical-libration mark is presentation only; astronomy stays upstream.
  */
 export function buildSublunarMarkerRenderPlan(options: {
   viewportWidthPx: number;
@@ -125,6 +136,9 @@ export function buildSublunarMarkerRenderPlan(options: {
   latDeg: number;
   illuminatedFraction: number;
   waxing: boolean;
+  librationLongitudeDeg?: number;
+  librationLatitudeDeg?: number;
+  appearance?: SublunarMarkerAppearance;
   readability?: OverlayReadabilityHints | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
@@ -141,9 +155,10 @@ export function buildSublunarMarkerRenderPlan(options: {
   const sw = (base: number) => Math.max(base, base * (1 + 0.7 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.25 * v));
 
+  const appearance = options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE;
   const cx = mapXFromLongitudeDeg(options.lonDeg, w);
   const cy = mapLatToY(options.latDeg, h);
-  const r = Math.min(7.5, Math.max(3.8, w * 0.0046));
+  const r = sublunarMarkerRadiusPx(w, appearance.size);
   const f = Math.min(1, Math.max(0, options.illuminatedFraction));
   const waxing = options.waxing;
   const pad = r * 2.5;
@@ -227,6 +242,18 @@ export function buildSublunarMarkerRenderPlan(options: {
     });
   }
 
+  if (appearance.librationEnabled) {
+    pushLibrationIndicator(items, {
+      cx,
+      cy,
+      r,
+      appearance,
+      longitudeDeg: options.librationLongitudeDeg ?? 0,
+      latitudeDeg: options.librationLatitudeDeg ?? 0,
+      alpha: a,
+    });
+  }
+
   items.push({
     kind: "path2d",
     pathKind: "path2d",
@@ -244,4 +271,80 @@ export function buildSublunarMarkerRenderPlan(options: {
   });
 
   return { items };
+}
+
+function cssStrokeRgba(css: string, alpha: number, fallbackRgb: string): string {
+  const px = parseCssColorToRgba8888(css);
+  if (!px) {
+    return `rgba(${fallbackRgb}, ${alpha})`;
+  }
+  return `rgba(${px.r}, ${px.g}, ${px.b}, ${alpha})`;
+}
+
+function pushLibrationIndicator(
+  items: RenderPlan["items"],
+  args: {
+    cx: number;
+    cy: number;
+    r: number;
+    appearance: SublunarMarkerAppearance;
+    longitudeDeg: number;
+    latitudeDeg: number;
+    alpha: (x: number) => number;
+  },
+): void {
+  const markR = librationRingRadiusPx(args.r);
+  const strokeW = librationStrokeWidthPx(args.r, args.appearance.librationThickness);
+  const offset = librationDisplayOffsetPx({
+    longitudeDeg: args.longitudeDeg,
+    latitudeDeg: args.latitudeDeg,
+    moonRadiusPx: args.r,
+    motionScale: args.appearance.librationMotionScale,
+    markRadiusPx: args.appearance.librationStyle === "ring" ? markR : 0.12 * args.r,
+    strokeWidthPx: strokeW,
+  });
+  const ix = args.cx + offset.dxPx;
+  const iy = args.cy + offset.dyPx;
+  const clip = clipPayloadDescriptor(circlePathDescriptor(args.cx, args.cy, args.r));
+  const color = cssStrokeRgba(args.appearance.librationColor, args.alpha(0.92), "197, 212, 232");
+  const under = `rgba(18, 26, 40, ${args.alpha(0.55)})`;
+  if (args.appearance.librationStyle === "crosshair") {
+    const arm = librationCrosshairArmPx(args.r);
+    const cross = new Path2D(
+      `M ${ix - arm},${iy} L ${ix + arm},${iy} M ${ix},${iy - arm} L ${ix},${iy + arm}`,
+    );
+    items.push(
+      createPath2DItem({
+        path: cross,
+        stroke: under,
+        strokeWidthPx: strokeW + 0.7,
+        clip,
+      }),
+    );
+    items.push(
+      createPath2DItem({
+        path: cross,
+        stroke: color,
+        strokeWidthPx: strokeW,
+        clip,
+      }),
+    );
+    return;
+  }
+  items.push(
+    createPath2DItem({
+      path: circlePath2D(ix, iy, markR),
+      stroke: under,
+      strokeWidthPx: strokeW + 0.7,
+      clip,
+    }),
+  );
+  items.push(
+    createPath2DItem({
+      path: circlePath2D(ix, iy, markR),
+      stroke: color,
+      strokeWidthPx: strokeW,
+      clip,
+    }),
+  );
 }

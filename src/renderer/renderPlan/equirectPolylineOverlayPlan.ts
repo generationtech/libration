@@ -22,6 +22,12 @@ import {
   equirectXFromUnwrappedLon,
   unwrappedLongitudes,
 } from "./equirectSeamPath";
+import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
+import {
+  astronomyPathStrokeWidthPx,
+  DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+  type AstronomyPathThicknessId,
+} from "../../core/astronomyOverlayStrokeAppearance";
 
 export interface EquirectangularPolylineOverlayPlanOptions {
   viewportWidthPx: number;
@@ -30,6 +36,8 @@ export interface EquirectangularPolylineOverlayPlanOptions {
   closed: boolean;
   layerOpacity: number;
   readability?: OverlayReadabilityHints | null;
+  strokeColor?: string;
+  strokeThickness?: AstronomyPathThicknessId;
 }
 
 export function buildEquirectangularPolylineOverlayRenderPlan(
@@ -51,8 +59,8 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
   );
   const baseStrokeA = 0.5 * op;
   const strokeA = Math.min(0.92 * op, baseStrokeA + 0.32 * veil * op);
-  const stroke = `rgba(255, 200, 120, ${strokeA})`;
-  const strokeW = 1.2 + 0.95 * veil;
+  const stroke = strokeRgba(options.strokeColor ?? DEFAULT_SOLAR_ANALEMMA_STROKE_RGB, strokeA);
+  const strokeW = astronomyPathStrokeWidthPx(veil, options.strokeThickness);
   const lons = unwrappedLongitudes(pts.map((p) => p.lonDeg));
   const items: RenderLineItem[] = [];
 
@@ -76,4 +84,12 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     pushLine(lons.length - 1, 0);
   }
   return { items };
+}
+
+function strokeRgba(css: string, alpha: number): string {
+  const px = parseCssColorToRgba8888(css);
+  if (!px) {
+    return `rgba(255, 200, 120, ${alpha})`;
+  }
+  return `rgba(${px.r}, ${px.g}, ${px.b}, ${alpha})`;
 }

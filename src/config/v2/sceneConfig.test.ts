@@ -31,6 +31,9 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
   applyLunarGroundTrackColorToScene,
+  applyLunarLocusStrokeToScene,
+  applySolarAnalemmaStrokeToScene,
+  applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
   resolveEquirectBaseMapAsset,
@@ -981,6 +984,113 @@ describe("SceneConfig (Phase 1)", () => {
     );
     expect(paintedRow?.source.kind === "derived" ? paintedRow.source.parameters?.futureColor : undefined).toBe(
       "#ff0000",
+    );
+  });
+
+  it("fills Moon libration appearance defaults on old sublunarPoint rows", () => {
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers),
+        layers: buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers).layers.map((row) =>
+          row.id === "sublunarMarker" && row.source.kind === "derived"
+            ? { ...row, source: { kind: "derived", product: "sublunarPoint" } }
+            : row,
+        ),
+      },
+    });
+    const row = v2.scene?.layers.find((l) => l.id === "sublunarMarker");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.size : undefined).toBe("normal");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationEnabled : undefined).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationStyle : undefined).toBe("ring");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationColor : undefined).toBe("#c5d4e8");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationThickness : undefined).toBe(
+      "normal",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationMotionScale : undefined).toBe(
+      "normal",
+    );
+  });
+
+  it("round-trips Moon appearance and keeps locus/analemma styles independent", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      scene: applySolarAnalemmaStrokeToScene(
+        applyLunarLocusStrokeToScene(
+          applySublunarMarkerAppearanceToScene(base.scene!, {
+            size: "large",
+            librationColor: "#aabbcc",
+            librationStyle: "crosshair",
+          }),
+          { strokeColor: "#112233", strokeThickness: "thick" },
+        ),
+        { strokeColor: "#ff00aa", strokeThickness: "thin" },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    const moon = round.scene?.layers.find((l) => l.id === "sublunarMarker");
+    const locus = round.scene?.layers.find((l) => l.id === "lunarLocus");
+    const analemma = round.scene?.layers.find((l) => l.id === "solarAnalemma");
+    expect(moon?.source.kind === "derived" ? moon.source.parameters?.size : undefined).toBe("large");
+    expect(moon?.source.kind === "derived" ? moon.source.parameters?.librationStyle : undefined).toBe(
+      "crosshair",
+    );
+    expect(moon?.source.kind === "derived" ? moon.source.parameters?.librationColor : undefined).toBe(
+      "#aabbcc",
+    );
+    expect(locus?.source.kind === "derived" ? locus.source.parameters?.strokeColor : undefined).toBe(
+      "#112233",
+    );
+    expect(locus?.source.kind === "derived" ? locus.source.parameters?.strokeThickness : undefined).toBe(
+      "thick",
+    );
+    expect(analemma?.source.kind === "derived" ? analemma.source.parameters?.strokeColor : undefined).toBe(
+      "#ff00aa",
+    );
+    expect(analemma?.source.kind === "derived" ? analemma.source.parameters?.strokeThickness : undefined).toBe(
+      "thin",
+    );
+    const moonOnly = applySublunarMarkerAppearanceToScene(round.scene!, { librationColor: "#00ff00" });
+    const locusAfterMoon = moonOnly.layers.find((l) => l.id === "lunarLocus");
+    const analemmaAfterMoon = moonOnly.layers.find((l) => l.id === "solarAnalemma");
+    expect(locusAfterMoon?.source.kind === "derived" ? locusAfterMoon.source.parameters?.strokeColor : undefined).toBe(
+      "#112233",
+    );
+    expect(
+      analemmaAfterMoon?.source.kind === "derived" ? analemmaAfterMoon.source.parameters?.strokeColor : undefined,
+    ).toBe("#ff00aa");
+  });
+
+  it("defaults missing lunar locus and solar analemma stroke fields to current production styles", () => {
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers),
+        layers: buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers).layers.map((row) => {
+          if (row.id === "lunarLocus" && row.source.kind === "derived") {
+            return { ...row, source: { kind: "derived", product: "sublunarLocus" } };
+          }
+          if (row.id === "solarAnalemma" && row.source.kind === "derived") {
+            return { ...row, source: { kind: "derived", product: "solarAnalemmaGroundTrack" } };
+          }
+          return row;
+        }),
+      },
+    });
+    const locus = v2.scene?.layers.find((l) => l.id === "lunarLocus");
+    const analemma = v2.scene?.layers.find((l) => l.id === "solarAnalemma");
+    expect(locus?.source.kind === "derived" ? locus.source.parameters?.strokeColor : undefined).toBe(
+      "#1c2638",
+    );
+    expect(locus?.source.kind === "derived" ? locus.source.parameters?.strokeThickness : undefined).toBe(
+      "normal",
+    );
+    expect(analemma?.source.kind === "derived" ? analemma.source.parameters?.strokeColor : undefined).toBe(
+      "#ffc878",
+    );
+    expect(analemma?.source.kind === "derived" ? analemma.source.parameters?.strokeThickness : undefined).toBe(
+      "normal",
     );
   });
 });

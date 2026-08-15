@@ -309,3 +309,68 @@ describe("LayersTab lunar ground track stroke colors", () => {
     expect(params.futureColor).toBe("#00ff00");
   });
 });
+
+describe("LayersTab Moon and astronomy path styling", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("updates Moon, locus, and analemma styles independently", () => {
+    function Harness() {
+      const [config, setConfig] = useState(() => normalizeLibrationConfig(defaultLibrationConfigV2()));
+      const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
+        setConfig((prev) => {
+          const draft = normalizeLibrationConfig(prev);
+          updater(draft);
+          return normalizeLibrationConfig(draft);
+        });
+      }, []);
+      const moon = config.scene?.layers.find((l) => l.id === "sublunarMarker");
+      const locus = config.scene?.layers.find((l) => l.id === "lunarLocus");
+      const analemma = config.scene?.layers.find((l) => l.id === "solarAnalemma");
+      return (
+        <>
+          <LayersTab config={config} updateConfig={updateConfig} />
+          <pre data-testid="moon-params">
+            {JSON.stringify(moon?.source.kind === "derived" ? moon.source.parameters : {})}
+          </pre>
+          <pre data-testid="locus-params">
+            {JSON.stringify(locus?.source.kind === "derived" ? locus.source.parameters : {})}
+          </pre>
+          <pre data-testid="analemma-params">
+            {JSON.stringify(analemma?.source.kind === "derived" ? analemma.source.parameters : {})}
+          </pre>
+        </>
+      );
+    }
+    render(<Harness />);
+    const libColor = screen.getByLabelText("Libration color") as HTMLInputElement;
+    const locusColor = screen.getByLabelText("Lunar locus color") as HTMLInputElement;
+    const analemmaColor = screen.getByLabelText("Solar analemma color") as HTMLInputElement;
+    expect(libColor.value).toBe("#c5d4e8");
+    expect(locusColor.value).toBe("#1c2638");
+    expect(analemmaColor.value).toBe("#ffc878");
+    fireEvent.change(libColor, { target: { value: "#abcdef" } });
+    fireEvent.change(locusColor, { target: { value: "#112233" } });
+    fireEvent.change(analemmaColor, { target: { value: "#fedcba" } });
+    fireEvent.change(screen.getByLabelText("Moon size"), { target: { value: "large" } });
+    fireEvent.change(screen.getByLabelText("Libration style"), { target: { value: "crosshair" } });
+    fireEvent.change(screen.getByLabelText("Lunar locus thickness"), { target: { value: "thick" } });
+    fireEvent.change(screen.getByLabelText("Solar analemma thickness"), { target: { value: "thin" } });
+    const moon = JSON.parse(screen.getByTestId("moon-params").textContent ?? "{}") as Record<string, unknown>;
+    const locus = JSON.parse(screen.getByTestId("locus-params").textContent ?? "{}") as Record<string, unknown>;
+    const analemma = JSON.parse(screen.getByTestId("analemma-params").textContent ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    expect(moon.librationColor).toBe("#abcdef");
+    expect(moon.size).toBe("large");
+    expect(moon.librationStyle).toBe("crosshair");
+    expect(locus.strokeColor).toBe("#112233");
+    expect(locus.strokeThickness).toBe("thick");
+    expect(analemma.strokeColor).toBe("#fedcba");
+    expect(analemma.strokeThickness).toBe("thin");
+    expect(moon.librationColor).not.toBe(locus.strokeColor);
+    expect(locus.strokeColor).not.toBe(analemma.strokeColor);
+  });
+});

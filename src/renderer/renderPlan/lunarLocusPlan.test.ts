@@ -109,6 +109,37 @@ describe("buildLunarLocusRenderPlan", () => {
     expect(DEFAULT_LUNAR_LOCUS_STROKE_RGB).toBe("#1c2638");
   });
 
+  it("propagates custom locus color and thickness without changing geometry", () => {
+    const points = [
+      { latDeg: 0, lonDeg: 0 },
+      { latDeg: 8, lonDeg: 16 },
+    ];
+    const base = buildLunarLocusRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({ points }),
+    });
+    const custom = buildLunarLocusRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        points,
+        strokeColor: "#ff00aa",
+        strokeThickness: "thick",
+      }),
+    });
+    expect(custom.items.length).toBe(base.items.length);
+    const line = custom.items.find((item) => item.kind === "line");
+    expect(line?.kind).toBe("line");
+    if (line?.kind !== "line") {
+      return;
+    }
+    expect(line.stroke).toMatch(/255,\s*0,\s*170/);
+    expect(line.strokeWidthPx).toBeCloseTo(1.2 * 1.45, 5);
+  });
+
   it("emits no primitives when opacity is zero", () => {
     const plan = buildLunarLocusRenderPlan({
       viewportWidthPx: 360,

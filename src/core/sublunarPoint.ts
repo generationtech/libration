@@ -40,6 +40,21 @@ export const LUNAR_MODEL_GMST_RATE_DEG_PER_DAY = 360.98564736629;
  */
 export const LUNAR_MODEL_MEAN_LONGITUDE_RATE_DEG_PER_JULIAN_CENTURY = 481267.88123421;
 
+/**
+ * Moon mean ascending-node longitude `Ω` at J2000 (degrees).
+ * Same truncated Meeus-style model as {@link sublunarPoint}.
+ */
+export const LUNAR_MODEL_NODE_LONGITUDE_AT_J2000_DEG = 125.0445479;
+
+/** `Ω` rate, degrees per Julian century of `T`. */
+export const LUNAR_MODEL_NODE_RATE_DEG_PER_JULIAN_CENTURY = -1934.136261;
+
+/** Argument of latitude `F` at J2000 (degrees). */
+export const LUNAR_MODEL_ARGUMENT_OF_LATITUDE_AT_J2000_DEG = 93.272095;
+
+/** `F` rate, degrees per Julian century of `T`. */
+export const LUNAR_MODEL_ARGUMENT_OF_LATITUDE_RATE_DEG_PER_JULIAN_CENTURY = 483202.0175233;
+
 function julianDate(utcMs: number): number {
   return utcMs / MS_PER_DAY + 2440587.5;
 }
@@ -69,6 +84,48 @@ export function moonEclipticLongitudeDeg(utcMs: number): number {
   return ((lambda % 360) + 360) % 360;
 }
 
+function julianCenturiesFromJ2000(utcMs: number): number {
+  const JD = julianDate(utcMs);
+  return (JD - 2451545.0) / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
+}
+
+function wrapDeg360(deg: number): number {
+  return ((deg % 360) + 360) % 360;
+}
+
+/**
+ * Approximate Moon ecliptic latitude (degrees), same series as {@link sublunarPoint}.
+ */
+export function moonEclipticLatitudeDeg(utcMs: number): number {
+  const T = julianCenturiesFromJ2000(utcMs);
+  const Mp = 134.9633964 + 477198.8675055 * T;
+  const F = LUNAR_MODEL_ARGUMENT_OF_LATITUDE_AT_J2000_DEG +
+    LUNAR_MODEL_ARGUMENT_OF_LATITUDE_RATE_DEG_PER_JULIAN_CENTURY * T;
+  const d = Math.PI / 180;
+  return (
+    5.128122 * Math.sin(F * d) +
+    0.280606 * Math.sin((Mp + F) * d) +
+    0.277693 * Math.sin((Mp - F) * d)
+  );
+}
+
+/** Mean argument of latitude `F` (degrees, 0…360), same linear term as {@link sublunarPoint}. */
+export function moonArgumentOfLatitudeDeg(utcMs: number): number {
+  const T = julianCenturiesFromJ2000(utcMs);
+  return wrapDeg360(
+    LUNAR_MODEL_ARGUMENT_OF_LATITUDE_AT_J2000_DEG +
+      LUNAR_MODEL_ARGUMENT_OF_LATITUDE_RATE_DEG_PER_JULIAN_CENTURY * T,
+  );
+}
+
+/** Mean longitude of the ascending node `Ω` (degrees, 0…360). */
+export function moonMeanAscendingNodeLongitudeDeg(utcMs: number): number {
+  const T = julianCenturiesFromJ2000(utcMs);
+  return wrapDeg360(
+    LUNAR_MODEL_NODE_LONGITUDE_AT_J2000_DEG + LUNAR_MODEL_NODE_RATE_DEG_PER_JULIAN_CENTURY * T,
+  );
+}
+
 /**
  * Point on Earth where the Moon is at the zenith (sub-lunar point).
  */
@@ -77,16 +134,8 @@ export function sublunarPoint(utcMs: number): SublunarPointDeg {
   const T = (JD - 2451545.0) / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
   const n = JD - 2451545.0;
 
-  const Mp = 134.9633964 + 477198.8675055 * T;
-  const F = 93.272095 + 483202.0175233 * T;
-
-  const d = Math.PI / 180;
   const lambda = moonEclipticLongitudeDeg(utcMs);
-
-  const beta =
-    5.128122 * Math.sin(F * d) +
-    0.280606 * Math.sin((Mp + F) * d) +
-    0.277693 * Math.sin((Mp - F) * d);
+  const beta = moonEclipticLatitudeDeg(utcMs);
 
   const epsDeg = 23.439291 - 0.0130042 * T;
   const epsRad = (epsDeg * Math.PI) / 180;

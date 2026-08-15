@@ -24,6 +24,7 @@ import { isLunarGroundTrackPayload } from "./lunarGroundTrackPayload";
 import { isLunarLocusPayload } from "./lunarLocusPayload";
 import { createLayerForSceneOverlayInstance } from "./sceneOverlayLayerFactory";
 import { isSolarShadingPayload } from "./solarShadingPayload";
+import { isSublunarMarkerPayload } from "./sublunarMarkerPayload";
 
 describe("createLayerForSceneOverlayInstance (source-driven)", () => {
   it("builds solar analemma from product and parameters, not from row id", () => {
@@ -179,6 +180,86 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     expect(isLunarLocusPayload(st.data)).toBe(true);
     if (isLunarLocusPayload(st.data)) {
       expect(st.data.points.length).toBeGreaterThan(50);
+    }
+  });
+
+  it("passes Moon appearance and independent path styles through payloads", () => {
+    const config = {
+      ...DEFAULT_APP_CONFIG,
+      scene: {
+        ...DEFAULT_APP_CONFIG.scene,
+        layers: DEFAULT_APP_CONFIG.scene.layers.map((row) => {
+          if (row.id === "sublunarMarker" && row.source.kind === "derived") {
+            return {
+              ...row,
+              source: {
+                ...row.source,
+                parameters: {
+                  ...row.source.parameters,
+                  size: "large",
+                  librationStyle: "crosshair",
+                  librationColor: "#abcdef",
+                },
+              },
+            };
+          }
+          if (row.id === "lunarLocus" && row.source.kind === "derived") {
+            return {
+              ...row,
+              source: {
+                ...row.source,
+                parameters: { strokeColor: "#112233", strokeThickness: "thick" },
+              },
+            };
+          }
+          if (row.id === "solarAnalemma" && row.source.kind === "derived") {
+            return {
+              ...row,
+              source: {
+                ...row.source,
+                parameters: { utcHour: 12, strokeColor: "#fedcba", strokeThickness: "thin" },
+              },
+            };
+          }
+          return row;
+        }),
+      },
+    };
+    const moonLayer = createLayerForSceneOverlayInstance(
+      config.scene.layers.find((l) => l.id === "sublunarMarker")!,
+      { zIndex: 5, opacity: 1 },
+      config,
+    );
+    const locusLayer = createLayerForSceneOverlayInstance(
+      config.scene.layers.find((l) => l.id === "lunarLocus")!,
+      { zIndex: 4, opacity: 1 },
+      config,
+    );
+    const analemmaLayer = createLayerForSceneOverlayInstance(
+      config.scene.layers.find((l) => l.id === "solarAnalemma")!,
+      { zIndex: 3, opacity: 1 },
+      config,
+    );
+    const time = createTimeContext(Date.UTC(2026, 0, 16, 22, 0, 0, 0), 0, true);
+    const moon = moonLayer!.getState(time).data;
+    const locus = locusLayer!.getState(time).data;
+    const analemma = analemmaLayer!.getState(time).data;
+    expect(isSublunarMarkerPayload(moon)).toBe(true);
+    expect(isLunarLocusPayload(locus)).toBe(true);
+    expect(isEquirectangularPolylinePayload(analemma)).toBe(true);
+    if (isSublunarMarkerPayload(moon)) {
+      expect(moon.appearance.size).toBe("large");
+      expect(moon.appearance.librationStyle).toBe("crosshair");
+      expect(moon.appearance.librationColor).toBe("#abcdef");
+    }
+    if (isLunarLocusPayload(locus)) {
+      expect(locus.strokeColor).toBe("#112233");
+      expect(locus.strokeThickness).toBe("thick");
+      expect(locus.moonSize).toBe("large");
+    }
+    if (isEquirectangularPolylinePayload(analemma)) {
+      expect(analemma.strokeColor).toBe("#fedcba");
+      expect(analemma.strokeThickness).toBe("thin");
     }
   });
 });

@@ -21,9 +21,14 @@ import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
-import type { LunarLocusPayload } from "../../layers/lunarLocusPayload";
+import {
+  lunarLocusMoonSizeFromPayload,
+  type LunarLocusPayload,
+} from "../../layers/lunarLocusPayload";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 import { equirectXFromUnwrappedLon } from "./equirectSeamPath";
+import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeAppearance";
+import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 
 export interface LunarLocusRenderPlanOptions {
   viewportWidthPx: number;
@@ -33,11 +38,6 @@ export interface LunarLocusRenderPlanOptions {
 }
 
 const WORLD_COPIES_DEG = [-360, 0, 360] as const;
-
-/** Same disc radius as `buildSublunarMarkerRenderPlan` (opaque Moon glyph). */
-function sublunarDiscRadiusPx(viewportWidthPx: number): number {
-  return Math.min(7.5, Math.max(3.8, viewportWidthPx * 0.0046));
-}
 
 function dist2(x0: number, y0: number, x1: number, y1: number): number {
   return Math.hypot(x1 - x0, y1 - y0);
@@ -97,6 +97,7 @@ function pushWrappedOpenPolyline(
   h: number,
   stroke: string,
   strokeWidthPx: number,
+  moonRadiusPx: number,
 ): void {
   if (points.length < 2) {
     return;
@@ -104,7 +105,7 @@ function pushWrappedOpenPolyline(
   const n = points.length;
   const moonLon = points[0]!.lonDeg;
   const moonLat = points[0]!.latDeg;
-  const moonR = sublunarDiscRadiusPx(w) * 0.75;
+  const moonR = moonRadiusPx * 0.75;
   for (const offset of WORLD_COPIES_DEG) {
     const moonX = equirectXFromUnwrappedLon(moonLon + offset, w);
     const moonY = parallelYFromLatitudeDeg(moonLat, h);
@@ -188,9 +189,10 @@ export function buildLunarLocusRenderPlan(options: LunarLocusRenderPlanOptions):
   );
   const baseStrokeA = 0.5 * op;
   const strokeA = Math.min(0.92 * op, baseStrokeA + 0.32 * veil * op);
-  const strokeW = 1.2 + 0.95 * veil;
-  const stroke = strokeRgba(DEFAULT_LUNAR_LOCUS_STROKE_RGB, strokeA);
+  const strokeW = astronomyPathStrokeWidthPx(veil, options.payload.strokeThickness);
+  const stroke = strokeRgba(options.payload.strokeColor ?? DEFAULT_LUNAR_LOCUS_STROKE_RGB, strokeA);
+  const moonRadiusPx = sublunarMarkerRadiusPx(w, lunarLocusMoonSizeFromPayload(options.payload));
   const items: RenderPlan["items"] = [];
-  pushWrappedOpenPolyline(items, options.payload.points, w, h, stroke, strokeW);
+  pushWrappedOpenPolyline(items, options.payload.points, w, h, stroke, strokeW, moonRadiusPx);
   return { items };
 }

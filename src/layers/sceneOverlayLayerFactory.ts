@@ -22,7 +22,10 @@ import {
   resolvePinDateTimeTextFontAssetId,
 } from "../config/productTextFont";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
-import { resolveMoonlightPresentationMode } from "../config/v2/sceneConfig";
+import {
+  resolveMoonlightPresentationMode,
+  sublunarMarkerAppearanceFromScene,
+} from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
 import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
@@ -36,6 +39,15 @@ import { createDynamicEquirectRasterOverlayLayer } from "./dynamicEquirectRaster
 import { createDynamicPointFeaturesOverlayLayer } from "./dynamicPointFeaturesOverlayLayer";
 import { createDynamicTracksOverlayLayer } from "./dynamicTracksOverlayLayer";
 import type { Layer } from "./types";
+import {
+  DEFAULT_ASTRONOMY_PATH_THICKNESS,
+  DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+  normalizeAstronomyPathColorCss,
+  normalizeAstronomyPathThicknessId,
+  type AstronomyPathThicknessId,
+} from "../core/astronomyOverlayStrokeAppearance";
+import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
+import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
 
 type OverlayPart = { zIndex: number; opacity: number };
 
@@ -133,6 +145,21 @@ function lunarStrokeCssFromOptionalParameters(
   return typeof c === "string" ? c : undefined;
 }
 
+function astronomyPathColorFromOptionalParameters(
+  parameters: Readonly<Record<string, unknown>> | undefined,
+  fallback: string,
+): string {
+  return normalizeAstronomyPathColorCss(parameters?.strokeColor, fallback);
+}
+
+function astronomyPathThicknessFromOptionalParameters(
+  parameters: Readonly<Record<string, unknown>> | undefined,
+): AstronomyPathThicknessId {
+  return normalizeAstronomyPathThicknessId(
+    parameters?.strokeThickness ?? DEFAULT_ASTRONOMY_PATH_THICKNESS,
+  );
+}
+
 function createDerivedOverlayByProduct(
   source: Extract<SceneLayerInstance["source"], { kind: "derived" }>,
   part: OverlayPart,
@@ -186,6 +213,7 @@ function createDerivedOverlayByProduct(
       return createSublunarMarkerLayer({
         zIndex,
         opacity,
+        appearance: normalizeSublunarMarkerAppearance(source.parameters),
         sublunarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.sublunarMarker,
       });
     case "sublunarGroundTrack":
@@ -201,12 +229,23 @@ function createDerivedOverlayByProduct(
       return createLunarLocusLayer({
         zIndex,
         opacity,
+        strokeColor: astronomyPathColorFromOptionalParameters(
+          source.parameters,
+          DEFAULT_LUNAR_LOCUS_STROKE_RGB,
+        ),
+        strokeThickness: astronomyPathThicknessFromOptionalParameters(source.parameters),
+        moonSize: sublunarMarkerAppearanceFromScene(config.scene).size,
       });
     case "solarAnalemmaGroundTrack":
       return createSolarAnalemmaLayer({
         zIndex,
         opacity,
         ...(utcH !== undefined ? { utcHour: utcH } : {}),
+        strokeColor: astronomyPathColorFromOptionalParameters(
+          source.parameters,
+          DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+        ),
+        strokeThickness: astronomyPathThicknessFromOptionalParameters(source.parameters),
         solarAnalemmaReadabilityPresentation: config.scene.overlayReadability.perLayer?.solarAnalemma,
       });
     default:

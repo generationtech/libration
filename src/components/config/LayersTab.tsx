@@ -30,14 +30,20 @@ import {
   applyLayerEnableFlagsToScene,
   applyLunarGroundTrackColorToScene,
   applyLunarGroundTrackExtentToScene,
+  applyLunarLocusStrokeToScene,
+  applySolarAnalemmaStrokeToScene,
+  applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
   deriveLayerEnableFlagsFromScene,
   getBaseMapPresentationForMapId,
   lunarGroundTrackColorsFromScene,
   lunarGroundTrackExtentsFromScene,
+  lunarLocusStrokeFromScene,
   LUNAR_GROUND_TRACK_EXTENT_HOURS,
   setBaseMapPresentationForMapId,
+  solarAnalemmaStrokeFromScene,
+  sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
   type MoonlightPresentationMode,
@@ -49,6 +55,20 @@ import {
   CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MAX,
   CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MIN,
 } from "../../core/cloudParticipationPresentationDefaults";
+import {
+  ASTRONOMY_PATH_THICKNESS_IDS,
+  type AstronomyPathThicknessId,
+} from "../../core/astronomyOverlayStrokeAppearance";
+import {
+  LIBRATION_MOTION_SCALE_IDS,
+  LIBRATION_STYLE_IDS,
+  LIBRATION_THICKNESS_IDS,
+  SUBLUNAR_MARKER_SIZE_IDS,
+  type LibrationIndicatorStyleId,
+  type LibrationMotionScaleId,
+  type LibrationThicknessId,
+  type SublunarMarkerSizeId,
+} from "../../core/sublunarMarkerAppearance";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 
@@ -453,6 +473,9 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const lunarExtents = lunarGroundTrackExtentsFromScene(scene);
   const lunarColors = lunarGroundTrackColorsFromScene(scene);
+  const moonAppearance = sublunarMarkerAppearanceFromScene(scene);
+  const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
+  const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1458,6 +1481,278 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                 : undefined
             }
           />
+        </ConfigControlRow>
+        <ConfigControlRow label="Moon size">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Moon size"
+            title="Overall Moon glyph size. Does not change the Sun glyph."
+            value={moonAppearance.size}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const size = e.currentTarget.value as SublunarMarkerSizeId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, { size });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {SUBLUNAR_MARKER_SIZE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id === "normal" ? "Current" : id === "extraLarge" ? "Extra large" : id[0]!.toUpperCase() + id.slice(1)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Moon libration">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={moonAppearance.librationEnabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Moon libration"
+            title="Show the optical-libration mark inside the Moon glyph. Off restores the phase-only disc."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationEnabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationEnabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Libration style">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Libration style"
+            title="Ring or crosshair presentation of the same libration displacement."
+            value={moonAppearance.librationStyle}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationStyle = e.currentTarget.value as LibrationIndicatorStyleId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationStyle,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LIBRATION_STYLE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id === "ring" ? "Ring" : "Crosshair"}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Libration color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Libration color"
+            title="Stroke color of the libration ring or crosshair."
+            value={moonAppearance.librationColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationColor = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationColor,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Libration thickness">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Libration thickness"
+            title="Stroke weight of the libration mark."
+            value={moonAppearance.librationThickness}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationThickness = e.currentTarget.value as LibrationThicknessId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationThickness,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LIBRATION_THICKNESS_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id[0]!.toUpperCase() + id.slice(1)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Libration motion scale">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Libration motion scale"
+            title="Visual displacement only. Does not change reported libration degrees."
+            value={moonAppearance.librationMotionScale}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationMotionScale = e.currentTarget.value as LibrationMotionScaleId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationMotionScale,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LIBRATION_MOTION_SCALE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id[0]!.toUpperCase() + id.slice(1)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar locus color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar locus color"
+            title="Stroke color of the Lunar locus. Independent of the Solar analemma."
+            value={lunarLocusStroke.strokeColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const strokeColor = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarLocusStrokeToScene(baseScene, { strokeColor });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar locus thickness">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Lunar locus thickness"
+            title="Stroke weight of the Lunar locus. Independent of the Solar analemma."
+            value={lunarLocusStroke.strokeThickness}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const strokeThickness = e.currentTarget.value as AstronomyPathThicknessId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarLocusStrokeToScene(baseScene, { strokeThickness });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
+              <option key={`locus-${id}`} value={id}>
+                {id[0]!.toUpperCase() + id.slice(1)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Solar analemma color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Solar analemma color"
+            title="Stroke color of the Solar analemma. Independent of the Lunar locus."
+            value={solarAnalemmaStroke.strokeColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const strokeColor = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarAnalemmaStrokeToScene(baseScene, { strokeColor });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Solar analemma thickness">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Solar analemma thickness"
+            title="Stroke weight of the Solar analemma. Independent of the Lunar locus."
+            value={solarAnalemmaStroke.strokeThickness}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const strokeThickness = e.currentTarget.value as AstronomyPathThicknessId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySolarAnalemmaStrokeToScene(baseScene, { strokeThickness });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
+              <option key={`analemma-${id}`} value={id}>
+                {id[0]!.toUpperCase() + id.slice(1)}
+              </option>
+            ))}
+          </select>
         </ConfigControlRow>
       </section>
     </div>

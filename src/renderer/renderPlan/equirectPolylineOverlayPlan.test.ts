@@ -72,4 +72,37 @@ describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
       expect(h.strokeWidthPx).toBeGreaterThan(b.strokeWidthPx);
     }
   });
+
+  it("uses the current solar-analemma default color and accepts an independent custom stroke", () => {
+    const points = [
+      { latDeg: 0, lonDeg: -10 },
+      { latDeg: 0, lonDeg: 10 },
+    ];
+    const base = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      points,
+      closed: false,
+      layerOpacity: 1,
+    });
+    const custom = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      points,
+      closed: false,
+      layerOpacity: 1,
+      strokeColor: "#00ffaa",
+      strokeThickness: "thin",
+    });
+    const b = base.items[0];
+    const c = custom.items[0];
+    expect(b?.kind).toBe("line");
+    expect(c?.kind).toBe("line");
+    if (b?.kind === "line" && c?.kind === "line") {
+      expect(b.stroke).toMatch(/255,\s*200,\s*120/);
+      expect(c.stroke).toMatch(/0,\s*255,\s*170/);
+      expect(c.strokeWidthPx).toBeLessThan(b.strokeWidthPx);
+      expect(custom.items.length).toBe(base.items.length);
+    }
+  });
 });

@@ -23,6 +23,13 @@ import {
   EQUIRECT_POLYLINE_KIND,
   type EquirectangularPolylinePayload,
 } from "./equirectPolylinePayload";
+import {
+  DEFAULT_ASTRONOMY_PATH_THICKNESS,
+  DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+  normalizeAstronomyPathColorCss,
+  normalizeAstronomyPathThicknessId,
+  type AstronomyPathThicknessId,
+} from "../core/astronomyOverlayStrokeAppearance";
 
 const SOLAR_ANALEMMA_LAYER_ID = "layer.solarAnalemma.groundTrack";
 
@@ -46,6 +53,8 @@ export function createSolarAnalemmaLayer(
     zIndex?: number;
     opacity?: number;
     utcHour?: number;
+    strokeColor?: string;
+    strokeThickness?: AstronomyPathThicknessId;
     /** Optional pilot: extra veil/lift pass for the solar analemma only (after global presentation). */
     solarAnalemmaReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
   } = {},
@@ -53,6 +62,13 @@ export function createSolarAnalemmaLayer(
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const utcHour = parseUtcHour(options);
+  const strokeColor = normalizeAstronomyPathColorCss(
+    options.strokeColor,
+    DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+  );
+  const strokeThickness = normalizeAstronomyPathThicknessId(
+    options.strokeThickness ?? DEFAULT_ASTRONOMY_PATH_THICKNESS,
+  );
   const solarAnalemmaReadabilityPresentation = options.solarAnalemmaReadabilityPresentation;
   return {
     id: SOLAR_ANALEMMA_LAYER_ID,
@@ -74,6 +90,8 @@ export function createSolarAnalemmaLayer(
         kind: EQUIRECT_POLYLINE_KIND,
         points: pts,
         closed: true,
+        strokeColor,
+        strokeThickness,
         readability: {
           nightVeil01: frame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,

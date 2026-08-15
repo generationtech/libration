@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-009](work/LIB-009-eliminate-lunar-locus-residual-cusp.md) — Eliminate lunar locus residual cusp
+[LIB-010](work/LIB-010-moon-libration-and-astronomy-styling.md) — Moon libration indicator and astronomical overlay styling
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Await human scope. Do not start work.
+Stop. Draft a proposed item only if asked. Do not start work from `docs/FUTURE_FEATURES.md`.

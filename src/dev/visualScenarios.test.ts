@@ -26,6 +26,7 @@ import {
   VISUAL_SCENARIO_IDS,
   VISUAL_SCENARIO_UTC,
   VISUAL_SCENARIOS,
+  MOON_LIBRATION_EPOCH_UTC,
   applyVisualScenarioFromLocation,
   parseVisualScenarioQuery,
   resolveVisualScenarioSession,
@@ -163,6 +164,37 @@ describe("resolveVisualScenarioSession", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureHours : undefined).toBe(24);
     expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
+  });
+
+  it("seeds moon-libration with the production Moon glyph and libration on by default", () => {
+    const config = VISUAL_SCENARIOS["moon-libration"].buildConfig();
+    expect(config.layers.sublunarMarker).toBe(true);
+    expect(config.layers.lunarLocus).toBe(false);
+    expect(config.layers.solarAnalemma).toBe(false);
+    expect(config.layers.cityPins).toBe(false);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["moon-libration"]);
+    const row = config.scene?.layers.find((l) => l.id === "sublunarMarker");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationEnabled : undefined).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationStyle : undefined).toBe("ring");
+  });
+
+  it("selects moon-libration epoch UTC from the DEV librationEpoch query parameter", () => {
+    const zero = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=moon-libration&librationEpoch=zero",
+    });
+    expect(zero.kind).toBe("applied");
+    if (zero.kind === "applied") {
+      expect(zero.startIsoUtc).toBe(MOON_LIBRATION_EPOCH_UTC.zero);
+    }
+    const full = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=moon-libration&librationEpoch=full",
+    });
+    expect(full.kind).toBe("applied");
+    if (full.kind === "applied") {
+      expect(full.startIsoUtc).toBe(MOON_LIBRATION_EPOCH_UTC.full);
+    }
   });
 
   it("seeds lunar-locus with the production overlay, Moon marker, track off, and analemma off", () => {

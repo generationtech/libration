@@ -70,4 +70,10 @@ Lunar locus is no longer forced into a false remote closure. The displayed cycle
 
 Verified: focused lunar-locus tests 40 passed; `npx tsc --noEmit` clean; `npm test` 170 files / 1581 passed / 0 failed; `npm run build` succeeded. Cursor Browser at inner 1920×1080: `?scenario=lunar-locus` recent/standstill/minor/baseline plus accelerated demo at 86400×.
 
+## 2026-08-15 — LIB-010 complete
+
+Production Moon glyph now shows optical libration (Meeus ch. 53, no physical libration) as a displaced internal ring by default, optional crosshair, with durable Moon size and independent Lunar locus / Solar analemma stroke color and thickness. Apparent lunar-north rotation recorded in `docs/FUTURE_FEATURES.md` only.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 172 files / 1607 passed / 0 failed; `npm run build` succeeded with no `moon-libration` / `librationEpoch` in `dist/`. Cursor Browser at inner 1920×1080: `?scenario=moon-libration` epochs, sizes, ring/crosshair, accelerated demo/pause, alt path styles, ordinary startup.
+
 

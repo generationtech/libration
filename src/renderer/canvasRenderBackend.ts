@@ -15,7 +15,7 @@ import { isCityPinsPayload } from "../layers/cityPinsPayload";
 import { isDynamicPointFeaturesPayload } from "../layers/dynamicPointFeaturesPayload";
 import { isDynamicTracksPayload } from "../layers/dynamicTracksPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
-import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
+import { isSublunarMarkerPayload, sublunarMarkerAppearanceFromPayload } from "../layers/sublunarMarkerPayload";
 import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
 import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
 import { isLunarGroundTrackPayload } from "../layers/lunarGroundTrackPayload";
@@ -351,7 +351,7 @@ export class CanvasRenderBackend implements RenderBackend {
       return;
     }
     if (isEquirectangularPolylinePayload(layer.data)) {
-      const { points, closed, readability } = layer.data;
+      const { points, closed, readability, strokeColor, strokeThickness } = layer.data;
       executeRenderPlanOnCanvas(
         ctx,
         buildEquirectangularPolylineOverlayRenderPlan({
@@ -361,6 +361,8 @@ export class CanvasRenderBackend implements RenderBackend {
           closed,
           layerOpacity: layer.opacity,
           readability: readability ?? null,
+          strokeColor,
+          strokeThickness,
         }),
       );
       return;
@@ -456,6 +458,9 @@ export class CanvasRenderBackend implements RenderBackend {
           latDeg: layer.data.latDeg,
           illuminatedFraction: layer.data.illuminatedFraction,
           waxing: layer.data.waxing,
+          librationLongitudeDeg: layer.data.librationLongitudeDeg,
+          librationLatitudeDeg: layer.data.librationLatitudeDeg,
+          appearance: sublunarMarkerAppearanceFromPayload(layer.data),
           readability: layer.data.readability ?? null,
         }),
       );

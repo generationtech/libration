@@ -13,6 +13,10 @@
 
 import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
 import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+import {
+  ASTRONOMY_PATH_THICKNESS_IDS,
+  type AstronomyPathThicknessId,
+} from "../core/astronomyOverlayStrokeAppearance";
 
 export const EQUIRECT_POLYLINE_KIND = "equirectPolyline" as const;
 
@@ -21,6 +25,8 @@ export interface EquirectangularPolylinePayload {
   readonly points: readonly { latDeg: number; lonDeg: number }[];
   /** When true, adds a segment from last to first with longitude unwrapping. */
   closed: boolean;
+  strokeColor?: string;
+  strokeThickness?: AstronomyPathThicknessId;
   readability?: OverlayReadabilityHints;
 }
 
@@ -42,6 +48,15 @@ export function isEquirectangularPolylinePayload(
     if (typeof q.latDeg !== "number" || typeof q.lonDeg !== "number") {
       return false;
     }
+  }
+  if (o.strokeColor !== undefined && typeof o.strokeColor !== "string") {
+    return false;
+  }
+  if (
+    o.strokeThickness !== undefined &&
+    !(ASTRONOMY_PATH_THICKNESS_IDS as readonly string[]).includes(o.strokeThickness as string)
+  ) {
+    return false;
   }
   if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {
     return false;

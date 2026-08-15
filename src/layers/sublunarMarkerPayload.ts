@@ -13,6 +13,11 @@
 
 import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
 import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
+import {
+  DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+  normalizeSublunarMarkerAppearance,
+  type SublunarMarkerAppearance,
+} from "../core/sublunarMarkerAppearance";
 
 export const SUBLUNAR_MARKER_KIND = "sublunarMarkerEquirect" as const;
 
@@ -20,8 +25,8 @@ export const SUBLUNAR_MARKER_KIND = "sublunarMarkerEquirect" as const;
  * Single sub-lunar point in equirectangular space (same convention as subsolar / grid:
  * lon −180…180 east positive, lat −90…90).
  *
- * Phase fields come from core `approximateLunarPhase`; the renderer draws the disc
- * from illuminated fraction and waxing/waning — no astronomy in the backend.
+ * Phase and optical-libration fields come from core; the renderer draws the disc and
+ * indicator from those numbers — no astronomy in the backend.
  */
 export interface SublunarMarkerPayload {
   kind: typeof SUBLUNAR_MARKER_KIND;
@@ -33,6 +38,11 @@ export interface SublunarMarkerPayload {
   geocentricElongationDeg: number;
   /** When true, the lit portion grows toward full; when false, toward new. */
   waxing: boolean;
+  /** Optical libration in longitude (degrees). Display mapping is downstream. */
+  librationLongitudeDeg: number;
+  /** Optical libration in latitude (degrees). Display mapping is downstream. */
+  librationLatitudeDeg: number;
+  appearance: SublunarMarkerAppearance;
   readability?: OverlayReadabilityHints;
 }
 
@@ -46,7 +56,9 @@ export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPa
       typeof o.lonDeg === "number" &&
       typeof o.illuminatedFraction === "number" &&
       typeof o.geocentricElongationDeg === "number" &&
-      typeof o.waxing === "boolean"
+      typeof o.waxing === "boolean" &&
+      typeof o.librationLongitudeDeg === "number" &&
+      typeof o.librationLatitudeDeg === "number"
     )
   ) {
     return false;
@@ -55,4 +67,10 @@ export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPa
     return false;
   }
   return true;
+}
+
+export function sublunarMarkerAppearanceFromPayload(
+  payload: SublunarMarkerPayload,
+): SublunarMarkerAppearance {
+  return normalizeSublunarMarkerAppearance(payload.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE);
 }

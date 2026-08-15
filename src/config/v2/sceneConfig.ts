@@ -27,6 +27,18 @@ import {
   normalizeLunarGroundTrackStrokeCss,
 } from "../../core/lunarGroundTrackAppearance";
 import {
+  DEFAULT_ASTRONOMY_PATH_THICKNESS,
+  DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+  normalizeAstronomyPathColorCss,
+  normalizeAstronomyPathThicknessId,
+} from "../../core/astronomyOverlayStrokeAppearance";
+import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
+import {
+  DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+  normalizeSublunarMarkerAppearance,
+  type SublunarMarkerAppearance,
+} from "../../core/sublunarMarkerAppearance";
+import {
   BASE_MAP_OPTION_CATEGORY_ORDER,
   DEFAULT_EQUIRECT_BASE_MAP_ID as DEFAULT_EQUIRECT_BASE_MAP_ID_VALUE,
   EQUIRECT_BASE_MAP_OPTIONS,
@@ -802,7 +814,14 @@ const LUNAR_LOCUS_ROW: SceneLayerInstance = {
   type: "astronomyVector",
   enabled: false,
   order: 4.75,
-  source: { kind: "derived", product: "sublunarLocus" },
+  source: {
+    kind: "derived",
+    product: "sublunarLocus",
+    parameters: {
+      strokeColor: DEFAULT_LUNAR_LOCUS_STROKE_RGB,
+      strokeThickness: DEFAULT_ASTRONOMY_PATH_THICKNESS,
+    },
+  },
 };
 
 const SUBLUNAR: SceneLayerInstance = {
@@ -811,7 +830,11 @@ const SUBLUNAR: SceneLayerInstance = {
   type: "astronomyVector",
   enabled: true,
   order: 5,
-  source: { kind: "derived", product: "sublunarPoint" },
+  source: {
+    kind: "derived",
+    product: "sublunarPoint",
+    parameters: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE },
+  },
 };
 
 /** Phase 4: equation-of-time ground track; default off so the legacy stack is visually unchanged. */
@@ -821,7 +844,14 @@ const SOLAR_ANALEMMA_ROW: SceneLayerInstance = {
   type: "astronomyVector",
   enabled: false,
   order: 6,
-  source: { kind: "derived", product: "solarAnalemmaGroundTrack" },
+  source: {
+    kind: "derived",
+    product: "solarAnalemmaGroundTrack",
+    parameters: {
+      strokeColor: DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+      strokeThickness: DEFAULT_ASTRONOMY_PATH_THICKNESS,
+    },
+  },
 };
 
 const DEFAULT_STACK: readonly SceneLayerInstance[] = [
@@ -1040,6 +1070,124 @@ export function applyLunarGroundTrackColorToScene(
   };
 }
 
+export function sublunarMarkerAppearanceFromScene(scene: SceneConfig): SublunarMarkerAppearance {
+  const row = scene.layers.find((l) => l.id === "sublunarMarker");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return normalizeSublunarMarkerAppearance(params);
+}
+
+export function applySublunarMarkerAppearanceToScene(
+  scene: SceneConfig,
+  patch: Partial<SublunarMarkerAppearance>,
+): SceneConfig {
+  const current = sublunarMarkerAppearanceFromScene(scene);
+  const next = normalizeSublunarMarkerAppearance({ ...current, ...patch });
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "sublunarMarker" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSublunarPointParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
+export function lunarLocusStrokeFromScene(scene: SceneConfig): {
+  strokeColor: string;
+  strokeThickness: ReturnType<typeof normalizeAstronomyPathThicknessId>;
+} {
+  const row = scene.layers.find((l) => l.id === "lunarLocus");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return {
+    strokeColor: normalizeAstronomyPathColorCss(params?.strokeColor, DEFAULT_LUNAR_LOCUS_STROKE_RGB),
+    strokeThickness: normalizeAstronomyPathThicknessId(params?.strokeThickness),
+  };
+}
+
+export function applyLunarLocusStrokeToScene(
+  scene: SceneConfig,
+  patch: { strokeColor?: unknown; strokeThickness?: unknown },
+): SceneConfig {
+  const current = lunarLocusStrokeFromScene(scene);
+  const next = {
+    strokeColor: normalizeAstronomyPathColorCss(
+      patch.strokeColor !== undefined ? patch.strokeColor : current.strokeColor,
+      DEFAULT_LUNAR_LOCUS_STROKE_RGB,
+    ),
+    strokeThickness: normalizeAstronomyPathThicknessId(
+      patch.strokeThickness !== undefined ? patch.strokeThickness : current.strokeThickness,
+    ),
+  };
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "lunarLocus" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSublunarLocusParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
+export function solarAnalemmaStrokeFromScene(scene: SceneConfig): {
+  strokeColor: string;
+  strokeThickness: ReturnType<typeof normalizeAstronomyPathThicknessId>;
+} {
+  const row = scene.layers.find((l) => l.id === "solarAnalemma");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return {
+    strokeColor: normalizeAstronomyPathColorCss(
+      params?.strokeColor,
+      DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+    ),
+    strokeThickness: normalizeAstronomyPathThicknessId(params?.strokeThickness),
+  };
+}
+
+export function applySolarAnalemmaStrokeToScene(
+  scene: SceneConfig,
+  patch: { strokeColor?: unknown; strokeThickness?: unknown },
+): SceneConfig {
+  const current = solarAnalemmaStrokeFromScene(scene);
+  const next = {
+    strokeColor: normalizeAstronomyPathColorCss(
+      patch.strokeColor !== undefined ? patch.strokeColor : current.strokeColor,
+      DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+    ),
+    strokeThickness: normalizeAstronomyPathThicknessId(
+      patch.strokeThickness !== undefined ? patch.strokeThickness : current.strokeThickness,
+    ),
+  };
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "solarAnalemma" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedSolarAnalemmaParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
 /**
  * Shallow clone for preset / AppConfig snapshots.
  */
@@ -1185,6 +1333,56 @@ function withNormalizedSublunarGroundTrackParameters(source: LayerSourceConfig):
   };
 }
 
+function withNormalizedSublunarPointParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "sublunarPoint") {
+    return source;
+  }
+  const appearance = normalizeSublunarMarkerAppearance(source.parameters);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...appearance,
+    },
+  };
+}
+
+function withNormalizedSublunarLocusParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "sublunarLocus") {
+    return source;
+  }
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      strokeColor: normalizeAstronomyPathColorCss(
+        source.parameters?.strokeColor,
+        DEFAULT_LUNAR_LOCUS_STROKE_RGB,
+      ),
+      strokeThickness: normalizeAstronomyPathThicknessId(source.parameters?.strokeThickness),
+    },
+  };
+}
+
+function withNormalizedSolarAnalemmaParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "solarAnalemmaGroundTrack") {
+    return source;
+  }
+  const utcHour = source.parameters?.utcHour;
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...(typeof utcHour === "number" && Number.isFinite(utcHour) ? { utcHour } : {}),
+      strokeColor: normalizeAstronomyPathColorCss(
+        source.parameters?.strokeColor,
+        DEFAULT_SOLAR_ANALEMMA_STROKE_RGB,
+      ),
+      strokeThickness: normalizeAstronomyPathThicknessId(source.parameters?.strokeThickness),
+    },
+  };
+}
+
 function defaultSourceForLayerId(id: string): LayerSourceConfig {
   const m = new Map<string, LayerSourceConfig>(
     DEFAULT_STACK.map((s) => [s.id, s.source] as const),
@@ -1325,6 +1523,9 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = defaultSourceForLayerId(idNorm);
   }
   source = withNormalizedSublunarGroundTrackParameters(source);
+  source = withNormalizedSublunarPointParameters(source);
+  source = withNormalizedSublunarLocusParameters(source);
+  source = withNormalizedSolarAnalemmaParameters(source);
   let opacity: number | undefined;
   if (typeof raw.opacity === "number" && Number.isFinite(raw.opacity)) {
     opacity = clampOpacity(raw.opacity);

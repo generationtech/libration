@@ -16,6 +16,7 @@ import { createTimeContext } from "../core/time";
 import type { OverlayReadabilityFrame } from "../core/overlayReadabilityFrame";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
 import { isSublunarMarkerPayload } from "./sublunarMarkerPayload";
+import { opticalLunarLibration } from "../core/lunarOpticalLibration";
 
 const fakeFrame: OverlayReadabilityFrame = {
   globalNightVeil01: 0.5,
@@ -55,5 +56,20 @@ describe("createSublunarMarkerLayer", () => {
     }
     expect(st.data.readability?.nightVeil01).toBeCloseTo(0.275, 5);
     expect(st.data.readability?.overlayReadabilityLiftScale01).toBeCloseTo(0.9, 5);
+  });
+
+  it("emits optical libration from TimeContext.now", () => {
+    const utcMs = Date.UTC(2020, 0, 1);
+    const layer = createSublunarMarkerLayer({});
+    const st = layer.getState(createTimeContext(utcMs, 0, true));
+    expect(isSublunarMarkerPayload(st.data)).toBe(true);
+    if (!isSublunarMarkerPayload(st.data)) {
+      return;
+    }
+    const expected = opticalLunarLibration(utcMs);
+    expect(st.data.librationLongitudeDeg).toBe(expected.longitudeDeg);
+    expect(st.data.librationLatitudeDeg).toBe(expected.latitudeDeg);
+    expect(st.data.appearance.librationEnabled).toBe(true);
+    expect(st.data.appearance.librationStyle).toBe("ring");
   });
 });
