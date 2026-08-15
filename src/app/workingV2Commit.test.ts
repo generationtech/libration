@@ -261,9 +261,13 @@ describe("commitWorkingV2Update", () => {
     expect(derivedAppConfigRef.current.displayTime.topBandMode).toBe("utc24");
   });
 
-  it("changing topBandAnchor only does not replace the layer registry", () => {
+  it("changing topBandAnchor only does not replace the layer registry when Moon is off", () => {
     const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
-    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const v2 = normalizeLibrationConfig({
+      ...base,
+      layers: { ...base.layers, sublunarMarker: false },
+    });
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(v2);
     const registryBefore = registryRef.current;
 
     commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
@@ -272,6 +276,26 @@ describe("commitWorkingV2Update", () => {
 
     expect(registryRef.current).toBe(registryBefore);
     expect(derivedAppConfigRef.current.displayTime.topBandAnchor).toEqual({ mode: "auto" });
+  });
+
+  it("changing topBandAnchor replaces the layer registry when the Moon layer is on", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const v2 = normalizeLibrationConfig({
+      ...base,
+      layers: { ...base.layers, sublunarMarker: true },
+    });
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(v2);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      draft.chrome.displayTime.topBandAnchor = { mode: "fixedCity", cityId: "city.sydney" };
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(derivedAppConfigRef.current.displayTime.topBandAnchor).toEqual({
+      mode: "fixedCity",
+      cityId: "city.sydney",
+    });
   });
 
   it("changing geography only does not replace the layer registry", () => {

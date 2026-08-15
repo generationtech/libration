@@ -16,7 +16,10 @@
  * Visual displacement is display scaling of real optical libration, not a new ephemeris.
  */
 
-import { parseCssColorToRgba8888 } from "../color/contrastForegroundOnCssBackground";
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+  parseCssColorToRgba8888,
+} from "../color/contrastForegroundOnCssBackground";
 
 export const SUBLUNAR_MARKER_SIZE_IDS = ["small", "normal", "large", "extraLarge"] as const;
 export type SublunarMarkerSizeId = (typeof SUBLUNAR_MARKER_SIZE_IDS)[number];
@@ -45,6 +48,16 @@ export const DEFAULT_LIBRATION_MOTION_SCALE: LibrationMotionScaleId = "normal";
 export const DEFAULT_LIBRATION_INDICATOR_COLOR = "#c5d4e8";
 
 export const DEFAULT_LIBRATION_ENABLED = true;
+
+export const LIBRATION_ORIENTATION_IDS = ["map", "observer"] as const;
+export type LibrationOrientationId = (typeof LIBRATION_ORIENTATION_IDS)[number];
+export const DEFAULT_LIBRATION_ORIENTATION: LibrationOrientationId = "observer";
+
+export const DEFAULT_LIBRATION_USE_REFERENCE_CITY = true;
+
+/** Restrained neutrals for the automatic under-stroke (not a user setting). */
+export const LIBRATION_UNDERSTROKE_DARK_RGB = "18, 26, 40";
+export const LIBRATION_UNDERSTROKE_LIGHT_RGB = "236, 240, 246";
 
 /** Typical optical-libration extrema used only to map degrees into glyph space. */
 export const LIBRATION_LONGITUDE_DISPLAY_EXTREMA_DEG = 8;
@@ -84,6 +97,25 @@ export function normalizeLibrationMotionScaleId(raw: unknown): LibrationMotionSc
 
 export function normalizeLibrationEnabled(raw: unknown): boolean {
   return typeof raw === "boolean" ? raw : DEFAULT_LIBRATION_ENABLED;
+}
+
+export function normalizeLibrationOrientationId(raw: unknown): LibrationOrientationId {
+  return isOneOf(raw, LIBRATION_ORIENTATION_IDS) ? raw : DEFAULT_LIBRATION_ORIENTATION;
+}
+
+export function normalizeLibrationUseReferenceCity(raw: unknown): boolean {
+  return typeof raw === "boolean" ? raw : DEFAULT_LIBRATION_USE_REFERENCE_CITY;
+}
+
+/** Light foreground → dark under-stroke; dark foreground → light under-stroke. */
+export function librationUnderStrokeKind(foregroundCss: string): "dark" | "light" {
+  return blackOrWhiteForegroundForBackgroundCss(foregroundCss) === "#000000" ? "dark" : "light";
+}
+
+export function librationUnderStrokeWidthPx(foregroundWidthPx: number): number {
+  const fg = Math.max(0, foregroundWidthPx);
+  const extra = Math.min(1.25, Math.max(0.55, fg * 0.55));
+  return fg + extra;
 }
 
 function toHexRrggbb(r: number, g: number, b: number): string {
@@ -166,6 +198,44 @@ export function librationDisplayOffsetPx(options: {
   return { dxPx: dx, dyPx: dy };
 }
 
+/**
+ * Rotate a map-oriented offset so lunar north moves from map-north toward map-east by `orientationDeg`.
+ * χ = 0 is identity (LIB-010 axes). Screen y increases downward.
+ */
+export function rotateLibrationOffsetPx(
+  offset: LibrationDisplayOffsetPx,
+  orientationDeg: number,
+): LibrationDisplayOffsetPx {
+  if (!Number.isFinite(orientationDeg) || orientationDeg === 0) {
+    return offset;
+  }
+  const a = (orientationDeg * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return {
+    dxPx: offset.dxPx * c - offset.dyPx * s,
+    dyPx: offset.dxPx * s + offset.dyPx * c,
+  };
+}
+
+export function rotateScreenPoint(
+  x: number,
+  y: number,
+  originX: number,
+  originY: number,
+  orientationDeg: number,
+): { x: number; y: number } {
+  if (!Number.isFinite(orientationDeg) || orientationDeg === 0) {
+    return { x, y };
+  }
+  const a = (orientationDeg * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  const dx = x - originX;
+  const dy = y - originY;
+  return { x: originX + dx * c - dy * s, y: originY + dx * s + dy * c };
+}
+
 export type SublunarMarkerAppearance = {
   readonly size: SublunarMarkerSizeId;
   readonly librationEnabled: boolean;
@@ -173,6 +243,8 @@ export type SublunarMarkerAppearance = {
   readonly librationColor: string;
   readonly librationThickness: LibrationThicknessId;
   readonly librationMotionScale: LibrationMotionScaleId;
+  readonly librationOrientation: LibrationOrientationId;
+  readonly librationUseReferenceCity: boolean;
 };
 
 export const DEFAULT_SUBLUNAR_MARKER_APPEARANCE: SublunarMarkerAppearance = {
@@ -182,6 +254,8 @@ export const DEFAULT_SUBLUNAR_MARKER_APPEARANCE: SublunarMarkerAppearance = {
   librationColor: DEFAULT_LIBRATION_INDICATOR_COLOR,
   librationThickness: DEFAULT_LIBRATION_THICKNESS,
   librationMotionScale: DEFAULT_LIBRATION_MOTION_SCALE,
+  librationOrientation: DEFAULT_LIBRATION_ORIENTATION,
+  librationUseReferenceCity: DEFAULT_LIBRATION_USE_REFERENCE_CITY,
 };
 
 export function normalizeSublunarMarkerAppearance(
@@ -194,5 +268,7 @@ export function normalizeSublunarMarkerAppearance(
     librationColor: normalizeLibrationIndicatorColorCss(params?.librationColor),
     librationThickness: normalizeLibrationThicknessId(params?.librationThickness),
     librationMotionScale: normalizeLibrationMotionScaleId(params?.librationMotionScale),
+    librationOrientation: normalizeLibrationOrientationId(params?.librationOrientation),
+    librationUseReferenceCity: normalizeLibrationUseReferenceCity(params?.librationUseReferenceCity),
   };
 }

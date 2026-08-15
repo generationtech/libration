@@ -1044,9 +1044,13 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     });
   });
 
-  it("Chrome tab: anchor-only edits do not rebuild the layer registry", async () => {
+  it("Chrome tab: anchor-only edits do not rebuild the layer registry when Moon is off", async () => {
     const user = userEvent.setup();
-    const working = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const base = appConfigToV2(getActiveAppConfig());
+    const working = normalizeLibrationConfig({
+      ...base,
+      layers: { ...base.layers, sublunarMarker: false },
+    });
     const ref: { current: LibrationConfigV2 | null } = { current: working };
     const derivedAppConfigRef = {
       current: deriveAppConfigFromV2(working),
@@ -1072,6 +1076,41 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
 
     expect(registryRef.current).toBe(registryBefore);
     expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("Chrome tab: changing the reference city rebuilds the layer registry when Moon is on", async () => {
+    const user = userEvent.setup();
+    const base = appConfigToV2(getActiveAppConfig());
+    const working = normalizeLibrationConfig({
+      ...base,
+      layers: { ...base.layers, sublunarMarker: true },
+    });
+    const ref: { current: LibrationConfigV2 | null } = { current: working };
+    const derivedAppConfigRef = {
+      current: deriveAppConfigFromV2(working),
+    };
+    const registryRef = {
+      current: createLayerRegistryFromConfig(derivedAppConfigRef.current),
+    };
+    const registryBefore = registryRef.current;
+    const spy = vi.spyOn(appBootstrap, "createLayerRegistryFromConfig");
+
+    render(
+      <ConfigShellWithCommitRerender
+        workingV2Ref={ref}
+        derivedAppConfigRef={derivedAppConfigRef}
+        registryRef={registryRef}
+      />,
+    );
+    await user.click(screen.getByRole("tab", { name: "Chrome" }));
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Read point meridian policy for top strip registration" }),
+      "auto",
+    );
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
 

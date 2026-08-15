@@ -1010,6 +1010,12 @@ describe("SceneConfig (Phase 1)", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.librationMotionScale : undefined).toBe(
       "normal",
     );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationOrientation : undefined).toBe(
+      "observer",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.librationUseReferenceCity : undefined).toBe(
+      true,
+    );
   });
 
   it("round-trips Moon appearance and keeps locus/analemma styles independent", () => {
@@ -1039,6 +1045,12 @@ describe("SceneConfig (Phase 1)", () => {
     expect(moon?.source.kind === "derived" ? moon.source.parameters?.librationColor : undefined).toBe(
       "#aabbcc",
     );
+    expect(moon?.source.kind === "derived" ? moon.source.parameters?.librationOrientation : undefined).toBe(
+      "observer",
+    );
+    expect(
+      moon?.source.kind === "derived" ? moon.source.parameters?.librationUseReferenceCity : undefined,
+    ).toBe(true);
     expect(locus?.source.kind === "derived" ? locus.source.parameters?.strokeColor : undefined).toBe(
       "#112233",
     );

@@ -76,4 +76,10 @@ Production Moon glyph now shows optical libration (Meeus ch. 53, no physical lib
 
 Verified: `npx tsc --noEmit` clean; `npm test` 172 files / 1607 passed / 0 failed; `npm run build` succeeded with no `moon-libration` / `librationEpoch` in `dist/`. Cursor Browser at inner 1920×1080: `?scenario=moon-libration` epochs, sizes, ring/crosshair, accelerated demo/pause, alt path styles, ordinary startup.
 
+## 2026-08-15 — LIB-011 complete
+
+Moon libration ring/crosshair now uses an automatic contrasting under-stroke plus the user color, and can present in map-oriented or observer-oriented frames (default observer, following the chrome reference city; map-oriented fallback when no city is resolved).
+
+Verified: `npx tsc --noEmit` clean; `npm test` 174 files / 1631 passed / 0 failed; `npm run build` succeeded with no `moon-libration` / `librationEpoch` / `observerCity` in `dist/`. Cursor Browser at inner 1920×1080: new/full/diagonal epochs, Knoxville vs Sydney vs map vs `observerCity=none`, live city switch, 86400× pause, ordinary startup.
+
 

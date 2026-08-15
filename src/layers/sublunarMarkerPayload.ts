@@ -42,6 +42,11 @@ export interface SublunarMarkerPayload {
   librationLongitudeDeg: number;
   /** Optical libration in latitude (degrees). Display mapping is downstream. */
   librationLatitudeDeg: number;
+  /**
+   * Presentation rotation of the libration mark (degrees). 0 = map-oriented LIB-010 axes.
+   * Computed upstream from observer orientation; the backend must not interpret it.
+   */
+  librationOrientationDeg: number;
   appearance: SublunarMarkerAppearance;
   readability?: OverlayReadabilityHints;
 }
@@ -58,7 +63,8 @@ export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPa
       typeof o.geocentricElongationDeg === "number" &&
       typeof o.waxing === "boolean" &&
       typeof o.librationLongitudeDeg === "number" &&
-      typeof o.librationLatitudeDeg === "number"
+      typeof o.librationLatitudeDeg === "number" &&
+      typeof o.librationOrientationDeg === "number"
     )
   ) {
     return false;

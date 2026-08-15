@@ -25,6 +25,7 @@ import { isLunarLocusPayload } from "./lunarLocusPayload";
 import { createLayerForSceneOverlayInstance } from "./sceneOverlayLayerFactory";
 import { isSolarShadingPayload } from "./solarShadingPayload";
 import { isSublunarMarkerPayload } from "./sublunarMarkerPayload";
+import { opticalLunarLibration } from "../core/lunarOpticalLibration";
 
 describe("createLayerForSceneOverlayInstance (source-driven)", () => {
   it("builds solar analemma from product and parameters, not from row id", () => {
@@ -260,6 +261,51 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     if (isEquirectangularPolylinePayload(analemma)) {
       expect(analemma.strokeColor).toBe("#fedcba");
       expect(analemma.strokeThickness).toBe("thin");
+    }
+  });
+
+  it("resolves Moon observer orientation from chrome reference city, not Moon parameters", () => {
+    const utcMs = Date.UTC(2021, 11, 10);
+    const knoxConfig = {
+      ...DEFAULT_APP_CONFIG,
+      displayTime: {
+        ...DEFAULT_APP_CONFIG.displayTime,
+        topBandAnchor: { mode: "fixedCity" as const, cityId: "city.knoxville" },
+      },
+    };
+    const sydneyConfig = {
+      ...DEFAULT_APP_CONFIG,
+      displayTime: {
+        ...DEFAULT_APP_CONFIG.displayTime,
+        topBandAnchor: { mode: "fixedCity" as const, cityId: "city.sydney" },
+      },
+    };
+    const autoConfig = {
+      ...DEFAULT_APP_CONFIG,
+      displayTime: {
+        ...DEFAULT_APP_CONFIG.displayTime,
+        topBandAnchor: { mode: "auto" as const },
+      },
+    };
+    const row = DEFAULT_APP_CONFIG.scene.layers.find((l) => l.id === "sublunarMarker")!;
+    const knoxLayer = createLayerForSceneOverlayInstance(row, { zIndex: 5, opacity: 1 }, knoxConfig);
+    const sydneyLayer = createLayerForSceneOverlayInstance(row, { zIndex: 5, opacity: 1 }, sydneyConfig);
+    const autoLayer = createLayerForSceneOverlayInstance(row, { zIndex: 5, opacity: 1 }, autoConfig);
+    const time = createTimeContext(utcMs, 0, true);
+    const knox = knoxLayer!.getState(time).data;
+    const sydney = sydneyLayer!.getState(time).data;
+    const auto = autoLayer!.getState(time).data;
+    expect(isSublunarMarkerPayload(knox)).toBe(true);
+    expect(isSublunarMarkerPayload(sydney)).toBe(true);
+    expect(isSublunarMarkerPayload(auto)).toBe(true);
+    if (isSublunarMarkerPayload(knox) && isSublunarMarkerPayload(sydney) && isSublunarMarkerPayload(auto)) {
+      expect(knox.librationOrientationDeg).not.toBeCloseTo(sydney.librationOrientationDeg, 0);
+      expect(auto.librationOrientationDeg).toBe(0);
+      expect(JSON.stringify(knox.appearance)).not.toMatch(/-83\.92/);
+      expect(JSON.stringify(row.source)).not.toMatch(/city\.knoxville/);
+      const expected = opticalLunarLibration(utcMs);
+      expect(knox.librationLongitudeDeg).toBe(expected.longitudeDeg);
+      expect(sydney.librationLongitudeDeg).toBe(expected.longitudeDeg);
     }
   });
 });

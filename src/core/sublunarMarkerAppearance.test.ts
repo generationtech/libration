@@ -18,7 +18,10 @@ import {
   librationDisplayOffsetPx,
   librationRingRadiusPx,
   librationStrokeWidthPx,
+  librationUnderStrokeKind,
+  librationUnderStrokeWidthPx,
   normalizeSublunarMarkerAppearance,
+  rotateLibrationOffsetPx,
   sublunarMarkerRadiusPx,
 } from "./sublunarMarkerAppearance";
 
@@ -29,6 +32,21 @@ describe("sublunarMarkerAppearance", () => {
     expect(DEFAULT_SUBLUNAR_MARKER_APPEARANCE.librationEnabled).toBe(true);
     expect(DEFAULT_SUBLUNAR_MARKER_APPEARANCE.librationStyle).toBe("ring");
     expect(DEFAULT_SUBLUNAR_MARKER_APPEARANCE.librationColor).toBe(DEFAULT_LIBRATION_INDICATOR_COLOR);
+    expect(DEFAULT_SUBLUNAR_MARKER_APPEARANCE.librationOrientation).toBe("observer");
+    expect(DEFAULT_SUBLUNAR_MARKER_APPEARANCE.librationUseReferenceCity).toBe(true);
+  });
+
+  it("fills observer-oriented defaults on old appearance objects", () => {
+    const n = normalizeSublunarMarkerAppearance({
+      size: "normal",
+      librationEnabled: true,
+      librationStyle: "ring",
+      librationColor: "#c5d4e8",
+      librationThickness: "normal",
+      librationMotionScale: "normal",
+    });
+    expect(n.librationOrientation).toBe("observer");
+    expect(n.librationUseReferenceCity).toBe(true);
   });
 
   it("preserves current Moon radius at size normal", () => {
@@ -101,5 +119,33 @@ describe("sublunarMarkerAppearance", () => {
       strokeWidthPx: stroke,
     });
     expect(enhanced.dxPx).toBeGreaterThan(subtle.dxPx);
+  });
+
+  it("picks dark under-stroke for light foreground and light for dark", () => {
+    expect(librationUnderStrokeKind("#c5d4e8")).toBe("dark");
+    expect(librationUnderStrokeKind("#ffffff")).toBe("dark");
+    expect(librationUnderStrokeKind("#000000")).toBe("light");
+    expect(librationUnderStrokeKind("#1a2230")).toBe("light");
+    expect(librationUnderStrokeWidthPx(1)).toBeGreaterThan(1);
+    expect(librationUnderStrokeWidthPx(1.2) - 1.2).toBeLessThanOrEqual(1.25);
+  });
+
+  it("rotates +north toward +east at +90° and is identity at 0°", () => {
+    const r = 7.5;
+    const markR = librationRingRadiusPx(r);
+    const stroke = librationStrokeWidthPx(r, "normal");
+    const north = librationDisplayOffsetPx({
+      longitudeDeg: 0,
+      latitudeDeg: 6.9,
+      moonRadiusPx: r,
+      markRadiusPx: markR,
+      strokeWidthPx: stroke,
+    });
+    const same = rotateLibrationOffsetPx(north, 0);
+    expect(same.dxPx).toBeCloseTo(north.dxPx, 10);
+    expect(same.dyPx).toBeCloseTo(north.dyPx, 10);
+    const eastward = rotateLibrationOffsetPx(north, 90);
+    expect(eastward.dxPx).toBeGreaterThan(0);
+    expect(eastward.dyPx).toBeCloseTo(0, 8);
   });
 });

@@ -34,6 +34,7 @@ import {
   persistWorkingV2,
 } from "../config/v2/workingV2Persistence";
 import type { LayerRegistry } from "../layers/LayerRegistry";
+import { topBandAnchorEqual } from "../core/referenceCityObserver";
 
 const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
@@ -258,6 +259,13 @@ function applyCommittedWorkingV2(
     prevDerived.displayTime.topBandMode !== nextDerived.displayTime.topBandMode;
   const cityPinsHourLabelRequiresRegistry =
     cityPinsHourLabelPolicyChanged && (prevDerived.layers.cityPins || nextDerived.layers.cityPins);
+  const moonObserverAnchorChanged = !topBandAnchorEqual(
+    prevDerived.displayTime.topBandAnchor,
+    nextDerived.displayTime.topBandAnchor,
+  );
+  const moonObserverRequiresRegistry =
+    moonObserverAnchorChanged &&
+    (prevDerived.layers.sublunarMarker || nextDerived.layers.sublunarMarker);
   const sceneRuntimeChanged = !sceneRuntimeAffectingEqual(prevDerived.scene, nextDerived.scene);
 
   if (
@@ -267,7 +275,8 @@ function applyCommittedWorkingV2(
     !customPinsEqual(prevDerived.customPins, nextDerived.customPins) ||
     pinPresentationRequiresRegistry ||
     cityPinsFontRequiresRegistry ||
-    cityPinsHourLabelRequiresRegistry
+    cityPinsHourLabelRequiresRegistry ||
+    moonObserverRequiresRegistry
   ) {
     registryRef.current = createLayerRegistryFromConfig(nextDerived);
   }

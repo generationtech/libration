@@ -460,6 +460,7 @@ export class CanvasRenderBackend implements RenderBackend {
           waxing: layer.data.waxing,
           librationLongitudeDeg: layer.data.librationLongitudeDeg,
           librationLatitudeDeg: layer.data.librationLatitudeDeg,
+          librationOrientationDeg: layer.data.librationOrientationDeg,
           appearance: sublunarMarkerAppearanceFromPayload(layer.data),
           readability: layer.data.readability ?? null,
         }),

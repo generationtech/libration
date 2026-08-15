@@ -79,7 +79,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - solar subpoint.
 - lunar subpoint.
 - moon phase beyond the existing sublunar-marker phase representation.
-- **Apparent lunar orientation / lunar north rotation** (candidate; not current work). A third orientation dimension beyond the longitude/latitude libration displacement on the Moon glyph: an orientation element would rotate with the apparent position angle of lunar north / the Moon’s apparent sky orientation. Complements, and must not replace, the existing X/Y libration mark. Requires its own approved LIB item; do not fold it into Moon styling.
+- **Apparent lunar orientation / lunar north rotation** (candidate; not current work). Richer visualization of the Moon’s apparent face: surface/maria orientation, an explicit lunar-north reference, or a detailed oriented Moon disc. The libration marker already has a map vs observer reference-frame setting (observer-oriented rotates the libration displacement and crosshair axes using the chrome reference city). That marker-frame rotation is not this item. Complements, and must not replace, the existing X/Y optical-libration mark. Requires its own approved LIB item.
 - analemma variants.
 - equinox and solstice reference overlays.
 - eclipse path overlays.

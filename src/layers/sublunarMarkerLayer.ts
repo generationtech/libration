@@ -13,6 +13,11 @@
 
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { opticalLunarLibration } from "../core/lunarOpticalLibration";
+import {
+  apparentLunarNorthPositionAngleDeg,
+  unwrapAngleDeg,
+} from "../core/lunarObserverOrientation";
+import type { ReferenceCityObserverLocation } from "../core/referenceCityObserver";
 import { sublunarPoint } from "../core/sublunarPoint";
 import {
   applySceneOverlayReadabilityPresentationToFrame,
@@ -41,6 +46,8 @@ export function createSublunarMarkerLayer(
     zIndex?: number;
     opacity?: number;
     appearance?: SublunarMarkerAppearance;
+    /** Catalog observer from chrome `fixedCity`; null → map-oriented fallback. */
+    observer?: ReferenceCityObserverLocation | null;
     /** Optional pilot: extra veil/lift pass for this marker only (after global presentation). */
     sublunarMarkerReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
   } = {},
@@ -50,7 +57,9 @@ export function createSublunarMarkerLayer(
   const appearance = normalizeSublunarMarkerAppearance(
     options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   );
+  const observer = options.observer ?? null;
   const sublunarMarkerReadabilityPresentation = options.sublunarMarkerReadabilityPresentation;
+  let previousOrientationDeg: number | undefined;
   return {
     id: SUBLUNAR_MARKER_ID,
     name: "Sub-lunar point",
@@ -63,6 +72,22 @@ export function createSublunarMarkerLayer(
       const { latDeg, lonDeg } = sublunarPoint(time.now);
       const phase = approximateLunarPhase(time.now);
       const libration = opticalLunarLibration(time.now);
+      const useObserver =
+        appearance.librationOrientation === "observer" &&
+        appearance.librationUseReferenceCity &&
+        observer !== null;
+      let librationOrientationDeg = 0;
+      if (useObserver) {
+        const raw = apparentLunarNorthPositionAngleDeg(
+          time.now,
+          observer.latitudeDeg,
+          observer.longitudeDeg,
+        );
+        librationOrientationDeg = unwrapAngleDeg(previousOrientationDeg, raw);
+        previousOrientationDeg = librationOrientationDeg;
+      } else {
+        previousOrientationDeg = undefined;
+      }
       let frame = getOverlayReadabilityFrameOrCompute(time);
       if (sublunarMarkerReadabilityPresentation) {
         frame = applySceneOverlayReadabilityPresentationToFrame(frame, sublunarMarkerReadabilityPresentation);
@@ -76,6 +101,7 @@ export function createSublunarMarkerLayer(
         waxing: phase.waxing,
         librationLongitudeDeg: libration.longitudeDeg,
         librationLatitudeDeg: libration.latitudeDeg,
+        librationOrientationDeg,
         appearance,
         readability: {
           nightVeil01: frame.readabilityVeil01At(latDeg, lonDeg),

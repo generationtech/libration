@@ -366,6 +366,29 @@ describe("LayersTab Moon and astronomy path styling", () => {
     expect(moon.librationColor).toBe("#abcdef");
     expect(moon.size).toBe("large");
     expect(moon.librationStyle).toBe("crosshair");
+    expect(moon.librationOrientation).toBe("observer");
+    expect(moon.librationUseReferenceCity).toBe(true);
+    fireEvent.change(screen.getByLabelText("Libration orientation"), { target: { value: "map" } });
+    expect((screen.getByLabelText("Use reference city") as HTMLInputElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Libration orientation"), { target: { value: "observer" } });
+    fireEvent.click(screen.getByLabelText("Use reference city"));
+    const moonAfter = JSON.parse(screen.getByTestId("moon-params").textContent ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    expect(moonAfter.librationOrientation).toBe("observer");
+    expect(moonAfter.librationUseReferenceCity).toBe(false);
+    expect(moonAfter.librationColor).toBe("#abcdef");
+    const locusAfter = JSON.parse(screen.getByTestId("locus-params").textContent ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const analemmaAfter = JSON.parse(screen.getByTestId("analemma-params").textContent ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    expect(locusAfter.strokeColor).toBe("#112233");
+    expect(analemmaAfter.strokeColor).toBe("#fedcba");
     expect(locus.strokeColor).toBe("#112233");
     expect(locus.strokeThickness).toBe("thick");
     expect(analemma.strokeColor).toBe("#fedcba");

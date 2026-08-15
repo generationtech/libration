@@ -30,6 +30,7 @@ import {
   applyVisualScenarioFromLocation,
   parseVisualScenarioQuery,
   resolveVisualScenarioSession,
+  parseMoonLibrationObserverCityId,
 } from "./visualScenarios";
 import {
   getVisualScenarioRuntime,
@@ -176,6 +177,50 @@ describe("resolveVisualScenarioSession", () => {
     const row = config.scene?.layers.find((l) => l.id === "sublunarMarker");
     expect(row?.source.kind === "derived" ? row.source.parameters?.librationEnabled : undefined).toBe(true);
     expect(row?.source.kind === "derived" ? row.source.parameters?.librationStyle : undefined).toBe("ring");
+  });
+
+  it("applies moon-libration DEV observerCity, orientation, and style parameters", () => {
+    const sydney = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=moon-libration&observerCity=sydney&librationStyle=crosshair",
+    });
+    expect(sydney.kind).toBe("applied");
+    if (sydney.kind === "applied") {
+      expect(sydney.config.chrome.displayTime.topBandAnchor).toEqual({
+        mode: "fixedCity",
+        cityId: "city.sydney",
+      });
+      const row = sydney.config.scene?.layers.find((l) => l.id === "sublunarMarker");
+      expect(row?.source.kind === "derived" ? row.source.parameters?.librationStyle : undefined).toBe(
+        "crosshair",
+      );
+    }
+    const none = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=moon-libration&observerCity=none",
+    });
+    expect(none.kind).toBe("applied");
+    if (none.kind === "applied") {
+      expect(none.config.chrome.displayTime.topBandAnchor).toEqual({ mode: "auto" });
+    }
+    const map = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=moon-libration&librationOrientation=map",
+    });
+    expect(map.kind).toBe("applied");
+    if (map.kind === "applied") {
+      const row = map.config.scene?.layers.find((l) => l.id === "sublunarMarker");
+      expect(row?.source.kind === "derived" ? row.source.parameters?.librationOrientation : undefined).toBe(
+        "map",
+      );
+    }
+  });
+
+  it("parses moon-libration observerCity catalog ids", () => {
+    expect(parseMoonLibrationObserverCityId("sydney")).toBe("city.sydney");
+    expect(parseMoonLibrationObserverCityId("sao-paulo")).toBe("city.sao_paulo");
+    expect(parseMoonLibrationObserverCityId("none")).toBe("none");
+    expect(parseMoonLibrationObserverCityId("not-a-city")).toBeNull();
   });
 
   it("selects moon-libration epoch UTC from the DEV librationEpoch query parameter", () => {

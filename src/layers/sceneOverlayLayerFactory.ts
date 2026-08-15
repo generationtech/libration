@@ -48,6 +48,7 @@ import {
 } from "../core/astronomyOverlayStrokeAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
 import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
+import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
 
 type OverlayPart = { zIndex: number; opacity: number };
 
@@ -214,6 +215,7 @@ function createDerivedOverlayByProduct(
         zIndex,
         opacity,
         appearance: normalizeSublunarMarkerAppearance(source.parameters),
+        observer: resolveReferenceCityObserverLocation(config.displayTime),
         sublunarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.sublunarMarker,
       });
     case "sublunarGroundTrack":

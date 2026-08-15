@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-010](work/LIB-010-moon-libration-and-astronomy-styling.md) — Moon libration indicator and astronomical overlay styling
+[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) — Observer-oriented lunar libration and contrast-safe marker
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. Draft a proposed item only if asked. Do not start work from `docs/FUTURE_FEATURES.md`.
+No approved work. Stop.

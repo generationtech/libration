@@ -61,14 +61,17 @@ import {
 } from "../../core/astronomyOverlayStrokeAppearance";
 import {
   LIBRATION_MOTION_SCALE_IDS,
+  LIBRATION_ORIENTATION_IDS,
   LIBRATION_STYLE_IDS,
   LIBRATION_THICKNESS_IDS,
   SUBLUNAR_MARKER_SIZE_IDS,
   type LibrationIndicatorStyleId,
   type LibrationMotionScaleId,
+  type LibrationOrientationId,
   type LibrationThicknessId,
   type SublunarMarkerSizeId,
 } from "../../core/sublunarMarkerAppearance";
+import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 
@@ -474,6 +477,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
   const lunarExtents = lunarGroundTrackExtentsFromScene(scene);
   const lunarColors = lunarGroundTrackColorsFromScene(scene);
   const moonAppearance = sublunarMarkerAppearanceFromScene(scene);
+  const observerLocation = resolveReferenceCityObserverLocation(config.chrome.displayTime);
+  const observerCityUnavailable =
+    moonAppearance.librationOrientation === "observer" &&
+    moonAppearance.librationUseReferenceCity &&
+    observerLocation === null;
   const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
@@ -1566,6 +1574,67 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
               </option>
             ))}
           </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Libration orientation">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Libration orientation"
+            title={
+              observerCityUnavailable
+                ? "No valid reference city is selected; the mark uses map-oriented presentation until one is available."
+                : "Map-oriented keeps east/north axes. Observer-oriented rotates the mark into the terrestrial observer frame."
+            }
+            value={moonAppearance.librationOrientation}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationOrientation = e.currentTarget.value as LibrationOrientationId;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationOrientation,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {LIBRATION_ORIENTATION_IDS.map((id) => (
+              <option key={id} value={id}>
+                {id === "map" ? "Map-oriented" : "Observer-oriented"}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Use reference city">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={moonAppearance.librationUseReferenceCity}
+            readOnly={!mutable}
+            disabled={!mutable || moonAppearance.librationOrientation !== "observer"}
+            tabIndex={mutable && moonAppearance.librationOrientation === "observer" ? 0 : -1}
+            aria-label="Use reference city"
+            title="When Observer-oriented, use the Chrome reference city's latitude and longitude. Off, or no valid city, falls back to map-oriented presentation."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const librationUseReferenceCity = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applySublunarMarkerAppearanceToScene(baseScene, {
+                        librationUseReferenceCity,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
         </ConfigControlRow>
         <ConfigControlRow label="Libration color">
           <input

@@ -17,6 +17,9 @@ import type { OverlayReadabilityFrame } from "../core/overlayReadabilityFrame";
 import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
 import { isSublunarMarkerPayload } from "./sublunarMarkerPayload";
 import { opticalLunarLibration } from "../core/lunarOpticalLibration";
+import { apparentLunarNorthPositionAngleDeg } from "../core/lunarObserverOrientation";
+import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE } from "../core/sublunarMarkerAppearance";
+import { REFERENCE_CITIES } from "../data/referenceCities";
 
 const fakeFrame: OverlayReadabilityFrame = {
   globalNightVeil01: 0.5,
@@ -71,5 +74,71 @@ describe("createSublunarMarkerLayer", () => {
     expect(st.data.librationLatitudeDeg).toBe(expected.latitudeDeg);
     expect(st.data.appearance.librationEnabled).toBe(true);
     expect(st.data.appearance.librationStyle).toBe("ring");
+    expect(st.data.librationOrientationDeg).toBe(0);
+  });
+
+  it("falls back to map orientation when observer-oriented but no reference city is available", () => {
+    const utcMs = Date.UTC(2021, 11, 10);
+    const layer = createSublunarMarkerLayer({
+      appearance: {
+        ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+        librationOrientation: "observer",
+        librationUseReferenceCity: true,
+      },
+      observer: null,
+    });
+    const st = layer.getState(createTimeContext(utcMs, 0, true));
+    expect(isSublunarMarkerPayload(st.data)).toBe(true);
+    if (!isSublunarMarkerPayload(st.data)) {
+      return;
+    }
+    expect(st.data.librationOrientationDeg).toBe(0);
+    const expected = opticalLunarLibration(utcMs);
+    expect(st.data.librationLongitudeDeg).toBe(expected.longitudeDeg);
+    expect(st.data.librationLatitudeDeg).toBe(expected.latitudeDeg);
+  });
+
+  it("emits observer orientation from catalog coordinates without storing a Moon copy of them", () => {
+    const utcMs = Date.UTC(2021, 11, 10);
+    const knox = REFERENCE_CITIES.find((c) => c.id === "city.knoxville");
+    expect(knox).toBeDefined();
+    const layer = createSublunarMarkerLayer({
+      observer: {
+        cityId: knox!.id,
+        latitudeDeg: knox!.latitude,
+        longitudeDeg: knox!.longitude,
+      },
+    });
+    const st = layer.getState(createTimeContext(utcMs, 0, true));
+    expect(isSublunarMarkerPayload(st.data)).toBe(true);
+    if (!isSublunarMarkerPayload(st.data)) {
+      return;
+    }
+    expect(st.data.librationOrientationDeg).toBeCloseTo(
+      apparentLunarNorthPositionAngleDeg(utcMs, knox!.latitude, knox!.longitude),
+      10,
+    );
+    expect(JSON.stringify(st.data.appearance)).not.toMatch(/city\.knoxville/);
+    expect(st.data.appearance).not.toHaveProperty("latitudeDeg");
+    expect(st.data.appearance).not.toHaveProperty("longitudeDeg");
+  });
+
+  it("keeps map-oriented presentation at 0° even when an observer is supplied", () => {
+    const utcMs = Date.UTC(2021, 11, 10);
+    const knox = REFERENCE_CITIES.find((c) => c.id === "city.knoxville")!;
+    const layer = createSublunarMarkerLayer({
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationOrientation: "map" },
+      observer: {
+        cityId: knox.id,
+        latitudeDeg: knox.latitude,
+        longitudeDeg: knox.longitude,
+      },
+    });
+    const st = layer.getState(createTimeContext(utcMs, 0, true));
+    expect(isSublunarMarkerPayload(st.data)).toBe(true);
+    if (!isSublunarMarkerPayload(st.data)) {
+      return;
+    }
+    expect(st.data.librationOrientationDeg).toBe(0);
   });
 });

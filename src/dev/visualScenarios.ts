@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { applyLayerEnableFlagsToScene } from "../config/v2/sceneConfig";
+import { applyLayerEnableFlagsToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
 import {
   assertIsNormalizedLibrationConfig,
   defaultLibrationConfigV2,
@@ -20,6 +20,7 @@ import {
 } from "../config/v2/librationConfig";
 import { setWorkingV2PersistenceSuppressed } from "../config/v2/workingV2Persistence";
 import { LUNAR_LOCUS_EPOCH_UTC, type LunarLocusEpochId } from "../core/lunarLocus";
+import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setVisualScenarioExtraOverlayBuilder,
   setVisualScenarioRuntime,
@@ -202,7 +203,7 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     id: "moon-libration",
     startIsoUtc: VISUAL_SCENARIO_UTC["moon-libration"],
     purpose:
-      "Production Moon glyph with optical-libration ring at a combined longitude/latitude displacement.",
+      "Production Moon glyph with optical-libration ring; observer-oriented by default. Optional DEV librationEpoch, observerCity, librationOrientation, librationStyle.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["moon-libration"], applyMoonLibrationScene),
   },
 };
@@ -244,6 +245,25 @@ export function parseMoonLibrationEpochId(raw: string | null): MoonLibrationEpoc
     return raw as MoonLibrationEpochId;
   }
   return "diagonal";
+}
+
+/** DEV-only: catalog city id, or `none` to clear the reference-city observer. */
+export function parseMoonLibrationObserverCityId(raw: string | null): "none" | string | null {
+  if (raw === null || raw === "") {
+    return null;
+  }
+  if (raw === "none") {
+    return "none";
+  }
+  const direct = raw.startsWith("city.") ? raw : `city.${raw}`;
+  const hyphen = direct.replace(/-/g, "_");
+  if (REFERENCE_CITIES.some((c) => c.id === direct)) {
+    return direct;
+  }
+  if (REFERENCE_CITIES.some((c) => c.id === hyphen)) {
+    return hyphen;
+  }
+  return null;
 }
 
 export function isVisualScenarioId(id: string): id is VisualScenarioId {
@@ -295,11 +315,49 @@ export function resolveVisualScenarioSession(
     const params = parseSearchParams(input.search);
     const epoch = parseMoonLibrationEpochId(params.get("librationEpoch"));
     const startIsoUtc = MOON_LIBRATION_EPOCH_UTC[epoch];
+    const observerCity = parseMoonLibrationObserverCityId(params.get("observerCity"));
+    const orientationRaw = params.get("librationOrientation");
+    const styleRaw = params.get("librationStyle");
     return {
       kind: "applied",
       id: "moon-libration",
       startIsoUtc,
-      config: withDemoAt(startIsoUtc, applyMoonLibrationScene),
+      config: withDemoAt(startIsoUtc, (draft) => {
+        applyMoonLibrationScene(draft);
+        if (observerCity === "none") {
+          draft.chrome = {
+            ...draft.chrome,
+            displayTime: {
+              ...draft.chrome.displayTime,
+              topBandAnchor: { mode: "auto" },
+            },
+          };
+        } else if (observerCity !== null) {
+          draft.chrome = {
+            ...draft.chrome,
+            displayTime: {
+              ...draft.chrome.displayTime,
+              topBandAnchor: { mode: "fixedCity", cityId: observerCity },
+            },
+          };
+        }
+        if (
+          draft.scene &&
+          (orientationRaw === "map" ||
+            orientationRaw === "observer" ||
+            styleRaw === "ring" ||
+            styleRaw === "crosshair")
+        ) {
+          draft.scene = applySublunarMarkerAppearanceToScene(draft.scene, {
+            ...(orientationRaw === "map" || orientationRaw === "observer"
+              ? { librationOrientation: orientationRaw }
+              : {}),
+            ...(styleRaw === "ring" || styleRaw === "crosshair"
+              ? { librationStyle: styleRaw }
+              : {}),
+          });
+        }
+      }),
     };
   }
   const definition = VISUAL_SCENARIOS[requested];

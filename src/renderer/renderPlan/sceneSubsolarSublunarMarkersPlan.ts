@@ -27,10 +27,17 @@ import { clipPayloadDescriptor, createPath2DItem } from "./pathItemFactories";
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+  LIBRATION_UNDERSTROKE_DARK_RGB,
+  LIBRATION_UNDERSTROKE_LIGHT_RGB,
   librationCrosshairArmPx,
   librationDisplayOffsetPx,
   librationRingRadiusPx,
   librationStrokeWidthPx,
+  librationUnderStrokeKind,
+  librationUnderStrokeWidthPx,
+  normalizeSublunarMarkerAppearance,
+  rotateLibrationOffsetPx,
+  rotateScreenPoint,
   sublunarMarkerRadiusPx,
   type SublunarMarkerAppearance,
 } from "../../core/sublunarMarkerAppearance";
@@ -138,7 +145,9 @@ export function buildSublunarMarkerRenderPlan(options: {
   waxing: boolean;
   librationLongitudeDeg?: number;
   librationLatitudeDeg?: number;
-  appearance?: SublunarMarkerAppearance;
+  /** Presentation rotation only (degrees). 0 = map-oriented. */
+  librationOrientationDeg?: number;
+  appearance?: Partial<SublunarMarkerAppearance>;
   readability?: OverlayReadabilityHints | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
@@ -155,7 +164,9 @@ export function buildSublunarMarkerRenderPlan(options: {
   const sw = (base: number) => Math.max(base, base * (1 + 0.7 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.25 * v));
 
-  const appearance = options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE;
+  const appearance = normalizeSublunarMarkerAppearance(
+    options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+  );
   const cx = mapXFromLongitudeDeg(options.lonDeg, w);
   const cy = mapLatToY(options.latDeg, h);
   const r = sublunarMarkerRadiusPx(w, appearance.size);
@@ -250,6 +261,7 @@ export function buildSublunarMarkerRenderPlan(options: {
       appearance,
       longitudeDeg: options.librationLongitudeDeg ?? 0,
       latitudeDeg: options.librationLatitudeDeg ?? 0,
+      orientationDeg: options.librationOrientationDeg ?? 0,
       alpha: a,
     });
   }
@@ -290,12 +302,13 @@ function pushLibrationIndicator(
     appearance: SublunarMarkerAppearance;
     longitudeDeg: number;
     latitudeDeg: number;
+    orientationDeg: number;
     alpha: (x: number) => number;
   },
 ): void {
   const markR = librationRingRadiusPx(args.r);
   const strokeW = librationStrokeWidthPx(args.r, args.appearance.librationThickness);
-  const offset = librationDisplayOffsetPx({
+  const mapOffset = librationDisplayOffsetPx({
     longitudeDeg: args.longitudeDeg,
     latitudeDeg: args.latitudeDeg,
     moonRadiusPx: args.r,
@@ -303,21 +316,30 @@ function pushLibrationIndicator(
     markRadiusPx: args.appearance.librationStyle === "ring" ? markR : 0.12 * args.r,
     strokeWidthPx: strokeW,
   });
+  const offset = rotateLibrationOffsetPx(mapOffset, args.orientationDeg);
   const ix = args.cx + offset.dxPx;
   const iy = args.cy + offset.dyPx;
   const clip = clipPayloadDescriptor(circlePathDescriptor(args.cx, args.cy, args.r));
   const color = cssStrokeRgba(args.appearance.librationColor, args.alpha(0.92), "197, 212, 232");
-  const under = `rgba(18, 26, 40, ${args.alpha(0.55)})`;
+  const underKind = librationUnderStrokeKind(args.appearance.librationColor);
+  const underRgb =
+    underKind === "dark" ? LIBRATION_UNDERSTROKE_DARK_RGB : LIBRATION_UNDERSTROKE_LIGHT_RGB;
+  const under = `rgba(${underRgb}, ${args.alpha(underKind === "dark" ? 0.72 : 0.82)})`;
+  const underW = librationUnderStrokeWidthPx(strokeW);
   if (args.appearance.librationStyle === "crosshair") {
     const arm = librationCrosshairArmPx(args.r);
+    const e1 = rotateScreenPoint(ix - arm, iy, ix, iy, args.orientationDeg);
+    const e2 = rotateScreenPoint(ix + arm, iy, ix, iy, args.orientationDeg);
+    const n1 = rotateScreenPoint(ix, iy - arm, ix, iy, args.orientationDeg);
+    const n2 = rotateScreenPoint(ix, iy + arm, ix, iy, args.orientationDeg);
     const cross = new Path2D(
-      `M ${ix - arm},${iy} L ${ix + arm},${iy} M ${ix},${iy - arm} L ${ix},${iy + arm}`,
+      `M ${e1.x},${e1.y} L ${e2.x},${e2.y} M ${n1.x},${n1.y} L ${n2.x},${n2.y}`,
     );
     items.push(
       createPath2DItem({
         path: cross,
         stroke: under,
-        strokeWidthPx: strokeW + 0.7,
+        strokeWidthPx: underW,
         clip,
       }),
     );
@@ -335,7 +357,7 @@ function pushLibrationIndicator(
     createPath2DItem({
       path: circlePath2D(ix, iy, markR),
       stroke: under,
-      strokeWidthPx: strokeW + 0.7,
+      strokeWidthPx: underW,
       clip,
     }),
   );

@@ -126,10 +126,20 @@ export function moonMeanAscendingNodeLongitudeDeg(utcMs: number): number {
   );
 }
 
+export type MoonEquatorialRaDecGmstDeg = {
+  /** Right ascension, degrees. */
+  readonly raDeg: number;
+  /** Declination, degrees. */
+  readonly decDeg: number;
+  /** Greenwich mean sidereal time, degrees (0…360). */
+  readonly gmstDeg: number;
+};
+
 /**
- * Point on Earth where the Moon is at the zenith (sub-lunar point).
+ * Moon equatorial coordinates and GMST from the same truncated series as {@link sublunarPoint}.
+ * Does not read the system clock.
  */
-export function sublunarPoint(utcMs: number): SublunarPointDeg {
+export function moonEquatorialRaDecGmst(utcMs: number): MoonEquatorialRaDecGmstDeg {
   const JD = julianDate(utcMs);
   const T = (JD - 2451545.0) / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
   const n = JD - 2451545.0;
@@ -156,11 +166,19 @@ export function sublunarPoint(utcMs: number): SublunarPointDeg {
   let gmst = 280.46061837 + LUNAR_MODEL_GMST_RATE_DEG_PER_DAY * n;
   gmst = ((gmst % 360) + 360) % 360;
 
-  const raDeg = (raRad * 180) / Math.PI;
-  let lonDeg = raDeg - gmst;
+  return {
+    raDeg: (raRad * 180) / Math.PI,
+    decDeg: (decRad * 180) / Math.PI,
+    gmstDeg: gmst,
+  };
+}
+
+/**
+ * Point on Earth where the Moon is at the zenith (sub-lunar point).
+ */
+export function sublunarPoint(utcMs: number): SublunarPointDeg {
+  const { raDeg, decDeg, gmstDeg } = moonEquatorialRaDecGmst(utcMs);
+  let lonDeg = raDeg - gmstDeg;
   lonDeg = ((lonDeg + 540) % 360) - 180;
-
-  const latDeg = (decRad * 180) / Math.PI;
-
-  return { latDeg, lonDeg };
+  return { latDeg: decDeg, lonDeg };
 }

@@ -16,10 +16,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
-import {
-  buildSubsolarMarkerRenderPlan,
-  buildSublunarMarkerRenderPlan,
-} from "./sceneSubsolarSublunarMarkersPlan";
+import { buildSubsolarMarkerRenderPlan, buildSublunarMarkerRenderPlan } from "./sceneSubsolarSublunarMarkersPlan";
+import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE } from "../../core/sublunarMarkerAppearance";
 
 describe("buildSubsolarMarkerRenderPlan", () => {
   it("emits empty plan for zero viewport", () => {
@@ -301,6 +299,105 @@ describe("buildSublunarMarkerRenderPlan", () => {
     expect(src).not.toMatch(/opticalLunarLibration/);
     expect(src).not.toMatch(/moonEcliptic/);
     expect(src).not.toMatch(/librationMotionScale/);
+    expect(src).not.toMatch(/parallacticAngle/);
+    expect(src).not.toMatch(/city\.knoxville/);
+    expect(src).not.toMatch(/apparentLunarNorth/);
+    expect(src).not.toMatch(/referenceCity/);
+  });
+
+  it("uses a wider contrasting under-stroke then the user foreground for ring and crosshair", () => {
+    const pale = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      librationLongitudeDeg: 0,
+      librationLatitudeDeg: 0,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationColor: "#c5d4e8" },
+    });
+    const black = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 0.05,
+      waxing: true,
+      librationLongitudeDeg: 0,
+      librationLatitudeDeg: 0,
+      appearance: {
+        ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
+        librationStyle: "crosshair",
+        librationColor: "#000000",
+      },
+    });
+    const paleMarks = pale.items.filter((i) => i.kind === "path2d" && i.clip);
+    const blackMarks = black.items.filter((i) => i.kind === "path2d" && i.clip);
+    expect(paleMarks.length).toBeGreaterThanOrEqual(2);
+    expect(blackMarks.length).toBeGreaterThanOrEqual(2);
+    const paleUnder = paleMarks[paleMarks.length - 2];
+    const paleFg = paleMarks[paleMarks.length - 1];
+    const blackUnder = blackMarks[blackMarks.length - 2];
+    const blackFg = blackMarks[blackMarks.length - 1];
+    expect(paleUnder).toMatchObject({ kind: "path2d", stroke: expect.stringMatching(/18,\s*26,\s*40/) });
+    expect(paleFg).toMatchObject({ kind: "path2d", stroke: expect.stringMatching(/197,\s*212,\s*232/) });
+    expect(blackUnder).toMatchObject({ kind: "path2d", stroke: expect.stringMatching(/236,\s*240,\s*246/) });
+    expect(blackFg).toMatchObject({ kind: "path2d", stroke: expect.stringMatching(/0,\s*0,\s*0/) });
+    if (
+      paleUnder?.kind === "path2d" &&
+      paleFg?.kind === "path2d" &&
+      blackUnder?.kind === "path2d" &&
+      blackFg?.kind === "path2d"
+    ) {
+      expect(paleUnder.strokeWidthPx ?? 0).toBeGreaterThan(paleFg.strokeWidthPx ?? 0);
+      expect(blackUnder.strokeWidthPx ?? 0).toBeGreaterThan(blackFg.strokeWidthPx ?? 0);
+    }
+  });
+
+  it("rotates observer-oriented displacement off the map axes", () => {
+    const OrigPath2D = globalThis.Path2D;
+    const svgCalls: string[] = [];
+    globalThis.Path2D = class extends OrigPath2D {
+      constructor(d?: string | Path2D) {
+        super(d as never);
+        if (typeof d === "string") {
+          svgCalls.push(d);
+        }
+      }
+    } as typeof Path2D;
+    try {
+      buildSublunarMarkerRenderPlan({
+        viewportWidthPx: 400,
+        viewportHeightPx: 200,
+        lonDeg: 0,
+        latDeg: 0,
+        illuminatedFraction: 1,
+        waxing: true,
+        librationLongitudeDeg: 0,
+        librationLatitudeDeg: 6.9,
+        librationOrientationDeg: 0,
+      });
+      const mapSvgs = [...svgCalls];
+      svgCalls.length = 0;
+      buildSublunarMarkerRenderPlan({
+        viewportWidthPx: 400,
+        viewportHeightPx: 200,
+        lonDeg: 0,
+        latDeg: 0,
+        illuminatedFraction: 1,
+        waxing: true,
+        librationLongitudeDeg: 0,
+        librationLatitudeDeg: 6.9,
+        librationOrientationDeg: 90,
+      });
+      const observerSvgs = [...svgCalls];
+      expect(mapSvgs.some((s) => s.includes("A"))).toBe(true);
+      expect(observerSvgs.some((s) => s.includes("A"))).toBe(true);
+      expect(mapSvgs.join("\n")).not.toBe(observerSvgs.join("\n"));
+    } finally {
+      globalThis.Path2D = OrigPath2D;
+    }
   });
 });
 
