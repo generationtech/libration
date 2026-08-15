@@ -16,7 +16,13 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { LUNAR_LOCUS_KIND, type LunarLocusPayload } from "../../layers/lunarLocusPayload";
-import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
+import {
+  DEFAULT_LUNAR_LOCUS_STROKE_RGB,
+  LUNAR_LOCUS_EPOCH_UTC,
+  interpolateLunarLocusPolyline,
+  resetLunarLocusCacheForTests,
+  sampleLunarLocus,
+} from "../../core/lunarLocus";
 import { buildLunarLocusRenderPlan } from "./lunarLocusPlan";
 
 function payload(partial: Partial<LunarLocusPayload> = {}): LunarLocusPayload {
@@ -124,5 +130,27 @@ describe("buildLunarLocusRenderPlan", () => {
     expect(src).not.toMatch(/meanLunarDay/);
     expect(src).not.toMatch(/standstill/i);
     expect(src).not.toMatch(/mean lunar/i);
+  });
+
+  it("preserves wrapped-copy geometry without long or reversed world spans", () => {
+    resetLunarLocusCacheForTests();
+    const points = interpolateLunarLocusPolyline(sampleLunarLocus(Date.parse(LUNAR_LOCUS_EPOCH_UTC.recent)));
+    const plan = buildLunarLocusRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({ points }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(100);
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      const dx = item.x2 - item.x1;
+      const dy = item.y2 - item.y1;
+      expect(Math.abs(dx)).toBeLessThan(360 * 0.5);
+      expect(Math.hypot(dx, dy)).toBeLessThan(40);
+    }
   });
 });

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-007](work/LIB-007-lunar-locus.md) — Production lunar locus overlay
+[LIB-008](work/LIB-008-fix-lunar-locus-zigzag.md) — Fix lunar locus moving zigzag
 
 ## Blockers
 

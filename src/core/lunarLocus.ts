@@ -26,7 +26,7 @@ import {
 
 const MS_PER_DAY = 86_400_000;
 
-/** Inclusive sample count: k = −13 … +14 (current Moon is k = 0). */
+/** Inclusive rendered sample count: k = −13 … +14 (current Moon is k = 0). */
 export const LUNAR_LOCUS_SAMPLE_COUNT = 28;
 
 /** Mean-lunar-day offsets before the canonical instant. */
@@ -34,6 +34,19 @@ export const LUNAR_LOCUS_PAST_STEPS = 13;
 
 /** Mean-lunar-day offsets after the canonical instant. */
 export const LUNAR_LOCUS_FUTURE_STEPS = 14;
+
+/**
+ * Extra past samples for Catmull-Rom neighbors, including one prefix span
+ * (k = −14 → −13) so the one-cycle join can match the approach into k = −13.
+ * Not part of the rendered sample window.
+ */
+export const LUNAR_LOCUS_PAST_TANGENT_SUPPORT = 2;
+
+/** Extra future sample so the last rendered span has a real p3 (k = +15). */
+export const LUNAR_LOCUS_FUTURE_TANGENT_SUPPORT = 1;
+
+/** Prefix spans interpolated before k = −13 for join correspondence. */
+const LUNAR_LOCUS_PREFIX_SPANS = 1;
 
 /** Centripetal Catmull-Rom subdivisions per sample span. */
 export const LUNAR_LOCUS_INTERP_SUBDIVISIONS = 12;
@@ -105,6 +118,17 @@ export function meanLunarDayMsFromModel(): number {
     LUNAR_MODEL_MEAN_LONGITUDE_RATE_DEG_PER_JULIAN_CENTURY / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
   const relativeDegPerDay = LUNAR_MODEL_GMST_RATE_DEG_PER_DAY - lpDegPerDay;
   return (360 / relativeDegPerDay) * MS_PER_DAY;
+}
+
+/**
+ * Mean-lunar-day steps in one sidereal month of this lunar model
+ * (`360° / Lp` divided by the mean lunar day). ≈26.4.
+ */
+export function meanLunarDaysPerSiderealMonth(): number {
+  const lpDegPerDay =
+    LUNAR_MODEL_MEAN_LONGITUDE_RATE_DEG_PER_JULIAN_CENTURY / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
+  const siderealMonthDays = 360 / lpDegPerDay;
+  return siderealMonthDays / (meanLunarDayMsFromModel() / MS_PER_DAY);
 }
 
 /** Same wrap as `(((b − a) + 540) % 360) − 180`. */
@@ -237,8 +261,26 @@ function hypot2(a: ResidualPt, b: ResidualPt): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
-function wrapIndex(i: number, n: number): number {
-  return ((i % n) + n) % n;
+function lerpPt(a: ResidualPt, b: ResidualPt, t: number): ResidualPt {
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+
+function smoothstep01(t: number): number {
+  const x = Math.max(0, Math.min(1, t));
+  return x * x * (3 - 2 * x);
+}
+
+function residualAtOffset(
+  utcMs: number,
+  cadenceMs: number,
+  lon0: number,
+  k: number,
+): ResidualPt {
+  const geographic = sublunarPoint(utcMs + k * cadenceMs);
+  return {
+    x: residualLongitudeDeg(geographic.lonDeg, lon0),
+    y: geographic.latDeg,
+  };
 }
 
 /**
@@ -273,8 +315,15 @@ function centripetalSegment(p0: ResidualPt, p1: ResidualPt, p2: ResidualPt, p3: 
 }
 
 /**
- * Closed smooth polyline through residual (δlon, lat), plotted as unwrapped
+ * Smooth polyline through residual (δlon, lat), plotted as unwrapped
  * geographic longitudes `lon0 + δlon` so a compact figure near ±180° stays continuous.
+ *
+ * Catmull-Rom is **open** with real neighbors outside the rendered window
+ * (`k = −15, −14` and `k = +15`). The path is cropped near one sidereal month
+ * after `k = −13` (the closest same-direction return, not an earlier figure-8
+ * near-miss) and the last interpolated span is merged onto the matching
+ * approach into the start so the slowly evolving figure can close without
+ * treating the merely-near first/last samples as consecutive control points.
  * Does not resample {@link sublunarPoint} more densely in time.
  */
 export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): SublunarPointDeg[] {
@@ -291,18 +340,79 @@ export function interpolateLunarLocusPolyline(geometry: LunarLocusGeometry): Sub
     x: s.residualLonDeg,
     y: s.geographic.latDeg,
   }));
+  const kFirst = geometry.samples[0]!.k;
+  const kLast = geometry.samples[n - 1]!.k;
+  const utcMs = geometry.referenceUtcMs;
+  const cadenceMs = geometry.cadenceMs;
+  const ctrl = (i: number): ResidualPt => {
+    if (i >= 0 && i < n) {
+      return residual[i]!;
+    }
+    const k = i < 0 ? kFirst + i : kLast + (i - (n - 1));
+    return residualAtOffset(utcMs, cadenceMs, lon0, k);
+  };
   const subdiv = LUNAR_LOCUS_INTERP_SUBDIVISIONS;
-  const out: SublunarPointDeg[] = [];
-  for (let i = 0; i < n; i += 1) {
-    const p0 = residual[wrapIndex(i - 1, n)]!;
-    const p1 = residual[i]!;
-    const p2 = residual[wrapIndex(i + 1, n)]!;
-    const p3 = residual[wrapIndex(i + 2, n)]!;
+  const prefixSpans = Math.min(LUNAR_LOCUS_PREFIX_SPANS, LUNAR_LOCUS_PAST_TANGENT_SUPPORT - 1);
+  const out: ResidualPt[] = [];
+  const iStart = -prefixSpans;
+  const iEnd = n - 1;
+  for (let i = iStart; i < iEnd; i += 1) {
+    const p0 = ctrl(i - 1);
+    const p1 = ctrl(i);
+    const p2 = ctrl(i + 1);
+    const p3 = ctrl(i + 2);
     for (let s = 0; s < subdiv; s += 1) {
-      const t = s / subdiv;
-      const p = centripetalSegment(p0, p1, p2, p3, t);
-      out.push({ latDeg: p.y, lonDeg: lon0 + p.x });
+      out.push(centripetalSegment(p0, p1, p2, p3, s / subdiv));
     }
   }
-  return out;
+  out.push(ctrl(iEnd));
+  const startIdx = prefixSpans * subdiv;
+  const start = out[startIdx];
+  if (start === undefined) {
+    return residual.map((p) => ({ latDeg: p.y, lonDeg: lon0 + p.x }));
+  }
+  const startNext = out[startIdx + 1] ?? start;
+  const startOut = { x: startNext.x - start.x, y: startNext.y - start.y };
+  const periodSteps = meanLunarDaysPerSiderealMonth();
+  const expectedIdx = startIdx + periodSteps * subdiv;
+  const window = subdiv;
+  const searchFrom = Math.max(startIdx + subdiv * 2, Math.floor(expectedIdx - window));
+  const searchTo = Math.min(out.length - 1, Math.ceil(expectedIdx + window));
+  let bestI = Math.min(out.length - 1, Math.max(searchFrom, Math.round(expectedIdx)));
+  let bestD = Infinity;
+  for (let i = searchFrom; i <= searchTo; i += 1) {
+    const p = out[i];
+    const prev = out[i - 1];
+    if (p === undefined || prev === undefined) {
+      continue;
+    }
+    const incoming = { x: p.x - prev.x, y: p.y - prev.y };
+    const align = incoming.x * startOut.x + incoming.y * startOut.y;
+    if (align < 0) {
+      continue;
+    }
+    const d = hypot2(p, start);
+    if (d < bestD) {
+      bestD = d;
+      bestI = i;
+    }
+  }
+  if (!Number.isFinite(bestD)) {
+    bestI = Math.min(out.length - 1, Math.max(searchFrom, Math.round(expectedIdx)));
+  }
+  const blendN = Math.min(subdiv, Math.max(0, bestI - startIdx));
+  if (blendN >= 2 && startIdx + 1 >= blendN) {
+    for (let j = 0; j < blendN; j += 1) {
+      const t = smoothstep01((j + 1) / blendN);
+      const retIdx = bestI - blendN + 1 + j;
+      const sIdx = startIdx - blendN + 1 + j;
+      const a = out[retIdx];
+      const b = out[sIdx];
+      if (a !== undefined && b !== undefined) {
+        out[retIdx] = lerpPt(a, b, t);
+      }
+    }
+  }
+  const cropped = out.slice(startIdx, bestI + 1);
+  return cropped.map((p) => ({ latDeg: p.y, lonDeg: lon0 + p.x }));
 }

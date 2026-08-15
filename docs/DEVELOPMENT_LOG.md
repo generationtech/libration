@@ -58,4 +58,10 @@ Production Lunar locus overlay: mean-lunar-day samples of `sublunarPoint` (~24 h
 
 Verified: `npx tsc --noEmit` clean; `npm test` 170 files / 1560 passed / 0 failed; `npm run build` succeeded with no experiment selectors in `dist/`. Cursor Browser at 1920×1080: recent/standstill/minor/baseline epochs, animation/pause, night substrate, analemma+ground-track coexistence, disabled, ordinary startup.
 
+## 2026-08-14 — LIB-008 complete
+
+Lunar locus no longer forces Catmull-Rom closure through the merely-near `k = −13` / `k = +14` pair. Open interpolation uses real neighbors outside the rendered window; the path is cropped at one sidereal month and merged onto the start so the traveling opposite-Moon zigzag is gone.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 170 files / 1576 passed / 0 failed; `npm run build` succeeded. Cursor Browser at 1920×1080: `?scenario=lunar-locus` recent (pre-fix kink visible, then gone), standstill, minor, baseline; interpolator month sweep at 6 h steps.
+
 

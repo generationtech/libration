@@ -79,7 +79,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `night` | `2026-12-21T06:00:00.000Z` | Near December solstice at 06:00 UTC (subsolar near 90°E; Americas in night); illustrative moonlight and emissive night lights | Dark-side composition, night lights, readability over dark substrate |
 | `readability` | `2026-06-21T12:00:00.000Z` | Köppen–Geiger climate substrate (`equirect-world-climate-koppen-beck-v1`) plus grid, city pins, subsolar/sublunar markers, solar shading, and analemma | Labels/overlays, contrast, clutter, chrome/scene interaction, clipping |
 | `lunar-track` | `2026-01-16T22:00:00.000Z` | Lunar ground track on (24 h past + 24 h future), sublunar marker on, analemma off, grid on; Moon near 170°W at high southern latitude so a dateline crossing and latitude excursion are in view | Lunar track alignment, past/future styling, seam/wrap, overlay readability |
-| `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap |
+| `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap; accelerated demo to confirm the path stays smooth opposite the moving Moon (no traveling closure kink) |
 
 Adding a scenario requires a work item. Do not grow this set casually.
 

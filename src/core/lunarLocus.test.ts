@@ -18,10 +18,13 @@ import { describe, expect, it } from "vitest";
 import { sublunarPoint } from "./sublunarPoint";
 import {
   LUNAR_LOCUS_EPOCH_UTC,
+  LUNAR_LOCUS_FUTURE_TANGENT_SUPPORT,
   LUNAR_LOCUS_INTERP_SUBDIVISIONS,
+  LUNAR_LOCUS_PAST_TANGENT_SUPPORT,
   LUNAR_LOCUS_SAMPLE_COUNT,
   interpolateLunarLocusPolyline,
   meanLunarDayMsFromModel,
+  meanLunarDaysPerSiderealMonth,
   monthlyAbsLatitudeMaxDeg,
   residualLongitudeDeg,
   resetLunarLocusCacheForTests,
@@ -44,6 +47,9 @@ describe("lunarLocus", () => {
     const publicApproxMs = (24 * 3600 + 50 * 60) * 1000;
     expect(Math.abs(ms - publicApproxMs)).toBeLessThan(60_000);
     expect(ms).toBeCloseTo(89_428_328.66, 1);
+    const steps = meanLunarDaysPerSiderealMonth();
+    expect(steps).toBeGreaterThan(26.2);
+    expect(steps).toBeLessThan(26.6);
   });
 
   it("samples N points centered on sublunarPoint(now)", () => {
@@ -116,7 +122,8 @@ describe("lunarLocus", () => {
     const geometry = sampleLunarLocus(RECENT_MS);
     const moon = sublunarPoint(RECENT_MS);
     const line = interpolateLunarLocusPolyline(geometry);
-    expect(line.length).toBe(LUNAR_LOCUS_SAMPLE_COUNT * LUNAR_LOCUS_INTERP_SUBDIVISIONS);
+    expect(line.length).toBeGreaterThan(26 * LUNAR_LOCUS_INTERP_SUBDIVISIONS);
+    expect(line.length).toBeLessThan(LUNAR_LOCUS_SAMPLE_COUNT * LUNAR_LOCUS_INTERP_SUBDIVISIONS);
     const nearest = line.reduce((best, p) => {
       const d = Math.hypot(
         residualLongitudeDeg(p.lonDeg, moon.lonDeg),
@@ -184,5 +191,163 @@ describe("lunarLocus", () => {
     expect(src).not.toMatch(/Date\.now\s*\(/);
     expect(src).not.toMatch(/major.?standstill/i);
     expect(src).not.toMatch(/if\s*\(.*standstill/);
+    expect(src).not.toMatch(/wrapIndex/);
+  });
+});
+
+function residualOf(p: { latDeg: number; lonDeg: number }, lon0: number): { x: number; y: number } {
+  return { x: residualLongitudeDeg(p.lonDeg, lon0), y: p.latDeg };
+}
+
+function segmentProgressCos(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  c: { x: number; y: number },
+): number {
+  const v1x = b.x - a.x;
+  const v1y = b.y - a.y;
+  const v2x = c.x - b.x;
+  const v2y = c.y - b.y;
+  const n1 = Math.hypot(v1x, v1y);
+  const n2 = Math.hypot(v2x, v2y);
+  if (n1 < 1e-9 || n2 < 1e-9) {
+    return 1;
+  }
+  return (v1x * v2x + v1y * v2y) / (n1 * n2);
+}
+
+function polylineProgress(line: readonly { latDeg: number; lonDeg: number }[], lon0: number): number[] {
+  const pts = line.map((p) => residualOf(p, lon0));
+  const n = pts.length;
+  const out: number[] = [];
+  for (let i = 0; i < n; i += 1) {
+    out.push(segmentProgressCos(pts[(i - 1 + n) % n]!, pts[i]!, pts[(i + 1) % n]!));
+  }
+  return out;
+}
+
+describe("lunarLocus interpolation continuity", () => {
+  const epochs: { label: string; utcMs: number }[] = [
+    { label: "recent", utcMs: RECENT_MS },
+    { label: "recent+3d", utcMs: RECENT_MS + 3 * 86_400_000 },
+    { label: "standstill", utcMs: STANDSTILL_MS },
+    { label: "minor", utcMs: MINOR_MS },
+    { label: "baseline", utcMs: BASELINE_MS },
+  ];
+
+  it("uses one past and one future Catmull-Rom neighbor beyond the rendered window", () => {
+    expect(LUNAR_LOCUS_PAST_TANGENT_SUPPORT).toBeGreaterThanOrEqual(2);
+    expect(LUNAR_LOCUS_FUTURE_TANGENT_SUPPORT).toBeGreaterThanOrEqual(1);
+  });
+
+  it("keeps rendered samples at k = −13 … +14", () => {
+    resetLunarLocusCacheForTests();
+    const geometry = sampleLunarLocus(RECENT_MS);
+    expect(geometry.samples[0]!.k).toBe(-13);
+    expect(geometry.samples[geometry.samples.length - 1]!.k).toBe(14);
+    expect(geometry.sampleCount).toBe(LUNAR_LOCUS_SAMPLE_COUNT);
+  });
+
+  for (const { label, utcMs } of epochs) {
+    it(`has no backtracking cusp at the cycle join (${label})`, () => {
+      resetLunarLocusCacheForTests();
+      const geometry = sampleLunarLocus(utcMs);
+      const lon0 = geometry.samples[geometry.currentIndex]!.geographic.lonDeg;
+      const line = interpolateLunarLocusPolyline(geometry);
+      const progress = polylineProgress(line, lon0);
+      const minCos = Math.min(...progress);
+      expect(minCos).toBeGreaterThan(0.5);
+      const seam = [...progress.slice(-15), ...progress.slice(0, 15)];
+      expect(Math.min(...seam)).toBeGreaterThan(0.7);
+      const first = residualOf(line[0]!, lon0);
+      const last = residualOf(line[line.length - 1]!, lon0);
+      expect(Math.hypot(last.x - first.x, last.y - first.y)).toBeLessThan(0.05);
+    });
+
+    it(`keeps k = 0 on the rendered locus (${label})`, () => {
+      resetLunarLocusCacheForTests();
+      const geometry = sampleLunarLocus(utcMs);
+      const moon = sublunarPoint(utcMs);
+      const line = interpolateLunarLocusPolyline(geometry);
+      const nearest = line.reduce((best, p) => {
+        const d = Math.hypot(
+          residualLongitudeDeg(p.lonDeg, moon.lonDeg),
+          p.latDeg - moon.latDeg,
+        );
+        return Math.min(best, d);
+      }, Infinity);
+      expect(nearest).toBeLessThan(0.05);
+    });
+  }
+
+  it("does not expand the rendered cycle to the future support sample", () => {
+    resetLunarLocusCacheForTests();
+    const geometry = sampleLunarLocus(RECENT_MS);
+    const cadence = geometry.cadenceMs;
+    const moon = sublunarPoint(RECENT_MS);
+    const kLast = geometry.samples[geometry.samples.length - 1]!.k;
+    const supportFuture = sublunarPoint(RECENT_MS + (kLast + LUNAR_LOCUS_FUTURE_TANGENT_SUPPORT) * cadence);
+    const line = interpolateLunarLocusPolyline(geometry);
+    const distToSupport = line.reduce((best, p) => {
+      const d = Math.hypot(
+        residualLongitudeDeg(p.lonDeg, supportFuture.lonDeg),
+        p.latDeg - supportFuture.latDeg,
+      );
+      return Math.min(best, d);
+    }, Infinity);
+    const distToMoon = line.reduce((best, p) => {
+      const d = Math.hypot(
+        residualLongitudeDeg(p.lonDeg, moon.lonDeg),
+        p.latDeg - moon.latDeg,
+      );
+      return Math.min(best, d);
+    }, Infinity);
+    expect(distToMoon).toBeLessThan(0.05);
+    expect(distToSupport).toBeGreaterThan(0.05);
+    const start = geometry.samples[0]!;
+    const first = line[0]!;
+    const last = line[line.length - 1]!;
+    expect(Math.hypot(
+      residualLongitudeDeg(first.lonDeg, start.geographic.lonDeg),
+      first.latDeg - start.geographic.latDeg,
+    )).toBeLessThan(0.05);
+    expect(Math.hypot(
+      residualLongitudeDeg(last.lonDeg, start.geographic.lonDeg),
+      last.latDeg - start.geographic.latDeg,
+    )).toBeLessThan(0.05);
+  });
+
+  it("does not include the past support sample as a rendered vertex", () => {
+    resetLunarLocusCacheForTests();
+    const geometry = sampleLunarLocus(RECENT_MS);
+    const cadence = geometry.cadenceMs;
+    const kFirst = geometry.samples[0]!.k;
+    const supportPast = sublunarPoint(RECENT_MS + (kFirst - LUNAR_LOCUS_PAST_TANGENT_SUPPORT) * cadence);
+    const line = interpolateLunarLocusPolyline(geometry);
+    const distToSupport = line.reduce((best, p) => {
+      const d = Math.hypot(
+        residualLongitudeDeg(p.lonDeg, supportPast.lonDeg),
+        p.latDeg - supportPast.latDeg,
+      );
+      return Math.min(best, d);
+    }, Infinity);
+    expect(distToSupport).toBeGreaterThan(0.05);
+  });
+
+  it("stays free of a seam backtrack across a month of 6-hour steps", () => {
+    const start = RECENT_MS;
+    let worst = 1;
+    for (let h = 0; h < 28 * 24; h += 6) {
+      resetLunarLocusCacheForTests();
+      const utcMs = start + h * 3_600_000;
+      const geometry = sampleLunarLocus(utcMs);
+      const lon0 = geometry.samples[geometry.currentIndex]!.geographic.lonDeg;
+      const line = interpolateLunarLocusPolyline(geometry);
+      const progress = polylineProgress(line, lon0);
+      const minCos = Math.min(...progress);
+      worst = Math.min(worst, minCos);
+      expect(minCos).toBeGreaterThan(0.5);
+    }
+    expect(worst).toBeGreaterThan(0.5);
   });
 });
