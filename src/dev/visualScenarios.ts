@@ -20,6 +20,14 @@ import {
 } from "../config/v2/librationConfig";
 import { setWorkingV2PersistenceSuppressed } from "../config/v2/workingV2Persistence";
 import {
+  LUNAR_LOCUS_EPOCH_UTC,
+  type LunarLocusEpochId,
+  type LunarLocusMode,
+  type LunarLocusTreatment,
+} from "./lunarLocusExperiment";
+import { buildLunarLocusRenderPlan } from "./lunarLocusPlan";
+import {
+  setVisualScenarioExtraOverlayBuilder,
   setVisualScenarioRuntime,
   type VisualScenarioRuntime,
 } from "./visualScenarioRuntime";
@@ -31,6 +39,7 @@ export const VISUAL_SCENARIO_IDS = [
   "night",
   "readability",
   "lunar-track",
+  "lunar-locus",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -41,6 +50,7 @@ export const VISUAL_SCENARIO_UTC = {
   night: "2026-12-21T06:00:00.000Z",
   readability: "2026-06-21T12:00:00.000Z",
   "lunar-track": "2026-01-16T22:00:00.000Z",
+  "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** Chromatic Köppen–Geiger substrate used by the readability scenario. */
@@ -170,7 +180,49 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
         draft.layers.cityPins = false;
       }),
   },
+  "lunar-locus": {
+    id: "lunar-locus",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-locus"],
+    purpose:
+      "Development-only lunar-day locus experiment: Moon marker on, ground track off, analemma off.",
+    buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["lunar-locus"], applyLunarLocusScene),
+  },
 };
+
+function applyLunarLocusScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.sublunarMarker = true;
+  draft.layers.lunarGroundTrack = false;
+  draft.layers.solarAnalemma = false;
+  draft.layers.cityPins = false;
+}
+
+function parseSearchParams(search: string): URLSearchParams {
+  const trimmed = search.startsWith("?") ? search.slice(1) : search;
+  return new URLSearchParams(trimmed);
+}
+
+export function parseLunarLocusEpochId(raw: string | null): LunarLocusEpochId {
+  if (raw === "standstill" || raw === "minor" || raw === "baseline" || raw === "recent") {
+    return raw;
+  }
+  return "recent";
+}
+
+export function parseLunarLocusMode(raw: string | null): LunarLocusMode {
+  if (raw === "geographic" || raw === "residual" || raw === "glyph") {
+    return raw;
+  }
+  return "glyph";
+}
+
+export function parseLunarLocusTreatment(raw: string | null): LunarLocusTreatment {
+  if (raw === "dots" || raw === "dots-line") {
+    return raw;
+  }
+  return "dots";
+}
 
 export function isVisualScenarioId(id: string): id is VisualScenarioId {
   return (VISUAL_SCENARIO_IDS as readonly string[]).includes(id);
@@ -206,6 +258,17 @@ export function resolveVisualScenarioSession(
   if (!isVisualScenarioId(requested)) {
     return { kind: "unknown", requestedId: requested };
   }
+  if (requested === "lunar-locus") {
+    const params = parseSearchParams(input.search);
+    const epoch = parseLunarLocusEpochId(params.get("locusEpoch"));
+    const startIsoUtc = LUNAR_LOCUS_EPOCH_UTC[epoch];
+    return {
+      kind: "applied",
+      id: "lunar-locus",
+      startIsoUtc,
+      config: withDemoAt(startIsoUtc, applyLunarLocusScene),
+    };
+  }
   const definition = VISUAL_SCENARIOS[requested];
   return {
     kind: "applied",
@@ -226,6 +289,21 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   });
   setVisualScenarioRuntime(session);
   setWorkingV2PersistenceSuppressed(session.kind === "applied");
+  setVisualScenarioExtraOverlayBuilder(null);
+  if (session.kind === "applied" && session.id === "lunar-locus") {
+    const params = parseSearchParams(search);
+    const mode = parseLunarLocusMode(params.get("locusMode"));
+    const treatment = parseLunarLocusTreatment(params.get("locusTreatment"));
+    setVisualScenarioExtraOverlayBuilder(({ utcMs, viewportWidthPx, viewportHeightPx }) =>
+      buildLunarLocusRenderPlan({
+        utcMs,
+        viewportWidthPx,
+        viewportHeightPx,
+        mode,
+        treatment,
+      }),
+    );
+  }
   if (session.kind === "unknown") {
     console.error(
       `[libration] Unknown visual scenario "${session.requestedId}". Ordinary startup; the requested scenario was not applied.`,

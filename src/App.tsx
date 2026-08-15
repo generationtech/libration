@@ -50,6 +50,7 @@ import {
   type DemoPlaybackState,
 } from "./app/demoPlayback";
 import {
+  getVisualScenarioExtraOverlayLayer,
   getVisualScenarioRuntime,
   INACTIVE_VISUAL_SCENARIO_RUNTIME,
 } from "./dev/visualScenarioRuntime";
@@ -432,6 +433,17 @@ export default function App() {
         scene: { backgroundColor: "#1a1a1a" },
         topChromeReservedHeightPx: chromeState.topBand.height,
       });
+      if (import.meta.env.DEV) {
+        const extra = getVisualScenarioExtraOverlayLayer({
+          utcMs: time.now,
+          viewportWidthPx: input.sceneLayerViewportPx.width,
+          viewportHeightPx: input.sceneLayerViewportPx.height,
+          layers: input.layers,
+        });
+        if (extra) {
+          input.layers.push(extra);
+        }
+      }
       backend.render(input);
       const ctx2d = canvas.getContext("2d");
       if (ctx2d) {

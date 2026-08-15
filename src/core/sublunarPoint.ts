@@ -27,6 +27,19 @@ export interface SublunarPointDeg {
 
 const MS_PER_DAY = 86400000;
 
+/** Julian century length used by this module's Meeus-style series. */
+export const LUNAR_MODEL_JULIAN_CENTURY_DAYS = 36525;
+
+/**
+ * Mean GMST rate (degrees per day of `n = JD − 2451545`), same coefficient as {@link sublunarPoint}.
+ */
+export const LUNAR_MODEL_GMST_RATE_DEG_PER_DAY = 360.98564736629;
+
+/**
+ * Moon mean ecliptic longitude `Lp` rate (degrees per Julian century of `T`).
+ */
+export const LUNAR_MODEL_MEAN_LONGITUDE_RATE_DEG_PER_JULIAN_CENTURY = 481267.88123421;
+
 function julianDate(utcMs: number): number {
   return utcMs / MS_PER_DAY + 2440587.5;
 }
@@ -37,9 +50,9 @@ function julianDate(utcMs: number): number {
  */
 export function moonEclipticLongitudeDeg(utcMs: number): number {
   const JD = julianDate(utcMs);
-  const T = (JD - 2451545.0) / 36525.0;
+  const T = (JD - 2451545.0) / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
 
-  const Lp = 218.3164477 + 481267.88123421 * T;
+  const Lp = 218.3164477 + LUNAR_MODEL_MEAN_LONGITUDE_RATE_DEG_PER_JULIAN_CENTURY * T;
   const D = 297.8501921 + 445267.1114034 * T;
   const M = 357.5291092 + 35999.0502909 * T;
   const Mp = 134.9633964 + 477198.8675055 * T;
@@ -61,7 +74,7 @@ export function moonEclipticLongitudeDeg(utcMs: number): number {
  */
 export function sublunarPoint(utcMs: number): SublunarPointDeg {
   const JD = julianDate(utcMs);
-  const T = (JD - 2451545.0) / 36525.0;
+  const T = (JD - 2451545.0) / LUNAR_MODEL_JULIAN_CENTURY_DAYS;
   const n = JD - 2451545.0;
 
   const Mp = 134.9633964 + 477198.8675055 * T;
@@ -91,7 +104,7 @@ export function sublunarPoint(utcMs: number): SublunarPointDeg {
   const x = Math.cos(lambdaRad) * Math.cos(betaRad);
   const raRad = Math.atan2(y, x);
 
-  let gmst = 280.46061837 + 360.98564736629 * n;
+  let gmst = 280.46061837 + LUNAR_MODEL_GMST_RATE_DEG_PER_DAY * n;
   gmst = ((gmst % 360) + 360) % 360;
 
   const raDeg = (raRad * 180) / Math.PI;

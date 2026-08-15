@@ -78,6 +78,8 @@ In the Vite development server only (`import.meta.env.DEV`), `src/main.tsx` may 
 
 While a scenario is applied, `persistWorkingV2` is a no-op (`setWorkingV2PersistenceSuppressed`), so fixture edits do not overwrite `libration.workingConfigV2.v1`. Unknown ids do not suppress persistence and do not substitute another scenario.
 
+A DEV scenario may also install a process-local extra overlay builder (`setVisualScenarioExtraOverlayBuilder` in `src/dev/visualScenarioRuntime.ts`). The shell appends an upstream-resolved `resolvedRenderPlan` vector layer (drawn below the sublunar marker). The Canvas backend executes the already-resolved primitives and does not interpret the experiment. Production never installs a builder. `lunar-locus` is a development-only experiment (`src/dev/lunarLocusExperiment.ts`, `src/dev/lunarLocusPlan.ts`); it is not a `SceneConfig` stack row and has no Layers-tab control.
+
 Production builds never import the registry (the dynamic import sits inside the DEV branch) and ignore `?scenario=`. Procedure: [`docs/VISUAL_VERIFICATION.md`](VISUAL_VERIFICATION.md).
 
 The layer registry is then built by `createLayerRegistryFromConfig` (`src/app/bootstrap.ts`), which asks `planSceneStackComposition(config.scene)` for the resolved base-map part and ordered overlay parts, registers the base-map layer, and registers one layer per enabled overlay instance through `createLayerForSceneOverlayInstance`. Layers do not decide their own stacking; composition order, opacity, and `zIndex` come from the scene plan.

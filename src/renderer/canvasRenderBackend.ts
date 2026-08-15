@@ -31,6 +31,7 @@ import { buildBaseRasterMapRenderPlan } from "./renderPlan/sceneBaseRasterMapPla
 import { buildEquirectangularGridOverlayRenderPlan } from "./renderPlan/equirectGridOverlayPlan";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./renderPlan/equirectPolylineOverlayPlan";
 import { buildLunarGroundTrackRenderPlan } from "./renderPlan/lunarGroundTrackPlan";
+import { isResolvedRenderPlanPayload } from "./renderPlan/resolvedRenderPlanPayload";
 import type { EmissiveRasterSampleBuffer } from "./emissiveIlluminationRaster";
 import { rgbaBufferFromHtmlImage } from "./emissiveIlluminationRaster";
 import { buildSolarShadingIlluminationRenderPlan } from "./renderPlan/sceneSolarShadingIlluminationPlan";
@@ -360,6 +361,10 @@ export class CanvasRenderBackend implements RenderBackend {
           readability: readability ?? null,
         }),
       );
+      return;
+    }
+    if (isResolvedRenderPlanPayload(layer.data)) {
+      executeRenderPlanOnCanvas(ctx, layer.data.plan);
       return;
     }
     if (isLunarGroundTrackPayload(layer.data)) {

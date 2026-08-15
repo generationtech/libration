@@ -163,6 +163,36 @@ describe("resolveVisualScenarioSession", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
   });
+
+  it("seeds lunar-locus with the Moon marker, track off, and analemma off", () => {
+    const config = VISUAL_SCENARIOS["lunar-locus"].buildConfig();
+    expect(config.layers.sublunarMarker).toBe(true);
+    expect(config.layers.lunarGroundTrack).toBe(false);
+    expect(config.layers.solarAnalemma).toBe(false);
+    expect(config.layers.grid).toBe(true);
+    expect(config.layers.cityPins).toBe(false);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["lunar-locus"]);
+  });
+
+  it("selects lunar-locus epoch UTC from the DEV locusEpoch query parameter", () => {
+    const standstill = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-locus&locusEpoch=standstill",
+    });
+    expect(standstill.kind).toBe("applied");
+    if (standstill.kind === "applied") {
+      expect(standstill.startIsoUtc).toBe("2025-03-08T12:00:00.000Z");
+      expect(standstill.config.data.demoTime.startIsoUtc).toBe("2025-03-08T12:00:00.000Z");
+    }
+    const minor = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-locus&locusEpoch=minor",
+    });
+    expect(minor.kind).toBe("applied");
+    if (minor.kind === "applied") {
+      expect(minor.startIsoUtc).toBe("2015-09-16T12:00:00.000Z");
+    }
+  });
 });
 
 describe("applyVisualScenarioFromLocation", () => {
@@ -229,5 +259,7 @@ describe("development-only containment in the entry point", () => {
     const importIdx = mainSource.indexOf("dev/visualScenarios");
     expect(devIdx).toBeGreaterThanOrEqual(0);
     expect(importIdx).toBeGreaterThan(devIdx);
+    expect(mainSource).not.toMatch(/lunarLocusExperiment/);
+    expect(mainSource).not.toMatch(/lunarLocusPlan/);
   });
 });

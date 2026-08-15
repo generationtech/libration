@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-005](work/LIB-005-lunar-ground-track-stroke-colors.md) — Lunar ground track past and future stroke colors
+[LIB-006](work/LIB-006-experimental-lunar-locus.md) — Experimental lunar locus (compact lunar-day sampling)
 
 ## Blockers
 

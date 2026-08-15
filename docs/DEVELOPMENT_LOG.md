@@ -46,3 +46,10 @@ Lunar ground track past and future polyline RGB identities are independently con
 
 Verified: `npx tsc --noEmit` clean; `npm test` 167 files / 1530 passed / 0 failed. Cursor Browser at 1920×1080: `?scenario=lunar-track` default cool track, then past `#ff3300` / future `#22cc66` visibly recolored; reload restored the default.
 
+## 2026-08-14 — LIB-006 complete
+
+Development-only lunar-day locus experiment: sampling `sublunarPoint` at the model mean lunar day (~24h 50m 28s) for 28 points yields a compact residual figure-8 near the current Moon, with nodal-cycle amplitude change. DEV scenario `lunar-locus` kept; no production overlay.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 169 files / 1545 passed / 0 failed; `npm run build` succeeded with no `lunar-locus` in `dist/`. Cursor Browser at 1920×1080: `lunar-locus` glyph dots and dots-line, geographic mode, standstill/minor epochs, `lunar-track` weave comparison, `readability` solar analemma, `baseline`, ordinary startup.
+
+
