@@ -22,8 +22,6 @@ An idea on this page is direction, not permission to start — except items list
 
 None.
 
-Remaining modernization (M6 terminal audit) is program-approved but is not a work item until a human authorizes it. Do not start M6 from this page.
-
 ---
 
 ## Strategic direction

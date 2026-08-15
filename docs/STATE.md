@@ -9,7 +9,9 @@ None
 
 ## Last completed
 
-[LIB-002](work/LIB-002-modernization-reconciliation.md) — Modernization reconciliation and green baseline (modernization M5)
+[LIB-002](work/LIB-002-modernization-reconciliation.md) — Modernization reconciliation and green baseline
+
+The repository modernization programme is finished: its terminal audit passed on 2026-08-14 and closed it. Modernization no longer governs what work is selected, and it is not a phase that continues. See [`docs/DEVELOPMENT_LOG.md`](DEVELOPMENT_LOG.md).
 
 ## Blockers
 
@@ -21,8 +23,8 @@ None
 
 ## Awaiting human decision
 
-Modernization M6 (terminal modernization audit) requires explicit human authorization. Do not create or self-approve an M6 work item.
+Which ordinary Libration work to propose or approve next.
 
 ## Next action
 
-Stop. M6 may be authorized separately; it is not active.
+Stop. A human proposes or approves a `docs/work/LIB-###` item — the next identifier is LIB-003 — following [`docs/WORKFLOW.md`](WORKFLOW.md). Direction candidates live in [`docs/ROADMAP.md`](ROADMAP.md).
