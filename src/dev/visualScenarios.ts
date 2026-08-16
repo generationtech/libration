@@ -116,6 +116,9 @@ export type LunarEclipsePhaseId = keyof typeof LUNAR_ECLIPSE_2022_PHASE_UTC;
  * 17:52:57Z, 18:36:03Z, 19:55:15Z (`eclipseStation=stationA`…`stationF`).
  * Raster-boundary diagnostic stations (LIB-028): 15:39:02Z, 16:45:01Z, 17:06:33Z,
  * 19:22:59Z, 19:56:08Z (`rasterPreStart`…`rasterLate`).
+ * Horizon/illumination stations (LIB-029): 14:30:00Z, 16:33:24Z, 17:10:15Z,
+ * 19:22:26Z, 19:55:32Z (`horizonA`…`horizonE`) plus west 14:20–14:45Z and
+ * east 19:40–20:05Z time steps.
  * Authority: global 15:46:43.920Z–20:58:49.700Z; central on Earth 16:49:13.920Z–20:01:43.920Z.
  * Production does not import this map.
  */
@@ -140,6 +143,23 @@ export const SOLAR_ECLIPSE_2017_STATION_UTC = {
   rasterMid: "2017-08-21T17:06:33.000Z",
   rasterEast: "2017-08-21T19:22:59.000Z",
   rasterLate: "2017-08-21T19:56:08.000Z",
+  /** LIB-029 horizon/illumination Knoxville wall-clock stations (EDT = UTC−4). */
+  horizonA: "2017-08-21T14:30:00.000Z",
+  horizonB: "2017-08-21T16:33:24.000Z",
+  horizonC: "2017-08-21T17:10:15.000Z",
+  horizonD: "2017-08-21T19:22:26.000Z",
+  horizonE: "2017-08-21T19:55:32.000Z",
+  horizonWest1420: "2017-08-21T14:20:00.000Z",
+  horizonWest1425: "2017-08-21T14:25:00.000Z",
+  horizonWest1435: "2017-08-21T14:35:00.000Z",
+  horizonWest1440: "2017-08-21T14:40:00.000Z",
+  horizonWest1445: "2017-08-21T14:45:00.000Z",
+  horizonEast1940: "2017-08-21T19:40:00.000Z",
+  horizonEast1945: "2017-08-21T19:45:00.000Z",
+  horizonEast1950: "2017-08-21T19:50:00.000Z",
+  horizonEast1955: "2017-08-21T19:55:00.000Z",
+  horizonEast2000: "2017-08-21T20:00:00.000Z",
+  horizonEast2005: "2017-08-21T20:05:00.000Z",
 } as const;
 
 export type SolarEclipse2017StationId = keyof typeof SOLAR_ECLIPSE_2017_STATION_UTC;

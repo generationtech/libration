@@ -95,6 +95,22 @@ describe("solarEclipseObscurationAt", () => {
     );
     expect(night.sunAboveHorizon).toBe(false);
     expect(night.obscuration01).toBe(0);
+    expect(night.physicalObscuration01).toBe(0);
+  });
+
+  it("keeps physical overlap below the horizon while E4 obscuration stays 0", () => {
+    const event = requireEvent(TOTAL_2017);
+    const sample = solarEclipseObscurationAt(
+      Date.parse("2017-08-21T16:45:01.000Z"),
+      event,
+      45,
+      -174,
+    );
+    expect(sample.sunAboveHorizon).toBe(false);
+    expect(sample.obscuration01).toBe(0);
+    expect(sample.inPenumbra).toBe(true);
+    expect(sample.physicalObscuration01).toBeGreaterThan(0.5);
+    expect(sample.physicalObscuration01).toBeLessThan(1);
   });
 
   it("agrees with E4 local-maximum obscuration at the same UTC and city", () => {

@@ -197,13 +197,13 @@ describe("solar eclipse obscuration field", () => {
       event,
       event.geLatDeg,
       179.75,
-    ).obscuration01;
+    ).physicalObscuration01;
     const exactB = solarEclipseObscurationAt(
       event.greatestEclipseUtcMs,
       event,
       event.geLatDeg,
       -179.75,
-    ).obscuration01;
+    ).physicalObscuration01;
     expect(Math.abs(a - exactA)).toBeLessThan(0.08);
     expect(Math.abs(b - exactB)).toBeLessThan(0.08);
   });
@@ -222,7 +222,7 @@ describe("solar eclipse obscuration field", () => {
       event,
       towardPole,
       event.geLonDeg,
-    ).obscuration01;
+    ).physicalObscuration01;
     expect(Number.isFinite(polarSample)).toBe(true);
     expect(Math.abs(polarSample - polarExact)).toBeLessThan(0.12);
   });
@@ -235,8 +235,17 @@ describe("solar eclipse obscuration field", () => {
     expect(field.lonSamples).toBe(288);
     expect(field.latSamples).toBe(145);
     expect(field.obscuration01.some((v) => v > 0.2)).toBe(true);
-    const far = sampleSolarEclipseObscurationField(field, event.geLonDeg + 40, event.geLatDeg);
-    expect(far).toBeLessThan(center * 0.5);
+    const farLat = -Math.sign(event.geLatDeg || 1) * 40;
+    const farLon = event.geLonDeg + 180;
+    const farExact = solarEclipseObscurationAt(
+      event.greatestEclipseUtcMs,
+      event,
+      farLat,
+      farLon,
+    ).physicalObscuration01;
+    const far = sampleSolarEclipseObscurationField(field, farLon, farLat);
+    expect(farExact).toBeLessThan(0.02);
+    expect(far).toBeLessThan(0.02);
   });
 
   it("stays continuous across the 2023 hybrid central subtype change", () => {
@@ -311,12 +320,12 @@ describe("solar eclipse obscuration field", () => {
     // Former moving-bbox west pad ended at ~−171.24°. These cells were skipped.
     for (const lon of [-172.5, -171.25]) {
       const sampled = sampleSolarEclipseObscurationField(field, lon, lat);
-      const exact = solarEclipseObscurationAt(utcMs, event, lat, lon).obscuration01;
+      const exact = solarEclipseObscurationAt(utcMs, event, lat, lon).physicalObscuration01;
       expect(exact).toBeGreaterThan(0.5);
       expect(sampled).toBeGreaterThan(0.5);
       expect(Math.abs(sampled - exact)).toBeLessThan(0.08);
     }
-    // Daylit interior across the old bbox edge; horizon gating further west is physical.
+    // Daylit interior across the old bbox edge; the terminator further west is ordinary night veil, not a field skip.
     let prevT: number | null = null;
     let maxJump = 0;
     for (let lon = -171.5; lon <= -160; lon += 0.5) {
@@ -337,7 +346,7 @@ describe("solar eclipse obscuration field", () => {
     const lat = 40;
     const clippedLon = -10;
     const sampled = sampleSolarEclipseObscurationField(field, clippedLon, lat);
-    const exact = solarEclipseObscurationAt(utcMs, event, lat, clippedLon).obscuration01;
+    const exact = solarEclipseObscurationAt(utcMs, event, lat, clippedLon).physicalObscuration01;
     expect(exact).toBeGreaterThan(0.1);
     expect(sampled).toBeGreaterThan(0.1);
     expect(Math.abs(sampled - exact)).toBeLessThan(0.08);
@@ -360,7 +369,7 @@ describe("solar eclipse obscuration field", () => {
     const field = buildSolarEclipseObscurationField(utcMs, event);
     const lat = 42.5;
     const sampled = sampleSolarEclipseObscurationField(field, -17.5, lat);
-    const exact = solarEclipseObscurationAt(utcMs, event, lat, -17.5).obscuration01;
+    const exact = solarEclipseObscurationAt(utcMs, event, lat, -17.5).physicalObscuration01;
     expect(Math.abs(sampled - exact)).toBeLessThan(0.05);
     let prevT: number | null = null;
     let maxJump = 0;
@@ -385,5 +394,32 @@ describe("solar eclipse obscuration field", () => {
     const atNeg1789 = sampleSolarEclipseObscurationField(field, -178.9, lat);
     expect(Math.abs(at181 - atNeg1789)).toBeLessThan(1e-9);
     expect(Math.abs(at179 - atNeg179)).toBeLessThan(0.05);
+  });
+
+  it("does not store a synthetic horizon-zero mask across the 2017 western terminator", () => {
+    const event = requireEvent(TOTAL_2017);
+    const utcMs = Date.parse("2017-08-21T16:45:01.000Z");
+    const field = buildSolarEclipseObscurationField(utcMs, event);
+    const lat = 45;
+    let crossedHorizon = false;
+    let prev: { lon: number; o: number; sunUp: boolean } | null = null;
+    let maxJump = 0;
+    for (let lon = -176; lon <= -168; lon += 0.25) {
+      const sample = solarEclipseObscurationAt(utcMs, event, lat, lon);
+      const o = sampleSolarEclipseObscurationField(field, lon, lat);
+      expect(Math.abs(o - sample.physicalObscuration01)).toBeLessThan(0.08);
+      if (prev) {
+        maxJump = Math.max(maxJump, Math.abs(o - prev.o));
+        if (prev.sunUp !== sample.sunAboveHorizon) {
+          crossedHorizon = true;
+          expect(sample.physicalObscuration01).toBeGreaterThan(0.5);
+          expect(o).toBeGreaterThan(0.5);
+          expect(Math.abs(o - prev.o)).toBeLessThan(0.08);
+        }
+      }
+      prev = { lon, o, sunUp: sample.sunAboveHorizon };
+    }
+    expect(crossedHorizon).toBe(true);
+    expect(maxJump).toBeLessThan(0.08);
   });
 });

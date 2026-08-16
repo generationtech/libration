@@ -21,6 +21,11 @@
  * limb-truncated at ingress/egress, so clipping it produced a visible
  * rectangular domain wall.
  *
+ * Cells store {@link SolarEclipseObscurationSample.physicalObscuration01}, not
+ * the E4 horizon-gated visibility quantity. Horizon ownership stays with the
+ * ordinary solar night veil at illumination sample time; a boolean
+ * sun-above-horizon mask in this raster interpolates into a scalloped seam.
+ *
  * Physical samples are bilinearly interpolated in lon/lat. Time is quantized
  * to a short bucket so consecutive frames at the same product UTC reuse the
  * field; the bucket is small enough that the moving shadow does not jump at
@@ -112,7 +117,7 @@ export function buildSolarEclipseObscurationField(
     for (let i = 0; i < lonSamples; i += 1) {
       const lonDeg = lonIndexToDeg(i, lonSamples);
       const obs = { ...obsLat, longitudeDeg: lonDeg };
-      obscuration01[row + i] = solarEclipseObscurationFromElements(el, obs).obscuration01;
+      obscuration01[row + i] = solarEclipseObscurationFromElements(el, obs).physicalObscuration01;
     }
   }
   return { eventId: event.id, utcMs, lonSamples, latSamples, obscuration01 };

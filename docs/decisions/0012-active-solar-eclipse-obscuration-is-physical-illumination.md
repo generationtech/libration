@@ -14,9 +14,9 @@ Active solar eclipses were still presented as a mostly uniform teal live-partial
 **Authoritative active solar-eclipse obscuration attenuates physical solar illumination independently of informational eclipse overlays.**
 
 - The physical quantity is local solar-disc *area* obscuration from the same Besselian observer-plane geometry used by E4 local circumstances (`Rs = (L1'+L2')/2`, `Rm = (L1'−L2')/2`, circle-overlap fraction).
-- A geographic field is sampled on a modest equirect grid, bilinearly interpolated, and mapped through a presentation transmission curve (`visualDarkening = maxDarken × obscuration^γ`) before remaining daylight is multiplied in `sampleIlluminationRgba8`.
+- A geographic field stores *physical* disc overlap (not an E4 horizon boolean) on a modest equirect grid, bilinearly interpolated, and mapped through a presentation transmission curve (`visualDarkening = maxDarken × obscuration^γ`). That transmission multiplies ordinary daylight availability (`1 − nightVeil`) in `sampleIlluminationRgba8`; it does not further darken settled night.
 - The field is active-only. Upcoming forecast geography stays an informational teal overlay. Completed events contribute nothing.
-- Geometric solar altitude gates the field: below-horizon samples are 0, so ordinary night shading retains the night side.
+- E4 local-circumstance visibility still reports obscuration 0 when the Sun is geometrically below the horizon. The illumination raster does not share that hard cutoff: ordinary solar twilight already takes daylight to zero, so a horizon-masked field would interpolate into a visible seam.
 - The Solar eclipses master and child geography toggles continue to gate corridor, compact umbra/antumbra, alignment, marker, and labels — not the illumination field.
 - Factory default is ON / Normal. An explicit Active eclipse shading control can disable the physical field; that is a presentation intensity choice, not a second eclipse authority.
 - Compact umbra/antumbra remain overlay markers. They are not a substitute for the continuous field and are not encoded by hacking illumination RGB.

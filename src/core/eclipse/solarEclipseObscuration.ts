@@ -18,9 +18,13 @@
  * Moon (0–1). This is presentation-independent. Daylight attenuation mapping
  * lives in {@link solarEclipseVisualTransmission01}.
  *
- * Horizon: geometric solar altitude from the Besselian observer plane; no
- * refraction. Below-horizon samples report obscuration 0 so ordinary night
- * shading retains ownership of the night side.
+ * Two horizon semantics share this geometry:
+ * - {@link SolarEclipseObscurationSample.obscuration01} is the E4 / local-circumstance
+ *   visibility quantity: 0 when the Sun is geometrically below the horizon.
+ * - {@link SolarEclipseObscurationSample.physicalObscuration01} is the overlap
+ *   fraction while the observer is in the penumbra, including just below the
+ *   horizon. The illumination raster uses this and multiplies it into ordinary
+ *   daylight availability; it does not store a boolean horizon mask.
  */
 
 import { evaluateBesselianElements } from "./besselianElements";
@@ -35,7 +39,10 @@ import {
 } from "./solarObserverPlane";
 
 export type SolarEclipseObscurationSample = {
+  /** E4 visibility quantity: 0 when the Sun is geometrically below the horizon. */
   readonly obscuration01: number;
+  /** Observer-plane disc overlap; independent of the E4 horizon boolean. */
+  readonly physicalObscuration01: number;
   readonly magnitude: number | null;
   readonly altitudeDeg: number;
   readonly sunAboveHorizon: boolean;
@@ -44,6 +51,7 @@ export type SolarEclipseObscurationSample = {
 
 const EMPTY: SolarEclipseObscurationSample = {
   obscuration01: 0,
+  physicalObscuration01: 0,
   magnitude: null,
   altitudeDeg: -90,
   sunAboveHorizon: false,
@@ -76,6 +84,7 @@ export function solarEclipseObscurationFromElements(
   if (!st.insideWindow) {
     return {
       obscuration01: 0,
+      physicalObscuration01: 0,
       magnitude: null,
       altitudeDeg: st.altitudeDeg,
       sunAboveHorizon,
@@ -84,22 +93,13 @@ export function solarEclipseObscurationFromElements(
   }
   const inPenumbra =
     st.l1p > SOLAR_OBSERVER_CONE_RADIUS_MIN && st.m <= st.l1p + 1e-6;
-  if (!sunAboveHorizon || !inPenumbra) {
-    return {
-      obscuration01: 0,
-      magnitude: inPenumbra ? solarEclipseMagnitudeFromPlane(st.l1p, st.l2p, st.m) : null,
-      altitudeDeg: st.altitudeDeg,
-      sunAboveHorizon,
-      inPenumbra,
-    };
-  }
-  const obscuration01 = Math.max(
-    0,
-    Math.min(1, solarEclipseObscurationFromPlane(st.l1p, st.l2p, st.m)),
-  );
+  const physicalObscuration01 = inPenumbra
+    ? Math.max(0, Math.min(1, solarEclipseObscurationFromPlane(st.l1p, st.l2p, st.m)))
+    : 0;
   return {
-    obscuration01,
-    magnitude: solarEclipseMagnitudeFromPlane(st.l1p, st.l2p, st.m),
+    obscuration01: sunAboveHorizon ? physicalObscuration01 : 0,
+    physicalObscuration01,
+    magnitude: inPenumbra ? solarEclipseMagnitudeFromPlane(st.l1p, st.l2p, st.m) : null,
     altitudeDeg: st.altitudeDeg,
     sunAboveHorizon,
     inPenumbra,

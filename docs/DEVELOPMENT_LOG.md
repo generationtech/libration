@@ -172,4 +172,18 @@ Replaced the active solar eclipse’s flat teal live-partial fill with continuou
 
 Verified: `npx tsc --noEmit` clean; `npm test` 205 files / 1938 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 A–F / post-central / after / GE Normal and Dramatic / overlay-off, annular, partial-only, dateline, ordinary startup.
 
+## 2026-08-16 — LIB-028 complete
+
+Replaced the moving penumbra-outline bbox with a stable full-world 288×145 equirect obscuration field so 2017 ingress/egress no longer show a rectangular domain wall. Physical zeros outside the penumbra are physical zeros. Horizon gating of `obscuration01` was left for LIB-029. No README recapture.
+
+Verified in-tree: field topology and wrap tests; successor LIB-029 owns remaining terminator-adjacent seams.
+
+## 2026-08-16 — LIB-029 complete
+
+Reconciled active solar-eclipse illumination with ordinary daylight. The west/east terminator seams were a horizon-masked obscuration raster plus `combinedAlpha = 1 − (1 − ordinaryAlpha) × transmission`, which jumped from eclipsed daylight to brighter twilight at altitude 0°. The field now stores physical overlap; E4 visibility stays horizon-gated; composition multiplies transmission into `1 − nightVeil` only. No new ADR. No README recapture.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 206 files / 1965 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 horizon A–E / rasterWest / east 19:40Z and 20:05Z, annular, partial, dateline, ordinary startup; canvas transects at 16:45Z and 19:55:32Z.
+
+
+
 

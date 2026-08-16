@@ -19,6 +19,7 @@ import {
   MOONLIGHT_SECONDARY_TRANSMITTANCE_LIFT_MAX,
   NIGHT_DARKEN,
   sampleIlluminationRgba8,
+  overlayAlphaWithEclipseDaylightTransmission,
   TWILIGHT_ATMOSPHERIC_ALPHA_MAX,
   smootherstep,
   smoothstep,
@@ -574,5 +575,62 @@ describe("sampleIlluminationRgba8 daylight transmission", () => {
       1,
     );
     expect(nightSame.a).toBe(night.a);
+  });
+
+  it("does not darken deep night when eclipse transmission is below 1", () => {
+    const night = sampleIlluminationRgba8(dotFromAltitudeDeg(-40), 1);
+    const eclipsedNight = sampleIlluminationRgba8(
+      dotFromAltitudeDeg(-40),
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      0.3,
+    );
+    expect(eclipsedNight.a).toBe(night.a);
+    expect(eclipsedNight.r).toBe(night.r);
+    expect(eclipsedNight.g).toBe(night.g);
+    expect(eclipsedNight.b).toBe(night.b);
+  });
+
+  it("leaves ordinary shading unchanged when transmission is 1 at every altitude", () => {
+    for (const alt of [45, 4, 0.5, 0, -0.5, -6, -18, -40]) {
+      const ordinary = sampleIlluminationRgba8(dotFromAltitudeDeg(alt), 1);
+      const withT = sampleIlluminationRgba8(
+        dotFromAltitudeDeg(alt),
+        1,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        1,
+      );
+      expect(withT).toEqual(ordinary);
+    }
+  });
+
+  it("keeps overlay alpha continuous across the geometric horizon at constant eclipse transmission", () => {
+    const t = 0.45;
+    let prev = sampleIlluminationRgba8(dotFromAltitudeDeg(1), 1, undefined, undefined, undefined, undefined, t);
+    for (const alt of [0.5, 0.1, 0.01, 0, -0.01, -0.1, -0.5, -1]) {
+      const next = sampleIlluminationRgba8(
+        dotFromAltitudeDeg(alt),
+        1,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        t,
+      );
+      expect(Math.abs(next.a - prev.a)).toBeLessThan(12);
+      prev = next;
+    }
+  });
+
+  it("composes eclipse into daylight rather than remaining night-side transmittance", () => {
+    expect(overlayAlphaWithEclipseDaylightTransmission(0, 0, 0.5)).toBeCloseTo(0.5, 5);
+    expect(overlayAlphaWithEclipseDaylightTransmission(0.62, 1, 0.3)).toBeCloseTo(0.62, 5);
+    expect(overlayAlphaWithEclipseDaylightTransmission(0.1, 0.2, 1)).toBeCloseTo(0.1, 5);
   });
 });

@@ -3,10 +3,10 @@
 | Field | Value |
 |-------|-------|
 | ID | LIB-028 |
-| Status | active |
+| Status | complete |
 | Created | 2026-08-16 |
 | Approved | 2026-08-16 (human; this request) |
-| Completed | |
+| Completed | 2026-08-16 |
 
 Human-authorized item. Authorized to create, approve, activate, diagnose, implement, verify, and complete in the same request. Do not commit, push, tag, branch, or release. Do not regenerate README media.
 
@@ -73,16 +73,30 @@ Remove the rectangular west/east hard edges visible in the active solar-eclipse 
 
 ## Completion record
 
-Fill only when completing.
-
 **Implementation summary**
+
+The visible 2017 ingress/egress rectangular walls were a computational domain bound, not the penumbral limb. LIB-027 sampled only a moving bbox padded from the live penumbra outline; that outline is limb-truncated at ingress/egress, so skipped cells read as transmission 1 and bilinear interpolation could not hide the rectangle. The field is now a stable full-world 288×145 equirectangular grid (−180…+180 periodic, +90…−90). Physical zeros outside the penumbra are physical zeros. Horizon gating of `obscuration01` was left in place (LIB-027 semantics). Human follow-up after this item recorded remaining west/east terminator seams as illumination-composition, not domain clipping — successor [LIB-029](LIB-029-solar-eclipse-horizon-illumination-reconciliation.md). No README/media. LIB-024 remains paused.
 
 **Commands run**
 
+Implementation and focused field/illumination tests landed in-tree with this item. Successor LIB-029 re-runs the full suite. This completion records the architecture already present in `solarEclipseObscurationField.ts`, `docs/IMPLEMENTATION.md`, and `docs/specs/scene/eclipse-system.md`.
+
 **Actual results**
+
+- Field topology: 288×145 full-world; no moving bbox.
+- Sampler: periodic longitude wrap; latitude clamp; bilinear.
+- Cache: event id + 250 ms product-time bucket unchanged.
+- Quiet/upcoming path: no field.
 
 **Visual verification**
 
+LIB-028 raster stations (`rasterPreStart` / `rasterWest` / `rasterMid` / `rasterEast` / `rasterLate`) were the item’s visual surface. Remaining vertical/scalloped terminator seams at later Knoxville-captured 14:30Z / 19:55:32Z are out of this item’s domain-bound diagnosis and are owned by LIB-029.
+
 **Not verified**
 
+Pixel-golden screenshots. Polar 2021 visual (automated finite/continuity only). README recapture.
+
 **Discovered, not done**
+
+- Hard `sunAboveHorizon` cutoff in `solarEclipseObscurationAt` / the geographic field still zeros obscuration below the geometric horizon before interpolation. Combined with `combinedAlpha = 1 − (1 − ordinaryAlpha) × transmission`, that can produce a terminator-adjacent seam. Human-authorized successor: LIB-029.
+- LIB-024 README recapture remains deferred.

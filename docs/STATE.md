@@ -1,15 +1,15 @@
 # Development state
 
 Updated: 2026-08-16
-Status: ACTIVE
+Status: AWAITING SCOPE
 
 ## Active work item
 
-[LIB-028](work/LIB-028-solar-eclipse-obscuration-raster-boundary.md) — Solar-eclipse obscuration raster-boundary reconciliation
+None
 
 ## Last completed
 
-[LIB-027](work/LIB-027-continuous-solar-eclipse-obscuration-shading.md) — Continuous solar-eclipse obscuration shading
+[LIB-029](work/LIB-029-solar-eclipse-horizon-illumination-reconciliation.md) — Solar-eclipse horizon / illumination composition reconciliation
 
 ## Blockers
 
@@ -25,4 +25,4 @@ None
 
 ## Next action
 
-Diagnose the 2017 ingress/egress hard west/east obscuration-field edges, then implement the selected field-domain architecture (prefer full-world 288×145 if cost is comparable).
+Stop. No approved work remains. Do not start speculative items. LIB-024 README recapture waits for an explicit request.

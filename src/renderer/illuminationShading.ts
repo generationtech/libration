@@ -265,9 +265,29 @@ const CLOUD_NIGHT_DARKEN_BOOST_MAX = 0.22;
 const CLOUD_VEIL_RGB = { r: 48, g: 54, b: 68 } as const;
 
 /**
+ * Compose eclipse daylight transmission into an ordinary illumination overlay.
+ *
+ * `ordinaryOverlayAlpha01` is night-overlay opacity (straight alpha), not a
+ * daylight fraction. `nightVeil01` is {@link illuminationNightVeil01FromSolarAltitudeDeg}
+ * (0 = full day, 1 = deep night). Eclipse transmission multiplies remaining
+ * daylight (`1 − nightVeil`) only; night-side map visibility is unchanged.
+ */
+export function overlayAlphaWithEclipseDaylightTransmission(
+  ordinaryOverlayAlpha01: number,
+  nightVeil01: number,
+  daylightTransmission01: number,
+): number {
+  const dayClear01 = 1 - Math.max(0, Math.min(1, nightVeil01));
+  const t = Math.max(0, Math.min(1, daylightTransmission01));
+  const eclipseDaylightFactor = 1 - dayClear01 * (1 - t);
+  return 1 - (1 - ordinaryOverlayAlpha01) * eclipseDaylightFactor;
+}
+
+/**
  * RGBA for one shading pixel given subsolar geometry dot product and layer opacity.
  * `daylightTransmission01` multiplies remaining daylight (1 = unchanged). It is a
- * visual illumination scalar, not a named astronomy concept.
+ * visual illumination scalar, not a named astronomy concept. It does not further
+ * darken ordinary night: composition uses {@link overlayAlphaWithEclipseDaylightTransmission}.
  */
 export function sampleIlluminationRgba8(
   dot: number,
@@ -334,7 +354,11 @@ export function sampleIlluminationRgba8(
     daylightTransmission01 !== undefined && Number.isFinite(daylightTransmission01)
       ? Math.max(0, Math.min(1, daylightTransmission01))
       : 1;
-  combinedAlpha = 1 - (1 - combinedAlpha) * daylightT;
+  combinedAlpha = overlayAlphaWithEclipseDaylightTransmission(
+    combinedAlpha,
+    nightStrength,
+    daylightT,
+  );
 
   if (combinedAlpha > 0) {
     const twilightTint = continuousTwilightOverlayRgb(altDeg);
