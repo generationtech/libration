@@ -142,4 +142,10 @@ Post-LIB-020 lunar eclipse visual reconciliation: event information moved to a d
 
 Verified: `npx tsc --noEmit` clean; `npm test` 199 files / 1851 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: 2022-05-16 pre/penumbral/partial/total/egress, Tokyo vs Knoxville, solar forecast and live, Config controls-only, Event information OFF, Hide/chip.
 
+## 2026-08-16 — LIB-022 complete
+
+README-candidate PNG set of the 2017-08-21 total solar eclipse (`nasa-5mcse-solar-9546`) from the existing production Eclipse System. Six captures under `docs/images/eclipse-2017/`. No product source changes; no README/GIF/video.
+
+Verified: authority stations via `npx tsx`; Cursor Browser CDP 1920×1080 PNGs (forecast 2017-08-16T18:00Z, overview 18:00Z, Oregon 17:16:44Z, GE 18:25:30Z, Carolina 18:48:44Z, beam crop of GE). Suite not rerun (no source changes).
+
 

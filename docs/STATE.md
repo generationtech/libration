@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-021](work/LIB-021-lunar-eclipse-visual-reconciliation.md) — Lunar eclipse visual reconciliation (info panel, moonlight attenuation, spatial Earth-shadow, label avoidance)
+[LIB-022](work/LIB-022-eclipse-2017-readme-screenshots.md) — 2017 total solar eclipse README screenshot set
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. No approved follow-up. Do not start another eclipse or astronomy item.
+None. Capture PNGs are in `docs/images/eclipse-2017/`. README.md is not edited.
