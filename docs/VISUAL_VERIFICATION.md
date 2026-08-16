@@ -85,7 +85,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
 | `solar-eclipse-dateline` | `2016-03-09T01:57:09.400Z` | Production solar eclipse overlay at NASA 2016 Mar 09 Pacific total; live-only horizon. Optional DEV `observerCity=` | Seam/wrap: no map-spanning fill, coherent centerline, band, and alignment ribbon |
-| `solar-eclipse-forecast` | `2024-04-03T18:00:00.000Z` | Upcoming 2024 Apr 08 total, 7-day forecast horizon, five days before greatest eclipse. Optional DEV `observerCity=` | Event corridor Mexico → US → Canada; no live umbra yet; local circumstances may say not visible / partial / total without hiding the corridor |
+| `solar-eclipse-forecast` | `2024-04-03T18:00:00.000Z` | Upcoming 2024 Apr 08 total, 7-day forecast horizon, five days before greatest eclipse. Optional DEV `observerCity=` | Event corridor Mexico → US → Canada; no live umbra or beam; event information and nearest-event label; local circumstances may say not visible / partial / total without hiding the corridor |
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon. Optional DEV `observerCity=` | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon. Optional DEV `observerCity=` | Partial forecast region; no fabricated central corridor |
 | `solar-eclipse-forecast-multiple` | `2023-10-01T00:00:00.000Z` | 365-day horizon with more than one upcoming solar eclipse. Optional DEV `observerCity=` | Multi-event density; nearest event emphasized |
@@ -98,6 +98,20 @@ Adding a scenario requires a work item. Do not grow this set casually.
 ### Reference-city eclipse circumstances (E4)
 
 Existing eclipse scenarios accept optional DEV `observerCity=` (same catalog ids as LIB-011). Production reference-city resolution still uses chrome `displayTime.topBandAnchor`. Do not add a second observer control to the production bundle.
+
+### Eclipse product polish (E6)
+
+Reuse the existing eclipse catalog. Do not add a second scenario family for labels, event information, or styling.
+
+When inspecting E6:
+
+- Confirm `baseline` (ordinary supported date, factory eclipse masters on) has no eclipse geography, no empty chrome, and no empty event panel.
+- Confirm the 2024-04-08 workflow: outside the 7-day horizon → no solar effects; `solar-eclipse-forecast` → corridor + event information + Knoxville partial; `solar-eclipse-total` → live footprint + corridor context + alignment + label; after last contact → no stale event UI.
+- Confirm `lunar-eclipse-total` then `observerCity=tokyo`: global Moon-up region and Moon treatment unchanged; local status becomes not visible.
+- Confirm `solar-eclipse-forecast-multiple`: multiple restrained corridors, nearest event emphasized, one primary label.
+- Confirm product UTC outside 1900–2100 shows “Eclipse data unavailable outside 1900–2100.” when Solar or Lunar eclipses are enabled, and does not imply that no eclipse exists.
+- Confirm Layers groups disable child controls when the parent is off, and that forecast corridor/partial disable when the horizon is Live only.
+- Confirm hybrid events say Hybrid solar eclipse and penumbral events say Penumbral lunar eclipse.
 
 ### Live eclipse alignment / beam (E5)
 

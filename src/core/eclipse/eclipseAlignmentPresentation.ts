@@ -21,18 +21,10 @@
 
 import {
   eclipseAlignmentIntensityScale,
-  LUNAR_ALIGNMENT_AXIS_STROKE,
   LUNAR_ALIGNMENT_AXIS_WIDTH_PX,
-  LUNAR_ALIGNMENT_CORE_FILL,
-  LUNAR_ALIGNMENT_MID_FILL,
-  LUNAR_ALIGNMENT_OUTER_FILL,
-  LUNAR_ALIGNMENT_TOTALITY_WASH,
+  resolveEclipseAlignmentPalette,
   scaleAlignmentFill,
-  SOLAR_ALIGNMENT_AXIS_STROKE,
   SOLAR_ALIGNMENT_AXIS_WIDTH_PX,
-  SOLAR_ALIGNMENT_CORE_FILL,
-  SOLAR_ALIGNMENT_MID_FILL,
-  SOLAR_ALIGNMENT_OUTER_FILL,
   type EclipseAlignmentPresentation as EclipseAlignmentConfig,
 } from "./eclipseAlignmentAppearance";
 import {
@@ -128,6 +120,7 @@ function solarCentralEffect(
   const core = taperedAlignmentRibbon(origin, target, startHalf * 0.28, endHalf * 0.7, 18);
   const axis = greatCircleCenterline(origin, target, 16);
   const a = scale.alpha;
+  const paint = resolveEclipseAlignmentPalette(input.alignment);
   return {
     kind: "solar-central",
     eventId,
@@ -135,14 +128,14 @@ function solarCentralEffect(
     origin,
     target,
     bands: [
-      { ring: outer, fill: scaleAlignmentFill(SOLAR_ALIGNMENT_OUTER_FILL, strength01, a) },
-      { ring: mid, fill: scaleAlignmentFill(SOLAR_ALIGNMENT_MID_FILL, strength01, a) },
-      { ring: core, fill: scaleAlignmentFill(SOLAR_ALIGNMENT_CORE_FILL, strength01, a) },
+      { ring: outer, fill: scaleAlignmentFill(paint.solarOuter, strength01, a) },
+      { ring: mid, fill: scaleAlignmentFill(paint.solarMid, strength01, a) },
+      { ring: core, fill: scaleAlignmentFill(paint.solarCore, strength01, a) },
     ],
     strokes: [
       {
         points: axis,
-        stroke: scaleAlignmentFill(SOLAR_ALIGNMENT_AXIS_STROKE, strength01, a),
+        stroke: scaleAlignmentFill(paint.solarAxis, strength01, a),
         strokeWidthPx: SOLAR_ALIGNMENT_AXIS_WIDTH_PX,
       },
     ],
@@ -158,6 +151,7 @@ function solarPartialField(
   const scale = eclipseAlignmentIntensityScale(input.alignment.intensity);
   const a = scale.alpha * 0.7;
   const r0 = 4.2 * scale.width;
+  const paint = resolveEclipseAlignmentPalette(input.alignment);
   return {
     kind: "solar-partial-field",
     eventId,
@@ -167,11 +161,11 @@ function solarPartialField(
     bands: [
       {
         ring: circleAlignmentRing(origin, r0 * 1.55, 28),
-        fill: scaleAlignmentFill(SOLAR_ALIGNMENT_OUTER_FILL, strength01, a),
+        fill: scaleAlignmentFill(paint.solarOuter, strength01, a),
       },
       {
         ring: circleAlignmentRing(origin, r0, 28),
-        fill: scaleAlignmentFill(SOLAR_ALIGNMENT_MID_FILL, strength01, a * 0.85),
+        fill: scaleAlignmentFill(paint.solarMid, strength01, a * 0.85),
       },
     ],
     strokes: [],
@@ -200,16 +194,17 @@ function lunarAxisEffect(
   const halo = circleAlignmentRing(moon, 2.4 * scale.width, 24);
   const axis = greatCircleCenterline(origin, moon, 14);
   const a = scale.alpha;
+  const paint = resolveEclipseAlignmentPalette(input.alignment);
   const bands: EclipseAlignmentBand[] = [
-    { ring: outer, fill: scaleAlignmentFill(LUNAR_ALIGNMENT_OUTER_FILL, strength01, a) },
-    { ring: mid, fill: scaleAlignmentFill(LUNAR_ALIGNMENT_MID_FILL, strength01, a) },
-    { ring: core, fill: scaleAlignmentFill(LUNAR_ALIGNMENT_CORE_FILL, strength01, a) },
-    { ring: halo, fill: scaleAlignmentFill(LUNAR_ALIGNMENT_MID_FILL, strength01, a * 0.55) },
+    { ring: outer, fill: scaleAlignmentFill(paint.lunarOuter, strength01, a) },
+    { ring: mid, fill: scaleAlignmentFill(paint.lunarMid, strength01, a) },
+    { ring: core, fill: scaleAlignmentFill(paint.lunarCore, strength01, a) },
+    { ring: halo, fill: scaleAlignmentFill(paint.lunarMid, strength01, a * 0.55) },
   ];
   if (geom.phase === "total-umbral") {
     bands.push({
       ring: circleAlignmentRing(moon, 3.4 * scale.width, 24),
-      fill: scaleAlignmentFill(LUNAR_ALIGNMENT_TOTALITY_WASH, strength01, a),
+      fill: scaleAlignmentFill(paint.lunarTotalityWash, strength01, a),
     });
   }
   return {
@@ -222,7 +217,7 @@ function lunarAxisEffect(
     strokes: [
       {
         points: axis,
-        stroke: scaleAlignmentFill(LUNAR_ALIGNMENT_AXIS_STROKE, strength01, a),
+        stroke: scaleAlignmentFill(paint.lunarAxis, strength01, a),
         strokeWidthPx: LUNAR_ALIGNMENT_AXIS_WIDTH_PX,
       },
     ],

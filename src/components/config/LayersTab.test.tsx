@@ -416,12 +416,12 @@ describe("LayersTab eclipse alignment", () => {
     expect(solarBeam.checked).toBe(true);
     expect(lunarBeam.checked).toBe(true);
     expect(intensity.value).toBe("normal");
-    expect(solar.checked).toBe(false);
+    expect(solar.checked).toBe(true);
     await user.click(master);
     expect(master.checked).toBe(false);
-    expect(solar.checked).toBe(false);
-    await user.click(solar);
     expect(solar.checked).toBe(true);
+    await user.click(solar);
+    expect(solar.checked).toBe(false);
     expect(master.checked).toBe(false);
   });
 });
@@ -439,14 +439,14 @@ describe("LayersTab reference-city eclipse circumstances", () => {
     const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
     expect(details.checked).toBe(true);
     expect(chrome.checked).toBe(true);
-    expect(solar.checked).toBe(false);
+    expect(solar.checked).toBe(true);
     await user.click(details);
     await user.click(chrome);
     expect(details.checked).toBe(false);
     expect(chrome.checked).toBe(false);
-    expect(solar.checked).toBe(false);
-    await user.click(solar);
     expect(solar.checked).toBe(true);
+    await user.click(solar);
+    expect(solar.checked).toBe(false);
     expect(details.checked).toBe(false);
   });
 
@@ -474,5 +474,32 @@ describe("LayersTab reference-city eclipse circumstances", () => {
     expect(screen.getByTestId("eclipse-circumstances-details").textContent?.toLowerCase()).not.toContain(
       "no eclipse",
     );
+    expect(screen.getByTestId("eclipse-event-information").textContent).toMatch(/Total solar eclipse/);
+  });
+});
+
+describe("LayersTab eclipse product polish", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("disables solar forecast children when horizon is live only", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const horizon = screen.getByLabelText("Solar forecast horizon") as HTMLSelectElement;
+    await user.selectOptions(horizon, "0");
+    expect((screen.getByLabelText("Forecast corridor") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Forecast partial region") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Live central line") as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it("does not leak solar forecast color into lunar visibility color", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const solarColor = screen.getByLabelText("Solar forecast color") as HTMLInputElement;
+    const lunarColor = screen.getByLabelText("Lunar visibility color") as HTMLInputElement;
+    const beforeLunar = lunarColor.value;
+    fireEvent.change(solarColor, { target: { value: "#112233" } });
+    expect(solarColor.value).toBe("#112233");
+    expect(lunarColor.value).toBe(beforeLunar);
   });
 });

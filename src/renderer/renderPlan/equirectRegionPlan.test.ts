@@ -40,6 +40,20 @@ function xs(item: RenderPath2DItem): number[] {
 }
 
 describe("equirect region RenderPlan", () => {
+  it("projects optional labels to text items without astronomy names", () => {
+    const plan = buildEquirectRegionOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        labels: [{ latDeg: 0, lonDeg: 0, text: "Total solar eclipse" }],
+      }),
+    });
+    const texts = plan.items.filter((item) => item.kind === "text");
+    expect(texts).toHaveLength(1);
+    expect(texts[0]).toMatchObject({ text: "Total solar eclipse", x: 180, y: 90 });
+  });
+
   it("emits nothing for an empty payload", () => {
     const plan = buildEquirectRegionOverlayRenderPlan({
       viewportWidthPx: 360,

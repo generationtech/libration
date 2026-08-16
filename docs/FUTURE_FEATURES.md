@@ -8,7 +8,7 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-The preferred next product-development direction after LIB-018 is the remaining [Eclipse System](#eclipse-system) (E6 configuration completeness). Intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). E6+ implementation is not approved. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
+The Eclipse System (E1–E6) is production. Remaining ideas in [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy) are unapproved. The strongest remaining candidate in that family is [lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry). It is not approved.
 
 ## Status vocabulary
 
@@ -21,7 +21,7 @@ Several sections describe extensions to subsystems that already exist. Those sub
 
 ## Moon, Sun-Moon-Earth, and observer astronomy
 
-This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure, [LIB-013](work/LIB-013-eclipse-authority-evaluation.md) selected the bundled NASA/Espenak–Meeus authority, [LIB-014](work/LIB-014-solar-eclipse-live-footprint.md) implemented E1 (live solar footprint), [LIB-015](work/LIB-015-solar-eclipse-forecast.md) implemented E2 (solar forecast window), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md) implemented E3 (lunar truth and terrestrial visibility), [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md) implemented E4 (reference-city eclipse circumstances), and [LIB-018](work/LIB-018-eclipse-alignment-beam.md) implemented E5 (live alignment / beam). Remaining slices (E6+) are unapproved. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E6.
+This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. The Eclipse System through E6 is production ([LIB-012](work/LIB-012-eclipse-system-architecture.md) through [LIB-019](work/LIB-019-eclipse-product-polish.md)). Ranking below is future-work preference only: it is not permission to start implementation, and it is not an E7.
 
 Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
 
@@ -29,14 +29,13 @@ Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [
 
 | Rank | Role | Entry |
 |------|------|--------|
-| 1 | Preferred next direction | [Eclipse System](#eclipse-system) |
-| 2 | High-value follow-on / enabler | [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry) |
-| 3 | High-value follow-on | [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth) |
-| 4 | High-value follow-on | [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships) |
-| 5 | Later Moon enhancement | [Earth-Moon distance, perigee, and apogee](#earth-moon-distance-perigee-and-apogee) |
-| 6 | Later Moon enhancement | [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation) |
-| 7 | Longer-term product direction | [Astronomical Events](#astronomical-events) |
-| 8 | Longer-term product direction | [Accessible versus technical terminology](#accessible-versus-technical-terminology) |
+| 1 | Preferred remaining direction | [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry) |
+| 2 | High-value follow-on | [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth) |
+| 3 | High-value follow-on | [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships) |
+| 4 | Later Moon enhancement | [Earth-Moon distance, perigee, and apogee](#earth-moon-distance-perigee-and-apogee) |
+| 5 | Later Moon enhancement | [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation) |
+| 6 | Longer-term product direction | [Astronomical Events](#astronomical-events) |
+| 7 | Longer-term product direction | [Accessible versus technical terminology](#accessible-versus-technical-terminology) |
 
 ### Visual-design principle
 
@@ -54,56 +53,23 @@ The point is to keep Libration an instrument, not a cluttered astronomy diagram.
 
 ### Eclipse System
 
-**Planned** remaining Eclipse System work after E5. Live solar event truth, geographic footprint, the solar forecast window, lunar eclipse truth/visibility, reference-city circumstances, and live alignment/beam are production ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md), [LIB-015](work/LIB-015-solar-eclipse-forecast.md), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md), [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md), [LIB-018](work/LIB-018-eclipse-alignment-beam.md); [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md)). Architecture and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Lunar forecast map and configuration completeness remain **unapproved**.
+**Production** through E6 ([LIB-012](work/LIB-012-eclipse-system-architecture.md) through [LIB-019](work/LIB-019-eclipse-product-polish.md); [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md)). Architecture and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). There is no approved E7.
 
-The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, rendering primitives, and work-item slices are **not** decided here. Authority source, span, and precision posture are recorded in the architecture spec.
+Shipped: offline NASA/Espenak–Meeus authority; global solar forecast and live footprint; lunar Earth-shadow and Moon-visible region; reference-city circumstances that never filter global truth; live alignment/beam; grouped configuration; event information; restrained labels; type filters; independent styling; factory solar/lunar masters on; honest unsupported-range copy.
 
-#### Forecasting
+The following remain **unapproved** recoverable extras, not a continuation of the planned sequence:
 
-Libration should eventually forecast upcoming eclipses at the authoritative product time:
+- lunar forecast map (authority already has `nextLunarEclipseAfter`; E3/E6 stayed active-only)
+- past/future active-corridor split
+- swept penumbra union (E2 uses a representative greatest-eclipse partial outline)
+- event browser / history / search-by-date catalog
+- map click-inspect of eclipse overlays (scene pointer inspection remains Phase 11)
+- atmospheric eclipse darkness or ambient solar-shading modification from obscuration
+- advanced style options beyond the E6 color / thickness / opacity families
+- About-page authority provenance (identity remains durable internally)
+- notifications
 
-- **Solar:** total, partial, and annular where supported/appropriate; hybrid later if justified.
-- **Lunar:** total and partial; penumbral later if justified.
-
-Forecasting is **global**. An eclipse should be known and displayable whether or not it is visible from the configured reference city. Reference-city circumstances are additional observer-specific information, not a filter on whether the global event exists.
-
-Users should eventually be able to configure how far in advance eclipse visualization appears. Examples worth keeping, not a frozen control set: off; short advance warning; several days; one or more weeks; longer horizons.
-
-#### Solar versus lunar map effects
-
-Do not assume lunar eclipses should use the same path metaphor as solar eclipses.
-
-- **Solar eclipse:** moving shadow / path geometry on Earth — a path, strip, or band; path of totality or annularity where applicable; broader partial-eclipse region; centerline and/or boundaries where useful; movement and progression during the event. These should be configurable so users can choose how much eclipse geography appears.
-- **Lunar eclipse:** Earth-shadow interaction with the Moon, plus the terrestrial region from which the eclipsed Moon is observable. Consider Moon-above-horizon / visibility geometry for that observability region. Lunar visibility geometry ([below](#lunar-visibility-and-moonlight-geometry)) may later become useful infrastructure for that region.
-
-#### Live-event alignment decoration
-
-During an eclipse, Libration should become more visually expressive, using the existing Sun and Moon visual language rather than inventing an unrelated HUD.
-
-The desired dramatic gesture is a projected **beam / alignment effect** across the map — informally a **“Mars Attacks”** visual — while remaining grounded in the actual eclipse geometry, not an arbitrary glow.
-
-Conceptual behaviour to preserve, not a rendering design:
-
-- **Solar:** Moon/Sun alignment visually connected to the active terrestrial shadow footprint or path.
-- **Lunar:** emphasize the Sun → Earth → Moon shadow-axis relationship, rather than pretending there is a narrow terrestrial lunar-eclipse path.
-
-#### Configuration richness
-
-The eventual system is expected to be highly configurable. Dimensions worth preserving, without freezing a schema: system on/off; eclipse types; forecast horizon; forecast paths/bands; partial regions; centerlines; boundaries; labels; event prominence; live alignment effects; beam/alignment decoration; reference-city information; event-specific presentation choices.
-
-#### Reference-city eclipse circumstances
-
-Production as of [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md). Observer-specific contacts, magnitude/obscuration, altitudes, and local visibility for the chrome catalog city. Global event existence does not depend on that visibility. Do not invent a separate eclipse observer location.
-
-#### How implementation should begin
-
-Repository inventory and intended structure are in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
-
-A future implementation LIB may start only after explicit approval of a slice (recommended next: E6, configuration completeness and integration polish).
-
-Intentionally **not** decided here: exact configuration schema or UI; exact rendering primitives; colors and beam styling. Authority, offline span, precision posture, first-release types, and layer structure are recorded in the architecture spec; implementation still requires a human-authorized LIB.
-
-Related inventory pointer: the [derived overlays](#derived-overlays) list below points here rather than keeping a separate one-liner.
+Do not treat those extras as approved work. Related inventory pointer: the [derived overlays](#derived-overlays) list below points here rather than keeping a separate one-liner.
 
 ### Lunar visibility and moonlight geometry
 
@@ -275,7 +241,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - **Symbolic lunar surface / apparent face orientation** — see [Symbolic lunar surface and face orientation](#symbolic-lunar-surface-and-face-orientation). Replaces the earlier “apparent lunar orientation / lunar north rotation” one-liner. LIB-011 marker-frame rotation is not this item.
 - analemma variants.
 - equinox and solstice reference overlays.
-- **Eclipse System** — see [Eclipse System](#eclipse-system). Replaces the earlier “eclipse path overlays” one-liner. E1 live solar footprint, E2 forecast window, and E3 lunar truth/visibility are production; remaining slices unapproved. Architecture in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md).
+- **Eclipse System** — see [Eclipse System](#eclipse-system). Replaces the earlier “eclipse path overlays” one-liner. E1–E6 are production. Deferred extras remain unapproved. Architecture in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md).
 - lunar horizon / moonlight-participation / illumination-contour geometry — see [Lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry).
 - lunar standstill envelopes (related to the nodal cycle already visible as lunar-locus amplitude change; not a production control today). See also [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).
 - lunar nodes on or near the lunar locus — see [Lunar nodes and eclipse relationships](#lunar-nodes-and-eclipse-relationships).

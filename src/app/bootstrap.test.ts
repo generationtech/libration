@@ -51,9 +51,11 @@ describe("createLayerRegistryFromConfig", () => {
       [
         "layer.baseMap.world",
         "layer.grid.latLon",
+        "layer.lunarEclipse.visibility",
         "layer.points.referenceCities",
         "layer.points.sublunar",
         "layer.points.subsolar",
+        "layer.solarEclipse.liveFootprint",
         "layer.solarShading.dayNight",
       ].sort(),
     );

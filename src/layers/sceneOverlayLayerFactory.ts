@@ -24,6 +24,7 @@ import {
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
   eclipseAlignmentPresentationFromScene,
+  eclipseInfoPresentationFromScene,
   lunarEclipsePresentationFromScene,
   resolveMoonlightPresentationMode,
   sublunarMarkerAppearanceFromScene,
@@ -265,6 +266,7 @@ function createDerivedOverlayByProduct(
         opacity,
         presentation: normalizeSolarEclipsePresentation(source.parameters),
         alignment: eclipseAlignmentPresentationFromScene(config.scene),
+        labelsEnabled: eclipseInfoPresentationFromScene(config.scene).labelsEnabled,
       });
     case "lunarEclipseVisibility":
       return createLunarEclipseLayer({
@@ -272,6 +274,7 @@ function createDerivedOverlayByProduct(
         opacity,
         presentation: normalizeLunarEclipsePresentation(source.parameters),
         alignment: eclipseAlignmentPresentationFromScene(config.scene),
+        labelsEnabled: eclipseInfoPresentationFromScene(config.scene).labelsEnabled,
       });
     default:
       return null;

@@ -63,6 +63,12 @@ import {
   type EclipseAlignmentPresentation,
 } from "../../core/eclipse/eclipseAlignmentAppearance";
 import {
+  DEFAULT_ECLIPSE_EVENT_INFORMATION_ENABLED,
+  DEFAULT_ECLIPSE_LABELS_ENABLED,
+  normalizeEclipseInfoPresentation,
+  type EclipseInfoPresentation,
+} from "../../core/eclipse/eclipseInfoAppearance";
+import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
   type SublunarMarkerAppearance,
@@ -455,6 +461,11 @@ export type SceneConfig = {
    * toggles. Always present on normalized configs.
    */
   eclipseAlignment: EclipseAlignmentPresentation;
+  /**
+   * Shared Eclipse System information/labels (E6). Independent of geography
+   * masters. Always present on normalized configs.
+   */
+  eclipseInfo: EclipseInfoPresentation;
   metadata?: Record<string, unknown>;
 };
 
@@ -779,12 +790,12 @@ const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   },
 };
 
-/** NASA-derived solar eclipse overlay: live footprint plus optional forecast corridor. Default off. */
+/** NASA-derived solar eclipse overlay: live footprint plus optional forecast corridor. Default on. */
 const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "solarEclipse",
   family: "astronomy",
   type: "astronomyVector",
-  enabled: false,
+  enabled: true,
   order: 2.7,
   source: {
     kind: "derived",
@@ -800,12 +811,12 @@ const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   },
 };
 
-/** NASA-derived lunar eclipse overlay: Moon-up visibility region while an event is active. Default off. */
+/** NASA-derived lunar eclipse overlay: Moon-up visibility region while an event is active. Default on. */
 const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "lunarEclipse",
   family: "astronomy",
   type: "astronomyVector",
-  enabled: false,
+  enabled: true,
   order: 2.75,
   source: {
     kind: "derived",
@@ -1031,12 +1042,16 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       detailsEnabled: DEFAULT_REFERENCE_CITY_ECLIPSE_DETAILS_ENABLED,
       chromeStatusEnabled: DEFAULT_REFERENCE_CITY_ECLIPSE_CHROME_ENABLED,
     },
-    eclipseAlignment: {
+    eclipseAlignment: normalizeEclipseAlignmentPresentation({
       enabled: DEFAULT_ECLIPSE_ALIGNMENT_ENABLED,
       solarEnabled: DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_ENABLED,
       lunarEnabled: DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_ENABLED,
       intensity: DEFAULT_ECLIPSE_ALIGNMENT_INTENSITY,
-    },
+    }),
+    eclipseInfo: normalizeEclipseInfoPresentation({
+      labelsEnabled: DEFAULT_ECLIPSE_LABELS_ENABLED,
+      eventInformationEnabled: DEFAULT_ECLIPSE_EVENT_INFORMATION_ENABLED,
+    }),
   };
 }
 
@@ -1205,14 +1220,9 @@ export function solarEclipsePresentationFromScene(scene: SceneConfig) {
 
 export function applySolarEclipsePresentationToScene(
   scene: SceneConfig,
-  patch: Partial<{
-    showCentralLine: boolean;
-    showCentralBand: boolean;
-    showPartialRegion: boolean;
-    showForecastCorridor: boolean;
-    showForecastPartialRegion: boolean;
-    forecastHorizonDays: number;
-  }>,
+  patch: Partial<Omit<ReturnType<typeof normalizeSolarEclipsePresentation>, "forecastHorizonDays">> & {
+    forecastHorizonDays?: number;
+  },
 ): SceneConfig {
   const current = solarEclipsePresentationFromScene(scene);
   const next = normalizeSolarEclipsePresentation({ ...current, ...patch });
@@ -1273,13 +1283,24 @@ export function applyEclipseAlignmentPresentationToScene(
   };
 }
 
+export function eclipseInfoPresentationFromScene(scene: SceneConfig): EclipseInfoPresentation {
+  return normalizeEclipseInfoPresentation(scene.eclipseInfo);
+}
+
+export function applyEclipseInfoPresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<EclipseInfoPresentation>,
+): SceneConfig {
+  const current = eclipseInfoPresentationFromScene(scene);
+  return {
+    ...scene,
+    eclipseInfo: normalizeEclipseInfoPresentation({ ...current, ...patch }),
+  };
+}
+
 export function applyLunarEclipsePresentationToScene(
   scene: SceneConfig,
-  patch: Partial<{
-    showMoonEclipseShadow: boolean;
-    showVisibilityBoundary: boolean;
-    showVisibilityRegion: boolean;
-  }>,
+  patch: Partial<ReturnType<typeof normalizeLunarEclipsePresentation>>,
 ): SceneConfig {
   const current = lunarEclipsePresentationFromScene(scene);
   const next = normalizeLunarEclipsePresentation({ ...current, ...patch });
@@ -1469,6 +1490,7 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     },
     eclipseCircumstances: normalizeReferenceCityEclipsePresentation(scene.eclipseCircumstances),
     eclipseAlignment: normalizeEclipseAlignmentPresentation(scene.eclipseAlignment),
+    eclipseInfo: normalizeEclipseInfoPresentation(scene.eclipseInfo),
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };
 }
@@ -1838,6 +1860,9 @@ export function normalizeSceneConfig(
   const eclipseAlignment = normalizeEclipseAlignmentPresentation(
     isPlainObject(input.eclipseAlignment) ? input.eclipseAlignment : undefined,
   );
+  const eclipseInfo = normalizeEclipseInfoPresentation(
+    isPlainObject(input.eclipseInfo) ? input.eclipseInfo : undefined,
+  );
   return {
     version: 1,
     projectionId,
@@ -1849,6 +1874,7 @@ export function normalizeSceneConfig(
     overlayReadability,
     eclipseCircumstances,
     eclipseAlignment,
+    eclipseInfo,
     ...(metadata ? { metadata } : {}),
   };
 }

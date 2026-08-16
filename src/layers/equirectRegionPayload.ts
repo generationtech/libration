@@ -34,14 +34,22 @@ export type EquirectRegionStroke = {
   readonly strokeWidthPx: number;
 };
 
+export type EquirectRegionLabel = {
+  readonly latDeg: number;
+  readonly lonDeg: number;
+  readonly text: string;
+  readonly fill?: string;
+};
+
 /**
- * Seam-aware geographic fills and strokes in lat/lon. Canvas must not interpret
- * astronomy; it only executes the projected primitives.
+ * Seam-aware geographic fills, strokes, and optional labels in lat/lon. Canvas
+ * must not interpret astronomy; it only executes the projected primitives.
  */
 export type EquirectRegionOverlayPayload = {
   readonly kind: typeof EQUIRECT_REGION_OVERLAY_KIND;
   readonly fills: readonly EquirectRegionFill[];
   readonly strokes: readonly EquirectRegionStroke[];
+  readonly labels?: readonly EquirectRegionLabel[];
   readonly readability?: OverlayReadabilityHints;
 };
 
@@ -82,6 +90,23 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
       !g.points.every(isLatLon)
     ) {
       return false;
+    }
+  }
+  if (o.labels !== undefined) {
+    if (!Array.isArray(o.labels)) {
+      return false;
+    }
+    for (const label of o.labels) {
+      if (label === null || typeof label !== "object") {
+        return false;
+      }
+      const g = label as Record<string, unknown>;
+      if (typeof g.latDeg !== "number" || typeof g.lonDeg !== "number" || typeof g.text !== "string") {
+        return false;
+      }
+      if (g.fill !== undefined && typeof g.fill !== "string") {
+        return false;
+      }
     }
   }
   if (o.readability !== undefined && !isOverlayReadabilityHints(o.readability)) {

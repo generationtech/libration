@@ -38,6 +38,7 @@ import {
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
   applyEclipseAlignmentPresentationToScene,
+  applyEclipseInfoPresentationToScene,
   applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
@@ -1118,11 +1119,11 @@ describe("SceneConfig (Phase 1)", () => {
 });
 
 describe("solar eclipse scene presentation", () => {
-  it("defaults the layer off with live and forecast presentation on and a 7-day horizon", () => {
+  it("defaults the layer on with live and forecast presentation on and a 7-day horizon", () => {
     const v2 = defaultLibrationConfigV2();
-    expect(v2.layers.solarEclipse).toBe(false);
+    expect(v2.layers.solarEclipse).toBe(true);
     const row = v2.scene?.layers.find((l) => l.id === "solarEclipse");
-    expect(row?.enabled).toBe(false);
+    expect(row?.enabled).toBe(true);
     expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe(
       "solarEclipseLiveFootprint",
     );
@@ -1177,13 +1178,22 @@ describe("solar eclipse scene presentation", () => {
     );
   });
 
-  it("normalizes a missing solarEclipse layer flag to off", () => {
+  it("normalizes a missing solarEclipse layer flag to on and preserves explicit off", () => {
     const { solarEclipse: _drop, ...legacyLayers } = DEFAULT_APP_CONFIG.layers;
-    const v2 = normalizeLibrationConfig({
+    const missing = normalizeLibrationConfig({
       ...defaultLibrationConfigV2(),
       layers: legacyLayers,
     } as LibrationConfigV2);
-    expect(v2.layers.solarEclipse).toBe(false);
+    expect(missing.layers.solarEclipse).toBe(true);
+    const explicitOff = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: { ...DEFAULT_APP_CONFIG.layers, solarEclipse: false },
+      scene: applyLayerEnableFlagsToScene(defaultLibrationConfigV2().scene!, {
+        ...DEFAULT_APP_CONFIG.layers,
+        solarEclipse: false,
+      }),
+    });
+    expect(explicitOff.layers.solarEclipse).toBe(false);
   });
 
   it("normalizes a missing forecast horizon to 7 days and snaps unknown values", () => {
@@ -1226,11 +1236,11 @@ describe("solar eclipse scene presentation", () => {
 });
 
 describe("lunar eclipse scene presentation", () => {
-  it("defaults the layer off with child presentation on", () => {
+  it("defaults the layer on with child presentation on", () => {
     const v2 = defaultLibrationConfigV2();
-    expect(v2.layers.lunarEclipse).toBe(false);
+    expect(v2.layers.lunarEclipse).toBe(true);
     const row = v2.scene?.layers.find((l) => l.id === "lunarEclipse");
-    expect(row?.enabled).toBe(false);
+    expect(row?.enabled).toBe(true);
     expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe(
       "lunarEclipseVisibility",
     );
@@ -1267,13 +1277,22 @@ describe("lunar eclipse scene presentation", () => {
     );
   });
 
-  it("normalizes a missing lunarEclipse layer flag to off", () => {
+  it("normalizes a missing lunarEclipse layer flag to on and preserves explicit off", () => {
     const { lunarEclipse: _drop, ...legacyLayers } = DEFAULT_APP_CONFIG.layers;
-    const v2 = normalizeLibrationConfig({
+    const missing = normalizeLibrationConfig({
       ...defaultLibrationConfigV2(),
       layers: legacyLayers,
     } as LibrationConfigV2);
-    expect(v2.layers.lunarEclipse).toBe(false);
+    expect(missing.layers.lunarEclipse).toBe(true);
+    const explicitOff = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: { ...DEFAULT_APP_CONFIG.layers, lunarEclipse: false },
+      scene: applyLayerEnableFlagsToScene(defaultLibrationConfigV2().scene!, {
+        ...DEFAULT_APP_CONFIG.layers,
+        lunarEclipse: false,
+      }),
+    });
+    expect(explicitOff.layers.lunarEclipse).toBe(false);
   });
 });
 
@@ -1370,5 +1389,80 @@ describe("eclipse alignment scene presentation", () => {
       },
     });
     expect(v2.scene?.eclipseAlignment.intensity).toBe("normal");
+  });
+});
+
+describe("eclipse product polish presentation", () => {
+  it("defaults type filters, labels, event information, and style tokens on", () => {
+    const v2 = defaultLibrationConfigV2();
+    const solar = v2.scene?.layers.find((l) => l.id === "solarEclipse");
+    const params = solar?.source.kind === "derived" ? solar.source.parameters : undefined;
+    expect(params?.showTypeTotal).toBe(true);
+    expect(params?.showTypeHybrid).toBe(true);
+    expect(v2.scene?.eclipseInfo.labelsEnabled).toBe(true);
+    expect(v2.scene?.eclipseInfo.eventInformationEnabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.solarColor).toMatch(/^#/);
+    expect(v2.scene?.eclipseAlignment.lunarColor).toMatch(/^#/);
+  });
+
+  it("persists style and filter changes independently", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      scene: applyEclipseInfoPresentationToScene(
+        applyEclipseAlignmentPresentationToScene(
+          applyLunarEclipsePresentationToScene(
+            applySolarEclipsePresentationToScene(base.scene!, {
+              showTypeTotal: false,
+              forecastCorridorColor: "#112233",
+              livePartialOpacity: 0.08,
+            }),
+            { visibilityRegionColor: "#abcdef", showTypePenumbral: false },
+          ),
+          { solarColor: "#fedcba", intensity: "subtle" },
+        ),
+        { labelsEnabled: false },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    const solar = round.scene?.layers.find((l) => l.id === "solarEclipse");
+    const lunar = round.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(solar?.source.kind === "derived" ? solar.source.parameters?.showTypeTotal : undefined).toBe(
+      false,
+    );
+    expect(solar?.source.kind === "derived" ? solar.source.parameters?.forecastCorridorColor : undefined).toBe(
+      "#112233",
+    );
+    expect(lunar?.source.kind === "derived" ? lunar.source.parameters?.visibilityRegionColor : undefined).toBe(
+      "#abcdef",
+    );
+    expect(lunar?.source.kind === "derived" ? lunar.source.parameters?.showTypePenumbral : undefined).toBe(
+      false,
+    );
+    expect(round.scene?.eclipseAlignment.solarColor).toBe("#fedcba");
+    expect(round.scene?.eclipseAlignment.lunarColor).not.toBe("#fedcba");
+    expect(round.scene?.eclipseAlignment.intensity).toBe("subtle");
+    expect(round.scene?.eclipseInfo.labelsEnabled).toBe(false);
+    expect(round.scene?.eclipseInfo.eventInformationEnabled).toBe(true);
+  });
+
+  it("clamps fill opacity to the product bounds", () => {
+    const base = defaultLibrationConfigV2();
+    const high = normalizeLibrationConfig({
+      ...base,
+      scene: applySolarEclipsePresentationToScene(base.scene!, { liveCentralBandOpacity: 1 }),
+    });
+    const low = normalizeLibrationConfig({
+      ...base,
+      scene: applySolarEclipsePresentationToScene(base.scene!, { liveCentralBandOpacity: 0 }),
+    });
+    const highRow = high.scene?.layers.find((l) => l.id === "solarEclipse");
+    const lowRow = low.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(
+      highRow?.source.kind === "derived" ? highRow.source.parameters?.liveCentralBandOpacity : undefined,
+    ).toBe(0.55);
+    expect(
+      lowRow?.source.kind === "derived" ? lowRow.source.parameters?.liveCentralBandOpacity : undefined,
+    ).toBe(0.04);
   });
 });

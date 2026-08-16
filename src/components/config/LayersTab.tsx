@@ -32,10 +32,6 @@ import {
   applyLunarGroundTrackExtentToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
-  applyLunarEclipsePresentationToScene,
-  applySolarEclipsePresentationToScene,
-  applyReferenceCityEclipsePresentationToScene,
-  applyEclipseAlignmentPresentationToScene,
   applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
@@ -47,10 +43,6 @@ import {
   LUNAR_GROUND_TRACK_EXTENT_HOURS,
   setBaseMapPresentationForMapId,
   solarAnalemmaStrokeFromScene,
-  lunarEclipsePresentationFromScene,
-  solarEclipsePresentationFromScene,
-  referenceCityEclipsePresentationFromScene,
-  eclipseAlignmentPresentationFromScene,
   sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
@@ -80,23 +72,12 @@ import {
   type SublunarMarkerSizeId,
 } from "../../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
-import {
-  forecastHorizonLabel,
-  forecastHorizonMsFromDays,
-  SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
-} from "../../core/eclipse/solarEclipseAppearance";
-import {
-  ECLIPSE_ALIGNMENT_INTENSITY_IDS,
-  eclipseAlignmentIntensityLabel,
-} from "../../core/eclipse/eclipseAlignmentAppearance";
-import { resolveEclipseFrame } from "../../core/eclipse/eclipseEventService";
-import { resolveReferenceCityEclipseCircumstances } from "../../core/eclipse/referenceCityEclipseCircumstances";
 import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
 import { displayTimeModeFromTopBandTimeMode } from "../../core/displayTimeMode";
 import { REFERENCE_CITIES } from "../../data/referenceCities";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
-import { EclipseCircumstancesDetails } from "./EclipseCircumstancesDetails";
+import { EclipseSystemSection } from "./EclipseSystemSection";
 
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
@@ -202,10 +183,10 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
     return "Shows the Moon's compact sublunar figure traced over one mean-lunar-day sampling cycle.";
   }
   if (key === "solarEclipse") {
-    return "Shows NASA-derived solar eclipse geography: the live footprint when an eclipse is active, and forecast path/region for upcoming events inside the forecast horizon. Default off.";
+    return "Shows NASA-derived solar eclipse geography: the live footprint when an eclipse is active, and forecast path/region for upcoming events inside the forecast horizon. Default on; nothing is drawn when no event is relevant.";
   }
   if (key === "lunarEclipse") {
-    return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default off.";
+    return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
   }
   return undefined;
 }
@@ -517,26 +498,6 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
     observerLocation === null;
   const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
-  const eclipsePresentation = solarEclipsePresentationFromScene(scene);
-  const lunarEclipsePresentation = lunarEclipsePresentationFromScene(scene);
-  const eclipseCircumstancesPresentation = referenceCityEclipsePresentationFromScene(scene);
-  const eclipseAlignmentPresentation = eclipseAlignmentPresentationFromScene(scene);
-  const eclipseHorizonMs = config.layers.solarEclipse
-    ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
-    : 0;
-  const eclipseFrame =
-    productInstantMs !== undefined
-      ? resolveEclipseFrame(productInstantMs, { horizonMs: eclipseHorizonMs })
-      : null;
-  const eclipseCircumstances =
-    eclipseFrame && eclipseCircumstancesPresentation.detailsEnabled
-      ? resolveReferenceCityEclipseCircumstances(eclipseFrame, observerLocation)
-      : null;
-  const hasEclipseEvent = Boolean(
-    eclipseFrame?.activeSolar ||
-      eclipseFrame?.activeLunar ||
-      (eclipseFrame?.upcomingSolar.length ?? 0) > 0,
-  );
   const eclipseCityName =
     observerLocation !== null
       ? (REFERENCE_CITIES.find((c) => c.id === observerLocation.cityId)?.name ?? observerLocation.cityId)
@@ -1433,424 +1394,14 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </ConfigControlRow>
           );
         })}
-        <ConfigControlRow label="Eclipse forecast horizon">
-          <select
-            className="config-input"
-            disabled={!mutable}
-            aria-label="Eclipse forecast horizon"
-            title="How far ahead of product time to show upcoming solar eclipse geography. Off / Live only keeps the live footprint only."
-            value={String(eclipsePresentation.forecastHorizonDays)}
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const forecastHorizonDays = Number(e.currentTarget.value);
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        forecastHorizonDays,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          >
-            {SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS.map((days) => (
-              <option key={`eclipse-horizon-${days}`} value={days}>
-                {forecastHorizonLabel(days)}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse central line">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipsePresentation.showCentralLine}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse central line"
-            title="Central eclipse path (path of totality or annularity) for live and forecast geography. Ignored for partial-only events."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showCentralLine = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        showCentralLine,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse central band">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipsePresentation.showCentralBand}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse central band"
-            title="Live umbral or antumbral footprint at the current product time. Not drawn for partial-only events."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showCentralBand = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        showCentralBand,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse partial region">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipsePresentation.showPartialRegion}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse partial region"
-            title="Live penumbral / partial-eclipse footprint at the current product time."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showPartialRegion = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        showPartialRegion,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse forecast corridor">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipsePresentation.showForecastCorridor}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse forecast corridor"
-            title="Event-long central eclipse corridor (where totality or annularity sweeps). Distinct from the live umbra. Not drawn for partial-only events."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showForecastCorridor = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        showForecastCorridor,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse forecast partial region">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipsePresentation.showForecastPartialRegion}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse forecast partial region"
-            title="Representative greatest-eclipse partial footprint for upcoming events. Not the event-long swept penumbra."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showForecastPartialRegion = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applySolarEclipsePresentationToScene(baseScene, {
-                        showForecastPartialRegion,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Moon eclipse-shadow treatment">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lunarEclipsePresentation.showMoonEclipseShadow}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Moon eclipse-shadow treatment"
-            title="Earth-shadow overlay on the Moon glyph during an active lunar eclipse. Independent of ordinary phase shading."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showMoonEclipseShadow = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
-                        showMoonEclipseShadow,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar eclipse visibility boundary">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lunarEclipsePresentation.showVisibilityBoundary}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Lunar eclipse visibility boundary"
-            title="Geometric lunar-horizon contour (altitude 0°) during an active lunar eclipse. Not the solar terminator."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showVisibilityBoundary = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
-                        showVisibilityBoundary,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar eclipse visibility region">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lunarEclipsePresentation.showVisibilityRegion}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Lunar eclipse visibility region"
-            title="Terrestrial region where the Moon is above the geometric horizon during an active lunar eclipse."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const showVisibilityRegion = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
-                        showVisibilityRegion,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Eclipse alignment effects">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipseAlignmentPresentation.enabled}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Eclipse alignment effects"
-            title="Master switch for the live Sun–Moon–Earth alignment field during an active eclipse. Does not disable eclipse geography."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const enabled = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
-                        enabled,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Solar alignment beam">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipseAlignmentPresentation.solarEnabled}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Solar alignment beam"
-            title="Solar alignment field during an active solar eclipse. Requires Solar eclipses to be enabled."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const solarEnabled = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
-                        solarEnabled,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar alignment beam">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipseAlignmentPresentation.lunarEnabled}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Lunar alignment beam"
-            title="Lunar Earth-shadow axis during an active lunar eclipse. Requires Lunar eclipses to be enabled."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const lunarEnabled = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
-                        lunarEnabled,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Alignment intensity">
-          <select
-            className="config-input"
-            disabled={!mutable}
-            aria-label="Alignment intensity"
-            title="Width and opacity of the live alignment field. Subtle, normal, or dramatic."
-            value={eclipseAlignmentPresentation.intensity}
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const intensity = e.currentTarget.value;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
-                        intensity: intensity as typeof eclipseAlignmentPresentation.intensity,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          >
-            {ECLIPSE_ALIGNMENT_INTENSITY_IDS.map((id) => (
-              <option key={`eclipse-alignment-intensity-${id}`} value={id}>
-                {eclipseAlignmentIntensityLabel(id)}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Reference-city eclipse details">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipseCircumstancesPresentation.detailsEnabled}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Reference-city eclipse details"
-            title="Inspectable local eclipse circumstances for the chrome reference city. Does not filter the global eclipse map."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const detailsEnabled = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyReferenceCityEclipsePresentationToScene(baseScene, {
-                        detailsEnabled,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Persistent eclipse status">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={eclipseCircumstancesPresentation.chromeStatusEnabled}
-            readOnly={!mutable}
-            disabled={!mutable}
-            tabIndex={mutable ? 0 : -1}
-            aria-label="Persistent eclipse status"
-            title="Compact eclipse status on the reference-city chrome. Independent of inspectable details and of the global eclipse map."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const chromeStatusEnabled = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = applyReferenceCityEclipsePresentationToScene(baseScene, {
-                        chromeStatusEnabled,
-                      });
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <EclipseCircumstancesDetails
-          circumstances={eclipseCircumstances}
-          observerUnavailable={observerLocation === null && hasEclipseEvent}
+        <EclipseSystemSection
+          config={config}
+          updateConfig={updateConfig}
+          productInstantMs={productInstantMs}
+          observerLocation={observerLocation}
           cityName={eclipseCityName}
           timeZone={eclipseTimeZone}
           displayTimeMode={eclipseDisplayTimeMode}
-          enabled={eclipseCircumstancesPresentation.detailsEnabled}
         />
         <ConfigControlRow label="Lunar ground track past">
           <select

@@ -65,8 +65,14 @@ import {
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
-import { solarEclipsePresentationFromScene, referenceCityEclipsePresentationFromScene } from "./config/v2/sceneConfig";
+import {
+  eclipseInfoPresentationFromScene,
+  lunarEclipsePresentationFromScene,
+  solarEclipsePresentationFromScene,
+  referenceCityEclipsePresentationFromScene,
+} from "./config/v2/sceneConfig";
 import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
+import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInformation";
 import { createDynamicDataLifecycleHost } from "./lifecycle";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
@@ -434,6 +440,9 @@ export default function App() {
         deltaMs: time.deltaMs,
       };
       const e4pres = referenceCityEclipsePresentationFromScene(scene);
+      const eclipseInfoPres = eclipseInfoPresentationFromScene(scene);
+      const solarPres = solarEclipsePresentationFromScene(scene);
+      const lunarPres = lunarEclipsePresentationFromScene(scene);
       const observer = resolveReferenceCityObserverLocation(derivedAppConfigRef.current.displayTime);
       const circumstances =
         e4pres.detailsEnabled || e4pres.chromeStatusEnabled
@@ -443,12 +452,27 @@ export default function App() {
         observer !== null
           ? (REFERENCE_CITIES.find((c) => c.id === observer.cityId)?.name ?? observer.cityId)
           : "";
+      const eventInfo = buildEclipseEventInformation({
+        frame: eclipseFrame,
+        solarEnabled: derivedAppConfigRef.current.layers.solarEclipse,
+        lunarEnabled: derivedAppConfigRef.current.layers.lunarEclipse,
+        solar: solarPres,
+        lunar: lunarPres,
+        info: eclipseInfoPres,
+        circumstances,
+      });
       const eclipseStatusText = e4pres.chromeStatusEnabled
         ? formatReferenceCityEclipseChromeStatus(
-            circumstances,
+            eventInfo.circumstances,
             cityName,
             resolveReferenceFrameCivilTimeZone(derivedAppConfigRef.current.displayTime),
             displayTimeModeFromTopBandTimeMode(derivedAppConfigRef.current.displayTime.topBandMode),
+            {
+              unsupported: eventInfo.unsupported,
+              presented: eventInfo.kind !== null || eventInfo.unsupported,
+              lifecycle: eventInfo.lifecycle,
+              relativeTime: eventInfo.relativeTime,
+            },
           )
         : null;
       const chromeState = buildDisplayChromeState({

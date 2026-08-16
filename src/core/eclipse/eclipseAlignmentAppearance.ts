@@ -12,9 +12,12 @@
  */
 
 /**
- * Eclipse alignment / beam presentation parameters. Style tokens are
- * implementation defaults, not a user-facing color editor (E6).
+ * Eclipse alignment / beam presentation parameters. Intensity remains a
+ * discrete product control; optional base colors are transformed into the
+ * layered E5 effect.
  */
+
+import { colorsEqualHex, hexToRgba, normalizeEclipseColorHex } from "./eclipseStyle";
 
 export const ECLIPSE_ALIGNMENT_INTENSITY_IDS = ["subtle", "normal", "dramatic"] as const;
 export type EclipseAlignmentIntensityId = (typeof ECLIPSE_ALIGNMENT_INTENSITY_IDS)[number];
@@ -23,12 +26,16 @@ export const DEFAULT_ECLIPSE_ALIGNMENT_ENABLED = true;
 export const DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_ENABLED = true;
 export const DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_ENABLED = true;
 export const DEFAULT_ECLIPSE_ALIGNMENT_INTENSITY: EclipseAlignmentIntensityId = "normal";
+export const DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_COLOR = "#ffd696";
+export const DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_COLOR = "#6c88a4";
 
 export type EclipseAlignmentPresentation = {
   readonly enabled: boolean;
   readonly solarEnabled: boolean;
   readonly lunarEnabled: boolean;
   readonly intensity: EclipseAlignmentIntensityId;
+  readonly solarColor: string;
+  readonly lunarColor: string;
 };
 
 function flag(raw: unknown, fallback: boolean): boolean {
@@ -53,6 +60,8 @@ export function normalizeEclipseAlignmentPresentation(
     solarEnabled: flag(raw?.solarEnabled, DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_ENABLED),
     lunarEnabled: flag(raw?.lunarEnabled, DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_ENABLED),
     intensity: normalizeEclipseAlignmentIntensity(raw?.intensity),
+    solarColor: normalizeEclipseColorHex(raw?.solarColor, DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_COLOR),
+    lunarColor: normalizeEclipseColorHex(raw?.lunarColor, DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_COLOR),
   };
 }
 
@@ -109,4 +118,34 @@ export const LUNAR_ALIGNMENT_AXIS_WIDTH_PX = 1.25;
 
 export function scaleAlignmentFill(css: string, strength01: number, alphaScale: number): string {
   return scaleRgbaAlpha(css, Math.max(0, strength01) * alphaScale);
+}
+
+export type EclipseAlignmentPalette = {
+  readonly solarOuter: string;
+  readonly solarMid: string;
+  readonly solarCore: string;
+  readonly solarAxis: string;
+  readonly lunarOuter: string;
+  readonly lunarMid: string;
+  readonly lunarCore: string;
+  readonly lunarTotalityWash: string;
+  readonly lunarAxis: string;
+};
+
+export function resolveEclipseAlignmentPalette(
+  presentation: EclipseAlignmentPresentation,
+): EclipseAlignmentPalette {
+  const solarDefault = colorsEqualHex(presentation.solarColor, DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_COLOR);
+  const lunarDefault = colorsEqualHex(presentation.lunarColor, DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_COLOR);
+  return {
+    solarOuter: solarDefault ? SOLAR_ALIGNMENT_OUTER_FILL : hexToRgba(presentation.solarColor, 0.07),
+    solarMid: solarDefault ? SOLAR_ALIGNMENT_MID_FILL : hexToRgba(presentation.solarColor, 0.11),
+    solarCore: solarDefault ? SOLAR_ALIGNMENT_CORE_FILL : hexToRgba(presentation.solarColor, 0.165),
+    solarAxis: solarDefault ? SOLAR_ALIGNMENT_AXIS_STROKE : hexToRgba(presentation.solarColor, 0.42),
+    lunarOuter: lunarDefault ? LUNAR_ALIGNMENT_OUTER_FILL : hexToRgba(presentation.lunarColor, 0.075),
+    lunarMid: lunarDefault ? LUNAR_ALIGNMENT_MID_FILL : hexToRgba(presentation.lunarColor, 0.12),
+    lunarCore: lunarDefault ? LUNAR_ALIGNMENT_CORE_FILL : hexToRgba(presentation.lunarColor, 0.175),
+    lunarTotalityWash: LUNAR_ALIGNMENT_TOTALITY_WASH,
+    lunarAxis: lunarDefault ? LUNAR_ALIGNMENT_AXIS_STROKE : hexToRgba(presentation.lunarColor, 0.4),
+  };
 }

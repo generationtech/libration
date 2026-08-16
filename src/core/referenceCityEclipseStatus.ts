@@ -73,6 +73,13 @@ function lunarVisibleLine(circumstances: ReferenceCityEclipseCircumstances): str
   return `Lunar eclipse · ${kind} · visible`;
 }
 
+export type EclipseChromeStatusOptions = {
+  readonly unsupported?: boolean;
+  readonly presented?: boolean;
+  readonly lifecycle?: "upcoming" | "active" | null;
+  readonly relativeTime?: string | null;
+};
+
 /**
  * Compact persistent chrome line. Null when there is no relevant eclipse.
  * Never implies the global event is absent because the city cannot see it.
@@ -82,7 +89,14 @@ export function formatReferenceCityEclipseChromeStatus(
   cityName: string,
   timeZone: string,
   displayTimeMode: DisplayTimeMode,
+  options?: EclipseChromeStatusOptions,
 ): string | null {
+  if (options?.unsupported) {
+    return "Eclipse data unavailable outside 1900–2100.";
+  }
+  if (options?.presented === false) {
+    return null;
+  }
   if (!circumstances) {
     return null;
   }
@@ -91,13 +105,29 @@ export function formatReferenceCityEclipseChromeStatus(
   if (!solar && !lunar) {
     return null;
   }
+  const relative = options?.relativeTime && options.relativeTime !== "now" ? options.relativeTime : null;
   if (solar?.locallyVisible) {
+    if (options?.lifecycle === "upcoming" && relative) {
+      const kind =
+        solar.observableKind === "total"
+          ? "Total"
+          : solar.observableKind === "annular"
+            ? "Annular"
+            : "Partial";
+      const pct =
+        solar.observableKind === "partial" ? percent(solar.obscuration ?? solar.magnitude) : null;
+      const kindBit = pct ? `${kind} ${pct}` : kind;
+      return `Eclipse · ${kindBit} · ${relative}`;
+    }
     return solarVisibleLine(circumstances, timeZone, displayTimeMode);
   }
   if (lunar?.locallyVisible) {
     return lunarVisibleLine(circumstances);
   }
   if (solar) {
+    if (options?.lifecycle === "upcoming" && relative) {
+      return `Eclipse · ${relative} · not visible from ${cityName}`;
+    }
     return `Eclipse not visible from ${cityName}`;
   }
   return `Lunar eclipse not visible from ${cityName}`;

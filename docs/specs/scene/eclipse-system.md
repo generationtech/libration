@@ -4,7 +4,7 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). E5 (live alignment / beam presentation) is **production** as of [LIB-018](../../work/LIB-018-eclipse-alignment-beam.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E6+), which still require a separate human-authorized work item.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). E5 (live alignment / beam presentation) is **production** as of [LIB-018](../../work/LIB-018-eclipse-alignment-beam.md). E6 (configuration completeness, event information, and product polish) is **production** as of [LIB-019](../../work/LIB-019-eclipse-product-polish.md). Current behaviour lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). The planned E1–E6 Eclipse System sequence is complete. Remaining eclipse ideas stay unapproved in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). This file remains the intended architecture; it is not a work-item queue.
 
 Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs). E3 production notes are in [§10](#10-lunar-eclipse-map-architecture) and [§22.16](#2216-e3-inputs).
 
@@ -455,13 +455,13 @@ No separate eclipse lat/lon picker. Inspectable Layers details and optional bott
 
 ## 13. Configuration direction
 
-Do **not** define the schema in this item.
+E6 shipped the product configuration without a second persistence mechanism. Schema and UI live in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
 
-Expected future dimensions: master enable; event categories/types; forecast horizon; solar path / partial region / centerline; lunar visibility region; labels; forecast prominence; live alignment; beam effect; reference-city information; styling.
+Shipped dimensions: solar/lunar master enable (factory default **on**); presentation-only event-type filters; forecast horizon; solar path / partial region / centerline; lunar visibility region; labels; event information; live alignment; beam intensity and optional base colors; reference-city information; independent styling (color / thickness / opacity).
 
 ### Where it should live
 
-One **Eclipse System** subtree on the persisted document (scene-adjacent), because enablement, horizon, and types are shared event-service inputs. Presentation rows in `SceneConfig.layers` for what is drawn.
+Presentation remains on the existing `SceneConfig` rows (`solarEclipse`, `lunarEclipse`) plus `scene.eclipseAlignment`, `scene.eclipseCircumstances`, and `scene.eclipseInfo`. Discovery still belongs to `EclipseEventService`. A single shared Eclipse System persistence subtree was not required: the service already owns the frame, and E6 grouped the existing owners in the Layers UI.
 
 ### Structural options
 
@@ -474,7 +474,7 @@ One **Eclipse System** subtree on the persisted document (scene-adjacent), becau
 
 **Recommendation:** global `EclipseEventService` feeding **two** presentation layers (`solarEclipse`, `lunarEclipse`), with a shared config root for master enable, types, and horizon. Do not start a generic events framework.
 
-E1 followed existing overlay patterns: `source.kind === "derived"` product `solarEclipseLiveFootprint`, presentation parameters on the row, factory dispatch by product. A `LayerEnableFlags.solarEclipse` compatibility flag exists (default off), matching other stack overlays. E2 added `forecastHorizonDays` (default 7; `0` = live only) plus `showForecastCorridor` / `showForecastPartialRegion` on the same row. A shared Eclipse System config subtree remains E6 if lunar presentation needs a common root.
+E1 followed existing overlay patterns: `source.kind === "derived"` product `solarEclipseLiveFootprint`, presentation parameters on the row, factory dispatch by product. A `LayerEnableFlags.solarEclipse` compatibility flag exists (factory default **on** as of E6; named presets may still be explicitly off). E2 added `forecastHorizonDays` (default 7; `0` = live only) plus `showForecastCorridor` / `showForecastPartialRegion` on the same row. E6 added type filters, user style, labels, and event information on those owners rather than inventing a second config root.
 
 ---
 
@@ -610,15 +610,16 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Arbitrary glow; backend-specific tricks; coupling to illumination.
 - **Completion evidence:** Plan tests with effect off (no extra primitives); visual on/off.
 
-### E6 — Configuration completeness and integration polish
+### E6 — Configuration completeness and integration polish — **implemented (LIB-019)**
 
 - **Goal:** Remaining configurable dimensions, readability, labels, defaults that keep the ambient map calm.
 - **Dependencies:** E1–E5 as shipped.
-- **User-visible:** Coherent Eclipse System controls without mode chaos.
+- **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
+- **User-visible:** Coherent Eclipse System controls, event information, restrained labels, type filters, independent styling, factory solar/lunar masters on, honest unsupported-range copy.
 - **Principal risks:** Schema sprawl; legacy layer flags.
-- **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
+- **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration; end-to-end solar/lunar workflows.
 
-E1 is production. E2 is production. E3 is production. E4 is production. E5 is production. E6 (configuration completeness and integration polish) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
+E1–E6 are production. The planned Eclipse System sequence is complete. Do not invent E7 here. Intentionally deferred ideas (lunar forecast map, event browser/history, swept penumbra union, atmospheric/ambient eclipse shading, map click-inspect) remain in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). The NASA/Espenak–Meeus authority classifies hybrid solar and penumbral lunar events; E6 labels them honestly in ordinary UI.
 
 ---
 
@@ -668,10 +669,9 @@ E1 live solar footprint at known NASA events. E2 solar forecast window and cache
 
 ## 20. Intentionally not predetermined
 
-- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls, E3’s lunar overlay controls, and E5’s alignment master / solar / lunar / intensity.
-- Numeric imminent thresholds.
-- Colors, opacities, gradients, cone/beam shape, animation beyond E1/E3/E5’s restrained production tokens.
-- Chrome vs inspectable-panel placement for observer circumstances.
+- Numeric imminent thresholds beyond the restrained product-time relative countdown shipped in E6.
+- Colors, opacities, gradients, cone/beam shape, animation beyond the E1–E6 production tokens and user style families.
+- Map click-inspect for eclipse overlays (scene pointer inspection remains unapproved).
 - Extracting a shared `surfaceDotProduct(lat, lon, subpoint)` helper (good cleanup, not an architecture decision).
 - Adding Sun RA/Dec exports before they have a caller.
 - Any change to illumination composition.

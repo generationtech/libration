@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-018](work/LIB-018-eclipse-alignment-beam.md) — Live eclipse alignment / beam presentation (E5)
+[LIB-019](work/LIB-019-eclipse-product-polish.md) — Eclipse configuration completeness, event information, and product polish (E6)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Wait for human authorization. The strongest candidate is E6 — eclipse configuration completeness and integration polish. Do not start it without an approved work item.
+Wait for a human to approve the next work item. Do not start E7 or another astronomy feature.

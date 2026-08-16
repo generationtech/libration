@@ -18,24 +18,18 @@ import {
   type EclipseAlignmentPresentation,
 } from "../core/eclipse/eclipseAlignmentAppearance";
 import { buildEclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentPresentation";
+import { solarEclipseMapLabel } from "../core/eclipse/eclipseEventLabels";
+import {
+  presentedActiveSolar,
+  presentedForecastSelections,
+  presentedUpcomingSolar,
+} from "../core/eclipse/eclipsePresentedEvents";
 import {
   forecastHorizonMsFromDays,
   normalizeSolarEclipsePresentation,
+  resolveSolarEclipsePaint,
   scaleRgbaAlpha,
-  SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL,
-  SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL,
-  SOLAR_ECLIPSE_ANTUMBRA_FILL,
-  SOLAR_ECLIPSE_CENTERLINE_STROKE,
-  SOLAR_ECLIPSE_CENTERLINE_WIDTH_PX,
-  SOLAR_ECLIPSE_FORECAST_CENTERLINE_STROKE,
-  SOLAR_ECLIPSE_FORECAST_CENTERLINE_WIDTH_PX,
-  SOLAR_ECLIPSE_FORECAST_CORRIDOR_ANTUMBRA_FILL,
-  SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE,
-  SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE_WIDTH_PX,
-  SOLAR_ECLIPSE_FORECAST_CORRIDOR_UMBRA_FILL,
-  SOLAR_ECLIPSE_FORECAST_PARTIAL_FILL,
-  SOLAR_ECLIPSE_PARTIAL_FILL,
-  SOLAR_ECLIPSE_UMBRA_FILL,
+  type SolarEclipsePaint,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
 import { sublunarPoint } from "../core/sublunarPoint";
@@ -45,6 +39,7 @@ import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   EQUIRECT_REGION_OVERLAY_KIND,
   type EquirectRegionFill,
+  type EquirectRegionLabel,
   type EquirectRegionOverlayPayload,
   type EquirectRegionStroke,
 } from "./equirectRegionPayload";
@@ -54,21 +49,21 @@ export const SOLAR_ECLIPSE_LAYER_ID = "layer.solarEclipse.liveFootprint";
 
 const updatePolicy: UpdatePolicy = { type: "perFrame" };
 
-function corridorFill(selection: SolarEclipseForecastSelection): string {
+function corridorFill(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
   const annular = selection.geometry.subtype === "annular";
   if (selection.lifecycle === "active") {
-    return annular ? SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL : SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL;
+    return annular ? paint.activeCorridorAntumbraFill : paint.activeCorridorUmbraFill;
   }
-  const base = annular ? SOLAR_ECLIPSE_FORECAST_CORRIDOR_ANTUMBRA_FILL : SOLAR_ECLIPSE_FORECAST_CORRIDOR_UMBRA_FILL;
+  const base = annular ? paint.forecastCorridorAntumbraFill : paint.forecastCorridorUmbraFill;
   return scaleRgbaAlpha(base, selection.prominence01);
 }
 
-function forecastPartialFill(selection: SolarEclipseForecastSelection): string {
-  return scaleRgbaAlpha(SOLAR_ECLIPSE_FORECAST_PARTIAL_FILL, selection.prominence01);
+function forecastPartialFill(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
+  return scaleRgbaAlpha(paint.forecastPartialFill, selection.prominence01);
 }
 
-function forecastCenterlineStroke(selection: SolarEclipseForecastSelection): string {
-  return scaleRgbaAlpha(SOLAR_ECLIPSE_FORECAST_CENTERLINE_STROKE, selection.prominence01);
+function forecastCenterlineStroke(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
+  return scaleRgbaAlpha(paint.forecastCenterlineStroke, selection.prominence01);
 }
 
 export function createSolarEclipseLayer(
@@ -77,13 +72,16 @@ export function createSolarEclipseLayer(
     opacity?: number;
     presentation?: Partial<SolarEclipsePresentation> | Readonly<Record<string, unknown>>;
     alignment?: Partial<EclipseAlignmentPresentation> | Readonly<Record<string, unknown>>;
+    labelsEnabled?: boolean;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const presentation = normalizeSolarEclipsePresentation(options.presentation);
   const alignment = normalizeEclipseAlignmentPresentation(options.alignment);
+  const labelsEnabled = options.labelsEnabled !== false;
   const horizonMs = forecastHorizonMsFromDays(presentation.forecastHorizonDays);
+  const paint = resolveSolarEclipsePaint(presentation);
   return {
     id: SOLAR_ECLIPSE_LAYER_ID,
     name: "Solar eclipses",
@@ -98,8 +96,11 @@ export function createSolarEclipseLayer(
           : resolveEclipseFrame(time.now, { horizonMs });
       const fills: EquirectRegionFill[] = [];
       const strokes: EquirectRegionStroke[] = [];
-      if (frame.support.supported || frame.forecastSelections.length > 0) {
-        for (const selection of frame.forecastSelections) {
+      const labels: EquirectRegionLabel[] = [];
+      const selections = presentedForecastSelections(frame, presentation);
+      const activeSolar = presentedActiveSolar(frame, presentation);
+      if (frame.support.supported || selections.length > 0) {
+        for (const selection of selections) {
           if (
             presentation.showForecastPartialRegion &&
             selection.lifecycle === "upcoming" &&
@@ -107,17 +108,17 @@ export function createSolarEclipseLayer(
           ) {
             fills.push({
               ring: selection.geometry.partialForecastRegion,
-              fill: forecastPartialFill(selection),
+              fill: forecastPartialFill(selection, paint),
             });
           }
           if (presentation.showForecastCorridor) {
             for (const ring of selection.geometry.corridorBands) {
               if (ring.length >= 4) {
-                fills.push({ ring, fill: corridorFill(selection) });
+                fills.push({ ring, fill: corridorFill(selection, paint) });
                 strokes.push({
                   points: ring,
-                  stroke: scaleRgbaAlpha(SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE, selection.prominence01),
-                  strokeWidthPx: SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE_WIDTH_PX,
+                  stroke: scaleRgbaAlpha(paint.forecastCorridorStroke, selection.prominence01),
+                  strokeWidthPx: paint.forecastCorridorStrokeWidthPx,
                 });
               }
             }
@@ -129,15 +130,15 @@ export function createSolarEclipseLayer(
           ) {
             strokes.push({
               points: selection.geometry.centerline,
-              stroke: forecastCenterlineStroke(selection),
-              strokeWidthPx: SOLAR_ECLIPSE_FORECAST_CENTERLINE_WIDTH_PX,
+              stroke: forecastCenterlineStroke(selection, paint),
+              strokeWidthPx: paint.forecastCenterlineWidthPx,
             });
           }
         }
         const geom = frame.solarGeometry;
-        if (geom && frame.support.supported) {
+        if (geom && frame.support.supported && activeSolar) {
           if (presentation.showPartialRegion && geom.partialRegion.length >= 4) {
-            fills.push({ ring: geom.partialRegion, fill: SOLAR_ECLIPSE_PARTIAL_FILL });
+            fills.push({ ring: geom.partialRegion, fill: paint.livePartialFill });
           }
           const sun = subsolarPoint(time.now);
           const moon = sublunarPoint(time.now);
@@ -159,7 +160,7 @@ export function createSolarEclipseLayer(
           if (presentation.showCentralBand && geom.centralBand.length >= 4) {
             fills.push({
               ring: geom.centralBand,
-              fill: geom.centralShadowKind === "antumbra" ? SOLAR_ECLIPSE_ANTUMBRA_FILL : SOLAR_ECLIPSE_UMBRA_FILL,
+              fill: geom.centralShadowKind === "antumbra" ? paint.liveAntumbraFill : paint.liveUmbraFill,
             });
           }
           if (alignmentView.solar) {
@@ -176,9 +177,36 @@ export function createSolarEclipseLayer(
           if (presentation.showCentralLine && geom.centerline.length >= 2) {
             strokes.push({
               points: geom.centerline,
-              stroke: SOLAR_ECLIPSE_CENTERLINE_STROKE,
-              strokeWidthPx: SOLAR_ECLIPSE_CENTERLINE_WIDTH_PX,
+              stroke: paint.liveCenterlineStroke,
+              strokeWidthPx: paint.liveCenterlineWidthPx,
             });
+          }
+        }
+      }
+      if (labelsEnabled && frame.support.supported) {
+        if (activeSolar) {
+          const geom = frame.solarGeometry;
+          labels.push(
+            solarEclipseMapLabel({
+              event: activeSolar,
+              lifecycle: "active",
+              productUtcMs: frame.productUtcMs,
+              latDeg: geom?.centralPoint?.latDeg ?? activeSolar.geLatDeg,
+              lonDeg: geom?.centralPoint?.lonDeg ?? activeSolar.geLonDeg,
+            }),
+          );
+        } else {
+          const nearest = presentedUpcomingSolar(frame, presentation)[0];
+          if (nearest) {
+            labels.push(
+              solarEclipseMapLabel({
+                event: nearest,
+                lifecycle: "upcoming",
+                productUtcMs: frame.productUtcMs,
+                latDeg: nearest.geLatDeg,
+                lonDeg: nearest.geLonDeg,
+              }),
+            );
           }
         }
       }
@@ -187,6 +215,7 @@ export function createSolarEclipseLayer(
         kind: EQUIRECT_REGION_OVERLAY_KIND,
         fills,
         strokes,
+        ...(labels.length > 0 ? { labels } : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: readabilityFrame.substrateOverlayReadabilityLiftScale01,

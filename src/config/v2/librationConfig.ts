@@ -1167,9 +1167,20 @@ export function assertIsNormalizedLibrationConfig(
     typeof eclipseAlignment.lunarEnabled !== "boolean" ||
     (eclipseAlignment.intensity !== "subtle" &&
       eclipseAlignment.intensity !== "normal" &&
-      eclipseAlignment.intensity !== "dramatic")
+      eclipseAlignment.intensity !== "dramatic") ||
+    typeof eclipseAlignment.solarColor !== "string" ||
+    typeof eclipseAlignment.lunarColor !== "string"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseAlignment");
+  }
+  const eclipseInfo = (sc as SceneConfig).eclipseInfo;
+  if (
+    typeof eclipseInfo !== "object" ||
+    eclipseInfo === null ||
+    typeof eclipseInfo.labelsEnabled !== "boolean" ||
+    typeof eclipseInfo.eventInformationEnabled !== "boolean"
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseInfo");
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (

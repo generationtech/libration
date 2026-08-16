@@ -11,11 +11,18 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import type { EquirectRegionOverlayPayload } from "../../layers/equirectRegionPayload";
 import { createDescriptorPathItem } from "./pathItemFactories";
-import type { RenderPlan } from "./renderPlanTypes";
+import {
+  RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
+  type RenderPlan,
+  type RenderTextItem,
+} from "./renderPlanTypes";
 import { equirectPolylineToPathDescriptors, equirectRingToPathDescriptors } from "./equirectSeamRegion";
+
+const LABEL_FONT_STACK = "system-ui, -apple-system, Segoe UI, sans-serif";
 
 export interface EquirectRegionOverlayPlanOptions {
   viewportWidthPx: number;
@@ -66,6 +73,43 @@ export function buildEquirectRegionOverlayRenderPlan(
           strokeWidthPx: width,
         }),
       );
+    }
+  }
+  const labels = options.payload.labels ?? [];
+  if (labels.length > 0) {
+    const sizePx = Math.min(15, Math.max(11, w * 0.011));
+    for (const label of labels) {
+      if (!label.text.trim()) {
+        continue;
+      }
+      const x = mapXFromLongitudeDeg(label.lonDeg, w);
+      const y = ((90 - label.latDeg) / 180) * h;
+      const fill = label.fill ?? "rgba(245, 248, 255, 0.92)";
+      const text: RenderTextItem = {
+        kind: "text",
+        x,
+        y,
+        text: label.text,
+        fill: scaleRgba(fill, op),
+        font: {
+          assetId: RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
+          displayName: "System UI stack",
+          family: LABEL_FONT_STACK,
+          sizePx,
+          weight: 500,
+          style: "normal",
+        },
+        textAlign: "center",
+        textBaseline: "middle",
+        stroke: {
+          color: `rgba(8, 14, 28, ${Math.min(1, op * 0.88).toFixed(4)})`,
+          widthPx: Math.max(2.2, sizePx * 0.26),
+          lineJoin: "round",
+          miterLimit: 2,
+        },
+        opacity: options.layerOpacity,
+      };
+      items.push(text);
     }
   }
   return { items };

@@ -124,4 +124,10 @@ E5 live eclipse alignment / beam: semantic presentation from existing `EclipseFr
 
 Verified: `npx tsc --noEmit` clean; `npm test` 191 files / 1777 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: 2024 total / 2023 annular / 2022 partial / 2016 dateline / forecast-only, 2022 total lunar / 2008 partial lunar, Tokyo vs Knoxville, intensity, 7200× demo, ordinary startup.
 
+## 2026-08-15 — LIB-019 complete
+
+E6 Eclipse System product polish: grouped Layers configuration, presentation-only type filters, event information, restrained labels, independent styling, factory solar/lunar masters on, honest unsupported-range copy. No new ADR. No E7.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 194 files / 1799 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: baseline quiet, 2024 forecast→active, annular naming, 2022 lunar Knoxville/Tokyo, multi-event nearest label, ordinary startup.
+
 

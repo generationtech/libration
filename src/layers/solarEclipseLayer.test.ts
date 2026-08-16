@@ -205,6 +205,35 @@ describe("solar eclipse layer", () => {
     expect(fillCount(st.data)).toBe(fillCount(off.data));
     expect(strokeCount(st.data)).toBe(strokeCount(off.data));
   });
+
+  it("hides a filtered-out total without changing authority truth", () => {
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: HORIZON_7D });
+    expect(frame.upcomingSolar[0]?.subtype).toBe("total");
+    const hidden = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 7, showTypeTotal: false },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: false,
+    }).getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    expect(fillCount(hidden.data)).toBe(0);
+    expect(frame.upcomingSolar[0]?.id).toBe("nasa-5mcse-solar-9561");
+  });
+
+  it("keeps solar forecast paint independent of a custom live band color", () => {
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: HORIZON_7D });
+    const def = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: false,
+    }).getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    const custom = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 7, liveCentralBandColor: "#ff0000" },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: false,
+    }).getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    if (isEquirectRegionOverlayPayload(def.data) && isEquirectRegionOverlayPayload(custom.data)) {
+      expect(custom.data.fills.map((f) => f.fill)).toEqual(def.data.fills.map((f) => f.fill));
+    }
+  });
 });
 
 describe("Canvas eclipse containment", () => {
