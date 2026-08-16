@@ -266,6 +266,8 @@ const CLOUD_VEIL_RGB = { r: 48, g: 54, b: 68 } as const;
 
 /**
  * RGBA for one shading pixel given subsolar geometry dot product and layer opacity.
+ * `daylightTransmission01` multiplies remaining daylight (1 = unchanged). It is a
+ * visual illumination scalar, not a named astronomy concept.
  */
 export function sampleIlluminationRgba8(
   dot: number,
@@ -274,6 +276,7 @@ export function sampleIlluminationRgba8(
   moonlightPolicy: MoonlightPolicy = ILLUSTRATIVE_MOONLIGHT,
   emissive?: EmissiveIlluminationInputs,
   cloud?: CloudIlluminationInputs,
+  daylightTransmission01?: number,
 ): IlluminationRgba8 {
   const op = layerOpacity;
   let r = 0;
@@ -326,6 +329,12 @@ export function sampleIlluminationRgba8(
   const cloudDayVeil =
     cloudAttenuation * dayClear01 * CLOUD_DAY_VEIL_ALPHA_MAX * op;
   combinedAlpha = Math.min(1, combinedAlpha + cloudDayVeil);
+
+  const daylightT =
+    daylightTransmission01 !== undefined && Number.isFinite(daylightTransmission01)
+      ? Math.max(0, Math.min(1, daylightTransmission01))
+      : 1;
+  combinedAlpha = 1 - (1 - combinedAlpha) * daylightT;
 
   if (combinedAlpha > 0) {
     const twilightTint = continuousTwilightOverlayRgb(altDeg);

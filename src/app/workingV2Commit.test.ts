@@ -33,6 +33,7 @@ import { createTimeContext } from "../core/time";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import {
   applyEclipseInfoPresentationToScene,
+  applySolarEclipsePresentationToScene,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
@@ -571,6 +572,32 @@ describe("commitWorkingV2Update", () => {
     };
     expect(sceneRuntimeAffectingEqual(base, b)).toBe(false);
     expect(sceneRuntimeAffectingEqual(b, b)).toBe(true);
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only active eclipse shading intensity changes", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      globalCloudsIr: false,
+      earthquakes: false,
+      orbitalTracks: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      lunarGroundTrack: false,
+      lunarLocus: false,
+      solarEclipse: true,
+      lunarEclipse: false,
+      solarAnalemma: false,
+    });
+    const a = applySolarEclipsePresentationToScene(base, { activeEclipseShadingIntensity: "normal" });
+    const b = applySolarEclipsePresentationToScene(base, { activeEclipseShadingIntensity: "dramatic" });
+    const off = applySolarEclipsePresentationToScene(base, { activeEclipseShadingEnabled: false });
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(a, off)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
   });
 
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {

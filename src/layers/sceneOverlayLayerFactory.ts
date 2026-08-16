@@ -177,7 +177,8 @@ function createDerivedOverlayByProduct(
   const { zIndex, opacity } = part;
   const utcH = utcHourFromOptionalParameters(source.parameters);
   switch (source.product) {
-    case "solarDayNightShading":
+    case "solarDayNightShading": {
+      const solarPresentation = solarEclipsePresentationFromScene(config.scene);
       return createSolarShadingLayer({
         zIndex,
         opacity,
@@ -189,7 +190,10 @@ function createDerivedOverlayByProduct(
         cloudParticipationMode: config.scene.illumination.cloudParticipation.mode,
         cloudParticipationSourceId: config.scene.illumination.cloudParticipation.sourceId,
         cloudParticipationIntensity: config.scene.illumination.cloudParticipation.presentation.intensity,
+        activeEclipseShadingEnabled: solarPresentation.activeEclipseShadingEnabled,
+        activeEclipseShadingIntensity: solarPresentation.activeEclipseShadingIntensity,
       });
+    }
     case "latLonGrid":
       return createLatLonGridLayer({
         zIndex,

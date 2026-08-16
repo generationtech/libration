@@ -48,38 +48,30 @@ import {
   utcMsFromBesselianHours,
   type EvaluatedBesselianElementsAndRates,
 } from "./besselianElements";
-import {
-  EARTH_SIDEREAL_DEG_PER_SECOND,
-  IAU1976_EARTH_ECCENTRICITY_SQ,
-  IAU1976_POLAR_OVER_EQUATORIAL,
-} from "./earthFigure";
-import { diskIntersectionFractionOfFirst } from "./circleOverlap";
+import { EARTH_SIDEREAL_DEG_PER_SECOND } from "./earthFigure";
 import type {
   SolarLocalCircumstances,
   SolarLocalContact,
   SolarLocalKind,
 } from "./referenceCityEclipseTypes";
 import type { SolarEclipseEvent } from "./solarEclipseTypes";
+import {
+  SOLAR_OBSERVER_CONE_RADIUS_MIN,
+  solarEclipseMagnitudeFromPlane,
+  solarEclipseObscurationFromPlane,
+  solarObserverFixed,
+  type SolarObserverFixed,
+} from "./solarObserverPlane";
 
 const DEG = Math.PI / 180;
 const RAD = 180 / Math.PI;
-const B2 = IAU1976_POLAR_OVER_EQUATORIAL * IAU1976_POLAR_OVER_EQUATORIAL;
-const E2 = IAU1976_EARTH_ECCENTRICITY_SQ;
 const SAMPLE_STEP_MS = 30_000;
 const BISECTION_ITERS = 48;
 const NEWTON_ITERS = 8;
 const TIME_TOL_MS = 1;
-const CONE_RADIUS_MIN = 1e-8;
+const CONE_RADIUS_MIN = SOLAR_OBSERVER_CONE_RADIUS_MIN;
 
-type ObserverFixed = {
-  readonly latitudeDeg: number;
-  readonly longitudeDeg: number;
-  readonly rhoSinPhi1: number;
-  readonly rhoCosPhi1: number;
-  readonly rho: number;
-  readonly sinPhi: number;
-  readonly cosPhi: number;
-};
+type ObserverFixed = SolarObserverFixed;
 
 type ObserverPlaneState = {
   readonly utcMs: number;
@@ -102,23 +94,7 @@ type ObserverPlaneState = {
 };
 
 function observerFixed(latitudeDeg: number, longitudeDeg: number): ObserverFixed {
-  const phi = latitudeDeg * DEG;
-  const sinPhi = Math.sin(phi);
-  const cosPhi = Math.cos(phi);
-  const c = 1 / Math.sqrt(1 - E2 * sinPhi * sinPhi);
-  const s = B2 * c;
-  const rhoSinPhi1 = s * sinPhi;
-  const rhoCosPhi1 = c * cosPhi;
-  const rho = Math.hypot(rhoSinPhi1, rhoCosPhi1);
-  return {
-    latitudeDeg,
-    longitudeDeg,
-    rhoSinPhi1,
-    rhoCosPhi1,
-    rho,
-    sinPhi,
-    cosPhi,
-  };
+  return solarObserverFixed(latitudeDeg, longitudeDeg);
 }
 
 function observerState(
@@ -359,20 +335,17 @@ function observableKindFromContacts(
 }
 
 function magnitudeAtMaximum(st: ObserverPlaneState): number | null {
-  const den = st.l1p + st.l2p;
-  if (!(Math.abs(den) > 1e-12)) {
-    return null;
-  }
-  return (st.l1p - st.m) / den;
+  return solarEclipseMagnitudeFromPlane(st.l1p, st.l2p, st.m);
 }
 
 function obscurationAtMaximum(st: ObserverPlaneState): number | null {
+  const frac = solarEclipseObscurationFromPlane(st.l1p, st.l2p, st.m);
   const rs = (st.l1p + st.l2p) / 2;
   const rm = (st.l1p - st.l2p) / 2;
   if (!(rs > 0) || !(rm >= 0)) {
     return null;
   }
-  return diskIntersectionFractionOfFirst(rs, rm, st.m);
+  return frac;
 }
 
 export function solveSolarLocalCircumstances(

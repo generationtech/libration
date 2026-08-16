@@ -535,4 +535,54 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(n).toBeLessThan(e);
     expect(e).toBeLessThan(i);
   });
+
+  it("applies an optional daylight transmission field as extra day-side darkening", () => {
+    const field = {
+      lonSamples: 4,
+      latSamples: 3,
+      transmission01: new Float32Array(12).fill(0.5),
+    };
+    const ordinary = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: 64,
+      viewportHeightPx: 32,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 180,
+      lunarIlluminatedFraction: 0.1,
+      layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
+    });
+    const attenuated = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: 64,
+      viewportHeightPx: 32,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 180,
+      lunarIlluminatedFraction: 0.1,
+      layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
+      daylightTransmissionField: field,
+    });
+    expect(ordinary.items[0]?.kind).toBe("rasterPatch");
+    expect(attenuated.items[0]?.kind).toBe("rasterPatch");
+    if (ordinary.items[0]?.kind !== "rasterPatch" || attenuated.items[0]?.kind !== "rasterPatch") {
+      return;
+    }
+    const o = ordinary.items[0].rgba;
+    const t = attenuated.items[0].rgba;
+    let ordinaryDayAlpha = 0;
+    let attenuatedDayAlpha = 0;
+    let daySamples = 0;
+    for (let i = 0; i < o.length; i += 4) {
+      if (o[i + 3]! < 40) {
+        ordinaryDayAlpha += o[i + 3]!;
+        attenuatedDayAlpha += t[i + 3]!;
+        daySamples += 1;
+      }
+    }
+    expect(daySamples).toBeGreaterThan(10);
+    expect(attenuatedDayAlpha / daySamples).toBeGreaterThan(ordinaryDayAlpha / daySamples + 40);
+  });
 });

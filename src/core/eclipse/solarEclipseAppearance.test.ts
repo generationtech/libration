@@ -28,6 +28,8 @@ describe("solar eclipse ground-position appearance", () => {
     expect(p.liveGroundPositionSize).toBe("normal");
     expect(p.liveGroundPositionColor).toBe(DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR);
     expect(p.liveGroundPositionColor).toBe("#d45a3c");
+    expect(p.activeEclipseShadingEnabled).toBe(true);
+    expect(p.activeEclipseShadingIntensity).toBe("normal");
   });
 
   it("normalizes missing and invalid size/color keys", () => {
@@ -35,6 +37,8 @@ describe("solar eclipse ground-position appearance", () => {
     expect(missing.showLiveGroundPosition).toBe(true);
     expect(missing.liveGroundPositionSize).toBe("normal");
     expect(missing.liveGroundPositionColor).toBe("#d45a3c");
+    expect(missing.activeEclipseShadingEnabled).toBe(true);
+    expect(missing.activeEclipseShadingIntensity).toBe("normal");
     const invalid = normalizeSolarEclipsePresentation({
       showLiveGroundPosition: "yes",
       liveGroundPositionSize: "huge",
@@ -86,7 +90,7 @@ describe("solar eclipse ground-position appearance", () => {
     expect(paint.forecastCorridorUmbraFill).toBe("rgba(72, 48, 140, 0.28)");
     expect(paint.activeCorridorUmbraFill).toBe("rgba(72, 48, 140, 0.22)");
     expect(paint.activeCorridorAntumbraFill).toBe("rgba(176, 96, 36, 0.19)");
-    expect(paint.activeCorridorStroke).toBe("rgba(220, 208, 255, 0.52)");
+    expect(paint.activeCorridorStroke).toBe("rgba(220, 208, 255, 0.62)");
     expect(paint.forecastCorridorStroke).toBe("rgba(220, 208, 255, 0.38)");
     const custom = resolveSolarEclipsePaint(
       normalizeSolarEclipsePresentation({
@@ -95,7 +99,7 @@ describe("solar eclipse ground-position appearance", () => {
       }),
     );
     expect(custom.activeCorridorUmbraFill).toMatch(/0\.3200/);
-    expect(custom.activeCorridorStroke).toMatch(/0\.5200/);
+    expect(custom.activeCorridorStroke).toMatch(/0\.6200/);
   });
 
   it("uses a teal-slate live partial family distinct from path violet", () => {
@@ -105,5 +109,26 @@ describe("solar eclipse ground-position appearance", () => {
     expect(paint.liveUmbraFill).toBe("rgba(40, 24, 72, 0.50)");
     expect(paint.livePartialFill).not.toEqual(paint.activeCorridorUmbraFill);
     expect(paint.livePartialFill).not.toContain("72, 48, 140");
+    expect(paint.livePartialStroke).toBe("rgba(47, 109, 120, 0.50)");
+  });
+
+  it("defaults active eclipse shading on at Normal and preserves explicit off / Dramatic", () => {
+    const missing = normalizeSolarEclipsePresentation({});
+    expect(missing.activeEclipseShadingEnabled).toBe(true);
+    expect(missing.activeEclipseShadingIntensity).toBe("normal");
+    const invalid = normalizeSolarEclipsePresentation({
+      activeEclipseShadingEnabled: "yes",
+      activeEclipseShadingIntensity: "max",
+    });
+    expect(invalid.activeEclipseShadingEnabled).toBe(false);
+    expect(invalid.activeEclipseShadingIntensity).toBe("normal");
+    const custom = normalizeSolarEclipsePresentation({
+      activeEclipseShadingEnabled: false,
+      activeEclipseShadingIntensity: "dramatic",
+    });
+    expect(custom.activeEclipseShadingEnabled).toBe(false);
+    expect(custom.activeEclipseShadingIntensity).toBe("dramatic");
+    const subtle = normalizeSolarEclipsePresentation({ activeEclipseShadingIntensity: "subtle" });
+    expect(subtle.activeEclipseShadingIntensity).toBe("subtle");
   });
 });

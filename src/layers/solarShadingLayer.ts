@@ -28,6 +28,13 @@ import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightL
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import { lunarEclipseMoonlightTransmission } from "../core/eclipse/lunarEclipseMoonlightTransmission";
+import {
+  DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED,
+  DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY,
+  solarEclipseVisualTransmission01,
+  type SolarEclipseShadingIntensityId,
+} from "../core/eclipse/solarEclipseDaylightTransmission";
+import { solarEclipseObscurationFieldAt } from "../core/eclipse/solarEclipseObscurationField";
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
@@ -65,6 +72,12 @@ export function createSolarShadingLayer(
     cloudParticipationMode?: CloudParticipationPresentationMode;
     cloudParticipationSourceId?: string;
     cloudParticipationIntensity?: number;
+    /**
+     * Physical active-solar daylight attenuation. Independent of the Solar
+     * eclipses overlay master. Omitted uses factory ON / Normal.
+     */
+    activeEclipseShadingEnabled?: boolean;
+    activeEclipseShadingIntensity?: SolarEclipseShadingIntensityId;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -84,6 +97,10 @@ export function createSolarShadingLayer(
     options.cloudParticipationSourceId ?? GLOBAL_CLOUDS_IR_SOURCE_ID;
   const cloudParticipationIntensity =
     options.cloudParticipationIntensity ?? DEFAULT_CLOUD_PARTICIPATION_PRESENTATION_INTENSITY;
+  const activeEclipseShadingEnabled =
+    options.activeEclipseShadingEnabled ?? DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED;
+  const activeEclipseShadingIntensity =
+    options.activeEclipseShadingIntensity ?? DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY;
   return {
     id: SOLAR_SHADING_ID,
     name: "Solar shading (day/night)",
@@ -97,6 +114,33 @@ export function createSolarShadingLayer(
       const phase = approximateLunarPhase(time.now);
       const eclipseFrame = time.eclipseFrame ?? resolveEclipseFrame(time.now, { horizonMs: 0 });
       const moonlightTransmission01 = lunarEclipseMoonlightTransmission(eclipseFrame.lunarGeometry);
+      let daylightTransmissionField: SolarShadingPayload["daylightTransmissionField"];
+      if (activeEclipseShadingEnabled && eclipseFrame.activeSolar) {
+        const obscurationField = solarEclipseObscurationFieldAt(
+          time.now,
+          eclipseFrame.activeSolar,
+          { partialRegion: eclipseFrame.solarGeometry?.partialRegion },
+        );
+        const transmission01 = new Float32Array(obscurationField.obscuration01.length);
+        let anyAttenuation = false;
+        for (let i = 0; i < obscurationField.obscuration01.length; i += 1) {
+          const t = solarEclipseVisualTransmission01(
+            obscurationField.obscuration01[i]!,
+            activeEclipseShadingIntensity,
+          );
+          transmission01[i] = t;
+          if (t < 0.999) {
+            anyAttenuation = true;
+          }
+        }
+        if (anyAttenuation) {
+          daylightTransmissionField = {
+            lonSamples: obscurationField.lonSamples,
+            latSamples: obscurationField.latSamples,
+            transmission01,
+          };
+        }
+      }
       let cloudOpacityRaster: SolarShadingPayload["cloudOpacityRaster"] = null;
       if (cloudParticipationMode !== "off") {
         const attachment = getDynamicDataLifecycleAttachment(time);
@@ -111,6 +155,7 @@ export function createSolarShadingLayer(
         sublunarLonDeg: moonLonDeg,
         lunarIlluminatedFraction: phase.illuminatedFraction,
         moonlightTransmission01,
+        ...(daylightTransmissionField ? { daylightTransmissionField } : {}),
         moonlightMode,
         emissiveNightLightsMode,
         emissiveCompositionAssetId,

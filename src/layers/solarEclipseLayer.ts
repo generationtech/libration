@@ -199,7 +199,11 @@ export function createSolarEclipseLayer(
         }
         const geom = frame.solarGeometry;
         if (geom && frame.support.supported && activeSolar) {
-          if (presentation.showPartialRegion && geom.partialRegion.length >= 4) {
+          if (
+            presentation.showPartialRegion &&
+            !presentation.activeEclipseShadingEnabled &&
+            geom.partialRegion.length >= 4
+          ) {
             fills.push({
               ring: geom.partialRegion,
               fill: paint.livePartialFill,

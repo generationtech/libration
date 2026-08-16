@@ -80,7 +80,7 @@ describe("solar eclipse layer", () => {
     const frame = resolveEclipseFrame(TOTAL_UTC, { horizonMs: HORIZON_7D });
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
     expect(frame.activeSolar?.id).toBe("nasa-5mcse-solar-9561");
-    expect(fillCount(st.data)).toBeGreaterThan(2);
+    expect(fillCount(st.data)).toBeGreaterThan(1);
     expect(strokeCount(st.data)).toBeGreaterThanOrEqual(1);
   });
 
@@ -94,11 +94,10 @@ describe("solar eclipse layer", () => {
       createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }),
     );
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
-    expect(fillCount(st.data)).toBe(2);
+    expect(fillCount(st.data)).toBe(1);
     expect(strokeCount(st.data)).toBe(1);
     if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.fills[0]!.ring.length).toBeGreaterThan(4);
-      expect(st.data.fills[1]!.ring.length).toBeGreaterThan(4);
     }
   });
 
@@ -109,8 +108,28 @@ describe("solar eclipse layer", () => {
     });
     const st = layer.getState(createTimeContext(PARTIAL_UTC, 0, true));
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
-    expect(fillCount(st.data)).toBe(1);
+    expect(fillCount(st.data)).toBe(0);
     expect(strokeCount(st.data)).toBe(0);
+  });
+
+  it("restores the teal live-partial fill only when active eclipse shading is off", () => {
+    const frame = resolveEclipseFrame(TOTAL_UTC, { horizonMs: 0 });
+    const shaded = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 0, activeEclipseShadingEnabled: true },
+      alignment: ALIGNMENT_OFF,
+    }).getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
+    const fallback = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 0, activeEclipseShadingEnabled: false },
+      alignment: ALIGNMENT_OFF,
+    }).getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
+    expect(isEquirectRegionOverlayPayload(shaded.data)).toBe(true);
+    expect(isEquirectRegionOverlayPayload(fallback.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(shaded.data) && isEquirectRegionOverlayPayload(fallback.data)) {
+      expect(fillCount(shaded.data)).toBe(1);
+      expect(fillCount(fallback.data)).toBe(2);
+      expect(fallback.data.fills.some((f) => f.fill.includes("47, 109, 120"))).toBe(true);
+      expect(shaded.data.fills.some((f) => f.fill.includes("47, 109, 120"))).toBe(false);
+    }
   });
 
   it("emits a partial forecast region and no corridor for an upcoming partial-only event", () => {
@@ -140,7 +159,7 @@ describe("solar eclipse layer", () => {
       alignment: ALIGNMENT_OFF,
     });
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
-    expect(fillCount(st.data)).toBe(1);
+    expect(fillCount(st.data)).toBe(0);
     expect(strokeCount(st.data)).toBe(0);
   });
 
@@ -194,7 +213,7 @@ describe("solar eclipse layer", () => {
       expect(withBeam.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_UMBRA_FILL)).toBe(
         true,
       );
-      expect(without.data.fills.length).toBe(2);
+      expect(without.data.fills.length).toBe(1);
     }
   });
 

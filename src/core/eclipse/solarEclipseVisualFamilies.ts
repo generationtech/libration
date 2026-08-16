@@ -88,6 +88,9 @@ export function classifySolarEclipseStrokeFamily(css: string): SolarEclipseVisua
   if (!c) {
     return null;
   }
+  if (rgbNear(c, 47, 109, 120)) {
+    return "live-partial";
+  }
   if (rgbNear(c, 220, 208, 255)) {
     return "event-path-limit";
   }

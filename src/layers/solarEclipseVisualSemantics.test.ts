@@ -18,7 +18,6 @@ import {
   SOLAR_ECLIPSE_DRAW_FORECAST_PARTIAL,
   SOLAR_ECLIPSE_DRAW_LIVE_CENTRAL,
   SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL,
-  SOLAR_ECLIPSE_PARTIAL_FILL,
 } from "../core/eclipse/solarEclipseAppearance";
 import {
   classifySolarEclipseFillFamily,
@@ -176,31 +175,30 @@ describe("solar eclipse visual semantics — 2017 A–F", () => {
     expect(data.fills.some((f) => f.drawOrder === SOLAR_ECLIPSE_DRAW_FORECAST_PARTIAL)).toBe(true);
   });
 
-  it("B pre-central: live partial + corridor; no forecast partial, marker, or targeted beam", () => {
+  it("B pre-central: corridor only; no live-partial fill, forecast partial, marker, or targeted beam", () => {
     const { frame, data } = payloadAt(STATION_AF.B);
     const fam = familiesOf(data);
     expect(frame.activeSolar?.id).toBe(TOTAL_2017_ID);
     expect(frame.solarGeometry?.centralPoint ?? null).toBeNull();
     expect(fam.has("event-path-fill")).toBe(true);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(fam.has("forecast-partial")).toBe(false);
     expect(fam.has("live-central-umbra")).toBe(false);
     expect(fam.has("alignment-outer")).toBe(false);
     expect(data.pointMarkers ?? []).toEqual([]);
-    expect(data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
     expect(data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       false,
     );
   });
 
-  it("C first-central: marker, umbra, beam, corridor, live partial; no forecast partial", () => {
+  it("C first-central: marker, umbra, beam, corridor; no live-partial fill or forecast partial", () => {
     const { frame, data } = payloadAt(STATION_AF.C);
     const fam = familiesOf(data);
     expect(frame.solarGeometry?.centralPoint).not.toBeNull();
     expect(data.pointMarkers).toHaveLength(1);
     expect(data.pointMarkers![0]!.latDeg).toBe(frame.solarGeometry!.centralPoint!.latDeg);
     expect(fam.has("event-path-fill")).toBe(true);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(fam.has("live-central-umbra")).toBe(true);
     expect(fam.has("alignment-outer")).toBe(true);
     expect(fam.has("alignment-mid")).toBe(true);
@@ -216,7 +214,7 @@ describe("solar eclipse visual semantics — 2017 A–F", () => {
     expect(d.data.pointMarkers![0]!.lonDeg).toBeGreaterThan(c.data.pointMarkers![0]!.lonDeg);
     const fam = familiesOf(d.data);
     expect(fam.has("event-path-fill")).toBe(true);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(fam.has("live-central-umbra")).toBe(true);
     expect(fam.has("alignment-outer")).toBe(true);
     expect(fam.has("forecast-partial")).toBe(false);
@@ -232,24 +230,23 @@ describe("solar eclipse visual semantics — 2017 A–F", () => {
     expect(fam.has("forecast-partial")).toBe(false);
   });
 
-  it("F late-central: marker near Atlantic end; corridor and partial remain", () => {
+  it("F late-central: marker near Atlantic end; corridor remains without live-partial fill", () => {
     const { frame, data } = payloadAt(STATION_AF.F);
     const fam = familiesOf(data);
     expect(frame.solarGeometry?.centralPoint).not.toBeNull();
     expect(data.pointMarkers![0]!.lonDeg).toBeGreaterThan(-85);
     expect(fam.has("event-path-fill")).toBe(true);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(fam.has("alignment-outer")).toBe(true);
     expect(fam.has("forecast-partial")).toBe(false);
   });
 
-  it("asserts RenderPlan z-order: corridor fill < live partial < corridor limits < umbra < marker", () => {
+  it("asserts RenderPlan z-order: corridor fill < corridor limits < umbra < marker", () => {
     const { data, plan } = planAt(STATION_AF.D);
     expect(data.fills.find((f) => f.drawOrder === SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL)).toBeDefined();
-    expect(data.fills.find((f) => f.drawOrder === SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL)).toBeDefined();
+    expect(data.fills.find((f) => f.drawOrder === SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL)).toBeUndefined();
     expect(data.strokes.find((s) => s.drawOrder === SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT)).toBeDefined();
-    expect(SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL).toBeLessThan(SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL);
-    expect(SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL).toBeLessThan(SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT);
+    expect(SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL).toBeLessThan(SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT);
     expect(SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT).toBeLessThan(SOLAR_ECLIPSE_DRAW_LIVE_CENTRAL);
 
     const order: string[] = [];
@@ -267,30 +264,21 @@ describe("solar eclipse visual semantics — 2017 A–F", () => {
       }
     }
     const pathFill = order.indexOf("event-path-fill");
-    const livePartial = order.indexOf("live-partial");
     const pathLimit = order.indexOf("event-path-limit");
     const umbra = order.indexOf("live-central-umbra");
     const marker = order.indexOf("ground-marker");
     expect(pathFill).toBeGreaterThanOrEqual(0);
-    expect(livePartial).toBeGreaterThan(pathFill);
-    expect(pathLimit).toBeGreaterThan(livePartial);
+    expect(pathLimit).toBeGreaterThan(pathFill);
     expect(umbra).toBeGreaterThan(pathLimit);
     expect(marker).toBeGreaterThan(umbra);
   });
 
-  it("does not polar-close the 2017 mid-central live partial into a world fill", () => {
+  it("does not emit an active live-partial overlay fill that could polar-close", () => {
     const utc = Date.parse("2017-08-21T17:52:57.000Z");
-    const { plan, data } = planAt(utc);
-    const live = data.fills.find((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial");
-    expect(live).toBeDefined();
-    const items = plan.items.filter((item) => item.kind === "path2d" && item.fill) as RenderPath2DItem[];
-    const liveItems = items.filter((item) => classifySolarEclipseFillFamily(item.fill ?? "") === "live-partial");
-    expect(liveItems.length).toBeGreaterThan(0);
-    for (const item of liveItems) {
-      const box = pathBBox(item);
-      expect(box).not.toBeNull();
-      expect(box!.maxX - box!.minX).toBeLessThan(VIEW_W * 0.82);
-    }
+    const { data } = planAt(utc);
+    expect(data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
   });
 
   it("does not double-stack the same geographic fill family via wrap copies at A–F", () => {
@@ -396,7 +384,7 @@ describe("solar eclipse visual semantics — regressions", () => {
   it("does not self-overlap the 2016 dateline live partial fill", () => {
     const utc = Date.parse("2016-03-09T01:57:09.400Z");
     const { plan, data } = planAt(utc);
-    expect(familiesOf(data).has("live-partial")).toBe(true);
+    expect(familiesOf(data).has("live-partial")).toBe(false);
     expect(sameFamilyFillCopiesOverlap(plan, "live-partial")).toBe(false);
     expect(data.pointMarkers).toHaveLength(1);
   });
@@ -404,7 +392,7 @@ describe("solar eclipse visual semantics — regressions", () => {
   it("does not self-overlap the 2021 polar live partial fill", () => {
     const utc = Date.parse("2021-12-04T07:34:00.000Z");
     const { plan, data } = planAt(utc);
-    expect(familiesOf(data).has("live-partial")).toBe(true);
+    expect(familiesOf(data).has("live-partial")).toBe(false);
     expect(sameFamilyFillCopiesOverlap(plan, "live-partial")).toBe(false);
     expect(sameFamilyFillCopiesOverlap(plan, "event-path-fill")).toBe(false);
   });
@@ -416,7 +404,7 @@ describe("solar eclipse visual semantics — regressions", () => {
     expect(fam.has("live-central-antumbra")).toBe(true);
     expect(fam.has("live-central-umbra")).toBe(false);
     expect(fam.has("alignment-outer")).toBe(true);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(data.pointMarkers).toHaveLength(1);
   });
 
@@ -424,7 +412,7 @@ describe("solar eclipse visual semantics — regressions", () => {
     const utc = Date.parse("2022-10-25T11:00:06.900Z");
     const { data } = payloadAt(utc);
     const fam = familiesOf(data);
-    expect(fam.has("live-partial")).toBe(true);
+    expect(fam.has("live-partial")).toBe(false);
     expect(fam.has("event-path-fill")).toBe(false);
     expect(fam.has("live-central-umbra")).toBe(false);
     expect(data.pointMarkers ?? []).toEqual([]);

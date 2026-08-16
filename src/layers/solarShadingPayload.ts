@@ -24,6 +24,33 @@ import type { CloudOpacitySampleBuffer } from "../lifecycle/dynamicCloudOpacityM
 
 export const SOLAR_SHADING_KIND = "solarShading" as const;
 
+/** Geographic 0–1 transmission field covering −180..180 / +90..−90. */
+export type DaylightTransmissionField = {
+  readonly lonSamples: number;
+  readonly latSamples: number;
+  readonly transmission01: Float32Array;
+};
+
+export function isDaylightTransmissionField(value: unknown): value is DaylightTransmissionField {
+  if (value === undefined) {
+    return true;
+  }
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const o = value as Record<string, unknown>;
+  return (
+    typeof o.lonSamples === "number" &&
+    Number.isFinite(o.lonSamples) &&
+    o.lonSamples >= 2 &&
+    typeof o.latSamples === "number" &&
+    Number.isFinite(o.latSamples) &&
+    o.latSamples >= 2 &&
+    o.transmission01 instanceof Float32Array &&
+    o.transmission01.length === o.lonSamples * o.latSamples
+  );
+}
+
 /**
  * Renderer-facing day/night mask parameters for an equirectangular map.
  * Computed in the layer using {@link subsolarPoint}; the illumination pass samples this into a render-plan raster patch upstream of canvas execution.
@@ -40,6 +67,12 @@ export interface SolarShadingPayload {
    * Resolved upstream; omitted means 1.
    */
   moonlightTransmission01?: number;
+  /**
+   * Optional equirect daylight transmission field (1 = ordinary daylight).
+   * Resolved upstream; omitted means 1 everywhere. Canvas does not interpret
+   * the source of the field.
+   */
+  daylightTransmissionField?: DaylightTransmissionField;
   /** Scene-level moonlight presentation; resolved before the raster plan (not backend-owned). */
   moonlightMode: MoonlightPresentationMode;
   emissiveNightLightsMode: EmissiveNightLightsPresentationMode;
@@ -81,6 +114,7 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.lunarIlluminatedFraction === "number" &&
     (o.moonlightTransmission01 === undefined ||
       (typeof o.moonlightTransmission01 === "number" && Number.isFinite(o.moonlightTransmission01))) &&
+    isDaylightTransmissionField(o.daylightTransmissionField) &&
     typeof o.moonlightMode === "string" &&
     isMoonlightPresentationMode(o.moonlightMode) &&
     typeof o.emissiveNightLightsMode === "string" &&

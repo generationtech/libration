@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-026](work/LIB-026-solar-eclipse-visual-semantics-reconciliation.md) — Solar eclipse visual-semantics reconciliation
+[LIB-027](work/LIB-027-continuous-solar-eclipse-obscuration-shading.md) — Continuous solar-eclipse obscuration shading
 
 ## Blockers
 
@@ -25,4 +25,4 @@ None
 
 ## Next action
 
-Stop. No approved work is active.
+Stop. No approved work is active. Do not start README recapture or another astronomy feature until a human names it.

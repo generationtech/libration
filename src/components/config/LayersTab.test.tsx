@@ -492,6 +492,8 @@ describe("LayersTab eclipse product polish", () => {
       /Hidden once the eclipse is active/,
     );
     expect((screen.getByLabelText("Live central line") as HTMLInputElement).disabled).toBe(false);
+    expect((screen.getByLabelText("Active eclipse shading") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Eclipse shading intensity") as HTMLSelectElement).value).toBe("normal");
   });
 
   it("defaults lunar forecast horizon to 7 days and disables forecast children when live only", async () => {

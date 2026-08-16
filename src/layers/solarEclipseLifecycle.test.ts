@@ -17,7 +17,6 @@ import {
   SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE,
   SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL,
   SOLAR_ECLIPSE_FORECAST_CORRIDOR_UMBRA_FILL,
-  SOLAR_ECLIPSE_PARTIAL_FILL,
   SOLAR_ECLIPSE_UMBRA_FILL,
 } from "../core/eclipse/solarEclipseAppearance";
 import { classifySolarEclipseFillFamily } from "../core/eclipse/solarEclipseVisualFamilies";
@@ -94,10 +93,6 @@ function ringBounds(ring: readonly { latDeg: number; lonDeg: number }[]) {
   return { minLat, maxLat, minLon, maxLon };
 }
 
-function livePartialRing(data: { fills: readonly { ring: readonly { latDeg: number; lonDeg: number }[]; fill: string }[] }) {
-  return data.fills.find((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL);
-}
-
 function beamTargetAt(utcMs: number) {
   const frame = resolveEclipseFrame(utcMs, { horizonMs: HORIZON_7D });
   const sun = subsolarPoint(utcMs);
@@ -165,15 +160,21 @@ describe("solar eclipse forecast vs live partial ownership", () => {
     expect(upcoming.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       true,
     );
-    expect(upcoming.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(false);
+    expect(upcoming.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
     expect(pre.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       false,
     );
-    expect(pre.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
+    expect(pre.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
     expect(ge.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       false,
     );
-    expect(ge.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
+    expect(ge.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
   });
 });
 
@@ -187,13 +188,10 @@ describe("solar eclipse live partial continuity", () => {
       STATION.ge + 10 * 60_000,
     ];
     const boxes = times.map((utc) => {
-      const { frame, data } = payloadAt(utc);
+      const { frame } = payloadAt(utc);
       expect(frame.activeSolar?.id).toBe(TOTAL_2017_ID);
       expect(frame.solarGeometry?.partialRegion.length).toBeGreaterThan(8);
-      const live = livePartialRing(data);
-      expect(live).toBeDefined();
-      expect(live!.ring).toBe(frame.solarGeometry!.partialRegion);
-      return ringBounds(live!.ring);
+      return ringBounds(frame.solarGeometry!.partialRegion);
     });
     for (let i = 1; i < boxes.length; i += 1) {
       expect(boxes[i]).not.toEqual(boxes[i - 1]);
@@ -289,7 +287,9 @@ describe("solar eclipse lifecycle regressions", () => {
     expect(data.fills.some((f) => f.fill === SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL)).toBe(true);
     expect(data.pointMarkers).toHaveLength(1);
     expect(data.pointMarkers![0]!.lonDeg).toBeGreaterThan(140);
-    expect(data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
+    expect(data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
   });
 
   it("keeps 2023 annular corridor, antumbra footprint, and marker without totality fill", () => {
@@ -312,7 +312,9 @@ describe("solar eclipse lifecycle regressions", () => {
     expect(frame.solarGeometry?.centralPoint ?? null).toBeNull();
     expect(data.pointMarkers ?? []).toEqual([]);
     expect(data.fills.some((f) => f.fill.includes("72, 48, 140"))).toBe(false);
-    expect(data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
+    expect(data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "live-partial")).toBe(
+      false,
+    );
     const { view } = beamTargetAt(utc);
     expect(view.solar?.kind).toBe("solar-partial-field");
     expect(view.solar?.target).toBeNull();

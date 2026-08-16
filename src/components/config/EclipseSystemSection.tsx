@@ -38,7 +38,9 @@ import {
   forecastHorizonLabel,
   SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
   SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS,
+  SOLAR_ECLIPSE_SHADING_INTENSITY_IDS,
   solarEclipseGroundPositionSizeLabel,
+  solarEclipseShadingIntensityLabel,
 } from "../../core/eclipse/solarEclipseAppearance";
 import { ConfigControlRow } from "./ConfigControlRow";
 
@@ -71,6 +73,7 @@ export function EclipseSystemSection(props: {
   const circumstancesPres = referenceCityEclipsePresentationFromScene(scene);
   const infoPres = eclipseInfoPresentationFromScene(scene);
   const solarOn = config.layers.solarEclipse;
+  const solarShadingOn = config.layers.solarShading;
   const lunarOn = config.layers.lunarEclipse;
   const liveOnly = solar.forecastHorizonDays === 0;
   const lunarLiveOnly = lunar.forecastHorizonDays === 0;
@@ -136,7 +139,8 @@ export function EclipseSystemSection(props: {
         <p className="config-section__hint">
           Forecast horizon is how early upcoming solar eclipse geography appears — not the
           duration of the eclipse. Live only keeps the moving footprint while an eclipse is
-          happening.
+          happening. Active eclipse shading dims daylight from local solar-disc obscuration
+          and follows solar shading even if overlay geography is hidden.
         </p>
         <ConfigControlRow label="Solar forecast horizon">
           <select
@@ -201,10 +205,10 @@ export function EclipseSystemSection(props: {
         {(
           [
             ["showForecastCorridor", "Forecast corridor", !solarOn || liveOnly, "Event-long path of totality or annularity. Distinct from the live central shadow."],
-            ["showForecastPartialRegion", "Forecast partial region", !solarOn || liveOnly, "Representative partial-visibility region at greatest eclipse for an upcoming event. Hidden once the eclipse is active; the live partial region then shows the current footprint."],
+            ["showForecastPartialRegion", "Forecast partial region", !solarOn || liveOnly, "Representative future partial-visibility geography at greatest eclipse. Informational teal. Hidden once the eclipse is active."],
             ["showCentralLine", "Live central line", !solarOn, "Live path of totality or annularity. Not drawn for partial-only events."],
             ["showCentralBand", "Live central band", !solarOn, "Live totality or annularity footprint. Not labeled totality for annular events."],
-            ["showPartialRegion", "Live partial region", !solarOn, "Live partial-visibility footprint at the current product time."],
+            ["showPartialRegion", "Live partial region", !solarOn, "Fallback teal footprint used only when Active eclipse shading is off. Physical obscuration shading replaces this fill while an eclipse is active."],
             ["showLiveGroundPosition", "Live eclipse position", !solarOn, "Instantaneous central eclipse shadow on Earth. Not the Moon glyph. Not drawn for partial-only events."],
           ] as const
         ).map(([key, label, disabled, title]) => (
@@ -231,6 +235,54 @@ export function EclipseSystemSection(props: {
             />
           </ConfigControlRow>
         ))}
+        <ConfigControlRow label="Active eclipse shading">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={solar.activeEclipseShadingEnabled}
+            readOnly={!mutable}
+            disabled={!mutable || !solarShadingOn}
+            tabIndex={mutable && solarShadingOn ? 0 : -1}
+            aria-label="Active eclipse shading"
+            title="Dim daylight from local solar-disc obscuration during an active eclipse. Follows solar shading, not the overlay master. Not a photometric simulation."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const activeEclipseShadingEnabled = e.currentTarget.checked;
+                    patchScene(updateConfig, (base) =>
+                      applySolarEclipsePresentationToScene(base, { activeEclipseShadingEnabled }),
+                    );
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse shading intensity">
+          <select
+            className="config-input"
+            disabled={!mutable || !solarShadingOn || !solar.activeEclipseShadingEnabled}
+            aria-label="Eclipse shading intensity"
+            title="How strongly local obscuration darkens daylight. Normal is the default; Dramatic is a showcase strength."
+            value={solar.activeEclipseShadingIntensity}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const activeEclipseShadingIntensity = e.currentTarget
+                      .value as (typeof SOLAR_ECLIPSE_SHADING_INTENSITY_IDS)[number];
+                    patchScene(updateConfig, (base) =>
+                      applySolarEclipsePresentationToScene(base, { activeEclipseShadingIntensity }),
+                    );
+                  }
+                : undefined
+            }
+          >
+            {SOLAR_ECLIPSE_SHADING_INTENSITY_IDS.map((id) => (
+              <option key={`solar-eclipse-shading-intensity-${id}`} value={id}>
+                {solarEclipseShadingIntensityLabel(id)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
       </fieldset>
 
       <fieldset className="config-fieldset config-fieldset--plain">

@@ -544,3 +544,35 @@ describe("sampleIlluminationRgba8 lunar-eclipse moonlight transmission", () => {
     expect(eclipsed.r + eclipsed.g + eclipsed.b).toBeLessThan(full.r + full.g + full.b);
   });
 });
+
+describe("sampleIlluminationRgba8 daylight transmission", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+  it("darkens daylight when transmission is below 1 and leaves night unchanged at 1", () => {
+    const day = sampleIlluminationRgba8(dotFromAltitudeDeg(45), 1);
+    const dimmed = sampleIlluminationRgba8(
+      dotFromAltitudeDeg(45),
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      0.5,
+    );
+    expect(day.a).toBe(0);
+    expect(dimmed.a).toBeGreaterThan(100);
+    expect(dimmed.a).toBeLessThan(200);
+    const night = sampleIlluminationRgba8(dotFromAltitudeDeg(-40), 1);
+    const nightSame = sampleIlluminationRgba8(
+      dotFromAltitudeDeg(-40),
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+    );
+    expect(nightSame.a).toBe(night.a);
+  });
+});

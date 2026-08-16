@@ -175,7 +175,7 @@ Use `?scenario=solar-eclipse-2017` (7-day horizon) plus `eclipseStation=` rather
 When inspecting:
 
 - Confirm the Pacific→Atlantic corridor remains immediately legible at upcoming, pre-central, central, and post-central stations. It must not read as absent during the interesting part of the event.
-- Confirm the representative forecast partial fill is present upcoming and gone once globally active; the live partial region then owns current partial shading.
+- Confirm the representative forecast partial fill is present upcoming and gone once globally active; active partial darkening is the physical obscuration field in solar shading, not a competing teal live fill.
 - Confirm the vermilion ground marker is absent until the umbra intersects Earth, tracks the live footprint, and disappears after the umbra leaves Earth — including while the event is still globally active.
 - Confirm Dramatic alignment is a ribbon to the live marker during central-active stations, and is absent at pre-central and post-central (no stale target, no unexplained glyph-field wash).
 - Confirm ordinary day/night shading continues to move with product time and is not rewritten by eclipse overlays.
@@ -199,13 +199,33 @@ Showcase config for this sequence: Extra Large Moon, Event labels OFF, Alignment
 
 When inspecting:
 
-- Confirm each visible translucent region belongs to one family: violet event path, teal-slate live (or quieter upcoming) partial, compact indigo central shadow, warm gold alignment ribbon, vermilion marker, ordinary cool night raster.
-- Isolate families at D or E with production toggles (solar shading only; then corridor; then live partial; then central footprint; then alignment; then marker). A large changing wedge must be attributable to one family.
-- Confirm corridor geometry does not change across A–F; corridor limits remain readable through the live partial fill.
-- Confirm B (pre-central) has live partial + path, no marker, no targeted beam, and no unexplained alignment wedge.
+- Confirm each visible translucent region belongs to one family: violet event path, informational teal forecast partial (upcoming only), compact indigo central shadow, warm gold alignment ribbon, vermilion marker, ordinary cool night raster, plus a continuous charcoal daylight-attenuation field while the eclipse is active.
+- Isolate families at D or E with production toggles (solar shading only; then corridor; then central footprint; then alignment; then marker). A large changing wedge must be attributable to one family.
+- Confirm corridor geometry does not change across A–F; corridor limits remain readable over the moving dark field.
+- Confirm B (pre-central) has the dark obscuration field + path, no marker, no targeted beam, and no unexplained alignment wedge.
 - Confirm C–F keep marker/beam target agreement; E is the primary near-GE acceptance station.
 - Confirm wrap copies do not darken the same geography twice on `solar-eclipse-dateline` and polar 2021 (`2021-12-04`).
-- Confirm continuous accelerated playback through the 2017 event: partial footprint evolves smoothly, beam follows the marker, path stays put, terminator stays a separate night family.
+- Confirm continuous accelerated playback through the 2017 event: the dark field evolves smoothly, beam follows the marker, path stays put, terminator stays a separate night family.
+
+### Continuous solar-eclipse obscuration shading (LIB-027)
+
+Use `?scenario=solar-eclipse-2017` with Solar shading ON, Active eclipse shading ON, intensity **Normal** first, Event labels OFF, Extra Large Moon, Large vermilion marker, Alignment Normal first.
+
+When inspecting:
+
+- Confirm the active broad effect is a continuous dark field, not a flat teal polygon turning on/off.
+- Confirm A upcoming still uses informational teal forecast partial; no physical darkening days early.
+- Confirm B pre-central already darkens where the eclipse is partial; corridor visible; no marker; no targeted beam; no umbra on Earth.
+- Confirm C central entry is additive: the dark field is already present, then compact umbra, marker, and beam appear without a style-family switch.
+- Confirm D–F keep one continuous dark field; marker/beam/umbra remain readable over it; corridor limits remain readable.
+- Confirm just after last central intersection: field continues where partial remains; marker/beam/umbra gone.
+- Confirm global end clears the field continuously into ordinary daylight.
+- Confirm Dramatic shading + Dramatic alignment at 2017 central phases is striking but still readable (do not recapture README media).
+- Confirm `solar-eclipse-annular` center is strongly dark but not totality-black; antumbra/marker remain distinct.
+- Confirm `solar-eclipse-partial` is explained by the dark field alone (no corridor/marker/targeted beam/umbra).
+- Confirm `solar-eclipse-dateline` does not duplicate or seam-darken near ±180°.
+- Confirm polar 2021 (`2021-12-04`) stays continuous near the pole with no false cap fill.
+- Confirm Solar eclipses overlay OFF with solar shading ON still physically darkens during an active eclipse.
 
 When inspecting E4:
 

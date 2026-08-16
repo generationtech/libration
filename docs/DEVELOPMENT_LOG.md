@@ -166,4 +166,10 @@ Reconciled solar eclipse visual families after the 2017 corridor-continuity fix.
 
 Verified: `npx tsc --noEmit` clean; `npm test` 203 files / 1911 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: exact 2017 A–F Knoxville UTCs, family isolation at D, Normal vs Dramatic at D/E, 400× playback, dateline/annular/partial, ordinary startup.
 
+## 2026-08-16 — LIB-027 complete
+
+Replaced the active solar eclipse’s flat teal live-partial fill with continuous local-obscuration daylight attenuation in the illumination raster. Obscuration reuses E4 Besselian observer-plane area overlap; a 288×145 grid is bilinearly sampled and mapped with `maxDarken × obscuration^γ` (default Normal). Upcoming forecast teal stays informational. Physical dimming follows solar shading independently of overlay geography ([ADR 0012](decisions/0012-active-solar-eclipse-obscuration-is-physical-illumination.md)). No README recapture.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 205 files / 1938 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 A–F / post-central / after / GE Normal and Dramatic / overlay-off, annular, partial-only, dateline, ordinary startup.
+
 

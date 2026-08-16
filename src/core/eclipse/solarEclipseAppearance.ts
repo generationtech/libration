@@ -28,6 +28,20 @@ import {
   type AstronomyPathThicknessId,
 } from "./eclipseStyle";
 import type { SolarEclipseSubtype } from "./solarEclipseTypes";
+import {
+  DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED,
+  DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY,
+  normalizeSolarEclipseShadingIntensityId,
+  type SolarEclipseShadingIntensityId,
+} from "./solarEclipseDaylightTransmission";
+
+export {
+  DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED,
+  DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY,
+  SOLAR_ECLIPSE_SHADING_INTENSITY_IDS,
+  solarEclipseShadingIntensityLabel,
+  type SolarEclipseShadingIntensityId,
+} from "./solarEclipseDaylightTransmission";
 
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND = true;
@@ -35,6 +49,8 @@ export const DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_CORRIDOR = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_PARTIAL_REGION = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_LIVE_GROUND_POSITION = true;
+export const DEFAULT_SOLAR_ECLIPSE_ACTIVE_SHADING_ENABLED = DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED;
+export const DEFAULT_SOLAR_ECLIPSE_ACTIVE_SHADING_INTENSITY = DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_TOTAL = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_ANNULAR = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_PARTIAL = true;
@@ -119,6 +135,8 @@ export type SolarEclipsePresentation = {
   readonly showLiveGroundPosition: boolean;
   readonly liveGroundPositionColor: string;
   readonly liveGroundPositionSize: SolarEclipseGroundPositionSizeId;
+  readonly activeEclipseShadingEnabled: boolean;
+  readonly activeEclipseShadingIntensity: SolarEclipseShadingIntensityId;
 };
 
 function flag(raw: unknown, fallback: boolean): boolean {
@@ -182,6 +200,13 @@ export function normalizeSolarEclipsePresentation(
       DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR,
     ),
     liveGroundPositionSize: normalizeSolarEclipseGroundPositionSizeId(raw?.liveGroundPositionSize),
+    activeEclipseShadingEnabled: flag(
+      raw?.activeEclipseShadingEnabled,
+      DEFAULT_SOLAR_ECLIPSE_ACTIVE_SHADING_ENABLED,
+    ),
+    activeEclipseShadingIntensity: normalizeSolarEclipseShadingIntensityId(
+      raw?.activeEclipseShadingIntensity,
+    ),
   };
 }
 
@@ -270,6 +295,9 @@ export const SOLAR_ECLIPSE_DRAW_CENTERLINE = 80;
 
 /** Live partial footprint: restrained teal-slate, not path-violet and not night-blue. */
 export const SOLAR_ECLIPSE_PARTIAL_FILL = "rgba(47, 109, 120, 0.16)";
+/** Outer penumbral boundary when physical shading owns the interior. */
+export const SOLAR_ECLIPSE_PARTIAL_STROKE = "rgba(47, 109, 120, 0.50)";
+export const SOLAR_ECLIPSE_PARTIAL_STROKE_WIDTH_PX = 1.15;
 /** Totality (umbra) band — compact central shadow, stronger than the live partial. */
 export const SOLAR_ECLIPSE_UMBRA_FILL = "rgba(40, 24, 72, 0.50)";
 /** Annularity (antumbra) band — warm, not totality. */
@@ -287,7 +315,7 @@ export const SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE_WIDTH_PX = 1.0;
 /** Active corridor fill stays ~80% of upcoming so the path remains context, not absent. */
 export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL = "rgba(72, 48, 140, 0.22)";
 export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL = "rgba(176, 96, 36, 0.19)";
-export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE = "rgba(220, 208, 255, 0.52)";
+export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE = "rgba(220, 208, 255, 0.62)";
 
 export function scaleRgbaAlpha(css: string, factor: number): string {
   const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$/.exec(css);
@@ -330,6 +358,8 @@ export type SolarEclipsePaint = {
   readonly activeCorridorAntumbraFill: string;
   readonly activeCorridorStroke: string;
   readonly livePartialFill: string;
+  readonly livePartialStroke: string;
+  readonly livePartialStrokeWidthPx: number;
   readonly liveUmbraFill: string;
   readonly liveAntumbraFill: string;
   readonly liveCenterlineStroke: string;
@@ -379,10 +409,14 @@ export function resolveSolarEclipsePaint(presentation: SolarEclipsePresentation)
       : hexToRgba(corridor, presentation.forecastCorridorOpacity * 0.72),
     activeCorridorStroke: forecastDefault
       ? SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE
-      : hexToRgba(corridor, 0.52),
+      : hexToRgba(corridor, 0.62),
     livePartialFill: liveDefault
       ? SOLAR_ECLIPSE_PARTIAL_FILL
       : hexToRgba(partial, presentation.livePartialOpacity),
+    livePartialStroke: liveDefault
+      ? SOLAR_ECLIPSE_PARTIAL_STROKE
+      : hexToRgba(partial, Math.min(1, presentation.livePartialOpacity * 2.8)),
+    livePartialStrokeWidthPx: SOLAR_ECLIPSE_PARTIAL_STROKE_WIDTH_PX,
     liveUmbraFill: liveDefault
       ? SOLAR_ECLIPSE_UMBRA_FILL
       : hexToRgba(band, presentation.liveCentralBandOpacity),

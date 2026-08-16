@@ -33,6 +33,52 @@ import { sampleEquirectEmissiveRadianceLinear01 } from "../emissiveIlluminationR
 import { sampleIlluminationRgba8 } from "../illuminationShading";
 import type { RenderPlan } from "./renderPlanTypes";
 
+function wrapLonDeg(lonDeg: number): number {
+  let lon = lonDeg;
+  while (lon < -180) {
+    lon += 360;
+  }
+  while (lon >= 180) {
+    lon -= 360;
+  }
+  return lon;
+}
+
+function sampleDaylightTransmission01(
+  field:
+    | {
+        lonSamples: number;
+        latSamples: number;
+        transmission01: Float32Array;
+      }
+    | undefined,
+  longitudeDeg: number,
+  latitudeDeg: number,
+): number {
+  if (!field || field.lonSamples < 2 || field.latSamples < 2) {
+    return 1;
+  }
+  const { lonSamples, latSamples, transmission01 } = field;
+  const lon = wrapLonDeg(longitudeDeg);
+  const lat = Math.max(-90, Math.min(90, latitudeDeg));
+  const lonPos = ((lon + 180) / 360) * lonSamples;
+  const latPos = ((90 - lat) / 180) * (latSamples - 1);
+  let i0 = Math.floor(lonPos);
+  const tLon = lonPos - i0;
+  i0 = ((i0 % lonSamples) + lonSamples) % lonSamples;
+  const i1 = (i0 + 1) % lonSamples;
+  const j0 = Math.max(0, Math.min(latSamples - 2, Math.floor(latPos)));
+  const j1 = j0 + 1;
+  const tLat = Math.max(0, Math.min(1, latPos - j0));
+  const a = transmission01[j0 * lonSamples + i0] ?? 1;
+  const b = transmission01[j0 * lonSamples + i1] ?? 1;
+  const c = transmission01[j1 * lonSamples + i0] ?? 1;
+  const d = transmission01[j1 * lonSamples + i1] ?? 1;
+  const top = a + (b - a) * tLon;
+  const bottom = c + (d - c) * tLon;
+  return Math.max(0, Math.min(1, top + (bottom - top) * tLat));
+}
+
 /** Matches historical canvas pass: half-res sampling then smooth upscale to the viewport. */
 export const SOLAR_SHADING_PLAN_DOWNSAMPLE = 2;
 
@@ -73,6 +119,12 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   cloudOpacityRaster?: CloudOpacitySampleBuffer | null;
   /** Scene `cloudParticipation.presentation.intensity`; omitted defaults to 1. */
   cloudParticipationIntensity?: number;
+  /** Optional equirect 0–1 daylight transmission field; omitted means 1. */
+  daylightTransmissionField?: {
+    lonSamples: number;
+    latSamples: number;
+    transmission01: Float32Array;
+  };
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -153,6 +205,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
         options.moonlightPolicy,
         emissiveInputs,
         cloudInputs,
+        sampleDaylightTransmission01(options.daylightTransmissionField, lonDeg, latDeg),
       );
       rgba[p++] = r;
       rgba[p++] = g;

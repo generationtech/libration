@@ -63,7 +63,7 @@ The following remain **unapproved** recoverable extras, not a continuation of th
 - swept penumbra union (E2 uses a representative greatest-eclipse partial outline)
 - event browser / history / search-by-date catalog
 - map click-inspect of eclipse overlays (scene pointer inspection remains Phase 11)
-- atmospheric eclipse darkness or ambient solar-shading modification from obscuration
+- atmospheric eclipse color (horizon shifts, corona, Purkinje, sky color); map illumination attenuation from local obscuration is production ([LIB-027](work/LIB-027-continuous-solar-eclipse-obscuration-shading.md))
 - advanced style options beyond the E6 color / thickness / opacity families
 - About-page authority provenance (identity remains durable internally)
 - notifications

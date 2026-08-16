@@ -1300,6 +1300,40 @@ describe("solar eclipse scene presentation", () => {
     );
   });
 
+  it("defaults active eclipse shading on/Normal and persists explicit off and Dramatic", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const solar = base.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(solar?.source.kind === "derived" ? solar.source.parameters?.activeEclipseShadingEnabled : undefined).toBe(
+      true,
+    );
+    expect(
+      solar?.source.kind === "derived" ? solar.source.parameters?.activeEclipseShadingIntensity : undefined,
+    ).toBe("normal");
+    const painted = {
+      ...base,
+      scene: applySolarEclipsePresentationToScene(base.scene!, {
+        activeEclipseShadingEnabled: false,
+        activeEclipseShadingIntensity: "dramatic",
+      }),
+    };
+    const round = normalizeLibrationConfig(painted);
+    const row = round.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.activeEclipseShadingEnabled : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.activeEclipseShadingIntensity : undefined).toBe(
+      "dramatic",
+    );
+    const reset = applySolarEclipsePresentationToScene(round.scene!, normalizeSolarEclipsePresentation(undefined));
+    const resetRow = reset.layers.find((l) => l.id === "solarEclipse");
+    expect(resetRow?.source.kind === "derived" ? resetRow.source.parameters?.activeEclipseShadingEnabled : undefined).toBe(
+      true,
+    );
+    expect(
+      resetRow?.source.kind === "derived" ? resetRow.source.parameters?.activeEclipseShadingIntensity : undefined,
+    ).toBe("normal");
+  });
+
   it("restores live ground-position defaults on a full presentation reset", () => {
     const base = normalizeLibrationConfig(defaultLibrationConfigV2());
     const custom = applySolarEclipsePresentationToScene(base.scene!, {

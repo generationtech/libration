@@ -42,3 +42,60 @@ describe("solar shading moonlight transmission", () => {
     }
   });
 });
+
+const SOLAR_2017_GE = Date.parse("2017-08-21T18:25:29.700Z");
+const SOLAR_2017_UPCOMING = Date.parse("2017-08-21T14:42:59.000Z");
+const QUIET = Date.parse("2024-01-15T00:00:00.000Z");
+
+describe("solar shading active eclipse daylight attenuation", () => {
+  it("attaches a daylight transmission field only while a solar eclipse is active", () => {
+    const layer = createSolarShadingLayer({
+      moonlightMode: "illustrative",
+      activeEclipseShadingEnabled: true,
+    });
+    const quiet = layer.getState(
+      createTimeContext(QUIET, 0, true, {
+        eclipseFrame: resolveEclipseFrame(QUIET, { horizonMs: 0 }),
+      }),
+    );
+    const upcoming = layer.getState(
+      createTimeContext(SOLAR_2017_UPCOMING, 0, true, {
+        eclipseFrame: resolveEclipseFrame(SOLAR_2017_UPCOMING, { horizonMs: 7 * 86_400_000 }),
+      }),
+    );
+    const active = layer.getState(
+      createTimeContext(SOLAR_2017_GE, 0, true, {
+        eclipseFrame: resolveEclipseFrame(SOLAR_2017_GE, { horizonMs: 0 }),
+      }),
+    );
+    expect(isSolarShadingPayload(quiet.data)).toBe(true);
+    expect(isSolarShadingPayload(upcoming.data)).toBe(true);
+    expect(isSolarShadingPayload(active.data)).toBe(true);
+    if (
+      isSolarShadingPayload(quiet.data) &&
+      isSolarShadingPayload(upcoming.data) &&
+      isSolarShadingPayload(active.data)
+    ) {
+      expect(quiet.data.daylightTransmissionField).toBeUndefined();
+      expect(upcoming.data.daylightTransmissionField).toBeUndefined();
+      expect(active.data.daylightTransmissionField).toBeDefined();
+      expect(active.data.daylightTransmissionField!.transmission01.some((t) => t < 0.9)).toBe(true);
+    }
+  });
+
+  it("omits the field when physical shading is disabled", () => {
+    const layer = createSolarShadingLayer({
+      moonlightMode: "illustrative",
+      activeEclipseShadingEnabled: false,
+    });
+    const active = layer.getState(
+      createTimeContext(SOLAR_2017_GE, 0, true, {
+        eclipseFrame: resolveEclipseFrame(SOLAR_2017_GE, { horizonMs: 0 }),
+      }),
+    );
+    expect(isSolarShadingPayload(active.data)).toBe(true);
+    if (isSolarShadingPayload(active.data)) {
+      expect(active.data.daylightTransmissionField).toBeUndefined();
+    }
+  });
+});
