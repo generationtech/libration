@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-022](work/LIB-022-eclipse-2017-readme-screenshots.md) — 2017 total solar eclipse README screenshot set
+[LIB-023](work/LIB-023-repair-readme-screenshot-capture.md) — Repair README screenshot capture pipeline and recapture 2017 eclipse set
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-None. Capture PNGs are in `docs/images/eclipse-2017/`. README.md is not edited.
+Stop. No approved work. Do not edit README.md, create animation, or start another media item until a human authorizes it.

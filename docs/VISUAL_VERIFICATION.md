@@ -47,6 +47,21 @@ It is not the only supported resolution. Do not invent a device matrix.
 
 If Cursor cannot programmatically guarantee that exact size, use the closest controllable 1920×1080 browser viewport and **report the limitation** rather than claiming exactness.
 
+### README and docs PNG capture
+
+A PNG that is nominally 1920×1080 is not proof of one Libration viewport. LIB-022’s `Page.captureScreenshot` files were 1920×1080 and still contained two full scene copies plus a partial third.
+
+`CanvasRenderBackend.applyViewport` writes inline `style.width` / `style.height` in CSS pixels from the first layout. `Emulation.setDeviceMetricsOverride` after that load changes `window.innerWidth` but leaves the canvas locked to the Cursor pane size (~670×770). Forcing `canvas.style` to `100%` and dispatching `resize` does paint one genuine wide world on the **canvas bitmap**. Capturing the **compositor surface** with `Page.captureScreenshot` (`fromSurface: true`) under a 1920×1080 override then **tiles that smaller surface** across the PNG (LIB-022 period was an exact 912 px repeat, including duplicated chrome).
+
+Do this instead:
+
+1. Set device metrics to 1920×1080 **before** navigation/reload so layout initializes at that size.
+2. After load, `html`/`body` `overflow: hidden`; set the scene canvas CSS to `100%` width/height and dispatch `resize` so remaining slack is absorbed.
+3. Export with `canvas.toDataURL('image/png')`. Honest backing size may be 1919×1079 (`Math.floor(1920 * dpr)` at dpr slightly under 1). Do not upscale.
+4. Confirm left vs +~900 px columns are **not** pixel-identical before accepting the file.
+
+Do not stretch a pane-sized canvas without reload, tile/stitch viewports, or crop one repeated copy and scale it. Hide the DEV scenario banner and Config launcher only as session CSS; they are DOM overlays and are already absent from a canvas export. Procedure detail: [`docs/work/LIB-023-repair-readme-screenshot-capture.md`](work/LIB-023-repair-readme-screenshot-capture.md).
+
 ## Scenario selection
 
 A work item does not mechanically need every scenario.

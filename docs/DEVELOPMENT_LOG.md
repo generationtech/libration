@@ -148,4 +148,10 @@ README-candidate PNG set of the 2017-08-21 total solar eclipse (`nasa-5mcse-sola
 
 Verified: authority stations via `npx tsx`; Cursor Browser CDP 1920×1080 PNGs (forecast 2017-08-16T18:00Z, overview 18:00Z, Oregon 17:16:44Z, GE 18:25:30Z, Carolina 18:48:44Z, beam crop of GE). Suite not rerun (no source changes).
 
+## 2026-08-16 — LIB-023 complete
+
+Replaced the malformed LIB-022 2017 eclipse PNGs. Root cause was Chromium `Page.captureScreenshot` tiling the Cursor pane compositor surface under a 1920×1080 device-metrics override, not product world wrap. Capture is now `canvas.toDataURL` after metrics-before-reload; full frames 1919×1079, beam crop 680×540. No product source changes; README.md not edited.
+
+Verified: PIL uniqueness (no 912 px tile); visual inspection of all six; README-scale downsamples of the overview at 1200/800/600. Suite not rerun (no source changes).
+
 
