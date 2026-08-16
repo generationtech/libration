@@ -56,7 +56,7 @@ A PNG that is nominally 1920×1080 is not proof of one Libration viewport. LIB-0
 Do this instead:
 
 1. Set device metrics to 1920×1080 **before** navigation/reload so layout initializes at that size.
-2. After load, `html`/`body` `overflow: hidden`; set the scene canvas CSS to `100%` width/height and dispatch `resize` so remaining slack is absorbed.
+2. After load, `html`/`body` `overflow: hidden` and `margin: 0` (the UA 8px body margin otherwise locks the canvas ~16px short of 1920); set the scene canvas CSS to `100%` width/height and dispatch `resize` so remaining slack is absorbed.
 3. Export with `canvas.toDataURL('image/png')`. Honest backing size may be 1919×1079 (`Math.floor(1920 * dpr)` at dpr slightly under 1). Do not upscale.
 4. Confirm left vs +~900 px columns are **not** pixel-identical before accepting the file.
 

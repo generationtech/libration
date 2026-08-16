@@ -184,6 +184,12 @@ Reconciled active solar-eclipse illumination with ordinary daylight. The west/ea
 
 Verified: `npx tsc --noEmit` clean; `npm test` 206 files / 1965 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 horizon A–E / rasterWest / east 19:40Z and 20:05Z, annular, partial, dateline, ordinary startup; canvas transects at 16:45Z and 19:55:32Z.
 
+## 2026-08-16 — LIB-024 complete
+
+Resumed after LIB-025–LIB-029. Marker implementation was already in the tree. Recaptured the six 2017 README PNGs from `solar-eclipse-2017` showcase (Extra Large Moon, Event labels off, Dramatic alignment, Large vermilion marker) via canvas `toDataURL` at 1919×1079; #6 is a 680×540 lossless crop. README.md not edited. No eclipse architecture changes.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 206 files / 1965 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser canvas exports at the six LIB-022 station UTCs; left-vs-+912 uniqueness confirmed.
+
 
 
 
