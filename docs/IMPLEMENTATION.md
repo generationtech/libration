@@ -366,6 +366,31 @@ bundled lunar authority JSON
 
 See [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) §10 and §22.
 
+### Reference-city eclipse circumstances
+
+Production flow (E4, [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md)):
+
+```
+EclipseFrame (global events + geography)
+  + resolveReferenceCityObserverLocation(displayTime.topBandAnchor)
+  → ReferenceCityEclipseCircumstances resolver (cached by event id / authority version / lat/lon)
+  → presentation (Layers inspectable details; optional bottom-HUD chrome line)
+```
+
+GLOBAL ECLIPSE TRUTH IS NEVER FILTERED BY REFERENCE CITY. Changing the city updates only the derived circumstances. Event identity, solar live footprint, solar forecast corridor, lunar Earth-shadow state, and lunar visibility region are unchanged. No catalog city (auto, fixed longitude, unknown id) leaves global eclipses intact and omits circumstances — there is no Knoxville fallback.
+
+- **Observer:** the same chrome `displayTime.topBandAnchor` catalog city used by top-band time and LIB-011 libration. No second selector.
+- **Solar local contacts:** Besselian reduction of the same NASA elements as E1/E2. Root functions `m²−L1'²` (C1/C4), `m²−|L2'|²` (C2/C3), and `u u̇ + v v̇` (maximum). 30 s sampling, bisection + Newton, 1 ms tolerance. C2/C3 only when the observer is locally total or annular. Contacts are UTC instants in domain state.
+- **Magnitude** is NASA diameter fraction `(L1'−m)/(L1'+L2')` at local maximum. **Obscuration** is circle-overlap area fraction from apparent Sun/Moon radii; it is not magnitude.
+- **Geometric horizon:** Sun/Moon center altitude with no refraction, topography, or station elevation. A contact is below the horizon when center altitude < 0°.
+- **Lunar:** global contacts from E3; Moon altitude at each contact; geometric moonrise/moonset inside the event interval; local-visible maximum is global GE only when the Moon is up.
+- **Caching:** solar C1–C4 solutions are cached per event+observer and are not recomputed every frame. Product time only selects the relevant event and formats live status.
+- **Presentation:** inspectable rows in the Layers tab; optional compact bottom-HUD line (date-style, subordinate). Local wall times use the city’s IANA zone via existing `formatWallClockInTimeZone`. Copy says “not visible from {city}”, never that the global event is absent.
+- **Config:** `scene.eclipseCircumstances.detailsEnabled` and `chromeStatusEnabled`, both default **on**. Disabling either does not disable the global eclipse map. Old configs missing the keys normalize to on.
+- **Upcoming solar:** local contacts are available for forecast-horizon events, not only active ones. Lunar forecast map presentation is still out of scope.
+
+See [ADR 0010](decisions/0010-eclipse-events-global-circumstances-derived.md).
+
 ### Overlay readability
 
 Overlays must stay legible over eleven visually different substrates and across the full illumination range. The mechanism is derived entirely upstream — **it never samples the rendered raster**.
@@ -462,6 +487,7 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 - the lunar locus (mean-lunar-day samples of the same `sublunarPoint` across one orbital cycle, with the instant as the cycle seam);
 - solar eclipse authority lookup, live geographic footprint, and forecast-window event selection (NASA Besselian evaluation at that UTC; unsupported outside 1900–2100; forecast windows that extend past the span are truncated);
 - lunar eclipse authority lookup, Earth-shadow geometry at the Moon, and the terrestrial Moon-above-horizon region (active events only; unsupported outside 1900–2100);
+- reference-city eclipse circumstances for the chrome catalog city (derived observer projection; does not change global event selection);
 - which dynamic snapshot is resolved for each source.
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.
@@ -538,7 +564,7 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles (including lunar ground track, lunar locus, Solar eclipses, and Lunar eclipses), eclipse forecast horizon, independent solar eclipse central-line / central-band / live-partial / forecast-corridor / forecast-partial checkboxes, independent lunar Moon-eclipse-shadow / visibility-boundary / visibility-region checkboxes, Moon size and libration presentation (ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale), independent Lunar locus and Solar analemma stroke color/thickness, past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
+| Layers | Scene stack toggles (including lunar ground track, lunar locus, Solar eclipses, and Lunar eclipses), eclipse forecast horizon, independent solar eclipse central-line / central-band / live-partial / forecast-corridor / forecast-partial checkboxes, independent lunar Moon-eclipse-shadow / visibility-boundary / visibility-region checkboxes, reference-city eclipse details and persistent chrome status, inspectable local circumstances, Moon size and libration presentation (ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale), independent Lunar locus and Solar analemma stroke color/thickness, past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS) |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
 | Geography | Base-map family selection and presentation, projection-adjacent settings |
@@ -608,6 +634,6 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 - [`docs/decisions/`](decisions/) — why the durable choices were made.
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.
-- [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — Eclipse System architecture; E1 live solar footprint, E2 solar forecast window, and E3 lunar truth/visibility are production, E4+ remain unapproved.
+- [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — Eclipse System architecture; E1–E4 are production, E5+ remain unapproved.
 - [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md) — asset provenance and licensing.
 - [`docs/history/`](history/) — how the system was built, for when the *why* is not in the code.

@@ -511,6 +511,32 @@ export function resolveVisualScenarioSession(
     };
   }
   const definition = VISUAL_SCENARIOS[requested];
+  const eclipseObserver =
+    requested.startsWith("solar-eclipse-") || requested.startsWith("lunar-eclipse-")
+      ? parseMoonLibrationObserverCityId(parseSearchParams(input.search).get("observerCity"))
+      : null;
+  if (eclipseObserver !== null) {
+    const config = definition.buildConfig();
+    const topBandAnchor =
+      eclipseObserver === "none"
+        ? ({ mode: "auto" } as const)
+        : ({ mode: "fixedCity", cityId: eclipseObserver } as const);
+    return {
+      kind: "applied",
+      id: definition.id,
+      startIsoUtc: definition.startIsoUtc,
+      config: {
+        ...config,
+        chrome: {
+          ...config.chrome,
+          displayTime: {
+            ...config.chrome.displayTime,
+            topBandAnchor,
+          },
+        },
+      },
+    };
+  }
   return {
     kind: "applied",
     id: definition.id,

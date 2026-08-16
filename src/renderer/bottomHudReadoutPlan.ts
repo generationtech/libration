@@ -45,6 +45,8 @@ export function buildBottomHudReadoutLines(options: {
     DisplayChromeLayoutConfig,
     "bottomTimeStackShowDate" | "bottomTimeStackShowTime" | "bottomTimeShowSeconds"
   >;
+  /** Compact eclipse status; omitted when no relevant eclipse or chrome is disabled. */
+  eclipseStatusText?: string | null;
 }): BottomHudReadoutLine[] {
   const lay = options.bottomTimeStack ?? {};
   const showDate = lay.bottomTimeStackShowDate !== false;
@@ -65,6 +67,10 @@ export function buildBottomHudReadoutLines(options: {
       includeSeconds: bottomTimeShowSeconds,
     });
     lines.push({ role: "time", text: timeText });
+  }
+  const eclipse = options.eclipseStatusText?.trim() ?? "";
+  if (eclipse.length > 0) {
+    lines.push({ role: "eclipse", text: eclipse });
   }
   return lines;
 }

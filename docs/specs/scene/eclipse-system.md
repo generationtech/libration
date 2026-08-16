@@ -4,7 +4,7 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E4+), which still require a separate human-authorized work item.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E5+), which still require a separate human-authorized work item.
 
 Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs). E3 production notes are in [§10](#10-lunar-eclipse-map-architecture) and [§22.16](#2216-e3-inputs).
 
@@ -434,6 +434,10 @@ Colors, opacity, cone shape, and animation remain **open**.
 
 LIB-011 already binds observer identity to chrome `displayTime.topBandAnchor` via `resolveReferenceCityObserverLocation`. Eclipse work must use that seam only.
 
+**GLOBAL ECLIPSE TRUTH IS NEVER FILTERED BY REFERENCE CITY.**
+
+E4 ([LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md)) implements this as a derived `ReferenceCityEclipseCircumstances` projection. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md) and [ADR 0010](../../decisions/0010-eclipse-events-global-circumstances-derived.md).
+
 | Solar (when observer exists) | Lunar |
 |------------------------------|--------|
 | Locally visible? (Sun up **and** inside partial/total/annular footprint as applicable) | Moon above horizon? |
@@ -443,7 +447,7 @@ LIB-011 already binds observer identity to chrome `displayTime.topBandAnchor` vi
 
 Global event existence **never** depends on these fields.
 
-No separate eclipse lat/lon picker. No frozen UI (chrome chip vs inspectable panel is backlog-adjacent, not this architecture’s schema).
+No separate eclipse lat/lon picker. Inspectable Layers details and optional bottom-HUD status are production as of LIB-017.
 
 ---
 
@@ -584,13 +588,16 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Forcing a path metaphor; over-building ambient lunar horizon.
 - **Completion evidence:** Type/contact fixtures; hemisphere tests; visual scene with/without Moon-up at the reference city.
 
-### E4 — Reference-city circumstances
+### E4 — Reference-city circumstances — **implemented (LIB-017)**
 
 - **Goal:** Local visibility, contacts, maximum, altitudes, magnitude/obscuration where the authority allows — solar and lunar — using the existing city.
 - **Dependencies:** E1 (solar) and E3 (lunar).
-- **User-visible:** Observer information without a second location system. Exact chrome/UI still scoped in the implementing item.
+- **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
+- **User-visible:** Observer information on the existing reference city (Layers inspectable details + optional bottom-HUD status). No second location system.
 - **Principal risks:** Letting city visibility filter global events; inventing UI surface area.
 - **Completion evidence:** City-in vs city-out fixtures; global event still resolves when the city cannot see it.
+
+**GLOBAL ECLIPSE TRUTH IS NEVER FILTERED BY REFERENCE CITY.**
 
 ### E5 — Live alignment / beam presentation
 
@@ -608,7 +615,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
 
-E1 is production. E2 is production. E3 is production. E4 (reference-city eclipse circumstances) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
+E1 is production. E2 is production. E3 is production. E4 is production. E5 (live alignment / beam) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
 
 ---
 

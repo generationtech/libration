@@ -23,7 +23,8 @@ export interface BottomBarDayCell {
 /** One row in the lower-left reference-city HUD (date above time when both are enabled). */
 export type BottomHudReadoutLine =
   | { role: "date"; text: string }
-  | { role: "time"; text: string };
+  | { role: "time"; text: string }
+  | { role: "eclipse"; text: string };
 
 /**
  * Bottom instrument overlay: lower-left reference-city date + time — not map layers.

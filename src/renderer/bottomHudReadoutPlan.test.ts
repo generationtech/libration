@@ -165,6 +165,26 @@ describe("buildBottomHudReadoutLines hour-label mode (America/New_York)", () => 
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.text).toMatch(/04:30:00/);
   });
+
+  it("appends eclipse status only when provided, and omits it when empty", () => {
+    const t = Date.UTC(2024, 3, 8, 18, 17, 15);
+    const withStatus = buildBottomHudReadoutLines({
+      nowMs: t,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local12",
+      eclipseStatusText: "Eclipse not visible from Knoxville",
+    });
+    expect(withStatus.some((l) => l.role === "eclipse")).toBe(true);
+    expect(withStatus.find((l) => l.role === "eclipse")?.text).toBe(
+      "Eclipse not visible from Knoxville",
+    );
+    const without = buildBottomHudReadoutLines({
+      nowMs: t,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local12",
+    });
+    expect(without.some((l) => l.role === "eclipse")).toBe(false);
+  });
 });
 
 describe("formatBottomHudDateLine", () => {

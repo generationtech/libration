@@ -126,7 +126,7 @@ export function buildBottomChromeBandRenderPlan(options: {
     const yFrac = topFrac + t * stackSpanFrac;
     const cy = by + bh * yFrac - sideLift;
 
-    if (row.role === "date") {
+    if (row.role === "date" || row.role === "eclipse") {
       const text = row.text.length > 0 ? row.text : "\u00a0";
       emitGlyphToRenderPlan(
         createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),

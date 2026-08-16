@@ -22,6 +22,7 @@ import { defaultLibrationConfigV2, normalizeLibrationConfig, type LibrationConfi
 import {
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_ASSET_ID,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
+  applyLayerEnableFlagsToScene,
 } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
 
@@ -395,5 +396,52 @@ describe("LayersTab Moon and astronomy path styling", () => {
     expect(analemma.strokeThickness).toBe("thin");
     expect(moon.librationColor).not.toBe(locus.strokeColor);
     expect(locus.strokeColor).not.toBe(analemma.strokeColor);
+  });
+});
+
+describe("LayersTab reference-city eclipse circumstances", () => {
+  it("defaults details and chrome status on and can disable them independently of Solar eclipses", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const details = screen.getByLabelText("Reference-city eclipse details") as HTMLInputElement;
+    const chrome = screen.getByLabelText("Persistent eclipse status") as HTMLInputElement;
+    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
+    expect(details.checked).toBe(true);
+    expect(chrome.checked).toBe(true);
+    expect(solar.checked).toBe(false);
+    await user.click(details);
+    await user.click(chrome);
+    expect(details.checked).toBe(false);
+    expect(chrome.checked).toBe(false);
+    expect(solar.checked).toBe(false);
+    await user.click(solar);
+    expect(solar.checked).toBe(true);
+    expect(details.checked).toBe(false);
+  });
+
+  it("shows local partial details for Knoxville during the 2024 total, not a missing global event", () => {
+    const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
+    initial.layers.solarEclipse = true;
+    initial.scene = applyLayerEnableFlagsToScene(initial.scene!, initial.layers);
+    function Harness() {
+      const [config, setConfig] = useState(initial);
+      return (
+        <LayersTab
+          config={config}
+          updateConfig={(updater) => {
+            const draft = normalizeLibrationConfig(config);
+            updater(draft);
+            setConfig(normalizeLibrationConfig(draft));
+          }}
+          productInstantMs={Date.parse("2024-04-08T18:17:15.000Z")}
+        />
+      );
+    }
+    render(<Harness />);
+    expect(screen.getByTestId("eclipse-circumstances-details").textContent).toMatch(/Partial/);
+    expect(screen.getByTestId("eclipse-circumstances-details").textContent).toMatch(/Knoxville/);
+    expect(screen.getByTestId("eclipse-circumstances-details").textContent?.toLowerCase()).not.toContain(
+      "no eclipse",
+    );
   });
 });

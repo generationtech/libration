@@ -63,6 +63,36 @@ export function isMoonGeometricallyAboveHorizon(
   return sphericalMoonAltitudeCosine(latDeg, lonDeg, moonLatDeg, moonLonDeg) >= 0;
 }
 
+/** Geometric center altitude in degrees. No refraction. */
+export function geometricMoonAltitudeDeg(
+  latDeg: number,
+  lonDeg: number,
+  moonLatDeg: number,
+  moonLonDeg: number,
+): number {
+  const c = sphericalMoonAltitudeCosine(latDeg, lonDeg, moonLatDeg, moonLonDeg);
+  return (Math.asin(Math.max(-1, Math.min(1, c))) / Math.PI) * 180;
+}
+
+/**
+ * Initial great-circle bearing from the observer toward the sublunar point,
+ * degrees clockwise from north (0…360). Geometric; no refraction.
+ */
+export function geometricMoonAzimuthDeg(
+  latDeg: number,
+  lonDeg: number,
+  moonLatDeg: number,
+  moonLonDeg: number,
+): number {
+  const phi = latDeg * DEG;
+  const phiM = moonLatDeg * DEG;
+  const dLam = (moonLonDeg - lonDeg) * DEG;
+  const y = Math.sin(dLam) * Math.cos(phiM);
+  const x = Math.cos(phi) * Math.sin(phiM) - Math.sin(phi) * Math.cos(phiM) * Math.cos(dLam);
+  const az = (Math.atan2(y, x) / Math.PI) * 180;
+  return ((az % 360) + 360) % 360;
+}
+
 function horizonLatitudeDeg(subLatDeg: number, deltaLonDeg: number): number {
   const phiM = subLatDeg * DEG;
   const dLam = deltaLonDeg * DEG;

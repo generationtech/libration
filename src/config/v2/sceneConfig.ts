@@ -49,6 +49,12 @@ import {
   normalizeSolarEclipsePresentation,
 } from "../../core/eclipse/solarEclipseAppearance";
 import {
+  DEFAULT_REFERENCE_CITY_ECLIPSE_CHROME_ENABLED,
+  DEFAULT_REFERENCE_CITY_ECLIPSE_DETAILS_ENABLED,
+  normalizeReferenceCityEclipsePresentation,
+  type ReferenceCityEclipsePresentation,
+} from "../../core/eclipse/referenceCityEclipseAppearance";
+import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
   type SublunarMarkerAppearance,
@@ -431,6 +437,11 @@ export type SceneConfig = {
    * Always present on normalized configs.
    */
   overlayReadability: SceneOverlayReadabilityConfig;
+  /**
+   * Observer-derived eclipse circumstances presentation (E4). Independent of
+   * global solar/lunar map overlays. Always present on normalized configs.
+   */
+  eclipseCircumstances: ReferenceCityEclipsePresentation;
   metadata?: Record<string, unknown>;
 };
 
@@ -1003,6 +1014,10 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
     overlayReadability: {
       presentation: { ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION },
     },
+    eclipseCircumstances: {
+      detailsEnabled: DEFAULT_REFERENCE_CITY_ECLIPSE_DETAILS_ENABLED,
+      chromeStatusEnabled: DEFAULT_REFERENCE_CITY_ECLIPSE_CHROME_ENABLED,
+    },
   };
 }
 
@@ -1205,6 +1220,23 @@ export function lunarEclipsePresentationFromScene(scene: SceneConfig) {
   return normalizeLunarEclipsePresentation(params);
 }
 
+export function referenceCityEclipsePresentationFromScene(
+  scene: SceneConfig,
+): ReferenceCityEclipsePresentation {
+  return normalizeReferenceCityEclipsePresentation(scene.eclipseCircumstances);
+}
+
+export function applyReferenceCityEclipsePresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<ReferenceCityEclipsePresentation>,
+): SceneConfig {
+  const current = referenceCityEclipsePresentationFromScene(scene);
+  return {
+    ...scene,
+    eclipseCircumstances: normalizeReferenceCityEclipsePresentation({ ...current, ...patch }),
+  };
+}
+
 export function applyLunarEclipsePresentationToScene(
   scene: SceneConfig,
   patch: Partial<{
@@ -1399,6 +1431,7 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
           }
         : {}),
     },
+    eclipseCircumstances: normalizeReferenceCityEclipsePresentation(scene.eclipseCircumstances),
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };
 }
@@ -1762,6 +1795,9 @@ export function normalizeSceneConfig(
   const metadata = isPlainObject(input.metadata) ? { ...input.metadata } : undefined;
   const illumination = normalizeSceneIlluminationInput(input);
   const overlayReadability = normalizeSceneOverlayReadabilityInput(input);
+  const eclipseCircumstances = normalizeReferenceCityEclipsePresentation(
+    isPlainObject(input.eclipseCircumstances) ? input.eclipseCircumstances : undefined,
+  );
   return {
     version: 1,
     projectionId,
@@ -1771,6 +1807,7 @@ export function normalizeSceneConfig(
     layers: merged,
     illumination,
     overlayReadability,
+    eclipseCircumstances,
     ...(metadata ? { metadata } : {}),
   };
 }

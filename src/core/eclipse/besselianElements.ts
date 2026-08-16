@@ -111,3 +111,49 @@ export function evaluateBesselianElements(
     insideElementWindow: inside,
   };
 }
+
+/** Time derivatives of the polynomials, per hour of TDT. */
+export type BesselianElementRates = {
+  readonly xDot: number;
+  readonly yDot: number;
+  readonly dDegDot: number;
+  readonly muDegDot: number;
+  readonly l1Dot: number;
+  readonly l2Dot: number;
+};
+
+export type EvaluatedBesselianElementsAndRates = EvaluatedBesselianElements & BesselianElementRates;
+
+function evalPolyDeriv(coeffs: readonly number[], t: number): number {
+  let s = 0;
+  let p = 1;
+  for (let i = 1; i < coeffs.length; i += 1) {
+    s += i * coeffs[i]! * p;
+    p *= t;
+  }
+  return s;
+}
+
+export function evaluateBesselianElementsAndRates(
+  elements: SolarBesselianCoefficients,
+  utcMs: number,
+): EvaluatedBesselianElementsAndRates {
+  const base = evaluateBesselianElements(elements, utcMs);
+  const t = base.tHours;
+  return {
+    ...base,
+    xDot: evalPolyDeriv(elements.x, t),
+    yDot: evalPolyDeriv(elements.y, t),
+    dDegDot: evalPolyDeriv(elements.d, t),
+    muDegDot: evalPolyDeriv(elements.mu, t),
+    l1Dot: evalPolyDeriv(elements.l1, t),
+    l2Dot: evalPolyDeriv(elements.l2, t),
+  };
+}
+
+export function utcMsFromBesselianHours(
+  elements: SolarBesselianCoefficients,
+  tHours: number,
+): number {
+  return t0TdtMs(elements) + tHours * 3_600_000 - elements.deltaTSeconds * 1000;
+}

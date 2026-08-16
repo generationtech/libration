@@ -422,3 +422,29 @@ describe("development-only containment in the entry point", () => {
     expect(mainSource).not.toMatch(/lunar-eclipse-total/);
   });
 });
+
+describe("eclipse scenario DEV observerCity", () => {
+  it("applies catalog observerCity on solar-eclipse-total without changing the overlay", () => {
+    const tokyo = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-total&observerCity=tokyo",
+    });
+    expect(tokyo.kind).toBe("applied");
+    if (tokyo.kind === "applied") {
+      expect(tokyo.config.chrome.displayTime.topBandAnchor).toEqual({
+        mode: "fixedCity",
+        cityId: "city.tokyo",
+      });
+      expect(tokyo.config.layers.solarEclipse).toBe(true);
+    }
+    const none = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-total&observerCity=none",
+    });
+    expect(none.kind).toBe("applied");
+    if (none.kind === "applied") {
+      expect(none.config.chrome.displayTime.topBandAnchor).toEqual({ mode: "auto" });
+      expect(none.config.layers.lunarEclipse).toBe(true);
+    }
+  });
+});

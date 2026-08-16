@@ -65,9 +65,15 @@ import {
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
-import { solarEclipsePresentationFromScene } from "./config/v2/sceneConfig";
+import { solarEclipsePresentationFromScene, referenceCityEclipsePresentationFromScene } from "./config/v2/sceneConfig";
 import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
 import { createDynamicDataLifecycleHost } from "./lifecycle";
+import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
+import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
+import { formatReferenceCityEclipseChromeStatus } from "./core/referenceCityEclipseStatus";
+import { resolveReferenceFrameCivilTimeZone } from "./core/displayTimeReference";
+import { displayTimeModeFromTopBandTimeMode } from "./core/displayTimeMode";
+import { REFERENCE_CITIES } from "./data/referenceCities";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
@@ -410,9 +416,10 @@ export default function App() {
       const eclipseHorizonMs = derivedAppConfigRef.current.layers.solarEclipse
         ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
         : 0;
+      const eclipseFrame = resolveEclipseFrame(clockNowMs, { horizonMs: eclipseHorizonMs });
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
-        eclipseFrame: resolveEclipseFrame(clockNowMs, { horizonMs: eclipseHorizonMs }),
+        eclipseFrame,
         dynamicDataLifecycle:
           dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs),
       });
@@ -426,6 +433,24 @@ export default function App() {
         now: time.now,
         deltaMs: time.deltaMs,
       };
+      const e4pres = referenceCityEclipsePresentationFromScene(scene);
+      const observer = resolveReferenceCityObserverLocation(derivedAppConfigRef.current.displayTime);
+      const circumstances =
+        e4pres.detailsEnabled || e4pres.chromeStatusEnabled
+          ? resolveReferenceCityEclipseCircumstances(eclipseFrame, observer)
+          : null;
+      const cityName =
+        observer !== null
+          ? (REFERENCE_CITIES.find((c) => c.id === observer.cityId)?.name ?? observer.cityId)
+          : "";
+      const eclipseStatusText = e4pres.chromeStatusEnabled
+        ? formatReferenceCityEclipseChromeStatus(
+            circumstances,
+            cityName,
+            resolveReferenceFrameCivilTimeZone(derivedAppConfigRef.current.displayTime),
+            displayTimeModeFromTopBandTimeMode(derivedAppConfigRef.current.displayTime.topBandMode),
+          )
+        : null;
       const chromeState = buildDisplayChromeState({
         time,
         viewport,
@@ -433,6 +458,7 @@ export default function App() {
         displayTime: derivedAppConfigRef.current.displayTime,
         geography: derivedAppConfigRef.current.geography,
         displayChromeLayout: derivedAppConfigRef.current.displayChromeLayout,
+        eclipseStatusText,
       });
       const input = buildSceneRenderInput({
         frame: frameCtx,

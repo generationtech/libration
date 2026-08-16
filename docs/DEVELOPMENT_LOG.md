@@ -112,4 +112,10 @@ E3 lunar eclipse truth and terrestrial visibility: bundled NASA/Espenak–Meeus 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 184 files / 1711 passed / 0 failed; `npm run build` succeeded with no lunar eclipse scenario ids in `dist/`. Cursor Browser: total/partial/horizon, 3600× demo progression and post-event jump, ordinary startup.
 
+## 2026-08-15 — LIB-017 complete
+
+E4 reference-city eclipse circumstances: Besselian local solar contacts/magnitude/obscuration, lunar per-contact altitude and local-visible maximum, inspectable Layers details plus optional bottom-HUD status, same chrome catalog city as LIB-011. Global eclipse geography is never filtered by the city. ADR 0010. No E5+.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 189 files / 1742 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: Knoxville/Tokyo/none solar, forecast local status, lunar visible/not-visible, city switch, chrome/details toggles, 3600× demo, ordinary startup.
+
 

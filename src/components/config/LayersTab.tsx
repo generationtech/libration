@@ -34,6 +34,7 @@ import {
   applySolarAnalemmaStrokeToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
+  applyReferenceCityEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
@@ -47,6 +48,7 @@ import {
   solarAnalemmaStrokeFromScene,
   lunarEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
+  referenceCityEclipsePresentationFromScene,
   sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
@@ -78,10 +80,17 @@ import {
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
 import {
   forecastHorizonLabel,
+  forecastHorizonMsFromDays,
   SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
 } from "../../core/eclipse/solarEclipseAppearance";
+import { resolveEclipseFrame } from "../../core/eclipse/eclipseEventService";
+import { resolveReferenceCityEclipseCircumstances } from "../../core/eclipse/referenceCityEclipseCircumstances";
+import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
+import { displayTimeModeFromTopBandTimeMode } from "../../core/displayTimeMode";
+import { REFERENCE_CITIES } from "../../data/referenceCities";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
+import { EclipseCircumstancesDetails } from "./EclipseCircumstancesDetails";
 
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
@@ -504,6 +513,31 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
   const eclipsePresentation = solarEclipsePresentationFromScene(scene);
   const lunarEclipsePresentation = lunarEclipsePresentationFromScene(scene);
+  const eclipseCircumstancesPresentation = referenceCityEclipsePresentationFromScene(scene);
+  const eclipseHorizonMs = config.layers.solarEclipse
+    ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
+    : 0;
+  const eclipseFrame =
+    productInstantMs !== undefined
+      ? resolveEclipseFrame(productInstantMs, { horizonMs: eclipseHorizonMs })
+      : null;
+  const eclipseCircumstances =
+    eclipseFrame && eclipseCircumstancesPresentation.detailsEnabled
+      ? resolveReferenceCityEclipseCircumstances(eclipseFrame, observerLocation)
+      : null;
+  const hasEclipseEvent = Boolean(
+    eclipseFrame?.activeSolar ||
+      eclipseFrame?.activeLunar ||
+      (eclipseFrame?.upcomingSolar.length ?? 0) > 0,
+  );
+  const eclipseCityName =
+    observerLocation !== null
+      ? (REFERENCE_CITIES.find((c) => c.id === observerLocation.cityId)?.name ?? observerLocation.cityId)
+      : "";
+  const eclipseTimeZone = resolveReferenceFrameCivilTimeZone(config.chrome.displayTime);
+  const eclipseDisplayTimeMode = displayTimeModeFromTopBandTimeMode(
+    config.chrome.displayTime.topBandMode,
+  );
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1638,6 +1672,68 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             }
           />
         </ConfigControlRow>
+        <ConfigControlRow label="Reference-city eclipse details">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipseCircumstancesPresentation.detailsEnabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Reference-city eclipse details"
+            title="Inspectable local eclipse circumstances for the chrome reference city. Does not filter the global eclipse map."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const detailsEnabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyReferenceCityEclipsePresentationToScene(baseScene, {
+                        detailsEnabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Persistent eclipse status">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipseCircumstancesPresentation.chromeStatusEnabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Persistent eclipse status"
+            title="Compact eclipse status on the reference-city chrome. Independent of inspectable details and of the global eclipse map."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const chromeStatusEnabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyReferenceCityEclipsePresentationToScene(baseScene, {
+                        chromeStatusEnabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <EclipseCircumstancesDetails
+          circumstances={eclipseCircumstances}
+          observerUnavailable={observerLocation === null && hasEclipseEvent}
+          cityName={eclipseCityName}
+          timeZone={eclipseTimeZone}
+          displayTimeMode={eclipseDisplayTimeMode}
+          enabled={eclipseCircumstancesPresentation.detailsEnabled}
+        />
         <ConfigControlRow label="Lunar ground track past">
           <select
             className="config-input"

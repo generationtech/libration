@@ -1149,6 +1149,15 @@ export function assertIsNormalizedLibrationConfig(
       }
     }
   }
+  const eclipseCircumstances = (sc as SceneConfig).eclipseCircumstances;
+  if (
+    typeof eclipseCircumstances !== "object" ||
+    eclipseCircumstances === null ||
+    typeof eclipseCircumstances.detailsEnabled !== "boolean" ||
+    typeof eclipseCircumstances.chromeStatusEnabled !== "boolean"
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseCircumstances");
+  }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
     baseMapPres !== undefined &&

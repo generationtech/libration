@@ -36,6 +36,7 @@ import {
   applySolarAnalemmaStrokeToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
+  applyReferenceCityEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
@@ -1272,5 +1273,41 @@ describe("lunar eclipse scene presentation", () => {
       layers: legacyLayers,
     } as LibrationConfigV2);
     expect(v2.layers.lunarEclipse).toBe(false);
+  });
+});
+
+describe("reference-city eclipse circumstances presentation", () => {
+  it("defaults details and chrome status on", () => {
+    const v2 = defaultLibrationConfigV2();
+    expect(v2.scene?.eclipseCircumstances.detailsEnabled).toBe(true);
+    expect(v2.scene?.eclipseCircumstances.chromeStatusEnabled).toBe(true);
+  });
+
+  it("normalizes missing eclipseCircumstances keys to enabled", () => {
+    const base = defaultLibrationConfigV2();
+    const { eclipseCircumstances: _drop, ...sceneRest } = base.scene!;
+    const v2 = normalizeLibrationConfig({
+      ...base,
+      scene: sceneRest,
+    } as LibrationConfigV2);
+    expect(v2.scene?.eclipseCircumstances.detailsEnabled).toBe(true);
+    expect(v2.scene?.eclipseCircumstances.chromeStatusEnabled).toBe(true);
+  });
+
+  it("persists independent details and chrome toggles without disabling solar eclipses", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      layers: { ...base.layers, solarEclipse: true },
+      scene: applyReferenceCityEclipsePresentationToScene(
+        applyLayerEnableFlagsToScene(base.scene!, { ...base.layers, solarEclipse: true }),
+        { detailsEnabled: false, chromeStatusEnabled: false },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    expect(round.layers.solarEclipse).toBe(true);
+    expect(round.scene?.eclipseCircumstances.detailsEnabled).toBe(false);
+    expect(round.scene?.eclipseCircumstances.chromeStatusEnabled).toBe(false);
+    expect(round.scene?.layers.find((l) => l.id === "solarEclipse")?.enabled).toBe(true);
   });
 });
