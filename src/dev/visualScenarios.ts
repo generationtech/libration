@@ -112,6 +112,8 @@ export type LunarEclipsePhaseId = keyof typeof LUNAR_ECLIPSE_2022_PHASE_UTC;
  * Product UTCs (Knoxville EDT = UTC−4 wall labels in the originating playback):
  * upcoming 14:51Z, pre-central 15:56Z, early central 16:58Z, GE 18:25:29.700Z,
  * late central 18:48:44Z, post-central 20:21Z, after 21:10Z.
+ * Visual-semantics A–F (Knoxville EDT captures): 14:42:59Z, 15:56:19Z, 17:05:58Z,
+ * 17:52:57Z, 18:36:03Z, 19:55:15Z (`eclipseStation=stationA`…`stationF`).
  * Authority: global 15:46:43.920Z–20:58:49.700Z; central on Earth 16:49:13.920Z–20:01:43.920Z.
  * Production does not import this map.
  */
@@ -123,6 +125,13 @@ export const SOLAR_ECLIPSE_2017_STATION_UTC = {
   lateCentral: "2017-08-21T18:48:44.000Z",
   postCentral: "2017-08-21T20:21:00.000Z",
   after: "2017-08-21T21:10:00.000Z",
+  /** Knoxville-captured visual-semantics sequence (EDT = UTC−4). Do not replace. */
+  stationA: "2017-08-21T14:42:59.000Z",
+  stationB: "2017-08-21T15:56:19.000Z",
+  stationC: "2017-08-21T17:05:58.000Z",
+  stationD: "2017-08-21T17:52:57.000Z",
+  stationE: "2017-08-21T18:36:03.000Z",
+  stationF: "2017-08-21T19:55:15.000Z",
 } as const;
 
 export type SolarEclipse2017StationId = keyof typeof SOLAR_ECLIPSE_2017_STATION_UTC;

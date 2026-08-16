@@ -68,7 +68,7 @@ describe("solar eclipse layer", () => {
     expect(fillCount(st.data)).toBeGreaterThan(0);
     expect(strokeCount(st.data)).toBeGreaterThan(0);
     if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills.some((f) => f.fill.includes("0.42"))).toBe(false);
+      expect(st.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_UMBRA_FILL)).toBe(false);
     }
   });
 
@@ -191,7 +191,7 @@ describe("solar eclipse layer", () => {
     expect(fillCount(withBeam.data)).toBeGreaterThan(fillCount(without.data));
     expect(strokeCount(withBeam.data)).toBeGreaterThan(strokeCount(without.data));
     if (isEquirectRegionOverlayPayload(withBeam.data) && isEquirectRegionOverlayPayload(without.data)) {
-      expect(withBeam.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_UMBRA_FILL || f.fill.includes("48, 28, 92"))).toBe(
+      expect(withBeam.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_UMBRA_FILL)).toBe(
         true,
       );
       expect(without.data.fills.length).toBe(2);

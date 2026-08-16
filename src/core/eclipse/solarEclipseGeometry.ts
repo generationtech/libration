@@ -91,7 +91,7 @@ export function solarEclipseGeometryAt(
     const w = centralPathWidthKm(el, axis.zeta, axis.rho);
     pathWidthKm = Number.isFinite(w) ? w : null;
   }
-  const partialRegion = shadowOutlineRing(el, "penumbra", 5);
+  const partialRegion = shadowOutlineRing(el, "penumbra", 2);
   return {
     centralPoint: hasCentral && axis ? { latDeg: axis.latDeg, lonDeg: axis.lonDeg } : null,
     centralShadowKind,

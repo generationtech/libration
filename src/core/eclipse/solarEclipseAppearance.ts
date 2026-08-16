@@ -45,8 +45,8 @@ export const DEFAULT_SOLAR_FORECAST_CORRIDOR_OPACITY = 0.28;
 export const DEFAULT_SOLAR_FORECAST_PARTIAL_OPACITY = 0.14;
 export const DEFAULT_SOLAR_LIVE_CENTRAL_LINE_COLOR = "#ecdcff";
 export const DEFAULT_SOLAR_LIVE_CENTRAL_BAND_COLOR = "#301c5c";
-export const DEFAULT_SOLAR_LIVE_CENTRAL_BAND_OPACITY = 0.42;
-export const DEFAULT_SOLAR_LIVE_PARTIAL_COLOR = "#5c4aa8";
+export const DEFAULT_SOLAR_LIVE_CENTRAL_BAND_OPACITY = 0.50;
+export const DEFAULT_SOLAR_LIVE_PARTIAL_COLOR = "#2f6d78";
 export const DEFAULT_SOLAR_LIVE_PARTIAL_OPACITY = 0.18;
 /** Warm vermilion locator — distinct from corridor violet, Sun gold, Moon, and city-pin blue. */
 export const DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR = "#d45a3c";
@@ -258,16 +258,26 @@ export function forecastHorizonLabel(days: SolarEclipseForecastHorizonDays): str
   return `${days} days ahead`;
 }
 
-/** Partial footprint: cool violet, distinct from solar shading. */
-export const SOLAR_ECLIPSE_PARTIAL_FILL = "rgba(92, 74, 168, 0.18)";
-/** Totality (umbra) band. */
-export const SOLAR_ECLIPSE_UMBRA_FILL = "rgba(48, 28, 92, 0.42)";
+/** Event path (corridor): static violet/lilac family. Distinct from live partial. */
+export const SOLAR_ECLIPSE_DRAW_FORECAST_PARTIAL = 10;
+export const SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL = 20;
+export const SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL = 30;
+export const SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT = 40;
+export const SOLAR_ECLIPSE_DRAW_ALIGNMENT_BAND = 50;
+export const SOLAR_ECLIPSE_DRAW_LIVE_CENTRAL = 60;
+export const SOLAR_ECLIPSE_DRAW_ALIGNMENT_AXIS = 70;
+export const SOLAR_ECLIPSE_DRAW_CENTERLINE = 80;
+
+/** Live partial footprint: restrained teal-slate, not path-violet and not night-blue. */
+export const SOLAR_ECLIPSE_PARTIAL_FILL = "rgba(47, 109, 120, 0.16)";
+/** Totality (umbra) band — compact central shadow, stronger than the live partial. */
+export const SOLAR_ECLIPSE_UMBRA_FILL = "rgba(40, 24, 72, 0.50)";
 /** Annularity (antumbra) band — warm, not totality. */
 export const SOLAR_ECLIPSE_ANTUMBRA_FILL = "rgba(176, 96, 36, 0.36)";
 export const SOLAR_ECLIPSE_CENTERLINE_STROKE = "rgba(236, 220, 255, 0.92)";
 export const SOLAR_ECLIPSE_CENTERLINE_WIDTH_PX = 1.6;
 
-export const SOLAR_ECLIPSE_FORECAST_PARTIAL_FILL = "rgba(92, 74, 168, 0.14)";
+export const SOLAR_ECLIPSE_FORECAST_PARTIAL_FILL = "rgba(47, 109, 120, 0.11)";
 export const SOLAR_ECLIPSE_FORECAST_CORRIDOR_UMBRA_FILL = "rgba(72, 48, 140, 0.28)";
 export const SOLAR_ECLIPSE_FORECAST_CORRIDOR_ANTUMBRA_FILL = "rgba(176, 96, 36, 0.24)";
 export const SOLAR_ECLIPSE_FORECAST_CENTERLINE_STROKE = "rgba(236, 220, 255, 0.62)";

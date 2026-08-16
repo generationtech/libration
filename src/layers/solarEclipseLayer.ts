@@ -34,6 +34,14 @@ import {
   resolveSolarEclipseGroundPositionPaint,
   resolveSolarEclipsePaint,
   scaleRgbaAlpha,
+  SOLAR_ECLIPSE_DRAW_ALIGNMENT_AXIS,
+  SOLAR_ECLIPSE_DRAW_ALIGNMENT_BAND,
+  SOLAR_ECLIPSE_DRAW_CENTERLINE,
+  SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL,
+  SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT,
+  SOLAR_ECLIPSE_DRAW_FORECAST_PARTIAL,
+  SOLAR_ECLIPSE_DRAW_LIVE_CENTRAL,
+  SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL,
   type SolarEclipsePaint,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
@@ -156,16 +164,22 @@ export function createSolarEclipseLayer(
             fills.push({
               ring: selection.geometry.partialForecastRegion,
               fill: forecastPartialFill(selection, paint),
+              drawOrder: SOLAR_ECLIPSE_DRAW_FORECAST_PARTIAL,
             });
           }
           if (presentation.showForecastCorridor) {
             for (const ring of selection.geometry.corridorBands) {
               if (ring.length >= 4) {
-                fills.push({ ring, fill: corridorFill(selection, paint) });
+                fills.push({
+                  ring,
+                  fill: corridorFill(selection, paint),
+                  drawOrder: SOLAR_ECLIPSE_DRAW_CORRIDOR_FILL,
+                });
                 strokes.push({
                   points: ring,
                   stroke: corridorStroke(selection, paint),
                   strokeWidthPx: paint.forecastCorridorStrokeWidthPx,
+                  drawOrder: SOLAR_ECLIPSE_DRAW_CORRIDOR_LIMIT,
                 });
               }
             }
@@ -179,13 +193,18 @@ export function createSolarEclipseLayer(
               points: selection.geometry.centerline,
               stroke: forecastCenterlineStroke(selection, paint),
               strokeWidthPx: paint.forecastCenterlineWidthPx,
+              drawOrder: SOLAR_ECLIPSE_DRAW_CENTERLINE,
             });
           }
         }
         const geom = frame.solarGeometry;
         if (geom && frame.support.supported && activeSolar) {
           if (presentation.showPartialRegion && geom.partialRegion.length >= 4) {
-            fills.push({ ring: geom.partialRegion, fill: paint.livePartialFill });
+            fills.push({
+              ring: geom.partialRegion,
+              fill: paint.livePartialFill,
+              drawOrder: SOLAR_ECLIPSE_DRAW_LIVE_PARTIAL,
+            });
           }
           const sun = subsolarPoint(time.now);
           const moon = sublunarPoint(time.now);
@@ -200,7 +219,11 @@ export function createSolarEclipseLayer(
           if (alignmentView.solar) {
             for (const band of alignmentView.solar.bands) {
               if (band.ring.length >= 4) {
-                fills.push({ ring: band.ring, fill: band.fill });
+                fills.push({
+                  ring: band.ring,
+                  fill: band.fill,
+                  drawOrder: SOLAR_ECLIPSE_DRAW_ALIGNMENT_BAND,
+                });
               }
             }
           }
@@ -208,6 +231,7 @@ export function createSolarEclipseLayer(
             fills.push({
               ring: geom.centralBand,
               fill: geom.centralShadowKind === "antumbra" ? paint.liveAntumbraFill : paint.liveUmbraFill,
+              drawOrder: SOLAR_ECLIPSE_DRAW_LIVE_CENTRAL,
             });
           }
           if (alignmentView.solar) {
@@ -217,6 +241,7 @@ export function createSolarEclipseLayer(
                   points: s.points,
                   stroke: s.stroke,
                   strokeWidthPx: s.strokeWidthPx,
+                  drawOrder: SOLAR_ECLIPSE_DRAW_ALIGNMENT_AXIS,
                 });
               }
             }
@@ -226,6 +251,7 @@ export function createSolarEclipseLayer(
               points: geom.centerline,
               stroke: paint.liveCenterlineStroke,
               strokeWidthPx: paint.liveCenterlineWidthPx,
+              drawOrder: SOLAR_ECLIPSE_DRAW_CENTERLINE,
             });
           }
         }

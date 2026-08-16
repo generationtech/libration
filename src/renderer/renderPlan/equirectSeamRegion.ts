@@ -19,15 +19,63 @@
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import { createPathBuilder } from "./pathBuilder";
 import type { RenderPathDescriptor } from "./pathTypes";
-import { equirectXFromUnwrappedLon, unwrappedLongitudes } from "./equirectSeamPath";
+import {
+  circularLongitudeSpanDeg,
+  equirectXFromUnwrappedLon,
+  foldLongitudesIntoSmallestArc,
+  unwrappedLongitudes,
+} from "./equirectSeamPath";
 
 const WORLD_COPIES_DEG = [-360, 0, 360] as const;
 
 export type EquirectRing = readonly { latDeg: number; lonDeg: number }[];
 
+export type EquirectProjectedCopy = {
+  readonly pathDescriptor: RenderPathDescriptor;
+  readonly minX: number;
+  readonly maxX: number;
+};
+
+/**
+ * Keep world copies whose visible x-spans do not overlap. Dateline left/right
+ * strips are complementary and both remain; a ±360° copy that would paint the
+ * same viewport pixels as another copy is dropped so translucent fills do not
+ * alpha-stack on themselves.
+ */
+export function selectNonOverlappingWorldCopies<T extends { minX: number; maxX: number }>(
+  copies: readonly T[],
+  viewportWidthPx: number,
+): T[] {
+  if (copies.length <= 1) {
+    return [...copies];
+  }
+  const seamPx = Math.max(2, viewportWidthPx * 0.006);
+  const ranked = copies
+    .map((item) => {
+      const lo = Math.max(item.minX, 0);
+      const hi = Math.min(item.maxX, viewportWidthPx);
+      const width = hi - lo;
+      return width > 0.5 ? { item, lo, hi, width } : null;
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => b.width - a.width || a.lo - b.lo);
+  const kept: typeof ranked = [];
+  for (const candidate of ranked) {
+    const overlaps = kept.some((row) => {
+      const overlap = Math.min(row.hi, candidate.hi) - Math.max(row.lo, candidate.lo);
+      return overlap > seamPx;
+    });
+    if (!overlaps) {
+      kept.push(candidate);
+    }
+  }
+  const keptItems = new Set(kept.map((row) => row.item));
+  return copies.filter((item) => keptItems.has(item));
+}
+
 function ringUnwrapped(ring: EquirectRing): { lats: number[]; lons: number[] } {
   const lats = ring.map((p) => p.latDeg);
-  const lons = unwrappedLongitudes(ring.map((p) => p.lonDeg));
+  const lons = foldLongitudesIntoSmallestArc(ring.map((p) => p.lonDeg));
   return { lats, lons };
 }
 
@@ -37,7 +85,7 @@ function pathForCopy(
   offsetDeg: number,
   w: number,
   h: number,
-): RenderPathDescriptor | null {
+): EquirectProjectedCopy | null {
   if (lats.length < 3) {
     return null;
   }
@@ -68,12 +116,13 @@ function pathForCopy(
   if (maxX < -slop || minX > w + slop) {
     return null;
   }
-  return b.build();
+  return { pathDescriptor: b.build(), minX, maxX };
 }
 
 /**
  * Project a lat/lon ring to zero or more screen-space path descriptors (world copies).
- * Polar rings whose unwrapped longitude span exceeds 270° close through the nearer polar edge.
+ * Closed rings fold into their smallest longitude arc so a winding oval does not
+ * fill the world. Polar caps (circular lon span > 270°) close through the nearer pole.
  */
 export function equirectRingToPathDescriptors(
   ring: EquirectRing,
@@ -87,7 +136,7 @@ export function equirectRingToPathDescriptors(
     return [];
   }
   const { lats, lons } = ringUnwrapped(ring);
-  const span = Math.max(...lons) - Math.min(...lons);
+  const span = circularLongitudeSpanDeg(ring.map((p) => p.lonDeg));
   let useLats = lats;
   let useLons = lons;
   if (span > 270) {
@@ -100,14 +149,14 @@ export function equirectRingToPathDescriptors(
     const hi = Math.max(...lons);
     useLons = [...lons, hi, lo, lons[0]!];
   }
-  const out: RenderPathDescriptor[] = [];
+  const copies: EquirectProjectedCopy[] = [];
   for (const offset of WORLD_COPIES_DEG) {
     const d = pathForCopy(useLats, useLons, offset, w, h);
     if (d) {
-      out.push(d);
+      copies.push(d);
     }
   }
-  return out;
+  return selectNonOverlappingWorldCopies(copies, w).map((c) => c.pathDescriptor);
 }
 
 export function equirectPolylineToPathDescriptors(
@@ -122,7 +171,7 @@ export function equirectPolylineToPathDescriptors(
   }
   const lats = points.map((p) => p.latDeg);
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
-  const out: RenderPathDescriptor[] = [];
+  const copies: EquirectProjectedCopy[] = [];
   for (const offset of WORLD_COPIES_DEG) {
     const b = createPathBuilder();
     let started = false;
@@ -150,7 +199,7 @@ export function equirectPolylineToPathDescriptors(
     if (maxX < -slop || minX > w + slop) {
       continue;
     }
-    out.push(b.build());
+    copies.push({ pathDescriptor: b.build(), minX, maxX });
   }
-  return out;
+  return selectNonOverlappingWorldCopies(copies, w).map((c) => c.pathDescriptor);
 }

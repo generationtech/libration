@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { EQUIRECT_REGION_OVERLAY_KIND, type EquirectRegionOverlayPayload } from "../../layers/equirectRegionPayload";
 import { buildEquirectRegionOverlayRenderPlan } from "./equirectRegionPlan";
-import { equirectRingToPathDescriptors } from "./equirectSeamRegion";
+import { equirectRingToPathDescriptors, selectNonOverlappingWorldCopies } from "./equirectSeamRegion";
 import type { RenderPath2DItem } from "./renderPlanTypes";
 
 function payload(partial: Partial<EquirectRegionOverlayPayload> = {}): EquirectRegionOverlayPayload {
@@ -121,6 +121,25 @@ describe("equirect region RenderPlan", () => {
     }
   });
 
+  it("does not world-fill a closed oval whose sequential unwrap winds 360°", () => {
+    const ring: { latDeg: number; lonDeg: number }[] = [];
+    for (let i = 0; i <= 36; i += 1) {
+      const t = (i / 36) * Math.PI * 2;
+      ring.push({ latDeg: 40 + 8 * Math.sin(t), lonDeg: -100 + 40 * Math.cos(t) });
+    }
+    const descriptors = equirectRingToPathDescriptors(ring, 360, 180);
+    expect(descriptors.length).toBeGreaterThan(0);
+    for (const d of descriptors) {
+      const px: number[] = [];
+      for (const c of d.commands) {
+        if (c.kind === "moveTo" || c.kind === "lineTo") {
+          px.push(c.x);
+        }
+      }
+      expect(Math.max(...px) - Math.min(...px)).toBeLessThan(200);
+    }
+  });
+
   it("projects a dateline-crossing thin corridor without a world-spanning fill", () => {
     const ring = [
       { latDeg: 8, lonDeg: 170 },
@@ -204,5 +223,63 @@ describe("equirect region RenderPlan", () => {
     expect(xsAll.length).toBeGreaterThan(0);
     expect(Math.max(...xsAll)).toBeGreaterThan(300);
     expect(xsAll.every((x) => x > -40 && x < 400)).toBe(true);
+  });
+
+  it("draws a later drawOrder stroke after an earlier fill", () => {
+    const plan = buildEquirectRegionOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        fills: [
+          {
+            ring: [
+              { latDeg: 10, lonDeg: -20 },
+              { latDeg: 10, lonDeg: 20 },
+              { latDeg: -10, lonDeg: 20 },
+              { latDeg: -10, lonDeg: -20 },
+              { latDeg: 10, lonDeg: -20 },
+            ],
+            fill: "rgba(47, 109, 120, 0.16)",
+            drawOrder: 30,
+          },
+        ],
+        strokes: [
+          {
+            points: [
+              { latDeg: 0, lonDeg: -30 },
+              { latDeg: 0, lonDeg: 30 },
+            ],
+            stroke: "rgba(220, 208, 255, 0.52)",
+            strokeWidthPx: 1,
+            drawOrder: 40,
+          },
+        ],
+      }),
+    });
+    const kinds = plan.items.map((item) =>
+      item.kind === "path2d" ? (item.fill ? "fill" : "stroke") : item.kind,
+    );
+    expect(kinds.indexOf("fill")).toBeGreaterThanOrEqual(0);
+    expect(kinds.indexOf("stroke")).toBeGreaterThan(kinds.indexOf("fill"));
+  });
+
+  it("drops a redundant world copy that would alpha-stack on the same viewport pixels", () => {
+    const overlapping = selectNonOverlappingWorldCopies(
+      [
+        { minX: 10, maxX: 350, id: "main" },
+        { minX: -20, maxX: 80, id: "dup" },
+      ],
+      360,
+    );
+    expect(overlapping.map((c) => c.id)).toEqual(["main"]);
+    const dateline = selectNonOverlappingWorldCopies(
+      [
+        { minX: 0, maxX: 40, id: "left" },
+        { minX: 320, maxX: 360, id: "right" },
+      ],
+      360,
+    );
+    expect(dateline.map((c) => c.id).sort()).toEqual(["left", "right"]);
   });
 });

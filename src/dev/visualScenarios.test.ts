@@ -357,6 +357,22 @@ describe("resolveVisualScenarioSession", () => {
       expect(pre.startIsoUtc).toBe("2017-08-21T15:56:00.000Z");
       expect(pre.config.data.demoTime.startIsoUtc).toBe("2017-08-21T15:56:00.000Z");
     }
+    const stationA = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-2017&eclipseStation=stationA",
+    });
+    expect(stationA.kind).toBe("applied");
+    if (stationA.kind === "applied") {
+      expect(stationA.startIsoUtc).toBe("2017-08-21T14:42:59.000Z");
+    }
+    const stationE = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-2017&eclipseStation=stationE",
+    });
+    expect(stationE.kind).toBe("applied");
+    if (stationE.kind === "applied") {
+      expect(stationE.startIsoUtc).toBe("2017-08-21T18:36:03.000Z");
+    }
   });
 
   it("seeds lunar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {

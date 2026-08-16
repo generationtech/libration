@@ -114,26 +114,44 @@ export function buildEquirectRegionOverlayRenderPlan(
   );
   const op = options.layerOpacity * (0.82 + 0.18 * veil);
   const items: RenderPlan["items"] = [];
-  for (const fill of options.payload.fills) {
-    const color = scaleRgba(fill.fill, op);
-    for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h, {
-      polarCloseLatDeg: fill.polarCloseLatDeg,
-    })) {
-      items.push(createDescriptorPathItem({ pathDescriptor, fill: color }));
-    }
-  }
-  for (const stroke of options.payload.strokes) {
-    const color = scaleRgba(stroke.stroke, Math.min(1, op + 0.08));
-    const width = stroke.strokeWidthPx * (1 + 0.25 * veil);
-    for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h)) {
-      items.push(
-        createDescriptorPathItem({
-          pathDescriptor,
-          stroke: color,
-          strokeWidthPx: width,
-        }),
-      );
-    }
+  type PendingOp = { readonly order: number; readonly seq: number; readonly emit: () => void };
+  const pending: PendingOp[] = [];
+  options.payload.fills.forEach((fill, seq) => {
+    pending.push({
+      order: fill.drawOrder ?? 0,
+      seq,
+      emit: () => {
+        const color = scaleRgba(fill.fill, op);
+        for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h, {
+          polarCloseLatDeg: fill.polarCloseLatDeg,
+        })) {
+          items.push(createDescriptorPathItem({ pathDescriptor, fill: color }));
+        }
+      },
+    });
+  });
+  options.payload.strokes.forEach((stroke, seq) => {
+    pending.push({
+      order: stroke.drawOrder ?? 100,
+      seq: 1000 + seq,
+      emit: () => {
+        const color = scaleRgba(stroke.stroke, Math.min(1, op + 0.08));
+        const width = stroke.strokeWidthPx * (1 + 0.25 * veil);
+        for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h)) {
+          items.push(
+            createDescriptorPathItem({
+              pathDescriptor,
+              stroke: color,
+              strokeWidthPx: width,
+            }),
+          );
+        }
+      },
+    });
+  });
+  pending.sort((a, b) => a.order - b.order || a.seq - b.seq);
+  for (const op of pending) {
+    op.emit();
   }
   for (const marker of options.payload.pointMarkers ?? []) {
     emitPointMarkerCopies(items, marker, w, h, op);

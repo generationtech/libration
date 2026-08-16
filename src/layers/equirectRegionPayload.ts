@@ -26,12 +26,19 @@ export type EquirectRegionFill = {
    * close through this latitude (±90). Generic; not eclipse-specific.
    */
   readonly polarCloseLatDeg?: number;
+  /**
+   * Lower values draw earlier. Unset fills default to 0 (before unset strokes).
+   * Generic stacking hint; Canvas must not interpret product meaning.
+   */
+  readonly drawOrder?: number;
 };
 
 export type EquirectRegionStroke = {
   readonly points: readonly EquirectLatLon[];
   readonly stroke: string;
   readonly strokeWidthPx: number;
+  /** Lower values draw earlier. Unset strokes default to 100 (after unset fills). */
+  readonly drawOrder?: number;
 };
 
 export type EquirectRegionLabel = {
@@ -112,6 +119,9 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
     if (typeof g.fill !== "string" || !Array.isArray(g.ring) || !g.ring.every(isLatLon)) {
       return false;
     }
+    if (g.drawOrder !== undefined && (typeof g.drawOrder !== "number" || !Number.isFinite(g.drawOrder))) {
+      return false;
+    }
   }
   for (const s of o.strokes) {
     if (s === null || typeof s !== "object") {
@@ -124,6 +134,9 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
       !Array.isArray(g.points) ||
       !g.points.every(isLatLon)
     ) {
+      return false;
+    }
+    if (g.drawOrder !== undefined && (typeof g.drawOrder !== "number" || !Number.isFinite(g.drawOrder))) {
       return false;
     }
   }

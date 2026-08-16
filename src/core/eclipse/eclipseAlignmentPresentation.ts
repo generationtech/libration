@@ -111,15 +111,15 @@ function solarCentralEffect(
 ): EclipseAlignmentEffect {
   const origin = solarOrigin(input.subsolar, input.sublunar);
   const scale = eclipseAlignmentIntensityScale(input.alignment.intensity);
-  const startHalf = 9.5 * scale.width;
+  const startHalf = 5.4 * scale.width;
   const umbraHalfDeg =
     pathWidthKm !== null && Number.isFinite(pathWidthKm)
       ? Math.max(0.55, Math.min(2.4, pathWidthKm / 222))
       : 0.9;
   const endHalf = umbraHalfDeg * scale.width;
-  const outer = taperedAlignmentRibbon(origin, target, startHalf, endHalf * 1.8, 20);
-  const mid = taperedAlignmentRibbon(origin, target, startHalf * 0.62, endHalf * 1.15, 20);
-  const core = taperedAlignmentRibbon(origin, target, startHalf * 0.28, endHalf * 0.7, 18);
+  const outer = taperedAlignmentRibbon(origin, target, startHalf, endHalf * 1.45, 20);
+  const mid = taperedAlignmentRibbon(origin, target, startHalf * 0.52, endHalf * 1.05, 20);
+  const core = taperedAlignmentRibbon(origin, target, startHalf * 0.22, endHalf * 0.62, 18);
   const axis = greatCircleCenterline(origin, target, 16);
   const a = scale.alpha;
   const paint = resolveEclipseAlignmentPalette(input.alignment);

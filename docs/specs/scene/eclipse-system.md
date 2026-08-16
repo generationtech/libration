@@ -379,13 +379,15 @@ Shadow axis, umbra/antumbra/penumbra, contacts, type, magnitude. Owned by the ec
 
 ### Semantic map geometry
 
-Geographic polylines/polygons in lat/lon: centerline, totality/annularity band, partial footprint. Equirectangular **seam/dateline** is handled in the generic region plan builder (`equirectSeamRegion.ts`) using `unwrappedLongitudes` plus ±360° world copies. Polar rings whose unwrapped longitude span exceeds 270° close through the nearer pole. Canvas does not interpret eclipse semantics.
+Geographic polylines/polygons in lat/lon: centerline, totality/annularity band, partial footprint. Equirectangular **seam/dateline** is handled in the generic region plan builder (`equirectSeamRegion.ts`). Closed fill rings fold into their smallest longitude arc so a winding oval does not unwrap to 360° and fill the world. Polar caps (circular lon span > 270°) close through the nearer pole. World copies that would paint the same viewport pixels are not both emitted, so a translucent region cannot accidentally double its alpha. Canvas does not interpret eclipse semantics.
 
 ### Presentation / style
 
 Stroke tokens, fills, labels, forecast vs live opacity, whether centerline/band/partial/alignment are on. Owned by scene-layer parameters and plan builders. Canvas draws `line` / `path2d` / `text` only.
 
 Presentation lifecycle ([LIB-025](../../work/LIB-025-solar-eclipse-lifecycle-shading-reconciliation.md)) is derived from existing `EclipseFrame` fields (global start/end, live `centralPoint`, subtype). It is not a second authority. For central events: **upcoming** → **global-active pre-central** → **central-active** → **global-active post-central** → **completed**. The event corridor remains visible through the globally active phases when the forecast horizon is not live-only. The representative greatest-eclipse partial region is upcoming-only; the live partial footprint owns active partial shading. Targeted alignment and the live ground-position marker exist only while a terrestrial central intersection exists. Partial-only events use **global-active** with no fabricated corridor, marker, or targeted beam.
+
+Visual families ([LIB-026](../../work/LIB-026-solar-eclipse-visual-semantics-reconciliation.md)) keep those meanings distinct on the map: static violet/lilac **event path**; teal-slate **live partial** footprint; compact indigo/warm **live central** shadow; warm gold **alignment ribbon** (directional, not a geographic shadow); vermilion **ground marker**; unmodified **ordinary solar night** in the illumination raster. Corridor fill draws below the live partial; corridor limit strokes draw above it. Dramatic alignment stays stronger in the core/axis while occupying less map area than a penumbral region.
 
 Illumination raster is **not** the solar eclipse overlay. Do not encode the umbra by hacking `sampleIlluminationRgba8`.
 

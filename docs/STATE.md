@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-025](work/LIB-025-solar-eclipse-lifecycle-shading-reconciliation.md) — Solar eclipse lifecycle + shading presentation reconciliation
+[LIB-026](work/LIB-026-solar-eclipse-visual-semantics-reconciliation.md) — Solar eclipse visual-semantics reconciliation
 
 ## Blockers
 
@@ -25,4 +25,4 @@ None
 
 ## Next action
 
-Stop. No active item. Do not recapture README media, create animation, or start another astronomy feature until a human authorizes it.
+Stop. No approved work is active.

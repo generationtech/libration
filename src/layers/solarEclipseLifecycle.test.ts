@@ -20,6 +20,7 @@ import {
   SOLAR_ECLIPSE_PARTIAL_FILL,
   SOLAR_ECLIPSE_UMBRA_FILL,
 } from "../core/eclipse/solarEclipseAppearance";
+import { classifySolarEclipseFillFamily } from "../core/eclipse/solarEclipseVisualFamilies";
 import { solarEclipseGeometryAt } from "../core/eclipse/solarEclipseGeometry";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
@@ -94,7 +95,7 @@ function ringBounds(ring: readonly { latDeg: number; lonDeg: number }[]) {
 }
 
 function livePartialRing(data: { fills: readonly { ring: readonly { latDeg: number; lonDeg: number }[]; fill: string }[] }) {
-  return data.fills.find((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL || f.fill.includes("92, 74, 168, 0.18"));
+  return data.fills.find((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL);
 }
 
 function beamTargetAt(utcMs: number) {
@@ -161,13 +162,15 @@ describe("solar eclipse forecast vs live partial ownership", () => {
     const upcoming = payloadAt(STATION.upcoming);
     const pre = payloadAt(STATION.preCentral);
     const ge = payloadAt(STATION.ge);
-    expect(upcoming.data.fills.some((f) => f.fill.includes("92, 74, 168"))).toBe(true);
+    expect(upcoming.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
+      true,
+    );
     expect(upcoming.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(false);
-    expect(pre.data.fills.some((f) => f.fill.includes("92, 74, 168") && !f.fill.includes("0.18"))).toBe(
+    expect(pre.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       false,
     );
     expect(pre.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);
-    expect(ge.data.fills.some((f) => f.fill.includes("92, 74, 168") && !f.fill.includes("0.18"))).toBe(
+    expect(ge.data.fills.some((f) => classifySolarEclipseFillFamily(f.fill) === "forecast-partial")).toBe(
       false,
     );
     expect(ge.data.fills.some((f) => f.fill === SOLAR_ECLIPSE_PARTIAL_FILL)).toBe(true);

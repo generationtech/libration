@@ -87,7 +87,7 @@ export function eclipseAlignmentIntensityScale(
     return { width: 0.68, alpha: 0.55 };
   }
   if (intensity === "dramatic") {
-    return { width: 1.32, alpha: 1.22 };
+    return { width: 1.18, alpha: 1.28 };
   }
   return { width: 1, alpha: 1 };
 }
@@ -101,12 +101,12 @@ function scaleRgbaAlpha(css: string, factor: number): string {
   return `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${Math.max(0, Math.min(1, a)).toFixed(4)})`;
 }
 
-/** Warm gold / pale amber. Not neon, not warning yellow. */
-export const SOLAR_ALIGNMENT_OUTER_FILL = "rgba(255, 214, 150, 0.070)";
-export const SOLAR_ALIGNMENT_MID_FILL = "rgba(255, 228, 176, 0.110)";
-export const SOLAR_ALIGNMENT_CORE_FILL = "rgba(255, 244, 220, 0.165)";
-export const SOLAR_ALIGNMENT_AXIS_STROKE = "rgba(255, 236, 200, 0.420)";
-export const SOLAR_ALIGNMENT_AXIS_WIDTH_PX = 1.35;
+/** Warm gold / pale amber ribbon. Narrower outer band so it does not read as map shading. */
+export const SOLAR_ALIGNMENT_OUTER_FILL = "rgba(255, 214, 150, 0.048)";
+export const SOLAR_ALIGNMENT_MID_FILL = "rgba(255, 228, 176, 0.135)";
+export const SOLAR_ALIGNMENT_CORE_FILL = "rgba(255, 244, 220, 0.220)";
+export const SOLAR_ALIGNMENT_AXIS_STROKE = "rgba(255, 236, 200, 0.580)";
+export const SOLAR_ALIGNMENT_AXIS_WIDTH_PX = 1.65;
 
 /** Cool blue-gray outer, charcoal/violet core. Not lunar-visibility cyan. */
 export const LUNAR_ALIGNMENT_OUTER_FILL = "rgba(108, 136, 164, 0.075)";
@@ -138,10 +138,10 @@ export function resolveEclipseAlignmentPalette(
   const solarDefault = colorsEqualHex(presentation.solarColor, DEFAULT_ECLIPSE_ALIGNMENT_SOLAR_COLOR);
   const lunarDefault = colorsEqualHex(presentation.lunarColor, DEFAULT_ECLIPSE_ALIGNMENT_LUNAR_COLOR);
   return {
-    solarOuter: solarDefault ? SOLAR_ALIGNMENT_OUTER_FILL : hexToRgba(presentation.solarColor, 0.07),
-    solarMid: solarDefault ? SOLAR_ALIGNMENT_MID_FILL : hexToRgba(presentation.solarColor, 0.11),
-    solarCore: solarDefault ? SOLAR_ALIGNMENT_CORE_FILL : hexToRgba(presentation.solarColor, 0.165),
-    solarAxis: solarDefault ? SOLAR_ALIGNMENT_AXIS_STROKE : hexToRgba(presentation.solarColor, 0.42),
+    solarOuter: solarDefault ? SOLAR_ALIGNMENT_OUTER_FILL : hexToRgba(presentation.solarColor, 0.048),
+    solarMid: solarDefault ? SOLAR_ALIGNMENT_MID_FILL : hexToRgba(presentation.solarColor, 0.135),
+    solarCore: solarDefault ? SOLAR_ALIGNMENT_CORE_FILL : hexToRgba(presentation.solarColor, 0.22),
+    solarAxis: solarDefault ? SOLAR_ALIGNMENT_AXIS_STROKE : hexToRgba(presentation.solarColor, 0.58),
     lunarOuter: lunarDefault ? LUNAR_ALIGNMENT_OUTER_FILL : hexToRgba(presentation.lunarColor, 0.075),
     lunarMid: lunarDefault ? LUNAR_ALIGNMENT_MID_FILL : hexToRgba(presentation.lunarColor, 0.12),
     lunarCore: lunarDefault ? LUNAR_ALIGNMENT_CORE_FILL : hexToRgba(presentation.lunarColor, 0.175),

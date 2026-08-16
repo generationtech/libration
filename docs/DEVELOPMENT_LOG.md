@@ -160,4 +160,10 @@ Reconciled solar eclipse presentation lifecycle. Root cause of the 2017 disappea
 
 Verified: `npx tsc --noEmit` clean; `npm test` 202 files / 1888 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 stations A–G plus 1200× playback; dateline/annular/partial scenarios; ordinary startup.
 
+## 2026-08-16 — LIB-026 complete
+
+Reconciled solar eclipse visual families after the 2017 corridor-continuity fix. The changing blue/gray wedges were a mix of hue collision (partial/corridor/umbra all violet stacked on cool night), a false Arctic fill from sequential unwrap of a closed penumbra ring, and a map-scale Dramatic beam. Live partial is now teal-slate; corridor stays violet; umbra is compact indigo; the beam is a narrower gold ribbon. Closed fill rings fold into the smallest longitude arc; overlapping wrap copies are dropped rather than alpha-stacked. No ADR. No README recapture.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 203 files / 1911 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: exact 2017 A–F Knoxville UTCs, family isolation at D, Normal vs Dramatic at D/E, 400× playback, dateline/annular/partial, ordinary startup.
+
 

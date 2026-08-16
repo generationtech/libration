@@ -20,6 +20,53 @@ export function shortLonDeltaDeg(a: number, b: number): number {
   return (((b - a) + 540) % 360) - 180;
 }
 
+export function wrapLongitudeDeg(lonDeg: number): number {
+  let x = ((((lonDeg + 180) % 360) + 360) % 360) - 180;
+  if (x === -180) {
+    x = 180;
+  }
+  return x;
+}
+
+/**
+ * Smallest arc containing all longitudes (0–360). A closed oval that winds once
+ * while sequential unwrap accumulates 360° still reports the oval's true width.
+ */
+export function circularLongitudeSpanDeg(lons: readonly number[]): number {
+  if (lons.length === 0) {
+    return 0;
+  }
+  const wrapped = lons.map(wrapLongitudeDeg).sort((a, b) => a - b);
+  let maxGap = 0;
+  for (let i = 1; i < wrapped.length; i += 1) {
+    maxGap = Math.max(maxGap, wrapped[i]! - wrapped[i - 1]!);
+  }
+  maxGap = Math.max(maxGap, wrapped[0]! + 360 - wrapped[wrapped.length - 1]!);
+  return Math.min(360, Math.max(0, 360 - maxGap));
+}
+
+/**
+ * Fold longitudes into the smallest containing arc so a closed ring can be
+ * projected without a world-spanning unwrap.
+ */
+export function foldLongitudesIntoSmallestArc(lons: readonly number[]): number[] {
+  if (lons.length === 0) {
+    return [];
+  }
+  const wrapped = lons.map(wrapLongitudeDeg);
+  const sorted = [...wrapped].sort((a, b) => a - b);
+  let maxGap = sorted[0]! + 360 - sorted[sorted.length - 1]!;
+  let arcStart = sorted[0]!;
+  for (let i = 1; i < sorted.length; i += 1) {
+    const gap = sorted[i]! - sorted[i - 1]!;
+    if (gap > maxGap) {
+      maxGap = gap;
+      arcStart = sorted[i]!;
+    }
+  }
+  return wrapped.map((l) => arcStart + ((((l - arcStart) % 360) + 360) % 360));
+}
+
 export function unwrappedLongitudes(lons: readonly number[]): number[] {
   if (lons.length === 0) {
     return [];

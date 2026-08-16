@@ -182,6 +182,31 @@ When inspecting:
 - Confirm accelerated playback from `eclipseStation=upcoming` through global end has no corridor vanishing, no alpha flash, and no double forecast+live partial stack.
 - Confirm `solar-eclipse-dateline`, `solar-eclipse-annular`, and `solar-eclipse-partial` still follow their existing wrap / antumbra / no-fabricated-central checks.
 
+### Solar eclipse visual-semantics families (LIB-026)
+
+Use the exact Knoxville-captured 2017 UTC stations (EDT = UTC−4). Do not substitute nearby lifecycle stations.
+
+| Id | Knoxville wall | UTC | `eclipseStation=` |
+|----|----------------|-----|-------------------|
+| A | 10:42:59 AM EDT | `2017-08-21T14:42:59.000Z` | `stationA` |
+| B | 11:56:19 AM EDT | `2017-08-21T15:56:19.000Z` | `stationB` |
+| C | 1:05:58 PM EDT | `2017-08-21T17:05:58.000Z` | `stationC` |
+| D | 1:52:57 PM EDT | `2017-08-21T17:52:57.000Z` | `stationD` |
+| E | 2:36:03 PM EDT | `2017-08-21T18:36:03.000Z` | `stationE` |
+| F | 3:55:15 PM EDT | `2017-08-21T19:55:15.000Z` | `stationF` |
+
+Showcase config for this sequence: Extra Large Moon, Event labels OFF, Alignment Dramatic, Ground marker ON Large, solar shading ON.
+
+When inspecting:
+
+- Confirm each visible translucent region belongs to one family: violet event path, teal-slate live (or quieter upcoming) partial, compact indigo central shadow, warm gold alignment ribbon, vermilion marker, ordinary cool night raster.
+- Isolate families at D or E with production toggles (solar shading only; then corridor; then live partial; then central footprint; then alignment; then marker). A large changing wedge must be attributable to one family.
+- Confirm corridor geometry does not change across A–F; corridor limits remain readable through the live partial fill.
+- Confirm B (pre-central) has live partial + path, no marker, no targeted beam, and no unexplained alignment wedge.
+- Confirm C–F keep marker/beam target agreement; E is the primary near-GE acceptance station.
+- Confirm wrap copies do not darken the same geography twice on `solar-eclipse-dateline` and polar 2021 (`2021-12-04`).
+- Confirm continuous accelerated playback through the 2017 event: partial footprint evolves smoothly, beam follows the marker, path stays put, terminator stays a separate night family.
+
 When inspecting E4:
 
 - Open the same eclipse scene twice, changing only `observerCity`.

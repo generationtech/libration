@@ -97,4 +97,13 @@ describe("solar eclipse ground-position appearance", () => {
     expect(custom.activeCorridorUmbraFill).toMatch(/0\.3200/);
     expect(custom.activeCorridorStroke).toMatch(/0\.5200/);
   });
+
+  it("uses a teal-slate live partial family distinct from path violet", () => {
+    const paint = resolveSolarEclipsePaint(normalizeSolarEclipsePresentation(undefined));
+    expect(paint.livePartialFill).toBe("rgba(47, 109, 120, 0.16)");
+    expect(paint.forecastPartialFill).toBe("rgba(47, 109, 120, 0.11)");
+    expect(paint.liveUmbraFill).toBe("rgba(40, 24, 72, 0.50)");
+    expect(paint.livePartialFill).not.toEqual(paint.activeCorridorUmbraFill);
+    expect(paint.livePartialFill).not.toContain("72, 48, 140");
+  });
 });

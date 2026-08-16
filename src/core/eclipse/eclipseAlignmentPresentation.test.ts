@@ -368,6 +368,28 @@ describe("eclipse alignment presentation — config and independence", () => {
     const da = Number(/,\s*([0-9.]+)\)$/.exec(dramatic.solar!.bands[0]!.fill)?.[1] ?? 0);
     expect(da).toBeGreaterThan(sa);
   });
+
+  it("keeps the Dramatic solar ribbon narrower than a map-scale shading wedge", () => {
+    resetEclipseEventServiceCacheForTests();
+    const frame = resolveEclipseFrame(TOTAL_SOLAR, { horizonMs: 0 });
+    const g = glyphs(TOTAL_SOLAR);
+    const dramatic = buildEclipseAlignmentPresentation({
+      frame,
+      alignment: normalizeEclipseAlignmentPresentation({ intensity: "dramatic" }),
+      solarLayerEnabled: true,
+      lunarLayerEnabled: false,
+      ...g,
+    });
+    expect(dramatic.solar?.kind).toBe("solar-central");
+    const origin = dramatic.solar!.origin;
+    const outer = dramatic.solar!.bands[0]!.ring;
+    const half = angularDistanceDeg(origin, outer[0]!);
+    expect(half).toBeGreaterThan(3);
+    expect(half).toBeLessThan(8);
+    const core = dramatic.solar!.bands[2]!.ring;
+    const coreHalf = angularDistanceDeg(origin, core[0]!);
+    expect(coreHalf).toBeLessThan(half * 0.55);
+  });
 });
 
 describe("eclipse alignment presentation — performance", () => {
