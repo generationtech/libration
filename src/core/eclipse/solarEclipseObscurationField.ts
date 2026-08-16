@@ -14,6 +14,13 @@
 /**
  * Geographic obscuration grid for active solar eclipses.
  *
+ * Topology is a stable full-world equirectangular field: longitude −180 → +180
+ * (periodic), latitude +90 → −90, fixed 288×145 (~1.25°) samples. Physical
+ * zeros outside the penumbra are physical zeros, not skipped cells. A moving
+ * bbox derived from the live penumbra outline is not used: that outline is
+ * limb-truncated at ingress/egress, so clipping it produced a visible
+ * rectangular domain wall.
+ *
  * Physical samples are bilinearly interpolated in lon/lat. Time is quantized
  * to a short bucket so consecutive frames at the same product UTC reuse the
  * field; the bucket is small enough that the moving shadow does not jump at
@@ -39,8 +46,6 @@ export type SolarEclipseObscurationField = {
   /** Row-major, lat from +90 → −90, lon from −180 → +180. Values in [0, 1]. */
   readonly obscuration01: Float32Array;
 };
-
-export type GeographicRing = readonly { readonly latDeg: number; readonly lonDeg: number }[];
 
 type FieldCache = {
   key: string;
@@ -85,46 +90,12 @@ function wrapLonDeg(lonDeg: number): number {
   return lon;
 }
 
-function ringBounds(ring: GeographicRing | undefined): {
-  minLat: number;
-  maxLat: number;
-  minLon: number;
-  maxLon: number;
-  wraps: boolean;
-} | null {
-  if (!ring || ring.length < 4) {
-    return null;
-  }
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLon = Infinity;
-  let maxLon = -Infinity;
-  for (const p of ring) {
-    minLat = Math.min(minLat, p.latDeg);
-    maxLat = Math.max(maxLat, p.latDeg);
-    minLon = Math.min(minLon, p.lonDeg);
-    maxLon = Math.max(maxLon, p.lonDeg);
-  }
-  if (!Number.isFinite(minLat) || !Number.isFinite(maxLat)) {
-    return null;
-  }
-  const wraps = maxLon - minLon > 180;
-  return {
-    minLat: Math.max(-90, minLat - 3),
-    maxLat: Math.min(90, maxLat + 3),
-    minLon: minLon - 3,
-    maxLon: maxLon + 3,
-    wraps,
-  };
-}
-
 export function buildSolarEclipseObscurationField(
   utcMs: number,
   event: SolarEclipseEvent,
   options: {
     lonSamples?: number;
     latSamples?: number;
-    partialRegion?: GeographicRing;
   } = {},
 ): SolarEclipseObscurationField {
   const lonSamples = options.lonSamples ?? SOLAR_ECLIPSE_OBSCURATION_FIELD_LON_SAMPLES;
@@ -134,24 +105,12 @@ export function buildSolarEclipseObscurationField(
   if (!el.insideElementWindow || utcMs < event.globalStartMs || utcMs > event.globalEndMs) {
     return { eventId: event.id, utcMs, lonSamples, latSamples, obscuration01 };
   }
-  const bounds = ringBounds(options.partialRegion);
-  const padLat = bounds ? { min: bounds.minLat, max: bounds.maxLat } : { min: -90, max: 90 };
   for (let j = 0; j < latSamples; j += 1) {
     const latDeg = latIndexToDeg(j, latSamples);
-    if (latDeg < padLat.min || latDeg > padLat.max) {
-      continue;
-    }
     const row = j * lonSamples;
     const obsLat = solarObserverFixed(latDeg, 0);
     for (let i = 0; i < lonSamples; i += 1) {
       const lonDeg = lonIndexToDeg(i, lonSamples);
-      if (
-        bounds &&
-        !bounds.wraps &&
-        (lonDeg < bounds.minLon || lonDeg > bounds.maxLon)
-      ) {
-        continue;
-      }
       const obs = { ...obsLat, longitudeDeg: lonDeg };
       obscuration01[row + i] = solarEclipseObscurationFromElements(el, obs).obscuration01;
     }
@@ -165,7 +124,6 @@ export function solarEclipseObscurationFieldAt(
   options: {
     lonSamples?: number;
     latSamples?: number;
-    partialRegion?: GeographicRing;
   } = {},
 ): SolarEclipseObscurationField {
   const bucket =
@@ -180,7 +138,6 @@ export function solarEclipseObscurationFieldAt(
   const field = buildSolarEclipseObscurationField(bucket, event, {
     lonSamples,
     latSamples,
-    partialRegion: options.partialRegion,
   });
   fieldCache = { key, field };
   return field;

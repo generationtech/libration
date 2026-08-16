@@ -116,11 +116,7 @@ export function createSolarShadingLayer(
       const moonlightTransmission01 = lunarEclipseMoonlightTransmission(eclipseFrame.lunarGeometry);
       let daylightTransmissionField: SolarShadingPayload["daylightTransmissionField"];
       if (activeEclipseShadingEnabled && eclipseFrame.activeSolar) {
-        const obscurationField = solarEclipseObscurationFieldAt(
-          time.now,
-          eclipseFrame.activeSolar,
-          { partialRegion: eclipseFrame.solarGeometry?.partialRegion },
-        );
+        const obscurationField = solarEclipseObscurationFieldAt(time.now, eclipseFrame.activeSolar);
         const transmission01 = new Float32Array(obscurationField.obscuration01.length);
         let anyAttenuation = false;
         for (let i = 0; i < obscurationField.obscuration01.length; i += 1) {

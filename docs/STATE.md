@@ -1,11 +1,11 @@
 # Development state
 
 Updated: 2026-08-16
-Status: AWAITING SCOPE
+Status: ACTIVE
 
 ## Active work item
 
-None
+[LIB-028](work/LIB-028-solar-eclipse-obscuration-raster-boundary.md) — Solar-eclipse obscuration raster-boundary reconciliation
 
 ## Last completed
 
@@ -25,4 +25,4 @@ None
 
 ## Next action
 
-Stop. No approved work is active. Do not start README recapture or another astronomy feature until a human names it.
+Diagnose the 2017 ingress/egress hard west/east obscuration-field edges, then implement the selected field-domain architecture (prefer full-world 288×145 if cost is comparable).

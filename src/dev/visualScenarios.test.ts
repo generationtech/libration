@@ -373,6 +373,22 @@ describe("resolveVisualScenarioSession", () => {
     if (stationE.kind === "applied") {
       expect(stationE.startIsoUtc).toBe("2017-08-21T18:36:03.000Z");
     }
+    const rasterWest = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-2017&eclipseStation=rasterWest",
+    });
+    expect(rasterWest.kind).toBe("applied");
+    if (rasterWest.kind === "applied") {
+      expect(rasterWest.startIsoUtc).toBe("2017-08-21T16:45:01.000Z");
+    }
+    const rasterLate = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-2017&eclipseStation=rasterLate",
+    });
+    expect(rasterLate.kind).toBe("applied");
+    if (rasterLate.kind === "applied") {
+      expect(rasterLate.startIsoUtc).toBe("2017-08-21T19:56:08.000Z");
+    }
   });
 
   it("seeds lunar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {

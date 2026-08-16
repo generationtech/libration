@@ -390,7 +390,7 @@ Presentation lifecycle ([LIB-025](../../work/LIB-025-solar-eclipse-lifecycle-sha
 
 Visual families ([LIB-026](../../work/LIB-026-solar-eclipse-visual-semantics-reconciliation.md)) keep overlay meanings distinct on the map: static violet/lilac **event path**; informational teal **forecast partial** (upcoming only); compact indigo/warm **live central** shadow; warm gold **alignment ribbon**; vermilion **ground marker**. Active partial darkness is not a competing teal overlay. Corridor limit strokes remain readable over the moving dark field. Dramatic alignment stays stronger in the core/axis while occupying less map area than a penumbral region.
 
-Illumination raster is **not** the eclipse overlay. Compact umbra/antumbra remain overlay markers and are not encoded by hacking `sampleIlluminationRgba8`. Broad active obscuration *does* attenuate remaining daylight in that same `rasterPatch`, independently of the Solar eclipses master, analogous to lunar moonlight attenuation.
+Illumination raster is **not** the eclipse overlay. Compact umbra/antumbra remain overlay markers and are not encoded by hacking `sampleIlluminationRgba8`. Broad active obscuration *does* attenuate remaining daylight in that same `rasterPatch`, independently of the Solar eclipses master, analogous to lunar moonlight attenuation. The obscuration grid is a stable full-world equirectangular field (288×145); it is not clipped to the live penumbra-outline bbox ([LIB-028](../../work/LIB-028-solar-eclipse-obscuration-raster-boundary.md)).
 
 ---
 

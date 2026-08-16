@@ -100,7 +100,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
 | `solar-eclipse-dateline` | `2016-03-09T01:57:09.400Z` | Production solar eclipse overlay at NASA 2016 Mar 09 Pacific total; live-only horizon. Optional DEV `observerCity=` | Seam/wrap: no map-spanning fill, coherent centerline, band, and alignment ribbon |
-| `solar-eclipse-2017` | `2017-08-21T18:25:29.700Z` (default `eclipseStation=ge`) | 2017 Aug 21 total with **7-day horizon** so the event corridor stays in view. Showcase: Extra Large Moon, Event labels off, Dramatic alignment, Large ground marker. Optional DEV `eclipseStation=upcoming\|preCentral\|earlyCentral\|ge\|lateCentral\|postCentral\|after`, `horizon=`, `observerCity=` | Full-event lifecycle: corridor continuity, forecast vs live partial, beam/marker entry and exit, live footprint motion. Stations: upcoming `14:51Z`, pre-central `15:56Z`, early central `16:58Z`, GE `18:25:29.700Z`, late central `18:48:44Z`, post-central `20:21Z`, after `21:10Z` |
+| `solar-eclipse-2017` | `2017-08-21T18:25:29.700Z` (default `eclipseStation=ge`) | 2017 Aug 21 total with **7-day horizon** so the event corridor stays in view. Showcase: Extra Large Moon, Event labels off, Dramatic alignment, Large ground marker. Optional DEV `eclipseStation=upcoming\|preCentral\|earlyCentral\|ge\|lateCentral\|postCentral\|after`, A–F `stationA`…`stationF`, raster-boundary `rasterPreStart\|rasterWest\|rasterMid\|rasterEast\|rasterLate`, `horizon=`, `observerCity=` | Full-event lifecycle: corridor continuity, forecast vs live partial, beam/marker entry and exit, live footprint motion, obscuration-field ingress/egress limbs. Stations: upcoming `14:51Z`, pre-central `15:56Z`, early central `16:58Z`, GE `18:25:29.700Z`, late central `18:48:44Z`, post-central `20:21Z`, after `21:10Z`; raster `15:39:02Z` / `16:45:01Z` / `17:06:33Z` / `19:22:59Z` / `19:56:08Z` |
 | `solar-eclipse-forecast` | `2024-04-03T18:00:00.000Z` | Upcoming 2024 Apr 08 total, 7-day forecast horizon, five days before greatest eclipse. Optional DEV `observerCity=` | Event corridor Mexico → US → Canada; no live umbra or beam; event information and nearest-event label; local circumstances may say not visible / partial / total without hiding the corridor |
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon. Optional DEV `observerCity=` | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon. Optional DEV `observerCity=` | Partial forecast region; no fabricated central corridor |
@@ -226,6 +226,22 @@ When inspecting:
 - Confirm `solar-eclipse-dateline` does not duplicate or seam-darken near ±180°.
 - Confirm polar 2021 (`2021-12-04`) stays continuous near the pole with no false cap fill.
 - Confirm Solar eclipses overlay OFF with solar shading ON still physically darkens during an active eclipse.
+
+### Solar eclipse obscuration raster boundary (LIB-028)
+
+Use `?scenario=solar-eclipse-2017` with Solar shading ON, Active eclipse shading ON, intensity **Normal** first, Event labels OFF, Extra Large Moon, Large vermilion marker, Alignment Normal first. Diagnostic stations: `eclipseStation=rasterPreStart` (15:39:02Z, before global start), `rasterWest` (16:45:01Z), `rasterMid` (17:06:33Z), `rasterEast` (19:22:59Z), `rasterLate` (19:56:08Z).
+
+When inspecting:
+
+- Confirm `rasterPreStart` has no physical eclipse field (event has not started; forecast teal may still be present).
+- Confirm `rasterWest` has no rectangular west-edge shadow slab. The dark field should fade into ordinary Pacific daylight / night at the true penumbral/horizon limb, not at a longitude column.
+- Confirm `rasterMid` remains a continuous field; central progression coherent; no new seam.
+- Confirm `rasterEast` / `rasterLate` have no rectangular east-edge shadow slab. The eastern limb fades; do not accept a vertical dark wall.
+- Confirm west–east visual transects through the former artifact regions approach transmission 1 smoothly. A physical sunrise/sunset terminator coinciding with high obscuration may still be steep; that is horizon gating, not a computational domain bound.
+- Confirm `solar-eclipse-dateline` has no ±180° transmission seam or doubled darkening.
+- Do **not** accept a visible rectangular transmission-patch or field-bbox bound as “the eclipse edge.”
+- Then inspect Dramatic at `rasterWest` and `rasterLate` — stronger field, still no domain rectangle.
+- Confirm annular (`solar-eclipse-annular`) and partial-only (`solar-eclipse-partial`) keep smooth outer fades with no bbox line.
 
 When inspecting E4:
 
