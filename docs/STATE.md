@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md) — Reference-city eclipse circumstances (E4)
+[LIB-018](work/LIB-018-eclipse-alignment-beam.md) — Live eclipse alignment / beam presentation (E5)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Wait for explicit human authorization of E5 (live alignment / beam). Do not create an E5 work item until that authorization exists.
+Wait for human authorization. The strongest candidate is E6 — eclipse configuration completeness and integration polish. Do not start it without an approved work item.

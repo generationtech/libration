@@ -4,7 +4,7 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E5+), which still require a separate human-authorized work item.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). E5 (live alignment / beam presentation) is **production** as of [LIB-018](../../work/LIB-018-eclipse-alignment-beam.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E6+), which still require a separate human-authorized work item.
 
 Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs). E3 production notes are in [§10](#10-lunar-eclipse-map-architecture) and [§22.16](#2216-e3-inputs).
 
@@ -412,21 +412,23 @@ The spherical Moon-above-horizon contour is the same geometric object the backlo
 
 ## 11. Live alignment / beam (“Mars Attacks”)
 
+E5 ([LIB-018](../../work/LIB-018-eclipse-alignment-beam.md)) implements this as presentation derived from authoritative eclipse geometry. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
+
 Desired: dramatic, scientifically grounded alignment emphasis during an active eclipse, using existing Sun/Moon visual language, independently disableable.
 
 ### Upstream data the effect needs
 
-**Solar:** authority shadow axis; umbral/antumbral Earth footprint (or axis intersection); Sun and Moon directions at T (authority, not ambient glyphs). Conceptual chain: Sun → Moon → Earth footprint.
+**Solar:** live E1 central point (umbra or antumbra) plus ambient Sun/Moon glyph positions for visual anchoring. Conceptual chain: Sun → Moon → Earth footprint. Partial-only events have no central target; they receive a local alignment field only.
 
-**Lunar:** Sun → Earth → Moon shadow axis; Earth-shadow / Moon relationship; not a fake terrestrial “path.”
+**Lunar:** E3 Earth-shadow state plus anti-solar / Moon geometry. Conceptual chain: Sun → Earth → Moon. Not a fake terrestrial “path.”
 
 ### Where it lives
 
-Presentation / style. A plan builder emits ordinary primitives (`path2d`, gradients, lines) from semantic alignment geometry. Not a new backend blend mode. Not illumination. Not a literal laser.
+Presentation / style. `buildEclipseAlignmentPresentation` emits ordinary `equirectRegionOverlay` fills and strokes. Not a new backend blend mode. Not illumination. Not a literal laser. Not eclipse truth.
 
-The user must be able to disable this without disabling paths/regions or the event service.
+The user can disable this without disabling paths/regions or the event service (`scene.eclipseAlignment`).
 
-Colors, opacity, cone shape, and animation remain **open**.
+Implemented decisions: active-only; product-time driven; strength from live geometry (not reference-city magnitude); solar total/annular target the live umbra/antumbra; partial-only does not fabricate a central beam; lunar is an Earth-shadow axis toward the Moon; intensity `subtle` / `normal` / `dramatic`. Colors remain implementation tokens, not a user style editor.
 
 ---
 
@@ -599,10 +601,11 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 
 **GLOBAL ECLIPSE TRUTH IS NEVER FILTERED BY REFERENCE CITY.**
 
-### E5 — Live alignment / beam presentation
+### E5 — Live alignment / beam presentation — **implemented (LIB-018)**
 
 - **Goal:** Independently disableable alignment decoration from eclipse-authority geometry.
 - **Dependencies:** E1; lunar analog after E3 if both kinds get a beam.
+- **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
 - **User-visible:** Dramatic but grounded live-event emphasis.
 - **Principal risks:** Arbitrary glow; backend-specific tricks; coupling to illumination.
 - **Completion evidence:** Plan tests with effect off (no extra primitives); visual on/off.
@@ -615,7 +618,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
 
-E1 is production. E2 is production. E3 is production. E4 is production. E5 (live alignment / beam) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
+E1 is production. E2 is production. E3 is production. E4 is production. E5 is production. E6 (configuration completeness and integration polish) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
 
 ---
 
@@ -665,9 +668,9 @@ E1 live solar footprint at known NASA events. E2 solar forecast window and cache
 
 ## 20. Intentionally not predetermined
 
-- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls and E3’s lunar overlay controls.
+- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls, E3’s lunar overlay controls, and E5’s alignment master / solar / lunar / intensity.
 - Numeric imminent thresholds.
-- Colors, opacities, gradients, cone/beam shape, animation beyond E1/E3’s restrained production tokens.
+- Colors, opacities, gradients, cone/beam shape, animation beyond E1/E3/E5’s restrained production tokens.
 - Chrome vs inspectable-panel placement for observer circumstances.
 - Extracting a shared `surfaceDotProduct(lat, lon, subpoint)` helper (good cleanup, not an architecture decision).
 - Adding Sun RA/Dec exports before they have a caller.
@@ -690,6 +693,8 @@ E1 live solar footprint at known NASA events. E2 solar forecast window and cache
 | E1 live solar footprint | [`docs/work/LIB-014-solar-eclipse-live-footprint.md`](../../work/LIB-014-solar-eclipse-live-footprint.md) |
 | E2 solar forecast window | [`docs/work/LIB-015-solar-eclipse-forecast.md`](../../work/LIB-015-solar-eclipse-forecast.md) |
 | E3 lunar truth and visibility | [`docs/work/LIB-016-lunar-eclipse-truth-and-visibility.md`](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md) |
+| E4 reference-city circumstances | [`docs/work/LIB-017-reference-city-eclipse-circumstances.md`](../../work/LIB-017-reference-city-eclipse-circumstances.md) |
+| E5 live alignment / beam | [`docs/work/LIB-018-eclipse-alignment-beam.md`](../../work/LIB-018-eclipse-alignment-beam.md) |
 
 ---
 

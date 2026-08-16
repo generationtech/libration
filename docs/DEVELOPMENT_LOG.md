@@ -118,4 +118,10 @@ E4 reference-city eclipse circumstances: Besselian local solar contacts/magnitud
 
 Verified: `npx tsc --noEmit` clean; `npm test` 189 files / 1742 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: Knoxville/Tokyo/none solar, forecast local status, lunar visible/not-visible, city switch, chrome/details toggles, 3600× demo, ordinary startup.
 
+## 2026-08-15 — LIB-018 complete
+
+E5 live eclipse alignment / beam: semantic presentation from existing `EclipseFrame` plus ambient glyphs. Solar ribbon to live umbra/antumbra (partial-only = local bloom, no fabricated target). Lunar Sun→Earth→Moon axis from E3 geometry. Active-only, product-time driven, independently disableable. No new ADR. No E6+.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 191 files / 1777 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: 2024 total / 2023 annular / 2022 partial / 2016 dateline / forecast-only, 2022 total lunar / 2008 partial lunar, Tokyo vs Knoxville, intensity, 7200× demo, ordinary startup.
+
 

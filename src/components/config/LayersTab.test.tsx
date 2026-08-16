@@ -399,7 +399,38 @@ describe("LayersTab Moon and astronomy path styling", () => {
   });
 });
 
+describe("LayersTab eclipse alignment", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("defaults alignment on and can disable the beam without turning off Solar eclipses", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const master = screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement;
+    const solarBeam = screen.getByLabelText("Solar alignment beam") as HTMLInputElement;
+    const lunarBeam = screen.getByLabelText("Lunar alignment beam") as HTMLInputElement;
+    const intensity = screen.getByLabelText("Alignment intensity") as HTMLSelectElement;
+    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
+    expect(master.checked).toBe(true);
+    expect(solarBeam.checked).toBe(true);
+    expect(lunarBeam.checked).toBe(true);
+    expect(intensity.value).toBe("normal");
+    expect(solar.checked).toBe(false);
+    await user.click(master);
+    expect(master.checked).toBe(false);
+    expect(solar.checked).toBe(false);
+    await user.click(solar);
+    expect(solar.checked).toBe(true);
+    expect(master.checked).toBe(false);
+  });
+});
+
 describe("LayersTab reference-city eclipse circumstances", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("defaults details and chrome status on and can disable them independently of Solar eclipses", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);

@@ -263,6 +263,8 @@ describe("resolveVisualScenarioSession", () => {
       expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
         0,
       );
+      expect(config.scene?.eclipseAlignment.enabled).toBe(true);
+      expect(config.scene?.eclipseAlignment.solarEnabled).toBe(true);
     }
   });
 
@@ -303,6 +305,8 @@ describe("resolveVisualScenarioSession", () => {
       expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe(
         "lunarEclipseVisibility",
       );
+      expect(config.scene?.eclipseAlignment.enabled).toBe(true);
+      expect(config.scene?.eclipseAlignment.lunarEnabled).toBe(true);
     }
   });
 

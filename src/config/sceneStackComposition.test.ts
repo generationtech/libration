@@ -225,6 +225,23 @@ describe("planSceneStackComposition", () => {
     expect(p.overlays[moon]!.stackIndex).toBeGreaterThan(p.overlays[sun]!.stackIndex);
   });
 
+  it("keeps Moon above Sun when solar and lunar eclipse layers are enabled", () => {
+    const p = planSceneStackComposition(
+      buildDefaultSceneConfigFromLayerFlags({
+        ...ALL,
+        solarEclipse: true,
+        lunarEclipse: true,
+      }),
+    );
+    const sun = p.overlays.findIndex((o) => o.layerId === "subsolarMarker");
+    const moon = p.overlays.findIndex((o) => o.layerId === "sublunarMarker");
+    const solar = p.overlays.findIndex((o) => o.layerId === "solarEclipse");
+    expect(solar).toBeGreaterThanOrEqual(0);
+    expect(moon).toBeGreaterThan(sun);
+    expect(p.overlays[moon]!.zIndex).toBeGreaterThan(p.overlays[sun]!.zIndex);
+    expect(sun).toBeGreaterThan(solar);
+  });
+
   it("skips disabled stack rows without creating z-index gaps in the plan", () => {
     const s = sceneWith(undefined, (rows) =>
       rows.map((L) => {

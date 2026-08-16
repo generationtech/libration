@@ -23,6 +23,7 @@ import {
 } from "../config/productTextFont";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
+  eclipseAlignmentPresentationFromScene,
   lunarEclipsePresentationFromScene,
   resolveMoonlightPresentationMode,
   sublunarMarkerAppearanceFromScene,
@@ -263,12 +264,14 @@ function createDerivedOverlayByProduct(
         zIndex,
         opacity,
         presentation: normalizeSolarEclipsePresentation(source.parameters),
+        alignment: eclipseAlignmentPresentationFromScene(config.scene),
       });
     case "lunarEclipseVisibility":
       return createLunarEclipseLayer({
         zIndex,
         opacity,
         presentation: normalizeLunarEclipsePresentation(source.parameters),
+        alignment: eclipseAlignmentPresentationFromScene(config.scene),
       });
     default:
       return null;

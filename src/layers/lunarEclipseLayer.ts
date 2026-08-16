@@ -14,12 +14,18 @@
 import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import {
+  normalizeEclipseAlignmentPresentation,
+  type EclipseAlignmentPresentation,
+} from "../core/eclipse/eclipseAlignmentAppearance";
+import { buildEclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentPresentation";
+import {
   LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_STROKE,
   LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_WIDTH_PX,
   LUNAR_ECLIPSE_VISIBILITY_REGION_FILL,
   normalizeLunarEclipsePresentation,
   type LunarEclipsePresentation,
 } from "../core/eclipse/lunarEclipseAppearance";
+import { subsolarPoint } from "../core/subsolarPoint";
 import {
   lunarHorizonBoundaryPolylines,
   lunarVisibilityPolarCloseLatDeg,
@@ -44,11 +50,13 @@ export function createLunarEclipseLayer(
     zIndex?: number;
     opacity?: number;
     presentation?: Partial<LunarEclipsePresentation> | Readonly<Record<string, unknown>>;
+    alignment?: Partial<EclipseAlignmentPresentation> | Readonly<Record<string, unknown>>;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const presentation = normalizeLunarEclipsePresentation(options.presentation);
+  const alignment = normalizeEclipseAlignmentPresentation(options.alignment);
   return {
     id: LUNAR_ECLIPSE_LAYER_ID,
     name: "Lunar eclipses",
@@ -62,6 +70,7 @@ export function createLunarEclipseLayer(
       const strokes: EquirectRegionStroke[] = [];
       if (frame.support.supported && frame.activeLunar && frame.lunarGeometry) {
         const moon = sublunarPoint(time.now);
+        const sun = subsolarPoint(time.now);
         if (presentation.showVisibilityRegion) {
           const ring = lunarVisibilityRegionRing(moon.latDeg, moon.lonDeg);
           if (ring.length >= 4) {
@@ -70,6 +79,30 @@ export function createLunarEclipseLayer(
               fill: LUNAR_ECLIPSE_VISIBILITY_REGION_FILL,
               polarCloseLatDeg: lunarVisibilityPolarCloseLatDeg(moon.latDeg),
             });
+          }
+        }
+        const alignmentView = buildEclipseAlignmentPresentation({
+          frame,
+          alignment,
+          solarLayerEnabled: false,
+          lunarLayerEnabled: true,
+          subsolar: { latDeg: sun.latDeg, lonDeg: sun.lonDeg },
+          sublunar: { latDeg: moon.latDeg, lonDeg: moon.lonDeg },
+        });
+        if (alignmentView.lunar) {
+          for (const band of alignmentView.lunar.bands) {
+            if (band.ring.length >= 4) {
+              fills.push({ ring: band.ring, fill: band.fill });
+            }
+          }
+          for (const s of alignmentView.lunar.strokes) {
+            if (s.points.length >= 2) {
+              strokes.push({
+                points: s.points,
+                stroke: s.stroke,
+                strokeWidthPx: s.strokeWidthPx,
+              });
+            }
           }
         }
         if (presentation.showVisibilityBoundary) {

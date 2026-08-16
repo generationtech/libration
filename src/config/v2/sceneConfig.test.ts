@@ -37,6 +37,7 @@ import {
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
+  applyEclipseAlignmentPresentationToScene,
   applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
   normalizeSceneConfig,
@@ -1309,5 +1310,65 @@ describe("reference-city eclipse circumstances presentation", () => {
     expect(round.scene?.eclipseCircumstances.detailsEnabled).toBe(false);
     expect(round.scene?.eclipseCircumstances.chromeStatusEnabled).toBe(false);
     expect(round.scene?.layers.find((l) => l.id === "solarEclipse")?.enabled).toBe(true);
+  });
+});
+
+describe("eclipse alignment scene presentation", () => {
+  it("defaults master, solar, and lunar alignment on at normal intensity", () => {
+    const v2 = defaultLibrationConfigV2();
+    expect(v2.scene?.eclipseAlignment.enabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.solarEnabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.lunarEnabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.intensity).toBe("normal");
+  });
+
+  it("normalizes missing eclipseAlignment keys to defaults", () => {
+    const base = defaultLibrationConfigV2();
+    const { eclipseAlignment: _drop, ...sceneRest } = base.scene!;
+    const v2 = normalizeLibrationConfig({
+      ...base,
+      scene: sceneRest,
+    } as LibrationConfigV2);
+    expect(v2.scene?.eclipseAlignment.enabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.solarEnabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.lunarEnabled).toBe(true);
+    expect(v2.scene?.eclipseAlignment.intensity).toBe("normal");
+  });
+
+  it("persists alignment toggles without disabling solar or lunar eclipse layers", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      layers: { ...base.layers, solarEclipse: true, lunarEclipse: true },
+      scene: applyEclipseAlignmentPresentationToScene(
+        applyLayerEnableFlagsToScene(base.scene!, {
+          ...base.layers,
+          solarEclipse: true,
+          lunarEclipse: true,
+        }),
+        { enabled: false, solarEnabled: false, intensity: "dramatic" },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    expect(round.layers.solarEclipse).toBe(true);
+    expect(round.layers.lunarEclipse).toBe(true);
+    expect(round.scene?.eclipseAlignment.enabled).toBe(false);
+    expect(round.scene?.eclipseAlignment.solarEnabled).toBe(false);
+    expect(round.scene?.eclipseAlignment.lunarEnabled).toBe(true);
+    expect(round.scene?.eclipseAlignment.intensity).toBe("dramatic");
+    expect(round.scene?.layers.find((l) => l.id === "solarEclipse")?.enabled).toBe(true);
+    expect(round.scene?.layers.find((l) => l.id === "lunarEclipse")?.enabled).toBe(true);
+  });
+
+  it("snaps unknown intensity values to normal", () => {
+    const base = defaultLibrationConfigV2();
+    const v2 = normalizeLibrationConfig({
+      ...base,
+      scene: {
+        ...base.scene!,
+        eclipseAlignment: { ...base.scene!.eclipseAlignment, intensity: "laser" as never },
+      },
+    });
+    expect(v2.scene?.eclipseAlignment.intensity).toBe("normal");
   });
 });

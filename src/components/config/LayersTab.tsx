@@ -35,6 +35,7 @@ import {
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
+  applyEclipseAlignmentPresentationToScene,
   applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
   canonicalEquirectBaseMapIdForPersistence,
@@ -49,6 +50,7 @@ import {
   lunarEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
   referenceCityEclipsePresentationFromScene,
+  eclipseAlignmentPresentationFromScene,
   sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
@@ -83,6 +85,10 @@ import {
   forecastHorizonMsFromDays,
   SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
 } from "../../core/eclipse/solarEclipseAppearance";
+import {
+  ECLIPSE_ALIGNMENT_INTENSITY_IDS,
+  eclipseAlignmentIntensityLabel,
+} from "../../core/eclipse/eclipseAlignmentAppearance";
 import { resolveEclipseFrame } from "../../core/eclipse/eclipseEventService";
 import { resolveReferenceCityEclipseCircumstances } from "../../core/eclipse/referenceCityEclipseCircumstances";
 import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
@@ -514,6 +520,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
   const eclipsePresentation = solarEclipsePresentationFromScene(scene);
   const lunarEclipsePresentation = lunarEclipsePresentationFromScene(scene);
   const eclipseCircumstancesPresentation = referenceCityEclipsePresentationFromScene(scene);
+  const eclipseAlignmentPresentation = eclipseAlignmentPresentationFromScene(scene);
   const eclipseHorizonMs = config.layers.solarEclipse
     ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
     : 0;
@@ -1671,6 +1678,117 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                 : undefined
             }
           />
+        </ConfigControlRow>
+        <ConfigControlRow label="Eclipse alignment effects">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipseAlignmentPresentation.enabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Eclipse alignment effects"
+            title="Master switch for the live Sun–Moon–Earth alignment field during an active eclipse. Does not disable eclipse geography."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const enabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
+                        enabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Solar alignment beam">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipseAlignmentPresentation.solarEnabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Solar alignment beam"
+            title="Solar alignment field during an active solar eclipse. Requires Solar eclipses to be enabled."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const solarEnabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
+                        solarEnabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar alignment beam">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={eclipseAlignmentPresentation.lunarEnabled}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Lunar alignment beam"
+            title="Lunar Earth-shadow axis during an active lunar eclipse. Requires Lunar eclipses to be enabled."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const lunarEnabled = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
+                        lunarEnabled,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Alignment intensity">
+          <select
+            className="config-input"
+            disabled={!mutable}
+            aria-label="Alignment intensity"
+            title="Width and opacity of the live alignment field. Subtle, normal, or dramatic."
+            value={eclipseAlignmentPresentation.intensity}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const intensity = e.currentTarget.value;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyEclipseAlignmentPresentationToScene(baseScene, {
+                        intensity: intensity as typeof eclipseAlignmentPresentation.intensity,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          >
+            {ECLIPSE_ALIGNMENT_INTENSITY_IDS.map((id) => (
+              <option key={`eclipse-alignment-intensity-${id}`} value={id}>
+                {eclipseAlignmentIntensityLabel(id)}
+              </option>
+            ))}
+          </select>
         </ConfigControlRow>
         <ConfigControlRow label="Reference-city eclipse details">
           <input

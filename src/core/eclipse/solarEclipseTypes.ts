@@ -56,6 +56,12 @@ export type SolarEclipseLiveGeometry = {
   readonly centralBand: readonly GeographicPoint[];
   readonly partialRegion: readonly GeographicPoint[];
   readonly pathWidthKm: number | null;
+  /**
+   * Presentation scalar for the E5 alignment field. Derived from the same
+   * Besselian evaluation as the live footprint (axis distance vs penumbra /
+   * central presence). Not reference-city magnitude.
+   */
+  readonly alignmentStrength01: number;
 };
 
 export type SolarEclipseLifecycle = "upcoming" | "active";

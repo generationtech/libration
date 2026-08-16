@@ -231,7 +231,8 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
   "solar-eclipse-total": {
     id: "solar-eclipse-total",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-total"],
-    purpose: "Production solar eclipse overlay at 2024 Apr 08 greatest eclipse (total).",
+    purpose:
+      "Production solar eclipse overlay at 2024 Apr 08 greatest eclipse (total), including the live alignment beam.",
     buildConfig: () =>
       withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-total"], applySolarEclipseLiveScene),
   },

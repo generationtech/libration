@@ -99,7 +99,26 @@ export function solarEclipseGeometryAt(
     centralBand,
     partialRegion,
     pathWidthKm,
+    alignmentStrength01: solarAlignmentStrength01(el, hasCentral),
   };
+}
+
+/**
+ * Global alignment prominence from live Besselian state.
+ * Weak near penumbral limb; strongest when the shadow axis is most central.
+ */
+export function solarAlignmentStrength01(
+  el: { readonly x: number; readonly y: number; readonly l1: number },
+  hasCentral: boolean,
+): number {
+  const m = Math.hypot(el.x, el.y);
+  const penumbraReach = 1 + Math.max(el.l1, 0);
+  const penumbral = Math.max(0, Math.min(1, (penumbraReach - m) / Math.max(penumbraReach, 1e-6)));
+  if (hasCentral) {
+    const centrality = Math.max(0, Math.min(1, 1 - m));
+    return 0.55 + 0.45 * centrality;
+  }
+  return 0.12 + 0.28 * penumbral;
 }
 
 export function resetSolarEclipseGeometryCacheForTests(): void {

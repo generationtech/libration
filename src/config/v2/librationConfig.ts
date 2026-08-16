@@ -1158,6 +1158,19 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseCircumstances");
   }
+  const eclipseAlignment = (sc as SceneConfig).eclipseAlignment;
+  if (
+    typeof eclipseAlignment !== "object" ||
+    eclipseAlignment === null ||
+    typeof eclipseAlignment.enabled !== "boolean" ||
+    typeof eclipseAlignment.solarEnabled !== "boolean" ||
+    typeof eclipseAlignment.lunarEnabled !== "boolean" ||
+    (eclipseAlignment.intensity !== "subtle" &&
+      eclipseAlignment.intensity !== "normal" &&
+      eclipseAlignment.intensity !== "dramatic")
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseAlignment");
+  }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
     baseMapPres !== undefined &&

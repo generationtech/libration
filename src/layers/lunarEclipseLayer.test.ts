@@ -21,9 +21,11 @@ import canvasBackendSource from "../renderer/canvasRenderBackend.ts?raw";
 const TOTAL_UTC = Date.parse("2022-05-16T04:11:29.000Z");
 const QUIET_UTC = Date.parse("2024-01-15T00:00:00.000Z");
 
+const ALIGNMENT_OFF = { enabled: false } as const;
+
 describe("lunar eclipse layer", () => {
   it("emits no region primitives when there is no active lunar eclipse", () => {
-    const layer = createLunarEclipseLayer();
+    const layer = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
     const st = layer.getState(createTimeContext(QUIET_UTC, 0, true));
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(st.data)) {
@@ -33,7 +35,7 @@ describe("lunar eclipse layer", () => {
   });
 
   it("emits visibility region and boundary at 2022 totality", () => {
-    const layer = createLunarEclipseLayer();
+    const layer = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
     const frame = resolveEclipseFrame(TOTAL_UTC);
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
     expect(frame.activeLunar?.subtype).toBe("total");
@@ -48,12 +50,28 @@ describe("lunar eclipse layer", () => {
   it("omits the region when the visibility-region toggle is off", () => {
     const layer = createLunarEclipseLayer({
       presentation: { showVisibilityRegion: false, showVisibilityBoundary: true },
+      alignment: ALIGNMENT_OFF,
     });
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.fills).toHaveLength(0);
       expect(st.data.strokes.length).toBe(1);
+    }
+  });
+
+  it("adds a lunar alignment axis without removing the visibility region", () => {
+    const off = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
+    const on = createLunarEclipseLayer({ alignment: { enabled: true, lunarEnabled: true } });
+    const frame = resolveEclipseFrame(TOTAL_UTC);
+    const time = createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame });
+    const without = off.getState(time);
+    const withBeam = on.getState(time);
+    expect(isEquirectRegionOverlayPayload(withBeam.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(withBeam.data) && isEquirectRegionOverlayPayload(without.data)) {
+      expect(withBeam.data.fills.length).toBeGreaterThan(without.data.fills.length);
+      expect(withBeam.data.strokes.length).toBeGreaterThan(without.data.strokes.length);
+      expect(without.data.fills.length).toBe(1);
     }
   });
 });

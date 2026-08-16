@@ -8,7 +8,7 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-The preferred next product-development direction after LIB-017 is the remaining [Eclipse System](#eclipse-system) (E5 live alignment / beam). Intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). E5+ implementation is not approved. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
+The preferred next product-development direction after LIB-018 is the remaining [Eclipse System](#eclipse-system) (E6 configuration completeness). Intended structure: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). E6+ implementation is not approved. See [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy).
 
 ## Status vocabulary
 
@@ -21,7 +21,7 @@ Several sections describe extensions to subsystems that already exist. Those sub
 
 ## Moon, Sun-Moon-Earth, and observer astronomy
 
-This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure, [LIB-013](work/LIB-013-eclipse-authority-evaluation.md) selected the bundled NASA/Espenak–Meeus authority, [LIB-014](work/LIB-014-solar-eclipse-live-footprint.md) implemented E1 (live solar footprint), [LIB-015](work/LIB-015-solar-eclipse-forecast.md) implemented E2 (solar forecast window), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md) implemented E3 (lunar truth and terrestrial visibility), and [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md) implemented E4 (reference-city eclipse circumstances). Remaining slices (E5+) are unapproved. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E5–E6.
+This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. [LIB-012](work/LIB-012-eclipse-system-architecture.md) recorded intended Eclipse System structure, [LIB-013](work/LIB-013-eclipse-authority-evaluation.md) selected the bundled NASA/Espenak–Meeus authority, [LIB-014](work/LIB-014-solar-eclipse-live-footprint.md) implemented E1 (live solar footprint), [LIB-015](work/LIB-015-solar-eclipse-forecast.md) implemented E2 (solar forecast window), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md) implemented E3 (lunar truth and terrestrial visibility), [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md) implemented E4 (reference-city eclipse circumstances), and [LIB-018](work/LIB-018-eclipse-alignment-beam.md) implemented E5 (live alignment / beam). Remaining slices (E6+) are unapproved. Ranking below is future-work preference only: it is not permission to start implementation, and it is not a `LIB-###` decomposition of E6.
 
 Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
 
@@ -54,7 +54,7 @@ The point is to keep Libration an instrument, not a cluttered astronomy diagram.
 
 ### Eclipse System
 
-**Planned** remaining Eclipse System work after E4. Live solar event truth, geographic footprint, the solar forecast window, lunar eclipse truth/visibility, and reference-city circumstances are production ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md), [LIB-015](work/LIB-015-solar-eclipse-forecast.md), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md), [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md); [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md)). Architecture and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Lunar forecast and live alignment/beam remain **unapproved**.
+**Planned** remaining Eclipse System work after E5. Live solar event truth, geographic footprint, the solar forecast window, lunar eclipse truth/visibility, reference-city circumstances, and live alignment/beam are production ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md), [LIB-015](work/LIB-015-solar-eclipse-forecast.md), [LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md), [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md), [LIB-018](work/LIB-018-eclipse-alignment-beam.md); [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md)). Architecture and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Lunar forecast map and configuration completeness remain **unapproved**.
 
 The intent is a highly configurable eclipse capability: forecast upcoming eclipses globally, show meaningful geography for those events, and become more visually expressive while an eclipse is actually happening. Exact controls, schema, rendering primitives, and work-item slices are **not** decided here. Authority source, span, and precision posture are recorded in the architecture spec.
 
@@ -99,7 +99,7 @@ Production as of [LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md)
 
 Repository inventory and intended structure are in [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). Do not treat recent Moon visual work (LIB-007 through LIB-011) as the entire existing astronomy capability. Current solar/lunar behaviour is described in [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md); the source is the system.
 
-A future implementation LIB may start only after explicit approval of a slice (recommended next: E5, live alignment / beam presentation).
+A future implementation LIB may start only after explicit approval of a slice (recommended next: E6, configuration completeness and integration polish).
 
 Intentionally **not** decided here: exact configuration schema or UI; exact rendering primitives; colors and beam styling. Authority, offline span, precision posture, first-release types, and layer structure are recorded in the architecture spec; implementation still requires a human-authorized LIB.
 
