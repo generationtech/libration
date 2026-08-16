@@ -61,7 +61,10 @@ export type EarthShadowOverlayAppearance = {
   readonly offsetNorthMoonRadii: number;
   readonly outerRadiusMoonRadii: number;
   readonly innerRadiusMoonRadii: number;
-  readonly innerCoversDisc: boolean;
+  /** Fraction of the lunar disc inside the umbra (0–1). Drives totality red mix. */
+  readonly umbralCoverage01: number;
+  /** Fraction of the lunar disc inside the penumbra (0–1). */
+  readonly penumbralCoverage01: number;
 };
 
 export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPayload {

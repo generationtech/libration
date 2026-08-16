@@ -136,4 +136,10 @@ Post-E6 Eclipse reconciliation: Event labels rebuild the layer registry; HUD ecl
 
 Verified: `npx tsc --noEmit` clean; `npm test` 195 files / 1826 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: lunar forecast total Knoxville/Tokyo, labels OFF, Live only, active 2022 total, solar forecast labels ON/OFF, baseline quiet.
 
+## 2026-08-16 — LIB-021 complete
+
+Post-LIB-020 lunar eclipse visual reconciliation: event information moved to a dismissible lower-right map panel; moonlight attenuated from E3 disc coverage independently of lunar overlays (ADR 0011); spatial Earth-shadow on the Moon glyph; Moon-visible fill darkened; map labels offset Sun/Moon halos. Not E7.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 199 files / 1851 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: 2022-05-16 pre/penumbral/partial/total/egress, Tokyo vs Knoxville, solar forecast and live, Config controls-only, Event information OFF, Hide/chip.
+
 

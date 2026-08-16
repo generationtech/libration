@@ -55,6 +55,7 @@ import {
   INACTIVE_VISUAL_SCENARIO_RUNTIME,
 } from "./dev/visualScenarioRuntime";
 import { ConfigShell } from "./components/config/ConfigShell";
+import { EclipseInfoPanel } from "./components/eclipse/EclipseInfoPanel";
 import { ALLOW_PHASE3_MUTATIONS } from "./components/config/phase3Flags";
 import { getEquirectBaseMapCatalogEntry } from "./config/baseMapAssetResolve";
 import { calendarMonthUtc1To12FromUnixMs } from "./config/baseMapMonthResolve";
@@ -107,7 +108,7 @@ export default function App() {
   const scenarioRuntime = import.meta.env.DEV
     ? getVisualScenarioRuntime()
     : INACTIVE_VISUAL_SCENARIO_RUNTIME;
-  const [, bumpConfigView] = useReducer((n: number) => n + 1, 0);
+  const [configViewTick, bumpConfigView] = useReducer((n: number) => n + 1, 0);
   const [userPresetsEpoch, setUserPresetsEpoch] = useState(0);
   const bumpUserPresets = useCallback(() => setUserPresetsEpoch((n) => n + 1), []);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -116,6 +117,12 @@ export default function App() {
   const [configPanelProductInstantMs, setConfigPanelProductInstantMs] = useState(
     () => Date.now(),
   );
+  const [eclipsePanelInstantMs, setEclipsePanelInstantMs] = useState(() =>
+    scenarioRuntime.kind === "applied"
+      ? Date.parse(scenarioRuntime.startIsoUtc)
+      : Date.now(),
+  );
+  const lastEclipsePanelPushRef = useRef(0);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [isDirtyFromPreset, setIsDirtyFromPreset] = useState(false);
   const activePresetIdRef = useRef<string | null>(null);
@@ -381,6 +388,10 @@ export default function App() {
 
       const clockNowMs = demoActive ? effectiveNowMs : realNowMs;
       productInstantMsRef.current = clockNowMs;
+      if (Math.abs(clockNowMs - lastEclipsePanelPushRef.current) >= 400) {
+        lastEclipsePanelPushRef.current = clockNowMs;
+        setEclipsePanelInstantMs(clockNowMs);
+      }
       if (isConfigOpenRef.current) {
         setConfigPanelProductInstantMs((prev) => {
           if (calendarMonthUtc1To12FromUnixMs(prev) !== calendarMonthUtc1To12FromUnixMs(clockNowMs)) {
@@ -562,8 +573,10 @@ export default function App() {
     };
   }, []);
 
+  const eclipseInfoConfig = useMemo(() => workingV2Ref.current, [configViewTick]);
+
   return (
-    <div className="app-shell">
+    <div className={isConfigOpen ? "app-shell app-shell--config-open" : "app-shell"}>
       {import.meta.env.DEV && scenarioRuntime.kind === "applied" ? (
         <div
           className="visual-scenario-banner"
@@ -587,6 +600,11 @@ export default function App() {
       <div className="app-main">
         <canvas ref={canvasRef} className="render-canvas" aria-hidden />
       </div>
+      <EclipseInfoPanel
+        config={eclipseInfoConfig}
+        productInstantMs={eclipsePanelInstantMs}
+        configOpen={isConfigOpen}
+      />
       <button
         type="button"
         className="config-launcher"

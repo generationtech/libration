@@ -450,7 +450,7 @@ describe("LayersTab reference-city eclipse circumstances", () => {
     expect(details.checked).toBe(false);
   });
 
-  it("shows local partial details for Knoxville during the 2024 total, not a missing global event", () => {
+  it("keeps Layers eclipse controls-only during an active solar event", () => {
     const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
     initial.layers.solarEclipse = true;
     initial.scene = applyLayerEnableFlagsToScene(initial.scene!, initial.layers);
@@ -469,12 +469,10 @@ describe("LayersTab reference-city eclipse circumstances", () => {
       );
     }
     render(<Harness />);
-    expect(screen.getByTestId("eclipse-circumstances-details").textContent).toMatch(/Partial/);
-    expect(screen.getByTestId("eclipse-circumstances-details").textContent).toMatch(/Knoxville/);
-    expect(screen.getByTestId("eclipse-circumstances-details").textContent?.toLowerCase()).not.toContain(
-      "no eclipse",
-    );
-    expect(screen.getByTestId("eclipse-event-information").textContent).toMatch(/Total solar eclipse/);
+    expect(screen.queryByTestId("eclipse-event-information")).toBeNull();
+    expect(screen.queryByTestId("eclipse-circumstances-details")).toBeNull();
+    expect(screen.getByLabelText("Event information")).toBeTruthy();
+    expect(screen.getByLabelText("Reference-city eclipse details")).toBeTruthy();
   });
 });
 

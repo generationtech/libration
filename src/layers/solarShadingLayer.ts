@@ -26,6 +26,8 @@ import {
 import type { CloudParticipationPresentationMode } from "../core/cloudParticipationPolicy";
 import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
+import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
+import { lunarEclipseMoonlightTransmission } from "../core/eclipse/lunarEclipseMoonlightTransmission";
 import { approximateLunarPhase } from "../core/lunarPhase";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
@@ -93,6 +95,8 @@ export function createSolarShadingLayer(
       const { latDeg, lonDeg } = subsolarPoint(time.now);
       const { latDeg: moonLatDeg, lonDeg: moonLonDeg } = sublunarPoint(time.now);
       const phase = approximateLunarPhase(time.now);
+      const eclipseFrame = time.eclipseFrame ?? resolveEclipseFrame(time.now, { horizonMs: 0 });
+      const moonlightTransmission01 = lunarEclipseMoonlightTransmission(eclipseFrame.lunarGeometry);
       let cloudOpacityRaster: SolarShadingPayload["cloudOpacityRaster"] = null;
       if (cloudParticipationMode !== "off") {
         const attachment = getDynamicDataLifecycleAttachment(time);
@@ -106,6 +110,7 @@ export function createSolarShadingLayer(
         sublunarLatDeg: moonLatDeg,
         sublunarLonDeg: moonLonDeg,
         lunarIlluminatedFraction: phase.illuminatedFraction,
+        moonlightTransmission01,
         moonlightMode,
         emissiveNightLightsMode,
         emissiveCompositionAssetId,

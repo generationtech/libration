@@ -42,6 +42,7 @@ import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   EQUIRECT_REGION_OVERLAY_KIND,
+  type EquirectRegionAvoidDisc,
   type EquirectRegionFill,
   type EquirectRegionLabel,
   type EquirectRegionOverlayPayload,
@@ -103,6 +104,7 @@ export function createSolarEclipseLayer(
       const fills: EquirectRegionFill[] = [];
       const strokes: EquirectRegionStroke[] = [];
       const labels: EquirectRegionLabel[] = [];
+      const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
       const selections = presentedForecastSelections(frame, presentation);
       const activeSolar = presentedActiveSolar(frame, presentation);
       if (frame.support.supported || selections.length > 0) {
@@ -193,6 +195,8 @@ export function createSolarEclipseLayer(
         const primary = presentedPrimaryEclipse(frame, presentation, lunarPresentation);
         if (primary?.kind === "solar") {
           const geom = frame.solarGeometry;
+          const sun = subsolarPoint(time.now);
+          const moon = sublunarPoint(time.now);
           labels.push(
             solarEclipseMapLabel({
               event: primary.event,
@@ -208,6 +212,10 @@ export function createSolarEclipseLayer(
                   : primary.event.geLonDeg,
             }),
           );
+          labelAvoidDiscs.push(
+            { latDeg: sun.latDeg, lonDeg: sun.lonDeg, haloMultiplier: 2.4 },
+            { latDeg: moon.latDeg, lonDeg: moon.lonDeg, haloMultiplier: 2.4 },
+          );
         }
       }
       const readabilityFrame = getOverlayReadabilityFrameOrCompute(time);
@@ -215,7 +223,7 @@ export function createSolarEclipseLayer(
         kind: EQUIRECT_REGION_OVERLAY_KIND,
         fills,
         strokes,
-        ...(labels.length > 0 ? { labels } : {}),
+        ...(labels.length > 0 ? { labels, labelAvoidDiscs } : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: readabilityFrame.substrateOverlayReadabilityLiftScale01,

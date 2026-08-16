@@ -89,6 +89,22 @@ export const MOON_LIBRATION_EPOCH_UTC = {
 
 export type MoonLibrationEpochId = keyof typeof MOON_LIBRATION_EPOCH_UTC;
 
+/**
+ * DEV-only 2022-05-16 total lunar eclipse stations for Moon-shadow / moonlight inspection.
+ * Production does not import this map. Catalog contacts (symmetric about GE 04:11:29Z):
+ * P1 01:32:08Z, U1 02:27:53Z, U2 03:29:02Z, U3 04:53:56Z, U4 05:55:05Z, P4 06:50:50Z.
+ */
+export const LUNAR_ECLIPSE_2022_PHASE_UTC = {
+  pre: "2022-05-16T01:20:00.000Z",
+  penumbral: "2022-05-16T02:00:00.000Z",
+  partial: "2022-05-16T02:50:00.000Z",
+  nearTotal: "2022-05-16T03:25:00.000Z",
+  total: "2022-05-16T04:11:29.000Z",
+  egress: "2022-05-16T05:20:00.000Z",
+} as const;
+
+export type LunarEclipsePhaseId = keyof typeof LUNAR_ECLIPSE_2022_PHASE_UTC;
+
 /** Chromatic Köppen–Geiger substrate used by the readability scenario. */
 export const READABILITY_BASE_MAP_ID = "equirect-world-climate-koppen-beck-v1";
 
@@ -434,6 +450,13 @@ export function parseMoonLibrationEpochId(raw: string | null): MoonLibrationEpoc
   return "diagonal";
 }
 
+export function parseLunarEclipsePhaseId(raw: string | null): LunarEclipsePhaseId | null {
+  if (raw && raw in LUNAR_ECLIPSE_2022_PHASE_UTC) {
+    return raw as LunarEclipsePhaseId;
+  }
+  return null;
+}
+
 /** DEV-only: catalog city id, or `none` to clear the reference-city observer. */
 export function parseMoonLibrationObserverCityId(raw: string | null): "none" | string | null {
   if (raw === null || raw === "") {
@@ -557,8 +580,15 @@ export function resolveVisualScenarioSession(
     requested.startsWith("solar-eclipse-") || requested.startsWith("lunar-eclipse-")
       ? parseForecastHorizonDays(searchParams.get("horizon"))
       : null;
-  if (eclipseObserver !== null || horizonDays !== null) {
-    const config = definition.buildConfig();
+  const eclipsePhase =
+    requested === "lunar-eclipse-total" ? parseLunarEclipsePhaseId(searchParams.get("eclipsePhase")) : null;
+  if (eclipseObserver !== null || horizonDays !== null || eclipsePhase !== null) {
+    const startIsoUtc = eclipsePhase
+      ? LUNAR_ECLIPSE_2022_PHASE_UTC[eclipsePhase]
+      : definition.startIsoUtc;
+    const config = eclipsePhase
+      ? withDemoAt(startIsoUtc, applyLunarEclipseLiveScene)
+      : definition.buildConfig();
     const topBandAnchor =
       eclipseObserver === "none"
         ? ({ mode: "auto" } as const)
@@ -574,7 +604,7 @@ export function resolveVisualScenarioSession(
     return {
       kind: "applied",
       id: definition.id,
-      startIsoUtc: definition.startIsoUtc,
+      startIsoUtc,
       config: {
         ...config,
         ...(scene ? { scene } : {}),

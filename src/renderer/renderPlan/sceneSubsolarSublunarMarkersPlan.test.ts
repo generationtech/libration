@@ -16,8 +16,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
-import { buildSubsolarMarkerRenderPlan, buildSublunarMarkerRenderPlan } from "./sceneSubsolarSublunarMarkersPlan";
-import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE } from "../../core/sublunarMarkerAppearance";
+import {
+  buildSubsolarMarkerRenderPlan,
+  buildSublunarMarkerRenderPlan,
+  earthShadowScreenOffsetPx,
+} from "./sceneSubsolarSublunarMarkersPlan";
+import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE, sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 
 describe("buildSubsolarMarkerRenderPlan", () => {
   it("emits empty plan for zero viewport", () => {
@@ -193,7 +197,7 @@ describe("buildSublunarMarkerRenderPlan", () => {
     });
   });
 
-  it("paints Earth-shadow fills after phase shading and before the libration mark", () => {
+  it("paints Earth-shadow geometry after phase shading and before the libration mark", () => {
     const appearance = {
       size: "normal" as const,
       librationEnabled: true,
@@ -224,10 +228,11 @@ describe("buildSublunarMarkerRenderPlan", () => {
         offsetNorthMoonRadii: -0.4,
         outerRadiusMoonRadii: 4.5,
         innerRadiusMoonRadii: 2.6,
-        innerCoversDisc: true,
+        umbralCoverage01: 1,
+        penumbralCoverage01: 1,
       },
     });
-    expect(eclipsed.items.length).toBe(base.items.length + 2);
+    expect(eclipsed.items.length).toBeGreaterThan(base.items.length);
     const outlineIdx = eclipsed.items.length - 2;
     const librationIdx = eclipsed.items.findIndex(
       (item, i) =>
@@ -237,18 +242,194 @@ describe("buildSublunarMarkerRenderPlan", () => {
         item.stroke.includes("197, 212, 232") &&
         i < outlineIdx,
     );
-    const shadowFills = eclipsed.items
-      .map((item, i) => ({ item, i }))
-      .filter(
-        ({ item }) =>
-          item.kind === "path2d" &&
-          "fill" in item &&
-          typeof item.fill === "string" &&
-          (item.fill.includes("28, 36, 64") || item.fill.includes("110, 36, 24")),
+    const moonR = sublunarMarkerRadiusPx(400, "normal");
+    const shadowIdx = eclipsed.items.findIndex(
+      (item, i) =>
+        i > 1 &&
+        i < librationIdx &&
+        ((item.kind === "radialGradientFill" &&
+          Math.abs(item.clipR - moonR) < 0.01 &&
+          (item.x0 !== item.clipCx || item.y0 !== item.clipCy)) ||
+          (item.kind === "path2d" &&
+            "fill" in item &&
+            typeof item.fill === "string" &&
+            item.fill.includes("12, 10, 22"))),
+    );
+    expect(shadowIdx).toBeGreaterThan(1);
+    expect(librationIdx).toBeGreaterThan(shadowIdx);
+    expect(outlineIdx).toBeGreaterThan(librationIdx);
+  });
+
+  it("keeps Earth-shadow offset spatial and scale-invariant with Moon size", () => {
+    const overlay = {
+      offsetEastMoonRadii: 0.8,
+      offsetNorthMoonRadii: 0.1,
+      outerRadiusMoonRadii: 4.2,
+      innerRadiusMoonRadii: 2.5,
+      umbralCoverage01: 0.4,
+      penumbralCoverage01: 1,
+    };
+    const small = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, size: "small", librationEnabled: false },
+      earthShadowOverlay: overlay,
+    });
+    const large = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, size: "extraLarge", librationEnabled: false },
+      earthShadowOverlay: overlay,
+    });
+    const smallR = sublunarMarkerRadiusPx(800, "small");
+    const largeR = sublunarMarkerRadiusPx(800, "extraLarge");
+    const smallG = small.items.find(
+      (item) =>
+        item.kind === "radialGradientFill" &&
+        item.clipR === smallR &&
+        item.r1 > smallR * 1.5,
+    );
+    const largeG = large.items.find(
+      (item) =>
+        item.kind === "radialGradientFill" &&
+        item.clipR === largeR &&
+        item.r1 > largeR * 1.5,
+    );
+    expect(smallG?.kind).toBe("radialGradientFill");
+    expect(largeG?.kind).toBe("radialGradientFill");
+    if (smallG?.kind === "radialGradientFill" && largeG?.kind === "radialGradientFill") {
+      const sdx = (smallG.x0 - smallG.clipCx) / smallR;
+      const sdy = (smallG.y0 - smallG.clipCy) / smallR;
+      const ldx = (largeG.x0 - largeG.clipCx) / largeR;
+      const ldy = (largeG.y0 - largeG.clipCy) / largeR;
+      expect(sdx).toBeCloseTo(ldx, 6);
+      expect(sdy).toBeCloseTo(ldy, 6);
+      expect(Math.hypot(sdx, sdy)).toBeCloseTo(Math.hypot(0.8, 0.1), 5);
+    }
+  });
+
+  it("rotates Earth-shadow offset with observer orientation", () => {
+    const overlay = {
+      offsetEastMoonRadii: 0,
+      offsetNorthMoonRadii: 1,
+      outerRadiusMoonRadii: 3,
+      innerRadiusMoonRadii: 1.8,
+      umbralCoverage01: 0.3,
+      penumbralCoverage01: 1,
+    };
+    const map = earthShadowScreenOffsetPx(0, 1, 10, 0);
+    const observer = earthShadowScreenOffsetPx(0, 1, 10, 90);
+    expect(map.dxPx).toBeCloseTo(0, 8);
+    expect(map.dyPx).toBeCloseTo(-10, 8);
+    expect(observer.dxPx).toBeCloseTo(10, 8);
+    expect(observer.dyPx).toBeCloseTo(0, 8);
+    const plan = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      librationOrientationDeg: 90,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationEnabled: false },
+      earthShadowOverlay: overlay,
+    });
+    const r = sublunarMarkerRadiusPx(400, "normal");
+    const g = plan.items.find(
+      (item) =>
+        item.kind === "radialGradientFill" &&
+        item.clipR === r &&
+        item.r1 > r * 1.5,
+    );
+    expect(g?.kind).toBe("radialGradientFill");
+    if (g?.kind === "radialGradientFill") {
+      expect(g.x0 - g.clipCx).toBeCloseTo(r, 5);
+      expect(g.y0 - g.clipCy).toBeCloseTo(0, 5);
+    }
+  });
+
+  it("does not emit umbral totality red during penumbral-only coverage", () => {
+    const plan = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationEnabled: false },
+      earthShadowOverlay: {
+        offsetEastMoonRadii: 3.2,
+        offsetNorthMoonRadii: 0,
+        outerRadiusMoonRadii: 4.5,
+        innerRadiusMoonRadii: 2.6,
+        umbralCoverage01: 0,
+        penumbralCoverage01: 0.55,
+      },
+    });
+    const red = plan.items.filter(
+      (item) =>
+        item.kind === "radialGradientFill" &&
+        item.stops.some((s) => s.color.includes("118, 38, 24") || s.color.includes("110, 36, 24")),
+    );
+    expect(red).toHaveLength(0);
+    const pen = plan.items.filter(
+      (item) => item.kind === "radialGradientFill" && item.stops.some((s) => s.color.includes("28, 36, 64")),
+    );
+    expect(pen.length).toBeGreaterThan(0);
+  });
+
+  it("keeps totality red absent in early partial umbra and present at full coverage", () => {
+    const appearance = { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationEnabled: false };
+    const early = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance,
+      earthShadowOverlay: {
+        offsetEastMoonRadii: 1.4,
+        offsetNorthMoonRadii: 0,
+        outerRadiusMoonRadii: 4.5,
+        innerRadiusMoonRadii: 2.6,
+        umbralCoverage01: 0.35,
+        penumbralCoverage01: 1,
+      },
+    });
+    const total = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance,
+      earthShadowOverlay: {
+        offsetEastMoonRadii: 0,
+        offsetNorthMoonRadii: 0,
+        outerRadiusMoonRadii: 4.5,
+        innerRadiusMoonRadii: 2.6,
+        umbralCoverage01: 1,
+        penumbralCoverage01: 1,
+      },
+    });
+    const redOf = (plan: ReturnType<typeof buildSublunarMarkerRenderPlan>) =>
+      plan.items.filter(
+        (item) =>
+          item.kind === "radialGradientFill" &&
+          item.stops.some((s) => s.color.includes("118, 38, 24")),
       );
-    expect(shadowFills.length).toBe(2);
-    expect(librationIdx).toBeGreaterThan(shadowFills[1]!.i);
-    expect(shadowFills[0]!.i).toBeGreaterThan(1);
+    expect(redOf(early)).toHaveLength(0);
+    expect(redOf(total).length).toBeGreaterThan(0);
   });
 
   it("emits a clipped ring at disc center for zero libration", () => {

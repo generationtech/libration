@@ -15,6 +15,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0007](0007-overlay-readability-derived-not-sampled.md) | Overlay readability derived upstream, not sampled |
 | [0008](0008-bundled-nasa-solar-eclipse-authority.md) | Bundled NASA solar eclipse authority independent of ambient astronomy |
 | [0010](0010-eclipse-events-global-circumstances-derived.md) | Eclipse events are global; reference-city circumstances are derived |
+| [0011](0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md) | Lunar-eclipse moonlight attenuation is physical illumination |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

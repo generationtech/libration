@@ -46,6 +46,7 @@ import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   EQUIRECT_REGION_OVERLAY_KIND,
+  type EquirectRegionAvoidDisc,
   type EquirectRegionFill,
   type EquirectRegionLabel,
   type EquirectRegionOverlayPayload,
@@ -93,6 +94,7 @@ export function createLunarEclipseLayer(
       const fills: EquirectRegionFill[] = [];
       const strokes: EquirectRegionStroke[] = [];
       const labels: EquirectRegionLabel[] = [];
+      const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
       const activeLunar = presentedActiveLunar(frame, presentation);
       if (frame.support.supported && activeLunar && frame.lunarGeometry) {
         const moon = sublunarPoint(time.now);
@@ -197,6 +199,11 @@ export function createLunarEclipseLayer(
                 primary.lifecycle === "active" ? moon.lonDeg : primary.event.zenithLonDeg,
             }),
           );
+          labelAvoidDiscs.push({
+            latDeg: primary.lifecycle === "active" ? moon.latDeg : primary.event.zenithLatDeg,
+            lonDeg: primary.lifecycle === "active" ? moon.lonDeg : primary.event.zenithLonDeg,
+            haloMultiplier: 2.4,
+          });
         }
       }
       const readabilityFrame = getOverlayReadabilityFrameOrCompute(time);
@@ -204,7 +211,7 @@ export function createLunarEclipseLayer(
         kind: EQUIRECT_REGION_OVERLAY_KIND,
         fills,
         strokes,
-        ...(labels.length > 0 ? { labels } : {}),
+        ...(labels.length > 0 ? { labels, labelAvoidDiscs } : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: readabilityFrame.substrateOverlayReadabilityLiftScale01,

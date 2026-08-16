@@ -54,6 +54,25 @@ describe("equirect region RenderPlan", () => {
     expect(texts[0]).toMatchObject({ text: "Total solar eclipse", x: 180, y: 90 });
   });
 
+  it("offsets a label that intersects a glyph avoid disc", () => {
+    const plan = buildEquirectRegionOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        labels: [{ latDeg: 0, lonDeg: 0, text: "Total lunar eclipse" }],
+        labelAvoidDiscs: [{ latDeg: 0, lonDeg: 0, haloMultiplier: 2.4 }],
+      }),
+    });
+    const texts = plan.items.filter((item) => item.kind === "text");
+    expect(texts).toHaveLength(1);
+    expect(texts[0]?.kind).toBe("text");
+    if (texts[0]?.kind === "text") {
+      expect(texts[0].x).not.toBe(180);
+      expect(texts[0].textAlign).toBe("left");
+    }
+  });
+
   it("emits nothing for an empty payload", () => {
     const plan = buildEquirectRegionOverlayRenderPlan({
       viewportWidthPx: 360,

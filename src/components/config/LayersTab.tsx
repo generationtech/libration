@@ -72,9 +72,6 @@ import {
   type SublunarMarkerSizeId,
 } from "../../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
-import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
-import { displayTimeModeFromTopBandTimeMode } from "../../core/displayTimeMode";
-import { REFERENCE_CITIES } from "../../data/referenceCities";
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
@@ -498,14 +495,6 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
     observerLocation === null;
   const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
-  const eclipseCityName =
-    observerLocation !== null
-      ? (REFERENCE_CITIES.find((c) => c.id === observerLocation.cityId)?.name ?? observerLocation.cityId)
-      : "";
-  const eclipseTimeZone = resolveReferenceFrameCivilTimeZone(config.chrome.displayTime);
-  const eclipseDisplayTimeMode = displayTimeModeFromTopBandTimeMode(
-    config.chrome.displayTime.topBandMode,
-  );
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1397,11 +1386,6 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
         <EclipseSystemSection
           config={config}
           updateConfig={updateConfig}
-          productInstantMs={productInstantMs}
-          observerLocation={observerLocation}
-          cityName={eclipseCityName}
-          timeZone={eclipseTimeZone}
-          displayTimeMode={eclipseDisplayTimeMode}
         />
         <ConfigControlRow label="Lunar ground track past">
           <select

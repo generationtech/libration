@@ -49,6 +49,8 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   sublunarLatDeg: number;
   sublunarLonDeg: number;
   lunarIlluminatedFraction: number;
+  /** 0–1 scalar on ordinary moonlight; omitted means 1. */
+  moonlightTransmission01?: number;
   layerOpacity: number;
   moonlightPolicy: MoonlightPolicy;
   /**
@@ -146,6 +148,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
         {
           lunarDot,
           lunarIlluminatedFraction: options.lunarIlluminatedFraction,
+          moonlightTransmission01: options.moonlightTransmission01,
         },
         options.moonlightPolicy,
         emissiveInputs,

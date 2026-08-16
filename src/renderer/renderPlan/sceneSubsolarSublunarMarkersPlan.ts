@@ -41,11 +41,6 @@ import {
   sublunarMarkerRadiusPx,
   type SublunarMarkerAppearance,
 } from "../../core/sublunarMarkerAppearance";
-import {
-  LUNAR_ECLIPSE_PENUMBRA_FILL,
-  LUNAR_ECLIPSE_TOTALITY_FILL,
-  LUNAR_ECLIPSE_UMBRA_FILL,
-} from "../../core/eclipse/lunarEclipseAppearance";
 import type { EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
 
 function mapLatToY(latDeg: number, viewportHeightPx: number): number {
@@ -266,6 +261,7 @@ export function buildSublunarMarkerRenderPlan(options: {
       cy,
       r,
       overlay: options.earthShadowOverlay,
+      orientationDeg: options.librationOrientationDeg ?? 0,
     });
   }
 
@@ -387,6 +383,25 @@ function pushLibrationIndicator(
   );
 }
 
+/**
+ * Map-oriented Earth-shadow offset (east right, north up) rotated by the same
+ * observer χ used for the libration mark. Screen y increases downward.
+ */
+export function earthShadowScreenOffsetPx(
+  offsetEastMoonRadii: number,
+  offsetNorthMoonRadii: number,
+  moonRadiusPx: number,
+  orientationDeg: number,
+): { dxPx: number; dyPx: number } {
+  return rotateLibrationOffsetPx(
+    {
+      dxPx: offsetEastMoonRadii * moonRadiusPx,
+      dyPx: -offsetNorthMoonRadii * moonRadiusPx,
+    },
+    orientationDeg,
+  );
+}
+
 function pushEarthShadowOverlay(
   items: RenderPlan["items"],
   args: {
@@ -394,29 +409,70 @@ function pushEarthShadowOverlay(
     cy: number;
     r: number;
     overlay: EarthShadowOverlayAppearance;
+    orientationDeg: number;
   },
 ): void {
   const clip = clipPayloadDescriptor(circlePathDescriptor(args.cx, args.cy, args.r));
-  const sx = args.cx + args.overlay.offsetEastMoonRadii * args.r;
-  const sy = args.cy - args.overlay.offsetNorthMoonRadii * args.r;
+  const offset = earthShadowScreenOffsetPx(
+    args.overlay.offsetEastMoonRadii,
+    args.overlay.offsetNorthMoonRadii,
+    args.r,
+    args.orientationDeg,
+  );
+  const sx = args.cx + offset.dxPx;
+  const sy = args.cy + offset.dyPx;
   const outerR = Math.max(0, args.overlay.outerRadiusMoonRadii * args.r);
   const innerR = Math.max(0, args.overlay.innerRadiusMoonRadii * args.r);
-  if (outerR > 0.5) {
-    items.push(
-      createPath2DItem({
-        path: circlePath2D(sx, sy, outerR),
-        fill: LUNAR_ECLIPSE_PENUMBRA_FILL,
-        clip,
-      }),
-    );
+  const umbral = Math.max(0, Math.min(1, args.overlay.umbralCoverage01));
+  const penumbral = Math.max(0, Math.min(1, args.overlay.penumbralCoverage01));
+  if (outerR > 0.5 && penumbral > 0.001) {
+    const penAlpha = 0.08 + 0.14 * penumbral;
+    const coreR = innerR > 0.5 ? Math.min(innerR, outerR * 0.92) : outerR * 0.35;
+    items.push({
+      kind: "radialGradientFill",
+      x0: sx,
+      y0: sy,
+      r0: Math.max(0, coreR * 0.35),
+      x1: sx,
+      y1: sy,
+      r1: outerR,
+      stops: [
+        { offset: 0, color: `rgba(24, 30, 52, ${penAlpha.toFixed(3)})` },
+        { offset: 0.62, color: `rgba(28, 36, 64, ${(penAlpha * 0.42).toFixed(3)})` },
+        { offset: 1, color: "rgba(28, 36, 64, 0)" },
+      ],
+      clipCx: args.cx,
+      clipCy: args.cy,
+      clipR: args.r,
+    });
   }
-  if (innerR > 0.5) {
+  if (innerR > 0.5 && umbral > 0.001) {
     items.push(
       createPath2DItem({
         path: circlePath2D(sx, sy, innerR),
-        fill: args.overlay.innerCoversDisc ? LUNAR_ECLIPSE_TOTALITY_FILL : LUNAR_ECLIPSE_UMBRA_FILL,
+        fill: `rgba(12, 10, 22, ${(0.4 + 0.32 * umbral).toFixed(3)})`,
         clip,
       }),
     );
+    const redA = 0.52 * Math.pow(umbral, 2.6);
+    if (redA > 0.08) {
+      items.push({
+        kind: "radialGradientFill",
+        x0: sx,
+        y0: sy,
+        r0: 0,
+        x1: sx,
+        y1: sy,
+        r1: innerR,
+        stops: [
+          { offset: 0, color: `rgba(118, 38, 24, ${redA.toFixed(3)})` },
+          { offset: 0.55, color: `rgba(88, 28, 20, ${(redA * 0.7).toFixed(3)})` },
+          { offset: 1, color: `rgba(48, 16, 14, ${(redA * 0.18).toFixed(3)})` },
+        ],
+        clipCx: args.cx,
+        clipCy: args.cy,
+        clipR: args.r,
+      });
+    }
   }
 }

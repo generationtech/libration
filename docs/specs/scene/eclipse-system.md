@@ -4,7 +4,7 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). E5 (live alignment / beam presentation) is **production** as of [LIB-018](../../work/LIB-018-eclipse-alignment-beam.md). E6 (configuration completeness, event information, and product polish) is **production** as of [LIB-019](../../work/LIB-019-eclipse-product-polish.md). Lunar forecasting and product-surface reconciliation are **production** as of [LIB-020](../../work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md). Current behaviour lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). The planned E1–E6 Eclipse System sequence is complete; LIB-020 is not E7. Remaining eclipse ideas stay unapproved in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). This file remains the intended architecture; it is not a work-item queue.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). E4 (reference-city eclipse circumstances) is **production** as of [LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md). E5 (live alignment / beam presentation) is **production** as of [LIB-018](../../work/LIB-018-eclipse-alignment-beam.md). E6 (configuration completeness, event information, and product polish) is **production** as of [LIB-019](../../work/LIB-019-eclipse-product-polish.md). Lunar forecasting and product-surface reconciliation are **production** as of [LIB-020](../../work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md). [LIB-021](../../work/LIB-021-lunar-eclipse-visual-reconciliation.md) is a post-LIB-020 presentation reconciliation (map info panel, moonlight attenuation, spatial Earth-shadow, label glyph avoidance); it is not E7. Current behaviour lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). Remaining eclipse ideas stay unapproved in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). This file remains the intended architecture; it is not a work-item queue.
 
 Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs). E3 production notes are in [§10](#10-lunar-eclipse-map-architecture) and [§22.16](#2216-e3-inputs).
 
@@ -408,6 +408,10 @@ The spherical Moon-above-horizon contour is the same geometric object the backlo
 
 **Recommendation:** do **not** require a separate Lunar Visibility LIB before lunar eclipse presentation. Implement the contour as part of lunar-eclipse geometry (or a small shared helper introduced in that slice). Shipping it as a continuous ambient overlay remains a separate product decision.
 
+### Shipped presentation (LIB-021)
+
+The Moon glyph receives spatial Earth-shadow geometry (clipped penumbra/umbra circles in the same observer frame as libration), not whole-disc grey/dark/red state tints. Ordinary moonlight in the planetary illumination raster is multiplied by a coverage-derived transmission scalar even when lunar overlay presentation is off ([ADR 0011](../../decisions/0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md)). The Moon-visible region is a dark informational overlay, not a moonlight lift. Live event rows belong in the lower-right map information panel, not Layers.
+
 ---
 
 ## 11. Live alignment / beam (“Mars Attacks”)
@@ -449,7 +453,7 @@ E4 ([LIB-017](../../work/LIB-017-reference-city-eclipse-circumstances.md)) imple
 
 Global event existence **never** depends on these fields.
 
-No separate eclipse lat/lon picker. Inspectable Layers details and optional bottom-HUD status are production as of LIB-017.
+No separate eclipse lat/lon picker. Local circumstances belong in the lower-right eclipse information panel (gated by Event information and Reference-city eclipse details). Optional bottom-HUD status remains independent.
 
 ---
 
@@ -595,7 +599,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Goal:** Local visibility, contacts, maximum, altitudes, magnitude/obscuration where the authority allows — solar and lunar — using the existing city.
 - **Dependencies:** E1 (solar) and E3 (lunar).
 - **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
-- **User-visible:** Observer information on the existing reference city (Layers inspectable details + optional bottom-HUD status). No second location system.
+- **User-visible:** Observer information on the existing reference city (lower-right eclipse information panel + optional bottom-HUD status). No second location system.
 - **Principal risks:** Letting city visibility filter global events; inventing UI surface area.
 - **Completion evidence:** City-in vs city-out fixtures; global event still resolves when the city cannot see it.
 

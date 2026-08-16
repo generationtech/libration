@@ -42,6 +42,16 @@ export type EquirectRegionLabel = {
 };
 
 /**
+ * Screen-halo discs that labels should avoid. `haloMultiplier` scales the larger
+ * of the extra-large Moon disc and the Sun glow at the current viewport.
+ */
+export type EquirectRegionAvoidDisc = {
+  readonly latDeg: number;
+  readonly lonDeg: number;
+  readonly haloMultiplier: number;
+};
+
+/**
  * Seam-aware geographic fills, strokes, and optional labels in lat/lon. Canvas
  * must not interpret astronomy; it only executes the projected primitives.
  */
@@ -50,6 +60,7 @@ export type EquirectRegionOverlayPayload = {
   readonly fills: readonly EquirectRegionFill[];
   readonly strokes: readonly EquirectRegionStroke[];
   readonly labels?: readonly EquirectRegionLabel[];
+  readonly labelAvoidDiscs?: readonly EquirectRegionAvoidDisc[];
   readonly readability?: OverlayReadabilityHints;
 };
 
@@ -105,6 +116,24 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
         return false;
       }
       if (g.fill !== undefined && typeof g.fill !== "string") {
+        return false;
+      }
+    }
+  }
+  if (o.labelAvoidDiscs !== undefined) {
+    if (!Array.isArray(o.labelAvoidDiscs)) {
+      return false;
+    }
+    for (const disc of o.labelAvoidDiscs) {
+      if (disc === null || typeof disc !== "object") {
+        return false;
+      }
+      const g = disc as Record<string, unknown>;
+      if (
+        typeof g.latDeg !== "number" ||
+        typeof g.lonDeg !== "number" ||
+        typeof g.haloMultiplier !== "number"
+      ) {
         return false;
       }
     }

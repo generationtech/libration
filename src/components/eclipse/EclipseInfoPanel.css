@@ -1,0 +1,120 @@
+.eclipse-info-overlay {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 3.15rem;
+  z-index: 25;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  pointer-events: none;
+}
+
+.eclipse-info-overlay--config-open {
+  right: calc(min(22rem, 40vw) + 0.85rem);
+}
+
+.eclipse-info-panel,
+.eclipse-info-chip {
+  pointer-events: auto;
+}
+
+.eclipse-info-panel {
+  box-sizing: border-box;
+  max-height: min(42vh, 28rem);
+  overflow: auto;
+  padding: 0.7rem 0.8rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(186, 206, 232, 0.28);
+  background: rgba(12, 16, 28, 0.9);
+  color: rgba(236, 240, 248, 0.94);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.eclipse-info-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+}
+
+.eclipse-info-panel__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgba(245, 248, 255, 0.96);
+}
+
+.eclipse-info-panel__close,
+.eclipse-info-chip {
+  margin: 0;
+  padding: 0.18rem 0.42rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: 5px;
+  border: 1px solid rgba(186, 206, 232, 0.32);
+  background: rgba(28, 36, 54, 0.92);
+  color: rgba(236, 240, 248, 0.94);
+  box-shadow: none;
+}
+
+.eclipse-info-panel__close:hover,
+.eclipse-info-chip:hover {
+  background: rgba(40, 50, 72, 0.96);
+}
+
+.eclipse-info-panel__unsupported {
+  margin: 0;
+}
+
+.eclipse-info-panel__rows {
+  margin: 0;
+}
+
+.eclipse-info-panel__row {
+  display: grid;
+  grid-template-columns: minmax(6.2rem, 38%) 1fr;
+  gap: 0.35rem 0.55rem;
+  padding: 0.12rem 0;
+}
+
+.eclipse-info-panel__row dt {
+  margin: 0;
+  color: rgba(186, 200, 220, 0.78);
+  font-weight: 500;
+}
+
+.eclipse-info-panel__row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.eclipse-info-panel [data-testid="eclipse-circumstances-details"] {
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(186, 206, 232, 0.16);
+}
+
+.eclipse-info-panel .config-control-row {
+  display: grid;
+  grid-template-columns: minmax(6.2rem, 38%) 1fr;
+  gap: 0.35rem 0.55rem;
+  padding: 0.12rem 0;
+  align-items: start;
+}
+
+.eclipse-info-panel .config-control-row__label {
+  color: rgba(186, 200, 220, 0.78);
+}
+
+.eclipse-info-panel .config-control-row__slot {
+  color: rgba(236, 240, 248, 0.94);
+  overflow-wrap: anywhere;
+}
+
+.eclipse-info-chip {
+  display: inline-flex;
+  align-items: center;
+}

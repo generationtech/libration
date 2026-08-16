@@ -27,27 +27,18 @@ import {
   referenceCityEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
 } from "../../config/v2/sceneConfig";
-import {
-  ASTRONOMY_PATH_THICKNESS_IDS,
-  type AstronomyPathThicknessId,
-} from "../../core/astronomyOverlayStrokeAppearance";
-import type { DisplayTimeMode } from "../../core/chromeTimeDomain";
+import type { AstronomyPathThicknessId } from "../../core/astronomyOverlayStrokeAppearance";
+import { ASTRONOMY_PATH_THICKNESS_IDS } from "../../core/astronomyOverlayStrokeAppearance";
 import {
   ECLIPSE_ALIGNMENT_INTENSITY_IDS,
   eclipseAlignmentIntensityLabel,
 } from "../../core/eclipse/eclipseAlignmentAppearance";
-import { buildEclipseEventInformation } from "../../core/eclipse/eclipseEventInformation";
-import { resolveEclipseFrame } from "../../core/eclipse/eclipseEventService";
 import { ECLIPSE_FILL_OPACITY_MAX, ECLIPSE_FILL_OPACITY_MIN } from "../../core/eclipse/eclipseStyle";
-import { resolveReferenceCityEclipseCircumstances } from "../../core/eclipse/referenceCityEclipseCircumstances";
 import {
   forecastHorizonLabel,
-  forecastHorizonMsFromDays,
   SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
 } from "../../core/eclipse/solarEclipseAppearance";
-import type { ReferenceCityObserverLocation } from "../../core/referenceCityObserver";
 import { ConfigControlRow } from "./ConfigControlRow";
-import { EclipseEventInformation } from "./EclipseEventInformation";
 
 type UpdateConfig = (updater: (draft: LibrationConfigV2) => void) => void;
 
@@ -68,11 +59,6 @@ function patchScene(
 export function EclipseSystemSection(props: {
   config: LibrationConfigV2;
   updateConfig?: UpdateConfig;
-  productInstantMs?: number;
-  observerLocation: ReferenceCityObserverLocation | null;
-  cityName: string;
-  timeZone: string;
-  displayTimeMode: DisplayTimeMode;
 }): ReactElement {
   const { config, updateConfig } = props;
   const mutable = Boolean(updateConfig);
@@ -87,31 +73,6 @@ export function EclipseSystemSection(props: {
   const liveOnly = solar.forecastHorizonDays === 0;
   const lunarLiveOnly = lunar.forecastHorizonDays === 0;
   const alignmentChildrenOff = !alignment.enabled;
-  const horizonMs = solarOn ? forecastHorizonMsFromDays(solar.forecastHorizonDays) : 0;
-  const lunarHorizonMs = lunarOn ? forecastHorizonMsFromDays(lunar.forecastHorizonDays) : 0;
-  const frame =
-    props.productInstantMs !== undefined
-      ? resolveEclipseFrame(props.productInstantMs, { horizonMs, lunarHorizonMs })
-      : null;
-  const circumstances =
-    frame && circumstancesPres.detailsEnabled
-      ? resolveReferenceCityEclipseCircumstances(frame, props.observerLocation)
-      : null;
-  const hasEclipseEvent = Boolean(
-    frame?.activeSolar ||
-      frame?.activeLunar ||
-      (frame?.upcomingSolar.length ?? 0) > 0 ||
-      (frame?.upcomingLunar.length ?? 0) > 0,
-  );
-  const view = buildEclipseEventInformation({
-    frame,
-    solarEnabled: solarOn,
-    lunarEnabled: lunarOn,
-    solar,
-    lunar,
-    info: infoPres,
-    circumstances,
-  });
 
   return (
     <>
@@ -119,7 +80,8 @@ export function EclipseSystemSection(props: {
         <legend className="config-fieldset__legend">Eclipses</legend>
         <p className="config-section__hint">
           Global eclipse geography is independent of the reference city. Nothing is drawn on
-          ordinary dates when no event is relevant.
+          ordinary dates when no event is relevant. Live event details appear in a compact
+          lower-right map panel, not in this list.
         </p>
         <ConfigControlRow label="Event information">
           <input
@@ -130,7 +92,7 @@ export function EclipseSystemSection(props: {
             disabled={!mutable}
             tabIndex={mutable ? 0 : -1}
             aria-label="Event information"
-            title="Inspectable description of the current or upcoming eclipse. Does not filter the global map."
+            title="Lower-right map panel describing the current or upcoming eclipse. Does not filter the global map."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -478,7 +440,7 @@ export function EclipseSystemSection(props: {
             disabled={!mutable}
             tabIndex={mutable ? 0 : -1}
             aria-label="Reference-city eclipse details"
-            title="Inspectable local eclipse circumstances for the chrome reference city."
+            title="Include local circumstances in the lower-right eclipse information panel."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -513,16 +475,6 @@ export function EclipseSystemSection(props: {
             }
           />
         </ConfigControlRow>
-        <EclipseEventInformation
-          view={view}
-          circumstances={view.circumstances ?? circumstances}
-          observerUnavailable={props.observerLocation === null && hasEclipseEvent}
-          cityName={props.cityName}
-          timeZone={props.timeZone}
-          displayTimeMode={props.displayTimeMode}
-          detailsEnabled={circumstancesPres.detailsEnabled}
-          eventInformationEnabled={infoPres.eventInformationEnabled}
-        />
       </fieldset>
 
       <fieldset className="config-fieldset config-fieldset--plain">

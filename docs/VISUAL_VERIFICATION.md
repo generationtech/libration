@@ -89,7 +89,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon. Optional DEV `observerCity=` | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon. Optional DEV `observerCity=` | Partial forecast region; no fabricated central corridor |
 | `solar-eclipse-forecast-multiple` | `2023-10-01T00:00:00.000Z` | 365-day horizon with more than one upcoming solar eclipse. Optional DEV `observerCity=` | Multi-event density; nearest event emphasized |
-| `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total). Optional DEV `observerCity=knoxville\|tokyo\|none` | Earth-shadow on the Moon glyph; Moon-up visibility region **must not change when observerCity changes**; **lunar alignment axis toward the Moon, not a terrestrial path**; Knoxville locally visible vs Tokyo GE below horizon |
+| `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total). Optional DEV `observerCity=knoxville\|tokyo\|none`. Optional DEV `eclipsePhase=pre\|penumbral\|partial\|nearTotal\|total\|egress` selects a 2022-05-16 station (P1 01:32:08Z, U1 02:27:53Z, U2 03:29:02Z, GE 04:11:29Z, U3 04:53:56Z, U4 05:55:05Z, P4 06:50:50Z) | Earth-shadow on the Moon glyph; Moon-up visibility region **must not change when observerCity changes**; **lunar alignment axis toward the Moon, not a terrestrial path**; Knoxville locally visible vs Tokyo GE below horizon; moonlight attenuation and spatial umbra bite |
 | `lunar-eclipse-partial` | `2008-08-16T21:10:06.000Z` | Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial). Optional DEV `observerCity=` | Partial umbra only; no false totality tint; visibility region still present; alignment axis weaker than totality |
 | `lunar-eclipse-horizon` | `2015-04-04T12:00:15.000Z` | Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith). Optional DEV `observerCity=` | Broad Moon-up hemisphere near ±180°; no inverted fill |
 | `lunar-eclipse-forecast-total` | `2022-05-13T04:00:00.000Z` | Upcoming 2022 May 16 total, 7-day lunar forecast horizon, three days before greatest eclipse. Optional DEV `observerCity=` `horizon=` | Quiet GE Moon-visible region; no Earth-shadow Moon treatment; no lunar alignment beam; event label/info/status; Knoxville locally visible vs Tokyo not visible without changing global geography |
@@ -105,6 +105,17 @@ Existing eclipse scenarios accept optional DEV `observerCity=` (same catalog ids
 Reuse the existing eclipse catalog. Do not add a second scenario family for labels, event information, or styling.
 
 ### Eclipse reconciliation (LIB-020)
+
+### Lunar eclipse visual reconciliation (LIB-021)
+
+When inspecting the post-LIB-020 visual reconciliation:
+
+- Confirm Layers during `lunar-eclipse-forecast-total` or `lunar-eclipse-total` contains only controls and helper copy — no Event / Date / Greatest eclipse / magnitude readout rows.
+- Confirm Event information ON shows a compact lower-right map panel; OFF removes it. Labels and persistent status stay independent.
+- Confirm the panel does not overlap the lower-left HUD. When Config is open, the panel sits left of the Config shell.
+- Confirm `lunar-eclipse-total&eclipsePhase=pre` is an ordinary near-full Moon; `penumbral` is a soft one-sided darkening; `partial` keeps a bright uneclipsed region with a curved umbral bite; `total` is restrained red/brown with readable libration; `egress` restores.
+- Confirm night-side moonlight does not brighten when the eclipse begins; totality is darker than pre-eclipse; the Moon-visible region remains distinguishable without lifting the dark hemisphere.
+- Confirm `Total lunar eclipse` map text does not run through the Moon glyph/halo, and that Event labels OFF still removes it.
 
 When inspecting the post-E6 reconciliation:
 

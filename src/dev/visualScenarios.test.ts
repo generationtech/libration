@@ -312,6 +312,27 @@ describe("resolveVisualScenarioSession", () => {
     }
   });
 
+  it("accepts DEV eclipsePhase stations on the 2022 total lunar eclipse scenario", () => {
+    const partial = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-total&eclipsePhase=partial",
+    });
+    expect(partial.kind).toBe("applied");
+    if (partial.kind === "applied") {
+      expect(partial.startIsoUtc).toBe("2022-05-16T02:50:00.000Z");
+      expect(partial.config.data.demoTime.startIsoUtc).toBe("2022-05-16T02:50:00.000Z");
+      expect(partial.config.layers.lunarEclipse).toBe(true);
+    }
+    const pre = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-total&eclipsePhase=pre",
+    });
+    expect(pre.kind).toBe("applied");
+    if (pre.kind === "applied") {
+      expect(pre.startIsoUtc).toBe("2022-05-16T01:20:00.000Z");
+    }
+  });
+
   it("seeds lunar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {
     for (const id of ["lunar-eclipse-total", "lunar-eclipse-partial", "lunar-eclipse-horizon"] as const) {
       const config = VISUAL_SCENARIOS[id].buildConfig();

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-020](work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) — Eclipse reconciliation and lunar forecast (post-E6; not E7)
+[LIB-021](work/LIB-021-lunar-eclipse-visual-reconciliation.md) — Lunar eclipse visual reconciliation (info panel, moonlight attenuation, spatial Earth-shadow, label avoidance)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Stop. No approved work item. Do not start another Eclipse slice or astronomy backlog feature.
+Stop. No approved follow-up. Do not start another eclipse or astronomy item.

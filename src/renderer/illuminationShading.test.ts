@@ -520,3 +520,27 @@ describe("sampleIlluminationRgba8 emissive night lights", () => {
     expect(a).toEqual(b);
   });
 });
+
+describe("sampleIlluminationRgba8 lunar-eclipse moonlight transmission", () => {
+  function dotFromAltitudeDeg(altitudeDeg: number): number {
+    return Math.sin((altitudeDeg * Math.PI) / 180);
+  }
+  it("reduces night-side moonlight without changing the phase input", () => {
+    const solarNightDot = dotFromAltitudeDeg(-30);
+    const lunarHighDot = dotFromAltitudeDeg(65);
+    const full = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: lunarHighDot,
+      lunarIlluminatedFraction: 1,
+    });
+    const eclipsed = sampleIlluminationRgba8(solarNightDot, 1, {
+      lunarDot: lunarHighDot,
+      lunarIlluminatedFraction: 1,
+      moonlightTransmission01: 0.05,
+    });
+    const none = sampleIlluminationRgba8(solarNightDot, 1);
+    expect(full.a).toBeLessThan(none.a);
+    expect(eclipsed.a).toBeGreaterThan(full.a);
+    expect(eclipsed.a).toBeLessThanOrEqual(none.a);
+    expect(eclipsed.r + eclipsed.g + eclipsed.b).toBeLessThan(full.r + full.g + full.b);
+  });
+});

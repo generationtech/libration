@@ -35,6 +35,11 @@ export interface SolarShadingPayload {
   sublunarLatDeg: number;
   sublunarLonDeg: number;
   lunarIlluminatedFraction: number;
+  /**
+   * Scalar on the ordinary moonlight contribution (0 = extinguished, 1 = unchanged).
+   * Resolved upstream; omitted means 1.
+   */
+  moonlightTransmission01?: number;
   /** Scene-level moonlight presentation; resolved before the raster plan (not backend-owned). */
   moonlightMode: MoonlightPresentationMode;
   emissiveNightLightsMode: EmissiveNightLightsPresentationMode;
@@ -74,6 +79,8 @@ export function isSolarShadingPayload(data: unknown): data is SolarShadingPayloa
     typeof o.sublunarLatDeg === "number" &&
     typeof o.sublunarLonDeg === "number" &&
     typeof o.lunarIlluminatedFraction === "number" &&
+    (o.moonlightTransmission01 === undefined ||
+      (typeof o.moonlightTransmission01 === "number" && Number.isFinite(o.moonlightTransmission01))) &&
     typeof o.moonlightMode === "string" &&
     isMoonlightPresentationMode(o.moonlightMode) &&
     typeof o.emissiveNightLightsMode === "string" &&

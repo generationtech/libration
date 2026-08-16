@@ -80,6 +80,7 @@ describe("lunar eclipse layer", () => {
       expect(st.data.labels).toHaveLength(1);
       expect(st.data.labels?.[0]?.text).toMatch(/Total lunar eclipse/);
       expect(st.data.labels?.[0]?.text).toMatch(/·/);
+      expect(st.data.labelAvoidDiscs).toHaveLength(1);
     }
   });
 
@@ -93,6 +94,7 @@ describe("lunar eclipse layer", () => {
     const st = layer.getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
     if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.labels ?? []).toHaveLength(0);
+      expect(st.data.labelAvoidDiscs ?? []).toHaveLength(0);
       expect(st.data.fills.length).toBe(1);
     }
   });

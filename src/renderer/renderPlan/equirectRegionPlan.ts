@@ -12,6 +12,8 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import { placeEclipseMapLabel } from "../../core/eclipse/eclipseMapLabelPlacement";
+import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import type { EquirectRegionOverlayPayload } from "../../layers/equirectRegionPayload";
 import { createDescriptorPathItem } from "./pathItemFactories";
@@ -38,6 +40,12 @@ function scaleRgba(css: string, opacity: number): string {
   }
   const a = Number(m[4]) * opacity;
   return `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${Math.max(0, Math.min(1, a)).toFixed(4)})`;
+}
+
+function avoidHaloRadiusPx(viewportWidthPx: number, haloMultiplier: number): number {
+  const moon = sublunarMarkerRadiusPx(viewportWidthPx, "extraLarge");
+  const sun = Math.min(9, Math.max(4.5, viewportWidthPx * 0.0055));
+  return Math.max(moon, sun) * Math.max(1, haloMultiplier);
 }
 
 export function buildEquirectRegionOverlayRenderPlan(
@@ -78,17 +86,34 @@ export function buildEquirectRegionOverlayRenderPlan(
   const labels = options.payload.labels ?? [];
   if (labels.length > 0) {
     const sizePx = Math.min(15, Math.max(11, w * 0.011));
+    const avoidDiscs = (options.payload.labelAvoidDiscs ?? []).map((disc) => ({
+      x: mapXFromLongitudeDeg(disc.lonDeg, w),
+      y: ((90 - disc.latDeg) / 180) * h,
+      radiusPx: avoidHaloRadiusPx(w, disc.haloMultiplier),
+    }));
     for (const label of labels) {
       if (!label.text.trim()) {
         continue;
       }
-      const x = mapXFromLongitudeDeg(label.lonDeg, w);
-      const y = ((90 - label.latDeg) / 180) * h;
+      const preferredX = mapXFromLongitudeDeg(label.lonDeg, w);
+      const preferredY = ((90 - label.latDeg) / 180) * h;
+      const placed =
+        avoidDiscs.length > 0
+          ? placeEclipseMapLabel({
+              preferredX,
+              preferredY,
+              text: label.text,
+              sizePx,
+              viewportWidthPx: w,
+              viewportHeightPx: h,
+              avoidDiscs,
+            })
+          : { x: preferredX, y: preferredY, textAlign: "center" as const, textBaseline: "middle" as const };
       const fill = label.fill ?? "rgba(245, 248, 255, 0.92)";
       const text: RenderTextItem = {
         kind: "text",
-        x,
-        y,
+        x: placed.x,
+        y: placed.y,
         text: label.text,
         fill: scaleRgba(fill, op),
         font: {
@@ -99,8 +124,8 @@ export function buildEquirectRegionOverlayRenderPlan(
           weight: 500,
           style: "normal",
         },
-        textAlign: "center",
-        textBaseline: "middle",
+        textAlign: placed.textAlign,
+        textBaseline: placed.textBaseline,
         stroke: {
           color: `rgba(8, 14, 28, ${Math.min(1, op * 0.88).toFixed(4)})`,
           widthPx: Math.max(2.2, sizePx * 0.26),

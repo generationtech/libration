@@ -117,7 +117,7 @@ See [ADR 0001](docs/decisions/0001-renderplan-as-the-renderer-boundary.md).
 
 **Consequence.** Planetary illumination — solar geometry, twilight, moonlight, emissive night lights, optional cloud participation — resolves to **one** `rasterPatch`. The backend decodes images and blits pixels; it has no illumination concepts at all.
 
-See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-rasterpatch.md).
+See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-rasterpatch.md). Lunar-eclipse suppression of ordinary moonlight is part of that same raster: a coverage-derived transmission scalar multiplies phase moonlight independently of informational eclipse overlays ([ADR 0011](docs/decisions/0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md)).
 
 ---
 

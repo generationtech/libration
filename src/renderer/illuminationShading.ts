@@ -227,6 +227,8 @@ export interface IlluminationRgba8 {
 export interface MoonlightSamplingInputs {
   lunarDot: number;
   lunarIlluminatedFraction: number;
+  /** 0–1 scalar on ordinary moonlight; omitted means 1. Does not change phase. */
+  moonlightTransmission01?: number;
 }
 
 /** Per-texel emissive composition input resolved upstream of {@link sampleIlluminationRgba8}. */
@@ -281,6 +283,10 @@ export function sampleIlluminationRgba8(
 
   const d = Math.max(-1, Math.min(1, dot));
   const altDeg = solarAltitudeDegFromSurfaceSunDotProduct(d);
+  const transmission =
+    moonlight && Number.isFinite(moonlight.moonlightTransmission01)
+      ? Math.max(0, Math.min(1, moonlight.moonlightTransmission01 as number))
+      : 1;
   const lunarStrengthRaw =
     moonlight && moonlightPolicy.contributesMoonlight
       ? moonlightStrength(
@@ -290,7 +296,7 @@ export function sampleIlluminationRgba8(
             surfaceMoonDot: Math.max(0, Math.min(1, moonlight.lunarDot)),
           },
           moonlightPolicy,
-        )
+        ) * transmission
       : 0;
   const nightStrength = illuminationNightVeil01FromSolarAltitudeDeg(altDeg);
   const cloudAttenuation =

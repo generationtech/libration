@@ -26,6 +26,7 @@ import {
 import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
+import { lunarEclipseDiscCoverage } from "../core/eclipse/lunarEclipseMoonlightTransmission";
 import { SUBLUNAR_MARKER_KIND, type EarthShadowOverlayAppearance, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
 import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
@@ -130,13 +131,15 @@ function earthShadowOverlayFromTime(
   if (!eclipseFrame.support.supported || !eclipseFrame.activeLunar || !geom || geom.phase === "none") {
     return {};
   }
+  const coverage = lunarEclipseDiscCoverage(geom);
   return {
     earthShadowOverlay: {
       offsetEastMoonRadii: geom.shadowOffsetEastMoonRadii,
       offsetNorthMoonRadii: geom.shadowOffsetNorthMoonRadii,
       outerRadiusMoonRadii: geom.penumbraRadiusMoonRadii,
-      innerRadiusMoonRadii: geom.phase === "penumbral" ? 0 : geom.umbraRadiusMoonRadii,
-      innerCoversDisc: geom.phase === "total-umbral",
+      innerRadiusMoonRadii: Math.max(0, geom.umbraRadiusMoonRadii),
+      umbralCoverage01: coverage.umbralCoverage01,
+      penumbralCoverage01: coverage.penumbralCoverage01,
     },
   };
 }
