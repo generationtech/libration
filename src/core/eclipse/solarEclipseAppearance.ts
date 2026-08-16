@@ -16,6 +16,7 @@
  * user-facing style. Default paint tokens preserve the verified E1–E5 look.
  */
 
+import { blackOrWhiteForegroundForBackgroundCss } from "../../color/contrastForegroundOnCssBackground";
 import {
   colorsEqualHex,
   DEFAULT_ASTRONOMY_PATH_THICKNESS,
@@ -33,6 +34,7 @@ export const DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_PARTIAL_REGION = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_CORRIDOR = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_FORECAST_PARTIAL_REGION = true;
+export const DEFAULT_SOLAR_ECLIPSE_SHOW_LIVE_GROUND_POSITION = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_TOTAL = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_ANNULAR = true;
 export const DEFAULT_SOLAR_ECLIPSE_SHOW_TYPE_PARTIAL = true;
@@ -46,6 +48,23 @@ export const DEFAULT_SOLAR_LIVE_CENTRAL_BAND_COLOR = "#301c5c";
 export const DEFAULT_SOLAR_LIVE_CENTRAL_BAND_OPACITY = 0.42;
 export const DEFAULT_SOLAR_LIVE_PARTIAL_COLOR = "#5c4aa8";
 export const DEFAULT_SOLAR_LIVE_PARTIAL_OPACITY = 0.18;
+/** Warm vermilion locator — distinct from corridor violet, Sun gold, Moon, and city-pin blue. */
+export const DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR = "#d45a3c";
+
+export const SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS = ["small", "normal", "large", "extraLarge"] as const;
+export type SolarEclipseGroundPositionSizeId = (typeof SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS)[number];
+export const DEFAULT_SOLAR_ECLIPSE_GROUND_POSITION_SIZE: SolarEclipseGroundPositionSizeId = "normal";
+
+const GROUND_POSITION_SIZE_SCALE: Record<SolarEclipseGroundPositionSizeId, number> = {
+  small: 0.7,
+  normal: 1,
+  large: 1.45,
+  extraLarge: 1.9,
+};
+
+/** Same automatic under-ring neutrals as the libration mark — not a user setting. */
+export const SOLAR_ECLIPSE_GROUND_POSITION_UNDERSTROKE_DARK_RGB = "18, 26, 40";
+export const SOLAR_ECLIPSE_GROUND_POSITION_UNDERSTROKE_LIGHT_RGB = "236, 240, 246";
 
 export const SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS = [0, 1, 3, 7, 14, 30, 90, 365] as const;
 export type SolarEclipseForecastHorizonDays = (typeof SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS)[number];
@@ -97,6 +116,9 @@ export type SolarEclipsePresentation = {
   readonly liveCentralBandOpacity: number;
   readonly livePartialColor: string;
   readonly livePartialOpacity: number;
+  readonly showLiveGroundPosition: boolean;
+  readonly liveGroundPositionColor: string;
+  readonly liveGroundPositionSize: SolarEclipseGroundPositionSizeId;
 };
 
 function flag(raw: unknown, fallback: boolean): boolean {
@@ -154,6 +176,59 @@ export function normalizeSolarEclipsePresentation(
       raw?.livePartialOpacity,
       DEFAULT_SOLAR_LIVE_PARTIAL_OPACITY,
     ),
+    showLiveGroundPosition: flag(raw?.showLiveGroundPosition, DEFAULT_SOLAR_ECLIPSE_SHOW_LIVE_GROUND_POSITION),
+    liveGroundPositionColor: normalizeEclipseColorHex(
+      raw?.liveGroundPositionColor,
+      DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR,
+    ),
+    liveGroundPositionSize: normalizeSolarEclipseGroundPositionSizeId(raw?.liveGroundPositionSize),
+  };
+}
+
+export function normalizeSolarEclipseGroundPositionSizeId(raw: unknown): SolarEclipseGroundPositionSizeId {
+  return typeof raw === "string" &&
+    (SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS as readonly string[]).includes(raw)
+    ? (raw as SolarEclipseGroundPositionSizeId)
+    : DEFAULT_SOLAR_ECLIPSE_GROUND_POSITION_SIZE;
+}
+
+export function solarEclipseGroundPositionSizeLabel(id: SolarEclipseGroundPositionSizeId): string {
+  if (id === "extraLarge") {
+    return "Extra large";
+  }
+  return id[0]!.toUpperCase() + id.slice(1);
+}
+
+export function solarEclipseGroundPositionRadiusScale(
+  size: SolarEclipseGroundPositionSizeId = DEFAULT_SOLAR_ECLIPSE_GROUND_POSITION_SIZE,
+): number {
+  return GROUND_POSITION_SIZE_SCALE[normalizeSolarEclipseGroundPositionSizeId(size)];
+}
+
+export type SolarEclipseGroundPositionPaint = {
+  readonly radiusScale: number;
+  readonly fill: string;
+  readonly stroke: string;
+  readonly underStroke: string;
+  readonly haloFill: string;
+};
+
+export function resolveSolarEclipseGroundPositionPaint(
+  presentation: SolarEclipsePresentation,
+): SolarEclipseGroundPositionPaint {
+  const hex = presentation.liveGroundPositionColor;
+  const underKind =
+    blackOrWhiteForegroundForBackgroundCss(hex) === "#000000" ? "dark" : "light";
+  const underRgb =
+    underKind === "dark"
+      ? SOLAR_ECLIPSE_GROUND_POSITION_UNDERSTROKE_DARK_RGB
+      : SOLAR_ECLIPSE_GROUND_POSITION_UNDERSTROKE_LIGHT_RGB;
+  return {
+    radiusScale: solarEclipseGroundPositionRadiusScale(presentation.liveGroundPositionSize),
+    fill: hexToRgba(hex, 0.96),
+    stroke: hexToRgba(hex, 1),
+    underStroke: `rgba(${underRgb}, 0.88)`,
+    haloFill: hexToRgba(hex, 0.16),
   };
 }
 
@@ -199,8 +274,10 @@ export const SOLAR_ECLIPSE_FORECAST_CENTERLINE_STROKE = "rgba(236, 220, 255, 0.6
 export const SOLAR_ECLIPSE_FORECAST_CENTERLINE_WIDTH_PX = 1.4;
 export const SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE = "rgba(220, 208, 255, 0.38)";
 export const SOLAR_ECLIPSE_FORECAST_CORRIDOR_STROKE_WIDTH_PX = 1.0;
-export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL = "rgba(72, 48, 140, 0.12)";
-export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL = "rgba(176, 96, 36, 0.10)";
+/** Active corridor fill stays ~80% of upcoming so the path remains context, not absent. */
+export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL = "rgba(72, 48, 140, 0.22)";
+export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL = "rgba(176, 96, 36, 0.19)";
+export const SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE = "rgba(220, 208, 255, 0.52)";
 
 export function scaleRgbaAlpha(css: string, factor: number): string {
   const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$/.exec(css);
@@ -241,6 +318,7 @@ export type SolarEclipsePaint = {
   readonly forecastCorridorStrokeWidthPx: number;
   readonly activeCorridorUmbraFill: string;
   readonly activeCorridorAntumbraFill: string;
+  readonly activeCorridorStroke: string;
   readonly livePartialFill: string;
   readonly liveUmbraFill: string;
   readonly liveAntumbraFill: string;
@@ -285,10 +363,13 @@ export function resolveSolarEclipsePaint(presentation: SolarEclipsePresentation)
         ),
     activeCorridorUmbraFill: forecastDefault
       ? SOLAR_ECLIPSE_ACTIVE_CORRIDOR_UMBRA_FILL
-      : hexToRgba(corridor, presentation.forecastCorridorOpacity * 0.43),
+      : hexToRgba(corridor, presentation.forecastCorridorOpacity * 0.8),
     activeCorridorAntumbraFill: forecastDefault
       ? SOLAR_ECLIPSE_ACTIVE_CORRIDOR_ANTUMBRA_FILL
-      : hexToRgba(corridor, presentation.forecastCorridorOpacity * 0.36),
+      : hexToRgba(corridor, presentation.forecastCorridorOpacity * 0.72),
+    activeCorridorStroke: forecastDefault
+      ? SOLAR_ECLIPSE_ACTIVE_CORRIDOR_STROKE
+      : hexToRgba(corridor, 0.52),
     livePartialFill: liveDefault
       ? SOLAR_ECLIPSE_PARTIAL_FILL
       : hexToRgba(partial, presentation.livePartialOpacity),

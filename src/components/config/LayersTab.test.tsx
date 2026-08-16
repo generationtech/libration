@@ -488,6 +488,9 @@ describe("LayersTab eclipse product polish", () => {
     await user.selectOptions(horizon, "0");
     expect((screen.getByLabelText("Forecast corridor") as HTMLInputElement).disabled).toBe(true);
     expect((screen.getByLabelText("Forecast partial region") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Forecast partial region") as HTMLInputElement).title).toMatch(
+      /Hidden once the eclipse is active/,
+    );
     expect((screen.getByLabelText("Live central line") as HTMLInputElement).disabled).toBe(false);
   });
 
@@ -533,5 +536,20 @@ describe("LayersTab eclipse product polish", () => {
     fireEvent.change(solarColor, { target: { value: "#112233" } });
     expect(solarColor.value).toBe("#112233");
     expect(lunarColor.value).toBe(beforeLunar);
+  });
+
+  it("defaults the live eclipse position marker on with size and color controls", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const toggle = screen.getByLabelText("Live eclipse position") as HTMLInputElement;
+    const size = screen.getByLabelText("Live position size") as HTMLSelectElement;
+    const color = screen.getByLabelText("Live position color") as HTMLInputElement;
+    expect(toggle.checked).toBe(true);
+    expect(size.value).toBe("normal");
+    expect(color.value).toBe("#d45a3c");
+    await user.click(toggle);
+    expect(toggle.checked).toBe(false);
+    expect(size.disabled).toBe(true);
+    expect(color.disabled).toBe(true);
   });
 });

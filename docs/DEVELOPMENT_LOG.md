@@ -154,4 +154,10 @@ Replaced the malformed LIB-022 2017 eclipse PNGs. Root cause was Chromium `Page.
 
 Verified: PIL uniqueness (no 912 px tile); visual inspection of all six; README-scale downsamples of the overview at 1200/800/600. Suite not rerun (no source changes).
 
+## 2026-08-16 — LIB-025 complete
+
+Reconciled solar eclipse presentation lifecycle. Root cause of the 2017 disappearing path: E2 dropped active corridor fill to 0.12 and hid the forecast centerline before the umbra reached Earth. Corridor now stays through globally active phases (~80% upcoming fill, stronger limits, pre/post-central centerline). Forecast GE partial is upcoming-only; live partial owns active shading. Targeted beam and ground marker exist only while a terrestrial central intersection exists. No ADR. No README recapture.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 202 files / 1888 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser: 2017 stations A–G plus 1200× playback; dateline/annular/partial scenarios; ordinary startup.
+
 

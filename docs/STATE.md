@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-023](work/LIB-023-repair-readme-screenshot-capture.md) — Repair README screenshot capture pipeline and recapture 2017 eclipse set
+[LIB-025](work/LIB-025-solar-eclipse-lifecycle-shading-reconciliation.md) — Solar eclipse lifecycle + shading presentation reconciliation
 
 ## Blockers
 
@@ -19,6 +19,10 @@ None
 
 None
 
+## Awaiting human decision
+
+[LIB-024](work/LIB-024-solar-eclipse-ground-position-marker.md) remains approved and paused. Marker implementation is in the tree; README recapture waits for an explicit request. Do not activate it from this snapshot.
+
 ## Next action
 
-Stop. No approved work. Do not edit README.md, create animation, or start another media item until a human authorizes it.
+Stop. No active item. Do not recapture README media, create animation, or start another astronomy feature until a human authorizes it.

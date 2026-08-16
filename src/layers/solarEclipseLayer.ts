@@ -31,11 +31,18 @@ import {
 import {
   forecastHorizonMsFromDays,
   normalizeSolarEclipsePresentation,
+  resolveSolarEclipseGroundPositionPaint,
   resolveSolarEclipsePaint,
   scaleRgbaAlpha,
   type SolarEclipsePaint,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
+import {
+  resolveSolarEclipsePresentationPhase,
+  solarEclipseForecastCenterlineRemainsVisible,
+  solarEclipseForecastPartialRemainsVisible,
+  type SolarEclipsePresentationPhase,
+} from "../core/eclipse/solarEclipsePresentationLifecycle";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { subsolarPoint } from "../core/subsolarPoint";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
@@ -46,6 +53,7 @@ import {
   type EquirectRegionFill,
   type EquirectRegionLabel,
   type EquirectRegionOverlayPayload,
+  type EquirectRegionPointMarker,
   type EquirectRegionStroke,
 } from "./equirectRegionPayload";
 import type { SolarEclipseForecastSelection } from "../core/eclipse/solarEclipseTypes";
@@ -63,12 +71,36 @@ function corridorFill(selection: SolarEclipseForecastSelection, paint: SolarEcli
   return scaleRgbaAlpha(base, selection.prominence01);
 }
 
+function corridorStroke(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
+  if (selection.lifecycle === "active") {
+    return paint.activeCorridorStroke;
+  }
+  return scaleRgbaAlpha(paint.forecastCorridorStroke, selection.prominence01);
+}
+
 function forecastPartialFill(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
   return scaleRgbaAlpha(paint.forecastPartialFill, selection.prominence01);
 }
 
 function forecastCenterlineStroke(selection: SolarEclipseForecastSelection, paint: SolarEclipsePaint): string {
   return scaleRgbaAlpha(paint.forecastCenterlineStroke, selection.prominence01);
+}
+
+function selectionPhase(
+  selection: SolarEclipseForecastSelection,
+  productUtcMs: number,
+  activeEventId: string | null,
+  centralPointPresent: boolean,
+): SolarEclipsePresentationPhase | null {
+  return resolveSolarEclipsePresentationPhase({
+    productUtcMs,
+    event: selection.event,
+    selectionLifecycle: selection.lifecycle,
+    centralPointPresent:
+      selection.lifecycle === "active" &&
+      selection.event.id === activeEventId &&
+      centralPointPresent,
+  });
 }
 
 export function createSolarEclipseLayer(
@@ -107,11 +139,18 @@ export function createSolarEclipseLayer(
       const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
       const selections = presentedForecastSelections(frame, presentation);
       const activeSolar = presentedActiveSolar(frame, presentation);
+      const centralPointPresent = Boolean(frame.solarGeometry?.centralPoint);
       if (frame.support.supported || selections.length > 0) {
         for (const selection of selections) {
+          const phase = selectionPhase(
+            selection,
+            frame.productUtcMs,
+            activeSolar?.id ?? null,
+            centralPointPresent,
+          );
           if (
             presentation.showForecastPartialRegion &&
-            selection.lifecycle === "upcoming" &&
+            solarEclipseForecastPartialRemainsVisible(phase) &&
             selection.geometry.partialForecastRegion.length >= 4
           ) {
             fills.push({
@@ -125,7 +164,7 @@ export function createSolarEclipseLayer(
                 fills.push({ ring, fill: corridorFill(selection, paint) });
                 strokes.push({
                   points: ring,
-                  stroke: scaleRgbaAlpha(paint.forecastCorridorStroke, selection.prominence01),
+                  stroke: corridorStroke(selection, paint),
                   strokeWidthPx: paint.forecastCorridorStrokeWidthPx,
                 });
               }
@@ -133,7 +172,7 @@ export function createSolarEclipseLayer(
           }
           if (
             presentation.showCentralLine &&
-            selection.lifecycle === "upcoming" &&
+            solarEclipseForecastCenterlineRemainsVisible(phase) &&
             selection.geometry.centerline.length >= 2
           ) {
             strokes.push({
@@ -191,6 +230,25 @@ export function createSolarEclipseLayer(
           }
         }
       }
+      const pointMarkers: EquirectRegionPointMarker[] = [];
+      if (
+        presentation.showLiveGroundPosition &&
+        frame.support.supported &&
+        activeSolar &&
+        frame.solarGeometry?.centralPoint
+      ) {
+        const markerPaint = resolveSolarEclipseGroundPositionPaint(presentation);
+        const p = frame.solarGeometry.centralPoint;
+        pointMarkers.push({
+          latDeg: p.latDeg,
+          lonDeg: p.lonDeg,
+          radiusScale: markerPaint.radiusScale,
+          fill: markerPaint.fill,
+          stroke: markerPaint.stroke,
+          underStroke: markerPaint.underStroke,
+          haloFill: markerPaint.haloFill,
+        });
+      }
       if (labelsEnabled && frame.support.supported) {
         const primary = presentedPrimaryEclipse(frame, presentation, lunarPresentation);
         if (primary?.kind === "solar") {
@@ -224,6 +282,7 @@ export function createSolarEclipseLayer(
         fills,
         strokes,
         ...(labels.length > 0 ? { labels, labelAvoidDiscs } : {}),
+        ...(pointMarkers.length > 0 ? { pointMarkers } : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: readabilityFrame.substrateOverlayReadabilityLiftScale01,

@@ -52,6 +52,29 @@ export type EquirectRegionAvoidDisc = {
 };
 
 /**
+ * Generic disc radius for {@link EquirectRegionPointMarker} at `radiusScale = 1`.
+ * Viewport 1919 → 7.2 px.
+ */
+export function equirectPointMarkerBaseRadiusPx(viewportWidthPx: number): number {
+  return Math.min(7.2, Math.max(4.2, viewportWidthPx * 0.0038));
+}
+
+/**
+ * Screen-space circular locator at a geographic point. Pixel radius is derived
+ * in the RenderPlan builder from viewport width × {@link radiusScale}. Canvas
+ * must not interpret astronomy.
+ */
+export type EquirectRegionPointMarker = {
+  readonly latDeg: number;
+  readonly lonDeg: number;
+  readonly radiusScale: number;
+  readonly fill: string;
+  readonly stroke: string;
+  readonly underStroke: string;
+  readonly haloFill?: string;
+};
+
+/**
  * Seam-aware geographic fills, strokes, and optional labels in lat/lon. Canvas
  * must not interpret astronomy; it only executes the projected primitives.
  */
@@ -61,6 +84,7 @@ export type EquirectRegionOverlayPayload = {
   readonly strokes: readonly EquirectRegionStroke[];
   readonly labels?: readonly EquirectRegionLabel[];
   readonly labelAvoidDiscs?: readonly EquirectRegionAvoidDisc[];
+  readonly pointMarkers?: readonly EquirectRegionPointMarker[];
   readonly readability?: OverlayReadabilityHints;
 };
 
@@ -134,6 +158,30 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
         typeof g.lonDeg !== "number" ||
         typeof g.haloMultiplier !== "number"
       ) {
+        return false;
+      }
+    }
+  }
+  if (o.pointMarkers !== undefined) {
+    if (!Array.isArray(o.pointMarkers)) {
+      return false;
+    }
+    for (const marker of o.pointMarkers) {
+      if (marker === null || typeof marker !== "object") {
+        return false;
+      }
+      const g = marker as Record<string, unknown>;
+      if (
+        typeof g.latDeg !== "number" ||
+        typeof g.lonDeg !== "number" ||
+        typeof g.radiusScale !== "number" ||
+        typeof g.fill !== "string" ||
+        typeof g.stroke !== "string" ||
+        typeof g.underStroke !== "string"
+      ) {
+        return false;
+      }
+      if (g.haloFill !== undefined && typeof g.haloFill !== "string") {
         return false;
       }
     }

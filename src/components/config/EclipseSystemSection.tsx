@@ -37,6 +37,8 @@ import { ECLIPSE_FILL_OPACITY_MAX, ECLIPSE_FILL_OPACITY_MIN } from "../../core/e
 import {
   forecastHorizonLabel,
   SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
+  SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS,
+  solarEclipseGroundPositionSizeLabel,
 } from "../../core/eclipse/solarEclipseAppearance";
 import { ConfigControlRow } from "./ConfigControlRow";
 
@@ -199,10 +201,11 @@ export function EclipseSystemSection(props: {
         {(
           [
             ["showForecastCorridor", "Forecast corridor", !solarOn || liveOnly, "Event-long path of totality or annularity. Distinct from the live central shadow."],
-            ["showForecastPartialRegion", "Forecast partial region", !solarOn || liveOnly, "Representative partial-visibility region for an upcoming eclipse. Not a swept penumbra."],
+            ["showForecastPartialRegion", "Forecast partial region", !solarOn || liveOnly, "Representative partial-visibility region at greatest eclipse for an upcoming event. Hidden once the eclipse is active; the live partial region then shows the current footprint."],
             ["showCentralLine", "Live central line", !solarOn, "Live path of totality or annularity. Not drawn for partial-only events."],
             ["showCentralBand", "Live central band", !solarOn, "Live totality or annularity footprint. Not labeled totality for annular events."],
             ["showPartialRegion", "Live partial region", !solarOn, "Live partial-visibility footprint at the current product time."],
+            ["showLiveGroundPosition", "Live eclipse position", !solarOn, "Instantaneous central eclipse shadow on Earth. Not the Moon glyph. Not drawn for partial-only events."],
           ] as const
         ).map(([key, label, disabled, title]) => (
           <ConfigControlRow key={key} label={label}>
@@ -694,6 +697,52 @@ export function EclipseSystemSection(props: {
                 : undefined
             }
           />
+        </ConfigControlRow>
+        <ConfigControlRow label="Live position color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable || !solarOn || !solar.showLiveGroundPosition}
+            aria-label="Live position color"
+            title="Foreground color of the live central eclipse ground marker. Contrast under-ring is automatic."
+            value={solar.liveGroundPositionColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const liveGroundPositionColor = e.currentTarget.value;
+                    patchScene(updateConfig, (base) =>
+                      applySolarEclipsePresentationToScene(base, { liveGroundPositionColor }),
+                    );
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Live position size">
+          <select
+            className="config-input"
+            disabled={!mutable || !solarOn || !solar.showLiveGroundPosition}
+            aria-label="Live position size"
+            title="Screen size of the live central eclipse ground marker."
+            value={solar.liveGroundPositionSize}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const liveGroundPositionSize = e.currentTarget
+                      .value as (typeof SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS)[number];
+                    patchScene(updateConfig, (base) =>
+                      applySolarEclipsePresentationToScene(base, { liveGroundPositionSize }),
+                    );
+                  }
+                : undefined
+            }
+          >
+            {SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS.map((id) => (
+              <option key={`live-pos-size-${id}`} value={id}>
+                {solarEclipseGroundPositionSizeLabel(id)}
+              </option>
+            ))}
+          </select>
         </ConfigControlRow>
         <ConfigControlRow label="Lunar visibility color">
           <input

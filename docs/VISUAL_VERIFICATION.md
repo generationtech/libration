@@ -100,6 +100,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
 | `solar-eclipse-dateline` | `2016-03-09T01:57:09.400Z` | Production solar eclipse overlay at NASA 2016 Mar 09 Pacific total; live-only horizon. Optional DEV `observerCity=` | Seam/wrap: no map-spanning fill, coherent centerline, band, and alignment ribbon |
+| `solar-eclipse-2017` | `2017-08-21T18:25:29.700Z` (default `eclipseStation=ge`) | 2017 Aug 21 total with **7-day horizon** so the event corridor stays in view. Showcase: Extra Large Moon, Event labels off, Dramatic alignment, Large ground marker. Optional DEV `eclipseStation=upcoming\|preCentral\|earlyCentral\|ge\|lateCentral\|postCentral\|after`, `horizon=`, `observerCity=` | Full-event lifecycle: corridor continuity, forecast vs live partial, beam/marker entry and exit, live footprint motion. Stations: upcoming `14:51Z`, pre-central `15:56Z`, early central `16:58Z`, GE `18:25:29.700Z`, late central `18:48:44Z`, post-central `20:21Z`, after `21:10Z` |
 | `solar-eclipse-forecast` | `2024-04-03T18:00:00.000Z` | Upcoming 2024 Apr 08 total, 7-day forecast horizon, five days before greatest eclipse. Optional DEV `observerCity=` | Event corridor Mexico → US → Canada; no live umbra or beam; event information and nearest-event label; local circumstances may say not visible / partial / total without hiding the corridor |
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon. Optional DEV `observerCity=` | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon. Optional DEV `observerCity=` | Partial forecast region; no fabricated central corridor |
@@ -166,6 +167,20 @@ When inspecting E5:
 - Confirm changing `observerCity` does not move the beam.
 - Confirm forecast-only scenarios have no beam.
 - If checking intensity, use Layers: Subtle / Normal / Dramatic. Each should be useful; dramatic must not obscure the map.
+
+### Solar eclipse lifecycle + shading (LIB-025)
+
+Use `?scenario=solar-eclipse-2017` (7-day horizon) plus `eclipseStation=` rather than live-only 2024 scenes when judging corridor continuity.
+
+When inspecting:
+
+- Confirm the Pacific→Atlantic corridor remains immediately legible at upcoming, pre-central, central, and post-central stations. It must not read as absent during the interesting part of the event.
+- Confirm the representative forecast partial fill is present upcoming and gone once globally active; the live partial region then owns current partial shading.
+- Confirm the vermilion ground marker is absent until the umbra intersects Earth, tracks the live footprint, and disappears after the umbra leaves Earth — including while the event is still globally active.
+- Confirm Dramatic alignment is a ribbon to the live marker during central-active stations, and is absent at pre-central and post-central (no stale target, no unexplained glyph-field wash).
+- Confirm ordinary day/night shading continues to move with product time and is not rewritten by eclipse overlays.
+- Confirm accelerated playback from `eclipseStation=upcoming` through global end has no corridor vanishing, no alpha flash, and no double forecast+live partial stack.
+- Confirm `solar-eclipse-dateline`, `solar-eclipse-annular`, and `solar-eclipse-partial` still follow their existing wrap / antumbra / no-fabricated-central checks.
 
 When inspecting E4:
 

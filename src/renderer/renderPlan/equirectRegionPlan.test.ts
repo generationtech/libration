@@ -145,4 +145,64 @@ describe("equirect region RenderPlan", () => {
       expect(Math.max(...px) - Math.min(...px)).toBeLessThan(120);
     }
   });
+
+  it("emits a circular point marker at the projected geographic center", () => {
+    const plan = buildEquirectRegionOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        pointMarkers: [
+          {
+            latDeg: 0,
+            lonDeg: 0,
+            radiusScale: 1,
+            fill: "rgba(212, 90, 60, 0.9600)",
+            stroke: "rgba(212, 90, 60, 1.0000)",
+            underStroke: "rgba(18, 26, 40, 0.88)",
+            haloFill: "rgba(212, 90, 60, 0.1600)",
+          },
+        ],
+      }),
+    });
+    const discs = plan.items.filter((i) => i.kind === "path2d") as RenderPath2DItem[];
+    expect(discs.length).toBeGreaterThanOrEqual(3);
+    const filled = discs.filter((i) => i.fill);
+    expect(filled.some((i) => i.fill?.includes("212, 90, 60"))).toBe(true);
+    const cx = 180;
+    const cy = 90;
+    const firstMove = discs.flatMap((item) =>
+      item.pathKind === "descriptor"
+        ? item.pathDescriptor.commands.filter((c) => c.kind === "moveTo")
+        : [],
+    );
+    expect(firstMove.some((c) => c.kind === "moveTo" && Math.abs(c.x - cx) < 20 && Math.abs(c.y - cy) < 1)).toBe(
+      true,
+    );
+  });
+
+  it("places a dateline marker on the visible copy rather than inventing an opposite-side duplicate", () => {
+    const plan = buildEquirectRegionOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        pointMarkers: [
+          {
+            latDeg: 0,
+            lonDeg: 179,
+            radiusScale: 1,
+            fill: "rgba(212, 90, 60, 0.9600)",
+            stroke: "rgba(212, 90, 60, 1.0000)",
+            underStroke: "rgba(18, 26, 40, 0.88)",
+          },
+        ],
+      }),
+    });
+    const discs = plan.items.filter((i) => i.kind === "path2d") as RenderPath2DItem[];
+    const xsAll = discs.flatMap((item) => xs(item));
+    expect(xsAll.length).toBeGreaterThan(0);
+    expect(Math.max(...xsAll)).toBeGreaterThan(300);
+    expect(xsAll.every((x) => x > -40 && x < 400)).toBe(true);
+  });
 });

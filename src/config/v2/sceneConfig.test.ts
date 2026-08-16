@@ -47,6 +47,7 @@ import {
   sortSceneLayersForRender,
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 } from "./sceneConfig";
+import { normalizeSolarEclipsePresentation } from "../../core/eclipse/solarEclipseAppearance";
 
 const DEFAULT_LAYERS: LayerEnableFlags = {
   baseMap: true,
@@ -1145,6 +1146,15 @@ describe("solar eclipse scene presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
       7,
     );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showLiveGroundPosition : undefined,
+    ).toBe(true);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionSize : undefined,
+    ).toBe("normal");
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionColor : undefined,
+    ).toBe("#d45a3c");
   });
 
   it("persists independent presentation toggles", () => {
@@ -1232,6 +1242,83 @@ describe("solar eclipse scene presentation", () => {
     expect(
       snappedRow?.source.kind === "derived" ? snappedRow.source.parameters?.forecastHorizonDays : undefined,
     ).toBe(14);
+  });
+
+  it("normalizes a missing live ground-position marker to on / normal / default color", () => {
+    const base = defaultLibrationConfigV2();
+    const stripped = {
+      ...base,
+      scene: {
+        ...base.scene!,
+        layers: base.scene!.layers.map((l) => {
+          if (l.id !== "solarEclipse" || l.source.kind !== "derived") {
+            return l;
+          }
+          const {
+            showLiveGroundPosition: _g,
+            liveGroundPositionColor: _c,
+            liveGroundPositionSize: _s,
+            ...parameters
+          } = l.source.parameters ?? {};
+          return { ...l, source: { ...l.source, parameters } };
+        }),
+      },
+    };
+    const v2 = normalizeLibrationConfig(stripped);
+    const next = v2.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(next?.source.kind === "derived" ? next.source.parameters?.showLiveGroundPosition : undefined).toBe(
+      true,
+    );
+    expect(next?.source.kind === "derived" ? next.source.parameters?.liveGroundPositionSize : undefined).toBe(
+      "normal",
+    );
+    expect(next?.source.kind === "derived" ? next.source.parameters?.liveGroundPositionColor : undefined).toBe(
+      "#d45a3c",
+    );
+  });
+
+  it("persists live ground-position size, color, and explicit off", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      scene: applySolarEclipsePresentationToScene(base.scene!, {
+        showLiveGroundPosition: false,
+        liveGroundPositionSize: "large",
+        liveGroundPositionColor: "#c94c3c",
+      }),
+    };
+    const round = normalizeLibrationConfig(painted);
+    const row = round.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showLiveGroundPosition : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionSize : undefined).toBe(
+      "large",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionColor : undefined).toBe(
+      "#c94c3c",
+    );
+  });
+
+  it("restores live ground-position defaults on a full presentation reset", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const custom = applySolarEclipsePresentationToScene(base.scene!, {
+      showLiveGroundPosition: false,
+      liveGroundPositionSize: "extraLarge",
+      liveGroundPositionColor: "#112233",
+    });
+    const reset = applySolarEclipsePresentationToScene(custom, normalizeSolarEclipsePresentation(undefined));
+    const round = normalizeLibrationConfig({ ...base, scene: reset });
+    const row = round.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showLiveGroundPosition : undefined).toBe(
+      true,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionSize : undefined).toBe(
+      "normal",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionColor : undefined).toBe(
+      "#d45a3c",
+    );
   });
 });
 

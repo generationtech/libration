@@ -333,6 +333,32 @@ describe("resolveVisualScenarioSession", () => {
     }
   });
 
+  it("seeds solar-eclipse-2017 with a 7-day horizon and showcase presentation", () => {
+    const config = VISUAL_SCENARIOS["solar-eclipse-2017"].buildConfig();
+    expect(config.layers.solarEclipse).toBe(true);
+    expect(config.data.demoTime.startIsoUtc).toBe("2017-08-21T18:25:29.700Z");
+    const row = config.scene?.layers.find((l) => l.id === "solarEclipse");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.liveGroundPositionSize : undefined).toBe(
+      "large",
+    );
+    expect(config.scene?.eclipseAlignment.intensity).toBe("dramatic");
+    expect(config.scene?.eclipseInfo.labelsEnabled).toBe(false);
+    const moon = config.scene?.layers.find((l) => l.id === "sublunarMarker");
+    expect(moon?.source.kind === "derived" ? moon.source.parameters?.size : undefined).toBe("extraLarge");
+    const pre = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=solar-eclipse-2017&eclipseStation=preCentral",
+    });
+    expect(pre.kind).toBe("applied");
+    if (pre.kind === "applied") {
+      expect(pre.startIsoUtc).toBe("2017-08-21T15:56:00.000Z");
+      expect(pre.config.data.demoTime.startIsoUtc).toBe("2017-08-21T15:56:00.000Z");
+    }
+  });
+
   it("seeds lunar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {
     for (const id of ["lunar-eclipse-total", "lunar-eclipse-partial", "lunar-eclipse-horizon"] as const) {
       const config = VISUAL_SCENARIOS[id].buildConfig();

@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { applyLayerEnableFlagsToScene, applyLunarEclipsePresentationToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
+import { applyEclipseAlignmentPresentationToScene, applyEclipseInfoPresentationToScene, applyLayerEnableFlagsToScene, applyLunarEclipsePresentationToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
 import {
   assertIsNormalizedLibrationConfig,
   defaultLibrationConfigV2,
@@ -40,6 +40,7 @@ export const VISUAL_SCENARIO_IDS = [
   "solar-eclipse-annular",
   "solar-eclipse-partial",
   "solar-eclipse-dateline",
+  "solar-eclipse-2017",
   "solar-eclipse-forecast",
   "solar-eclipse-forecast-annular",
   "solar-eclipse-forecast-partial",
@@ -64,6 +65,7 @@ export const VISUAL_SCENARIO_UTC = {
   "solar-eclipse-annular": "2023-10-14T17:59:27.300Z",
   "solar-eclipse-partial": "2022-10-25T11:00:06.900Z",
   "solar-eclipse-dateline": "2016-03-09T01:57:09.400Z",
+  "solar-eclipse-2017": "2017-08-21T18:25:29.700Z",
   "solar-eclipse-forecast": "2024-04-03T18:00:00.000Z",
   "solar-eclipse-forecast-annular": "2023-10-09T18:00:00.000Z",
   "solar-eclipse-forecast-partial": "2022-10-20T11:00:00.000Z",
@@ -104,6 +106,26 @@ export const LUNAR_ECLIPSE_2022_PHASE_UTC = {
 } as const;
 
 export type LunarEclipsePhaseId = keyof typeof LUNAR_ECLIPSE_2022_PHASE_UTC;
+
+/**
+ * DEV-only 2017-08-21 total solar eclipse lifecycle stations.
+ * Product UTCs (Knoxville EDT = UTC−4 wall labels in the originating playback):
+ * upcoming 14:51Z, pre-central 15:56Z, early central 16:58Z, GE 18:25:29.700Z,
+ * late central 18:48:44Z, post-central 20:21Z, after 21:10Z.
+ * Authority: global 15:46:43.920Z–20:58:49.700Z; central on Earth 16:49:13.920Z–20:01:43.920Z.
+ * Production does not import this map.
+ */
+export const SOLAR_ECLIPSE_2017_STATION_UTC = {
+  upcoming: "2017-08-21T14:51:00.000Z",
+  preCentral: "2017-08-21T15:56:00.000Z",
+  earlyCentral: "2017-08-21T16:58:00.000Z",
+  ge: "2017-08-21T18:25:29.700Z",
+  lateCentral: "2017-08-21T18:48:44.000Z",
+  postCentral: "2017-08-21T20:21:00.000Z",
+  after: "2017-08-21T21:10:00.000Z",
+} as const;
+
+export type SolarEclipse2017StationId = keyof typeof SOLAR_ECLIPSE_2017_STATION_UTC;
 
 /** Chromatic Köppen–Geiger substrate used by the readability scenario. */
 export const READABILITY_BASE_MAP_ID = "equirect-world-climate-koppen-beck-v1";
@@ -275,6 +297,14 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     buildConfig: () =>
       withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-dateline"], applySolarEclipseLiveScene),
   },
+  "solar-eclipse-2017": {
+    id: "solar-eclipse-2017",
+    startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-2017"],
+    purpose:
+      "2017 Aug 21 total solar eclipse lifecycle (7-day horizon). Default GE; optional DEV eclipseStation. Showcase: Extra Large Moon, Event labels off, Dramatic alignment, Large ground marker.",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["solar-eclipse-2017"], applySolarEclipse2017Scene),
+  },
   "solar-eclipse-forecast": {
     id: "solar-eclipse-forecast",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-forecast"],
@@ -396,6 +426,19 @@ function applySolarEclipseForecastScene(
   }
 }
 
+function applySolarEclipse2017Scene(draft: LibrationConfigV2): void {
+  applySolarEclipseForecastScene(draft, 7);
+  if (!draft.scene) {
+    return;
+  }
+  draft.scene = applySublunarMarkerAppearanceToScene(draft.scene, { size: "extraLarge" });
+  draft.scene = applySolarEclipsePresentationToScene(draft.scene, {
+    liveGroundPositionSize: "large",
+  });
+  draft.scene = applyEclipseAlignmentPresentationToScene(draft.scene, { intensity: "dramatic" });
+  draft.scene = applyEclipseInfoPresentationToScene(draft.scene, { labelsEnabled: false });
+}
+
 function applyLunarEclipseLiveScene(draft: LibrationConfigV2): void {
   draft.layers.solarShading = true;
   draft.layers.grid = true;
@@ -453,6 +496,13 @@ export function parseMoonLibrationEpochId(raw: string | null): MoonLibrationEpoc
 export function parseLunarEclipsePhaseId(raw: string | null): LunarEclipsePhaseId | null {
   if (raw && raw in LUNAR_ECLIPSE_2022_PHASE_UTC) {
     return raw as LunarEclipsePhaseId;
+  }
+  return null;
+}
+
+export function parseSolarEclipse2017StationId(raw: string | null): SolarEclipse2017StationId | null {
+  if (raw && raw in SOLAR_ECLIPSE_2017_STATION_UTC) {
+    return raw as SolarEclipse2017StationId;
   }
   return null;
 }
@@ -568,6 +618,40 @@ export function resolveVisualScenarioSession(
           });
         }
       }),
+    };
+  }
+  if (requested === "solar-eclipse-2017") {
+    const params = parseSearchParams(input.search);
+    const station = parseSolarEclipse2017StationId(params.get("eclipseStation"));
+    const startIsoUtc = SOLAR_ECLIPSE_2017_STATION_UTC[station ?? "ge"];
+    const eclipseObserver = parseMoonLibrationObserverCityId(params.get("observerCity"));
+    const horizonDays = parseForecastHorizonDays(params.get("horizon"));
+    const config = withDemoAt(startIsoUtc, applySolarEclipse2017Scene);
+    const topBandAnchor =
+      eclipseObserver === "none"
+        ? ({ mode: "auto" } as const)
+        : eclipseObserver !== null
+          ? ({ mode: "fixedCity", cityId: eclipseObserver } as const)
+          : config.chrome.displayTime.topBandAnchor;
+    let scene = config.scene;
+    if (scene && horizonDays !== null) {
+      scene = applySolarEclipsePresentationToScene(scene, { forecastHorizonDays: horizonDays });
+    }
+    return {
+      kind: "applied",
+      id: "solar-eclipse-2017",
+      startIsoUtc,
+      config: {
+        ...config,
+        ...(scene ? { scene } : {}),
+        chrome: {
+          ...config.chrome,
+          displayTime: {
+            ...config.chrome.displayTime,
+            topBandAnchor,
+          },
+        },
+      },
     };
   }
   const definition = VISUAL_SCENARIOS[requested];

@@ -118,7 +118,7 @@ describe("eclipse alignment presentation — solar", () => {
     expect(view.solar).toBeNull();
   });
 
-  it("strengthens from first contact toward greatest eclipse", () => {
+  it("strengthens from first terrestrial central intersection toward greatest eclipse", () => {
     resetEclipseEventServiceCacheForTests();
     const frameGe = resolveEclipseFrame(TOTAL_SOLAR, { horizonMs: 0 });
     const start = frameGe.activeSolar!.globalStartMs + 60_000;
@@ -127,11 +127,27 @@ describe("eclipse alignment presentation — solar", () => {
     expect(early).not.toBeNull();
     expect(ge).not.toBeNull();
     expect(ge!.alignmentStrength01).toBeGreaterThan(early!.alignmentStrength01);
-    const earlyView = build(start, {
+    const preCentralView = build(start, {
       frame: resolveEclipseFrame(start, { horizonMs: 0 }),
     });
+    expect(preCentralView.solar).toBeNull();
+    let firstCentralMs: number | null = null;
+    for (
+      let t = frameGe.activeSolar!.globalStartMs;
+      t <= frameGe.activeSolar!.greatestEclipseUtcMs;
+      t += 30_000
+    ) {
+      const g = solarEclipseGeometryAt(frameGe.activeSolar!, t);
+      if (g?.centralPoint) {
+        firstCentralMs = t;
+        break;
+      }
+    }
+    expect(firstCentralMs).not.toBeNull();
+    const earlyCentralView = build(firstCentralMs! + 60_000);
     const geView = build(TOTAL_SOLAR, { frame: frameGe });
-    expect(geView.solar!.strength01).toBeGreaterThan(earlyView.solar!.strength01);
+    expect(earlyCentralView.solar?.kind).toBe("solar-central");
+    expect(geView.solar!.strength01).toBeGreaterThan(earlyCentralView.solar!.strength01);
   });
 
   it("moves the beam target with the live footprint", () => {

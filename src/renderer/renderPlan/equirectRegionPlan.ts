@@ -15,7 +15,12 @@ import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { placeEclipseMapLabel } from "../../core/eclipse/eclipseMapLabelPlacement";
 import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
-import type { EquirectRegionOverlayPayload } from "../../layers/equirectRegionPayload";
+import {
+  equirectPointMarkerBaseRadiusPx,
+  type EquirectRegionOverlayPayload,
+  type EquirectRegionPointMarker,
+} from "../../layers/equirectRegionPayload";
+import { circlePathDescriptor } from "./circlePath2D";
 import { createDescriptorPathItem } from "./pathItemFactories";
 import {
   RENDER_PLAN_SYSTEM_UI_STACK_ASSET_ID,
@@ -46,6 +51,53 @@ function avoidHaloRadiusPx(viewportWidthPx: number, haloMultiplier: number): num
   const moon = sublunarMarkerRadiusPx(viewportWidthPx, "extraLarge");
   const sun = Math.min(9, Math.max(4.5, viewportWidthPx * 0.0055));
   return Math.max(moon, sun) * Math.max(1, haloMultiplier);
+}
+
+const WORLD_COPIES_DEG = [-360, 0, 360] as const;
+
+function emitPointMarkerCopies(
+  items: RenderPlan["items"],
+  marker: EquirectRegionPointMarker,
+  viewportWidthPx: number,
+  viewportHeightPx: number,
+  opacity: number,
+): void {
+  const scale = Number.isFinite(marker.radiusScale) ? Math.max(0.2, marker.radiusScale) : 1;
+  const r = equirectPointMarkerBaseRadiusPx(viewportWidthPx) * scale;
+  const haloR = r * 1.55;
+  const underW = Math.max(2.4, r * 0.42);
+  const strokeW = Math.max(1.15, r * 0.2);
+  const cy = ((90 - marker.latDeg) / 180) * viewportHeightPx;
+  const slop = r + 4;
+  for (const offset of WORLD_COPIES_DEG) {
+    const cx = mapXFromLongitudeDeg(marker.lonDeg + offset, viewportWidthPx);
+    if (cx + slop < 0 || cx - slop > viewportWidthPx) {
+      continue;
+    }
+    if (marker.haloFill) {
+      items.push(
+        createDescriptorPathItem({
+          pathDescriptor: circlePathDescriptor(cx, cy, haloR),
+          fill: scaleRgba(marker.haloFill, opacity),
+        }),
+      );
+    }
+    items.push(
+      createDescriptorPathItem({
+        pathDescriptor: circlePathDescriptor(cx, cy, r + underW * 0.22),
+        stroke: scaleRgba(marker.underStroke, Math.min(1, opacity + 0.06)),
+        strokeWidthPx: underW,
+      }),
+    );
+    items.push(
+      createDescriptorPathItem({
+        pathDescriptor: circlePathDescriptor(cx, cy, r),
+        fill: scaleRgba(marker.fill, opacity),
+        stroke: scaleRgba(marker.stroke, Math.min(1, opacity + 0.04)),
+        strokeWidthPx: strokeW,
+      }),
+    );
+  }
 }
 
 export function buildEquirectRegionOverlayRenderPlan(
@@ -82,6 +134,9 @@ export function buildEquirectRegionOverlayRenderPlan(
         }),
       );
     }
+  }
+  for (const marker of options.payload.pointMarkers ?? []) {
+    emitPointMarkerCopies(items, marker, w, h, op);
   }
   const labels = options.payload.labels ?? [];
   if (labels.length > 0) {

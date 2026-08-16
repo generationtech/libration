@@ -15,7 +15,9 @@
  * Semantic eclipse alignment presentation. Downstream of EclipseFrame,
  * upstream of RenderPlan. Canvas must not evaluate this.
  *
- * Solar: glyph cluster → live umbra/antumbra. Partial-only has no central target.
+ * Solar: glyph cluster → live umbra/antumbra while a terrestrial central target exists.
+ * Partial-only has no central target (local glyph field only). Central events before/after
+ * the umbra/antumbra is on Earth emit no beam — the event corridor remains independent context.
  * Lunar: Earth-shadow axis toward the Moon (Sun → Earth → Moon), not a terrestrial path.
  */
 
@@ -252,11 +254,12 @@ export function buildEclipseAlignmentPresentation(
         geom.alignmentStrength01,
         geom.pathWidthKm,
       );
-    } else {
-      // Partial-only, or a central event before/after the umbra/antumbra is on Earth.
-      // Local alignment field only — no fabricated terrestrial target.
+    } else if (event.subtype === "partial") {
+      // Partial-only: local alignment field only — no fabricated terrestrial target.
       solar = solarPartialField(input, event.id, geom.alignmentStrength01);
     }
+    // Central events before/after the umbra/antumbra is on Earth: no targeted beam
+    // and no glyph-field bloom. The event corridor remains independent context.
   }
   if (
     cfg.enabled &&
