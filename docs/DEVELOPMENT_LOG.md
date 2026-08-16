@@ -130,4 +130,10 @@ E6 Eclipse System product polish: grouped Layers configuration, presentation-onl
 
 Verified: `npx tsc --noEmit` clean; `npm test` 194 files / 1799 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: baseline quiet, 2024 forecast→active, annular naming, 2022 lunar Knoxville/Tokyo, multi-event nearest label, ordinary startup.
 
+## 2026-08-16 — LIB-020 complete
+
+Post-E6 Eclipse reconciliation: Event labels rebuild the layer registry; HUD eclipse status is a separate row; factory Solar/Lunar ON diagnosed as already correct (observed Lunar OFF is persisted/preset); lunar forecast on the existing EclipseEventService (separate 7-day horizon, GE Moon-visible region). No new ADR. Not E7.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 195 files / 1826 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser: lunar forecast total Knoxville/Tokyo, labels OFF, Live only, active 2022 total, solar forecast labels ON/OFF, baseline quiet.
+
 

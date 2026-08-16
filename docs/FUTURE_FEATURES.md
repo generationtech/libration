@@ -55,11 +55,10 @@ The point is to keep Libration an instrument, not a cluttered astronomy diagram.
 
 **Production** through E6 ([LIB-012](work/LIB-012-eclipse-system-architecture.md) through [LIB-019](work/LIB-019-eclipse-product-polish.md); [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md)). Architecture and authority: [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md). There is no approved E7.
 
-Shipped: offline NASA/Espenak–Meeus authority; global solar forecast and live footprint; lunar Earth-shadow and Moon-visible region; reference-city circumstances that never filter global truth; live alignment/beam; grouped configuration; event information; restrained labels; type filters; independent styling; factory solar/lunar masters on; honest unsupported-range copy.
+Shipped: offline NASA/Espenak–Meeus authority; global solar forecast and live footprint; lunar Earth-shadow and Moon-visible region; lunar advance forecast (representative GE Moon-visible region, separate 7-day horizon); reference-city circumstances that never filter global truth; live alignment/beam; grouped configuration; event information; restrained labels; type filters; independent styling; factory solar/lunar masters on; honest unsupported-range copy. [LIB-020](work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) is a post-E6 reconciliation, not E7.
 
 The following remain **unapproved** recoverable extras, not a continuation of the planned sequence:
 
-- lunar forecast map (authority already has `nextLunarEclipseAfter`; E3/E6 stayed active-only)
 - past/future active-corridor split
 - swept penumbra union (E2 uses a representative greatest-eclipse partial outline)
 - event browser / history / search-by-date catalog

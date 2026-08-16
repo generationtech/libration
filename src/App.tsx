@@ -419,10 +419,17 @@ export default function App() {
         scene.overlayReadability.presentation,
       );
       const eclipsePresentation = solarEclipsePresentationFromScene(scene);
+      const lunarPresentation = lunarEclipsePresentationFromScene(scene);
       const eclipseHorizonMs = derivedAppConfigRef.current.layers.solarEclipse
         ? forecastHorizonMsFromDays(eclipsePresentation.forecastHorizonDays)
         : 0;
-      const eclipseFrame = resolveEclipseFrame(clockNowMs, { horizonMs: eclipseHorizonMs });
+      const lunarHorizonMs = derivedAppConfigRef.current.layers.lunarEclipse
+        ? forecastHorizonMsFromDays(lunarPresentation.forecastHorizonDays)
+        : 0;
+      const eclipseFrame = resolveEclipseFrame(clockNowMs, {
+        horizonMs: eclipseHorizonMs,
+        lunarHorizonMs,
+      });
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
         eclipseFrame,
@@ -441,8 +448,8 @@ export default function App() {
       };
       const e4pres = referenceCityEclipsePresentationFromScene(scene);
       const eclipseInfoPres = eclipseInfoPresentationFromScene(scene);
-      const solarPres = solarEclipsePresentationFromScene(scene);
-      const lunarPres = lunarEclipsePresentationFromScene(scene);
+      const solarPres = eclipsePresentation;
+      const lunarPres = lunarPresentation;
       const observer = resolveReferenceCityObserverLocation(derivedAppConfigRef.current.displayTime);
       const circumstances =
         e4pres.detailsEnabled || e4pres.chromeStatusEnabled

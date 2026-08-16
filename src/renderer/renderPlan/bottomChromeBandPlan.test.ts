@@ -172,6 +172,68 @@ describe("buildBottomChromeBandRenderPlan", () => {
     }
   });
 
+  it("keeps date/time spacing when eclipse status is added and places status below with a gap", () => {
+    const vw = 800;
+    const typo = resolveBottomChromeTypography(vw);
+    const bh = 72;
+    const bottomBand = { x: 0, y: 400, width: vw, height: bh };
+    const without = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand,
+      ib: sampleInformationBar(vw),
+      typography: typo,
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    const layout = computeBottomChromeLayout(vw);
+    const withStatus = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand,
+      ib: {
+        bottomHudReadoutLines: [
+          { role: "date", text: "Monday, April 7, 2026" },
+          { role: "time", text: "3:45:00 PM" },
+          { role: "eclipse", text: "Eclipse not visible from Knoxville" },
+        ],
+        bottomChromeLayout: layout,
+      },
+      typography: typo,
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    const withoutTexts = without.items.filter(
+      (it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text",
+    );
+    const withTexts = withStatus.items.filter(
+      (it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text",
+    );
+    expect(withoutTexts).toHaveLength(2);
+    expect(withTexts).toHaveLength(3);
+    expect(withTexts[0]!.y).toBe(withoutTexts[0]!.y);
+    expect(withTexts[1]!.y).toBe(withoutTexts[1]!.y);
+    const clockGap = withTexts[1]!.y - withTexts[0]!.y;
+    const statusGap = withTexts[2]!.y - withTexts[1]!.y;
+    expect(statusGap).toBeGreaterThanOrEqual(clockGap);
+    expect(withTexts[2]!.text).toBe("Eclipse not visible from Knoxville");
+    expect(withTexts[2]!.font.sizePx).toBeLessThan(withTexts[1]!.font.sizePx);
+  });
+
+  it("omits the eclipse row when status is absent", () => {
+    const vw = 800;
+    const plan = buildBottomChromeBandRenderPlan({
+      viewportWidthPx: vw,
+      bottomBand: { x: 0, y: 400, width: vw, height: 72 },
+      ib: sampleInformationBar(vw),
+      typography: resolveBottomChromeTypography(vw),
+      glyphRenderContext: GLYPH_CTX,
+      productDefaultFontAssetId: PRODUCT_FONT,
+    });
+    const texts = plan.items.filter(
+      (it): it is Extract<typeof it, { kind: "text" }> => it.kind === "text",
+    );
+    expect(texts.map((t) => t.text)).toEqual(["Monday, April 7, 2026", "3:45:00 PM"]);
+  });
+
   it("uses the same font size for date and time rows", () => {
     const vw = 700;
     const ib = sampleInformationBar(vw);

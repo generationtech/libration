@@ -493,6 +493,40 @@ describe("LayersTab eclipse product polish", () => {
     expect((screen.getByLabelText("Live central line") as HTMLInputElement).disabled).toBe(false);
   });
 
+  it("defaults lunar forecast horizon to 7 days and disables forecast children when live only", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const lunar = screen.getByLabelText("Lunar eclipses") as HTMLInputElement;
+    const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
+    expect(lunar.checked).toBe(true);
+    expect(horizon.value).toBe("7");
+    await user.selectOptions(horizon, "0");
+    expect((screen.getByLabelText("Forecast Moon-visible region") as HTMLInputElement).disabled).toBe(
+      true,
+    );
+    expect((screen.getByLabelText("Forecast Moon-visible boundary") as HTMLInputElement).disabled).toBe(
+      true,
+    );
+    expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).disabled).toBe(
+      false,
+    );
+  });
+
+  it("keeps event labels independent of event information", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const info = screen.getByLabelText("Event information") as HTMLInputElement;
+    const labels = screen.getByLabelText("Event labels") as HTMLInputElement;
+    expect(info.checked).toBe(true);
+    expect(labels.checked).toBe(true);
+    await user.click(info);
+    expect(info.checked).toBe(false);
+    expect(labels.checked).toBe(true);
+    await user.click(labels);
+    expect(labels.checked).toBe(false);
+    expect(info.checked).toBe(false);
+  });
+
   it("does not leak solar forecast color into lunar visibility color", () => {
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
     const solarColor = screen.getByLabelText("Solar forecast color") as HTMLInputElement;

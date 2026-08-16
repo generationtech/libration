@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { applyLayerEnableFlagsToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
+import { applyLayerEnableFlagsToScene, applyLunarEclipsePresentationToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
 import {
   assertIsNormalizedLibrationConfig,
   defaultLibrationConfigV2,
@@ -47,6 +47,7 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-eclipse-total",
   "lunar-eclipse-partial",
   "lunar-eclipse-horizon",
+  "lunar-eclipse-forecast-total",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -70,6 +71,7 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-eclipse-total": "2022-05-16T04:11:29.000Z",
   "lunar-eclipse-partial": "2008-08-16T21:10:06.000Z",
   "lunar-eclipse-horizon": "2015-04-04T12:00:15.000Z",
+  "lunar-eclipse-forecast-total": "2022-05-13T04:00:00.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
@@ -316,6 +318,17 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
     buildConfig: () =>
       withDemoAt(VISUAL_SCENARIO_UTC["lunar-eclipse-horizon"], applyLunarEclipseLiveScene),
   },
+  "lunar-eclipse-forecast-total": {
+    id: "lunar-eclipse-forecast-total",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-eclipse-forecast-total"],
+    purpose:
+      "Upcoming 2022 May 16 total lunar eclipse three days before greatest eclipse (7-day forecast horizon).",
+    buildConfig: () =>
+      withDemoAt(
+        VISUAL_SCENARIO_UTC["lunar-eclipse-forecast-total"],
+        applyLunarEclipseForecastScene,
+      ),
+  },
 };
 
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
@@ -377,6 +390,29 @@ function applyLunarEclipseLiveScene(draft: LibrationConfigV2): void {
   draft.layers.lunarLocus = false;
   draft.layers.solarAnalemma = false;
   draft.layers.cityPins = true;
+}
+
+function applyLunarEclipseForecastScene(
+  draft: LibrationConfigV2,
+  forecastHorizonDays: 0 | 1 | 3 | 7 | 14 | 30 | 90 | 365 = 7,
+): void {
+  applyLunarEclipseLiveScene(draft);
+  if (draft.scene) {
+    draft.scene = applyLunarEclipsePresentationToScene(draft.scene, { forecastHorizonDays });
+  }
+}
+
+function parseForecastHorizonDays(
+  raw: string | null,
+): 0 | 1 | 3 | 7 | 14 | 30 | 90 | 365 | null {
+  if (raw === null || raw === "") {
+    return null;
+  }
+  const n = Number(raw);
+  if (n === 0 || n === 1 || n === 3 || n === 7 || n === 14 || n === 30 || n === 90 || n === 365) {
+    return n;
+  }
+  return null;
 }
 
 function parseSearchParams(search: string): URLSearchParams {
@@ -512,22 +548,36 @@ export function resolveVisualScenarioSession(
     };
   }
   const definition = VISUAL_SCENARIOS[requested];
+  const searchParams = parseSearchParams(input.search);
   const eclipseObserver =
     requested.startsWith("solar-eclipse-") || requested.startsWith("lunar-eclipse-")
-      ? parseMoonLibrationObserverCityId(parseSearchParams(input.search).get("observerCity"))
+      ? parseMoonLibrationObserverCityId(searchParams.get("observerCity"))
       : null;
-  if (eclipseObserver !== null) {
+  const horizonDays =
+    requested.startsWith("solar-eclipse-") || requested.startsWith("lunar-eclipse-")
+      ? parseForecastHorizonDays(searchParams.get("horizon"))
+      : null;
+  if (eclipseObserver !== null || horizonDays !== null) {
     const config = definition.buildConfig();
     const topBandAnchor =
       eclipseObserver === "none"
         ? ({ mode: "auto" } as const)
-        : ({ mode: "fixedCity", cityId: eclipseObserver } as const);
+        : eclipseObserver !== null
+          ? ({ mode: "fixedCity", cityId: eclipseObserver } as const)
+          : config.chrome.displayTime.topBandAnchor;
+    let scene = config.scene;
+    if (scene && horizonDays !== null) {
+      scene = requested.startsWith("lunar-eclipse-")
+        ? applyLunarEclipsePresentationToScene(scene, { forecastHorizonDays: horizonDays })
+        : applySolarEclipsePresentationToScene(scene, { forecastHorizonDays: horizonDays });
+    }
     return {
       kind: "applied",
       id: definition.id,
       startIsoUtc: definition.startIsoUtc,
       config: {
         ...config,
+        ...(scene ? { scene } : {}),
         chrome: {
           ...config.chrome,
           displayTime: {

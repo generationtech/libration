@@ -34,6 +34,9 @@ import {
 } from "../../core/astronomyOverlayStrokeAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
+  DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
+  DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_BOUNDARY,
+  DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_REGION,
   DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
   DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
   DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
@@ -811,7 +814,7 @@ const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   },
 };
 
-/** NASA-derived lunar eclipse overlay: Moon-up visibility region while an event is active. Default on. */
+/** NASA-derived lunar eclipse overlay: active Moon-up region plus optional forecast visibility. Default on. */
 const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "lunarEclipse",
   family: "astronomy",
@@ -825,6 +828,9 @@ const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
       showMoonEclipseShadow: DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
       showVisibilityBoundary: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
       showVisibilityRegion: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
+      showForecastVisibilityRegion: DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_REGION,
+      showForecastVisibilityBoundary: DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_BOUNDARY,
+      forecastHorizonDays: DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
     },
   },
 };
@@ -1300,7 +1306,9 @@ export function applyEclipseInfoPresentationToScene(
 
 export function applyLunarEclipsePresentationToScene(
   scene: SceneConfig,
-  patch: Partial<ReturnType<typeof normalizeLunarEclipsePresentation>>,
+  patch: Partial<Omit<ReturnType<typeof normalizeLunarEclipsePresentation>, "forecastHorizonDays">> & {
+    forecastHorizonDays?: number;
+  },
 ): SceneConfig {
   const current = lunarEclipsePresentationFromScene(scene);
   const next = normalizeLunarEclipsePresentation({ ...current, ...patch });

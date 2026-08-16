@@ -83,6 +83,16 @@ function primarySolarEvent(frame: EclipseFrame): SolarEclipseEvent | null {
   return nearest?.event ?? frame.upcomingSolar[0] ?? null;
 }
 
+function primaryLunarEvent(frame: EclipseFrame): LunarEclipseEvent | null {
+  if (frame.activeLunar) {
+    return frame.activeLunar;
+  }
+  const nearest = frame.lunarForecastSelections.find(
+    (s) => s.lifecycle === "upcoming" && s.nearestUpcoming,
+  );
+  return nearest?.event ?? frame.upcomingLunar[0] ?? null;
+}
+
 /**
  * Derived observer view. Returns null when no concrete catalog-city observer
  * exists (auto, fixed longitude, unknown city). Does not invent a city.
@@ -96,7 +106,7 @@ export function resolveReferenceCityEclipseCircumstances(
     return null;
   }
   const solarEvent = primarySolarEvent(frame);
-  const lunarEvent = frame.activeLunar;
+  const lunarEvent = primaryLunarEvent(frame);
   if (!solarEvent && !lunarEvent) {
     return {
       cityId: observer.cityId,

@@ -108,6 +108,63 @@ describe("reference-city eclipse status presentation", () => {
     expect(formatReferenceCityEclipseChromeStatus(null, "Knoxville", KNOX_TZ, "12hr")).toBeNull();
   });
 
+  it("formats upcoming lunar status without implying the global event is absent", () => {
+    const upcomingVisible: ReferenceCityEclipseCircumstances = {
+      cityId: "city.knoxville",
+      latitudeDeg: 35.96,
+      longitudeDeg: -83.92,
+      globalSolarEventId: null,
+      globalLunarEventId: "nasa-5mcle-lunar-9700",
+      solar: null,
+      lunar: {
+        eventId: "nasa-5mcle-lunar-9700",
+        globalSubtype: "total",
+        locallyVisible: true,
+        totalityVisible: true,
+        partialityVisible: true,
+        inProgressAtMoonrise: false,
+        endsAfterMoonset: false,
+        contacts: [],
+        firstVisibleContactId: null,
+        lastVisibleContactId: null,
+        horizonCrossings: [],
+        localMaximum: null,
+      },
+    };
+    const upcomingHidden: ReferenceCityEclipseCircumstances = {
+      ...upcomingVisible,
+      cityId: "city.tokyo",
+      lunar: {
+        eventId: "nasa-5mcle-lunar-9700",
+        globalSubtype: "total",
+        locallyVisible: false,
+        totalityVisible: false,
+        partialityVisible: false,
+        inProgressAtMoonrise: false,
+        endsAfterMoonset: false,
+        contacts: [],
+        firstVisibleContactId: null,
+        lastVisibleContactId: null,
+        horizonCrossings: [],
+        localMaximum: null,
+      },
+    };
+    expect(
+      formatReferenceCityEclipseChromeStatus(upcomingVisible, "Knoxville", KNOX_TZ, "12hr", {
+        presented: true,
+        lifecycle: "upcoming",
+        relativeTime: "in 3d 0h",
+      }),
+    ).toBe("Lunar eclipse · Total · in 3d 0h");
+    expect(
+      formatReferenceCityEclipseChromeStatus(upcomingHidden, "Tokyo", TOKYO_TZ, "12hr", {
+        presented: true,
+        lifecycle: "upcoming",
+        relativeTime: "in 3d 0h",
+      }),
+    ).toBe("Lunar eclipse · not visible locally · in 3d 0h");
+  });
+
   it("mentions local type and maximum for a visible partial", () => {
     const line = formatReferenceCityEclipseChromeStatus(
       solarPartial(true),

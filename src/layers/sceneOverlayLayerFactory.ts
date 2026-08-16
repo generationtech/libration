@@ -27,6 +27,7 @@ import {
   eclipseInfoPresentationFromScene,
   lunarEclipsePresentationFromScene,
   resolveMoonlightPresentationMode,
+  solarEclipsePresentationFromScene,
   sublunarMarkerAppearanceFromScene,
 } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
@@ -267,6 +268,7 @@ function createDerivedOverlayByProduct(
         presentation: normalizeSolarEclipsePresentation(source.parameters),
         alignment: eclipseAlignmentPresentationFromScene(config.scene),
         labelsEnabled: eclipseInfoPresentationFromScene(config.scene).labelsEnabled,
+        lunarPresentation: lunarEclipsePresentationFromScene(config.scene),
       });
     case "lunarEclipseVisibility":
       return createLunarEclipseLayer({
@@ -275,6 +277,7 @@ function createDerivedOverlayByProduct(
         presentation: normalizeLunarEclipsePresentation(source.parameters),
         alignment: eclipseAlignmentPresentationFromScene(config.scene),
         labelsEnabled: eclipseInfoPresentationFromScene(config.scene).labelsEnabled,
+        solarPresentation: solarEclipsePresentationFromScene(config.scene),
       });
     default:
       return null;

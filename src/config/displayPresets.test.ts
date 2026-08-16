@@ -123,6 +123,17 @@ describe("displayPresets", () => {
     }
   });
 
+  it("factory/full enables Solar and Lunar eclipses; named presets keep them explicitly off", () => {
+    expect(DEFAULT_APP_CONFIG.layers.solarEclipse).toBe(true);
+    expect(DEFAULT_APP_CONFIG.layers.lunarEclipse).toBe(true);
+    expect(getAppConfigForPreset("full").layers.solarEclipse).toBe(true);
+    expect(getAppConfigForPreset("full").layers.lunarEclipse).toBe(true);
+    for (const id of ["minimal", "celestial", "featuredCities"] as const) {
+      expect(getAppConfigForPreset(id).layers.solarEclipse).toBe(false);
+      expect(getAppConfigForPreset(id).layers.lunarEclipse).toBe(false);
+    }
+  });
+
   it("full matches the default app config composition", () => {
     expect(DISPLAY_PRESETS.full.layers).toEqual(DEFAULT_APP_CONFIG.layers);
     expect(sortIds(DISPLAY_PRESETS.full.visibleCityIds)).toEqual(

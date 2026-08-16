@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-15
+Updated: 2026-08-16
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-019](work/LIB-019-eclipse-product-polish.md) — Eclipse configuration completeness, event information, and product polish (E6)
+[LIB-020](work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) — Eclipse reconciliation and lunar forecast (post-E6; not E7)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Wait for a human to approve the next work item. Do not start E7 or another astronomy feature.
+Stop. No approved work item. Do not start another Eclipse slice or astronomy backlog feature.

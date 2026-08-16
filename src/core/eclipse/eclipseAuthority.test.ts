@@ -22,6 +22,7 @@ import {
   SOLAR_ECLIPSE_AUTHORITY_METADATA,
   SOLAR_ECLIPSE_EVENTS,
   solarEclipsesIntersecting,
+  lunarEclipsesUpcomingInHorizon,
   solarEclipsesUpcomingInHorizon,
 } from "./eclipseAuthority";
 
@@ -147,5 +148,20 @@ describe("eclipse authority lookup", () => {
       activeSolarEclipseAt(t0 + i * 86_400_000);
     }
     expect(performance.now() - start).toBeLessThan(50);
+  });
+});
+
+describe("lunar eclipse authority forecast lookup", () => {
+  it("finds upcoming lunar events in a horizon without a full scan", () => {
+    const before = Date.parse("2022-05-13T04:00:00.000Z");
+    expect(lunarEclipsesUpcomingInHorizon(before, 0)).toEqual([]);
+    expect(lunarEclipsesUpcomingInHorizon(before, 7 * 86_400_000).map((e) => e.id)).toEqual([
+      "nasa-5mcle-lunar-9700",
+    ]);
+    const year = lunarEclipsesUpcomingInHorizon(Date.parse("2022-05-01T00:00:00.000Z"), 365 * 86_400_000);
+    expect(year.length).toBeGreaterThan(1);
+    for (let i = 1; i < year.length; i += 1) {
+      expect(year[i]!.globalStartMs).toBeGreaterThan(year[i - 1]!.globalStartMs);
+    }
   });
 });

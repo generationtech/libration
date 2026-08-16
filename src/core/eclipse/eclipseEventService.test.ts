@@ -31,7 +31,9 @@ describe("EclipseEventService", () => {
     expect(outside.activeLunar).toBeNull();
     expect(outside.lunarGeometry).toBeNull();
     expect(outside.upcomingSolar).toEqual([]);
+    expect(outside.upcomingLunar).toEqual([]);
     expect(outside.horizonMs).toBe(0);
+    expect(outside.lunarHorizonMs).toBe(0);
 
     const quiet = resolveEclipseFrame(Date.parse("2020-01-01T00:00:00.000Z"));
     expect(quiet.support).toEqual({ supported: true });
@@ -158,5 +160,71 @@ describe("EclipseEventService", () => {
     const after = resolveEclipseFrame(Date.parse("2022-05-16T12:00:00.000Z"));
     expect(after.activeLunar).toBeNull();
     expect(after.lunarGeometry).toBeNull();
+  });
+
+  it("resolves an upcoming total lunar eclipse inside a 7-day horizon and not outside it", () => {
+    resetEclipseEventServiceCacheForTests();
+    const before = Date.parse("2022-05-13T04:00:00.000Z");
+    const horizonMs = 7 * 86_400_000;
+    const liveOnly = resolveEclipseFrame(before, { lunarHorizonMs: 0 });
+    expect(liveOnly.upcomingLunar).toEqual([]);
+    expect(liveOnly.lunarForecastSelections).toEqual([]);
+    expect(liveOnly.activeLunar).toBeNull();
+
+    const tooEarly = resolveEclipseFrame(Date.parse("2022-05-08T04:00:00.000Z"), {
+      lunarHorizonMs: horizonMs,
+    });
+    expect(tooEarly.upcomingLunar.map((e) => e.id)).not.toContain("nasa-5mcle-lunar-9700");
+
+    const upcoming = resolveEclipseFrame(before, { lunarHorizonMs: horizonMs });
+    expect(upcoming.upcomingLunar.map((e) => e.id)).toEqual(["nasa-5mcle-lunar-9700"]);
+    expect(upcoming.lunarForecastSelections).toHaveLength(1);
+    expect(upcoming.lunarForecastSelections[0]?.lifecycle).toBe("upcoming");
+    expect(upcoming.lunarForecastSelections[0]?.nearestUpcoming).toBe(true);
+    expect(upcoming.lunarGeometry).toBeNull();
+    expect(upcoming.activeLunar).toBeNull();
+
+    const active = resolveEclipseFrame(Date.parse("2022-05-16T04:11:29.000Z"), {
+      lunarHorizonMs: horizonMs,
+    });
+    expect(active.activeLunar?.id).toBe("nasa-5mcle-lunar-9700");
+    expect(active.upcomingLunar.every((e) => e.id !== "nasa-5mcle-lunar-9700")).toBe(true);
+    expect(active.lunarGeometry?.phase).toBe("total-umbral");
+
+    const after = resolveEclipseFrame(Date.parse("2022-05-16T12:00:00.000Z"), {
+      lunarHorizonMs: horizonMs,
+    });
+    expect(after.activeLunar).toBeNull();
+    expect(after.upcomingLunar.map((e) => e.id)).not.toContain("nasa-5mcle-lunar-9700");
+  });
+
+  it("returns more than one upcoming lunar event for a long horizon, ordered by start", () => {
+    resetEclipseEventServiceCacheForTests();
+    const utc = Date.parse("2022-05-01T00:00:00.000Z");
+    const frame = resolveEclipseFrame(utc, { lunarHorizonMs: 365 * 86_400_000 });
+    expect(frame.upcomingLunar.length).toBeGreaterThan(1);
+    for (let i = 1; i < frame.upcomingLunar.length; i += 1) {
+      expect(frame.upcomingLunar[i]!.globalStartMs).toBeGreaterThan(
+        frame.upcomingLunar[i - 1]!.globalStartMs,
+      );
+    }
+    expect(frame.lunarForecastSelections.filter((s) => s.nearestUpcoming)).toHaveLength(1);
+    expect(frame.lunarForecastSelections.find((s) => s.nearestUpcoming)?.event.id).toBe(
+      frame.upcomingLunar[0]!.id,
+    );
+  });
+
+  it("keeps solar and lunar horizons independent", () => {
+    resetEclipseEventServiceCacheForTests();
+    const utc = Date.parse("2022-05-13T04:00:00.000Z");
+    const lunarOnly = resolveEclipseFrame(utc, { horizonMs: 0, lunarHorizonMs: 7 * 86_400_000 });
+    expect(lunarOnly.upcomingSolar).toEqual([]);
+    expect(lunarOnly.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
+    const solarOnly = resolveEclipseFrame(Date.parse("2024-04-03T18:00:00.000Z"), {
+      horizonMs: 7 * 86_400_000,
+      lunarHorizonMs: 0,
+    });
+    expect(solarOnly.upcomingSolar[0]?.id).toBe("nasa-5mcse-solar-9561");
+    expect(solarOnly.upcomingLunar).toEqual([]);
   });
 });

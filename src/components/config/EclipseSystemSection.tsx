@@ -85,18 +85,23 @@ export function EclipseSystemSection(props: {
   const solarOn = config.layers.solarEclipse;
   const lunarOn = config.layers.lunarEclipse;
   const liveOnly = solar.forecastHorizonDays === 0;
+  const lunarLiveOnly = lunar.forecastHorizonDays === 0;
   const alignmentChildrenOff = !alignment.enabled;
   const horizonMs = solarOn ? forecastHorizonMsFromDays(solar.forecastHorizonDays) : 0;
+  const lunarHorizonMs = lunarOn ? forecastHorizonMsFromDays(lunar.forecastHorizonDays) : 0;
   const frame =
     props.productInstantMs !== undefined
-      ? resolveEclipseFrame(props.productInstantMs, { horizonMs })
+      ? resolveEclipseFrame(props.productInstantMs, { horizonMs, lunarHorizonMs })
       : null;
   const circumstances =
     frame && circumstancesPres.detailsEnabled
       ? resolveReferenceCityEclipseCircumstances(frame, props.observerLocation)
       : null;
   const hasEclipseEvent = Boolean(
-    frame?.activeSolar || frame?.activeLunar || (frame?.upcomingSolar.length ?? 0) > 0,
+    frame?.activeSolar ||
+      frame?.activeLunar ||
+      (frame?.upcomingSolar.length ?? 0) > 0 ||
+      (frame?.upcomingLunar.length ?? 0) > 0,
   );
   const view = buildEclipseEventInformation({
     frame,
@@ -266,9 +271,37 @@ export function EclipseSystemSection(props: {
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Lunar eclipses</legend>
         <p className="config-section__hint">
-          The map region is where the eclipsed Moon is above the geometric horizon — not a lunar
-          path of totality.
+          Forecast horizon is how early an upcoming lunar eclipse appears — not the duration of
+          the eclipse. The map region is where the Moon is above the geometric horizon at
+          greatest eclipse, not a lunar path of totality.
         </p>
+        <ConfigControlRow label="Lunar forecast horizon">
+          <select
+            className="config-input"
+            disabled={!mutable || !lunarOn}
+            aria-label="Lunar forecast horizon"
+            title="How early upcoming lunar eclipse geography appears on the map."
+            value={String(lunar.forecastHorizonDays)}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const forecastHorizonDays = Number(
+                      e.currentTarget.value,
+                    ) as (typeof SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS)[number];
+                    patchScene(updateConfig, (base) =>
+                      applyLunarEclipsePresentationToScene(base, { forecastHorizonDays }),
+                    );
+                  }
+                : undefined
+            }
+          >
+            {SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS.map((days) => (
+              <option key={`lunar-eclipse-horizon-${days}`} value={days}>
+                {forecastHorizonLabel(days)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
         <ConfigControlRow label="Show lunar types">
           <div>
             {(
@@ -303,19 +336,21 @@ export function EclipseSystemSection(props: {
         </ConfigControlRow>
         {(
           [
-            ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse."],
-            ["showVisibilityBoundary", "Moon-visible boundary", "Geometric lunar-horizon contour. Not the solar terminator."],
-            ["showVisibilityRegion", "Moon-visible region", "Terrestrial region where the eclipsed Moon is above the geometric horizon."],
+            ["showForecastVisibilityRegion", "Forecast Moon-visible region", "Representative Moon-above-horizon region at greatest eclipse. Disabled when the horizon is Live only.", lunarLiveOnly],
+            ["showForecastVisibilityBoundary", "Forecast Moon-visible boundary", "Geometric lunar-horizon contour at greatest eclipse. Disabled when the horizon is Live only.", lunarLiveOnly],
+            ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse.", false],
+            ["showVisibilityBoundary", "Moon-visible boundary", "Geometric lunar-horizon contour during an active eclipse. Not the solar terminator.", false],
+            ["showVisibilityRegion", "Moon-visible region", "Terrestrial region where the eclipsed Moon is above the geometric horizon.", false],
           ] as const
-        ).map(([key, label, title]) => (
+        ).map(([key, label, title, forecastChild]) => (
           <ConfigControlRow key={key} label={label}>
             <input
               type="checkbox"
               className="config-input config-input--checkbox"
               checked={lunar[key]}
               readOnly={!mutable}
-              disabled={!mutable || !lunarOn}
-              tabIndex={mutable && lunarOn ? 0 : -1}
+              disabled={!mutable || !lunarOn || forecastChild}
+              tabIndex={mutable && lunarOn && !forecastChild ? 0 : -1}
               aria-label={label}
               title={title}
               onChange={

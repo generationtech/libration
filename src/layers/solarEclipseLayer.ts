@@ -22,8 +22,12 @@ import { solarEclipseMapLabel } from "../core/eclipse/eclipseEventLabels";
 import {
   presentedActiveSolar,
   presentedForecastSelections,
-  presentedUpcomingSolar,
+  presentedPrimaryEclipse,
 } from "../core/eclipse/eclipsePresentedEvents";
+import {
+  normalizeLunarEclipsePresentation,
+  type LunarEclipsePresentation,
+} from "../core/eclipse/lunarEclipseAppearance";
 import {
   forecastHorizonMsFromDays,
   normalizeSolarEclipsePresentation,
@@ -73,11 +77,13 @@ export function createSolarEclipseLayer(
     presentation?: Partial<SolarEclipsePresentation> | Readonly<Record<string, unknown>>;
     alignment?: Partial<EclipseAlignmentPresentation> | Readonly<Record<string, unknown>>;
     labelsEnabled?: boolean;
+    lunarPresentation?: Partial<LunarEclipsePresentation> | Readonly<Record<string, unknown>>;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const presentation = normalizeSolarEclipsePresentation(options.presentation);
+  const lunarPresentation = normalizeLunarEclipsePresentation(options.lunarPresentation);
   const alignment = normalizeEclipseAlignmentPresentation(options.alignment);
   const labelsEnabled = options.labelsEnabled !== false;
   const horizonMs = forecastHorizonMsFromDays(presentation.forecastHorizonDays);
@@ -184,30 +190,24 @@ export function createSolarEclipseLayer(
         }
       }
       if (labelsEnabled && frame.support.supported) {
-        if (activeSolar) {
+        const primary = presentedPrimaryEclipse(frame, presentation, lunarPresentation);
+        if (primary?.kind === "solar") {
           const geom = frame.solarGeometry;
           labels.push(
             solarEclipseMapLabel({
-              event: activeSolar,
-              lifecycle: "active",
+              event: primary.event,
+              lifecycle: primary.lifecycle,
               productUtcMs: frame.productUtcMs,
-              latDeg: geom?.centralPoint?.latDeg ?? activeSolar.geLatDeg,
-              lonDeg: geom?.centralPoint?.lonDeg ?? activeSolar.geLonDeg,
+              latDeg:
+                primary.lifecycle === "active"
+                  ? (geom?.centralPoint?.latDeg ?? primary.event.geLatDeg)
+                  : primary.event.geLatDeg,
+              lonDeg:
+                primary.lifecycle === "active"
+                  ? (geom?.centralPoint?.lonDeg ?? primary.event.geLonDeg)
+                  : primary.event.geLonDeg,
             }),
           );
-        } else {
-          const nearest = presentedUpcomingSolar(frame, presentation)[0];
-          if (nearest) {
-            labels.push(
-              solarEclipseMapLabel({
-                event: nearest,
-                lifecycle: "upcoming",
-                productUtcMs: frame.productUtcMs,
-                latDeg: nearest.geLatDeg,
-                lonDeg: nearest.geLonDeg,
-              }),
-            );
-          }
         }
       }
       const readabilityFrame = getOverlayReadabilityFrameOrCompute(time);

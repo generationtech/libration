@@ -57,6 +57,32 @@ export type LunarEclipsePhase = "none" | "penumbral" | "partial-umbral" | "total
  * Earth-shadow geometry at the Moon for one product UTC.
  * Radii and offsets are in Earth equatorial radii unless noted.
  */
+export type LunarEclipseLifecycle = "upcoming" | "active";
+
+/**
+ * Time-independent representative geography for an upcoming lunar eclipse:
+ * the Moon-above-horizon region at greatest eclipse. Not a terrestrial path
+ * and not visibility for every contact.
+ */
+export type LunarEclipseEventForecastGeometry = {
+  readonly eventId: string;
+  readonly authorityVersion: string;
+  readonly algorithmId: string;
+  readonly subtype: LunarEclipseSubtype;
+  readonly zenithLatDeg: number;
+  readonly zenithLonDeg: number;
+  readonly moonVisibleRegion: readonly { readonly latDeg: number; readonly lonDeg: number }[];
+  readonly polarCloseLatDeg: number | undefined;
+};
+
+export type LunarEclipseForecastSelection = {
+  readonly event: LunarEclipseEvent;
+  readonly lifecycle: LunarEclipseLifecycle;
+  readonly nearestUpcoming: boolean;
+  readonly prominence01: number;
+  readonly geometry: LunarEclipseEventForecastGeometry;
+};
+
 export type LunarEclipseLiveGeometry = {
   readonly phase: LunarEclipsePhase;
   readonly gamma: number;

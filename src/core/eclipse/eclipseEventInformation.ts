@@ -31,7 +31,9 @@ import {
   presentedActiveLunar,
   presentedActiveSolar,
   presentedForecastSelections,
+  presentedPrimaryEclipse,
   presentedPrimarySolar,
+  presentedUpcomingLunar,
   presentedUpcomingSolar,
 } from "./eclipsePresentedEvents";
 import type { SolarEclipsePresentation } from "./solarEclipseAppearance";
@@ -114,23 +116,40 @@ function solarRows(event: SolarEclipseEvent, frame: EclipseFrame, upcoming: bool
   return rows;
 }
 
-function lunarRows(event: LunarEclipseEvent, frame: EclipseFrame): EclipseEventInformationRow[] {
+function lunarRows(
+  event: LunarEclipseEvent,
+  frame: EclipseFrame,
+  upcoming: boolean,
+): EclipseEventInformationRow[] {
   const rows: EclipseEventInformationRow[] = [
     { label: "Event", value: lunarEclipseTypeTitle(event.subtype) },
     { label: "Date", value: formatEclipseCalendarDate(event) },
     { label: "Greatest eclipse", value: formatEclipseUtcClock(event.greatestEclipseUtcMs) },
-    { label: "Lifecycle", value: "Active" },
+    { label: "Lifecycle", value: upcoming ? "Upcoming" : "Active" },
   ];
-  const phase = lunarPhaseCopy(frame.lunarGeometry);
-  if (phase) {
-    rows.push({ label: "Current phase", value: phase });
+  if (upcoming) {
+    const relative = formatEclipseRelativeTime(frame.productUtcMs, event.globalStartMs);
+    if (relative) {
+      rows.push({ label: "Time until event", value: relative });
+    }
+    rows.push({
+      label: "Forecast Moon-visible region",
+      value: "Where the Moon is above the geometric horizon at greatest eclipse",
+    });
+  } else {
+    const phase = lunarPhaseCopy(frame.lunarGeometry);
+    if (phase) {
+      rows.push({ label: "Current phase", value: phase });
+    }
   }
   rows.push({ label: "Penumbral magnitude", value: event.penumbralMagnitude.toFixed(3) });
   rows.push({ label: "Umbral magnitude", value: event.umbralMagnitude.toFixed(3) });
-  rows.push({
-    label: "Moon-visible region",
-    value: "Where the eclipsed Moon is above the geometric horizon",
-  });
+  if (!upcoming) {
+    rows.push({
+      label: "Moon-visible region",
+      value: "Where the eclipsed Moon is above the geometric horizon",
+    });
+  }
   return rows;
 }
 
@@ -161,7 +180,13 @@ function solarLegend(args: {
   return items;
 }
 
-function lunarLegend(): EclipseLegendItem[] {
+function lunarLegend(upcoming: boolean): EclipseLegendItem[] {
+  if (upcoming) {
+    return [
+      { id: "forecast-moon-visible", label: "Forecast Moon-visible region at greatest eclipse" },
+      { id: "forecast-lunar-horizon", label: "Forecast boundary: geometric lunar horizon at GE" },
+    ];
+  }
   return [
     { id: "moon-visible", label: "Moon-visible region" },
     { id: "lunar-horizon", label: "Boundary: geometric lunar horizon" },
@@ -200,21 +225,30 @@ export function buildEclipseEventInformation(
   const upcomingSolar = input.solarEnabled ? presentedUpcomingSolar(input.frame, input.solar) : [];
   const primarySolar = input.solarEnabled ? presentedPrimarySolar(input.frame, input.solar) : null;
   const activeLunar = input.lunarEnabled ? presentedActiveLunar(input.frame, input.lunar) : null;
+  const upcomingLunar = input.lunarEnabled ? presentedUpcomingLunar(input.frame, input.lunar) : [];
   const presentedSelections = input.solarEnabled
     ? presentedForecastSelections(input.frame, input.solar)
     : [];
+  const primary = presentedPrimaryEclipse(
+    input.frame,
+    input.solarEnabled ? input.solar : { ...input.solar, showTypeTotal: false, showTypeAnnular: false, showTypePartial: false, showTypeHybrid: false },
+    input.lunarEnabled ? input.lunar : { ...input.lunar, showTypeTotal: false, showTypePartial: false, showTypePenumbral: false },
+  );
 
   const circumstancesEventId = input.circumstances?.globalSolarEventId ?? null;
   const circumstancesLunarId = input.circumstances?.globalLunarEventId ?? null;
   const showCircumstances = Boolean(
     input.circumstances &&
       ((circumstancesEventId &&
-        (primarySolar?.id === circumstancesEventId || activeSolar?.id === circumstancesEventId)) ||
-        (circumstancesLunarId && activeLunar?.id === circumstancesLunarId)),
+        (primarySolar?.id === circumstancesEventId ||
+          activeSolar?.id === circumstancesEventId ||
+          (primary?.kind === "solar" && primary.event.id === circumstancesEventId))) ||
+        (circumstancesLunarId &&
+          (activeLunar?.id === circumstancesLunarId ||
+            (primary?.kind === "lunar" && primary.event.id === circumstancesLunarId)))),
   );
 
-  if (activeSolar) {
-    const upcoming = false;
+  if (primary?.kind === "solar" && primary.lifecycle === "active" && activeSolar) {
     return {
       unsupported: false,
       unsupportedCopy: null,
@@ -222,8 +256,8 @@ export function buildEclipseEventInformation(
       lifecycle: "active",
       kind: "solar",
       relativeTime: null,
-      upcomingCount: upcomingSolar.length,
-      rows: solarRows(activeSolar, input.frame, upcoming),
+      upcomingCount: upcomingSolar.length + upcomingLunar.length,
+      rows: solarRows(activeSolar, input.frame, false),
       legend: solarLegend({
         upcoming: presentedSelections.some((s) => s.lifecycle === "active" || s.lifecycle === "upcoming"),
         active: true,
@@ -234,7 +268,7 @@ export function buildEclipseEventInformation(
     };
   }
 
-  if (activeLunar) {
+  if (primary?.kind === "lunar" && primary.lifecycle === "active" && activeLunar) {
     return {
       unsupported: false,
       unsupportedCopy: null,
@@ -242,14 +276,14 @@ export function buildEclipseEventInformation(
       lifecycle: "active",
       kind: "lunar",
       relativeTime: null,
-      upcomingCount: upcomingSolar.length,
-      rows: lunarRows(activeLunar, input.frame),
-      legend: lunarLegend(),
+      upcomingCount: upcomingSolar.length + upcomingLunar.length,
+      rows: lunarRows(activeLunar, input.frame, false),
+      legend: lunarLegend(false),
       circumstances: showCircumstances ? input.circumstances : null,
     };
   }
 
-  if (primarySolar) {
+  if (primary?.kind === "solar" && primarySolar) {
     const relative = formatEclipseRelativeTime(input.frame.productUtcMs, primarySolar.globalStartMs);
     return {
       unsupported: false,
@@ -258,7 +292,7 @@ export function buildEclipseEventInformation(
       lifecycle: "upcoming",
       kind: "solar",
       relativeTime: relative || null,
-      upcomingCount: upcomingSolar.length,
+      upcomingCount: upcomingSolar.length + upcomingLunar.length,
       rows: solarRows(primarySolar, input.frame, true),
       legend: solarLegend({
         upcoming: true,
@@ -266,6 +300,22 @@ export function buildEclipseEventInformation(
         annular: primarySolar.subtype === "annular",
         alignment: false,
       }),
+      circumstances: showCircumstances ? input.circumstances : null,
+    };
+  }
+
+  if (primary?.kind === "lunar") {
+    const relative = formatEclipseRelativeTime(input.frame.productUtcMs, primary.event.globalStartMs);
+    return {
+      unsupported: false,
+      unsupportedCopy: null,
+      title: lunarEclipseTypeTitle(primary.event.subtype),
+      lifecycle: "upcoming",
+      kind: "lunar",
+      relativeTime: relative || null,
+      upcomingCount: upcomingSolar.length + upcomingLunar.length,
+      rows: lunarRows(primary.event, input.frame, true),
+      legend: lunarLegend(true),
       circumstances: showCircumstances ? input.circumstances : null,
     };
   }

@@ -73,6 +73,28 @@ describe("reference-city circumstances vs global eclipse truth", () => {
     expect(b?.lunar?.contacts.find((c) => c.id === "greatest")?.aboveHorizon).toBe(false);
   });
 
+  it("derives upcoming lunar circumstances without changing global forecast geometry", () => {
+    resetEclipseEventServiceCacheForTests();
+    resetReferenceCityEclipseCircumstancesCacheForTests();
+    const knox = city("city.knoxville");
+    const tokyo = city("city.tokyo");
+    const frame = resolveEclipseFrame(Date.parse("2022-05-13T04:00:00.000Z"), {
+      lunarHorizonMs: HORIZON_7D,
+    });
+    const a = resolveReferenceCityEclipseCircumstances(frame, knox);
+    const b = resolveReferenceCityEclipseCircumstances(frame, tokyo);
+    expect(frame.activeLunar).toBeNull();
+    expect(frame.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
+    expect(a?.globalLunarEventId).toBe(frame.upcomingLunar[0]?.id);
+    expect(b?.globalLunarEventId).toBe(frame.upcomingLunar[0]?.id);
+    expect(a?.lunar?.locallyVisible).not.toBe(b?.lunar?.locallyVisible);
+    expect(resolveReferenceCityEclipseCircumstances(frame, null)).toBeNull();
+    expect(frame.lunarForecastSelections[0]?.geometry).toBe(
+      resolveEclipseFrame(Date.parse("2022-05-13T04:00:00.000Z"), { lunarHorizonMs: HORIZON_7D })
+        .lunarForecastSelections[0]?.geometry,
+    );
+  });
+
   it("still resolves a global solar event when no reference city is available", () => {
     resetEclipseEventServiceCacheForTests();
     const frame = resolveEclipseFrame(TOTAL_SOLAR_UTC);

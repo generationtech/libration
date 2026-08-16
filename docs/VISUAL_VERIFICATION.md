@@ -92,6 +92,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total). Optional DEV `observerCity=knoxville\|tokyo\|none` | Earth-shadow on the Moon glyph; Moon-up visibility region **must not change when observerCity changes**; **lunar alignment axis toward the Moon, not a terrestrial path**; Knoxville locally visible vs Tokyo GE below horizon |
 | `lunar-eclipse-partial` | `2008-08-16T21:10:06.000Z` | Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial). Optional DEV `observerCity=` | Partial umbra only; no false totality tint; visibility region still present; alignment axis weaker than totality |
 | `lunar-eclipse-horizon` | `2015-04-04T12:00:15.000Z` | Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith). Optional DEV `observerCity=` | Broad Moon-up hemisphere near ±180°; no inverted fill |
+| `lunar-eclipse-forecast-total` | `2022-05-13T04:00:00.000Z` | Upcoming 2022 May 16 total, 7-day lunar forecast horizon, three days before greatest eclipse. Optional DEV `observerCity=` `horizon=` | Quiet GE Moon-visible region; no Earth-shadow Moon treatment; no lunar alignment beam; event label/info/status; Knoxville locally visible vs Tokyo not visible without changing global geography |
 
 Adding a scenario requires a work item. Do not grow this set casually.
 
@@ -102,6 +103,18 @@ Existing eclipse scenarios accept optional DEV `observerCity=` (same catalog ids
 ### Eclipse product polish (E6)
 
 Reuse the existing eclipse catalog. Do not add a second scenario family for labels, event information, or styling.
+
+### Eclipse reconciliation (LIB-020)
+
+When inspecting the post-E6 reconciliation:
+
+- Confirm Event labels OFF removes on-map eclipse text immediately on a solar forecast scene and a lunar forecast scene; Event information and Persistent eclipse status may remain.
+- Confirm Event information OFF hides the inspectable panel while labels and persistent status follow their own toggles.
+- Confirm Persistent eclipse status OFF removes the lower-left contextual row and restores the ordinary two-line date/time spacing.
+- Confirm the eclipse status row sits below date/time with a clear gap for short (`Eclipse · Partial 89%`), medium (`Lunar eclipse · Total · visible`), and long (`Eclipse not visible from Knoxville`) copy.
+- Confirm factory/reset Solar and Lunar masters are checked, and an ordinary no-event date stays clean.
+- Confirm `lunar-eclipse-forecast-total` then `observerCity=tokyo`: global forecast region unchanged; local status says not visible.
+- Confirm forecast → active by jumping to `lunar-eclipse-total`: Earth-shadow and alignment appear; the GE forecast region is replaced by live geometry.
 
 When inspecting E6:
 

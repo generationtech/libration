@@ -32,6 +32,7 @@ import {
 import { createTimeContext } from "../core/time";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import {
+  applyEclipseInfoPresentationToScene,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
@@ -296,6 +297,36 @@ describe("commitWorkingV2Update", () => {
       mode: "fixedCity",
       cityId: "city.sydney",
     });
+  });
+
+  it("toggling event labels replaces the layer registry so map labels update", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+    expect(derivedAppConfigRef.current.scene.eclipseInfo.labelsEnabled).toBe(true);
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      draft.scene = applyEclipseInfoPresentationToScene(draft.scene!, { labelsEnabled: false });
+    });
+
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(derivedAppConfigRef.current.scene.eclipseInfo.labelsEnabled).toBe(false);
+  });
+
+  it("toggling event information does not replace the layer registry", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      draft.scene = applyEclipseInfoPresentationToScene(draft.scene!, {
+        eventInformationEnabled: false,
+      });
+    });
+
+    expect(registryRef.current).toBe(registryBefore);
+    expect(derivedAppConfigRef.current.scene.eclipseInfo.eventInformationEnabled).toBe(false);
+    expect(derivedAppConfigRef.current.scene.eclipseInfo.labelsEnabled).toBe(true);
   });
 
   it("changing geography only does not replace the layer registry", () => {

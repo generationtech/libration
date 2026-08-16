@@ -48,12 +48,16 @@ export function solarEclipseMapLabel(args: {
 
 export function lunarEclipseMapLabel(args: {
   readonly event: LunarEclipseEvent;
+  readonly lifecycle: "upcoming" | "active";
+  readonly productUtcMs: number;
   readonly latDeg: number;
   readonly lonDeg: number;
 }): EclipseMapLabel {
-  return {
-    latDeg: args.latDeg,
-    lonDeg: args.lonDeg,
-    text: lunarEclipseTypeTitle(args.event.subtype),
-  };
+  const title = lunarEclipseTypeTitle(args.event.subtype);
+  if (args.lifecycle === "active") {
+    return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: title };
+  }
+  const relative = formatEclipseRelativeTime(args.productUtcMs, args.event.globalStartMs);
+  const suffix = relative && relative !== "now" ? relative : formatEclipseCalendarDate(args.event);
+  return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: `${title} · ${suffix}` };
 }

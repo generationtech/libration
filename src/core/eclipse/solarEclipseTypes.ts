@@ -13,7 +13,11 @@
 
 import type { SolarBesselianCoefficients } from "./besselianElements";
 import type { GeographicPoint } from "./besselianGeographic";
-import type { LunarEclipseEvent, LunarEclipseLiveGeometry } from "./lunarEclipseTypes";
+import type {
+  LunarEclipseEvent,
+  LunarEclipseForecastSelection,
+  LunarEclipseLiveGeometry,
+} from "./lunarEclipseTypes";
 
 export type SolarEclipseSubtype = "partial" | "annular" | "total" | "hybrid";
 
@@ -112,14 +116,20 @@ export type EclipseForecastCoverage = {
 export type EclipseFrame = {
   readonly support: EclipseAuthoritySupport;
   readonly productUtcMs: number;
+  /** Solar forecast horizon. `0` is live-only. */
   readonly horizonMs: number;
+  /** Lunar forecast horizon. `0` is live-only. Independent of {@link horizonMs}. */
+  readonly lunarHorizonMs: number;
   readonly forecastCoverage: EclipseForecastCoverage;
+  readonly lunarForecastCoverage: EclipseForecastCoverage;
   readonly activeSolar: SolarEclipseEvent | null;
   readonly solarGeometry: SolarEclipseLiveGeometry | null;
   readonly upcomingSolar: readonly SolarEclipseEvent[];
   readonly forecastSelections: readonly SolarEclipseForecastSelection[];
   readonly activeLunar: LunarEclipseEvent | null;
   readonly lunarGeometry: LunarEclipseLiveGeometry | null;
+  readonly upcomingLunar: readonly LunarEclipseEvent[];
+  readonly lunarForecastSelections: readonly LunarEclipseForecastSelection[];
 };
 
 export type EclipseAuthorityMetadata = {

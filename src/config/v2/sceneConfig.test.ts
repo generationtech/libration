@@ -1253,6 +1253,17 @@ describe("lunar eclipse scene presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.showVisibilityRegion : undefined).toBe(
       true,
     );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined,
+    ).toBe(7);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showForecastVisibilityRegion : undefined,
+    ).toBe(true);
+    expect(
+      row?.source.kind === "derived"
+        ? row.source.parameters?.showForecastVisibilityBoundary
+        : undefined,
+    ).toBe(true);
   });
 
   it("persists independent lunar presentation toggles", () => {
@@ -1293,6 +1304,38 @@ describe("lunar eclipse scene presentation", () => {
       }),
     });
     expect(explicitOff.layers.lunarEclipse).toBe(false);
+  });
+
+  it("normalizes missing lunar forecast keys to the 7-day default and preserves explicit live-only", () => {
+    const base = defaultLibrationConfigV2();
+    const row = base.scene?.layers.find((l) => l.id === "lunarEclipse");
+    const stripped = normalizeLibrationConfig({
+      ...base,
+      scene: {
+        ...base.scene!,
+        layers: base.scene!.layers.map((l) => {
+          if (l.id !== "lunarEclipse" || l.source.kind !== "derived") {
+            return l;
+          }
+          const { forecastHorizonDays: _h, showForecastVisibilityRegion: _r, showForecastVisibilityBoundary: _b, ...parameters } =
+            l.source.parameters ?? {};
+          return { ...l, source: { ...l.source, parameters } };
+        }),
+      },
+    });
+    const restored = stripped.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(restored?.source.kind === "derived" ? restored.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
+    const liveOnly = normalizeLibrationConfig({
+      ...base,
+      scene: applyLunarEclipsePresentationToScene(base.scene!, { forecastHorizonDays: 0 }),
+    });
+    const liveRow = liveOnly.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(liveRow?.source.kind === "derived" ? liveRow.source.parameters?.forecastHorizonDays : undefined).toBe(
+      0,
+    );
+    void row;
   });
 });
 

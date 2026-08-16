@@ -72,6 +72,50 @@ describe("eclipse event information", () => {
     expect(penumbral.title === "Penumbral lunar eclipse" || penumbral.kind === "lunar").toBe(true);
   });
 
+  it("describes an upcoming total lunar eclipse before first contact", () => {
+    const frame = resolveEclipseFrame(Date.parse("2022-05-13T04:00:00.000Z"), {
+      lunarHorizonMs: 7 * 86_400_000,
+    });
+    const v = buildEclipseEventInformation({
+      frame,
+      solarEnabled: true,
+      lunarEnabled: true,
+      solar: SOLAR,
+      lunar: LUNAR,
+      info: INFO,
+      circumstances: null,
+    });
+    expect(v.kind).toBe("lunar");
+    expect(v.lifecycle).toBe("upcoming");
+    expect(v.title).toBe("Total lunar eclipse");
+    expect(v.relativeTime).toMatch(/^in /);
+    expect(
+      v.rows.some(
+        (r) =>
+          r.label === "Forecast Moon-visible region" &&
+          r.value.includes("greatest eclipse"),
+      ),
+    ).toBe(true);
+  });
+
+  it("names an upcoming penumbral lunar eclipse honestly", () => {
+    const frame = resolveEclipseFrame(Date.parse("2017-02-08T00:00:00.000Z"), {
+      lunarHorizonMs: 7 * 86_400_000,
+    });
+    expect(frame.upcomingLunar[0]?.subtype).toBe("penumbral");
+    const v = buildEclipseEventInformation({
+      frame,
+      solarEnabled: false,
+      lunarEnabled: true,
+      solar: SOLAR,
+      lunar: LUNAR,
+      info: INFO,
+      circumstances: null,
+    });
+    expect(v.title).toBe("Penumbral lunar eclipse");
+    expect(v.lifecycle).toBe("upcoming");
+  });
+
   it("exposes unsupported range without implying no eclipse exists", () => {
     const v = view("1899-06-15T12:00:00.000Z", 0);
     expect(v.unsupported).toBe(true);

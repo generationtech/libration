@@ -221,7 +221,14 @@ export function sceneRuntimeAffectingEqual(a: SceneConfig, b: SceneConfig): bool
     a.overlayReadability.presentation.overlayLiftMultiplier01 ===
       b.overlayReadability.presentation.overlayLiftMultiplier01 &&
     overlayReadabilityPerLayerEqual(a.overlayReadability.perLayer, b.overlayReadability.perLayer) &&
-    sceneLayersRuntimeEqual(a.layers, b.layers)
+    sceneLayersRuntimeEqual(a.layers, b.layers) &&
+    a.eclipseInfo.labelsEnabled === b.eclipseInfo.labelsEnabled &&
+    a.eclipseAlignment.enabled === b.eclipseAlignment.enabled &&
+    a.eclipseAlignment.solarEnabled === b.eclipseAlignment.solarEnabled &&
+    a.eclipseAlignment.lunarEnabled === b.eclipseAlignment.lunarEnabled &&
+    a.eclipseAlignment.intensity === b.eclipseAlignment.intensity &&
+    a.eclipseAlignment.solarColor === b.eclipseAlignment.solarColor &&
+    a.eclipseAlignment.lunarColor === b.eclipseAlignment.lunarColor
   );
 }
 

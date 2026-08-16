@@ -15,12 +15,15 @@ import {
   activeLunarEclipseAt,
   activeSolarEclipseAt,
   eclipseAuthoritySupport,
+  lunarEclipsesUpcomingInHorizon,
   SOLAR_ECLIPSE_AUTHORITY_METADATA,
   solarEclipsesUpcomingInHorizon,
 } from "./eclipseAuthority";
+import { lunarEclipseEventForecastGeometry } from "./lunarEclipseForecastGeometry";
 import { lunarEclipseGeometryAt } from "./lunarEclipseGeometry";
 import { solarEclipseEventForecastGeometry } from "./solarEclipseCorridor";
 import { solarEclipseGeometryAt } from "./solarEclipseGeometry";
+import type { LunarEclipseEvent, LunarEclipseForecastSelection } from "./lunarEclipseTypes";
 import type {
   EclipseForecastCoverage,
   EclipseFrame,
@@ -32,6 +35,7 @@ let cached: EclipseFrame | null = null;
 
 export type ResolveEclipseFrameOptions = {
   readonly horizonMs?: number;
+  readonly lunarHorizonMs?: number;
 };
 
 function clipForecastCoverage(utcMs: number, horizonMs: number): EclipseForecastCoverage {
@@ -138,16 +142,58 @@ function buildForecastSelections(
   return { upcomingSolar, forecastSelections: selections };
 }
 
+function buildLunarForecastSelections(
+  utcMs: number,
+  lunarHorizonMs: number,
+  coverage: EclipseForecastCoverage,
+): {
+  upcomingLunar: LunarEclipseEvent[];
+  lunarForecastSelections: LunarEclipseForecastSelection[];
+} {
+  if (lunarHorizonMs <= 0 || coverage.queryEndMs <= coverage.queryStartMs) {
+    return { upcomingLunar: [], lunarForecastSelections: [] };
+  }
+  const { startMs: authStart, endMs: authEnd } = SOLAR_ECLIPSE_AUTHORITY_METADATA.supportedUtcRange;
+  const upcomingLunar = lunarEclipsesUpcomingInHorizon(utcMs, lunarHorizonMs).filter(
+    (e) =>
+      e.globalStartMs >= authStart &&
+      e.globalStartMs < authEnd &&
+      e.globalStartMs >= coverage.queryStartMs &&
+      e.globalStartMs <= coverage.queryEndMs,
+  );
+  const nearestId = upcomingLunar[0]?.id;
+  const lunarForecastSelections: LunarEclipseForecastSelection[] = upcomingLunar.map((event) => ({
+    event,
+    lifecycle: "upcoming",
+    nearestUpcoming: event.id === nearestId,
+    prominence01: prominence01({
+      lifecycle: "upcoming",
+      msUntilStart: event.globalStartMs - utcMs,
+      horizonMs: lunarHorizonMs,
+      nearestUpcoming: event.id === nearestId,
+    }),
+    geometry: lunarEclipseEventForecastGeometry(event),
+  }));
+  return { upcomingLunar, lunarForecastSelections };
+}
+
 export function resolveEclipseFrame(
   utcMs: number,
   options?: ResolveEclipseFrameOptions,
 ): EclipseFrame {
   const horizonMs = Math.max(0, options?.horizonMs ?? 0);
-  if (cached && cached.productUtcMs === utcMs && cached.horizonMs === horizonMs) {
+  const lunarHorizonMs = Math.max(0, options?.lunarHorizonMs ?? 0);
+  if (
+    cached &&
+    cached.productUtcMs === utcMs &&
+    cached.horizonMs === horizonMs &&
+    cached.lunarHorizonMs === lunarHorizonMs
+  ) {
     return cached;
   }
   const support = eclipseAuthoritySupport(utcMs);
   const forecastCoverage = clipForecastCoverage(utcMs, horizonMs);
+  const lunarForecastCoverage = clipForecastCoverage(utcMs, lunarHorizonMs);
   const activeSolar = support.supported ? activeSolarEclipseAt(utcMs) : null;
   const activeLunar = support.supported ? activeLunarEclipseAt(utcMs) : null;
   const { upcomingSolar, forecastSelections } = buildForecastSelections(
@@ -156,17 +202,26 @@ export function resolveEclipseFrame(
     forecastCoverage,
     activeSolar,
   );
+  const { upcomingLunar, lunarForecastSelections } = buildLunarForecastSelections(
+    utcMs,
+    lunarHorizonMs,
+    lunarForecastCoverage,
+  );
   cached = {
     support,
     productUtcMs: utcMs,
     horizonMs,
+    lunarHorizonMs,
     forecastCoverage,
+    lunarForecastCoverage,
     activeSolar,
     solarGeometry: activeSolar ? solarEclipseGeometryAt(activeSolar, utcMs) : null,
     upcomingSolar,
     forecastSelections,
     activeLunar,
     lunarGeometry: activeLunar ? lunarEclipseGeometryAt(activeLunar, utcMs) : null,
+    upcomingLunar,
+    lunarForecastSelections,
   };
   return cached;
 }

@@ -104,43 +104,55 @@ export function buildBottomChromeBandRenderPlan(options: {
     },
   ];
 
-  const n = options.ib.bottomHudReadoutLines.length;
+  const lines = options.ib.bottomHudReadoutLines;
+  const clockLines = lines.filter((row) => row.role !== "eclipse");
+  const eclipseLine = lines.find((row) => row.role === "eclipse") ?? null;
+  const nClock = clockLines.length;
   const topFrac = 0.12;
   const botFrac = 0.9;
   const span = Math.max(0.05, botFrac - topFrac);
   /** Inter-row advance within the date/time pair: ~half legacy spacing, with a px floor for large stack fonts. */
   const minRowGapPx = Math.max(4, stackPx * 0.06);
   let stackSpanFrac = span;
-  if (n > 1) {
-    const originalStepFrac = span / (n - 1);
+  if (nClock > 1) {
+    const originalStepFrac = span / (nClock - 1);
     const newStepFrac = Math.max(
       minRowGapPx / Math.max(1, bh),
       originalStepFrac * 0.5,
     );
-    stackSpanFrac = newStepFrac * (n - 1);
+    stackSpanFrac = newStepFrac * (nClock - 1);
   }
 
-  for (let i = 0; i < n; i += 1) {
-    const row = options.ib.bottomHudReadoutLines[i]!;
-    const t = n === 1 ? 0.5 : i / Math.max(1, n - 1);
+  const clockCenters: number[] = [];
+  for (let i = 0; i < nClock; i += 1) {
+    const row = clockLines[i]!;
+    const t = nClock === 1 ? 0.5 : i / Math.max(1, nClock - 1);
     const yFrac = topFrac + t * stackSpanFrac;
     const cy = by + bh * yFrac - sideLift;
-
-    if (row.role === "date" || row.role === "eclipse") {
-      const text = row.text.length > 0 ? row.text : "\u00a0";
-      emitGlyphToRenderPlan(
-        createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),
-        { cx: padX, cy, size: stackPx },
-        gctx,
-        items,
-      );
-      continue;
-    }
-
+    clockCenters.push(cy);
     const text = row.text.length > 0 ? row.text : "\u00a0";
+    const policy = row.role === "date" ? datePolicy : timePolicy;
     emitGlyphToRenderPlan(
-      createBottomChromeTextGlyph(text, timePolicy, { textAlign: "left", shadow }),
+      createBottomChromeTextGlyph(text, policy, { textAlign: "left", shadow }),
       { cx: padX, cy, size: stackPx },
+      gctx,
+      items,
+    );
+  }
+
+  if (eclipseLine) {
+    const clockGapPx =
+      clockCenters.length >= 2
+        ? clockCenters[clockCenters.length - 1]! - clockCenters[clockCenters.length - 2]!
+        : Math.max(minRowGapPx, stackPx * 0.42);
+    const eclipseGapPx = Math.max(clockGapPx, stackPx * 0.48);
+    const lastClockCy =
+      clockCenters[clockCenters.length - 1] ?? by + bh * 0.5 - sideLift;
+    const cy = lastClockCy + eclipseGapPx;
+    const text = eclipseLine.text.length > 0 ? eclipseLine.text : "\u00a0";
+    emitGlyphToRenderPlan(
+      createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),
+      { cx: padX, cy, size: stackPx * 0.86 },
       gctx,
       items,
     );

@@ -19,7 +19,10 @@ import { createLunarEclipseLayer } from "./lunarEclipseLayer";
 import canvasBackendSource from "../renderer/canvasRenderBackend.ts?raw";
 
 const TOTAL_UTC = Date.parse("2022-05-16T04:11:29.000Z");
+const FORECAST_UTC = Date.parse("2022-05-13T04:00:00.000Z");
+const PARTIAL_FORECAST_UTC = Date.parse("2008-08-13T21:00:00.000Z");
 const QUIET_UTC = Date.parse("2024-01-15T00:00:00.000Z");
+const HORIZON_7D = 7 * 86_400_000;
 
 const ALIGNMENT_OFF = { enabled: false } as const;
 
@@ -58,6 +61,72 @@ describe("lunar eclipse layer", () => {
       expect(st.data.fills).toHaveLength(0);
       expect(st.data.strokes.length).toBe(1);
     }
+  });
+
+  it("emits a quieter forecast Moon-visible region before P1 and no alignment", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
+      alignment: { enabled: true, lunarEnabled: true },
+      labelsEnabled: true,
+    });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
+    const st = layer.getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    expect(frame.activeLunar).toBeNull();
+    expect(frame.upcomingLunar[0]?.subtype).toBe("total");
+    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.fills.length).toBe(1);
+      expect(st.data.strokes.length).toBeGreaterThan(0);
+      expect(st.data.labels).toHaveLength(1);
+      expect(st.data.labels?.[0]?.text).toMatch(/Total lunar eclipse/);
+      expect(st.data.labels?.[0]?.text).toMatch(/·/);
+    }
+  });
+
+  it("emits no forecast map label when labelsEnabled is false", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: false,
+    });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
+    const st = layer.getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.labels ?? []).toHaveLength(0);
+      expect(st.data.fills.length).toBe(1);
+    }
+  });
+
+  it("identifies a partial lunar forecast without totality semantics", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+    });
+    const frame = resolveEclipseFrame(PARTIAL_FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
+    expect(frame.upcomingLunar[0]?.subtype).toBe("partial");
+    const st = layer.getState(
+      createTimeContext(PARTIAL_FORECAST_UTC, 0, true, { eclipseFrame: frame }),
+    );
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.labels?.[0]?.text).toMatch(/Partial lunar eclipse/);
+      expect(st.data.labels?.[0]?.text).not.toMatch(/Total/);
+    }
+  });
+
+  it("hides a filtered-out upcoming total without changing authority truth", () => {
+    const frame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
+    expect(frame.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
+    const hidden = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 7, showTypeTotal: false },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+    }).getState(createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }));
+    if (isEquirectRegionOverlayPayload(hidden.data)) {
+      expect(hidden.data.fills).toHaveLength(0);
+      expect(hidden.data.labels ?? []).toHaveLength(0);
+    }
+    expect(frame.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
   });
 
   it("adds a lunar alignment axis without removing the visibility region", () => {

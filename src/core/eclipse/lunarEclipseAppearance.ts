@@ -27,10 +27,21 @@ import {
   type AstronomyPathThicknessId,
 } from "./eclipseStyle";
 import type { LunarEclipseSubtype } from "./lunarEclipseTypes";
+import {
+  DEFAULT_SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
+  normalizeForecastHorizonDays,
+  scaleRgbaAlpha,
+  type SolarEclipseForecastHorizonDays,
+} from "./solarEclipseAppearance";
 
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW = true;
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY = true;
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION = true;
+export const DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_REGION = true;
+export const DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_BOUNDARY = true;
+export const DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS: SolarEclipseForecastHorizonDays =
+  DEFAULT_SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS;
+export type LunarEclipseForecastHorizonDays = SolarEclipseForecastHorizonDays;
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_TOTAL = true;
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_PARTIAL = true;
 export const DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_PENUMBRAL = true;
@@ -43,6 +54,9 @@ export type LunarEclipsePresentation = {
   readonly showMoonEclipseShadow: boolean;
   readonly showVisibilityBoundary: boolean;
   readonly showVisibilityRegion: boolean;
+  readonly showForecastVisibilityRegion: boolean;
+  readonly showForecastVisibilityBoundary: boolean;
+  readonly forecastHorizonDays: LunarEclipseForecastHorizonDays;
   readonly showTypeTotal: boolean;
   readonly showTypePartial: boolean;
   readonly showTypePenumbral: boolean;
@@ -72,6 +86,15 @@ export function normalizeLunarEclipsePresentation(
       raw?.showVisibilityRegion,
       DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
     ),
+    showForecastVisibilityRegion: flag(
+      raw?.showForecastVisibilityRegion,
+      DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_REGION,
+    ),
+    showForecastVisibilityBoundary: flag(
+      raw?.showForecastVisibilityBoundary,
+      DEFAULT_LUNAR_ECLIPSE_SHOW_FORECAST_VISIBILITY_BOUNDARY,
+    ),
+    forecastHorizonDays: normalizeForecastHorizonDays(raw?.forecastHorizonDays),
     showTypeTotal: flag(raw?.showTypeTotal, DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_TOTAL),
     showTypePartial: flag(raw?.showTypePartial, DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_PARTIAL),
     showTypePenumbral: flag(raw?.showTypePenumbral, DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_PENUMBRAL),
@@ -117,10 +140,15 @@ export const LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_WIDTH_PX = 1.4;
 /** Quiet fill on the Moon-up side. Distinct from solar shading and solar eclipse partial. */
 export const LUNAR_ECLIPSE_VISIBILITY_REGION_FILL = "rgba(120, 168, 214, 0.14)";
 
+const LUNAR_FORECAST_REGION_ALPHA_SCALE = 0.45;
+const LUNAR_FORECAST_BOUNDARY_ALPHA_SCALE = 0.55;
+
 export type LunarEclipsePaint = {
   readonly visibilityBoundaryStroke: string;
   readonly visibilityBoundaryWidthPx: number;
   readonly visibilityRegionFill: string;
+  readonly forecastVisibilityBoundaryStroke: string;
+  readonly forecastVisibilityRegionFill: string;
 };
 
 export function resolveLunarEclipsePaint(presentation: LunarEclipsePresentation): LunarEclipsePaint {
@@ -134,17 +162,35 @@ export function resolveLunarEclipsePaint(presentation: LunarEclipsePresentation)
       visibilityBoundaryStroke: LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_STROKE,
       visibilityBoundaryWidthPx: LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_WIDTH_PX,
       visibilityRegionFill: LUNAR_ECLIPSE_VISIBILITY_REGION_FILL,
+      forecastVisibilityBoundaryStroke: scaleRgbaAlpha(
+        LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_STROKE,
+        LUNAR_FORECAST_BOUNDARY_ALPHA_SCALE,
+      ),
+      forecastVisibilityRegionFill: scaleRgbaAlpha(
+        LUNAR_ECLIPSE_VISIBILITY_REGION_FILL,
+        LUNAR_FORECAST_REGION_ALPHA_SCALE,
+      ),
     };
   }
+  const visibilityBoundaryStroke = hexToRgba(presentation.visibilityBoundaryColor, 0.78);
+  const visibilityRegionFill = hexToRgba(
+    presentation.visibilityRegionColor,
+    presentation.visibilityRegionOpacity,
+  );
   return {
-    visibilityBoundaryStroke: hexToRgba(presentation.visibilityBoundaryColor, 0.78),
+    visibilityBoundaryStroke,
     visibilityBoundaryWidthPx: eclipseStrokeWidthPx(
       LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_WIDTH_PX,
       presentation.visibilityBoundaryThickness,
     ),
-    visibilityRegionFill: hexToRgba(
-      presentation.visibilityRegionColor,
-      presentation.visibilityRegionOpacity,
+    visibilityRegionFill,
+    forecastVisibilityBoundaryStroke: scaleRgbaAlpha(
+      visibilityBoundaryStroke,
+      LUNAR_FORECAST_BOUNDARY_ALPHA_SCALE,
+    ),
+    forecastVisibilityRegionFill: scaleRgbaAlpha(
+      visibilityRegionFill,
+      LUNAR_FORECAST_REGION_ALPHA_SCALE,
     ),
   };
 }

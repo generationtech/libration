@@ -291,6 +291,27 @@ describe("resolveVisualScenarioSession", () => {
     );
   });
 
+  it("seeds lunar-eclipse-forecast-total several days before the 2022 total", () => {
+    const config = VISUAL_SCENARIOS["lunar-eclipse-forecast-total"].buildConfig();
+    expect(config.layers.lunarEclipse).toBe(true);
+    expect(config.data.demoTime.startIsoUtc).toBe("2022-05-13T04:00:00.000Z");
+    const row = config.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined).toBe(
+      7,
+    );
+    const liveOnly = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-forecast-total&horizon=0",
+    });
+    expect(liveOnly.kind).toBe("applied");
+    if (liveOnly.kind === "applied") {
+      const liveRow = liveOnly.config.scene?.layers.find((l) => l.id === "lunarEclipse");
+      expect(
+        liveRow?.source.kind === "derived" ? liveRow.source.parameters?.forecastHorizonDays : undefined,
+      ).toBe(0);
+    }
+  });
+
   it("seeds lunar eclipse scenarios with the production overlay at NASA fixture UTCs", () => {
     for (const id of ["lunar-eclipse-total", "lunar-eclipse-partial", "lunar-eclipse-horizon"] as const) {
       const config = VISUAL_SCENARIOS[id].buildConfig();

@@ -122,6 +122,15 @@ export function formatReferenceCityEclipseChromeStatus(
     return solarVisibleLine(circumstances, timeZone, displayTimeMode);
   }
   if (lunar?.locallyVisible) {
+    if (options?.lifecycle === "upcoming" && relative) {
+      const kind =
+        lunar.globalSubtype === "total"
+          ? "Total"
+          : lunar.globalSubtype === "partial"
+            ? "Partial"
+            : "Penumbral";
+      return `Lunar eclipse · ${kind} · ${relative}`;
+    }
     return lunarVisibleLine(circumstances);
   }
   if (solar) {
@@ -129,6 +138,9 @@ export function formatReferenceCityEclipseChromeStatus(
       return `Eclipse · ${relative} · not visible from ${cityName}`;
     }
     return `Eclipse not visible from ${cityName}`;
+  }
+  if (options?.lifecycle === "upcoming" && relative) {
+    return `Lunar eclipse · not visible locally · ${relative}`;
   }
   return `Lunar eclipse not visible from ${cityName}`;
 }

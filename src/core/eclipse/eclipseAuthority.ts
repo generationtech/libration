@@ -476,6 +476,21 @@ export function activeLunarEclipseAt(utcMs: number): LunarEclipseEvent | null {
   return null;
 }
 
+/**
+ * Upcoming lunar events whose global start lies in (utcMs, utcMs + horizonMs].
+ */
+export function lunarEclipsesUpcomingInHorizon(
+  utcMs: number,
+  horizonMs: number,
+): LunarEclipseEvent[] {
+  if (!(horizonMs > 0)) {
+    return [];
+  }
+  const endMs = utcMs + horizonMs;
+  const intersecting = lunarEclipsesIntersecting(utcMs + 1, endMs);
+  return intersecting.filter((e) => e.globalStartMs > utcMs && e.globalStartMs <= endMs);
+}
+
 export function nextLunarEclipseAfter(utcMs: number): LunarEclipseEvent | null {
   const events = LUNAR_ECLIPSE_EVENTS;
   let lo = 0;
