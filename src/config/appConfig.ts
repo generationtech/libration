@@ -65,6 +65,11 @@ export interface LayerEnableFlags {
    * Default off.
    */
   solarEclipse: boolean;
+  /**
+   * NASA-derived lunar eclipse visibility region and Moon-glyph shadow
+   * (scene product `lunarEclipseVisibility`). Default off.
+   */
+  lunarEclipse: boolean;
   /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */
   solarAnalemma: boolean;
 }
@@ -661,6 +666,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   lunarGroundTrack: false,
   lunarLocus: false,
   solarEclipse: false,
+  lunarEclipse: false,
   solarAnalemma: false,
 };
 

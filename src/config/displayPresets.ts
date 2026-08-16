@@ -163,6 +163,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       lunarGroundTrack: false,
       lunarLocus: false,
       solarEclipse: false,
+      lunarEclipse: false,
       solarAnalemma: false,
     } as const;
     return {
@@ -192,6 +193,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       lunarGroundTrack: false,
       lunarLocus: false,
       solarEclipse: false,
+      lunarEclipse: false,
       solarAnalemma: false,
     } as const;
     return {
@@ -221,6 +223,7 @@ export const DISPLAY_PRESETS: Record<DisplayPresetId, AppConfig> = {
       lunarGroundTrack: false,
       lunarLocus: false,
       solarEclipse: false,
+      lunarEclipse: false,
       solarAnalemma: false,
     } as const;
     return {

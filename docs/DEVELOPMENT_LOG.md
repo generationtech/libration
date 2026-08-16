@@ -106,4 +106,10 @@ E2 solar eclipse forecast window: product-UTC range lookup, durable horizon (def
 
 Verified: `npx tsc --noEmit` clean; `npm test` 181 files / 1682 passed / 0 failed; `npm run build` succeeded with no forecast scenario ids in `dist/`. Cursor Browser: forecast total/annular/partial/multiple, dateline live-only, 2024 jump into active+corridor, 3600× motion and pause, ordinary startup.
 
+## 2026-08-15 — LIB-016 complete
+
+E3 lunar eclipse truth and terrestrial visibility: bundled NASA/Espenak–Meeus lunar catalog v1 (459 events, 1900–2100), active-event Earth-shadow on the Moon glyph, Moon-above-horizon region (not a solar-style path). Master default off. DEV scenarios `lunar-eclipse-total|partial|horizon`. No new ADR. No E4+.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 184 files / 1711 passed / 0 failed; `npm run build` succeeded with no lunar eclipse scenario ids in `dist/`. Cursor Browser: total/partial/horizon, 3600× demo progression and post-event jump, ordinary startup.
+
 

@@ -21,6 +21,11 @@ export type EquirectLatLon = { readonly latDeg: number; readonly lonDeg: number 
 export type EquirectRegionFill = {
   readonly ring: readonly EquirectLatLon[];
   readonly fill: string;
+  /**
+   * When the unwrapped ring spans most of the world (polar/hemispheric caps),
+   * close through this latitude (±90). Generic; not eclipse-specific.
+   */
+  readonly polarCloseLatDeg?: number;
 };
 
 export type EquirectRegionStroke = {

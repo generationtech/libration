@@ -41,6 +41,12 @@ import {
   sublunarMarkerRadiusPx,
   type SublunarMarkerAppearance,
 } from "../../core/sublunarMarkerAppearance";
+import {
+  LUNAR_ECLIPSE_PENUMBRA_FILL,
+  LUNAR_ECLIPSE_TOTALITY_FILL,
+  LUNAR_ECLIPSE_UMBRA_FILL,
+} from "../../core/eclipse/lunarEclipseAppearance";
+import type { EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
 
 function mapLatToY(latDeg: number, viewportHeightPx: number): number {
   return ((90 - latDeg) / 180) * viewportHeightPx;
@@ -149,6 +155,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   librationOrientationDeg?: number;
   appearance?: Partial<SublunarMarkerAppearance>;
   readability?: OverlayReadabilityHints | null;
+  earthShadowOverlay?: EarthShadowOverlayAppearance | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -250,6 +257,15 @@ export function buildSublunarMarkerRenderPlan(options: {
       y2: cy + r * 1.02,
       stroke: `rgba(18, 26, 40, ${a(0.45)})`,
       strokeWidthPx: sw(Math.max(0.8, r * 0.09)),
+    });
+  }
+
+  if (options.earthShadowOverlay) {
+    pushEarthShadowOverlay(items, {
+      cx,
+      cy,
+      r,
+      overlay: options.earthShadowOverlay,
     });
   }
 
@@ -369,4 +385,38 @@ function pushLibrationIndicator(
       clip,
     }),
   );
+}
+
+function pushEarthShadowOverlay(
+  items: RenderPlan["items"],
+  args: {
+    cx: number;
+    cy: number;
+    r: number;
+    overlay: EarthShadowOverlayAppearance;
+  },
+): void {
+  const clip = clipPayloadDescriptor(circlePathDescriptor(args.cx, args.cy, args.r));
+  const sx = args.cx + args.overlay.offsetEastMoonRadii * args.r;
+  const sy = args.cy - args.overlay.offsetNorthMoonRadii * args.r;
+  const outerR = Math.max(0, args.overlay.outerRadiusMoonRadii * args.r);
+  const innerR = Math.max(0, args.overlay.innerRadiusMoonRadii * args.r);
+  if (outerR > 0.5) {
+    items.push(
+      createPath2DItem({
+        path: circlePath2D(sx, sy, outerR),
+        fill: LUNAR_ECLIPSE_PENUMBRA_FILL,
+        clip,
+      }),
+    );
+  }
+  if (innerR > 0.5) {
+    items.push(
+      createPath2DItem({
+        path: circlePath2D(sx, sy, innerR),
+        fill: args.overlay.innerCoversDisc ? LUNAR_ECLIPSE_TOTALITY_FILL : LUNAR_ECLIPSE_UMBRA_FILL,
+        clip,
+      }),
+    );
+  }
 }

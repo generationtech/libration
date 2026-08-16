@@ -13,6 +13,7 @@
 
 import type { SolarBesselianCoefficients } from "./besselianElements";
 import type { GeographicPoint } from "./besselianGeographic";
+import type { LunarEclipseEvent, LunarEclipseLiveGeometry } from "./lunarEclipseTypes";
 
 export type SolarEclipseSubtype = "partial" | "annular" | "total" | "hybrid";
 
@@ -111,6 +112,8 @@ export type EclipseFrame = {
   readonly solarGeometry: SolarEclipseLiveGeometry | null;
   readonly upcomingSolar: readonly SolarEclipseEvent[];
   readonly forecastSelections: readonly SolarEclipseForecastSelection[];
+  readonly activeLunar: LunarEclipseEvent | null;
+  readonly lunarGeometry: LunarEclipseLiveGeometry | null;
 };
 
 export type EclipseAuthorityMetadata = {

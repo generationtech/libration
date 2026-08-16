@@ -26,12 +26,13 @@ import {
 import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sceneConfig";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
-import { SUBLUNAR_MARKER_KIND, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
+import { SUBLUNAR_MARKER_KIND, type EarthShadowOverlayAppearance, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
 import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
   type SublunarMarkerAppearance,
 } from "../core/sublunarMarkerAppearance";
+import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 
 const SUBLUNAR_MARKER_ID = "layer.points.sublunar";
 
@@ -50,6 +51,8 @@ export function createSublunarMarkerLayer(
     observer?: ReferenceCityObserverLocation | null;
     /** Optional pilot: extra veil/lift pass for this marker only (after global presentation). */
     sublunarMarkerReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
+    /** When true, attach Earth-shadow overlay numbers from the active lunar eclipse. */
+    earthShadowEnabled?: boolean;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -59,6 +62,7 @@ export function createSublunarMarkerLayer(
   );
   const observer = options.observer ?? null;
   const sublunarMarkerReadabilityPresentation = options.sublunarMarkerReadabilityPresentation;
+  const earthShadowEnabled = options.earthShadowEnabled === true;
   let previousOrientationDeg: number | undefined;
   return {
     id: SUBLUNAR_MARKER_ID,
@@ -107,12 +111,32 @@ export function createSublunarMarkerLayer(
           nightVeil01: frame.readabilityVeil01At(latDeg, lonDeg),
           overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,
         },
+        ...(earthShadowEnabled ? earthShadowOverlayFromTime(time) : {}),
       };
       return {
         visible: true,
         opacity: op,
         data,
       };
+    },
+  };
+}
+
+function earthShadowOverlayFromTime(
+  time: TimeContext,
+): { earthShadowOverlay: EarthShadowOverlayAppearance } | Record<string, never> {
+  const eclipseFrame = time.eclipseFrame ?? resolveEclipseFrame(time.now, { horizonMs: 0 });
+  const geom = eclipseFrame.lunarGeometry;
+  if (!eclipseFrame.support.supported || !eclipseFrame.activeLunar || !geom || geom.phase === "none") {
+    return {};
+  }
+  return {
+    earthShadowOverlay: {
+      offsetEastMoonRadii: geom.shadowOffsetEastMoonRadii,
+      offsetNorthMoonRadii: geom.shadowOffsetNorthMoonRadii,
+      outerRadiusMoonRadii: geom.penumbraRadiusMoonRadii,
+      innerRadiusMoonRadii: geom.phase === "penumbral" ? 0 : geom.umbraRadiusMoonRadii,
+      innerCoversDisc: geom.phase === "total-umbral",
     },
   };
 }

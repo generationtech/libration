@@ -49,7 +49,9 @@ export function buildEquirectRegionOverlayRenderPlan(
   const items: RenderPlan["items"] = [];
   for (const fill of options.payload.fills) {
     const color = scaleRgba(fill.fill, op);
-    for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h)) {
+    for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h, {
+      polarCloseLatDeg: fill.polarCloseLatDeg,
+    })) {
       items.push(createDescriptorPathItem({ pathDescriptor, fill: color }));
     }
   }

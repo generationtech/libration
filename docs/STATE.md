@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-015](work/LIB-015-solar-eclipse-forecast.md) — Solar eclipse forecast window and upcoming-event progression (E2)
+[LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md) — Lunar eclipse truth and terrestrial visibility geometry (E3)
 
 ## Blockers
 
@@ -21,4 +21,4 @@ None
 
 ## Next action
 
-Await human authorization for E3 (lunar eclipse event truth and visibility geometry). Do not start E3 or create an E3 work item.
+Await human authorization. Strongest candidate: E4 — reference-city eclipse circumstances. Do not start E4 or create an E4 work item without approval.

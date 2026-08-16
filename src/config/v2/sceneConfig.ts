@@ -34,6 +34,12 @@ import {
 } from "../../core/astronomyOverlayStrokeAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
+  DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
+  DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
+  DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
+  normalizeLunarEclipsePresentation,
+} from "../../core/eclipse/lunarEclipseAppearance";
+import {
   DEFAULT_SOLAR_ECLIPSE_FORECAST_HORIZON_DAYS,
   DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_BAND,
   DEFAULT_SOLAR_ECLIPSE_SHOW_CENTRAL_LINE,
@@ -434,6 +440,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "staticEquirectOverlay",
   "globalCloudsIr",
   "solarEclipse",
+  "lunarEclipse",
   "earthquakes",
   "orbitalTracks",
   "cityPins",
@@ -769,6 +776,24 @@ const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   },
 };
 
+/** NASA-derived lunar eclipse overlay: Moon-up visibility region while an event is active. Default off. */
+const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
+  id: "lunarEclipse",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 2.75,
+  source: {
+    kind: "derived",
+    product: "lunarEclipseVisibility",
+    parameters: {
+      showMoonEclipseShadow: DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
+      showVisibilityBoundary: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
+      showVisibilityRegion: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
+    },
+  },
+};
+
 /**
  * DLC-2: Model B earthquake point features — lifecycle sourceId, default off.
  * Acquisition is outside rAF; layer reads sync-prepared views only.
@@ -891,6 +916,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   STATIC_EQUIRECT,
   GLOBAL_CLOUDS_IR,
   SOLAR_ECLIPSE_ROW,
+  LUNAR_ECLIPSE_ROW,
   CITY,
   EARTHQUAKES,
   ORBITAL_TRACKS,
@@ -923,6 +949,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "globalCloudsIr";
     case "solarEclipse":
       return "solarEclipse";
+    case "lunarEclipse":
+      return "lunarEclipse";
     case "earthquakes":
       return "earthquakes";
     case "orbitalTracks":
@@ -986,6 +1014,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     staticEquirectOverlay: false,
     globalCloudsIr: false,
     solarEclipse: false,
+    lunarEclipse: false,
     earthquakes: false,
     orbitalTracks: false,
     cityPins: false,
@@ -1162,6 +1191,39 @@ export function applySolarEclipsePresentationToScene(
       return {
         ...row,
         source: withNormalizedSolarEclipseParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
+export function lunarEclipsePresentationFromScene(scene: SceneConfig) {
+  const row = scene.layers.find((l) => l.id === "lunarEclipse");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return normalizeLunarEclipsePresentation(params);
+}
+
+export function applyLunarEclipsePresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<{
+    showMoonEclipseShadow: boolean;
+    showVisibilityBoundary: boolean;
+    showVisibilityRegion: boolean;
+  }>,
+): SceneConfig {
+  const current = lunarEclipsePresentationFromScene(scene);
+  const next = normalizeLunarEclipsePresentation({ ...current, ...patch });
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "lunarEclipse" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedLunarEclipseParameters({
           ...row.source,
           parameters: { ...(row.source.parameters ?? {}), ...next },
         }),
@@ -1468,6 +1530,20 @@ function withNormalizedSolarEclipseParameters(source: LayerSourceConfig): LayerS
   };
 }
 
+function withNormalizedLunarEclipseParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "lunarEclipseVisibility") {
+    return source;
+  }
+  const p = normalizeLunarEclipsePresentation(source.parameters);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...p,
+    },
+  };
+}
+
 function defaultSourceForLayerId(id: string): LayerSourceConfig {
   const m = new Map<string, LayerSourceConfig>(
     DEFAULT_STACK.map((s) => [s.id, s.source] as const),
@@ -1612,6 +1688,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   source = withNormalizedSublunarLocusParameters(source);
   source = withNormalizedSolarAnalemmaParameters(source);
   source = withNormalizedSolarEclipseParameters(source);
+  source = withNormalizedLunarEclipseParameters(source);
   let opacity: number | undefined;
   if (typeof raw.opacity === "number" && Number.isFinite(raw.opacity)) {
     opacity = clampOpacity(raw.opacity);

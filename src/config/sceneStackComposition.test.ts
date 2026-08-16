@@ -34,6 +34,7 @@ const ALL: LayerEnableFlags = {
   lunarGroundTrack: true,
   lunarLocus: true,
   solarEclipse: false,
+  lunarEclipse: false,
   solarAnalemma: true,
 };
 
@@ -191,6 +192,37 @@ describe("planSceneStackComposition", () => {
       "sublunarMarker",
       "solarAnalemma",
     ]);
+  });
+
+  it("includes lunar eclipse after solar eclipse and before city pins when enabled", () => {
+    const enabled = sceneWith(undefined, (rows) =>
+      rows.map((L) =>
+        L.id === "solarEclipse" || L.id === "lunarEclipse" ? { ...L, enabled: true } : L,
+      ),
+    );
+    expect(planSceneStackComposition(enabled).overlays.map((o) => o.layerId)).toEqual([
+      "solarShading",
+      "grid",
+      "staticEquirectOverlay",
+      "solarEclipse",
+      "lunarEclipse",
+      "cityPins",
+      "subsolarMarker",
+      "lunarGroundTrack",
+      "lunarLocus",
+      "sublunarMarker",
+      "solarAnalemma",
+    ]);
+  });
+
+  it("draws the Moon glyph after the Sun glyph when both markers participate", () => {
+    const p = planSceneStackComposition(buildDefaultSceneConfigFromLayerFlags(ALL));
+    const sun = p.overlays.findIndex((o) => o.layerId === "subsolarMarker");
+    const moon = p.overlays.findIndex((o) => o.layerId === "sublunarMarker");
+    expect(sun).toBeGreaterThanOrEqual(0);
+    expect(moon).toBeGreaterThan(sun);
+    expect(p.overlays[moon]!.zIndex).toBeGreaterThan(p.overlays[sun]!.zIndex);
+    expect(p.overlays[moon]!.stackIndex).toBeGreaterThan(p.overlays[sun]!.stackIndex);
   });
 
   it("skips disabled stack rows without creating z-index gaps in the plan", () => {

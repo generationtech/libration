@@ -89,6 +89,9 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon | Partial forecast region; no fabricated central corridor |
 | `solar-eclipse-forecast-multiple` | `2023-10-01T00:00:00.000Z` | 365-day horizon with more than one upcoming solar eclipse | Multi-event density; nearest event emphasized |
+| `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total) | Earth-shadow on the Moon glyph (totality vs phase); Moon-up visibility region; libration still readable; not a solar terminator |
+| `lunar-eclipse-partial` | `2008-08-16T21:10:06.000Z` | Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial) | Partial umbra only; no false totality tint; visibility region still present |
+| `lunar-eclipse-horizon` | `2015-04-04T12:00:15.000Z` | Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith) | Broad Moon-up hemisphere near ±180°; no inverted fill |
 
 Adding a scenario requires a work item. Do not grow this set casually.
 

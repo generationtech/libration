@@ -4,9 +4,9 @@
 
 A **planning specification** produced by [LIB-012](../../work/LIB-012-eclipse-system-architecture.md) and extended by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). It records how Libration structures an Eclipse System, including the selected offline eclipse authority.
 
-E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E3+), which still require a separate human-authorized work item.
+E1 (solar event truth and live geographic footprint) is **production** as of [LIB-014](../../work/LIB-014-solar-eclipse-live-footprint.md). E2 (solar forecast window and event-path corridor) is **production** as of [LIB-015](../../work/LIB-015-solar-eclipse-forecast.md). E3 (lunar event truth and terrestrial Moon-up visibility) is **production** as of [LIB-016](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md). Current behaviour for those slices lives in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This file remains the intended architecture for remaining slices (E4+), which still require a separate human-authorized work item.
 
-Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs).
+Product intent (why/what) remains in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). Durable invariants remain in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md). Authority vendor, format, span, and precision posture are selected in [§22](#22-eclipse-authority-selected). E1 production notes that belong in the architecture (not a changelog) are in [§9](#9-solar-eclipse-map-architecture) and [§22.14](#2214-e1-inputs). E3 production notes are in [§10](#10-lunar-eclipse-map-architecture) and [§22.16](#2216-e3-inputs).
 
 This document does not freeze configuration schema, UI, colors, cone shapes, animation, or exact numeric thresholds beyond the user-controlled forecast horizon.
 
@@ -575,10 +575,11 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Cache vs acceleration; horizon config without a frozen schema explosion (minimal horizon control only).
 - **Completion evidence:** Time-lifecycle tests; corridor tests vs NASA fixtures; visual upcoming → active → gone.
 
-### E3 — Lunar event truth and visibility geometry
+### E3 — Lunar event truth and visibility geometry — **implemented (LIB-016)**
 
 - **Goal:** Lunar events from the same authority; Earth-shadow/Moon relationship; terrestrial Moon-up region; no solar-style thin path.
 - **Dependencies:** E1’s service/authority; not E2 strictly, but sharing the frame is cheaper after E2.
+- **Status:** Production. See [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
 - **User-visible:** Known total lunar eclipse: Moon-up hemisphere (or equivalent) plus shadow-relationship decoration.
 - **Principal risks:** Forcing a path metaphor; over-building ambient lunar horizon.
 - **Completion evidence:** Type/contact fixtures; hemisphere tests; visual scene with/without Moon-up at the reference city.
@@ -607,7 +608,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration.
 
-E1 is production. E2 is production. E3 is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 may consume lunar types when cheap, without a second solar catalog.
+E1 is production. E2 is production. E3 is production. E4 (reference-city eclipse circumstances) is the recommended next implementation slice after human authorization. The NASA/Espenak–Meeus authority already classifies hybrid solar and penumbral lunar events; E3 preserves penumbral truth and draws a penumbral-only Moon overlay when such an event is active, without a dedicated penumbral UI.
 
 ---
 
@@ -627,21 +628,21 @@ Bundled span **1900-01-01T00:00:00.000Z ≤ T < 2101-01-01T00:00:00.000Z**. Outs
 
 Scientifically grounded instrument matching NASA Canon maps at world-map scale, not a survey or lunar-limb product. Numeric tolerances in [§22.3](#223-precision-target).
 
-### D4 — First-release types — **decided for E1 (LIB-014)**
+### D4 — First-release types — **decided for E1 (LIB-014) and E3 (LIB-016)**
 
-Solar total, annular, and partial are production. Hybrid is preserved as event subtype when the NASA data provides it; E1 live presentation uses the same central-event machinery with umbra vs antumbra from `L2′`, not a hybrid-specific renderer. Lunar types remain E3.
+Solar total, annular, and partial are production. Hybrid is preserved as event subtype when the NASA data provides it; E1 live presentation uses the same central-event machinery with umbra vs antumbra from `L2′`, not a hybrid-specific renderer. Lunar total and partial are production. Penumbral events keep their subtype and may draw when active; they are not reclassified as partial and do not fabricate umbral geometry.
 
-### D5 — First visible slice — **decided (LIB-014 / LIB-015)**
+### D5 — First visible slice — **decided (LIB-014 / LIB-015 / LIB-016)**
 
-E1 live solar footprint at known NASA events. E2 solar forecast window and cached event corridor. Lunar remains E3.
+E1 live solar footprint at known NASA events. E2 solar forecast window and cached event corridor. E3 live lunar Earth-shadow on the Moon glyph plus terrestrial Moon-up region. Lunar forecast remains later.
 
-### D6 — Service vs layers
+### D6 — Service vs layers — **decided (LIB-014 / LIB-016)**
 
 - **Options:** One mega-layer; two layers without a service; service + two layers (recommended); generic events platform.
 - **Recommend:** **EclipseEventService + solarEclipse + lunarEclipse layers.**
 - **Consequence:** One new frame seam; no events framework.
 
-### D7 — Lunar horizon sequencing
+### D7 — Lunar horizon sequencing — **decided (LIB-016)**
 
 - **Options:** Separate Lunar Visibility LIB first; contour inside E3; skip hemisphere and only decorate the Moon glyph.
 - **Recommend:** **Contour inside E3**; do not create the ambient overlay LIB as a blocker.
@@ -657,10 +658,9 @@ E1 live solar footprint at known NASA events. E2 solar forecast window and cache
 
 ## 20. Intentionally not predetermined
 
-- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls.
+- Exact configuration schema and control layout beyond E1/E2’s solar overlay controls and E3’s lunar overlay controls.
 - Numeric imminent thresholds.
-- Colors, opacities, gradients, cone/beam shape, animation beyond E1’s restrained production tokens.
-- Whether lunar penumbral events are shown in E3 (the authority classifies them).
+- Colors, opacities, gradients, cone/beam shape, animation beyond E1/E3’s restrained production tokens.
 - Chrome vs inspectable-panel placement for observer circumstances.
 - Extracting a shared `surfaceDotProduct(lat, lon, subpoint)` helper (good cleanup, not an architecture decision).
 - Adding Sun RA/Dec exports before they have a caller.
@@ -682,12 +682,13 @@ E1 live solar footprint at known NASA events. E2 solar forecast window and cache
 | Authority evaluation | [`docs/work/LIB-013-eclipse-authority-evaluation.md`](../../work/LIB-013-eclipse-authority-evaluation.md) |
 | E1 live solar footprint | [`docs/work/LIB-014-solar-eclipse-live-footprint.md`](../../work/LIB-014-solar-eclipse-live-footprint.md) |
 | E2 solar forecast window | [`docs/work/LIB-015-solar-eclipse-forecast.md`](../../work/LIB-015-solar-eclipse-forecast.md) |
+| E3 lunar truth and visibility | [`docs/work/LIB-016-lunar-eclipse-truth-and-visibility.md`](../../work/LIB-016-lunar-eclipse-truth-and-visibility.md) |
 
 ---
 
 ## 22. Eclipse authority (selected)
 
-Selected by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). E1 consumed this boundary; the solar half is now in source ([ADR 0008](../../decisions/0008-bundled-nasa-solar-eclipse-authority.md)).
+Selected by [LIB-013](../../work/LIB-013-eclipse-authority-evaluation.md). E1 consumed the solar half ([ADR 0008](../../decisions/0008-bundled-nasa-solar-eclipse-authority.md)); E3 consumed the lunar catalog half. Both are in source behind one `EclipseAuthority` family.
 
 ### 22.1 Chosen approach
 
@@ -908,7 +909,7 @@ E1 implemented solar event truth and a live geographic footprint without another
 2. Polynomial evaluation + Chauvenet/Explanatory Supplement Besselian→geographic geometry in `src/core/eclipse/`.
 3. Active solar event at product UTC; centerline, umbral/antumbral band, and partial footprint at `T`. Partial-only events do not fabricate a central band.
 4. Tests pin `authorityVersion` and the solar fixtures in [§22.11](#2211-verification-fixtures).
-5. Ambient Sun/Moon unchanged; lunar consumption remains E3.
+5. Ambient Sun/Moon unchanged; lunar consumption is E3.
 
 On-disk encoding is JSON. Master Solar eclipses control defaults **off**; central line / band / partial default **on** when the layer is enabled.
 
@@ -927,3 +928,15 @@ On-disk encoding is JSON. Master Solar eclipses control defaults **off**; centra
 | Winner | No — static max-eclipse paths fail E1 live footprint | Solar half of D | Overkill vs instrument posture | **Yes** |
 
 Uncertainty: NASA GSFC site copies of the mysqldump CSV vs later per-event ELP2000-85 pages differ by a few seconds of ΔT; v1 pins the Canon/Catalog dump. Lunar contacts from duration symmetry vs unpublished lunar Besselian polynomials: difference expected ≪ 1 min; acceptable. JPL would beat Canon on absolute modern accuracy by kilometres at most — below world-map noticeability and above justified complexity.
+
+### 22.16 E3 inputs
+
+E3 implemented lunar event truth, circular Earth-shadow geometry at the Moon, and the terrestrial Moon-up region without another research phase:
+
+1. NASA GSFC lunar catalog metadata + contact durations for 1900–2100 in versioned `EclipseAuthority` asset `nasa-espenak-meeus-5mcle-lunar` v1.
+2. Duration-symmetry contacts and magnitude-recovered circular shadow radii in `src/core/eclipse/`.
+3. Active lunar event at product UTC; Moon-glyph Earth-shadow overlay; Moon-above-horizon region from ambient `sublunarPoint` (geometric horizon, spherical Earth, no refraction).
+4. Tests pin `authorityVersion` and the lunar fixtures in [§22.11](#2211-verification-fixtures).
+5. No lunar forecast UI; no solar-style terrestrial corridor; no reference-city circumstances UI.
+
+Master Lunar eclipses control defaults **off**; Moon eclipse-shadow / visibility boundary / visibility region default **on** when the layer is enabled.

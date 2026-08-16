@@ -12,11 +12,13 @@
  */
 
 import {
+  activeLunarEclipseAt,
   activeSolarEclipseAt,
   eclipseAuthoritySupport,
   SOLAR_ECLIPSE_AUTHORITY_METADATA,
   solarEclipsesUpcomingInHorizon,
 } from "./eclipseAuthority";
+import { lunarEclipseGeometryAt } from "./lunarEclipseGeometry";
 import { solarEclipseEventForecastGeometry } from "./solarEclipseCorridor";
 import { solarEclipseGeometryAt } from "./solarEclipseGeometry";
 import type {
@@ -147,6 +149,7 @@ export function resolveEclipseFrame(
   const support = eclipseAuthoritySupport(utcMs);
   const forecastCoverage = clipForecastCoverage(utcMs, horizonMs);
   const activeSolar = support.supported ? activeSolarEclipseAt(utcMs) : null;
+  const activeLunar = support.supported ? activeLunarEclipseAt(utcMs) : null;
   const { upcomingSolar, forecastSelections } = buildForecastSelections(
     utcMs,
     horizonMs,
@@ -162,6 +165,8 @@ export function resolveEclipseFrame(
     solarGeometry: activeSolar ? solarEclipseGeometryAt(activeSolar, utcMs) : null,
     upcomingSolar,
     forecastSelections,
+    activeLunar,
+    lunarGeometry: activeLunar ? lunarEclipseGeometryAt(activeLunar, utcMs) : null,
   };
   return cached;
 }

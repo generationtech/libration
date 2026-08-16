@@ -193,6 +193,64 @@ describe("buildSublunarMarkerRenderPlan", () => {
     });
   });
 
+  it("paints Earth-shadow fills after phase shading and before the libration mark", () => {
+    const appearance = {
+      size: "normal" as const,
+      librationEnabled: true,
+      librationStyle: "ring" as const,
+      librationColor: "#c5d4e8",
+      librationThickness: "normal" as const,
+      librationMotionScale: "normal" as const,
+    };
+    const base = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance,
+    });
+    const eclipsed = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 400,
+      viewportHeightPx: 200,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance,
+      earthShadowOverlay: {
+        offsetEastMoonRadii: 0.2,
+        offsetNorthMoonRadii: -0.4,
+        outerRadiusMoonRadii: 4.5,
+        innerRadiusMoonRadii: 2.6,
+        innerCoversDisc: true,
+      },
+    });
+    expect(eclipsed.items.length).toBe(base.items.length + 2);
+    const outlineIdx = eclipsed.items.length - 2;
+    const librationIdx = eclipsed.items.findIndex(
+      (item, i) =>
+        item.kind === "path2d" &&
+        "stroke" in item &&
+        typeof item.stroke === "string" &&
+        item.stroke.includes("197, 212, 232") &&
+        i < outlineIdx,
+    );
+    const shadowFills = eclipsed.items
+      .map((item, i) => ({ item, i }))
+      .filter(
+        ({ item }) =>
+          item.kind === "path2d" &&
+          "fill" in item &&
+          typeof item.fill === "string" &&
+          (item.fill.includes("28, 36, 64") || item.fill.includes("110, 36, 24")),
+      );
+    expect(shadowFills.length).toBe(2);
+    expect(librationIdx).toBeGreaterThan(shadowFills[1]!.i);
+    expect(shadowFills[0]!.i).toBeGreaterThan(1);
+  });
+
   it("emits a clipped ring at disc center for zero libration", () => {
     const plan = buildSublunarMarkerRenderPlan({
       viewportWidthPx: 400,

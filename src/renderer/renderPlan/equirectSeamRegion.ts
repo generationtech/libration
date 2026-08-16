@@ -79,6 +79,7 @@ export function equirectRingToPathDescriptors(
   ring: EquirectRing,
   viewportWidthPx: number,
   viewportHeightPx: number,
+  options?: { polarCloseLatDeg?: number },
 ): RenderPathDescriptor[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -91,7 +92,9 @@ export function equirectRingToPathDescriptors(
   let useLons = lons;
   if (span > 270) {
     const meanLat = lats.reduce((s, v) => s + v, 0) / lats.length;
-    const poleLat = meanLat < 0 ? -90 : 90;
+    const hinted = options?.polarCloseLatDeg;
+    const poleLat =
+      typeof hinted === "number" && Number.isFinite(hinted) ? hinted : meanLat < 0 ? -90 : 90;
     useLats = [...lats, poleLat, poleLat, lats[0]!];
     const lo = Math.min(...lons);
     const hi = Math.max(...lons);

@@ -34,6 +34,7 @@ import {
   applyLunarGroundTrackColorToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
+  applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   getEquirectBaseMapOptionForId,
@@ -58,6 +59,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   lunarGroundTrack: true,
   lunarLocus: true,
   solarEclipse: false,
+  lunarEclipse: false,
   solarAnalemma: true,
 };
 
@@ -106,7 +108,8 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(13);
+    expect(v2.scene?.layers).toHaveLength(14);
+    expect(v2.scene?.layers.some((l) => l.id === "lunarEclipse")).toBe(true);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
@@ -895,6 +898,7 @@ describe("SceneConfig (Phase 1)", () => {
       lunarGroundTrack: true,
       lunarLocus: true,
       solarEclipse: false,
+      lunarEclipse: false,
       solarAnalemma: false,
     };
     const v2 = normalizeLibrationConfig({
@@ -1216,5 +1220,57 @@ describe("solar eclipse scene presentation", () => {
     expect(
       snappedRow?.source.kind === "derived" ? snappedRow.source.parameters?.forecastHorizonDays : undefined,
     ).toBe(14);
+  });
+});
+
+describe("lunar eclipse scene presentation", () => {
+  it("defaults the layer off with child presentation on", () => {
+    const v2 = defaultLibrationConfigV2();
+    expect(v2.layers.lunarEclipse).toBe(false);
+    const row = v2.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(row?.enabled).toBe(false);
+    expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe(
+      "lunarEclipseVisibility",
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showMoonEclipseShadow : undefined).toBe(
+      true,
+    );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showVisibilityBoundary : undefined,
+    ).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showVisibilityRegion : undefined).toBe(
+      true,
+    );
+  });
+
+  it("persists independent lunar presentation toggles", () => {
+    const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const painted = {
+      ...base,
+      layers: { ...base.layers, lunarEclipse: true },
+      scene: applyLunarEclipsePresentationToScene(
+        applyLayerEnableFlagsToScene(base.scene!, { ...base.layers, lunarEclipse: true }),
+        { showMoonEclipseShadow: false, showVisibilityBoundary: true, showVisibilityRegion: false },
+      ),
+    };
+    const round = normalizeLibrationConfig(painted);
+    expect(round.layers.lunarEclipse).toBe(true);
+    const row = round.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showMoonEclipseShadow : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "derived" ? row.source.parameters?.showVisibilityRegion : undefined).toBe(
+      false,
+    );
+  });
+
+  it("normalizes a missing lunarEclipse layer flag to off", () => {
+    const { lunarEclipse: _drop, ...legacyLayers } = DEFAULT_APP_CONFIG.layers;
+    const v2 = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: legacyLayers,
+    } as LibrationConfigV2);
+    expect(v2.layers.lunarEclipse).toBe(false);
   });
 });

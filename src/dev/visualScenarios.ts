@@ -44,6 +44,9 @@ export const VISUAL_SCENARIO_IDS = [
   "solar-eclipse-forecast-annular",
   "solar-eclipse-forecast-partial",
   "solar-eclipse-forecast-multiple",
+  "lunar-eclipse-total",
+  "lunar-eclipse-partial",
+  "lunar-eclipse-horizon",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -64,6 +67,9 @@ export const VISUAL_SCENARIO_UTC = {
   "solar-eclipse-forecast-annular": "2023-10-09T18:00:00.000Z",
   "solar-eclipse-forecast-partial": "2022-10-20T11:00:00.000Z",
   "solar-eclipse-forecast-multiple": "2023-10-01T00:00:00.000Z",
+  "lunar-eclipse-total": "2022-05-16T04:11:29.000Z",
+  "lunar-eclipse-partial": "2008-08-16T21:10:06.000Z",
+  "lunar-eclipse-horizon": "2015-04-04T12:00:15.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
@@ -287,6 +293,28 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
         applySolarEclipseForecastScene(draft, 365);
       }),
   },
+  "lunar-eclipse-total": {
+    id: "lunar-eclipse-total",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-eclipse-total"],
+    purpose: "Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["lunar-eclipse-total"], applyLunarEclipseLiveScene),
+  },
+  "lunar-eclipse-partial": {
+    id: "lunar-eclipse-partial",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-eclipse-partial"],
+    purpose: "Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["lunar-eclipse-partial"], applyLunarEclipseLiveScene),
+  },
+  "lunar-eclipse-horizon": {
+    id: "lunar-eclipse-horizon",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-eclipse-horizon"],
+    purpose:
+      "Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith).",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["lunar-eclipse-horizon"], applyLunarEclipseLiveScene),
+  },
 };
 
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
@@ -336,6 +364,18 @@ function applySolarEclipseForecastScene(
   if (draft.scene) {
     draft.scene = applySolarEclipsePresentationToScene(draft.scene, { forecastHorizonDays });
   }
+}
+
+function applyLunarEclipseLiveScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.lunarEclipse = true;
+  draft.layers.subsolarMarker = true;
+  draft.layers.sublunarMarker = true;
+  draft.layers.lunarGroundTrack = false;
+  draft.layers.lunarLocus = false;
+  draft.layers.solarAnalemma = false;
+  draft.layers.cityPins = true;
 }
 
 function parseSearchParams(search: string): URLSearchParams {

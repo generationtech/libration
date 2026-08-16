@@ -32,6 +32,7 @@ import {
   applyLunarGroundTrackExtentToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
+  applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applySublunarMarkerAppearanceToScene,
   buildDefaultSceneConfigFromLayerFlags,
@@ -44,6 +45,7 @@ import {
   LUNAR_GROUND_TRACK_EXTENT_HOURS,
   setBaseMapPresentationForMapId,
   solarAnalemmaStrokeFromScene,
+  lunarEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
   sublunarMarkerAppearanceFromScene,
   type CloudParticipationPresentationMode,
@@ -95,6 +97,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "lunarGroundTrack",
   "lunarLocus",
   "solarEclipse",
+  "lunarEclipse",
   "solarAnalemma",
 ];
 
@@ -170,6 +173,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     lunarGroundTrack: "Lunar ground track",
     lunarLocus: "Lunar locus",
     solarEclipse: "Solar eclipses",
+    lunarEclipse: "Lunar eclipses",
     solarAnalemma: "Solar analemma (ground track)",
   };
   return map[key];
@@ -184,6 +188,9 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   }
   if (key === "solarEclipse") {
     return "Shows NASA-derived solar eclipse geography: the live footprint when an eclipse is active, and forecast path/region for upcoming events inside the forecast horizon. Default off.";
+  }
+  if (key === "lunarEclipse") {
+    return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default off.";
   }
   return undefined;
 }
@@ -496,6 +503,7 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
   const lunarLocusStroke = lunarLocusStrokeFromScene(scene);
   const solarAnalemmaStroke = solarAnalemmaStrokeFromScene(scene);
   const eclipsePresentation = solarEclipsePresentationFromScene(scene);
+  const lunarEclipsePresentation = lunarEclipsePresentationFromScene(scene);
   const gridPilotReadability: SceneOverlayReadabilityPresentationConfig = {
     ...DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
     ...scene.overlayReadability.perLayer?.grid,
@@ -1541,6 +1549,87 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                         draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
                       draft.scene = applySolarEclipsePresentationToScene(baseScene, {
                         showForecastPartialRegion,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Moon eclipse-shadow treatment">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lunarEclipsePresentation.showMoonEclipseShadow}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Moon eclipse-shadow treatment"
+            title="Earth-shadow overlay on the Moon glyph during an active lunar eclipse. Independent of ordinary phase shading."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showMoonEclipseShadow = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
+                        showMoonEclipseShadow,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar eclipse visibility boundary">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lunarEclipsePresentation.showVisibilityBoundary}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Lunar eclipse visibility boundary"
+            title="Geometric lunar-horizon contour (altitude 0°) during an active lunar eclipse. Not the solar terminator."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showVisibilityBoundary = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
+                        showVisibilityBoundary,
+                      });
+                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar eclipse visibility region">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lunarEclipsePresentation.showVisibilityRegion}
+            readOnly={!mutable}
+            disabled={!mutable}
+            tabIndex={mutable ? 0 : -1}
+            aria-label="Lunar eclipse visibility region"
+            title="Terrestrial region where the Moon is above the geometric horizon during an active lunar eclipse."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showVisibilityRegion = e.currentTarget.checked;
+                    updateConfig((draft) => {
+                      const baseScene =
+                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+                      draft.scene = applyLunarEclipsePresentationToScene(baseScene, {
+                        showVisibilityRegion,
                       });
                       draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
                     });

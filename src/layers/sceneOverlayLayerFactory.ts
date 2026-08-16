@@ -23,11 +23,13 @@ import {
 } from "../config/productTextFont";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
+  lunarEclipsePresentationFromScene,
   resolveMoonlightPresentationMode,
   sublunarMarkerAppearanceFromScene,
 } from "../config/v2/sceneConfig";
 import { createCityPinsLayer } from "./cityPinsLayer";
 import { createLatLonGridLayer } from "./latLonGridLayer";
+import { createLunarEclipseLayer } from "./lunarEclipseLayer";
 import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
 import { createLunarLocusLayer } from "./lunarLocusLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
@@ -48,6 +50,7 @@ import {
   type AstronomyPathThicknessId,
 } from "../core/astronomyOverlayStrokeAppearance";
 import { normalizeSolarEclipsePresentation } from "../core/eclipse/solarEclipseAppearance";
+import { normalizeLunarEclipsePresentation } from "../core/eclipse/lunarEclipseAppearance";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
 import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
@@ -219,6 +222,9 @@ function createDerivedOverlayByProduct(
         appearance: normalizeSublunarMarkerAppearance(source.parameters),
         observer: resolveReferenceCityObserverLocation(config.displayTime),
         sublunarMarkerReadabilityPresentation: config.scene.overlayReadability.perLayer?.sublunarMarker,
+        earthShadowEnabled:
+          (config.scene.layers.find((l) => l.id === "lunarEclipse")?.enabled ?? false) &&
+          lunarEclipsePresentationFromScene(config.scene).showMoonEclipseShadow,
       });
     case "sublunarGroundTrack":
       return createLunarGroundTrackLayer({
@@ -257,6 +263,12 @@ function createDerivedOverlayByProduct(
         zIndex,
         opacity,
         presentation: normalizeSolarEclipsePresentation(source.parameters),
+      });
+    case "lunarEclipseVisibility":
+      return createLunarEclipseLayer({
+        zIndex,
+        opacity,
+        presentation: normalizeLunarEclipsePresentation(source.parameters),
       });
     default:
       return null;

@@ -28,6 +28,8 @@ describe("EclipseEventService", () => {
     });
     expect(outside.activeSolar).toBeNull();
     expect(outside.solarGeometry).toBeNull();
+    expect(outside.activeLunar).toBeNull();
+    expect(outside.lunarGeometry).toBeNull();
     expect(outside.upcomingSolar).toEqual([]);
     expect(outside.horizonMs).toBe(0);
 
@@ -137,5 +139,24 @@ describe("EclipseEventService", () => {
     expect(afterEnd.forecastCoverage.truncated).toBe(true);
     expect(afterEnd.upcomingSolar).toEqual([]);
     expect(afterEnd.activeSolar).toBeNull();
+    expect(afterEnd.activeLunar).toBeNull();
+  });
+
+  it("resolves the 2022 total lunar eclipse at product UTC and clears outside the span", () => {
+    resetEclipseEventServiceCacheForTests();
+    const utc = Date.parse("2022-05-16T04:11:29.000Z");
+    const a = resolveEclipseFrame(utc);
+    expect(a.activeLunar?.id).toBe("nasa-5mcle-lunar-9700");
+    expect(a.activeLunar?.subtype).toBe("total");
+    expect(a.lunarGeometry?.phase).toBe("total-umbral");
+    expect(a.activeSolar).toBeNull();
+    const paused = resolveEclipseFrame(utc);
+    expect(paused).toBe(a);
+    const later = resolveEclipseFrame(utc + 20 * 60_000);
+    expect(later.activeLunar?.id).toBe(a.activeLunar?.id);
+    expect(later.lunarGeometry?.axisDistanceEarthRadii).not.toBe(a.lunarGeometry?.axisDistanceEarthRadii);
+    const after = resolveEclipseFrame(Date.parse("2022-05-16T12:00:00.000Z"));
+    expect(after.activeLunar).toBeNull();
+    expect(after.lunarGeometry).toBeNull();
   });
 });

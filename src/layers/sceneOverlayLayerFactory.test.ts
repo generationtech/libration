@@ -139,6 +139,34 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
   });
 
+  it("builds lunar eclipse visibility from product parameters", () => {
+    const inst: SceneLayerInstance = {
+      id: "lunarEclipse",
+      family: "astronomy",
+      type: "astronomyVector",
+      enabled: true,
+      order: 0,
+      source: {
+        kind: "derived",
+        product: "lunarEclipseVisibility",
+        parameters: {
+          showMoonEclipseShadow: true,
+          showVisibilityBoundary: true,
+          showVisibilityRegion: true,
+        },
+      },
+    };
+    const layer = createLayerForSceneOverlayInstance(
+      inst,
+      { zIndex: 3, opacity: 1 },
+      DEFAULT_APP_CONFIG,
+    );
+    expect(layer?.id).toBe("layer.lunarEclipse.visibility");
+    const utc = Date.parse("2022-05-16T04:11:29.000Z");
+    const st = layer!.getState(createTimeContext(utc, 0, true));
+    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+  });
+
   it("returns null for unknown derived product", () => {
     const inst: SceneLayerInstance = {
       id: "solarAnalemma",

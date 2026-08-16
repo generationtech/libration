@@ -27,5 +27,6 @@ dist-ssr
 *.sw?
 tmp/
 
-# NASA Besselian dump (development ingest only; runtime uses the generated JSON)
+# NASA eclipse catalog dumps (development ingest only; runtime uses the generated JSON)
 tools/eclipse/source/eclipse_besselian_from_mysqldump2.csv
+tools/eclipse/source/5MKLEcatalog.txt

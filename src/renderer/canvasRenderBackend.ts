@@ -477,6 +477,7 @@ export class CanvasRenderBackend implements RenderBackend {
           librationOrientationDeg: layer.data.librationOrientationDeg,
           appearance: sublunarMarkerAppearanceFromPayload(layer.data),
           readability: layer.data.readability ?? null,
+          earthShadowOverlay: layer.data.earthShadowOverlay ?? null,
         }),
       );
       return;

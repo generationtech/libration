@@ -49,7 +49,20 @@ export interface SublunarMarkerPayload {
   librationOrientationDeg: number;
   appearance: SublunarMarkerAppearance;
   readability?: OverlayReadabilityHints;
+  /**
+   * Optional Earth-shadow disc overlay in Moon radii (east/north). Presentation
+   * numbers only; the backend must not interpret astronomy.
+   */
+  earthShadowOverlay?: EarthShadowOverlayAppearance;
 }
+
+export type EarthShadowOverlayAppearance = {
+  readonly offsetEastMoonRadii: number;
+  readonly offsetNorthMoonRadii: number;
+  readonly outerRadiusMoonRadii: number;
+  readonly innerRadiusMoonRadii: number;
+  readonly innerCoversDisc: boolean;
+};
 
 export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPayload {
   if (data === null || typeof data !== "object") return false;
