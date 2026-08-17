@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-030](work/LIB-030-config-panel-layers-subpanels.md) — Config panel Layers tab topic subpanels (layout only)
+[LIB-031](work/LIB-031-sticky-layers-topic-navigation.md) — Sticky Layers topic navigation
 
 ## Blockers
 

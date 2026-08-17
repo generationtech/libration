@@ -196,6 +196,12 @@ Layers tab topic subpanels (Chrome-style UI-only selector, not persisted). Defau
 
 Verified: focused Layers/config tests 90 passed; `npx tsc --noEmit` clean; `npm test` 206 files / 1968 passed / 0 failed. Cursor Browser `?scenario=baseline`: Config open, Layers topics switch without changing panel width token.
 
+## 2026-08-16 — LIB-031 complete
+
+Sticky Layers topic selector inside the existing `.config-tab-panel` scroller; topic change resets that panel’s scroll to the top. Heading/hint stay in normal flow. No config, persistence, or other-tab changes.
+
+Verified: focused Layers/config tests 79 passed; `npx tsc --noEmit` clean; `npm test` 206 files / 1970 passed / 0 failed. Cursor Browser `?scenario=baseline`: Config → Layers, Advanced/Eclipse scrolled with selector pinned; Moon & libration / Eclipse open at top.
+
 
 
 

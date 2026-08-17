@@ -25,7 +25,7 @@ import {
   applyLayerEnableFlagsToScene,
 } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
-import type { LayersTopicId } from "./layersTopicTypes";
+import { LAYERS_TOPIC_IDS, type LayersTopicId } from "./layersTopicTypes";
 
 function selectLayersTopic(topic: LayersTopicId): void {
   fireEvent.change(screen.getByTestId("layers-topic-select"), { target: { value: topic } });
@@ -628,5 +628,50 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByRole("button", { name: "Reset overlay readability" })).toBeInTheDocument();
     expect(screen.queryByLabelText("Solar eclipses")).toBeNull();
     expect(screen.queryByLabelText("Moonlight appearance")).toBeNull();
+  });
+
+  it("keeps Layer masters default, topic order, and sticky selector outside the heading", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const select = screen.getByTestId("layers-topic-select") as HTMLSelectElement;
+    expect(select).toHaveValue("layerMasters");
+    expect([...select.options].map((option) => option.value)).toEqual([...LAYERS_TOPIC_IDS]);
+    const nav = screen.getByTestId("layers-topic-nav");
+    expect(nav.classList.contains("layers-topic-nav")).toBe(true);
+    expect(nav.querySelector("#config-layers-topic")).toBe(select);
+    expect(screen.getByRole("heading", { name: "Scene layers" }).closest(".layers-topic-nav")).toBeNull();
+  });
+
+  it("resets the tab-panel scroll on topic change but not on setting edits", () => {
+    render(
+      <div className="config-tab-panel" data-testid="layers-scroll-host">
+        <LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />
+      </div>,
+    );
+    const host = screen.getByTestId("layers-scroll-host");
+    let scrollTopValue = 0;
+    Object.defineProperty(host, "scrollTop", {
+      configurable: true,
+      get: () => scrollTopValue,
+      set: (next: number) => {
+        scrollTopValue = next;
+      },
+    });
+
+    selectLayersTopic("advanced");
+    expect(scrollTopValue).toBe(0);
+    expect(screen.getByTestId("layers-topic-advanced")).toBeInTheDocument();
+
+    scrollTopValue = 420;
+    const veil = screen.getByLabelText("Overlay combined readability veil scale") as HTMLInputElement;
+    fireEvent.change(veil, { target: { value: "0.4" } });
+    expect(veil.value).toBe("0.4");
+    expect(scrollTopValue).toBe(420);
+    const illuminationAfterEdit = screen.getByTestId("illumination-state").textContent;
+
+    selectLayersTopic("moonAndLibration");
+    expect(scrollTopValue).toBe(0);
+    expect(screen.getByTestId("layers-topic-moon-and-libration")).toBeInTheDocument();
+    expect(screen.queryByTestId("layers-topic-advanced")).toBeNull();
+    expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationAfterEdit);
   });
 });
