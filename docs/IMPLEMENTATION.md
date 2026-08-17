@@ -86,8 +86,8 @@ The layer registry is then built by `createLayerRegistryFromConfig` (`src/app/bo
 
 Two startup effects then run:
 
-- `syncDynamicLifecycleConsumers()` — arms dynamic-data acquisition for whatever the persisted configuration already had enabled, so a saved session resumes without requiring the user to toggle anything.
-- The render effect (below), which constructs the backend, waits for `backend.initialize(viewport)`, and only then starts the animation-frame loop.
+- `syncDynamicLifecycleConsumers()` — arms dynamic-data acquisition for whatever the persisted configuration already had enabled, so a saved session resumes without requiring the user to toggle anything. The same helper runs after every `updateConfig` commit. If the lifecycle host has been `dispose()`d (the canvas render effect cleans it up; React StrictMode remounts that effect in development), `reviveDisposedDynamicLifecycleHost` replaces it before re-arming. `ensure*` on a disposed host is a no-op.
+- The render effect, which constructs the backend, waits for `backend.initialize(viewport)`, and only then starts the animation-frame loop. On setup it also calls `syncDynamicLifecycleConsumers()` so a StrictMode remount re-arms from current config.
 
 ---
 
@@ -502,6 +502,8 @@ That last group is worth understanding: several layers read configuration **once
 
 `normalizeLibrationConfig` backfills defaults, clamps unsupported values, canonicalizes durable ids against their catalogs, drops identity-valued optional entries, and preserves user intent where it is representable. `assertIsNormalizedLibrationConfig` is used in tests to prove a document is canonical.
 
+Missing keys take the **current factory defaults**. Explicit persisted values are kept. Factory presentation defaults after [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md): bottom HUD `chrome.layout.bottomTimeShowSeconds` is `false`; pin `labelMode` is `city` (name without time); pin `pinDateTimeDisplayMode` is `time` (no seconds when the time line is enabled). An old document that omitted those keys therefore normalizes to the new quieter defaults; a document that stored `true` / `cityAndTime` / `timeWithSeconds` keeps them. Named code presets clone `DEFAULT_APP_CONFIG` and inherit the same factory values; none pin HUD seconds or pin time as an intentional override.
+
 Config stores **durable semantic ids** — base-map family ids, emissive asset ids, dynamic `sourceId`s — never resolved file paths, month-specific rasters, or feed URLs.
 
 ### The transitional legacy-flag surface
@@ -542,6 +544,8 @@ Demo mode is the intentional exception to "one clock", and it is intentional pre
 
 **Display formatting never mutates the instant.** Reference zone, reference city, and top-band mode change presentation and — for the phased tape — where a civil hour is *read*. They do not change what time it is. Time formatting helpers live in `src/core/timeFormat.ts`, `wallTimeInZone.ts`, `timeZoneOffset.ts`, and `civilProjection.ts`; none of them feed back into the instant.
 
+**Current-only live feeds are gated by live-enough product time.** `isProductTimeLiveEnough` in `src/core/liveProductTimePolicy.ts` compares the product instant to wall-clock now with an inclusive ±5 minute window (not user-configurable). Ordinary current-time operation qualifies; paused Demo still within the window qualifies; 2017/2030 Demo and accelerated playback that has walked outside the window do not. Wall-clock now is the same top-of-frame `Date.now()` already used to distinguish real vs demo time. It is not a second display clock. See [ADR 0013](decisions/0013-current-only-internet-data-requires-live-enough-product-time.md).
+
 ---
 
 ## 9. Dynamic data lifecycle
@@ -552,19 +556,27 @@ Runtime lives in `src/lifecycle/`. `createDynamicDataLifecycleHost` bundles a ve
 
 Acquisition is periodic and runs on an injectable timer, never inside `requestAnimationFrame`, a layer constructor, or a RenderPlan builder. Refresh cadence is per source: 15 minutes for clouds/IR, 5 minutes for earthquakes, 1 minute for the ISS track.
 
-Each frame the host attaches a read-only view bound to the product instant. Layers ask that attachment for prepared views. Resolution is a store read; changing product time re-selects among cached versions and never triggers a fetch.
+Each frame the host attaches a read-only view bound to the product instant. When the shell supplies wall-clock now, `getPreparedEquirectRaster` / `getPreparedCloudOpacity` / `getPreparedPointFeatures` / `getPreparedTracks` return **null** for catalog `timePolicy: "wallClockCurrent"` sources unless product time is live-enough. Store snapshots remain; fixture bytes are not painted as a substitute. Layers with no prepared view contribute nothing (`missing-prepared-view`).
 
-Three live feeds are wired, each with a recorded real-format fixture as offline fallback under the same durable `sourceId`:
+Three live feeds are wired, each classified `timePolicy: "wallClockCurrent"` under their present implementations, with a recorded real-format fixture as offline fallback under the same durable `sourceId`:
 
-| Durable `sourceId` | Feed |
-|--------------------|------|
-| `global-clouds-ir-v1` | NASA GIBS WMS, MODIS Terra Cloud Top Temperature (Day), equirect JPEG |
-| `usgs-earthquakes-v1` | USGS `all_day.geojson` |
-| `iss-orbital-track-v1` | CelesTrak GP TLE (CATNR 25544), propagated with SGP4 via `satellite.js` |
+| Durable `sourceId` | Feed | When product time is not live-enough |
+|--------------------|------|--------------------------------------|
+| `global-clouds-ir-v1` | NASA GIBS WMS, MODIS Terra Cloud Top Temperature (Day), equirect JPEG (no `TIME`; latest/current) | Overlay **and** cloud illumination participation suppressed |
+| `usgs-earthquakes-v1` | USGS `all_day.geojson` | Presentation suppressed |
+| `iss-orbital-track-v1` | CelesTrak GP TLE (CATNR 25544), SGP4 via `satellite.js` | Track and current marker suppressed (current TLE is not a historical reconstruction) |
 
-Cloud participation in planetary illumination consumes the **same** `global-clouds-ir-v1` source through the cloud-opacity materializer, so enabling it arms acquisition even when the cloud overlay layer is off.
+Cloud participation in planetary illumination consumes the **same** `global-clouds-ir-v1` source through the cloud-opacity materializer, so enabling it arms acquisition even when the cloud overlay layer is off — **except** when product time is not live-enough, in which case both overlay and participation stay off.
 
-Failure policy is `stale-when-cached`: a failed refresh prefers the last good version over surfacing an error. Aborts do not trigger fixture fallback.
+Layer masters checkboxes (`globalCloudsIr`, `earthquakes`, `orbitalTracks`) are the production enablement path. They mutate SceneConfig through `updateConfig` → `commitWorkingV2Update`, rebuild the registry, and call `syncDynamicLifecycleConsumers()`. Factory defaults keep all three off, so ordinary startup fetches nothing. Durable checked state is **not** cleared when Demo time is historical; Layers shows “Live-only data is hidden while viewing another product time.” while suppressed.
+
+When every current-only consumer of a source is suppressed, `armDynamicLifecycleConsumers` **stops** periodic acquisition. Returning inside the live-enough window re-arms immediately (`runImmediately: true`) from a React effect driven by an eligibility flag — not from rAF.
+
+Each animation frame re-attaches the host and re-reads prepared views, so a completed acquisition becomes visible on the next frame without a separate React invalidation.
+
+**ISS current position.** Live acquisition stores TLE lines on the track properties. Each prepared view computes an explicit SGP4 sample at the product UTC (`propagateIssPositionAtTime`); the RenderPlan marker and `ISS` label use that sample, not the first or last track vertex. The track window is **−60 min past / +30 min future** at 2 min steps (presentation balance after the marker is independent of the window). Future segments use the same `line` primitive at slightly lower alpha. TLE refresh remains 1 minute; the marker moves with product time between fetches.
+
+Failure policy is `stale-when-cached`: a failed refresh prefers the last good version over surfacing an error. Aborts do not trigger fixture fallback. Historical suppression takes precedence: a current-only source outside the live window is hidden even if a fixture exists.
 
 ---
 
@@ -658,7 +670,7 @@ Not a defect list. These are places where the code is doing something subtle for
 | `src/app/` | Bootstrap (registry construction), render loop, render bridge, config commit path, demo playback, preset lifecycle |
 | `src/config/` | Resolvers, defaults, catalogs (base map, presentation), chrome and hour-marker configuration, semantic planning inputs |
 | `src/config/v2/` | `LibrationConfigV2`, `SceneConfig`, normalization, `localStorage` persistence, user presets |
-| `src/core/` | Product logic independent of rendering: time and civil projection, solar and lunar geometry, eclipse authority and Besselian geography, projection maths, illumination policies, overlay-readability frame, substrate lift model |
+| `src/core/` | Product logic independent of rendering: time and civil projection, live-enough product-time policy, solar and lunar geometry, eclipse authority and Besselian geography, projection maths, illumination policies, overlay-readability frame, substrate lift model |
 | `src/layers/` | Layer contracts, registry, factory, and one module per layer with its payload type |
 | `src/lifecycle/` | Dynamic data: contracts, store, manager, resolver, acquisition (live HTTP and fixture), source catalogs, materializers, app-shell host |
 | `src/renderer/` | Chrome layout and rendering, illumination sampling, realization adapters, scene viewport layout, backend interface |

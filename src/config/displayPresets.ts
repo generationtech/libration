@@ -82,7 +82,7 @@ function cloneConfig(config: AppConfig): AppConfig {
       bottomInformationBarVisible: dcl.bottomInformationBarVisible,
       bottomTimeStackShowDate: dcl.bottomTimeStackShowDate !== false,
       bottomTimeStackShowTime: dcl.bottomTimeStackShowTime !== false,
-      bottomTimeShowSeconds: dcl.bottomTimeShowSeconds !== false,
+      bottomTimeShowSeconds: dcl.bottomTimeShowSeconds === true,
       bottomTimeStackSizeMultiplier: resolvedBottomTimeStackSizeMultiplier(dcl),
       tickTapeVisible: dcl.tickTapeVisible,
       timezoneLetterRowVisible: dcl.timezoneLetterRowVisible,

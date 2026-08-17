@@ -1029,7 +1029,8 @@ describe("buildBottomInformationBarState", () => {
     expect(ib.bottomHudReadoutLines[0]!).toEqual({ role: "date", text: "January 1 2024" });
     expect(ib.bottomHudReadoutLines[1]!.role).toBe("time");
     if (ib.bottomHudReadoutLines[1]!.role === "time") {
-      expect(ib.bottomHudReadoutLines[1]!.text).toMatch(/00:00:00/);
+      expect(ib.bottomHudReadoutLines[1]!.text).toMatch(/00:00\b/);
+      expect(ib.bottomHudReadoutLines[1]!.text).not.toMatch(/00:00:00/);
     }
     expect(ib.bottomChromeLayout.viewportWidthPx).toBe(1920);
   });
@@ -1078,7 +1079,8 @@ describe("buildBottomInformationBarState", () => {
       const timeRow = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
       expect(timeRow.role).toBe("time");
       const wall = timeRow.role === "time" ? timeRow.text : "";
-      expect(wall).toMatch(/14:05:06/);
+      expect(wall).toMatch(/14:05\b/);
+      expect(wall).not.toMatch(/14:05:06/);
       expect(wall).not.toMatch(/\b(AM|PM)\b/i);
     }
   });
@@ -1094,7 +1096,8 @@ describe("buildBottomInformationBarState", () => {
     const timeRow = ib.bottomHudReadoutLines.find((l) => l.role === "time")!;
     expect(timeRow.role).toBe("time");
     if (timeRow.role === "time") {
-      expect(timeRow.text).toMatch(/14:05:06/);
+      expect(timeRow.text).toMatch(/14:05\b/);
+      expect(timeRow.text).not.toMatch(/14:05:06/);
     }
     expect(ib.bottomHudReadoutLines.filter((l) => l.role === "time")).toHaveLength(1);
   });
@@ -1127,7 +1130,8 @@ describe("buildBottomInformationBarState", () => {
     expect(row.role).toBe("time");
     if (row.role === "time") {
       expect(row.text).not.toMatch(/^0\d:/);
-      expect(row.text).toMatch(/\b7:07:59/);
+      expect(row.text).toMatch(/\b7:07\b/);
+      expect(row.text).not.toMatch(/7:07:59/);
     }
   });
 
@@ -1145,13 +1149,30 @@ describe("buildBottomInformationBarState", () => {
     }
   });
 
-  it("includes seconds in the time string by default (lower-left HUD only; controlled by bottomTimeShowSeconds)", () => {
+  it("omits seconds from the time string by default (lower-left HUD only; controlled by bottomTimeShowSeconds)", () => {
     const t = Date.UTC(2024, 0, 1, 14, 5, 6);
     const ib = buildBottomInformationBarState({
       nowMs: t,
       bottomBandWidthPx: 800,
       chromeTimeZone: "UTC",
       topBandMode: "local24",
+    });
+    const timeLine = ib.bottomHudReadoutLines.find((l) => l.role === "time");
+    expect(timeLine?.role).toBe("time");
+    if (timeLine?.role === "time") {
+      expect(timeLine.text).toMatch(/14:05\b/);
+      expect(timeLine.text).not.toMatch(/14:05:06/);
+    }
+  });
+
+  it("includes seconds in the lower-left time row when bottomTimeShowSeconds is true", () => {
+    const t = Date.UTC(2024, 0, 1, 14, 5, 6);
+    const ib = buildBottomInformationBarState({
+      nowMs: t,
+      bottomBandWidthPx: 800,
+      chromeTimeZone: "UTC",
+      topBandMode: "local24",
+      bottomTimeStack: { bottomTimeShowSeconds: true },
     });
     const timeLine = ib.bottomHudReadoutLines.find((l) => l.role === "time");
     expect(timeLine?.role).toBe("time");

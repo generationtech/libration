@@ -110,7 +110,7 @@ export function BottomHudEditor({ config, updateConfig }: BottomHudEditorProps) 
           type="checkbox"
           className="config-input config-input--checkbox"
           data-testid="chrome-bottom-hud-show-seconds"
-          checked={lay.bottomTimeShowSeconds !== false}
+          checked={lay.bottomTimeShowSeconds === true}
           readOnly={!wired}
           disabled={!wired}
           tabIndex={wired ? 0 : -1}

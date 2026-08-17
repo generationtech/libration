@@ -233,6 +233,13 @@ export {
   produceEarthquakesLiveAcquisitionFromFetched,
 } from "./earthquakesAcquisition";
 
+export type { DynamicSourceTimePolicy } from "./dynamicSourceTimePolicy";
+
+export {
+  getDynamicSourceTimePolicy,
+  isWallClockCurrentSource,
+} from "./dynamicSourceTimePolicy";
+
 export type { DynamicTracksSourceCatalogEntry } from "./dynamicTracksSourceCatalog";
 
 export {
@@ -254,6 +261,8 @@ export type {
   IssGroundTrackPropagateResult,
   IssOrbitalTrackAcquireOptions,
   IssOrbitalTrackLiveAcquireOptions,
+  IssPositionAtTimeResult,
+  IssTleLines,
   IssTleParseResult,
 } from "./issOrbitalTrackAcquisition";
 
@@ -264,23 +273,34 @@ export {
   ISS_ORBITAL_TRACK_LOOKAHEAD_MS,
   ISS_ORBITAL_TRACK_LOOKBACK_MS,
   ISS_ORBITAL_TRACK_SAMPLE_STEP_MS,
+  ISS_TLE_LINE1_PROPERTY,
+  ISS_TLE_LINE2_PROPERTY,
+  ISS_TLE_NAME_PROPERTY,
   ORBITAL_TRACKS_SCENE_LAYER_ID,
   createIssOrbitalTrackFixtureAcquisitionAdapter,
   createIssOrbitalTrackLiveHttpAcquisitionAdapter,
   isIssOrbitalTrackSourceId,
+  issTleEpochUnixMs,
   parseIssTleBytes,
   produceIssOrbitalTrackFixtureAcquisition,
   produceIssOrbitalTrackLiveAcquisitionFromFetched,
   propagateIssGroundTrackFromTle,
+  propagateIssPositionAtTime,
+  resolveIssCurrentSample,
+  tleLinesFromTrackProperties,
 } from "./issOrbitalTrackAcquisition";
 
 export type {
   DynamicDataLifecycleAttachment,
+  DynamicDataLifecycleAttachOptions,
   DynamicDataLifecycleHost,
   DynamicDataLifecycleHostDeps,
+  DynamicLifecycleConsumerFlags,
 } from "./dynamicDataLifecycleHostTypes";
 
 export {
+  armDynamicLifecycleConsumers,
   createDynamicDataLifecycleHost,
   getDynamicDataLifecycleAttachment,
+  reviveDisposedDynamicLifecycleHost,
 } from "./dynamicDataLifecycleHost";

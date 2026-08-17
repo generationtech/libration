@@ -17,7 +17,6 @@
  */
 
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import type { DynamicTracksPayload } from "../../layers/dynamicTracksPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import type {
@@ -45,7 +44,8 @@ export interface DynamicTracksRenderPlanOptions {
 }
 
 /**
- * Builds a {@link RenderPlan} for dynamic tracks: trail lines + tip disc + optional label.
+ * Builds a {@link RenderPlan} for dynamic tracks: trail lines + current-position disc + optional label.
+ * Past segments use the full trail alpha; future segments are slightly fainter (same primitive).
  */
 export function buildDynamicTracksRenderPlan(
   options: DynamicTracksRenderPlanOptions,
@@ -65,6 +65,8 @@ export function buildDynamicTracksRenderPlan(
   const sw = (base: number) => Math.max(base, base * (1 + 0.45 * v));
   const items: RenderPlan["items"] = [];
   const labelSize = Math.min(11, Math.max(8, w * 0.012));
+  const current = options.payload.currentPosition;
+  const currentTimeMs = current?.timeMs;
 
   for (const track of options.payload.tracks) {
     const samples = track.samples;
@@ -79,13 +81,15 @@ export function buildDynamicTracksRenderPlan(
         const rawX0 = equirectXFromUnwrappedLon(unwrapped[i - 1]!, w);
         const rawX1 = equirectXFromUnwrappedLon(unwrapped[i]!, w);
         const { x0, x1 } = adjustPairToShortStripPath(rawX0, rawX1, w);
+        const future =
+          currentTimeMs !== undefined && samples[i]!.timeMs > currentTimeMs;
         const line: RenderLineItem = {
           kind: "line",
           x1: x0,
           y1: y0,
           x2: x1,
           y2: y1,
-          stroke: `rgba(120, 210, 255, ${a(0.72)})`,
+          stroke: `rgba(120, 210, 255, ${a(future ? 0.38 : 0.72)})`,
           strokeWidthPx: sw(1.6),
           lineCap: "round",
         };
@@ -93,35 +97,45 @@ export function buildDynamicTracksRenderPlan(
       }
     }
 
-    const tip = samples[samples.length - 1]!;
-    const tipX = mapXFromLongitudeDeg(tip.lonDeg, w);
-    const tipY = mapLatToY(tip.latDeg, h);
-    const r = Math.min(7, Math.max(3.5, 3.8 * Math.max(0.7, w / 1400)));
+    const marker = current ?? samples[samples.length - 1]!;
+    const nearestIdx = nearestSampleIndexByTime(samples, marker.timeMs);
+    const lons = samples.map((s) => s.lonDeg);
+    const unwrapped = samples.length >= 2 ? unwrappedLongitudes(lons) : lons;
+    const nearU = unwrapped[nearestIdx] ?? marker.lonDeg;
+    const markerU = unwrapLonNear(marker.lonDeg, nearU);
+    let tipX = equirectXFromUnwrappedLon(markerU, w);
+    tipX = ((tipX % w) + w) % w;
+    const tipY = mapLatToY(marker.latDeg, h);
+    const r = Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, w / 1400)));
 
     const disc: RenderPath2DItem = {
       kind: "path2d",
       pathKind: "path2d",
       path: circlePath2D(tipX, tipY, r),
-      fill: `rgba(160, 230, 255, ${a(0.92)})`,
-      stroke: `rgba(20, 40, 60, ${a(0.7)})`,
-      strokeWidthPx: sw(1.2),
+      fill: `rgba(180, 240, 255, ${a(0.96)})`,
+      stroke: `rgba(12, 28, 44, ${a(0.85)})`,
+      strokeWidthPx: sw(1.4),
     };
     items.push(disc);
 
     items.push({
       kind: "path2d",
       pathKind: "path2d",
-      path: circlePath2D(tipX, tipY, r + 2),
-      stroke: `rgba(220, 245, 255, ${a(0.45)})`,
-      strokeWidthPx: sw(1),
+      path: circlePath2D(tipX, tipY, r + 2.5),
+      stroke: `rgba(230, 250, 255, ${a(0.55)})`,
+      strokeWidthPx: sw(1.15),
     });
 
-    if (track.label !== undefined && track.label.trim() !== "") {
+    const labelText =
+      track.label !== undefined && track.label.trim() !== ""
+        ? track.label.trim()
+        : undefined;
+    if (labelText !== undefined) {
       const text: RenderTextItem = {
         kind: "text",
         x: tipX + r + 4,
         y: tipY - labelSize * 0.35,
-        text: track.label,
+        text: labelText,
         fill: `rgba(220, 245, 255, ${a(0.94)})`,
         font: {
           assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
@@ -145,4 +159,27 @@ export function buildDynamicTracksRenderPlan(
   }
 
   return { items };
+}
+
+function unwrapLonNear(lonDeg: number, nearUnwrapped: number): number {
+  let x = lonDeg;
+  while (x - nearUnwrapped > 180) x -= 360;
+  while (nearUnwrapped - x > 180) x += 360;
+  return x;
+}
+
+function nearestSampleIndexByTime(
+  samples: readonly { timeMs: number }[],
+  timeMs: number,
+): number {
+  let best = 0;
+  let bestDist = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < samples.length; i += 1) {
+    const d = Math.abs(samples[i]!.timeMs - timeMs);
+    if (d < bestDist) {
+      best = i;
+      bestDist = d;
+    }
+  }
+  return best;
 }

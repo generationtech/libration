@@ -21,6 +21,7 @@ import {
   getOverlayReadabilityFrameOrCompute,
 } from "../core/overlayReadabilityFrame";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
+import { resolveIssCurrentSample } from "../lifecycle/issOrbitalTrackAcquisition";
 import type { DynamicSourceId } from "../lifecycle/dynamicSnapshotTypes";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -59,7 +60,7 @@ function labelFromProperties(
 }
 
 /**
- * Track trails + tip markers driven by lifecycle-prepared tracks snapshots.
+ * Track trails + current-position marker driven by lifecycle-prepared tracks.
  * Invisible when no prepared view exists for the product instant.
  */
 export function createDynamicTracksOverlayLayer(
@@ -93,10 +94,17 @@ export function createDynamicTracksOverlayLayer(
       }
 
       const frame = getOverlayReadabilityFrameOrCompute(time);
+      const first = prepared.tracks[0];
+      const current =
+        first !== undefined
+          ? resolveIssCurrentSample(first, time.now)
+          : null;
+
       const tracks: DynamicTrackOverlay[] = prepared.tracks
         .filter((t) => t.samples.length > 0)
         .map((t) => {
-          const label = labelFromProperties(t.properties);
+          const label =
+            t.id === "iss" ? "ISS" : labelFromProperties(t.properties);
           return {
             id: t.id,
             samples: t.samples.map((s) => ({
@@ -121,12 +129,17 @@ export function createDynamicTracksOverlayLayer(
         };
       }
 
-      const tip = tracks[0]!.samples[tracks[0]!.samples.length - 1]!;
-      const tipVeil = frame.readabilityVeil01At(tip.latDeg, tip.lonDeg);
+      const marker = current ?? tracks[0]!.samples[0]!;
+      const tipVeil = frame.readabilityVeil01At(marker.latDeg, marker.lonDeg);
 
       const data: DynamicTracksPayload = {
         kind: DYNAMIC_TRACKS_KIND,
         tracks,
+        currentPosition: {
+          lonDeg: marker.lonDeg,
+          latDeg: marker.latDeg,
+          timeMs: marker.timeMs,
+        },
         overlayReadabilityLiftScale01:
           frame.substrateOverlayReadabilityLiftScale01,
         tipReadabilityNightVeil01: tipVeil,

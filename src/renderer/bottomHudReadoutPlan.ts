@@ -51,7 +51,7 @@ export function buildBottomHudReadoutLines(options: {
   const lay = options.bottomTimeStack ?? {};
   const showDate = lay.bottomTimeStackShowDate !== false;
   const showTime = lay.bottomTimeStackShowTime !== false;
-  const bottomTimeShowSeconds = lay.bottomTimeShowSeconds !== false;
+  const bottomTimeShowSeconds = lay.bottomTimeShowSeconds === true;
   const dm = displayTimeModeFromTopBandTimeMode(options.topBandMode);
   const hour12 = dm === "12hr";
   const timeZoneForTimeRow = dm === "utc" ? "UTC" : options.referenceTimeZone;

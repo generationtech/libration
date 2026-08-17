@@ -34,6 +34,11 @@ export type DynamicEquirectSourceCatalogEntry = Readonly<{
    * Product prefers −180…+180° equirect.
    */
   spatialNote: string;
+  /**
+   * When `wallClockCurrent`, presentation is suppressed unless product time is
+   * live-enough relative to wall-clock now.
+   */
+  timePolicy?: "wallClockCurrent";
 }>;
 
 /** DLC-1 first consumer: global equirect clouds / satellite IR. */
@@ -55,6 +60,7 @@ const GLOBAL_CLOUDS_IR_ENTRY: DynamicEquirectSourceCatalogEntry = {
     "NASA GIBS / Earthdata imagery is free and open for public use with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content.",
   defaultRefreshIntervalMs: GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote: "Full-world equirectangular −180…+180° longitude, −90…+90° latitude.",
+  timePolicy: "wallClockCurrent",
 };
 
 const BY_ID = new Map<DynamicSourceId, DynamicEquirectSourceCatalogEntry>([

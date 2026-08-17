@@ -83,6 +83,15 @@ import {
   type LayersTopicId,
 } from "./layersTopicTypes";
 
+const LIVE_LAYER_KEYS = new Set<keyof LayerEnableFlags>([
+  "globalCloudsIr",
+  "earthquakes",
+  "orbitalTracks",
+]);
+
+const LIVE_ONLY_HIDDEN_HINT =
+  "Live-only data is hidden while viewing another product time.";
+
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
   "solarShading",
@@ -487,9 +496,18 @@ export type LayersTabProps = {
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
   /** Product instant for month-aware map selector (UTC civil month display). */
   productInstantMs?: number;
+  /**
+   * When false, current-only live layers are hidden. Durable checkboxes stay as-is.
+   */
+  productTimeLiveEnough?: boolean;
 };
 
-export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabProps) {
+export function LayersTab({
+  config,
+  updateConfig,
+  productInstantMs,
+  productTimeLiveEnough,
+}: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
 
@@ -628,6 +646,12 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
         {layersTopic === "illumination" ? (
           <div data-testid="layers-topic-illumination">
             <p className="config-section__hint">{descriptionForLayersTopic("illumination")}</p>
+            {productTimeLiveEnough === false &&
+            scene.illumination.cloudParticipation.mode !== "off" ? (
+              <p className="config-section__hint" data-testid="live-only-cloud-participation-hint">
+                {LIVE_ONLY_HIDDEN_HINT}
+              </p>
+            ) : null}
         <ConfigControlRow label="Moonlight appearance">
           <select
             className="config-input"
@@ -1382,7 +1406,14 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
         {layersTopic === "layerMasters" ? (
           <div data-testid="layers-topic-layer-masters">
             <p className="config-section__hint">{descriptionForLayersTopic("layerMasters")}</p>
+            {productTimeLiveEnough === false ? (
+              <p className="config-section__hint" data-testid="live-only-suppressed-hint">
+                {LIVE_ONLY_HIDDEN_HINT}
+              </p>
+            ) : null}
         {LAYER_KEYS.map((key) => {
+          const liveSuppressed =
+            productTimeLiveEnough === false && LIVE_LAYER_KEYS.has(key);
           return (
             <ConfigControlRow key={key} label={labelForLayer(key)}>
               <input
@@ -1393,7 +1424,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
                 disabled={!mutable}
                 tabIndex={mutable ? 0 : -1}
                 aria-label={labelForLayer(key)}
-                title={titleForLayer(key)}
+                title={
+                  liveSuppressed
+                    ? "Live-only — hidden at historical product time"
+                    : titleForLayer(key)
+                }
                 onChange={
                   mutable && updateConfig
                     ? (e) => {

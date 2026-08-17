@@ -18,6 +18,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0010](0010-eclipse-events-global-circumstances-derived.md) | Eclipse events are global; reference-city circumstances are derived |
 | [0011](0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md) | Lunar-eclipse moonlight attenuation is physical illumination |
 | [0012](0012-active-solar-eclipse-obscuration-is-physical-illumination.md) | Active solar-eclipse obscuration is physical illumination |
+| [0013](0013-current-only-internet-data-requires-live-enough-product-time.md) | Current-only internet data requires live-enough product time |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

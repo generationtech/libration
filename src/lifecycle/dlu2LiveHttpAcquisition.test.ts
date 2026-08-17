@@ -128,6 +128,12 @@ describe("normalizeHttpContentType / contentTypeMatchesAccept", () => {
       contentTypeMatchesAccept("application/geo+json", ["application/json"]),
     ).toBe(false);
     expect(contentTypeMatchesAccept(null, ["image/jpeg"])).toBe(false);
+    expect(
+      contentTypeMatchesAccept("image/jpeg;charset=utf-8", ["image/jpeg"]),
+    ).toBe(true);
+    expect(
+      contentTypeMatchesAccept("text/plain; charset=UTF-8", ["text/plain"]),
+    ).toBe(true);
   });
 });
 

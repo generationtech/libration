@@ -42,6 +42,11 @@ export type ConfigShellProps = {
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
   /** Product instant for month-aware base-map selector copy (matches render-loop clock). */
   productInstantMs?: number;
+  /**
+   * When false, current-only live layers are hidden because product time is not
+   * live-enough. Checkboxes keep their durable enable preference.
+   */
+  productTimeLiveEnough?: boolean;
   /** User-named full v2 snapshots (Phase 5); optional when panel is read-only. */
   userPresetsUi?: UserPresetsUiProps;
   /** Demo play / pause / reset; runtime-only, does not mutate persisted config. */
@@ -53,6 +58,7 @@ function renderActiveTabContent(
   config: LibrationConfigV2,
   updateConfig: ConfigShellProps["updateConfig"],
   productInstantMs: ConfigShellProps["productInstantMs"],
+  productTimeLiveEnough: ConfigShellProps["productTimeLiveEnough"],
   userPresetsUi: ConfigShellProps["userPresetsUi"],
   demoTransport: ConfigShellProps["demoTransport"],
 ): ReactNode {
@@ -63,6 +69,7 @@ function renderActiveTabContent(
           config={config}
           updateConfig={updateConfig}
           productInstantMs={productInstantMs}
+          productTimeLiveEnough={productTimeLiveEnough}
         />
       );
     case "pins":
@@ -95,6 +102,7 @@ export function ConfigShell({
   workingV2Ref,
   updateConfig,
   productInstantMs,
+  productTimeLiveEnough,
   userPresetsUi,
   demoTransport,
 }: ConfigShellProps) {
@@ -158,6 +166,7 @@ export function ConfigShell({
             config,
             updateConfig,
             productInstantMs,
+            productTimeLiveEnough,
             userPresetsUi,
             demoTransport,
           )}

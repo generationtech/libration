@@ -366,7 +366,7 @@ export interface DisplayChromeLayoutConfig {
    */
   bottomTimeStackShowDate?: boolean;
   bottomTimeStackShowTime?: boolean;
-  /** Lower-left HUD time row only: include seconds in the wall-clock string. Does not affect top band or pins. */
+  /** Lower-left HUD time row only: include seconds in the wall-clock string. Does not affect top band or pins. Factory default off. */
   bottomTimeShowSeconds?: boolean;
   /**
    * Scales lower-left HUD readout font sizes (date + time rows) after viewport token resolution.
@@ -440,7 +440,7 @@ export const DEFAULT_DISPLAY_CHROME_LAYOUT_CONFIG: DisplayChromeLayoutConfig = {
   bottomInformationBarVisible: true,
   bottomTimeStackShowDate: true,
   bottomTimeStackShowTime: true,
-  bottomTimeShowSeconds: true,
+  bottomTimeShowSeconds: false,
   bottomTimeStackSizeMultiplier: 1,
   tickTapeVisible: true,
   timezoneLetterRowVisible: true,
@@ -490,7 +490,7 @@ export type PinScale = "small" | "medium" | "large";
 
 /**
  * Pin secondary line: wall-clock text content in the city’s IANA zone (typography/layout are separate).
- * Default matches legacy pin time: hour, minute, second (locale default 12/24h).
+ * Factory default is time without seconds.
  */
 export const PIN_DATE_TIME_DISPLAY_MODES = [
   "time",
@@ -527,9 +527,9 @@ export interface PinPresentationConfig {
 
 export const DEFAULT_PIN_PRESENTATION: PinPresentationConfig = {
   showLabels: true,
-  labelMode: "cityAndTime",
+  labelMode: "city",
   scale: "medium",
-  pinDateTimeDisplayMode: "timeWithSeconds",
+  pinDateTimeDisplayMode: "time",
 };
 
 /** Geographic reference for product semantics (v2 `geography` domain); independent of display-chrome anchor controls. */

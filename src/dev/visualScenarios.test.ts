@@ -95,6 +95,24 @@ describe("resolveVisualScenarioSession", () => {
     ).toEqual({ kind: "inactive" });
   });
 
+  it("does not isolate live layers unless a DEV scenario is applied", () => {
+    const ordinary = resolveVisualScenarioSession({
+      isDev: true,
+      search: "",
+    });
+    expect(ordinary.kind).toBe("inactive");
+    const applied = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=baseline",
+    });
+    expect(applied.kind).toBe("applied");
+    if (applied.kind !== "applied") return;
+    expect(applied.config.layers.globalCloudsIr).toBe(false);
+    expect(applied.config.layers.earthquakes).toBe(false);
+    expect(applied.config.layers.orbitalTracks).toBe(false);
+    expect(applied.config.scene?.illumination.cloudParticipation.mode).toBe("off");
+  });
+
   it("does not silently substitute an unknown or empty id", () => {
     expect(
       resolveVisualScenarioSession({ isDev: true, search: "?scenario=not-a-scene" }),

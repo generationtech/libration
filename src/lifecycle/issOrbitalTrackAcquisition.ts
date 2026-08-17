@@ -65,14 +65,25 @@ export const ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES = [
 /** NORAD catalog number for ISS (ZARYA). */
 export const ISS_NORAD_CATALOG_NUMBER = 25544;
 
-/** Ground-track lookback before acquire time (~¾ ISS orbit). */
-export const ISS_ORBITAL_TRACK_LOOKBACK_MS = 75 * 60 * 1000;
+/** Ground-track lookback before center time (past track). */
+export const ISS_ORBITAL_TRACK_LOOKBACK_MS = 60 * 60 * 1000;
 
-/** Ground-track lookahead after acquire time. */
-export const ISS_ORBITAL_TRACK_LOOKAHEAD_MS = 15 * 60 * 1000;
+/** Ground-track lookahead after center time (future track). */
+export const ISS_ORBITAL_TRACK_LOOKAHEAD_MS = 30 * 60 * 1000;
 
 /** Sample spacing along the propagated track. */
 export const ISS_ORBITAL_TRACK_SAMPLE_STEP_MS = 2 * 60 * 1000;
+
+/** Track-property keys carrying the live TLE so the current marker can be re-propagated. */
+export const ISS_TLE_NAME_PROPERTY = "tleName";
+export const ISS_TLE_LINE1_PROPERTY = "tleLine1";
+export const ISS_TLE_LINE2_PROPERTY = "tleLine2";
+
+export type IssTleLines = Readonly<{
+  name: string;
+  line1: string;
+  line2: string;
+}>;
 
 /**
  * Approximate ISS-like ground track (~51.6° inclination) as timed Lon/Lat samples.
@@ -237,6 +248,139 @@ function isEciPosition(
   );
 }
 
+function geodeticSampleAt(
+  satrec: SatRec,
+  timeMs: number,
+): DynamicTrackSample | null {
+  const date = new Date(timeMs);
+  const pv = propagate(satrec, date);
+  if (!isEciPosition(pv.position)) {
+    return null;
+  }
+  const gmst = gstime(date);
+  const gd = eciToGeodetic(pv.position, gmst);
+  const lonDeg = normalizeLonDeg(degreesLong(gd.longitude));
+  const latDeg = degreesLat(gd.latitude);
+  if (!isFiniteLonLat(lonDeg, latDeg)) {
+    return null;
+  }
+  return { lonDeg, latDeg, timeMs };
+}
+
+/**
+ * Julian-date TLE epoch as Unix milliseconds, or null if the TLE cannot be parsed.
+ */
+export function issTleEpochUnixMs(tle: IssTleLines): number | null {
+  let satrec: SatRec;
+  try {
+    satrec = twoline2satrec(tle.line1, tle.line2);
+  } catch {
+    return null;
+  }
+  const jd = satrec.jdsatepoch;
+  if (!Number.isFinite(jd)) {
+    return null;
+  }
+  return (jd - 2440587.5) * 86_400_000;
+}
+
+export type IssPositionAtTimeOk = Readonly<{
+  ok: true;
+  sample: DynamicTrackSample;
+}>;
+
+export type IssPositionAtTimeFail = Readonly<{
+  ok: false;
+  error: string;
+}>;
+
+export type IssPositionAtTimeResult = IssPositionAtTimeOk | IssPositionAtTimeFail;
+
+/**
+ * One SGP4 geographic sample at an exact UTC instant.
+ * The current ISS marker must use this, not the first or last track sample.
+ */
+export function propagateIssPositionAtTime(
+  tle: IssTleLines,
+  productUtcMs: number,
+): IssPositionAtTimeResult {
+  if (!Number.isFinite(productUtcMs)) {
+    return { ok: false, error: "invalid productUtcMs" };
+  }
+  let satrec: SatRec;
+  try {
+    satrec = twoline2satrec(tle.line1, tle.line2);
+  } catch {
+    return { ok: false, error: "failed to initialize satrec from TLE" };
+  }
+  const sample = geodeticSampleAt(satrec, productUtcMs);
+  if (sample === null) {
+    return { ok: false, error: "propagation yielded no position" };
+  }
+  return { ok: true, sample };
+}
+
+export function tleLinesFromTrackProperties(
+  properties: Readonly<Record<string, unknown>> | undefined,
+): IssTleLines | null {
+  if (properties === undefined) return null;
+  const line1 = properties[ISS_TLE_LINE1_PROPERTY];
+  const line2 = properties[ISS_TLE_LINE2_PROPERTY];
+  if (typeof line1 !== "string" || typeof line2 !== "string") {
+    return null;
+  }
+  if (!line1.startsWith("1 ") || !line2.startsWith("2 ")) {
+    return null;
+  }
+  const nameRaw = properties[ISS_TLE_NAME_PROPERTY];
+  const name =
+    typeof nameRaw === "string" && nameRaw.trim().length > 0
+      ? nameRaw.trim()
+      : "ISS (ZARYA)";
+  return { name, line1, line2 };
+}
+
+function nearestSampleByTime(
+  samples: readonly DynamicTrackSample[],
+  productUtcMs: number,
+): DynamicTrackSample | null {
+  if (samples.length === 0 || !Number.isFinite(productUtcMs)) {
+    return null;
+  }
+  let best = samples[0]!;
+  let bestDist = Math.abs(best.timeMs - productUtcMs);
+  for (let i = 1; i < samples.length; i += 1) {
+    const s = samples[i]!;
+    const d = Math.abs(s.timeMs - productUtcMs);
+    if (d < bestDist) {
+      best = s;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+/**
+ * Current ISS sample at `productUtcMs`: explicit SGP4 when a TLE is on the
+ * track, otherwise the timed sample nearest the product instant (fixture).
+ */
+export function resolveIssCurrentSample(
+  track: Readonly<{
+    samples: readonly DynamicTrackSample[];
+    properties?: Readonly<Record<string, unknown>>;
+  }>,
+  productUtcMs: number,
+): DynamicTrackSample | null {
+  const tle = tleLinesFromTrackProperties(track.properties);
+  if (tle !== null) {
+    const propagated = propagateIssPositionAtTime(tle, productUtcMs);
+    if (propagated.ok) {
+      return propagated.sample;
+    }
+  }
+  return nearestSampleByTime(track.samples, productUtcMs);
+}
+
 /**
  * Parse CelesTrak TLE / 3LE (or 2LE) text bytes into name + two element lines.
  */
@@ -333,19 +477,10 @@ export function propagateIssGroundTrackFromTle(
   const samples: DynamicTrackSample[] = [];
 
   for (let t = startMs; t <= endMs + 1; t += sampleStepMs) {
-    const date = new Date(t);
-    const pv = propagate(satrec, date);
-    if (!isEciPosition(pv.position)) {
-      continue;
+    const sample = geodeticSampleAt(satrec, t);
+    if (sample !== null) {
+      samples.push(sample);
     }
-    const gmst = gstime(date);
-    const gd = eciToGeodetic(pv.position, gmst);
-    const lonDeg = normalizeLonDeg(degreesLong(gd.longitude));
-    const latDeg = degreesLat(gd.latitude);
-    if (!isFiniteLonLat(lonDeg, latDeg)) {
-      continue;
-    }
-    samples.push({ lonDeg, latDeg, timeMs: t });
   }
 
   if (samples.length < 2) {
@@ -365,7 +500,16 @@ function buildTracksGeoJsonPayload(options: {
   samples: readonly DynamicTrackSample[];
   sourceUrl: string;
   title: string;
+  tle?: IssTleLines;
 }): { tracks: DynamicTrack[]; payloadBytes: Uint8Array } {
+  const tleProps =
+    options.tle !== undefined
+      ? {
+          [ISS_TLE_NAME_PROPERTY]: options.tle.name,
+          [ISS_TLE_LINE1_PROPERTY]: options.tle.line1,
+          [ISS_TLE_LINE2_PROPERTY]: options.tle.line2,
+        }
+      : {};
   const coordinates = options.samples.map(
     (s) => [s.lonDeg, s.latDeg] as [number, number],
   );
@@ -394,6 +538,7 @@ function buildTracksGeoJsonPayload(options: {
           validTimeMs: options.validTimeMs,
           type: "orbital-track",
           title: options.name,
+          ...tleProps,
         },
       },
     ],
@@ -408,6 +553,7 @@ function buildTracksGeoJsonPayload(options: {
         noradId: ISS_NORAD_CATALOG_NUMBER,
         type: "orbital-track",
         title: options.name,
+        ...tleProps,
       },
     },
   ];
@@ -521,12 +667,18 @@ export function produceIssOrbitalTrackLiveAcquisitionFromFetched(
 
   const versionId =
     options.versionIdFor?.(acquiredAtMs) ?? `iss-track-live-${acquiredAtMs}`;
+  const tle: IssTleLines = {
+    name: parsed.name,
+    line1: parsed.line1,
+    line2: parsed.line2,
+  };
   const { tracks, payloadBytes } = buildTracksGeoJsonPayload({
     validTimeMs: acquiredAtMs,
     name: propagated.name,
     samples: propagated.samples,
     sourceUrl: fetched.responseUrl || ISS_ORBITAL_TRACK_LIVE_FEED_URL,
     title: "ISS Orbital Track — DLU-4 live",
+    tle,
   });
 
   const record = buildDynamicSnapshotRecord(

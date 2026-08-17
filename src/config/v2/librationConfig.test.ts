@@ -112,8 +112,11 @@ describe("librationConfig v2 (Phase 1)", () => {
     });
   });
 
-  it("normalizeDisplayChromeLayout defaults bottomTimeShowSeconds to true and accepts false", () => {
-    expect(normalizeDisplayChromeLayout({}).bottomTimeShowSeconds).toBe(true);
+  it("normalizeDisplayChromeLayout defaults bottomTimeShowSeconds to false and accepts true", () => {
+    expect(normalizeDisplayChromeLayout({}).bottomTimeShowSeconds).toBe(false);
+    expect(
+      normalizeDisplayChromeLayout({ bottomTimeShowSeconds: true }).bottomTimeShowSeconds,
+    ).toBe(true);
     expect(
       normalizeDisplayChromeLayout({ bottomTimeShowSeconds: false }).bottomTimeShowSeconds,
     ).toBe(false);
@@ -131,6 +134,33 @@ describe("librationConfig v2 (Phase 1)", () => {
     expect(withOff.chrome.layout.bottomTimeShowSeconds).toBe(false);
     expect(cloneV2(withOff).chrome.layout.bottomTimeShowSeconds).toBe(false);
     expect(v2ToAppConfig(withOff).displayChromeLayout.bottomTimeShowSeconds).toBe(false);
+
+    const withOn = normalizeLibrationConfig({
+      ...base,
+      chrome: {
+        ...base.chrome,
+        layout: { ...base.chrome.layout, bottomTimeShowSeconds: true },
+      },
+    });
+    expect(withOn.chrome.layout.bottomTimeShowSeconds).toBe(true);
+    expect(v2ToAppConfig(withOn).displayChromeLayout.bottomTimeShowSeconds).toBe(true);
+  });
+
+  it("factory pin presentation omits time; missing keys take new defaults; explicit old values survive", () => {
+    expect(DEFAULT_PIN_PRESENTATION.labelMode).toBe("city");
+    expect(DEFAULT_PIN_PRESENTATION.pinDateTimeDisplayMode).toBe("time");
+    expect(normalizePinPresentation({}).labelMode).toBe("city");
+    expect(normalizePinPresentation({}).pinDateTimeDisplayMode).toBe("time");
+    expect(
+      normalizePinPresentation({
+        labelMode: "cityAndTime",
+        pinDateTimeDisplayMode: "timeWithSeconds",
+      }),
+    ).toEqual({
+      ...DEFAULT_PIN_PRESENTATION,
+      labelMode: "cityAndTime",
+      pinDateTimeDisplayMode: "timeWithSeconds",
+    });
   });
 
   it("normalizeDisplayChromeLayout keeps valid defaultTextFontAssetId, migrates legacy key, and drops unknown font ids", () => {

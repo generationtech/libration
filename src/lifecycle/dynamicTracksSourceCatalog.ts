@@ -31,6 +31,11 @@ export type DynamicTracksSourceCatalogEntry = Readonly<{
   defaultRefreshIntervalMs: number;
   /** Spatial / product contract note for curators / docs. */
   spatialNote: string;
+  /**
+   * When `wallClockCurrent`, presentation is suppressed unless product time is
+   * live-enough relative to wall-clock now.
+   */
+  timePolicy?: "wallClockCurrent";
 }>;
 
 /** DLC-3 first tracks consumer: ISS orbital ground track. */
@@ -53,6 +58,7 @@ const ISS_ORBITAL_TRACK_ENTRY: DynamicTracksSourceCatalogEntry = {
   defaultRefreshIntervalMs: ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Time-tagged track samples in geographic lon/lat degrees (−180…+180°, −90…+90°), GeoJSON FeatureCollection with timed LineString contract.",
+  timePolicy: "wallClockCurrent",
 };
 
 const BY_ID = new Map<DynamicSourceId, DynamicTracksSourceCatalogEntry>([

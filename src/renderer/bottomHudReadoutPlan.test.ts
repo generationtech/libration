@@ -26,7 +26,8 @@ describe("buildBottomHudReadoutLines", () => {
     expect(lines[0]).toEqual({ role: "date", text: "January 1 2024" });
     expect(lines[1]!.role).toBe("time");
     if (lines[1]!.role === "time") {
-      expect(lines[1]!.text).toMatch(/14:05:06/);
+      expect(lines[1]!.text).toMatch(/14:05\b/);
+      expect(lines[1]!.text).not.toMatch(/14:05:06/);
     }
   });
 
@@ -65,7 +66,8 @@ describe("buildBottomHudReadoutLines", () => {
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.role).toBe("time");
     if (timeLine?.role === "time") {
-      expect(timeLine.text).toMatch(/14:05:06/);
+      expect(timeLine.text).toMatch(/14:05\b/);
+      expect(timeLine.text).not.toMatch(/14:05:06/);
     }
   });
 
@@ -137,20 +139,23 @@ describe("buildBottomHudReadoutLines hour-label mode (America/New_York)", () => 
     const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "local12" });
     const timeLine = lines.find((l) => l.role === "time");
     expect(timeLine?.text).toMatch(/\b(AM|PM)\b/i);
-    expect(timeLine?.text).toMatch(/3:35:30/);
+    expect(timeLine?.text).toMatch(/3:35\b/);
+    expect(timeLine?.text).not.toMatch(/3:35:30/);
   });
 
   it("local24: time row is reference-city 24-hour wall clock", () => {
     const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "local24" });
     const timeLine = lines.find((l) => l.role === "time");
-    expect(timeLine?.text).toMatch(/03:35:30/);
+    expect(timeLine?.text).toMatch(/03:35\b/);
+    expect(timeLine?.text).not.toMatch(/03:35:30/);
     expect(timeLine?.text).not.toMatch(/\b(AM|PM)\b/i);
   });
 
   it("utc24: time row is UTC 24-hour for the same instant", () => {
     const lines = buildBottomHudReadoutLines({ nowMs, referenceTimeZone, topBandMode: "utc24" });
     const timeLine = lines.find((l) => l.role === "time");
-    expect(timeLine?.text).toMatch(/07:35:30/);
+    expect(timeLine?.text).toMatch(/07:35\b/);
+    expect(timeLine?.text).not.toMatch(/07:35:30/);
   });
 
   it("utc24: date row stays on the reference-zone calendar when UTC calendar date differs", () => {
@@ -163,7 +168,8 @@ describe("buildBottomHudReadoutLines hour-label mode (America/New_York)", () => 
     const dateLine = lines.find((l) => l.role === "date");
     expect(dateLine?.text).toMatch(/December 31 2023/);
     const timeLine = lines.find((l) => l.role === "time");
-    expect(timeLine?.text).toMatch(/04:30:00/);
+    expect(timeLine?.text).toMatch(/04:30\b/);
+    expect(timeLine?.text).not.toMatch(/04:30:00/);
   });
 
   it("appends eclipse status only when provided, and omits it when empty", () => {

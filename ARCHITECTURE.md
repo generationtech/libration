@@ -79,6 +79,16 @@ See [ADR 0004](docs/decisions/0004-one-canonical-utc-instant-per-frame.md).
 
 **Consequence.** Demo time is configured, not ad hoc. Nothing downstream branches on demo mode to alter product behaviour.
 
+### 3.4 Current-only internet data requires live-enough product time
+
+**Boundary.** Internet-backed observations that are current-only under their present implementations may be shown only when the product instant is close enough to wall-clock now. Product time remains the scene authority. Wall clock is a validity gate, not a second display clock.
+
+**Rationale.** The three production-optional live sources (clouds/IR, earthquakes, ISS TLE) describe wall-clock-now reality. Painting them onto a materially different product instant — a 2017 eclipse, an accelerated future Demo — would make the instrument temporally incoherent in the same way a stray `Date.now()` would.
+
+**Consequence.** The frame may read wall-clock now once at the top (already required to distinguish real vs demo time) and pass it into the current-only gate. Downstream of that point, layers still consume only the product instant and prepared views. Durable enable preferences are not mutated by temporary suppression. Historical-capable sources may later declare a different time policy.
+
+See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enough-product-time.md).
+
 ---
 
 ## 4. Rendering invariants
@@ -219,7 +229,7 @@ See [ADR 0003](docs/decisions/0003-bundled-base-map-catalog-with-durable-family-
 
 **Rationale.** Otherwise time-travel and demo playback would show data from the wrong moment while the rest of the frame showed the right one — reintroducing the incoherence that 3.1 exists to prevent.
 
-**Consequence.** Snapshots are versioned and carry an explicit valid time. Changing product time re-selects among cached versions and never triggers acquisition.
+**Consequence.** Snapshots are versioned and carry an explicit valid time. Changing product time re-selects among cached versions and never triggers acquisition from the attach/resolver path. Current-only sources are additionally gated by live-enough product time ([ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enough-product-time.md)): when the gate flips, acquisition is stopped or re-armed **outside** the paint path, not from `requestAnimationFrame`.
 
 See [ADR 0005](docs/decisions/0005-dynamic-data-acquisition-outside-the-render-path.md).
 

@@ -302,7 +302,7 @@ export function normalizeDisplayChromeLayout(input: unknown): DisplayChromeLayou
   const showSeconds =
     typeof (input as { bottomTimeShowSeconds?: unknown }).bottomTimeShowSeconds === "boolean"
       ? (input as { bottomTimeShowSeconds: boolean }).bottomTimeShowSeconds
-      : defStack.bottomTimeShowSeconds !== false;
+      : defStack.bottomTimeShowSeconds === true;
 
   const smRaw = (input as { bottomTimeStackSizeMultiplier?: unknown }).bottomTimeStackSizeMultiplier;
   const bottomTimeStackSizeMultiplier = clampTopBandHourMarkerSizeMultiplier(
@@ -546,7 +546,7 @@ function cloneDisplayChromeLayout(l: DisplayChromeLayoutConfig): DisplayChromeLa
     bottomInformationBarVisible: l.bottomInformationBarVisible,
     bottomTimeStackShowDate: l.bottomTimeStackShowDate !== false,
     bottomTimeStackShowTime: l.bottomTimeStackShowTime !== false,
-    bottomTimeShowSeconds: l.bottomTimeShowSeconds !== false,
+    bottomTimeShowSeconds: l.bottomTimeShowSeconds === true,
     bottomTimeStackSizeMultiplier: m,
     tickTapeVisible: l.tickTapeVisible,
     timezoneLetterRowVisible: l.timezoneLetterRowVisible,

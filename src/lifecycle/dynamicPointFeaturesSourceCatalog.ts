@@ -31,6 +31,11 @@ export type DynamicPointFeaturesSourceCatalogEntry = Readonly<{
   defaultRefreshIntervalMs: number;
   /** Spatial / product contract note for curators / docs. */
   spatialNote: string;
+  /**
+   * When `wallClockCurrent`, presentation is suppressed unless product time is
+   * live-enough relative to wall-clock now.
+   */
+  timePolicy?: "wallClockCurrent";
 }>;
 
 /** DLC-2 first point-features consumer: USGS-lineage earthquake feed. */
@@ -53,6 +58,7 @@ const USGS_EARTHQUAKES_ENTRY: DynamicPointFeaturesSourceCatalogEntry = {
   defaultRefreshIntervalMs: USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Point features in geographic lon/lat degrees (−180…+180°, −90…+90°), USGS GeoJSON FeatureCollection contract.",
+  timePolicy: "wallClockCurrent",
 };
 
 const BY_ID = new Map<DynamicSourceId, DynamicPointFeaturesSourceCatalogEntry>([

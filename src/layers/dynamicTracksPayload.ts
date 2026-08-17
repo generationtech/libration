@@ -36,13 +36,18 @@ export interface DynamicTracksPayload {
   kind: typeof DYNAMIC_TRACKS_KIND;
   tracks: readonly DynamicTrackOverlay[];
   /**
+   * ISS (or other vehicle) position at the product instant.
+   * Independent of the first/last track sample.
+   */
+  currentPosition?: DynamicTrackSampleMarker;
+  /**
    * Substrate-aware scale for overlay readability lift (0.35–1).
    * Omitted means 1.
    */
   overlayReadabilityLiftScale01?: number;
   /**
-   * Optional derived solar night veil (0–1) at the tip of the first track,
-   * aligned with planetary illumination when a tip exists.
+   * Optional derived solar night veil (0–1) at the current position
+   * (or first-track fallback), aligned with planetary illumination.
    */
   tipReadabilityNightVeil01?: number;
 }
@@ -64,6 +69,22 @@ export function isDynamicTracksPayload(
   if (o.tipReadabilityNightVeil01 !== undefined) {
     const v = o.tipReadabilityNightVeil01;
     if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || v > 1) {
+      return false;
+    }
+  }
+  if (o.currentPosition !== undefined) {
+    if (o.currentPosition === null || typeof o.currentPosition !== "object") {
+      return false;
+    }
+    const cur = o.currentPosition as Record<string, unknown>;
+    if (
+      typeof cur.lonDeg !== "number" ||
+      typeof cur.latDeg !== "number" ||
+      typeof cur.timeMs !== "number" ||
+      !Number.isFinite(cur.lonDeg) ||
+      !Number.isFinite(cur.latDeg) ||
+      !Number.isFinite(cur.timeMs)
+    ) {
       return false;
     }
   }

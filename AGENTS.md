@@ -23,8 +23,8 @@ Then, for ordinary implementation, read [`ARCHITECTURE.md`](ARCHITECTURE.md) and
 | Rendering, chrome, layout | Implementation §4–5; ADRs 0001–0002; Cursor rule `010` |
 | Scene, layers, base maps | Implementation §6, §10; `docs/maps/`; Cursor rule `030` |
 | Configuration or persistence | Implementation §7; Cursor rule `020` |
-| Time or display modes | Implementation §8; ADR 0004 |
-| Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`; ADR 0005 |
+| Time or display modes | Implementation §8; ADR 0004; ADR 0013 (current-only live-enough gate) |
+| Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`; ADR 0005; ADR 0013 |
 | Visual changes | [`docs/VISUAL_VERIFICATION.md`](docs/VISUAL_VERIFICATION.md); Implementation §2 (DEV scenario seed); Cursor rule `060` |
 
 Read the source before editing it. Documentation describes the system; the source is the system.

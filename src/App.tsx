@@ -65,6 +65,7 @@ import {
   type SubstrateOverlayReadabilityFrameInputs,
 } from "./core/overlayReadabilityFrame";
 import { createTimeContext } from "./core/time";
+import { isProductTimeLiveEnough } from "./core/liveProductTimePolicy";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import {
   eclipseInfoPresentationFromScene,
@@ -74,7 +75,11 @@ import {
 } from "./config/v2/sceneConfig";
 import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
 import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInformation";
-import { createDynamicDataLifecycleHost } from "./lifecycle";
+import {
+  armDynamicLifecycleConsumers,
+  createDynamicDataLifecycleHost,
+  reviveDisposedDynamicLifecycleHost,
+} from "./lifecycle";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
 import { formatReferenceCityEclipseChromeStatus } from "./core/referenceCityEclipseStatus";
@@ -117,6 +122,17 @@ export default function App() {
   const [configPanelProductInstantMs, setConfigPanelProductInstantMs] = useState(
     () => Date.now(),
   );
+  const liveProductTimeEligibleRef = useRef(true);
+  const [liveProductTimeEligible, setLiveProductTimeEligible] = useState(() => {
+    if (scenarioRuntime.kind === "applied") {
+      return isProductTimeLiveEnough(
+        Date.parse(scenarioRuntime.startIsoUtc),
+        Date.now(),
+      );
+    }
+    return true;
+  });
+  liveProductTimeEligibleRef.current = liveProductTimeEligible;
   const [eclipsePanelInstantMs, setEclipsePanelInstantMs] = useState(() =>
     scenarioRuntime.kind === "applied"
       ? Date.parse(scenarioRuntime.startIsoUtc)
@@ -161,7 +177,7 @@ export default function App() {
   );
   const prevDemoTimeActiveRef = useRef(scenarioRuntime.kind === "applied");
   const lastRenderClockMsRef = useRef<number | null>(null);
-  /** Phase 10 shell seam: store/manager/resolver/acquisition (no dynamic overlay UI). */
+  /** Phase 10 shell seam: store/manager/resolver/acquisition for live overlays. */
   const dynamicLifecycleHostRef = useRef(createDynamicDataLifecycleHost());
 
   const requestDemoPause = useCallback(() => {
@@ -182,26 +198,18 @@ export default function App() {
 
   /** Phase 10 / DLC: arm acquisition from config commits — never from rAF paint. */
   const syncDynamicLifecycleConsumers = useCallback(() => {
-    const host = dynamicLifecycleHostRef.current;
+    const host = reviveDisposedDynamicLifecycleHost(
+      dynamicLifecycleHostRef.current,
+    );
+    dynamicLifecycleHostRef.current = host;
     const scene = derivedAppConfigRef.current.scene;
-    const cloudsIrOverlay = derivedAppConfigRef.current.layers.globalCloudsIr;
-    const cloudParticipationOn =
-      scene.illumination.cloudParticipation.mode !== "off";
-    if (cloudsIrOverlay || cloudParticipationOn) {
-      host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
-    } else {
-      host.stopGlobalCloudsIrConsumer();
-    }
-    if (derivedAppConfigRef.current.layers.earthquakes) {
-      host.ensureEarthquakesConsumer({ runImmediately: true });
-    } else {
-      host.stopEarthquakesConsumer();
-    }
-    if (derivedAppConfigRef.current.layers.orbitalTracks) {
-      host.ensureOrbitalTracksConsumer({ runImmediately: true });
-    } else {
-      host.stopOrbitalTracksConsumer();
-    }
+    armDynamicLifecycleConsumers(host, {
+      cloudsIrOverlay: derivedAppConfigRef.current.layers.globalCloudsIr,
+      cloudParticipationOn: scene.illumination.cloudParticipation.mode !== "off",
+      earthquakes: derivedAppConfigRef.current.layers.earthquakes,
+      orbitalTracks: derivedAppConfigRef.current.layers.orbitalTracks,
+      productTimeLiveEnough: liveProductTimeEligibleRef.current,
+    });
   }, []);
 
   const updateConfig = useCallback(
@@ -281,9 +289,10 @@ export default function App() {
   );
 
   useEffect(() => {
-    // Startup: honor persisted enablement without waiting for a Layers toggle.
+    // Startup and live-enough flips: honor persisted enablement without waiting
+    // for a Layers toggle. Acquisition stays off the rAF paint path.
     syncDynamicLifecycleConsumers();
-  }, [syncDynamicLifecycleConsumers]);
+  }, [liveProductTimeEligible, syncDynamicLifecycleConsumers]);
 
   useEffect(() => {
     isConfigOpenRef.current = isConfigOpen;
@@ -331,6 +340,10 @@ export default function App() {
     if (!canvas) {
       return;
     }
+
+    // StrictMode remounts this effect and disposes the host on cleanup.
+    // Revive + re-arm from current config so later Layer toggles are not no-ops.
+    syncDynamicLifecycleConsumers();
 
     let cancelled = false;
     let frameNumber = 0;
@@ -388,6 +401,11 @@ export default function App() {
 
       const clockNowMs = demoActive ? effectiveNowMs : realNowMs;
       productInstantMsRef.current = clockNowMs;
+      const liveEnough = isProductTimeLiveEnough(clockNowMs, realNowMs);
+      if (liveEnough !== liveProductTimeEligibleRef.current) {
+        liveProductTimeEligibleRef.current = liveEnough;
+        setLiveProductTimeEligible(liveEnough);
+      }
       if (Math.abs(clockNowMs - lastEclipsePanelPushRef.current) >= 400) {
         lastEclipsePanelPushRef.current = clockNowMs;
         setEclipsePanelInstantMs(clockNowMs);
@@ -445,7 +463,9 @@ export default function App() {
         overlayReadabilityFrame,
         eclipseFrame,
         dynamicDataLifecycle:
-          dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs),
+          dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
+            wallClockUtcMs: realNowMs,
+          }),
       });
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
@@ -571,7 +591,7 @@ export default function App() {
       backend.dispose();
       dynamicLifecycleHostRef.current.dispose();
     };
-  }, []);
+  }, [syncDynamicLifecycleConsumers]);
 
   const eclipseInfoConfig = useMemo(() => workingV2Ref.current, [configViewTick]);
 
@@ -631,6 +651,7 @@ export default function App() {
             workingV2Ref={workingV2Ref}
             updateConfig={updateConfig}
             productInstantMs={configPanelProductInstantMs}
+            productTimeLiveEnough={liveProductTimeEligible}
             userPresetsUi={ALLOW_PHASE3_MUTATIONS ? userPresetsUi : undefined}
             demoTransport={{
               paused: demoTransportPaused,

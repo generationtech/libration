@@ -214,6 +214,19 @@ Survey-only reconnaissance of dynamic / internet-sourced layers. No production s
 
 Verified: documentation-only; `tsc` / `npm test` / build / visual verification not run. Final STATE AWAITING SCOPE; no implementation LIB created.
 
+## 2026-08-16 — LIB-034 complete
+
+Ordinary Layer masters for clouds/IR, earthquakes, and ISS were inert because DEV StrictMode disposed the lifecycle host while the App ref survived, so `ensure*` no-op’d. Revive-on-arm restores acquisition. All three live providers succeeded in the browser (USGS, CelesTrak, GIBS); no new feeds or hardening.
+
+Verified: focused activation tests 7 passed (plus LayersTab/scenario isolation); `npx tsc --noEmit` clean; `npm test` 207 files / 1979 passed / 0 failed; `npm run build` succeeded. Cursor Browser ordinary non-scenario mode: enable/wait/visible/disable for each layer; `?scenario=baseline` still isolates live feeds.
+
+## 2026-08-16 — LIB-035 complete
+
+Current-only live layers (clouds/IR, earthquakes, ISS) hide when product time is outside ±5 minutes of wall-clock now, without mutating enablement; ISS marker is SGP4 at the product instant (−60/+30 min track). Factory HUD seconds and city-pin times default off; pin time format defaults to no seconds.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 211 files / 2003 passed / 0 failed; `npm run build` succeeded. Cursor Browser: factory HUD/pins, current-mode USGS+GIBS, 2017 Demo suppression and re-arm, `?scenario=baseline` isolation. CelesTrak 403 this session; ISS propagator vs where-the-iss.at at 2026-08-17T03:16:20Z agreed to ~0.1 m.
+
+
 
 
 

@@ -210,7 +210,7 @@ describe("createLayerRegistryFromConfig", () => {
     };
     expect(data.kind).toBe(CITY_PINS_KIND);
     expect(data.showLabels).toBe(true);
-    expect(data.labelMode).toBe("cityAndTime");
+    expect(data.labelMode).toBe("city");
     expect(data.scale).toBe("medium");
     expect(data.cities.map((c) => c.id).sort()).toEqual(
       ["city.london", "city.sydney", "city.tokyo"].sort(),

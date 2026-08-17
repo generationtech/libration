@@ -116,6 +116,7 @@ export interface DynamicDataLifecycleHost {
    */
   attachForProductInstant(
     productInstantMs: number,
+    options?: DynamicDataLifecycleAttachOptions,
   ): DynamicDataLifecycleAttachment;
 
   /**
@@ -159,9 +160,39 @@ export interface DynamicDataLifecycleHost {
   /** Stop periodic refresh for the ISS orbital tracks source (keeps cache). */
   stopOrbitalTracksConsumer(): void;
 
+  /**
+   * True after {@link dispose}. `ensure*` is a no-op on a disposed host;
+   * the shell must replace it via `reviveDisposedDynamicLifecycleHost`.
+   */
+  isDisposed(): boolean;
+
   /** Stop periodic acquisition timers and revoke prepared object URLs. */
   dispose(): void;
 }
+
+export type DynamicDataLifecycleAttachOptions = Readonly<{
+  /**
+   * Wall-clock UTC for current-only feed validity. When omitted, prepared
+   * views are not suppressed (tests that do not exercise live-time policy).
+   */
+  wallClockUtcMs?: number;
+}>;
+
+/**
+ * Config-derived arming flags for the three live consumers (plus cloud
+ * participation, which shares the clouds/IR source).
+ */
+export type DynamicLifecycleConsumerFlags = Readonly<{
+  cloudsIrOverlay: boolean;
+  cloudParticipationOn: boolean;
+  earthquakes: boolean;
+  orbitalTracks: boolean;
+  /**
+   * When false, current-only consumers are not periodically acquired even if
+   * the matching SceneConfig enable flag is on. Defaults to true when omitted.
+   */
+  productTimeLiveEnough?: boolean;
+}>;
 
 export type DynamicDataLifecycleHostDeps = Readonly<{
   /** Defaults to an in-memory store when omitted. */

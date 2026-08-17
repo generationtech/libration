@@ -337,6 +337,42 @@ When the lunar locus is in view, accelerated demo playback through at least one 
 - the expected product UTC/configuration is represented
 - the view is not persisted normal-mode state
 
+### Ordinary-mode live dynamic layers
+
+DEV `?scenario=` fixtures force Global clouds / IR, Earthquakes, ISS orbital track, and cloud participation **off**. That isolation is intentional and applies only when a scenario is applied.
+
+To verify those three overlays, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, fixture fallback, or blocked provider. Disable must remove the presentation; re-enable must show it again.
+
+Do not treat a DEV scenario session as evidence that live layers work.
+
+### Current vs historical dynamic-layer smoke
+
+Ordinary non-scenario current time (`http://localhost:1420/`, no `?scenario=`):
+
+- Enable Earthquakes, Global clouds / IR, and ISS orbital track. Wait for acquisition.
+- Confirm live USGS events, GIBS overlay, and an ISS track with a current-position marker labeled `ISS` that sits **on** the track (not at an arbitrary future endpoint unless the future window is 0).
+- If CelesTrak is blocked, classify ISS as fixture fallback; do not treat a canned Africa/Pacific fixture as a live current position.
+
+Historical Demo (for example 2017-08-21) with those three still checked:
+
+- Earthquakes, cloud overlay, cloud illumination participation, and ISS must disappear. Fixture must not substitute.
+- Layer masters checkboxes stay checked. Hint: “Live-only data is hidden while viewing another product time.”
+- Return to current time (static mode or Demo reset to near-now) without re-toggling: the three sources restore.
+
+### ISS live external comparison
+
+At a recorded UTC, compare Libration’s product-instant SGP4 sample to a reputable tracker (NASA if accessible, otherwise where-the-iss.at or equivalent). Record TLE epoch, wall-clock age, Libration lat/lon, external lat/lon, and approximate ground distance. Target ≤ 100 km. A Japan-versus-Mongolia class disagreement is a failure, not a rounding difference.
+
+### Default HUD and pin presentation
+
+Factory/fresh config (missing `libration.workingConfigV2.v1`, or reset to defaults), ordinary mode:
+
+- Bottom-left HUD time is HH:MM (or 24-hour equivalent) **without** seconds. Hour-tape labels are unchanged.
+- City pins show city names without clocks.
+- Enabling pin content “City name and local time” uses the default `time` format (no seconds) until the user picks `timeWithSeconds`.
+
+Chrome → Bottom HUD still exposes “Show seconds on lower-left reference time.” Pins still expose label content and datetime format.
+
 ## Evidence in the work-item completion record
 
 Record actual observations, not “looks fine”:

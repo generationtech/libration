@@ -49,11 +49,15 @@ import { createEarthquakesLiveHttpAcquisitionAdapter } from "./earthquakesAcquis
 import { createIssOrbitalTrackLiveHttpAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
 import type {
   DynamicDataLifecycleAttachment,
+  DynamicDataLifecycleAttachOptions,
   DynamicDataLifecycleHost,
   DynamicDataLifecycleHostDeps,
+  DynamicLifecycleConsumerFlags,
 } from "./dynamicDataLifecycleHostTypes";
 import type { DynamicSourceId } from "./dynamicSnapshotTypes";
 import type { TimeContext } from "../layers/types";
+import { isProductTimeLiveEnough } from "../core/liveProductTimePolicy";
+import { isWallClockCurrentSource } from "./dynamicSourceTimePolicy";
 
 /**
  * Create a process-local lifecycle host for the app shell.
@@ -120,10 +124,21 @@ export function createDynamicDataLifecycleHost(
 
   function attachForProductInstant(
     productInstantMs: number,
+    options?: DynamicDataLifecycleAttachOptions,
   ): DynamicDataLifecycleAttachment {
     const instant = Number.isFinite(productInstantMs)
       ? productInstantMs
       : Number.NaN;
+    const wallClockUtcMs = options?.wallClockUtcMs;
+    const allowCurrentOnly =
+      wallClockUtcMs === undefined ||
+      isProductTimeLiveEnough(instant, wallClockUtcMs);
+
+    function allowPreparedView(sourceId: DynamicSourceId): boolean {
+      if (allowCurrentOnly) return true;
+      return !isWallClockCurrentSource(sourceId);
+    }
+
     return {
       productInstantMs: instant,
       resolveSnapshot(sourceId) {
@@ -134,18 +149,22 @@ export function createDynamicDataLifecycleHost(
         return lifecycle.getState(sourceId);
       },
       getPreparedEquirectRaster(sourceId) {
+        if (!allowPreparedView(sourceId)) return null;
         return materializer.selectForProductInstant(sourceId, instant);
       },
       getPreparedCloudOpacity(sourceId) {
+        if (!allowPreparedView(sourceId)) return null;
         return cloudOpacityMaterializer.selectForProductInstant(sourceId, instant);
       },
       getPreparedPointFeatures(sourceId) {
+        if (!allowPreparedView(sourceId)) return null;
         return pointFeaturesMaterializer.selectForProductInstant(
           sourceId,
           instant,
         );
       },
       getPreparedTracks(sourceId) {
+        if (!allowPreparedView(sourceId)) return null;
         return tracksMaterializer.selectForProductInstant(sourceId, instant);
       },
     };
@@ -326,8 +345,49 @@ export function createDynamicDataLifecycleHost(
     stopEarthquakesConsumer,
     ensureOrbitalTracksConsumer,
     stopOrbitalTracksConsumer,
+    isDisposed() {
+      return disposed;
+    },
     dispose,
   };
+}
+
+/**
+ * Return `host` when it can still arm consumers; otherwise a fresh host.
+ * DEV React StrictMode remounts dispose the canvas-effect host while App refs
+ * survive, so the shell must replace the dead instance before re-arming.
+ */
+export function reviveDisposedDynamicLifecycleHost(
+  host: DynamicDataLifecycleHost,
+  deps: DynamicDataLifecycleHostDeps = {},
+): DynamicDataLifecycleHost {
+  return host.isDisposed() ? createDynamicDataLifecycleHost(deps) : host;
+}
+
+/**
+ * Arm or stop the three live consumers from config flags.
+ * Idempotent. Safe from config/effect paths — never from rAF paint.
+ */
+export function armDynamicLifecycleConsumers(
+  host: DynamicDataLifecycleHost,
+  flags: DynamicLifecycleConsumerFlags,
+): void {
+  const liveEnough = flags.productTimeLiveEnough !== false;
+  if ((flags.cloudsIrOverlay || flags.cloudParticipationOn) && liveEnough) {
+    host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
+  } else {
+    host.stopGlobalCloudsIrConsumer();
+  }
+  if (flags.earthquakes && liveEnough) {
+    host.ensureEarthquakesConsumer({ runImmediately: true });
+  } else {
+    host.stopEarthquakesConsumer();
+  }
+  if (flags.orbitalTracks && liveEnough) {
+    host.ensureOrbitalTracksConsumer({ runImmediately: true });
+  } else {
+    host.stopOrbitalTracksConsumer();
+  }
 }
 
 /**

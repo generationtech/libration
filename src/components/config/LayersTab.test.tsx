@@ -83,6 +83,15 @@ function LayersTabCommitHarness({ initial }: { initial: LibrationConfigV2 }) {
       <pre data-testid="committed-illumination">
         {JSON.stringify(workingV2Ref.current.scene?.illumination ?? null)}
       </pre>
+      <pre data-testid="committed-layer-flags">
+        {JSON.stringify({
+          flags: workingV2Ref.current.layers,
+          rows: (workingV2Ref.current.scene?.layers ?? []).map((row) => ({
+            id: row.id,
+            enabled: row.enabled,
+          })),
+        })}
+      </pre>
     </>
   );
 }
@@ -673,5 +682,74 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByTestId("layers-topic-moon-and-libration")).toBeInTheDocument();
     expect(screen.queryByTestId("layers-topic-advanced")).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationAfterEdit);
+  });
+});
+
+describe("LayersTab live overlay masters", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("toggles clouds/IR, earthquakes, and ISS through commitWorkingV2Update", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabCommitHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+
+    const clouds = screen.getByLabelText("Global clouds / IR") as HTMLInputElement;
+    const quakes = screen.getByLabelText("Earthquakes") as HTMLInputElement;
+    const iss = screen.getByLabelText("ISS orbital track") as HTMLInputElement;
+    expect(clouds.checked).toBe(false);
+    expect(quakes.checked).toBe(false);
+    expect(iss.checked).toBe(false);
+
+    await user.click(quakes);
+    expect(quakes.checked).toBe(true);
+    let dumped = JSON.parse(screen.getByTestId("committed-layer-flags").textContent ?? "{}") as {
+      flags: { globalCloudsIr: boolean; earthquakes: boolean; orbitalTracks: boolean };
+      rows: Array<{ id: string; enabled: boolean }>;
+    };
+    expect(dumped.flags.earthquakes).toBe(true);
+    expect(dumped.rows.find((r) => r.id === "earthquakes")?.enabled).toBe(true);
+    expect(dumped.flags.globalCloudsIr).toBe(false);
+    expect(dumped.flags.orbitalTracks).toBe(false);
+
+    await user.click(clouds);
+    await user.click(iss);
+    dumped = JSON.parse(screen.getByTestId("committed-layer-flags").textContent ?? "{}");
+    expect(dumped.flags.globalCloudsIr).toBe(true);
+    expect(dumped.flags.orbitalTracks).toBe(true);
+    expect(dumped.rows.find((r) => r.id === "globalCloudsIr")?.enabled).toBe(true);
+    expect(dumped.rows.find((r) => r.id === "orbitalTracks")?.enabled).toBe(true);
+
+    await user.click(quakes);
+    dumped = JSON.parse(screen.getByTestId("committed-layer-flags").textContent ?? "{}");
+    expect(dumped.flags.earthquakes).toBe(false);
+    expect(dumped.rows.find((r) => r.id === "earthquakes")?.enabled).toBe(false);
+    expect(dumped.flags.globalCloudsIr).toBe(true);
+  });
+
+  it("shows live-only suppression hint when product time is not live-enough without disabling enablement", () => {
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        updateConfig={() => undefined}
+        productTimeLiveEnough={false}
+      />,
+    );
+    expect(screen.getByTestId("live-only-suppressed-hint").textContent).toMatch(
+      /Live-only data is hidden/,
+    );
+    const quakes = screen.getByLabelText("Earthquakes") as HTMLInputElement;
+    expect(quakes.disabled).toBe(false);
+    expect(quakes.checked).toBe(false);
+  });
+
+  it("does not show the live-only hint when product time is live-enough", () => {
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        productTimeLiveEnough={true}
+      />,
+    );
+    expect(screen.queryByTestId("live-only-suppressed-hint")).toBeNull();
   });
 });

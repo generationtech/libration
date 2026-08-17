@@ -258,6 +258,17 @@ New consumers reuse the existing lifecycle subsystem; its contract, and the sour
 
 Adding any of these is a product decision requiring explicit scope, not a consequence of the seam supporting it. Prefer free-for-personal-use sources; paid sources are acceptable when the benefit is clear.
 
+ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
+
+- production fixture-on-live-failure policy (when to show recorded fixture vs hide vs error)
+- stale/error UX for live feeds
+- persistent snapshot cache
+- retry/backoff/timeouts beyond the next interval
+- GIBS historical `TIME`
+- earthquake magnitude/age filters
+- API-key / proxy / desktop `fetchFn`
+- historical USGS / TLE-history providers
+
 - weather radar.
 - precipitation forecast.
 - temperature forecast.

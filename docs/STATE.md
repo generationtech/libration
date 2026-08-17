@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-033](work/LIB-033-dynamic-layer-internet-source-survey.md) — Survey dynamic / internet-sourced layer support
+[LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md) — Dynamic live-time integrity + ISS current position + display default cleanup
 
 ## Blockers
 
@@ -21,8 +21,8 @@ None
 
 ## Awaiting human decision
 
-Live-vs-demo policy for current-only internet feeds; whether production may paint fixture data on live failure; whether the next *feed* after earthquake hardening is a new consumer.
+Whether production may paint fixture data on live failure; whether the next *feed* after earthquake hardening is a new consumer.
 
 ## Next action
 
-Stop. No approved work remains. Do not start speculative items. Do not implement earthquakes, ISS, clouds, or a generic dynamic-layer framework until a human approves a new LIB.
+Stop. No approved work. Do not start earthquake hardening, GIBS `TIME`, or another live source without a new authorized item.
