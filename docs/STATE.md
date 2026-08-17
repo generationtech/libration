@@ -21,8 +21,8 @@ None
 
 ## Awaiting human decision
 
-Whether production may paint fixture data on live failure; whether the next *feed* after earthquake hardening is a new consumer.
+Approve or revise proposed [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Captured: hide ISS on CelesTrak failure (preferred); TLE freshness 18 h / 48 h; marker = SGP4(product UTC); acquisition must become visible without re-toggle. Remaining outside this item: USGS/GIBS fixture-on-failure; next feed after earthquake hardening.
 
 ## Next action
 
-Stop. No approved work. Do not start earthquake hardening, GIBS `TIME`, or another live source without a new authorized item.
+Stop. Proposed LIB-036 is not approved. Reply that the item is approved (and revise the 18 h / 48 h bands if needed) before implementation. Do not start earthquake hardening, GIBS `TIME`, or another live source without a new authorized item.
