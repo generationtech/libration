@@ -731,12 +731,20 @@ describe("LayersTab topic navigation", () => {
     expect(screen.queryByLabelText("ISS dot color")).toBeNull();
     expect(screen.getByLabelText("ISS glyph color")).toBeInTheDocument();
 
-    await user.click(track);
-    expect(track.checked).toBe(false);
-    expect(past.disabled).toBe(true);
-    expect(pastDuration.disabled).toBe(true);
+    selectLayersTopic("advanced");
+    expect(screen.getByTestId("layers-topic-advanced")).toBeInTheDocument();
+    selectLayersTopic("spaceObjects");
+    expect((screen.getByLabelText("ISS glyph") as HTMLSelectElement).value).toBe("silhouette");
+
+    const trackAfterNav = screen.getByLabelText("Orbit track") as HTMLInputElement;
+    const pastAfterNav = screen.getByLabelText("Track past") as HTMLInputElement;
+    const pastDurationAfterNav = screen.getByLabelText("Past duration") as HTMLSelectElement;
+    await user.click(trackAfterNav);
+    expect(trackAfterNav.checked).toBe(false);
+    expect(pastAfterNav.disabled).toBe(true);
+    expect(pastDurationAfterNav.disabled).toBe(true);
     expect((screen.getByLabelText("Orbit line thickness") as HTMLSelectElement).disabled).toBe(true);
-    expect(glyph.disabled).toBe(false);
+    expect((screen.getByLabelText("ISS glyph") as HTMLSelectElement).disabled).toBe(false);
   });
 });
 

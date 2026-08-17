@@ -246,7 +246,7 @@ export function IssPresentationSection(props: {
           className="config-input"
           disabled={!mutable}
           aria-label="Orbit base color"
-          title="Canonical ISS color: label family and fallback when past/future colors are missing."
+          title="Canonical ISS color for the on-map label. The past track follows when it still matches this color."
           value={pres.baseColor}
           onChange={
             mutable

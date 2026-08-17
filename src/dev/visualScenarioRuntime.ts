@@ -12,6 +12,8 @@
  */
 
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
+import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
+import type { PreparedTracksView } from "../lifecycle/dynamicTracksMaterializer";
 import type { RenderPlan } from "../renderer/renderPlan/renderPlanTypes";
 import { RESOLVED_RENDER_PLAN_KIND } from "../renderer/renderPlan/resolvedRenderPlanPayload";
 import type { RenderableLayerState } from "../renderer/types";
@@ -45,6 +47,7 @@ export type VisualScenarioExtraOverlayBuilder = (input: {
 
 let runtime: VisualScenarioRuntime = INACTIVE_VISUAL_SCENARIO_RUNTIME;
 let extraOverlayBuilder: VisualScenarioExtraOverlayBuilder | null = null;
+let preparedTracksOverride: PreparedTracksView | null = null;
 
 export function getVisualScenarioRuntime(): VisualScenarioRuntime {
   return runtime;
@@ -60,9 +63,38 @@ export function setVisualScenarioExtraOverlayBuilder(
   extraOverlayBuilder = builder;
 }
 
+export function setVisualScenarioPreparedTracks(
+  view: PreparedTracksView | null,
+): void {
+  preparedTracksOverride = view;
+}
+
 export function resetVisualScenarioRuntime(): void {
   runtime = INACTIVE_VISUAL_SCENARIO_RUNTIME;
   extraOverlayBuilder = null;
+  preparedTracksOverride = null;
+}
+
+/**
+ * DEV hatch: reuse a process-local prepared ISS view when a visual scenario
+ * installed one. Production never sets the override, so this is a no-op.
+ */
+export function attachVisualScenarioPreparedTracks(
+  attachment: DynamicDataLifecycleAttachment,
+): DynamicDataLifecycleAttachment {
+  const override = preparedTracksOverride;
+  if (override === null) {
+    return attachment;
+  }
+  return {
+    ...attachment,
+    getPreparedTracks(sourceId) {
+      if (sourceId === override.sourceId) {
+        return override;
+      }
+      return attachment.getPreparedTracks(sourceId);
+    },
+  };
 }
 
 /**

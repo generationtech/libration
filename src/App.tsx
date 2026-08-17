@@ -50,6 +50,7 @@ import {
   type DemoPlaybackState,
 } from "./app/demoPlayback";
 import {
+  attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
   getVisualScenarioRuntime,
   INACTIVE_VISUAL_SCENARIO_RUNTIME,
@@ -469,10 +470,11 @@ export default function App() {
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
         eclipseFrame,
-        dynamicDataLifecycle:
+        dynamicDataLifecycle: attachVisualScenarioPreparedTracks(
           dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
             wallClockUtcMs: realNowMs,
           }),
+        ),
       });
       const issAttachment = time.dynamicDataLifecycle;
       const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;

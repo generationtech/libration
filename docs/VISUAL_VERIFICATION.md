@@ -96,6 +96,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `lunar-track` | `2026-01-16T22:00:00.000Z` | Lunar ground track on (24 h past + 24 h future), sublunar marker on, analemma off, grid on; Moon near 170°W at high southern latitude so a dateline crossing and latitude excursion are in view | Lunar track alignment, past/future styling, seam/wrap, overlay readability |
 | `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap; accelerated demo through a full Moon traversal with no migrating seam/cusp on the exposed line (cycle seam under the Moon glyph) |
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
+| `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, duration, colors, thickness, glyph type/size/color, label |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
@@ -344,6 +345,20 @@ DEV `?scenario=` fixtures force Global clouds / IR, Earthquakes, ISS orbital tra
 To verify those three overlays, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, fixture fallback, or blocked provider. Disable must remove the presentation; re-enable must show it again.
 
 Do not treat a DEV scenario session as evidence that live layers work.
+
+### ISS presentation controls (`iss-presentation`)
+
+Use `http://localhost:1420/?scenario=iss-presentation`. Confirm the DEV banner id and UTC `2026-08-06T01:17:00.000Z`. Open Config → Layers → Space objects. Each control must change the map on the next frame; do not wait for a TLE refresh, resize, or an unrelated edit. Restore factory values after each extreme.
+
+- Orbit track OFF: trajectory lines gone; current glyph and `ISS` label remain. ON: lines return immediately.
+- Distinct past (red) and future (green): both on; past off leaves only future; future off leaves only past; each restore is immediate.
+- Past duration 60 → 15 → 30 → 60 and future 30 → 15 → 30: line extent shortens and lengthens immediately.
+- Orbit base color: label (and past track when still linked to that color) changes immediately.
+- Line thickness Thin / Normal / Thick.
+- Glyph Dot ↔ ISS silhouette; size Small / Medium / Large / Extra large; conditional dot vs silhouette color.
+- Show ISS label OFF removes the text immediately; ON restores it; the marker remains.
+
+This scenario must not fetch CelesTrak. Production ordinary mode still hides ISS when the provider is unavailable.
 
 ### Current vs historical dynamic-layer smoke
 

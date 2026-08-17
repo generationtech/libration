@@ -1214,7 +1214,17 @@ export function applyIssOrbitalPresentationToScene(
   patch: Partial<IssOrbitalPresentation>,
 ): SceneConfig {
   const current = issOrbitalPresentationFromScene(scene);
-  const next = normalizeIssOrbitalPresentation({ ...current, ...patch });
+  const nextRaw: Record<string, unknown> = { ...current, ...patch };
+  // Orbit base color is the label family. When past color is still linked to
+  // the previous base (factory default), it follows so the control is not dead.
+  if (
+    patch.baseColor !== undefined &&
+    patch.pastColor === undefined &&
+    current.pastColor === current.baseColor
+  ) {
+    delete nextRaw.pastColor;
+  }
+  const next = normalizeIssOrbitalPresentation(nextRaw);
   return {
     ...scene,
     layers: scene.layers.map((row) => {

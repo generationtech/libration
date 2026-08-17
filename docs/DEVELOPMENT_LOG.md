@@ -237,3 +237,9 @@ Verified: focused ISS tests 78 passed; `npx tsc --noEmit` clean; `npm test` 212 
 Layers → Space objects is the ISS presentation home (orbit track, past/future segments and durations inside the existing −60/+30 min window, colors, thickness, Dot vs internal silhouette, size, label). Layer masters still owns ISS visibility. Orbital authority, provenance, and freshness were not changed.
 
 Verified: `npx tsc --noEmit` clean; focused presentation tests 135 passed; `npm test` 216 files / 2046 passed / 0 failed; `npm run build` succeeded. Cursor Browser: Space objects topic order and controls, orbit-track-off gating, glyph Dot/silhouette conditional colors, defaults restored. CelesTrak unreachable; no fixture on the map; live ISS map appearance not verified. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-039 complete
+
+ISS Space objects presentation now invalidates immediately: `dynamicTracks` runtime equality includes `source.parameters`, so the overlay is reconstructed instead of keeping a constructor snapshot. Duration filtering stays local over the prepared samples. Orbit base color drives the on-map label and follows into past while past is still linked. DEV `?scenario=iss-presentation` uses a process-local recorded TLE (not production fixture-as-live).
+
+Verified: `npx tsc --noEmit` clean; `npm test` 217 files / 2052 passed / 0 failed; `npm run build` succeeded with no `iss-presentation` in `dist/`. Cursor Browser `?scenario=iss-presentation`: every LIB-038 control changed the map on the next frame with 0 CelesTrak requests. Ordinary live ISS unavailable this session. LIB-037 stays proposed.

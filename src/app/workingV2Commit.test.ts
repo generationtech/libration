@@ -33,10 +33,12 @@ import { createTimeContext } from "../core/time";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import {
   applyEclipseInfoPresentationToScene,
+  applyIssOrbitalPresentationToScene,
   applySolarEclipsePresentationToScene,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
+import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
 import {
   commitWorkingV2Update,
   deriveAppConfigFromV2,
@@ -90,6 +92,29 @@ function setupRefs(initial: LibrationConfigV2) {
 function registryIds(registry: { current: { getLayers: () => { id: string }[] } }) {
   return registry.current.getLayers().map((l) => l.id);
 }
+
+function issOrbitalParams(scene: { layers: readonly { id: string; source: { kind: string; parameters?: Record<string, unknown> } }[] }) {
+  const row = scene.layers.find((l) => l.id === "orbitalTracks");
+  return row?.source.kind === "dynamicTracks" ? row.source.parameters : undefined;
+}
+
+const SCENE_EQUALITY_LAYER_FLAGS = {
+  baseMap: true,
+  solarShading: true,
+  grid: false,
+  staticEquirectOverlay: false,
+  globalCloudsIr: false,
+  earthquakes: false,
+  orbitalTracks: false,
+  cityPins: false,
+  subsolarMarker: false,
+  sublunarMarker: false,
+  lunarGroundTrack: false,
+  lunarLocus: false,
+  solarEclipse: false,
+  lunarEclipse: false,
+  solarAnalemma: false,
+} as const;
 
 describe("commitWorkingV2Update", () => {
   it("toggling grid updates working v2 and derived AppConfig", () => {
@@ -806,6 +831,48 @@ describe("commitWorkingV2Update", () => {
     expect(
       staticOverlay?.source.kind === "staticRaster" ? staticOverlay.source.src : undefined,
     ).toBe("/maps/world-equirectangular-night.jpg");
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only ISS orbital presentation parameters change", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      ...SCENE_EQUALITY_LAYER_FLAGS,
+      orbitalTracks: true,
+    });
+    const b = applyIssOrbitalPresentationToScene(a, { pastColor: "#ff0000" });
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+    expect(issOrbitalParams(a)?.pastColor).toBe(DEFAULT_ISS_ORBITAL_PRESENTATION.pastColor);
+    expect(issOrbitalParams(b)?.pastColor).toBe("#ff0000");
+  });
+
+  it("ISS presentation-only commit rebuilds the layer registry without toggling orbitalTracks", () => {
+    const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const base = normalizeLibrationConfig({
+      ...seed,
+      layers: { ...seed.layers, orbitalTracks: true },
+    });
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+    const prevDerivedScene = deriveAppConfigFromV2(workingV2Ref.current!).scene;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+      draft.scene = applyIssOrbitalPresentationToScene(baseScene, {
+        trackEnabled: false,
+        pastColor: "#cc0000",
+        glyphType: "silhouette",
+      });
+      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+    });
+
+    expect(derivedAppConfigRef.current.layers.orbitalTracks).toBe(true);
+    expect(sceneRuntimeAffectingEqual(prevDerivedScene, derivedAppConfigRef.current.scene)).toBe(
+      false,
+    );
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.trackEnabled).toBe(false);
+    expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.pastColor).toBe("#cc0000");
+    expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.glyphType).toBe("silhouette");
   });
 });
 

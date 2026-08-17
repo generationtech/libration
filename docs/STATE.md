@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-038](work/LIB-038-space-objects-iss-presentation.md) — Space objects configuration + ISS presentation controls
+[LIB-039](work/LIB-039-iss-presentation-live-update-repair.md) — ISS presentation live-update / invalidation repair
 
 ## Blockers
 
@@ -21,8 +21,8 @@ None
 
 ## Awaiting human decision
 
-Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track-correction.md) stays proposed. Do not activate from this item.
+Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track-correction.md) stays proposed.
 
 ## Next action
 
-Wait for the next approved work item. Do not start [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas or activate LIB-037.
+Stop. No approved work.

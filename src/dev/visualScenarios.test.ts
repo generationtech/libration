@@ -36,6 +36,7 @@ import {
   getVisualScenarioRuntime,
   getVisualScenarioExtraOverlayLayer,
   resetVisualScenarioRuntime,
+  attachVisualScenarioPreparedTracks,
 } from "./visualScenarioRuntime";
 
 function makeMemoryStorage(): Storage {
@@ -143,7 +144,7 @@ describe("resolveVisualScenarioSession", () => {
       expect(session.config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC[id]);
       expect(session.config.layers.globalCloudsIr).toBe(false);
       expect(session.config.layers.earthquakes).toBe(false);
-      expect(session.config.layers.orbitalTracks).toBe(false);
+      expect(session.config.layers.orbitalTracks).toBe(id === "iss-presentation");
       expect(session.config.scene?.illumination.cloudParticipation.mode).toBe("off");
     }
   });
@@ -183,6 +184,36 @@ describe("resolveVisualScenarioSession", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureHours : undefined).toBe(24);
     expect(row?.source.kind === "derived" ? row.source.parameters?.pastColor : undefined).toBe("#aacdf0");
     expect(row?.source.kind === "derived" ? row.source.parameters?.futureColor : undefined).toBe("#aacdf0");
+  });
+
+  it("enables ISS presentation scenario with orbitalTracks on and no other live feeds", () => {
+    const config = VISUAL_SCENARIOS["iss-presentation"].buildConfig();
+    expect(config.layers.orbitalTracks).toBe(true);
+    expect(config.layers.globalCloudsIr).toBe(false);
+    expect(config.layers.earthquakes).toBe(false);
+    expect(config.layers.solarShading).toBe(true);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["iss-presentation"]);
+    const row = config.scene?.layers.find((l) => l.id === "orbitalTracks");
+    expect(row?.enabled).toBe(true);
+  });
+
+  it("iss-presentation apply installs a DEV prepared ISS view without network", () => {
+    const session = applyVisualScenarioFromLocation("?scenario=iss-presentation");
+    expect(session.kind).toBe("applied");
+    const stub = {
+      productInstantMs: Date.parse(VISUAL_SCENARIO_UTC["iss-presentation"]),
+      resolveSnapshot: async () => ({ ok: false as const }),
+      getLifecycleState: () => ({ sourceId: "iss-orbital-track-v1", state: "idle" as const }),
+      getPreparedEquirectRaster: () => null,
+      getPreparedCloudOpacity: () => null,
+      getPreparedPointFeatures: () => null,
+      getPreparedTracks: () => null,
+    };
+    const wrapped = attachVisualScenarioPreparedTracks(stub as never);
+    const view = wrapped.getPreparedTracks("iss-orbital-track-v1");
+    expect(view).not.toBeNull();
+    expect(view?.versionId).toBe("iss-presentation-dev");
+    expect(view?.tracks[0]?.samples.length).toBeGreaterThan(20);
   });
 
   it("seeds moon-libration with the production Moon glyph and libration on by default", () => {

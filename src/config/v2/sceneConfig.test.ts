@@ -35,6 +35,7 @@ import {
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
   applyIssOrbitalPresentationToScene,
+  issOrbitalPresentationFromScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
@@ -1684,5 +1685,24 @@ describe("eclipse product polish presentation", () => {
       false,
     );
     expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(15);
+  });
+
+  it("orbit base color follows the linked past color and leaves a customized past alone", () => {
+    const factory = defaultLibrationConfigV2().scene!;
+    expect(issOrbitalPresentationFromScene(factory).pastColor).toBe(
+      issOrbitalPresentationFromScene(factory).baseColor,
+    );
+    const followed = applyIssOrbitalPresentationToScene(factory, { baseColor: "#ff0000" });
+    const followedPres = issOrbitalPresentationFromScene(followed);
+    expect(followedPres.baseColor).toBe("#ff0000");
+    expect(followedPres.pastColor).toBe("#ff0000");
+    expect(followedPres.futureColor).toBe(DEFAULT_ISS_ORBITAL_PRESENTATION.futureColor);
+    expect(followedPres.dotColor).toBe(DEFAULT_ISS_ORBITAL_PRESENTATION.dotColor);
+
+    const customized = applyIssOrbitalPresentationToScene(factory, { pastColor: "#00ff00" });
+    const afterBase = applyIssOrbitalPresentationToScene(customized, { baseColor: "#0000ff" });
+    const afterPres = issOrbitalPresentationFromScene(afterBase);
+    expect(afterPres.baseColor).toBe("#0000ff");
+    expect(afterPres.pastColor).toBe("#00ff00");
   });
 });

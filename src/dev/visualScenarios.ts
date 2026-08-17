@@ -23,9 +23,14 @@ import { LUNAR_LOCUS_EPOCH_UTC, type LunarLocusEpochId } from "../core/lunarLocu
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setVisualScenarioExtraOverlayBuilder,
+  setVisualScenarioPreparedTracks,
   setVisualScenarioRuntime,
   type VisualScenarioRuntime,
 } from "./visualScenarioRuntime";
+import {
+  ISS_PRESENTATION_SCENARIO_UTC,
+  buildIssPresentationPreparedTracksView,
+} from "./issPresentationScenario";
 import "./visualScenarioBanner.css";
 
 export const VISUAL_SCENARIO_IDS = [
@@ -36,6 +41,7 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-track",
   "lunar-locus",
   "moon-libration",
+  "iss-presentation",
   "solar-eclipse-total",
   "solar-eclipse-annular",
   "solar-eclipse-partial",
@@ -61,6 +67,7 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-track": "2026-01-16T22:00:00.000Z",
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
   "moon-libration": "2021-12-10T00:00:00.000Z",
+  "iss-presentation": ISS_PRESENTATION_SCENARIO_UTC,
   "solar-eclipse-total": "2024-04-08T18:17:15.000Z",
   "solar-eclipse-annular": "2023-10-14T17:59:27.300Z",
   "solar-eclipse-partial": "2022-10-25T11:00:06.900Z",
@@ -305,6 +312,13 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
       "Production Moon glyph with optical-libration ring; observer-oriented by default. Optional DEV librationEpoch, observerCity, librationOrientation, librationStyle.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["moon-libration"], applyMoonLibrationScene),
   },
+  "iss-presentation": {
+    id: "iss-presentation",
+    startIsoUtc: VISUAL_SCENARIO_UTC["iss-presentation"],
+    purpose:
+      "DEV-only ISS overlay from a recorded TLE at a frozen UTC so Space objects presentation controls can be exercised without CelesTrak. Not a production live fallback.",
+    buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["iss-presentation"], applyIssPresentationScene),
+  },
   "solar-eclipse-total": {
     id: "solar-eclipse-total",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-total"],
@@ -432,6 +446,14 @@ function applyMoonLibrationScene(draft: LibrationConfigV2): void {
   draft.layers.lunarLocus = false;
   draft.layers.solarAnalemma = false;
   draft.layers.cityPins = false;
+}
+
+function applyIssPresentationScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.orbitalTracks = true;
+  draft.layers.cityPins = false;
+  draft.layers.solarAnalemma = false;
 }
 
 function applySolarEclipseScene(draft: LibrationConfigV2): void {
@@ -759,6 +781,11 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   setVisualScenarioRuntime(session);
   setWorkingV2PersistenceSuppressed(session.kind === "applied");
   setVisualScenarioExtraOverlayBuilder(null);
+  setVisualScenarioPreparedTracks(
+    session.kind === "applied" && session.id === "iss-presentation"
+      ? buildIssPresentationPreparedTracksView()
+      : null,
+  );
   if (session.kind === "unknown") {
     console.error(
       `[libration] Unknown visual scenario "${session.requestedId}". Ordinary startup; the requested scenario was not applied.`,
