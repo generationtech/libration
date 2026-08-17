@@ -190,6 +190,12 @@ Resumed after LIB-025–LIB-029. Marker implementation was already in the tree. 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 206 files / 1965 passed / 0 failed; `npm run build` with no scenario registry in `dist/`. Cursor Browser canvas exports at the six LIB-022 station UTCs; left-vs-+912 uniqueness confirmed.
 
+## 2026-08-16 — LIB-030 complete
+
+Layers tab topic subpanels (Chrome-style UI-only selector, not persisted). Default Layer masters; Map / Illumination / Eclipse / Moon & libration / Astronomy paths / Advanced unmount when inactive. No config, default, or persistence changes. Other tabs unchanged.
+
+Verified: focused Layers/config tests 90 passed; `npx tsc --noEmit` clean; `npm test` 206 files / 1968 passed / 0 failed. Cursor Browser `?scenario=baseline`: Config open, Layers topics switch without changing panel width token.
+
 
 
 

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-024](work/LIB-024-solar-eclipse-ground-position-marker.md) — Solar eclipse live ground-position marker + 2017 README recapture
+[LIB-030](work/LIB-030-config-panel-layers-subpanels.md) — Config panel Layers tab topic subpanels (layout only)
 
 ## Blockers
 

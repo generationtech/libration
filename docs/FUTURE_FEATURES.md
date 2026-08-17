@@ -386,7 +386,7 @@ Planned direction:
 
 Candidates:
 
-- improved settings organization.
+- **Improved settings organization** — Layers tab topic subpanels are production ([LIB-030](work/LIB-030-config-panel-layers-subpanels.md)). Remaining organization (search, other-tab grouping) is still a candidate.
 - search/filter in settings.
 - map selector with thumbnails.
 - source attribution panel.

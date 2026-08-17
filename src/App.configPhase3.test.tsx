@@ -56,6 +56,10 @@ function assertNoRendererImportInConfig(source: string, label: string): void {
   }
 }
 
+function selectLayersTopic(topic: string): void {
+  fireEvent.change(screen.getByTestId("layers-topic-select"), { target: { value: topic } });
+}
+
 /**
  * Mirrors App’s `bumpConfigView` after {@link commitWorkingV2Update} so tests that drive
  * multi-step Chrome UI see updated controls (ref mutation alone does not re-render).
@@ -437,6 +441,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     for (const name of layerLabels) {
       expect(screen.getByRole("checkbox", { name })).not.toBeDisabled();
     }
+    selectLayersTopic("map");
     expect(screen.getByRole("combobox", { name: "Map style" })).not.toBeDisabled();
   });
 
@@ -459,6 +464,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     ]) {
       expect(screen.getByRole("checkbox", { name })).toBeDisabled();
     }
+    selectLayersTopic("map");
     expect(screen.getByRole("combobox", { name: "Map style" })).toBeDisabled();
     expect(ref.current).toEqual(working);
   });
@@ -482,6 +488,7 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
       />,
     );
 
+    selectLayersTopic("map");
     const style = screen.getByRole("combobox", { name: "Map style" });
     expect(screen.getByRole("option", { name: "World geology" })).toBeInTheDocument();
     await user.selectOptions(style, "equirect-world-geology-v1");

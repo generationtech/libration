@@ -25,6 +25,11 @@ import {
   applyLayerEnableFlagsToScene,
 } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
+import type { LayersTopicId } from "./layersTopicTypes";
+
+function selectLayersTopic(topic: LayersTopicId): void {
+  fireEvent.change(screen.getByTestId("layers-topic-select"), { target: { value: topic } });
+}
 
 function LayersTabHarness({ initial }: { initial: LibrationConfigV2 }) {
   const [config, setConfig] = useState<LibrationConfigV2>(() => normalizeLibrationConfig(initial));
@@ -104,6 +109,7 @@ describe("LayersTab base-map presentation persistence", () => {
       },
     });
     render(<LayersTabHarness initial={initial} />);
+    selectLayersTopic("map");
 
     const styleSelect = screen.getByLabelText("Map style");
     await user.selectOptions(styleSelect, "equirect-world-geology-v1");
@@ -114,6 +120,7 @@ describe("LayersTab base-map presentation persistence", () => {
   it("editing display controls updates only the current map id entry", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={defaultLibrationConfigV2()} />);
+    selectLayersTopic("map");
 
     const styleSelect = screen.getByLabelText("Map style");
     await user.selectOptions(styleSelect, "equirect-world-blue-marble-bm-v1");
@@ -144,6 +151,7 @@ describe("LayersTab base-map presentation persistence", () => {
       },
     });
     render(<LayersTabHarness initial={initial} />);
+    selectLayersTopic("map");
 
     await user.click(screen.getByRole("button", { name: "Reset base map display to defaults" }));
     const state = readSceneBaseMapState();
@@ -180,6 +188,7 @@ describe("LayersTab base-map presentation persistence", () => {
       },
     });
     render(<LayersTabHarness initial={initial} />);
+    selectLayersTopic("illumination");
 
     const sel = screen.getByLabelText("Night lights appearance");
     await user.selectOptions(sel, "enhanced");
@@ -196,6 +205,7 @@ describe("LayersTab base-map presentation persistence", () => {
     const user = userEvent.setup();
     const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
     render(<LayersTabCommitHarness initial={initial} />);
+    selectLayersTopic("illumination");
 
     await user.selectOptions(screen.getByLabelText("Night lights appearance"), "illustrative");
 
@@ -223,6 +233,7 @@ describe("LayersTab base-map presentation persistence", () => {
       },
     });
     render(<LayersTabHarness initial={initial} />);
+    selectLayersTopic("illumination");
 
     await user.selectOptions(screen.getByLabelText("Moonlight appearance"), "enhanced");
 
@@ -236,6 +247,7 @@ describe("LayersTab base-map presentation persistence", () => {
 
   it("renders clear numeric tuning labels and reset control copy", () => {
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("illumination");
     expect(screen.getByText("Intensity value (0–4)")).toBeTruthy();
     expect(screen.getByText("Lift value (0.35–1)")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Reset night-light tuning" })).toBeTruthy();
@@ -259,6 +271,7 @@ describe("LayersTab base-map presentation persistence", () => {
       },
     });
     render(<LayersTabHarness initial={initial} />);
+    selectLayersTopic("illumination");
 
     await user.click(screen.getByRole("button", { name: "Reset night-light tuning" }));
 
@@ -296,6 +309,7 @@ describe("LayersTab lunar ground track stroke colors", () => {
       );
     }
     render(<Harness />);
+    selectLayersTopic("astronomyPaths");
     const past = screen.getByLabelText("Lunar ground track past color") as HTMLInputElement;
     const future = screen.getByLabelText("Lunar ground track future color") as HTMLInputElement;
     expect(past.value).toBe("#aacdf0");
@@ -345,17 +359,19 @@ describe("LayersTab Moon and astronomy path styling", () => {
       );
     }
     render(<Harness />);
+    selectLayersTopic("moonAndLibration");
     const libColor = screen.getByLabelText("Libration color") as HTMLInputElement;
-    const locusColor = screen.getByLabelText("Lunar locus color") as HTMLInputElement;
-    const analemmaColor = screen.getByLabelText("Solar analemma color") as HTMLInputElement;
     expect(libColor.value).toBe("#c5d4e8");
-    expect(locusColor.value).toBe("#1c2638");
-    expect(analemmaColor.value).toBe("#ffc878");
     fireEvent.change(libColor, { target: { value: "#abcdef" } });
-    fireEvent.change(locusColor, { target: { value: "#112233" } });
-    fireEvent.change(analemmaColor, { target: { value: "#fedcba" } });
     fireEvent.change(screen.getByLabelText("Moon size"), { target: { value: "large" } });
     fireEvent.change(screen.getByLabelText("Libration style"), { target: { value: "crosshair" } });
+    selectLayersTopic("astronomyPaths");
+    const locusColor = screen.getByLabelText("Lunar locus color") as HTMLInputElement;
+    const analemmaColor = screen.getByLabelText("Solar analemma color") as HTMLInputElement;
+    expect(locusColor.value).toBe("#1c2638");
+    expect(analemmaColor.value).toBe("#ffc878");
+    fireEvent.change(locusColor, { target: { value: "#112233" } });
+    fireEvent.change(analemmaColor, { target: { value: "#fedcba" } });
     fireEvent.change(screen.getByLabelText("Lunar locus thickness"), { target: { value: "thick" } });
     fireEvent.change(screen.getByLabelText("Solar analemma thickness"), { target: { value: "thin" } });
     const moon = JSON.parse(screen.getByTestId("moon-params").textContent ?? "{}") as Record<string, unknown>;
@@ -369,6 +385,7 @@ describe("LayersTab Moon and astronomy path styling", () => {
     expect(moon.librationStyle).toBe("crosshair");
     expect(moon.librationOrientation).toBe("observer");
     expect(moon.librationUseReferenceCity).toBe(true);
+    selectLayersTopic("moonAndLibration");
     fireEvent.change(screen.getByLabelText("Libration orientation"), { target: { value: "map" } });
     expect((screen.getByLabelText("Use reference city") as HTMLInputElement).disabled).toBe(true);
     fireEvent.change(screen.getByLabelText("Libration orientation"), { target: { value: "observer" } });
@@ -407,22 +424,24 @@ describe("LayersTab eclipse alignment", () => {
   it("defaults alignment on and can disable the beam without turning off Solar eclipses", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const master = screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement;
     const solarBeam = screen.getByLabelText("Solar alignment beam") as HTMLInputElement;
     const lunarBeam = screen.getByLabelText("Lunar alignment beam") as HTMLInputElement;
     const intensity = screen.getByLabelText("Alignment intensity") as HTMLSelectElement;
-    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
     expect(master.checked).toBe(true);
     expect(solarBeam.checked).toBe(true);
     expect(lunarBeam.checked).toBe(true);
     expect(intensity.value).toBe("normal");
-    expect(solar.checked).toBe(true);
     await user.click(master);
     expect(master.checked).toBe(false);
+    selectLayersTopic("layerMasters");
+    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
     expect(solar.checked).toBe(true);
     await user.click(solar);
     expect(solar.checked).toBe(false);
-    expect(master.checked).toBe(false);
+    selectLayersTopic("eclipse");
+    expect((screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement).checked).toBe(false);
   });
 });
 
@@ -434,20 +453,24 @@ describe("LayersTab reference-city eclipse circumstances", () => {
   it("defaults details and chrome status on and can disable them independently of Solar eclipses", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const details = screen.getByLabelText("Reference-city eclipse details") as HTMLInputElement;
     const chrome = screen.getByLabelText("Persistent eclipse status") as HTMLInputElement;
-    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
     expect(details.checked).toBe(true);
     expect(chrome.checked).toBe(true);
-    expect(solar.checked).toBe(true);
     await user.click(details);
     await user.click(chrome);
     expect(details.checked).toBe(false);
     expect(chrome.checked).toBe(false);
+    selectLayersTopic("layerMasters");
+    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
     expect(solar.checked).toBe(true);
     await user.click(solar);
     expect(solar.checked).toBe(false);
-    expect(details.checked).toBe(false);
+    selectLayersTopic("eclipse");
+    expect((screen.getByLabelText("Reference-city eclipse details") as HTMLInputElement).checked).toBe(
+      false,
+    );
   });
 
   it("keeps Layers eclipse controls-only during an active solar event", () => {
@@ -469,6 +492,7 @@ describe("LayersTab reference-city eclipse circumstances", () => {
       );
     }
     render(<Harness />);
+    selectLayersTopic("eclipse");
     expect(screen.queryByTestId("eclipse-event-information")).toBeNull();
     expect(screen.queryByTestId("eclipse-circumstances-details")).toBeNull();
     expect(screen.getByLabelText("Event information")).toBeTruthy();
@@ -484,6 +508,7 @@ describe("LayersTab eclipse product polish", () => {
   it("disables solar forecast children when horizon is live only", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const horizon = screen.getByLabelText("Solar forecast horizon") as HTMLSelectElement;
     await user.selectOptions(horizon, "0");
     expect((screen.getByLabelText("Forecast corridor") as HTMLInputElement).disabled).toBe(true);
@@ -499,9 +524,11 @@ describe("LayersTab eclipse product polish", () => {
   it("defaults lunar forecast horizon to 7 days and disables forecast children when live only", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("layerMasters");
     const lunar = screen.getByLabelText("Lunar eclipses") as HTMLInputElement;
-    const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
     expect(lunar.checked).toBe(true);
+    selectLayersTopic("eclipse");
+    const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
     expect(horizon.value).toBe("7");
     await user.selectOptions(horizon, "0");
     expect((screen.getByLabelText("Forecast Moon-visible region") as HTMLInputElement).disabled).toBe(
@@ -518,6 +545,7 @@ describe("LayersTab eclipse product polish", () => {
   it("keeps event labels independent of event information", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const info = screen.getByLabelText("Event information") as HTMLInputElement;
     const labels = screen.getByLabelText("Event labels") as HTMLInputElement;
     expect(info.checked).toBe(true);
@@ -532,6 +560,7 @@ describe("LayersTab eclipse product polish", () => {
 
   it("does not leak solar forecast color into lunar visibility color", () => {
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const solarColor = screen.getByLabelText("Solar forecast color") as HTMLInputElement;
     const lunarColor = screen.getByLabelText("Lunar visibility color") as HTMLInputElement;
     const beforeLunar = lunarColor.value;
@@ -543,6 +572,7 @@ describe("LayersTab eclipse product polish", () => {
   it("defaults the live eclipse position marker on with size and color controls", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
     const toggle = screen.getByLabelText("Live eclipse position") as HTMLInputElement;
     const size = screen.getByLabelText("Live position size") as HTMLSelectElement;
     const color = screen.getByLabelText("Live position color") as HTMLInputElement;
@@ -553,5 +583,50 @@ describe("LayersTab eclipse product polish", () => {
     expect(toggle.checked).toBe(false);
     expect(size.disabled).toBe(true);
     expect(color.disabled).toBe(true);
+  });
+});
+
+describe("LayersTab topic navigation", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("defaults to Layer masters and unmounts other topics", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    expect(screen.getByTestId("layers-topic-select")).toHaveValue("layerMasters");
+    expect(screen.getByTestId("layers-topic-layer-masters")).toBeInTheDocument();
+    expect(screen.getByLabelText("Solar eclipses")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Map style")).toBeNull();
+    expect(screen.queryByLabelText("Moonlight appearance")).toBeNull();
+    expect(screen.queryByLabelText("Event information")).toBeNull();
+    expect(screen.queryByLabelText("Libration color")).toBeNull();
+    expect(screen.queryByLabelText("Overlay combined readability veil scale")).toBeNull();
+  });
+
+  it("switching topics unmounts the previous topic and does not mutate config", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const solar = screen.getByLabelText("Solar eclipses") as HTMLInputElement;
+    expect(solar.checked).toBe(true);
+    await user.click(solar);
+    expect(solar.checked).toBe(false);
+    const illuminationBefore = screen.getByTestId("illumination-state").textContent;
+    selectLayersTopic("map");
+    expect(screen.queryByTestId("layers-topic-layer-masters")).toBeNull();
+    expect(screen.getByTestId("layers-topic-map")).toBeInTheDocument();
+    expect(screen.getByLabelText("Map style")).toBeInTheDocument();
+    selectLayersTopic("layerMasters");
+    expect((screen.getByLabelText("Solar eclipses") as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
+  });
+
+  it("Advanced topic shows overlay-readability pilots and not layer masters", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("advanced");
+    expect(screen.getByTestId("layers-topic-advanced")).toBeInTheDocument();
+    expect(screen.getByLabelText("Overlay combined readability veil scale")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset overlay readability" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Solar eclipses")).toBeNull();
+    expect(screen.queryByLabelText("Moonlight appearance")).toBeNull();
   });
 });

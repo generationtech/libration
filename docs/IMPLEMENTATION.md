@@ -614,10 +614,10 @@ The scene fills the window. The configuration UI is an overlay panel.
 
 | Tab | Owns |
 |-----|------|
-| Layers | Scene stack toggles (including lunar ground track, lunar locus, Solar eclipses, and Lunar eclipses), grouped Eclipse System controls (event information / labels; solar and lunar forecast horizons and type filters; lunar forecast/active Moon-visible geography; alignment; reference-city details/chrome; independent appearance; active solar eclipse shading enable and Subtle/Normal/Dramatic intensity), Moon size and libration presentation (ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale), independent Lunar locus and Solar analemma stroke color/thickness, past/future track extents and stroke colors, illumination (moonlight, emissive night lights, cloud participation), overlay-readability presentation, optional live overlays (clouds/IR, earthquakes, ISS). Live eclipse event rows live on the map, not in this tab. |
+| Layers | Scene stack toggles (Layer masters topic, default): lunar ground track, lunar locus, Solar eclipses, Lunar eclipses, and the other overlay masters. Internal **Layers topic** selector (UI-only, not persisted; inactive topics unmount, matching Chrome): Map (family, preview, attribution, presentation); Illumination (moonlight, night lights, cloud participation); Eclipse System (event information / labels; solar and lunar forecast horizons and type filters; lunar forecast/active Moon-visible geography; alignment; reference-city details/chrome; independent appearance; active solar eclipse shading enable and Subtle/Normal/Dramatic intensity); Moon & libration (size, ring/crosshair, map/observer orientation, use-reference-city, color, thickness, motion scale); Astronomy paths (past/future track extents and stroke colors; independent Lunar locus and Solar analemma stroke color/thickness); Advanced (overlay-readability presentation and per-layer pilots). Optional live overlays (clouds/IR, earthquakes, ISS) remain Layer masters checkboxes. Live eclipse event rows live on the map, not in this tab. |
 | Pins | Reference cities, custom pins, pin presentation |
 | Chrome | Top-band layout, hour markers, tick tape, NATO letter row, bottom chrome |
-| Geography | Base-map family selection and presentation, projection-adjacent settings |
+| Geography | Geographic meridian when Chrome read point is Auto (Greenwich vs fixed coordinate) |
 | Data | Time mode and demo-time controls |
 | General | Application-level settings, presets |
 

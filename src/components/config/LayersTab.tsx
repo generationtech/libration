@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
@@ -75,6 +75,12 @@ import { resolveReferenceCityObserverLocation } from "../../core/referenceCityOb
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
+import { LayersTopicSelector } from "./LayersTopicSelector";
+import {
+  DEFAULT_LAYERS_TOPIC,
+  descriptionForLayersTopic,
+  type LayersTopicId,
+} from "./layersTopicTypes";
 
 const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "baseMap",
@@ -483,6 +489,7 @@ export type LayersTabProps = {
 };
 
 export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabProps) {
+  const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const lunarExtents = lunarGroundTrackExtentsFromScene(scene);
@@ -534,10 +541,14 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
           Scene layers
         </h2>
         <p className="config-section__hint">
-          Choose the basemap style, then toggle which map and overlay layers are shown. Read-only
-          when the panel has no live update handler.
+          Choose a topic to edit. Layer visibility is under Layer masters. Other topics hold
+          presentation for the same layers. Read-only when the panel has no live update handler.
         </p>
-        <BaseMapStyleControl
+        <LayersTopicSelector value={layersTopic} onChange={setLayersTopic} />
+        {layersTopic === "map" ? (
+          <div data-testid="layers-topic-map">
+            <p className="config-section__hint">{descriptionForLayersTopic("map")}</p>
+            <BaseMapStyleControl
           baseMapId={scene.baseMap.id}
           presentation={effectivePresentation}
           productInstantMs={productInstantMs}
@@ -608,6 +619,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
               : undefined
           }
         />
+          </div>
+        ) : null}
+        {layersTopic === "illumination" ? (
+          <div data-testid="layers-topic-illumination">
+            <p className="config-section__hint">{descriptionForLayersTopic("illumination")}</p>
         <ConfigControlRow label="Moonlight appearance">
           <select
             className="config-input"
@@ -1039,6 +1055,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </button>
           </div>
         </ConfigControlRow>
+          </div>
+        ) : null}
+        {layersTopic === "advanced" ? (
+          <div data-testid="layers-topic-advanced">
+            <p className="config-section__hint">{descriptionForLayersTopic("advanced")}</p>
         <ConfigControlRow label="Overlay readability veil scale">
           <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
             <div
@@ -1352,6 +1373,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             Reset overlay readability
           </button>
         </ConfigControlRow>
+          </div>
+        ) : null}
+        {layersTopic === "layerMasters" ? (
+          <div data-testid="layers-topic-layer-masters">
+            <p className="config-section__hint">{descriptionForLayersTopic("layerMasters")}</p>
         {LAYER_KEYS.map((key) => {
           return (
             <ConfigControlRow key={key} label={labelForLayer(key)}>
@@ -1383,10 +1409,20 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             </ConfigControlRow>
           );
         })}
+          </div>
+        ) : null}
+        {layersTopic === "eclipse" ? (
+          <div data-testid="layers-topic-eclipse">
+            <p className="config-section__hint">{descriptionForLayersTopic("eclipse")}</p>
         <EclipseSystemSection
           config={config}
           updateConfig={updateConfig}
         />
+          </div>
+        ) : null}
+        {layersTopic === "astronomyPaths" ? (
+          <div data-testid="layers-topic-astronomy-paths">
+            <p className="config-section__hint">{descriptionForLayersTopic("astronomyPaths")}</p>
         <ConfigControlRow label="Lunar ground track past">
           <select
             className="config-input"
@@ -1505,6 +1541,11 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             }
           />
         </ConfigControlRow>
+          </div>
+        ) : null}
+        {layersTopic === "moonAndLibration" ? (
+          <div data-testid="layers-topic-moon-and-libration">
+            <p className="config-section__hint">{descriptionForLayersTopic("moonAndLibration")}</p>
         <ConfigControlRow label="Moon size">
           <select
             className="config-input"
@@ -1736,6 +1777,10 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             ))}
           </select>
         </ConfigControlRow>
+          </div>
+        ) : null}
+        {layersTopic === "astronomyPaths" ? (
+          <div data-testid="layers-topic-astronomy-paths-style">
         <ConfigControlRow label="Lunar locus color">
           <input
             type="color"
@@ -1838,6 +1883,8 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
             ))}
           </select>
         </ConfigControlRow>
+          </div>
+        ) : null}
       </section>
     </div>
   );
