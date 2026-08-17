@@ -3,12 +3,12 @@
 | Field | Value |
 |-------|-------|
 | ID | LIB-036 |
-| Status | proposed |
+| Status | complete |
 | Created | 2026-08-16 |
-| Approved | |
-| Completed | |
+| Approved | 2026-08-17 (human; this request) |
+| Completed | 2026-08-17 |
 
-Drafted from the complete human intent after [LIB-035](LIB-035-dynamic-live-time-integrity-and-iss-position.md). Not approved. Do not implement until a human moves this item to `approved`.
+Human-approved. Freshness bands confirmed: ≤18 h normal, 18–48 h degraded, >48 h suppress. Preferred failure: CelesTrak unavailable → ISS unavailable; never present fixture as live. Do not activate LIB-037.
 
 ## Objective
 
@@ -137,16 +137,53 @@ Enabling ISS must not require a manual re-toggle after fetch completion. Prove (
 
 ## Completion record
 
-Fill only when completing.
-
 **Implementation summary**
+
+Production ISS no longer falls back to fixture. Acquisition stamps `issOrigin` (`live-tle` / `fixture`); overlay computes provenance (origin, TLE epoch, acquisition UTC, age at product UTC, SGP4 product UTC) and paints only a fresh or degraded live/cached TLE. Fixture never paints. Age bands: ≤18 h live, 18–48 h degraded, >48 h suppress. CelesTrak failure with an empty cache leaves ISS unavailable. Layers shows a concise unavailable/degraded hint when the layer is enabled and product time is live-enough; ADR 0013 live-only copy still takes precedence historically. Clouds/IR and earthquakes keep fixture fallback. Marker remains `SGP4(TLE, product UTC)`. Track window unchanged. No ADR (ISS-only policy; origin/freshness resolve upstream of `RenderPlan`).
 
 **Commands run**
 
+- `npx tsc --noEmit`
+- focused ISS/lifecycle/Layers tests (including new `src/lifecycle/issLiveProvenance.test.ts`)
+- `npm test`
+- `npm run build`
+- `npm run dev` at http://localhost:1420/ (Cursor built-in browser, ordinary current mode, no `?scenario=`)
+- `curl --max-time 12` to CelesTrak GP CATNR 25544 (connectivity probe)
+
 **Actual results**
+
+- `npx tsc --noEmit` — clean
+- focused ISS tests — 78 passed
+- `npm test` — 212 files / 2018 passed / 0 failed
+- `npm run build` — succeeded (`dist/assets/index-Dk9y2ABQ.js`)
+- CelesTrak curl — connection timed out after 12 s (`http_code=000`)
 
 **Visual verification**
 
+```text
+Visual verification:
+- Scenario: ordinary current mode (no ?scenario=); then Demo 2017-08-21; then Static / now
+- Viewport: Cursor browser pane; scene canvas CSS ~872×998 bitmap (not canonical 1920×1080)
+- Browser: Cursor built-in browser
+- Inspected: ISS Layer masters checkbox; Layers ISS/live-only hints; Data-tab ISS-hides copy;
+  map for ISS marker/track vs southern-Africa fixture; product HUD date; 2017 eclipse info panel
+- Result: PASS for provenance failure path, no fixture-as-live, historical hide, enablement restore
+- Ordinary now: enable ISS (stayed checked, no re-toggle). After acquire: Layers
+  “ISS orbital track is unavailable.” No ISS marker/track on the map (fixture not painted as live).
+  Data tab: clouds/quakes fixture on failure; ISS hides when CelesTrak unavailable.
+- Historical Demo start 2017-08-21: HUD/eclipse panel showed the 2017 total solar eclipse;
+  Layers “Live-only data is hidden while viewing another product time.”; ISS checkbox still on;
+  no ISS on the map.
+- Return to Static: product HUD August 17 2026 ~12:18 AM; ISS still checked without re-enable;
+  live-only hint gone; still no ISS on the map. Unavailable hint did not immediately return
+  (re-arm left lifecycle in loading while CelesTrak hung; loading shows no hint by design).
+```
+
 **Not verified**
 
+- Live CelesTrak TLE on the map (provider unreachable this session; curl TCP timeout). No comparison to an external ISS tracker. Viewport was not 1920×1080. Degraded (18–48 h) band was covered by unit tests, not a live stale TLE in the browser.
+
 **Discovered, not done**
+
+- CelesTrak GP still unreachable from this IP (LIB-035 saw HTTP 403; this session timed out). Fetch timeouts remain out of scope, so a hung re-arm after historical→now leaves the Layers hint empty until the fetch settles.
+- LIB-037 stays proposed. Re-evaluate only after a confirmed live TLE.

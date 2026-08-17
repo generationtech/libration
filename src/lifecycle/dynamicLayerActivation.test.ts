@@ -129,7 +129,7 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
     host.dispose();
   });
 
-  it("revive + arm all three yields prepared views for each source", async () => {
+  it("revive + arm all three: clouds/quakes materialize via fixture; ISS stays unavailable without a live TLE", async () => {
     let host = createDynamicDataLifecycleHost(hostDeps());
     host.dispose();
     host = reviveDisposedDynamicLifecycleHost(host, hostDeps());
@@ -148,16 +148,13 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
       expect(
         att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
       ).not.toBeNull();
-      expect(att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)).not.toBeNull();
     });
 
     const att = host.attachForProductInstant(PRODUCT_MS);
     expect(
       att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)!.features.length,
     ).toBeGreaterThan(0);
-    expect(
-      att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)!.tracks.length,
-    ).toBeGreaterThan(0);
+    expect(att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)).toBeNull();
     host.dispose();
   });
 

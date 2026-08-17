@@ -752,4 +752,29 @@ describe("LayersTab live overlay masters", () => {
     );
     expect(screen.queryByTestId("live-only-suppressed-hint")).toBeNull();
   });
+
+  it("shows ISS unavailable and degraded hints on Layer masters", () => {
+    const { unmount } = render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        productTimeLiveEnough={true}
+        issConfigStatusHint="unavailable"
+      />,
+    );
+    expect(screen.getByTestId("iss-status-hint").textContent).toMatch(
+      /ISS orbital track is unavailable/,
+    );
+    unmount();
+
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        productTimeLiveEnough={true}
+        issConfigStatusHint="degraded"
+      />,
+    );
+    expect(screen.getByTestId("iss-status-hint").textContent).toMatch(
+      /ISS orbital track is degraded/,
+    );
+  });
 });

@@ -18,7 +18,7 @@ The window is a single canvas with two parts.
 
 Over all of it sits **planetary illumination**: day and night, continuous twilight with atmospheric tint, moonlight varying with lunar phase and altitude, and emissive human-made night lights, all composed upstream into a single raster. Polar behaviour follows real solar geometry, so midnight sun and polar night simply happen.
 
-Three **live data feeds** can be enabled — cloud and infrared imagery, earthquakes, and the ISS ground track — each with an offline fixture fallback, and none of them touching the render path.
+Three **live data feeds** can be enabled — cloud and infrared imagery, earthquakes, and the ISS ground track. Clouds and earthquakes keep an offline fixture fallback. ISS hides when CelesTrak is unavailable. None of them touch the render path.
 
 Configuration is a six-tab panel toggled with the `C` key, persisted to browser storage as you change it.
 

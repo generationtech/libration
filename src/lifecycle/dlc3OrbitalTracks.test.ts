@@ -16,11 +16,35 @@ import { createTimeContext } from "../core/time";
 import { createDynamicTracksOverlayLayer } from "../layers/dynamicTracksOverlayLayer";
 import { isDynamicTracksPayload } from "../layers/dynamicTracksPayload";
 import {
+  ISS_ORBITAL_TRACK_LIVE_FEED_URL,
   ISS_ORBITAL_TRACK_SOURCE_ID,
   createDynamicDataLifecycleHost,
   getDynamicTracksSourceCatalogEntry,
   produceIssOrbitalTrackFixtureAcquisition,
+  type LiveHttpFetchFn,
 } from "./index";
+
+const SAMPLE_ISS_TLE_3LE = [
+  "ISS (ZARYA)",
+  "1 25544U 98067A   26218.05391056  .00003997  00000+0  79690-4 0  9990",
+  "2 25544  51.6321  53.3065 0007216  17.1615 342.9616 15.49359774579487",
+].join("\n");
+
+const SAMPLE_TLE_CENTER_MS = Date.UTC(2026, 7, 6, 1, 17, 0);
+
+function mockTleOk(): Response {
+  const body = new TextEncoder().encode(SAMPLE_ISS_TLE_3LE);
+  const headers = new Headers();
+  headers.set("content-type", "text/plain; charset=UTF-8");
+  return {
+    ok: true,
+    status: 200,
+    headers,
+    url: ISS_ORBITAL_TRACK_LIVE_FEED_URL,
+    arrayBuffer: async () =>
+      body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength),
+  } as Response;
+}
 
 describe("DLC-3 ISS orbital tracks consumer boundary", () => {
   it("catalog exposes durable sourceId with attribution (not a CDN URL)", () => {
@@ -66,12 +90,11 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     const acquireSpy = vi.fn();
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
-    // Avoid real network in DLC-3 boundary tests: fail live fetch → fixture fallback.
-    const orbitalTracksLiveFetchFn = vi.fn(async () => {
-      throw new Error("offline-test");
-    });
+    // Avoid real network: injectable CelesTrak TLE bytes (production has no fixture fallback).
+    const orbitalTracksLiveFetchFn: LiveHttpFetchFn = vi.fn(async () => mockTleOk());
     const host = createDynamicDataLifecycleHost({
       orbitalTracksLiveFetchFn,
+      nowMs: () => SAMPLE_TLE_CENTER_MS,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -100,7 +123,7 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     });
 
     await vi.waitFor(() => {
-      const att = host.attachForProductInstant(1_700_000_000_000);
+      const att = host.attachForProductInstant(SAMPLE_TLE_CENTER_MS);
       expect(att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)).not.toBeNull();
     });
 
@@ -108,7 +131,7 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
     expect(orbitalTracksLiveFetchFn).toHaveBeenCalled();
 
-    const productA = 1_700_000_000_000;
+    const productA = SAMPLE_TLE_CENTER_MS;
     const productB = productA + 3_600_000;
     const attA = host.attachForProductInstant(productA);
     const attB = host.attachForProductInstant(productB);
@@ -127,10 +150,10 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
   });
 
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
+    const orbitalTracksLiveFetchFn: LiveHttpFetchFn = vi.fn(async () => mockTleOk());
     const host = createDynamicDataLifecycleHost({
-      orbitalTracksLiveFetchFn: async () => {
-        throw new Error("offline-test");
-      },
+      orbitalTracksLiveFetchFn,
+      nowMs: () => SAMPLE_TLE_CENTER_MS,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
@@ -141,7 +164,7 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(Date.now())
+          .attachForProductInstant(SAMPLE_TLE_CENTER_MS)
           .getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
       ).not.toBeNull();
     });
@@ -152,9 +175,9 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
       opacity: 0.95,
     });
 
-    const attachment = host.attachForProductInstant(Date.now());
+    const attachment = host.attachForProductInstant(SAMPLE_TLE_CENTER_MS);
     const resolveSpy = vi.spyOn(attachment, "resolveSnapshot");
-    const time = createTimeContext(Date.now(), 0, false, {
+    const time = createTimeContext(SAMPLE_TLE_CENTER_MS, 0, false, {
       dynamicDataLifecycle: attachment,
     });
     const state = layer.getState(time);
@@ -166,7 +189,7 @@ describe("DLC-3 ISS orbital tracks consumer boundary", () => {
     }
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    const cold = layer.getState(createTimeContext(Date.now(), 0, false));
+    const cold = layer.getState(createTimeContext(SAMPLE_TLE_CENTER_MS, 0, false));
     expect(cold.visible).toBe(false);
 
     host.dispose();

@@ -22,6 +22,10 @@ import {
 } from "../core/overlayReadabilityFrame";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
 import { resolveIssCurrentSample } from "../lifecycle/issOrbitalTrackAcquisition";
+import {
+  issProvenanceFromPreparedTrack,
+  issTrackShouldPaint,
+} from "../lifecycle/issTrackProvenance";
 import type { DynamicSourceId } from "../lifecycle/dynamicSnapshotTypes";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -95,6 +99,35 @@ export function createDynamicTracksOverlayLayer(
 
       const frame = getOverlayReadabilityFrameOrCompute(time);
       const first = prepared.tracks[0];
+      const lifecycleState =
+        attachment?.getLifecycleState(sourceId).state ?? "idle";
+      const provenance = issProvenanceFromPreparedTrack({
+        tracks: prepared.tracks,
+        acquiredAtMs: prepared.validTimeMs,
+        productUtcMs: time.now,
+        lifecycleState,
+      });
+      if (provenance === null || !issTrackShouldPaint(provenance)) {
+        return {
+          visible: false,
+          opacity,
+          data: null,
+          metadata: {
+            dynamicSourceId: prepared.sourceId,
+            versionId: prepared.versionId,
+            reason:
+              provenance === null
+                ? "empty-tracks"
+                : provenance.origin === "fixture"
+                  ? "iss-fixture-suppressed"
+                  : provenance.freshnessBand === "excessively-stale"
+                    ? "iss-excessively-stale"
+                    : "iss-unavailable",
+            issProvenance: provenance,
+          },
+        };
+      }
+
       const current =
         first !== undefined
           ? resolveIssCurrentSample(first, time.now)
@@ -154,6 +187,7 @@ export function createDynamicTracksOverlayLayer(
           validTimeMs: prepared.validTimeMs,
           freshness: prepared.freshness,
           trackCount: tracks.length,
+          issProvenance: provenance,
           ...(prepared.attribution !== undefined
             ? { attribution: prepared.attribution }
             : {}),

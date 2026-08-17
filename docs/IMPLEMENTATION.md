@@ -38,7 +38,7 @@ The npm package name is `libration`. `index.html` and `tauri.conf.json` (`produc
 
 ### Offline behaviour
 
-The application is usable with no network. All base-map rasters, the emissive night-lights raster, and the font assets are bundled and served from `public/`. Dynamic data sources fall back to recorded fixtures when live acquisition fails. Nothing in the render path requires the network.
+The application is usable with no network. All base-map rasters, the emissive night-lights raster, and the font assets are bundled and served from `public/`. Clouds/IR and earthquakes fall back to recorded fixtures when live acquisition fails. ISS hides when CelesTrak is unavailable (fixture is tests/DEV only and is never painted as live). Nothing in the render path requires the network.
 
 ---
 
@@ -558,7 +558,7 @@ Acquisition is periodic and runs on an injectable timer, never inside `requestAn
 
 Each frame the host attaches a read-only view bound to the product instant. When the shell supplies wall-clock now, `getPreparedEquirectRaster` / `getPreparedCloudOpacity` / `getPreparedPointFeatures` / `getPreparedTracks` return **null** for catalog `timePolicy: "wallClockCurrent"` sources unless product time is live-enough. Store snapshots remain; fixture bytes are not painted as a substitute. Layers with no prepared view contribute nothing (`missing-prepared-view`).
 
-Three live feeds are wired, each classified `timePolicy: "wallClockCurrent"` under their present implementations, with a recorded real-format fixture as offline fallback under the same durable `sourceId`:
+Three live feeds are wired, each classified `timePolicy: "wallClockCurrent"` under their present implementations. Clouds/IR and earthquakes keep a recorded real-format fixture as offline fallback under the same durable `sourceId`. ISS does not: CelesTrak failure with no usable live TLE leaves the overlay unavailable.
 
 | Durable `sourceId` | Feed | When product time is not live-enough |
 |--------------------|------|--------------------------------------|
@@ -574,9 +574,11 @@ When every current-only consumer of a source is suppressed, `armDynamicLifecycle
 
 Each animation frame re-attaches the host and re-reads prepared views, so a completed acquisition becomes visible on the next frame without a separate React invalidation.
 
-**ISS current position.** Live acquisition stores TLE lines on the track properties. Each prepared view computes an explicit SGP4 sample at the product UTC (`propagateIssPositionAtTime`); the RenderPlan marker and `ISS` label use that sample, not the first or last track vertex. The track window is **−60 min past / +30 min future** at 2 min steps (presentation balance after the marker is independent of the window). Future segments use the same `line` primitive at slightly lower alpha. TLE refresh remains 1 minute; the marker moves with product time between fetches.
+**ISS current position.** Live acquisition stores TLE lines and an origin stamp (`live-tle`) on the track properties. Each prepared view computes an explicit SGP4 sample at the product UTC (`propagateIssPositionAtTime`); the RenderPlan marker and `ISS` label use that sample, not the first or last track vertex. The track window is **−60 min past / +30 min future** at 2 min steps (presentation balance after the marker is independent of the window). Future segments use the same `line` primitive at slightly lower alpha. TLE refresh remains 1 minute; the marker moves with product time between fetches.
 
-Failure policy is `stale-when-cached`: a failed refresh prefers the last good version over surfacing an error. Aborts do not trigger fixture fallback. Historical suppression takes precedence: a current-only source outside the live window is hidden even if a fixture exists.
+TLE age is `productUtcMs − tleEpochMs` (not user-configurable): ≤18 h paints as live; 18–48 h paints as degraded (not labeled live); >48 h suppresses ISS (same visual as unavailable). Last-good **live** TLE kept by `stale-when-cached` may still paint in the fresh or degraded band; origin is cached/stale, not live, not fixture. Production does not fall back to fixture. CelesTrak failure with an empty cache leaves ISS unavailable. Layers shows a concise “ISS orbital track is unavailable/degraded” hint when the layer is enabled and product time is live-enough. Historical suppression takes precedence: a current-only source outside the live window is hidden even if a snapshot exists.
+
+Failure policy for clouds/IR and earthquakes remains `stale-when-cached` with fixture fallback on empty cache. Aborts do not trigger fixture fallback.
 
 ---
 

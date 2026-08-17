@@ -258,10 +258,10 @@ New consumers reuse the existing lifecycle subsystem; its contract, and the sour
 
 Adding any of these is a product decision requiring explicit scope, not a consequence of the seam supporting it. Prefer free-for-personal-use sources; paid sources are acceptable when the benefit is clear.
 
-ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
+ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). ISS live provenance, TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden), and hide-on-CelesTrak-failure are production as of [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
 
-- production fixture-on-live-failure policy (when to show recorded fixture vs hide vs error)
-- stale/error UX for live feeds
+- production fixture-on-live-failure policy for clouds/IR and earthquakes (ISS already hides when CelesTrak is unavailable)
+- stale/error UX for clouds/IR and earthquakes (ISS has a concise Layers unavailable/degraded hint)
 - persistent snapshot cache
 - retry/backoff/timeouts beyond the next interval
 - GIBS historical `TIME`

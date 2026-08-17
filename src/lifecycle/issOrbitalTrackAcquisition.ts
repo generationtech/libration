@@ -78,6 +78,8 @@ export const ISS_ORBITAL_TRACK_SAMPLE_STEP_MS = 2 * 60 * 1000;
 export const ISS_TLE_NAME_PROPERTY = "tleName";
 export const ISS_TLE_LINE1_PROPERTY = "tleLine1";
 export const ISS_TLE_LINE2_PROPERTY = "tleLine2";
+/** Acquisition origin stamp: live TLE vs recorded fixture. */
+export const ISS_ORIGIN_PROPERTY = "issOrigin";
 
 export type IssTleLines = Readonly<{
   name: string;
@@ -141,6 +143,7 @@ function buildIssOrbitalTrackFixtureGeoJson(validTimeMs: number): {
           validTimeMs,
           type: "orbital-track",
           title: "ISS (ZARYA)",
+          [ISS_ORIGIN_PROPERTY]: "fixture",
         },
       },
     ],
@@ -155,6 +158,7 @@ function buildIssOrbitalTrackFixtureGeoJson(validTimeMs: number): {
         noradId: ISS_NORAD_CATALOG_NUMBER,
         type: "orbital-track",
         title: "ISS (ZARYA)",
+        [ISS_ORIGIN_PROPERTY]: "fixture",
       },
     },
   ];
@@ -178,7 +182,8 @@ export type IssOrbitalTrackLiveAcquireOptions = IssOrbitalTrackAcquireOptions &
     fetchFn?: LiveHttpFetchFn;
     /**
      * When live HTTP fails (non-abort), fall back to the offline fixture under
-     * the same durable sourceId. Default true.
+     * the same durable sourceId. Default false — production must not paint
+     * fixture as the current ISS. Tests / DEV may opt in.
      */
     useFixtureFallback?: boolean;
     /** Override lookback window for SGP4 ground-track samples (tests). */
@@ -505,11 +510,12 @@ function buildTracksGeoJsonPayload(options: {
   const tleProps =
     options.tle !== undefined
       ? {
+          [ISS_ORIGIN_PROPERTY]: "live-tle",
           [ISS_TLE_NAME_PROPERTY]: options.tle.name,
           [ISS_TLE_LINE1_PROPERTY]: options.tle.line1,
           [ISS_TLE_LINE2_PROPERTY]: options.tle.line2,
         }
-      : {};
+      : { [ISS_ORIGIN_PROPERTY]: "fixture" };
   const coordinates = options.samples.map(
     (s) => [s.lonDeg, s.latDeg] as [number, number],
   );
@@ -723,13 +729,14 @@ export function createIssOrbitalTrackFixtureAcquisitionAdapter(
 /**
  * DLU-4 live HTTP acquisition adapter for {@link ISS_ORBITAL_TRACK_SOURCE_ID}.
  * Fetches CelesTrak TLE via the DLU-2 seam, propagates SGP4 ground track outside
- * rAF; optional fixture fallback when offline.
+ * rAF. Fixture fallback is opt-in (tests/DEV); production hides ISS when
+ * CelesTrak is unavailable.
  */
 export function createIssOrbitalTrackLiveHttpAcquisitionAdapter(
   options: IssOrbitalTrackLiveAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
   const catalog = getDynamicTracksSourceCatalogEntry(ISS_ORBITAL_TRACK_SOURCE_ID);
-  const useFixtureFallback = options.useFixtureFallback !== false;
+  const useFixtureFallback = options.useFixtureFallback === true;
   const acquireOptions: IssOrbitalTrackLiveAcquireOptions = {
     ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
     ...(options.versionIdFor !== undefined

@@ -18,7 +18,9 @@
  * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback;
  * Model A cloud participation (DLU-6) consumes the same live opacity field.
  * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
- * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4) with fixture offline fallback.
+ * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4). Production does not
+ * fall back to fixture; CelesTrak failure with no usable live TLE hides ISS.
+
  * DLU-7 closed the live acquisition track for these four consumers.
  * TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
@@ -282,6 +284,8 @@ export function createDynamicDataLifecycleHost(
     if (!orbitalTracksArmed) {
       acquisition.registerAdapter(
         createIssOrbitalTrackLiveHttpAcquisitionAdapter({
+          useFixtureFallback: false,
+          ...(deps.nowMs !== undefined ? { nowMs: deps.nowMs } : {}),
           ...(deps.orbitalTracksLiveFetchFn !== undefined
             ? { fetchFn: deps.orbitalTracksLiveFetchFn }
             : {}),

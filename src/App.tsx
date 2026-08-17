@@ -78,7 +78,11 @@ import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInforma
 import {
   armDynamicLifecycleConsumers,
   createDynamicDataLifecycleHost,
+  ISS_ORBITAL_TRACK_SOURCE_ID,
+  issConfigStatusHint,
+  issProvenanceFromPreparedTrack,
   reviveDisposedDynamicLifecycleHost,
+  type IssConfigStatusHint,
 } from "./lifecycle";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
@@ -133,6 +137,9 @@ export default function App() {
     return true;
   });
   liveProductTimeEligibleRef.current = liveProductTimeEligible;
+  const issConfigStatusHintRef = useRef<IssConfigStatusHint | null>(null);
+  const [issTrackStatusHint, setIssTrackStatusHint] =
+    useState<IssConfigStatusHint | null>(null);
   const [eclipsePanelInstantMs, setEclipsePanelInstantMs] = useState(() =>
     scenarioRuntime.kind === "applied"
       ? Date.parse(scenarioRuntime.startIsoUtc)
@@ -467,6 +474,29 @@ export default function App() {
             wallClockUtcMs: realNowMs,
           }),
       });
+      const issAttachment = time.dynamicDataLifecycle;
+      const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;
+      const issLife =
+        issAttachment?.getLifecycleState(ISS_ORBITAL_TRACK_SOURCE_ID).state ??
+        "idle";
+      const nextIssHint = issConfigStatusHint({
+        enabled: derivedAppConfigRef.current.layers.orbitalTracks,
+        productTimeLiveEnough: liveEnough,
+        lifecycleState: issLife,
+        provenance:
+          issView === null
+            ? null
+            : issProvenanceFromPreparedTrack({
+                tracks: issView.tracks,
+                acquiredAtMs: issView.validTimeMs,
+                productUtcMs: clockNowMs,
+                lifecycleState: issLife,
+              }),
+      });
+      if (nextIssHint !== issConfigStatusHintRef.current) {
+        issConfigStatusHintRef.current = nextIssHint;
+        setIssTrackStatusHint(nextIssHint);
+      }
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
       registry.update(time);
@@ -652,6 +682,7 @@ export default function App() {
             updateConfig={updateConfig}
             productInstantMs={configPanelProductInstantMs}
             productTimeLiveEnough={liveProductTimeEligible}
+            issConfigStatusHint={issTrackStatusHint}
             userPresetsUi={ALLOW_PHASE3_MUTATIONS ? userPresetsUi : undefined}
             demoTransport={{
               paused: demoTransportPaused,

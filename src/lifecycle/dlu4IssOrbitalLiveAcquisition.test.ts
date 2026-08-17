@@ -185,7 +185,7 @@ describe("DLU-4 live ISS orbital track acquisition", () => {
     expect(callUrl).toBe(ISS_ORBITAL_TRACK_LIVE_FEED_URL);
   });
 
-  it("live adapter falls back to fixture when HTTP fails (non-abort)", async () => {
+  it("live adapter may still fall back to fixture when tests opt in", async () => {
     const fetchFn: LiveHttpFetchFn = vi.fn(async () =>
       mockTleResponse({
         body: new Uint8Array(),

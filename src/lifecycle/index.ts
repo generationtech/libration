@@ -276,6 +276,7 @@ export {
   ISS_TLE_LINE1_PROPERTY,
   ISS_TLE_LINE2_PROPERTY,
   ISS_TLE_NAME_PROPERTY,
+  ISS_ORIGIN_PROPERTY,
   ORBITAL_TRACKS_SCENE_LAYER_ID,
   createIssOrbitalTrackFixtureAcquisitionAdapter,
   createIssOrbitalTrackLiveHttpAcquisitionAdapter,
@@ -289,6 +290,24 @@ export {
   resolveIssCurrentSample,
   tleLinesFromTrackProperties,
 } from "./issOrbitalTrackAcquisition";
+
+export type {
+  IssConfigStatusHint,
+  IssTleFreshnessBand,
+  IssTrackOrigin,
+  IssTrackProvenance,
+} from "./issTrackProvenance";
+
+export {
+  ISS_TLE_DEGRADED_MAX_AGE_MS,
+  ISS_TLE_FRESH_MAX_AGE_MS,
+  issConfigStatusHint,
+  issConfigStatusHintCopy,
+  issProvenanceFromPreparedTrack,
+  issTleFreshnessBandFromAgeMs,
+  issTrackShouldPaint,
+  resolveIssTrackProvenance,
+} from "./issTrackProvenance";
 
 export type {
   DynamicDataLifecycleAttachment,

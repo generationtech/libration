@@ -64,7 +64,7 @@ describe("LIB-035 current-only live-time integrity", () => {
     vi.clearAllMocks();
   });
 
-  it("presents current-only views when product time is live-enough", async () => {
+  it("presents current-only clouds and earthquakes when product time is live-enough; ISS stays hidden without a live TLE", async () => {
     const host = createDynamicDataLifecycleHost(hostDeps());
     armDynamicLifecycleConsumers(host, ALL_ON);
 
@@ -75,8 +75,12 @@ describe("LIB-035 current-only live-time integrity", () => {
       expect(att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
       expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
       expect(att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).not.toBeNull();
-      expect(att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)).not.toBeNull();
     });
+    expect(
+      host
+        .attachForProductInstant(WALL_MS, { wallClockUtcMs: WALL_MS })
+        .getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
+    ).toBeNull();
 
     host.dispose();
   });
@@ -117,7 +121,7 @@ describe("LIB-035 current-only live-time integrity", () => {
     armDynamicLifecycleConsumers(host, ALL_ON);
     await vi.waitFor(() => {
       expect(
-        host.attachForProductInstant(WALL_MS).getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
+        host.attachForProductInstant(WALL_MS).getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
       ).not.toBeNull();
     });
 
@@ -126,12 +130,12 @@ describe("LIB-035 current-only live-time integrity", () => {
     expect(
       host
         .attachForProductInstant(inside, { wallClockUtcMs: WALL_MS })
-        .getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
+        .getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
     ).not.toBeNull();
     expect(
       host
         .attachForProductInstant(outside, { wallClockUtcMs: WALL_MS })
-        .getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
+        .getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
     ).toBeNull();
 
     host.dispose();

@@ -148,8 +148,8 @@ export interface DynamicDataLifecycleHost {
   stopEarthquakesConsumer(): void;
 
   /**
-   * DLC-3 / DLU-4: register live CelesTrak TLE→SGP4 adapter (fixture fallback) +
-   * start periodic refresh for ISS orbital tracks.
+   * DLC-3 / DLU-4: register live CelesTrak TLE→SGP4 adapter (no production
+   * fixture fallback) + start periodic refresh for ISS orbital tracks.
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureOrbitalTracksConsumer(options?: {

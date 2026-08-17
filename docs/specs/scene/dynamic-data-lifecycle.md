@@ -100,7 +100,7 @@ Layers read prepared views. If no prepared view exists for the current product i
 
 ## Current consumers
 
-Four consumers are wired today. Each uses a live network adapter with fixture offline fallback.
+Four consumers are wired today. Clouds/IR and earthquakes use a live network adapter with fixture offline fallback. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
 
 | Scene / config surface | Durable `sourceId` | Kind | Live feed | Default refresh |
 |------------------------|--------------------|------|-----------|-----------------|

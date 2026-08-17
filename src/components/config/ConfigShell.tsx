@@ -17,6 +17,7 @@ import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/produc
 import { resolveConfigUiTextFontAssetId } from "../../config/productTextFont";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { canvasCssFontFamilyStackForBundledAssetId } from "../../typography/bundledFontCssFamily";
+import type { IssConfigStatusHint } from "../../lifecycle/issTrackProvenance";
 import { CONFIG_TAB_DEFS, type ConfigTabId } from "./configTabs";
 import type { UserPresetsUiProps } from "./userPresetsPanelTypes";
 import { ConfigTabPanel } from "./ConfigTabPanel";
@@ -47,6 +48,7 @@ export type ConfigShellProps = {
    * live-enough. Checkboxes keep their durable enable preference.
    */
   productTimeLiveEnough?: boolean;
+  issConfigStatusHint?: IssConfigStatusHint | null;
   /** User-named full v2 snapshots (Phase 5); optional when panel is read-only. */
   userPresetsUi?: UserPresetsUiProps;
   /** Demo play / pause / reset; runtime-only, does not mutate persisted config. */
@@ -59,6 +61,7 @@ function renderActiveTabContent(
   updateConfig: ConfigShellProps["updateConfig"],
   productInstantMs: ConfigShellProps["productInstantMs"],
   productTimeLiveEnough: ConfigShellProps["productTimeLiveEnough"],
+  issConfigStatusHint: ConfigShellProps["issConfigStatusHint"],
   userPresetsUi: ConfigShellProps["userPresetsUi"],
   demoTransport: ConfigShellProps["demoTransport"],
 ): ReactNode {
@@ -70,6 +73,7 @@ function renderActiveTabContent(
           updateConfig={updateConfig}
           productInstantMs={productInstantMs}
           productTimeLiveEnough={productTimeLiveEnough}
+          issConfigStatusHint={issConfigStatusHint}
         />
       );
     case "pins":
@@ -103,6 +107,7 @@ export function ConfigShell({
   updateConfig,
   productInstantMs,
   productTimeLiveEnough,
+  issConfigStatusHint,
   userPresetsUi,
   demoTransport,
 }: ConfigShellProps) {
@@ -167,6 +172,7 @@ export function ConfigShell({
             updateConfig,
             productInstantMs,
             productTimeLiveEnough,
+            issConfigStatusHint,
             userPresetsUi,
             demoTransport,
           )}

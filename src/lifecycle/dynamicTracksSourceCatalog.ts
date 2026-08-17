@@ -52,9 +52,9 @@ const ISS_ORBITAL_TRACK_ENTRY: DynamicTracksSourceCatalogEntry = {
   label: "ISS orbital track",
   kind: "tracks",
   attribution:
-    "CelesTrak GP (TLE) for ISS NORAD 25544 via in-app live acquisition, propagated to a timed geographic ground track (SGP4) under durable id iss-orbital-track-v1. Offline / test sessions may fall back to a recorded ISS-shaped GeoJSON FeatureCollection fixture.",
+    "CelesTrak GP (TLE) for ISS NORAD 25544 via in-app live acquisition, propagated to a timed geographic ground track (SGP4) under durable id iss-orbital-track-v1. Production hides ISS when CelesTrak is unavailable; recorded GeoJSON fixture is tests/DEV only and is never painted as live.",
   licenseNote:
-    "CelesTrak GP / TLE products are free for redistribution with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content shaped like a timed GeoJSON track.",
+    "CelesTrak GP / TLE products are free for redistribution with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/DEV content and are not a production current-ISS substitute.",
   defaultRefreshIntervalMs: ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Time-tagged track samples in geographic lon/lat degrees (−180…+180°, −90…+90°), GeoJSON FeatureCollection with timed LineString contract.",

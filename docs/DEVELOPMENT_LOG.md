@@ -226,7 +226,8 @@ Current-only live layers (clouds/IR, earthquakes, ISS) hide when product time is
 
 Verified: `npx tsc --noEmit` clean; `npm test` 211 files / 2003 passed / 0 failed; `npm run build` succeeded. Cursor Browser: factory HUD/pins, current-mode USGS+GIBS, 2017 Demo suppression and re-arm, `?scenario=baseline` isolation. CelesTrak 403 this session; ISS propagator vs where-the-iss.at at 2026-08-17T03:16:20Z agreed to ~0.1 m.
 
+## 2026-08-17 — LIB-036 complete
 
+Production ISS no longer paints fixture as live. Provenance and TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden) resolve upstream of RenderPlan; CelesTrak failure with no usable live TLE hides the overlay. Marker remains SGP4 at product UTC. Clouds/IR and earthquakes unchanged.
 
-
-
+Verified: focused ISS tests 78 passed; `npx tsc --noEmit` clean; `npm test` 212 files / 2018 passed / 0 failed; `npm run build` succeeded. Cursor Browser ordinary current mode: enable ISS → unavailable hint, no fixture on the map; 2017 Demo live-only hide with checkbox still on; return to now without re-enable. CelesTrak unreachable (curl timeout); LIB-037 stays proposed.

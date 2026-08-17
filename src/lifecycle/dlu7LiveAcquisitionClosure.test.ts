@@ -13,8 +13,9 @@
 
 /**
  * DLU-7 — live acquisition track closure.
- * Smoke the four shipped consumers under durable sourceIds with offline fixture
- * fallback; prove host arm + resolve stay scrub-safe (no fetch on paint path).
+ * Smoke the four shipped consumers under durable sourceIds. Clouds/IR and
+ * earthquakes keep fixture fallback; ISS hides when CelesTrak is unavailable.
+ * Prove host arm + resolve stay scrub-safe (no fetch on paint path).
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -30,7 +31,7 @@ import {
 
 const PRODUCT_MS = 1_700_000_700_000;
 
-/** Offline / network-unavailable: live adapters must fall back to fixtures. */
+/** Offline: clouds/quakes fall back to fixtures; ISS does not. */
 const offlineFetch: LiveHttpFetchFn = async () => {
   throw new Error("offline-dlu7-closure");
 };
@@ -51,7 +52,7 @@ describe("DLU-7 live acquisition closure", () => {
     expect(ISS_ORBITAL_TRACK_SOURCE_ID).toBe("iss-orbital-track-v1");
   });
 
-  it("host arms all three live adapters with fixture fallback when offline", async () => {
+  it("host arms all three live adapters; clouds/quakes fixture-fallback, ISS does not", async () => {
     const fetchFn = vi.fn(offlineFetch);
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: fetchFn,
@@ -81,14 +82,17 @@ describe("DLU-7 live acquisition closure", () => {
       runImmediately: true,
     });
 
-    // Wait until materializers have fixture-backed prepared views (post-acquire).
     await vi.waitFor(() => {
       const att = host.attachForProductInstant(PRODUCT_MS);
       expect(att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
       expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
       expect(att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).not.toBeNull();
-      expect(att.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID)).not.toBeNull();
     });
+    expect(
+      host
+        .attachForProductInstant(PRODUCT_MS)
+        .getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID),
+    ).toBeNull();
 
     expect(fetchFn.mock.calls.length).toBeGreaterThanOrEqual(3);
 
@@ -113,9 +117,7 @@ describe("DLU-7 live acquisition closure", () => {
     expect(quakes.snapshot?.meta.sourceId).toBe(USGS_EARTHQUAKES_SOURCE_ID);
     expect(quakes.snapshot?.meta.kind).toBe("pointFeatures");
 
-    expect(tracks.status).toBe("ok");
-    expect(tracks.snapshot?.meta.sourceId).toBe(ISS_ORBITAL_TRACK_SOURCE_ID);
-    expect(tracks.snapshot?.meta.kind).toBe("tracks");
+    expect(tracks.status).toBe("error");
 
     const fetchCountAfterAcquire = fetchFn.mock.calls.length;
 
@@ -139,7 +141,7 @@ describe("DLU-7 live acquisition closure", () => {
 
     expect(resolvedClouds.status).toBe("ok");
     expect(resolvedQuakes.status).toBe("ok");
-    expect(resolvedTracks.status).toBe("ok");
+    expect(resolvedTracks.status).toBe("error");
     expect(fetchFn.mock.calls.length).toBe(fetchCountAfterAcquire);
 
     // Model A cloud participation reads the same prepared opacity field (no extra sourceId).

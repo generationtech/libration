@@ -82,6 +82,10 @@ import {
   descriptionForLayersTopic,
   type LayersTopicId,
 } from "./layersTopicTypes";
+import {
+  issConfigStatusHintCopy,
+  type IssConfigStatusHint,
+} from "../../lifecycle/issTrackProvenance";
 
 const LIVE_LAYER_KEYS = new Set<keyof LayerEnableFlags>([
   "globalCloudsIr",
@@ -500,6 +504,11 @@ export type LayersTabProps = {
    * When false, current-only live layers are hidden. Durable checkboxes stay as-is.
    */
   productTimeLiveEnough?: boolean;
+  /**
+   * ISS-only status when the orbital track layer is enabled and product time
+   * is live-enough. Historical suppression uses {@link productTimeLiveEnough}.
+   */
+  issConfigStatusHint?: IssConfigStatusHint | null;
 };
 
 export function LayersTab({
@@ -507,6 +516,7 @@ export function LayersTab({
   updateConfig,
   productInstantMs,
   productTimeLiveEnough,
+  issConfigStatusHint,
 }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
@@ -1409,6 +1419,12 @@ export function LayersTab({
             {productTimeLiveEnough === false ? (
               <p className="config-section__hint" data-testid="live-only-suppressed-hint">
                 {LIVE_ONLY_HIDDEN_HINT}
+              </p>
+            ) : null}
+            {issConfigStatusHint === "unavailable" ||
+            issConfigStatusHint === "degraded" ? (
+              <p className="config-section__hint" data-testid="iss-status-hint">
+                {issConfigStatusHintCopy(issConfigStatusHint)}
               </p>
             ) : null}
         {LAYER_KEYS.map((key) => {

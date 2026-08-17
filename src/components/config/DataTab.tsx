@@ -54,7 +54,8 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
         </h2>
         <p className="config-section__hint">
           Local product data and demo time. Live cloud, earthquake, and ISS feeds are optional Layers
-          overlays — off by default, with bundled fixtures when a live fetch is unavailable.
+          overlays — off by default. Clouds and earthquakes use bundled fixtures when a live fetch is
+          unavailable. ISS hides when CelesTrak is unavailable.
         </p>
         <ConfigControlRow label="Mode">
           <select
