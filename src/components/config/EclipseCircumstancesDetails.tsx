@@ -83,7 +83,7 @@ export function EclipseCircumstancesDetails(props: {
         <>
           <Row label="Global solar event" value={kindLabel(solar.globalSubtype)} />
           <Row
-            label="Local solar type"
+            label="Local type"
             value={
               solar.locallyVisible
                 ? kindLabel(solar.observableKind)

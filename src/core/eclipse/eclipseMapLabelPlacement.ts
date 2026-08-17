@@ -12,11 +12,13 @@
  */
 
 /**
- * Deterministic screen-space offset for a map label that would otherwise sit
- * on a Sun/Moon glyph halo. Not a general collision engine.
+ * Deterministic screen-space offset for a map label near a Sun/Moon glyph.
+ * Not a general collision engine.
  *
- * Candidate order is fixed: preferred, then right, left, above, below.
- * The first on-screen non-intersecting candidate wins.
+ * Solar path-aware order: opposite the nearest path sample, then ±45°, ±90°,
+ * a farther opposite offset, then generic right/left/above/below.
+ * Rejects glyph discs, path clearance, and screen edges. Last resort may drop
+ * path clearance then clamp on-screen.
  */
 
 export type LabelAvoidDisc = {
@@ -32,6 +34,10 @@ export type PlacedMapLabel = {
   readonly textBaseline: "top" | "middle" | "bottom";
 };
 
+export type LabelPathPolyline = {
+  readonly points: readonly { readonly x: number; readonly y: number }[];
+};
+
 type LabelBox = {
   readonly left: number;
   readonly right: number;
@@ -41,6 +47,9 @@ type LabelBox = {
 
 const SCREEN_MARGIN_PX = 8;
 const GLYPH_GAP_PX = 8;
+const PATH_CLEARANCE_PX = 12;
+const LABEL_OFFSET_MIN_PX = 36;
+const LABEL_OFFSET_MAX_PX = 64;
 const WIDTH_PER_EM = 0.58;
 const HEIGHT_EM = 1.15;
 
@@ -105,6 +114,130 @@ function maxAvoidRadiusPx(discs: readonly LabelAvoidDisc[]): number {
   return max;
 }
 
+function wrapCopiesX(x: number, viewportWidthPx: number): readonly number[] {
+  return [x, x - viewportWidthPx, x + viewportWidthPx];
+}
+
+/**
+ * Nearest screen-space path sample to the glyph, considering ±360° wrap copies.
+ */
+export function nearestEclipsePathPointScreen(args: {
+  readonly originX: number;
+  readonly originY: number;
+  readonly polylines: readonly LabelPathPolyline[];
+  readonly viewportWidthPx: number;
+}): { readonly x: number; readonly y: number; readonly dist: number } | null {
+  let best: { x: number; y: number; dist: number } | null = null;
+  for (const line of args.polylines) {
+    for (const p of line.points) {
+      for (const x of wrapCopiesX(p.x, args.viewportWidthPx)) {
+        const dx = x - args.originX;
+        const dy = p.y - args.originY;
+        const dist = Math.hypot(dx, dy);
+        if (best === null || dist < best.dist) {
+          best = { x, y: p.y, dist };
+        }
+      }
+    }
+  }
+  return best;
+}
+
+function alignForDelta(
+  dx: number,
+  dy: number,
+): Pick<Candidate, "textAlign" | "textBaseline"> {
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0
+      ? { textAlign: "left", textBaseline: "middle" }
+      : { textAlign: "right", textBaseline: "middle" };
+  }
+  return dy >= 0
+    ? { textAlign: "center", textBaseline: "top" }
+    : { textAlign: "center", textBaseline: "bottom" };
+}
+
+function rotateUnit(ux: number, uy: number, deg: number): { ux: number; uy: number } {
+  const r = (deg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return { ux: ux * c - uy * s, uy: ux * s + uy * c };
+}
+
+function oppositePathCandidates(ux: number, uy: number, offsetPx: number): readonly Candidate[] {
+  const dirs: readonly { ux: number; uy: number; scale: number }[] = [
+    { ux: -ux, uy: -uy, scale: 1 },
+    { ...rotateUnit(-ux, -uy, 45), scale: 1 },
+    { ...rotateUnit(-ux, -uy, -45), scale: 1 },
+    { ...rotateUnit(-ux, -uy, 90), scale: 1 },
+    { ...rotateUnit(-ux, -uy, -90), scale: 1 },
+    { ux: -ux, uy: -uy, scale: 1.55 },
+  ];
+  return dirs.map((d) => {
+    const dx = d.ux * offsetPx * d.scale;
+    const dy = d.uy * offsetPx * d.scale;
+    const align = alignForDelta(dx, dy);
+    return { dx, dy, textAlign: align.textAlign, textBaseline: align.textBaseline };
+  });
+}
+
+function segmentDistanceToBox(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  box: LabelBox,
+): number {
+  const samples = [
+    { x: x1, y: y1 },
+    { x: x2, y: y2 },
+    { x: (x1 + x2) / 2, y: (y1 + y2) / 2 },
+  ];
+  let min = Infinity;
+  for (const s of samples) {
+    const nx = Math.max(box.left, Math.min(s.x, box.right));
+    const ny = Math.max(box.top, Math.min(s.y, box.bottom));
+    min = Math.min(min, Math.hypot(s.x - nx, s.y - ny));
+  }
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len2 = dx * dx + dy * dy;
+  if (len2 > 0) {
+    const cx = (box.left + box.right) / 2;
+    const cy = (box.top + box.bottom) / 2;
+    let t = ((cx - x1) * dx + (cy - y1) * dy) / len2;
+    t = Math.max(0, Math.min(1, t));
+    const qx = x1 + t * dx;
+    const qy = y1 + t * dy;
+    const nx = Math.max(box.left, Math.min(qx, box.right));
+    const ny = Math.max(box.top, Math.min(qy, box.bottom));
+    min = Math.min(min, Math.hypot(qx - nx, qy - ny));
+  }
+  return min;
+}
+
+function polylineHitsBox(
+  polylines: readonly LabelPathPolyline[],
+  box: LabelBox,
+  clearancePx: number,
+  viewportWidthPx: number,
+): boolean {
+  for (const line of polylines) {
+    const pts = line.points;
+    for (let i = 1; i < pts.length; i += 1) {
+      const a = pts[i - 1]!;
+      const b = pts[i]!;
+      for (const ax of wrapCopiesX(a.x, viewportWidthPx)) {
+        const bx = ax + (b.x - a.x);
+        if (segmentDistanceToBox(ax, a.y, bx, b.y, box) < clearancePx) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 type Candidate = {
   readonly dx: number;
   readonly dy: number;
@@ -158,10 +291,34 @@ export function placeEclipseMapLabel(args: {
   readonly viewportWidthPx: number;
   readonly viewportHeightPx: number;
   readonly avoidDiscs: readonly LabelAvoidDisc[];
+  readonly avoidPolylines?: readonly LabelPathPolyline[];
+  readonly pathClearancePx?: number;
 }): PlacedMapLabel {
-  const offsetPx = maxAvoidRadiusPx(args.avoidDiscs) + GLYPH_GAP_PX;
-  const list = candidatesForOffset(offsetPx);
-  for (const candidate of list) {
+  const halo = maxAvoidRadiusPx(args.avoidDiscs);
+  const genericOffsetPx = halo + GLYPH_GAP_PX;
+  const pathOffsetPx = Math.min(
+    LABEL_OFFSET_MAX_PX,
+    Math.max(LABEL_OFFSET_MIN_PX, halo + GLYPH_GAP_PX + 8),
+  );
+  const clearance = args.pathClearancePx ?? PATH_CLEARANCE_PX;
+  const polylines = args.avoidPolylines ?? [];
+  const nearest =
+    polylines.length > 0
+      ? nearestEclipsePathPointScreen({
+          originX: args.preferredX,
+          originY: args.preferredY,
+          polylines,
+          viewportWidthPx: args.viewportWidthPx,
+        })
+      : null;
+  const list: Candidate[] = [];
+  if (nearest && nearest.dist > 1) {
+    const ux = (nearest.x - args.preferredX) / nearest.dist;
+    const uy = (nearest.y - args.preferredY) / nearest.dist;
+    list.push(...oppositePathCandidates(ux, uy, pathOffsetPx));
+  }
+  list.push(...candidatesForOffset(genericOffsetPx));
+  const tryCandidate = (candidate: Candidate, enforcePath: boolean): PlacedMapLabel | null => {
     const x = args.preferredX + candidate.dx;
     const y = args.preferredY + candidate.dy;
     const box = estimateLabelBox(
@@ -173,14 +330,29 @@ export function placeEclipseMapLabel(args: {
       candidate.textBaseline,
     );
     if (boxOffScreen(box, args.viewportWidthPx, args.viewportHeightPx)) {
-      continue;
+      return null;
     }
     if (anyDiscIntersects(args.avoidDiscs, box)) {
-      continue;
+      return null;
+    }
+    if (enforcePath && polylines.length > 0 && polylineHitsBox(polylines, box, clearance, args.viewportWidthPx)) {
+      return null;
     }
     return { x, y, textAlign: candidate.textAlign, textBaseline: candidate.textBaseline };
+  };
+  for (const candidate of list) {
+    const placed = tryCandidate(candidate, true);
+    if (placed) {
+      return placed;
+    }
   }
-  const fallback = list[1] ?? list[0]!;
+  for (const candidate of list) {
+    const placed = tryCandidate(candidate, false);
+    if (placed) {
+      return placed;
+    }
+  }
+  const fallback = list[0] ?? candidatesForOffset(genericOffsetPx)[1]!;
   const clamped = clampLabelPoint(
     args.preferredX + fallback.dx,
     args.preferredY + fallback.dy,

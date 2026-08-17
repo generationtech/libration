@@ -255,3 +255,9 @@ Verified: focused ISS/host tests 33 passed; `npx tsc --noEmit` clean; `npm test`
 ISS past/future tracks now use minute and orbit horizon tokens resolved from TLE mean motion (`1440 / n`), with local SGP4 expanding the sample window (no extra TLE fetch). Distant revolutions fade by orbit distance (alpha only). ISS silhouette glyph color is a two-pass understroke plus configured fill/stroke so color changes are visible immediately.
 
 Verified: `npx tsc --noEmit` clean; focused 142 passed; `npm test` 220 files / 2081 passed / 0 failed; `npm run build` succeeded with no `iss-presentation` in `dist/`. Cursor Browser `?scenario=iss-presentation`: 1/3/6 orbits, asymmetric 6/1 and 1/6, silhouette magenta/green, 0 TLE fetches. Fixture period ≈ 92.9416 min; 6+6 ≈ 558 samples / ~4 ms SGP4. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-042 complete
+
+Reconciled eclipse HUD, placard, and map-label copy through one `EclipsePresentationState` projection. HUD is local (obscuration percent that never shows partial as `100%`; begins/max/ends). Placard distinguishes global vs local. Map labels are `{title} · upcoming|active` near the Sun/Moon cluster, opposite the solar path in screen space. No astronomy or ADR change.
+
+Verified: `npx tsc --noEmit` clean; focused eclipse tests 114 passed; `npm test` 221 files / 2090 passed / 0 failed; `npm run build` succeeded with no `solar-eclipse-2017` / `iss-presentation` in `dist/`. Cursor Browser 2017 upcoming/earlyCentral/GE/lateCentral/after, dateline, partial, lunar forecast/total, Tokyo observer. LIB-037 stays proposed.

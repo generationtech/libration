@@ -175,4 +175,17 @@ describe("reference-city eclipse status presentation", () => {
     expect(line).toMatch(/Partial 89%/);
     expect(line).toMatch(/max /);
   });
+
+  it("uses begins when an upcoming local C1 is known", () => {
+    const line = formatReferenceCityEclipseChromeStatus(
+      solarPartial(true),
+      "Knoxville",
+      KNOX_TZ,
+      "12hr",
+      { lifecycle: "upcoming" },
+    );
+    expect(line).toMatch(/Partial 89%/);
+    expect(line).toMatch(/begins 1:49/);
+    expect(line).not.toMatch(/in /);
+  });
 });

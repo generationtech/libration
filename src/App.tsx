@@ -87,7 +87,7 @@ import {
 } from "./lifecycle";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
-import { formatReferenceCityEclipseChromeStatus } from "./core/referenceCityEclipseStatus";
+import { formatEclipseHudStatus } from "./core/referenceCityEclipseStatus";
 import { resolveReferenceFrameCivilTimeZone } from "./core/displayTimeReference";
 import { displayTimeModeFromTopBandTimeMode } from "./core/displayTimeMode";
 import { REFERENCE_CITIES } from "./data/referenceCities";
@@ -530,19 +530,14 @@ export default function App() {
         lunar: lunarPres,
         info: eclipseInfoPres,
         circumstances,
+        cityName,
       });
       const eclipseStatusText = e4pres.chromeStatusEnabled
-        ? formatReferenceCityEclipseChromeStatus(
-            eventInfo.circumstances,
-            cityName,
+        ? formatEclipseHudStatus(
+            eventInfo.presentation,
             resolveReferenceFrameCivilTimeZone(derivedAppConfigRef.current.displayTime),
             displayTimeModeFromTopBandTimeMode(derivedAppConfigRef.current.displayTime.topBandMode),
-            {
-              unsupported: eventInfo.unsupported,
-              presented: eventInfo.kind !== null || eventInfo.unsupported,
-              lifecycle: eventInfo.lifecycle,
-              relativeTime: eventInfo.relativeTime,
-            },
+            { unsupported: eventInfo.unsupported },
           )
         : null;
       const chromeState = buildDisplayChromeState({

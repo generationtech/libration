@@ -478,6 +478,49 @@ describe("solar eclipse live ground-position marker", () => {
     }
     expect(DEFAULT_SOLAR_LIVE_GROUND_POSITION_COLOR).toBe("#d45a3c");
   });
+
+  it("anchors the event label on the Moon glyph, not the corridor GE point", () => {
+    const layer = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+    });
+    const frame = resolveEclipseFrame(FORECAST_UTC, { horizonMs: HORIZON_7D });
+    const st = layer.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: frame }),
+    );
+    const moon = sublunarPoint(FORECAST_UTC);
+    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.labels?.[0]?.text).toBe("Total solar eclipse · upcoming");
+      expect(st.data.labels?.[0]?.latDeg).toBeCloseTo(moon.latDeg, 5);
+      expect(st.data.labels?.[0]?.lonDeg).toBeCloseTo(moon.lonDeg, 5);
+      expect(st.data.labels?.[0]?.latDeg).not.toBeCloseTo(frame.upcomingSolar[0]!.geLatDeg, 1);
+      expect(st.data.labelPathHints?.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("does not fabricate a central path for a partial-only eclipse", () => {
+    const layer = createSolarEclipseLayer({
+      presentation: { forecastHorizonDays: 0 },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+    });
+    const frame = resolveEclipseFrame(PARTIAL_UTC, { horizonMs: 0 });
+    const st = layer.getState(createTimeContext(PARTIAL_UTC, 0, true, { eclipseFrame: frame }));
+    expect(frame.activeSolar?.subtype).toBe("partial");
+    expect(frame.solarGeometry?.centerline.length ?? 0).toBe(0);
+    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.labels?.[0]?.text).toBe("Partial solar eclipse · active");
+      const hints = st.data.labelPathHints ?? [];
+      const liveCenterline = frame.solarGeometry?.centerline.length ?? 0;
+      expect(liveCenterline).toBe(0);
+      expect(hints.every((h) => h.points.length !== 1 || h.points[0] !== frame.solarGeometry?.centralPoint)).toBe(
+        true,
+      );
+    }
+  });
 });
 
 describe("Canvas eclipse containment", () => {

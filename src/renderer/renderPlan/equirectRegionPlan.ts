@@ -164,6 +164,20 @@ export function buildEquirectRegionOverlayRenderPlan(
       y: ((90 - disc.latDeg) / 180) * h,
       radiusPx: avoidHaloRadiusPx(w, disc.haloMultiplier),
     }));
+    for (const marker of options.payload.pointMarkers ?? []) {
+      const r = equirectPointMarkerBaseRadiusPx(w) * marker.radiusScale;
+      avoidDiscs.push({
+        x: mapXFromLongitudeDeg(marker.lonDeg, w),
+        y: ((90 - marker.latDeg) / 180) * h,
+        radiusPx: r + 8,
+      });
+    }
+    const avoidPolylines = (options.payload.labelPathHints ?? []).map((hint) => ({
+      points: hint.points.map((p) => ({
+        x: mapXFromLongitudeDeg(p.lonDeg, w),
+        y: ((90 - p.latDeg) / 180) * h,
+      })),
+    }));
     for (const label of labels) {
       if (!label.text.trim()) {
         continue;
@@ -171,7 +185,7 @@ export function buildEquirectRegionOverlayRenderPlan(
       const preferredX = mapXFromLongitudeDeg(label.lonDeg, w);
       const preferredY = ((90 - label.latDeg) / 180) * h;
       const placed =
-        avoidDiscs.length > 0
+        avoidDiscs.length > 0 || avoidPolylines.length > 0
           ? placeEclipseMapLabel({
               preferredX,
               preferredY,
@@ -180,6 +194,7 @@ export function buildEquirectRegionOverlayRenderPlan(
               viewportWidthPx: w,
               viewportHeightPx: h,
               avoidDiscs,
+              avoidPolylines,
             })
           : { x: preferredX, y: preferredY, textAlign: "center" as const, textBaseline: "middle" as const };
       const fill = label.fill ?? "rgba(245, 248, 255, 0.92)";

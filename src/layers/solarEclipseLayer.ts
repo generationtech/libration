@@ -60,6 +60,7 @@ import {
   type EquirectRegionAvoidDisc,
   type EquirectRegionFill,
   type EquirectRegionLabel,
+  type EquirectRegionLabelPathHint,
   type EquirectRegionOverlayPayload,
   type EquirectRegionPointMarker,
   type EquirectRegionStroke,
@@ -109,6 +110,22 @@ function selectionPhase(
       selection.event.id === activeEventId &&
       centralPointPresent,
   });
+}
+
+function decimateLatLon(
+  points: readonly { latDeg: number; lonDeg: number }[],
+  max = 64,
+): EquirectRegionLabelPathHint["points"] {
+  if (points.length <= max) {
+    return points.map((p) => ({ latDeg: p.latDeg, lonDeg: p.lonDeg }));
+  }
+  const step = (points.length - 1) / (max - 1);
+  const out: { latDeg: number; lonDeg: number }[] = [];
+  for (let i = 0; i < max; i += 1) {
+    const p = points[Math.round(i * step)]!;
+    out.push({ latDeg: p.latDeg, lonDeg: p.lonDeg });
+  }
+  return out;
 }
 
 export function createSolarEclipseLayer(
@@ -279,25 +296,36 @@ export function createSolarEclipseLayer(
           haloFill: markerPaint.haloFill,
         });
       }
+      const labelPathHints: EquirectRegionLabelPathHint[] = [];
       if (labelsEnabled && frame.support.supported) {
         const primary = presentedPrimaryEclipse(frame, presentation, lunarPresentation);
         if (primary?.kind === "solar") {
-          const geom = frame.solarGeometry;
           const sun = subsolarPoint(time.now);
           const moon = sublunarPoint(time.now);
+          const geom = frame.solarGeometry;
+          const selection = presentedForecastSelections(frame, presentation).find(
+            (s) => s.event.id === primary.event.id,
+          );
+          const liveCenterline = geom?.centerline;
+          const forecastCenterline = selection?.geometry.centerline;
+          const partialRing = selection?.geometry.partialForecastRegion;
+          if (primary.lifecycle === "active" && liveCenterline && liveCenterline.length >= 2) {
+            labelPathHints.push({ points: decimateLatLon(liveCenterline) });
+          } else if (primary.lifecycle === "active" && geom?.centralPoint) {
+            labelPathHints.push({ points: [geom.centralPoint] });
+          }
+          if (forecastCenterline && forecastCenterline.length >= 2) {
+            labelPathHints.push({ points: decimateLatLon(forecastCenterline) });
+          } else if (labelPathHints.length === 0 && partialRing && partialRing.length >= 4) {
+            labelPathHints.push({ points: decimateLatLon(partialRing, 24) });
+          }
           labels.push(
             solarEclipseMapLabel({
               event: primary.event,
               lifecycle: primary.lifecycle,
               productUtcMs: frame.productUtcMs,
-              latDeg:
-                primary.lifecycle === "active"
-                  ? (geom?.centralPoint?.latDeg ?? primary.event.geLatDeg)
-                  : primary.event.geLatDeg,
-              lonDeg:
-                primary.lifecycle === "active"
-                  ? (geom?.centralPoint?.lonDeg ?? primary.event.geLonDeg)
-                  : primary.event.geLonDeg,
+              latDeg: moon.latDeg,
+              lonDeg: moon.lonDeg,
             }),
           );
           labelAvoidDiscs.push(
@@ -312,6 +340,7 @@ export function createSolarEclipseLayer(
         fills,
         strokes,
         ...(labels.length > 0 ? { labels, labelAvoidDiscs } : {}),
+        ...(labelPathHints.length > 0 ? { labelPathHints } : {}),
         ...(pointMarkers.length > 0 ? { pointMarkers } : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,

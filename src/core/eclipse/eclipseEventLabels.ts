@@ -15,12 +15,7 @@
  * Restrained nearest/active eclipse map labels. Presentation only.
  */
 
-import {
-  formatEclipseCalendarDate,
-  formatEclipseRelativeTime,
-  lunarEclipseTypeTitle,
-  solarEclipseTypeTitle,
-} from "./eclipseEventCopy";
+import { lunarEclipseTypeTitle, solarEclipseTypeTitle } from "./eclipseEventCopy";
 import type { LunarEclipseEvent } from "./lunarEclipseTypes";
 import type { SolarEclipseEvent } from "./solarEclipseTypes";
 
@@ -38,12 +33,8 @@ export function solarEclipseMapLabel(args: {
   readonly lonDeg: number;
 }): EclipseMapLabel {
   const title = solarEclipseTypeTitle(args.event.subtype);
-  if (args.lifecycle === "active") {
-    return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: title };
-  }
-  const relative = formatEclipseRelativeTime(args.productUtcMs, args.event.globalStartMs);
-  const suffix = relative && relative !== "now" ? relative : formatEclipseCalendarDate(args.event);
-  return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: `${title} · ${suffix}` };
+  const lifecycle = args.lifecycle === "active" ? "active" : "upcoming";
+  return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: `${title} · ${lifecycle}` };
 }
 
 export function lunarEclipseMapLabel(args: {
@@ -54,10 +45,6 @@ export function lunarEclipseMapLabel(args: {
   readonly lonDeg: number;
 }): EclipseMapLabel {
   const title = lunarEclipseTypeTitle(args.event.subtype);
-  if (args.lifecycle === "active") {
-    return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: title };
-  }
-  const relative = formatEclipseRelativeTime(args.productUtcMs, args.event.globalStartMs);
-  const suffix = relative && relative !== "now" ? relative : formatEclipseCalendarDate(args.event);
-  return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: `${title} · ${suffix}` };
+  const lifecycle = args.lifecycle === "active" ? "active" : "upcoming";
+  return { latDeg: args.latDeg, lonDeg: args.lonDeg, text: `${title} · ${lifecycle}` };
 }

@@ -46,7 +46,7 @@ describe("eclipse event labels", () => {
       latDeg: active.geLatDeg,
       lonDeg: active.geLonDeg,
     });
-    expect(act.text).toBe("Total solar eclipse");
+    expect(act.text).toBe("Total solar eclipse · active");
   });
 
   it("emits one solar label for upcoming, one for active, and none when quiet", () => {
@@ -172,7 +172,7 @@ describe("eclipse event labels", () => {
         lonDeg: 0,
       });
       if (frame.activeLunar.subtype === "penumbral") {
-        expect(label.text).toBe("Penumbral lunar eclipse");
+        expect(label.text).toBe("Penumbral lunar eclipse · active");
       }
     }
   });

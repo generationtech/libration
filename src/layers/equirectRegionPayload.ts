@@ -59,6 +59,14 @@ export type EquirectRegionAvoidDisc = {
 };
 
 /**
+ * Geographic polylines used only for solar event-label direction and clearance.
+ * Canvas still does not interpret astronomy; the RenderPlan builder projects them.
+ */
+export type EquirectRegionLabelPathHint = {
+  readonly points: readonly EquirectLatLon[];
+};
+
+/**
  * Generic disc radius for {@link EquirectRegionPointMarker} at `radiusScale = 1`.
  * Viewport 1919 → 7.2 px.
  */
@@ -91,6 +99,7 @@ export type EquirectRegionOverlayPayload = {
   readonly strokes: readonly EquirectRegionStroke[];
   readonly labels?: readonly EquirectRegionLabel[];
   readonly labelAvoidDiscs?: readonly EquirectRegionAvoidDisc[];
+  readonly labelPathHints?: readonly EquirectRegionLabelPathHint[];
   readonly pointMarkers?: readonly EquirectRegionPointMarker[];
   readonly readability?: OverlayReadabilityHints;
 };
@@ -171,6 +180,20 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
         typeof g.lonDeg !== "number" ||
         typeof g.haloMultiplier !== "number"
       ) {
+        return false;
+      }
+    }
+  }
+  if (o.labelPathHints !== undefined) {
+    if (!Array.isArray(o.labelPathHints)) {
+      return false;
+    }
+    for (const hint of o.labelPathHints) {
+      if (hint === null || typeof hint !== "object") {
+        return false;
+      }
+      const g = hint as Record<string, unknown>;
+      if (!Array.isArray(g.points) || !g.points.every(isLatLon)) {
         return false;
       }
     }

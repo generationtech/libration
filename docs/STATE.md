@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md) — ISS multi-orbit track horizons + silhouette color fix
+[LIB-042](work/LIB-042-eclipse-presentation-semantics-and-label-placement.md) — Eclipse presentation semantics + path-aware event label placement
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Await human authorization of the next work item.
+Stop. No approved work.

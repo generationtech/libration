@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { placeEclipseMapLabel } from "./eclipseMapLabelPlacement";
+import { nearestEclipsePathPointScreen, placeEclipseMapLabel } from "./eclipseMapLabelPlacement";
 
 describe("placeEclipseMapLabel", () => {
   it("keeps a non-overlapping label at the preferred position", () => {
@@ -119,5 +119,75 @@ describe("placeEclipseMapLabel", () => {
     expect(placed.y).toBeGreaterThan(8);
     expect(placed.x).toBeLessThan(1912);
     expect(placed.y).toBeLessThan(1072);
+  });
+
+  it("places a solar label opposite the path from the glyph cluster", () => {
+    const placed = placeEclipseMapLabel({
+      preferredX: 400,
+      preferredY: 300,
+      text: "Total solar eclipse · upcoming",
+      sizePx: 13,
+      viewportWidthPx: 1920,
+      viewportHeightPx: 1080,
+      avoidDiscs: [{ x: 400, y: 300, radiusPx: 24 }],
+      avoidPolylines: [
+        {
+          points: [
+            { x: 700, y: 280 },
+            { x: 760, y: 300 },
+            { x: 820, y: 320 },
+          ],
+        },
+      ],
+    });
+    expect(placed.x).toBeLessThan(400);
+    const nearest = nearestEclipsePathPointScreen({
+      originX: 400,
+      originY: 300,
+      polylines: [{ points: [{ x: 700, y: 300 }] }],
+      viewportWidthPx: 1920,
+    });
+    expect(nearest?.x).toBe(700);
+    const boxLeft = placed.textAlign === "right" ? placed.x - 200 : placed.x;
+    expect(boxLeft + 40).toBeLessThan(700);
+  });
+
+  it("falls back on-screen when the opposite-path candidate would clip", () => {
+    const placed = placeEclipseMapLabel({
+      preferredX: 36,
+      preferredY: 300,
+      text: "Total solar eclipse · active",
+      sizePx: 13,
+      viewportWidthPx: 400,
+      viewportHeightPx: 600,
+      avoidDiscs: [{ x: 36, y: 300, radiusPx: 20 }],
+      avoidPolylines: [{ points: [{ x: 220, y: 300 }, { x: 300, y: 300 }] }],
+    });
+    expect(placed.x).toBeGreaterThan(8);
+    expect(placed.x).toBeLessThan(392);
+    expect(placed.y).toBeGreaterThan(8);
+    expect(placed.y).toBeLessThan(592);
+  });
+
+  it("uses the short wrapped path direction instead of inverting across the dateline", () => {
+    const nearest = nearestEclipsePathPointScreen({
+      originX: 20,
+      originY: 90,
+      polylines: [{ points: [{ x: 350, y: 90 }] }],
+      viewportWidthPx: 360,
+    });
+    expect(nearest).not.toBeNull();
+    expect(nearest!.x).toBe(-10);
+    const placed = placeEclipseMapLabel({
+      preferredX: 20,
+      preferredY: 90,
+      text: "Total solar eclipse · active",
+      sizePx: 11,
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      avoidDiscs: [{ x: 20, y: 90, radiusPx: 12 }],
+      avoidPolylines: [{ points: [{ x: 350, y: 90 }] }],
+    });
+    expect(placed.x).toBeGreaterThan(20);
   });
 });

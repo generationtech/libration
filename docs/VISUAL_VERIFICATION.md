@@ -154,6 +154,24 @@ When inspecting E6:
 - Confirm Layers groups disable child controls when the parent is off, and that forecast corridor/partial disable when the horizon is Live only.
 - Confirm hybrid events say Hybrid solar eclipse and penumbral events say Penumbral lunar eclipse.
 
+### Eclipse presentation semantics + label placement (LIB-042)
+
+Use `?scenario=solar-eclipse-2017` (7-day horizon) plus `eclipseStation=`. The 2017 showcase still defaults Event labels **OFF**; turn Event labels ON to inspect map text. Viewport in Cursor’s side pane is acceptable; record that it is not canonical 1920×1080.
+
+When inspecting:
+
+- Confirm HUD, placard, and map label tell one story with different verbosity. HUD is local/reference-city. Placard distinguishes global vs local. Map label is global identity plus `upcoming` or `active` only.
+- Confirm upcoming (`eclipseStation=upcoming`, 14:51Z / ~10:51 AM Knoxville): HUD `Eclipse · Partial 99.8% · begins 1:04 PM` (not `Partial 100%`, not a vague `in 50m` when C1 is known). Placard: Global event Total solar eclipse; Lifecycle Upcoming; Forecast path; **no** Current shadow row. Knoxville Local type Partial. Map: `Total solar eclipse · upcoming` near the Sun/Moon cluster, on the side opposite the US corridor, not printed on the path.
+- Confirm early central (`earlyCentral`, 16:58Z / 12:58 PM): map `Total solar eclipse · active`; HUD still local Partial 99.8% with `max 2:34 PM`; placard Lifecycle Active with Current shadow appropriate to the live umbra.
+- Confirm GE (`ge`, 18:25:29.700Z / 2:25 PM): placard Current shadow Totality (central shadow); Knoxville Local type Partial; HUD `Eclipse · Partial 99.8% · max 2:34 PM`; map `Total solar eclipse · active` next to the Pacific glyph, opposite the corridor.
+- Confirm late central (`lateCentral`, 18:48:44Z / 2:48 PM): HUD `ends 3:58 PM`; map still `· active`; path/marker/beam remain readable.
+- Confirm after (`after`, 21:10Z): geography gone; no `· ended` map label; HUD eclipse row gone.
+- Confirm `observerCity=tokyo` at GE: HUD `Eclipse not visible from Tokyo`; placard local not-visible; global event/path/lifecycle unchanged.
+- Confirm Event labels OFF removes map text while HUD/placard stay. Event information OFF hides the placard while HUD/map label stay. Persistent eclipse status OFF removes the HUD row while placard/map label stay.
+- Confirm `solar-eclipse-dateline`: label stays with the glyph cluster; no opposite-hemisphere jump from ±180°.
+- Confirm `solar-eclipse-partial`: `Partial solar eclipse · active` near the glyph; no fabricated central corridor.
+- Confirm `lunar-eclipse-forecast-total` / `lunar-eclipse-total`: `Total lunar eclipse · upcoming` / `· active` near the Moon glyph; HUD remains lunar wording; do not apply solar path-opposite placement.
+
 ### Live eclipse alignment / beam (E5)
 
 Existing eclipse scenarios enable the alignment field by default (`scene.eclipseAlignment` master / solar / lunar on, intensity normal). Do not add a second scenario catalog for the beam.

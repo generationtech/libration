@@ -80,6 +80,10 @@ export function buildEclipseInfoPanelModel(
     lunar,
     info,
     circumstances,
+    cityName:
+      observer !== null
+        ? (REFERENCE_CITIES.find((c) => c.id === observer.cityId)?.name ?? observer.cityId)
+        : "",
   });
   return {
     eventInformationEnabled: info.eventInformationEnabled,

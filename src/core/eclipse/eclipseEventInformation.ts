@@ -25,6 +25,10 @@ import {
   solarCentralPathLabel,
   solarEclipseTypeTitle,
 } from "./eclipseEventCopy";
+import {
+  buildEclipsePresentationState,
+  type EclipsePresentationState,
+} from "./eclipsePresentationState";
 import type { EclipseInfoPresentation } from "./eclipseInfoAppearance";
 import type { LunarEclipsePresentation } from "./lunarEclipseAppearance";
 import {
@@ -62,6 +66,7 @@ export type EclipseEventInformationView = {
   readonly rows: readonly EclipseEventInformationRow[];
   readonly legend: readonly EclipseLegendItem[];
   readonly circumstances: ReferenceCityEclipseCircumstances | null;
+  readonly presentation: EclipsePresentationState | null;
 };
 
 export type BuildEclipseEventInformationInput = {
@@ -72,6 +77,7 @@ export type BuildEclipseEventInformationInput = {
   readonly lunar: LunarEclipsePresentation;
   readonly info: EclipseInfoPresentation;
   readonly circumstances: ReferenceCityEclipseCircumstances | null;
+  readonly cityName?: string;
 };
 
 function lunarPhaseCopy(geom: LunarEclipseLiveGeometry | null): string | null {
@@ -92,7 +98,7 @@ function lunarPhaseCopy(geom: LunarEclipseLiveGeometry | null): string | null {
 
 function solarRows(event: SolarEclipseEvent, frame: EclipseFrame, upcoming: boolean): EclipseEventInformationRow[] {
   const rows: EclipseEventInformationRow[] = [
-    { label: "Event", value: solarEclipseTypeTitle(event.subtype) },
+    { label: "Global event", value: solarEclipseTypeTitle(event.subtype) },
     { label: "Date", value: formatEclipseCalendarDate(event) },
     { label: "Greatest eclipse", value: formatEclipseUtcClock(event.greatestEclipseUtcMs) },
     { label: "Lifecycle", value: upcoming ? "Upcoming" : "Active" },
@@ -122,7 +128,7 @@ function lunarRows(
   upcoming: boolean,
 ): EclipseEventInformationRow[] {
   const rows: EclipseEventInformationRow[] = [
-    { label: "Event", value: lunarEclipseTypeTitle(event.subtype) },
+    { label: "Global event", value: lunarEclipseTypeTitle(event.subtype) },
     { label: "Date", value: formatEclipseCalendarDate(event) },
     { label: "Greatest eclipse", value: formatEclipseUtcClock(event.greatestEclipseUtcMs) },
     { label: "Lifecycle", value: upcoming ? "Upcoming" : "Active" },
@@ -208,6 +214,7 @@ export function buildEclipseEventInformation(
     rows: [],
     legend: [],
     circumstances: null,
+    presentation: null,
   };
   const featuresOn = input.solarEnabled || input.lunarEnabled;
   if (!featuresOn || !input.frame) {
@@ -247,6 +254,15 @@ export function buildEclipseEventInformation(
           (activeLunar?.id === circumstancesLunarId ||
             (primary?.kind === "lunar" && primary.event.id === circumstancesLunarId)))),
   );
+  const presentation = buildEclipsePresentationState({
+    frame: input.frame,
+    solarEnabled: input.solarEnabled,
+    lunarEnabled: input.lunarEnabled,
+    solar: input.solar,
+    lunar: input.lunar,
+    circumstances: input.circumstances,
+    cityName: input.cityName ?? "",
+  });
 
   if (primary?.kind === "solar" && primary.lifecycle === "active" && activeSolar) {
     return {
@@ -265,6 +281,7 @@ export function buildEclipseEventInformation(
         alignment: true,
       }),
       circumstances: showCircumstances ? input.circumstances : null,
+      presentation,
     };
   }
 
@@ -280,6 +297,7 @@ export function buildEclipseEventInformation(
       rows: lunarRows(activeLunar, input.frame, false),
       legend: lunarLegend(false),
       circumstances: showCircumstances ? input.circumstances : null,
+      presentation,
     };
   }
 
@@ -301,6 +319,7 @@ export function buildEclipseEventInformation(
         alignment: false,
       }),
       circumstances: showCircumstances ? input.circumstances : null,
+      presentation,
     };
   }
 
@@ -317,6 +336,7 @@ export function buildEclipseEventInformation(
       rows: lunarRows(primary.event, input.frame, true),
       legend: lunarLegend(true),
       circumstances: showCircumstances ? input.circumstances : null,
+      presentation,
     };
   }
 
