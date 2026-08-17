@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-032](work/LIB-032-chrome-tab-topic-organization.md) — Chrome tab topic organization
+[LIB-033](work/LIB-033-dynamic-layer-internet-source-survey.md) — Survey dynamic / internet-sourced layer support
 
 ## Blockers
 
@@ -21,8 +21,8 @@ None
 
 ## Awaiting human decision
 
-None
+Live-vs-demo policy for current-only internet feeds; whether production may paint fixture data on live failure; whether the next *feed* after earthquake hardening is a new consumer.
 
 ## Next action
 
-Stop. No approved work remains. Do not start speculative items.
+Stop. No approved work remains. Do not start speculative items. Do not implement earthquakes, ISS, clouds, or a generic dynamic-layer framework until a human approves a new LIB.

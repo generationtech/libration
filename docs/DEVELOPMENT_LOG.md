@@ -208,6 +208,12 @@ Chrome tab unified topic subpanels (sticky UI-only selector, not persisted). Def
 
 Verified: focused Chrome/Layers/config tests 126 then 81 passed after guard-test update; `npx tsc --noEmit` clean; `npm test` 206 files / 1970 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser `?scenario=baseline`: Config → Chrome topics sticky and scroll-reset; Layers Advanced sticky still pinned.
 
+## 2026-08-16 — LIB-033 complete
+
+Survey-only reconnaissance of dynamic / internet-sourced layers. No production source changes. The lifecycle (ADR 0005) and three optional live consumers (clouds/IR, earthquakes, ISS) already exist, default-off, with fixture fallback. Recommended next slice is earthquake hardening (live-vs-demo policy and failure UX), not a new feed or generic framework.
+
+Verified: documentation-only; `tsc` / `npm test` / build / visual verification not run. Final STATE AWAITING SCOPE; no implementation LIB created.
+
 
 
 
