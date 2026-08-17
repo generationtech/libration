@@ -17,6 +17,7 @@
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
+import { resolveIssOrbitHorizonMs } from "../core/issOrbitHorizon";
 import {
   DEFAULT_ISS_ORBITAL_PRESENTATION,
   issTravelHeadingRad,
@@ -27,7 +28,15 @@ import {
   getOverlayReadabilityFrameOrCompute,
 } from "../core/overlayReadabilityFrame";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
-import { resolveIssCurrentSample } from "../lifecycle/issOrbitalTrackAcquisition";
+import {
+  ISS_ORBITAL_TRACK_SAMPLE_STEP_MS,
+  resolveIssCurrentSample,
+  tleLinesFromTrackProperties,
+} from "../lifecycle/issOrbitalTrackAcquisition";
+import {
+  getIssPresentationTrackSamples,
+  issOrbitalPeriodMsFromTle,
+} from "../lifecycle/issPresentationTrack";
 import {
   issProvenanceFromPreparedTrack,
   issTrackShouldPaint,
@@ -142,6 +151,29 @@ export function createDynamicTracksOverlayLayer(
           ? resolveIssCurrentSample(first, time.now)
           : null;
 
+      const tle =
+        first !== undefined ? tleLinesFromTrackProperties(first.properties) : null;
+      const orbitalPeriodMs = tle !== null ? issOrbitalPeriodMsFromTle(tle) : null;
+      const pastMs = resolveIssOrbitHorizonMs(presentation.pastHorizon, orbitalPeriodMs);
+      const futureMs = resolveIssOrbitHorizonMs(
+        presentation.futureHorizon,
+        orbitalPeriodMs,
+      );
+      const headingPad = ISS_ORBITAL_TRACK_SAMPLE_STEP_MS;
+      const lookbackMs =
+        presentation.trackEnabled && presentation.pastEnabled ? pastMs : headingPad;
+      const lookaheadMs =
+        presentation.trackEnabled && presentation.futureEnabled ? futureMs : headingPad;
+      const localSamples =
+        tle !== null
+          ? getIssPresentationTrackSamples({
+              tle,
+              productUtcMs: time.now,
+              lookbackMs,
+              lookaheadMs,
+            })
+          : null;
+
       const tracks: DynamicTrackOverlay[] = prepared.tracks
         .filter((t) => t.samples.length > 0)
         .map((t) => {
@@ -151,7 +183,11 @@ export function createDynamicTracksOverlayLayer(
               : t.id === "iss"
                 ? undefined
                 : labelFromProperties(t.properties);
-          const samples: DynamicTrackSampleMarker[] = t.samples.map((s) => ({
+          const sourceSamples =
+            t.id === "iss" && localSamples !== null && localSamples.length > 0
+              ? localSamples
+              : t.samples;
+          const samples: DynamicTrackSampleMarker[] = sourceSamples.map((s) => ({
             lonDeg: s.lonDeg,
             latDeg: s.latDeg,
             timeMs: s.timeMs,
@@ -167,8 +203,8 @@ export function createDynamicTracksOverlayLayer(
           const windowed = selectIssTrackTemporalWindow(samples, time.now, {
             pastEnabled: presentation.trackEnabled && presentation.pastEnabled,
             futureEnabled: presentation.trackEnabled && presentation.futureEnabled,
-            pastMinutes: presentation.pastMinutes,
-            futureMinutes: presentation.futureMinutes,
+            pastMs,
+            futureMs,
             current: marker,
           });
           return {
@@ -210,6 +246,7 @@ export function createDynamicTracksOverlayLayer(
         overlayReadabilityLiftScale01:
           frame.substrateOverlayReadabilityLiftScale01,
         tipReadabilityNightVeil01: tipVeil,
+        ...(orbitalPeriodMs !== null ? { orbitalPeriodMs } : {}),
       };
       return {
         visible: true,

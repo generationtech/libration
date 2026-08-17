@@ -132,11 +132,32 @@ describe("LIB-038 ISS presentation RenderPlan", () => {
     ).toBe(true);
   });
 
-  it("silhouette glyph emits a station path descriptor, not the disc pair", () => {
-    const plan = planOf({ glyphType: "silhouette", glyphColor: "#ffffff" });
+  it("silhouette glyph emits under-stroke then configured foreground fill/stroke", () => {
+    const plan = planOf({ glyphType: "silhouette", glyphColor: "#ff00ff" });
     const paths = plan.items.filter((i) => i.kind === "path2d");
-    expect(paths.some((i) => i.kind === "path2d" && i.pathKind === "descriptor")).toBe(true);
     expect(paths.filter((i) => i.kind === "path2d" && i.pathKind === "path2d")).toHaveLength(0);
+    const descriptors = paths.filter((i) => i.kind === "path2d" && i.pathKind === "descriptor");
+    expect(descriptors.length).toBe(2);
+    const under = descriptors[0];
+    const fg = descriptors[1];
+    expect(under?.kind).toBe("path2d");
+    expect(fg?.kind).toBe("path2d");
+    if (under?.kind === "path2d" && fg?.kind === "path2d") {
+      expect(under.fill).toBeUndefined();
+      expect(under.stroke).toMatch(/12,\s*28,\s*44/);
+      expect(fg.fill).toMatch(/255,\s*0,\s*255/);
+      expect(fg.stroke).toMatch(/255,\s*0,\s*255/);
+      expect(fg.strokeWidthPx ?? 0).toBeLessThan(under.strokeWidthPx ?? 0);
+    }
+    const green = planOf({ glyphType: "silhouette", glyphColor: "#00ff00" });
+    const greenFg = green.items.find(
+      (i) => i.kind === "path2d" && i.pathKind === "descriptor" && i.fill !== undefined,
+    );
+    expect(greenFg?.kind).toBe("path2d");
+    if (greenFg?.kind === "path2d" && greenFg.fill) {
+      expect(greenFg.fill).toMatch(/0,\s*255,\s*0/);
+      expect(fg?.kind === "path2d" ? fg.fill : undefined).not.toBe(greenFg.fill);
+    }
   });
 
   it("glyph size changes the marker footprint", () => {
@@ -224,5 +245,63 @@ describe("LIB-038 ISS presentation RenderPlan", () => {
     }
     expect(DEFAULT_ISS_DOT_COLOR).toBe("#b4f0ff");
     expect(DEFAULT_ISS_ORBIT_PAST_COLOR).toBe("#78d2ff");
+  });
+
+  it("multiplies past/future alpha by orbit distance without changing hue", () => {
+    const periodMs = 90 * 60_000;
+    const wrap: DynamicTracksPayload = {
+      kind: DYNAMIC_TRACKS_KIND,
+      tracks: [
+        {
+          id: "iss",
+          label: "ISS",
+          samples: [
+            { lonDeg: -40, latDeg: 10, timeMs: NOW - 2.2 * periodMs },
+            { lonDeg: -20, latDeg: 12, timeMs: NOW - 1.2 * periodMs },
+            { lonDeg: -10, latDeg: 13, timeMs: NOW - 0.2 * periodMs },
+            { lonDeg: 10, latDeg: 14, timeMs: NOW + 0.2 * periodMs },
+            { lonDeg: 20, latDeg: 15, timeMs: NOW + 1.2 * periodMs },
+          ],
+          pastSamples: [
+            { lonDeg: -40, latDeg: 10, timeMs: NOW - 2.2 * periodMs },
+            { lonDeg: -20, latDeg: 12, timeMs: NOW - 1.2 * periodMs },
+            { lonDeg: -10, latDeg: 13, timeMs: NOW - 0.2 * periodMs },
+            { lonDeg: 0, latDeg: 13, timeMs: NOW },
+          ],
+          futureSamples: [
+            { lonDeg: 0, latDeg: 13, timeMs: NOW },
+            { lonDeg: 10, latDeg: 14, timeMs: NOW + 0.2 * periodMs },
+            { lonDeg: 20, latDeg: 15, timeMs: NOW + 1.2 * periodMs },
+          ],
+        },
+      ],
+      currentPosition: { lonDeg: 0, latDeg: 13, timeMs: NOW },
+      presentation: {
+        ...DEFAULT_ISS_ORBITAL_PRESENTATION,
+        pastColor: "#ff0000",
+        futureColor: "#00ff00",
+      },
+      orbitalPeriodMs: periodMs,
+    };
+    const plan = buildDynamicTracksRenderPlan({
+      viewportWidthPx: 1800,
+      viewportHeightPx: 900,
+      layerOpacity: 1,
+      payload: wrap,
+    });
+    const past = plan.items.filter(
+      (i) => i.kind === "line" && /255,\s*0,\s*0/.test(i.stroke),
+    );
+    const alphas = [
+      ...new Set(
+        past.map((i) => {
+          const m = i.kind === "line" ? i.stroke.match(/,\s*([\d.]+)\s*\)$/) : null;
+          return m ? Number(m[1]) : Number.NaN;
+        }),
+      ),
+    ].sort((a, b) => b - a);
+    expect(alphas.length).toBeGreaterThan(1);
+    expect(alphas[0]!).toBeGreaterThan(alphas[alphas.length - 1]!);
+    expect(past.every((i) => i.kind === "line" && /255,\s*0,\s*0/.test(i.stroke))).toBe(true);
   });
 });

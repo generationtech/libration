@@ -22,17 +22,16 @@ import {
 import {
   ISS_GLYPH_SIZE_IDS,
   ISS_GLYPH_TYPE_IDS,
-  ISS_ORBIT_FUTURE_MINUTES,
+  ISS_ORBIT_HORIZON_UI_IDS,
   ISS_ORBIT_LINE_THICKNESS_IDS,
-  ISS_ORBIT_PAST_MINUTES,
   issGlyphSizeLabel,
   issGlyphTypeLabel,
+  issOrbitHorizonLabel,
   issOrbitLineThicknessLabel,
   type IssGlyphSizeId,
   type IssGlyphTypeId,
-  type IssOrbitFutureMinutes,
+  type IssOrbitHorizonId,
   type IssOrbitLineThicknessId,
-  type IssOrbitPastMinutes,
   type IssOrbitalPresentation,
 } from "../../core/issOrbitalPresentation";
 import { ConfigControlRow } from "./ConfigControlRow";
@@ -78,7 +77,9 @@ export function IssPresentationSection(props: {
         Presentation for the ISS overlay. Visibility remains under Layer masters. Turning the orbit
         track off keeps the current ISS glyph.
       </p>
-      <p className="config-section__hint">Orbit &amp; track</p>
+      <p className="config-section__hint">
+        Orbit &amp; track. Orbit horizons are derived from the current TLE orbital period.
+      </p>
       <ConfigControlRow label="Orbit track">
         <input
           type="checkbox"
@@ -117,24 +118,24 @@ export function IssPresentationSection(props: {
           }
         />
       </ConfigControlRow>
-      <ConfigControlRow label="Past duration">
+      <ConfigControlRow label="Past horizon">
         <select
           className="config-input"
           disabled={!mutable || pastOff}
-          aria-label="Past duration"
+          aria-label="Past horizon"
           title="How far before the current product time to draw the past track."
-          value={String(pres.pastMinutes)}
+          value={pres.pastHorizon}
           onChange={
             mutable
               ? (e) => {
-                  apply({ pastMinutes: Number(e.currentTarget.value) as IssOrbitPastMinutes });
+                  apply({ pastHorizon: e.currentTarget.value as IssOrbitHorizonId });
                 }
               : undefined
           }
         >
-          {ISS_ORBIT_PAST_MINUTES.map((m) => (
-            <option key={`past-${m}`} value={m}>
-              {m} min
+          {ISS_ORBIT_HORIZON_UI_IDS.map((id) => (
+            <option key={`past-${id}`} value={id}>
+              {issOrbitHorizonLabel(id)}
             </option>
           ))}
         </select>
@@ -175,26 +176,26 @@ export function IssPresentationSection(props: {
           }
         />
       </ConfigControlRow>
-      <ConfigControlRow label="Future duration">
+      <ConfigControlRow label="Future horizon">
         <select
           className="config-input"
           disabled={!mutable || futureOff}
-          aria-label="Future duration"
+          aria-label="Future horizon"
           title="How far after the current product time to draw the future track."
-          value={String(pres.futureMinutes)}
+          value={pres.futureHorizon}
           onChange={
             mutable
               ? (e) => {
                   apply({
-                    futureMinutes: Number(e.currentTarget.value) as IssOrbitFutureMinutes,
+                    futureHorizon: e.currentTarget.value as IssOrbitHorizonId,
                   });
                 }
               : undefined
           }
         >
-          {ISS_ORBIT_FUTURE_MINUTES.map((m) => (
-            <option key={`future-${m}`} value={m}>
-              {m} min
+          {ISS_ORBIT_HORIZON_UI_IDS.map((id) => (
+            <option key={`future-${id}`} value={id}>
+              {issOrbitHorizonLabel(id)}
             </option>
           ))}
         </select>
@@ -327,7 +328,7 @@ export function IssPresentationSection(props: {
             className="config-input"
             disabled={!mutable}
             aria-label="ISS glyph color"
-            title="Fill color of the ISS silhouette."
+            title="Fill and stroke color of the ISS silhouette."
             value={pres.glyphColor}
             onChange={
               mutable

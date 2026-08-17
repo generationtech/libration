@@ -13,9 +13,10 @@
 
 /**
  * DLC-3 / DLU-4 acquisition for ISS-lineage orbital tracks.
- * Fixture producer remains for offline / test fallback. Live HTTP fetches
- * CelesTrak GP (TLE) under durable sourceId `iss-orbital-track-v1`, then
- * propagates a timed ground track via SGP4 outside rAF.
+ * Fixture producer remains for offline / test fallback. Live HTTP tries
+ * CelesTrak GP (TLE) first, then Where the ISS at TLE, under durable
+ * sourceId `iss-orbital-track-v1`, then propagates a timed ground track via
+ * SGP4 outside rAF.
  * Never invoked from rAF / layer constructors / RenderPlan builders.
  */
 
@@ -32,7 +33,10 @@ import {
 } from "satellite.js";
 import { buildDynamicSnapshotRecord } from "./dynamicSnapshotContracts";
 import { createFixtureAcquisitionAdapter } from "./dynamicAcquisition";
-import { createLiveHttpAcquisitionAdapter } from "./liveHttpAcquisition";
+import {
+  applyAcquisitionAttribution,
+  fetchLiveHttpBytes,
+} from "./liveHttpAcquisition";
 import {
   ISS_ORBITAL_TRACK_SOURCE_ID,
   getDynamicTracksSourceCatalogEntry,
@@ -57,6 +61,45 @@ import type {
 export const ISS_ORBITAL_TRACK_LIVE_FEED_URL =
   "https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE";
 
+/**
+ * Secondary live TLE (text 3LE). Public rate-limited REST API with CORS.
+ * @see https://wheretheiss.at/w/developer
+ */
+export const ISS_ORBITAL_TRACK_SECONDARY_LIVE_FEED_URL =
+  "https://api.wheretheiss.at/v1/satellites/25544/tles?format=text";
+
+/** Bound for one ISS TLE HTTP attempt so a hung primary can fail over. */
+export const ISS_TLE_ACQUIRE_TIMEOUT_MS = 8_000;
+
+/** After all live providers fail, retry once on this delay if still enabled. */
+export const ISS_TLE_FAILURE_RETRY_MS = 5 * 60 * 1000;
+
+export type IssTleLiveProviderId = "celestrak" | "wheretheiss-at";
+
+export type IssTleLiveProvider = Readonly<{
+  id: IssTleLiveProviderId;
+  url: string;
+  acceptContentTypes: readonly string[];
+  attribution: string;
+}>;
+
+export const ISS_TLE_LIVE_PROVIDERS: readonly IssTleLiveProvider[] = [
+  {
+    id: "celestrak",
+    url: ISS_ORBITAL_TRACK_LIVE_FEED_URL,
+    acceptContentTypes: ["text/plain"],
+    attribution:
+      "CelesTrak GP (TLE) for ISS NORAD 25544 via in-app live acquisition.",
+  },
+  {
+    id: "wheretheiss-at",
+    url: ISS_ORBITAL_TRACK_SECONDARY_LIVE_FEED_URL,
+    acceptContentTypes: ["text/plain"],
+    attribution:
+      "Where the ISS at TLE for ISS NORAD 25544 via in-app live acquisition (api.wheretheiss.at).",
+  },
+];
+
 /** Content-Types accepted from the CelesTrak TLE feed (parameter-stripped). */
 export const ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES = [
   "text/plain",
@@ -80,6 +123,8 @@ export const ISS_TLE_LINE1_PROPERTY = "tleLine1";
 export const ISS_TLE_LINE2_PROPERTY = "tleLine2";
 /** Acquisition origin stamp: live TLE vs recorded fixture. */
 export const ISS_ORIGIN_PROPERTY = "issOrigin";
+/** Which live TLE provider supplied the element set (`celestrak` / `wheretheiss-at`). */
+export const ISS_TLE_PROVIDER_PROPERTY = "issTleProvider";
 
 export type IssTleLines = Readonly<{
   name: string;
@@ -192,6 +237,13 @@ export type IssOrbitalTrackLiveAcquireOptions = IssOrbitalTrackAcquireOptions &
     lookaheadMs?: number;
     /** Override sample step for SGP4 ground-track samples (tests). */
     sampleStepMs?: number;
+    /** Per-attempt HTTP timeout; default {@link ISS_TLE_ACQUIRE_TIMEOUT_MS}. */
+    timeoutMs?: number;
+    /**
+     * Live TLE provider identity stamped onto a successful live snapshot.
+     * Production chain sets this per attempt; tests may override.
+     */
+    tleProvider?: IssTleLiveProviderId;
   }>;
 
 export type IssTleParseOk = Readonly<{
@@ -506,6 +558,7 @@ function buildTracksGeoJsonPayload(options: {
   sourceUrl: string;
   title: string;
   tle?: IssTleLines;
+  tleProvider?: IssTleLiveProviderId;
 }): { tracks: DynamicTrack[]; payloadBytes: Uint8Array } {
   const tleProps =
     options.tle !== undefined
@@ -514,6 +567,9 @@ function buildTracksGeoJsonPayload(options: {
           [ISS_TLE_NAME_PROPERTY]: options.tle.name,
           [ISS_TLE_LINE1_PROPERTY]: options.tle.line1,
           [ISS_TLE_LINE2_PROPERTY]: options.tle.line2,
+          ...(options.tleProvider !== undefined
+            ? { [ISS_TLE_PROVIDER_PROPERTY]: options.tleProvider }
+            : {}),
         }
       : { [ISS_ORIGIN_PROPERTY]: "fixture" };
   const coordinates = options.samples.map(
@@ -678,6 +734,10 @@ export function produceIssOrbitalTrackLiveAcquisitionFromFetched(
     line1: parsed.line1,
     line2: parsed.line2,
   };
+  const tleProvider = options.tleProvider ?? "celestrak";
+  const providerAttribution =
+    ISS_TLE_LIVE_PROVIDERS.find((p) => p.id === tleProvider)?.attribution ??
+    catalog.attribution;
   const { tracks, payloadBytes } = buildTracksGeoJsonPayload({
     validTimeMs: acquiredAtMs,
     name: propagated.name,
@@ -685,6 +745,7 @@ export function produceIssOrbitalTrackLiveAcquisitionFromFetched(
     sourceUrl: fetched.responseUrl || ISS_ORBITAL_TRACK_LIVE_FEED_URL,
     title: "ISS Orbital Track — DLU-4 live",
     tle,
+    tleProvider,
   });
 
   const record = buildDynamicSnapshotRecord(
@@ -694,7 +755,7 @@ export function produceIssOrbitalTrackLiveAcquisitionFromFetched(
       versionId,
       acquiredAtMs,
       validTimeMs: acquiredAtMs,
-      attribution: catalog.attribution,
+      attribution: providerAttribution,
       ...(catalog.licenseNote !== undefined
         ? { licenseNote: catalog.licenseNote }
         : {}),
@@ -728,15 +789,21 @@ export function createIssOrbitalTrackFixtureAcquisitionAdapter(
 
 /**
  * DLU-4 live HTTP acquisition adapter for {@link ISS_ORBITAL_TRACK_SOURCE_ID}.
- * Fetches CelesTrak TLE via the DLU-2 seam, propagates SGP4 ground track outside
- * rAF. Fixture fallback is opt-in (tests/DEV); production hides ISS when
- * CelesTrak is unavailable.
+ * Tries CelesTrak then Where the ISS at TLE in one cycle, each with a bounded
+ * timeout. Fixture fallback is opt-in (tests/DEV); production hides ISS when
+ * no live TLE can be acquired.
  */
 export function createIssOrbitalTrackLiveHttpAcquisitionAdapter(
   options: IssOrbitalTrackLiveAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
   const catalog = getDynamicTracksSourceCatalogEntry(ISS_ORBITAL_TRACK_SOURCE_ID);
   const useFixtureFallback = options.useFixtureFallback === true;
+  const timeoutMs =
+    options.timeoutMs !== undefined &&
+    Number.isFinite(options.timeoutMs) &&
+    options.timeoutMs > 0
+      ? options.timeoutMs
+      : ISS_TLE_ACQUIRE_TIMEOUT_MS;
   const acquireOptions: IssOrbitalTrackLiveAcquireOptions = {
     ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
     ...(options.versionIdFor !== undefined
@@ -753,32 +820,75 @@ export function createIssOrbitalTrackLiveHttpAcquisitionAdapter(
       : {}),
   };
 
-  return createLiveHttpAcquisitionAdapter({
+  const providers: readonly IssTleLiveProvider[] =
+    options.url !== undefined
+      ? [
+          {
+            id: "celestrak",
+            url: options.url,
+            acceptContentTypes: ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES,
+            attribution:
+              catalog?.attribution ??
+              ISS_TLE_LIVE_PROVIDERS[0]!.attribution,
+          },
+        ]
+      : ISS_TLE_LIVE_PROVIDERS;
+
+  return {
     sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
-    url: options.url ?? ISS_ORBITAL_TRACK_LIVE_FEED_URL,
-    acceptContentTypes: ISS_ORBITAL_TRACK_LIVE_ACCEPT_CONTENT_TYPES,
-    ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
-    attribution: {
-      ...(catalog?.attribution !== undefined
-        ? { attribution: catalog.attribution }
-        : {}),
-      ...(catalog?.licenseNote !== undefined
-        ? { licenseNote: catalog.licenseNote }
-        : {}),
-    },
-    toEntry: (fetched, signal) =>
-      produceIssOrbitalTrackLiveAcquisitionFromFetched(
-        fetched,
-        acquireOptions,
-        signal,
-      ),
-    ...(useFixtureFallback
-      ? {
-          fixtureFallback: (signal?: AbortSignal) =>
-            produceIssOrbitalTrackFixtureAcquisition(acquireOptions, signal),
+    async acquire(signal?: AbortSignal): Promise<DynamicAcquisitionResult> {
+      if (signal?.aborted) {
+        return { ok: false, error: "aborted" };
+      }
+
+      let lastError = "live fetch failed";
+      for (const provider of providers) {
+        if (signal?.aborted) {
+          return { ok: false, error: "aborted" };
         }
-      : {}),
-  });
+        const fetched = await fetchLiveHttpBytes({
+          url: provider.url,
+          acceptContentTypes: provider.acceptContentTypes,
+          signal,
+          timeoutMs,
+          ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+        });
+        if (fetched.ok) {
+          const mapped = produceIssOrbitalTrackLiveAcquisitionFromFetched(
+            fetched,
+            { ...acquireOptions, tleProvider: provider.id },
+            signal,
+          );
+          if (mapped.ok) {
+            return {
+              ok: true,
+              entry: applyAcquisitionAttribution({
+                entry: mapped.entry,
+                attribution: {
+                  attribution: provider.attribution,
+                  ...(catalog?.licenseNote !== undefined
+                    ? { licenseNote: catalog.licenseNote }
+                    : {}),
+                },
+              }),
+            };
+          }
+          lastError = mapped.error;
+          continue;
+        }
+        if (fetched.aborted || signal?.aborted) {
+          return { ok: false, error: "aborted" };
+        }
+        lastError =
+          fetched.error.trim().length > 0 ? fetched.error.trim() : lastError;
+      }
+
+      if (useFixtureFallback) {
+        return produceIssOrbitalTrackFixtureAcquisition(acquireOptions, signal);
+      }
+      return { ok: false, error: lastError };
+    },
+  };
 }
 
 /** Scene stack row id for the DLC-3 Model B layer (SceneConfig). */

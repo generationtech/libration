@@ -148,13 +148,13 @@ describe("LIB-039 ISS presentation live-update from one prepared view", () => {
     expect(futureOff.payload.tracks[0]?.futureSamples ?? []).toHaveLength(0);
     expect((futureOff.payload.tracks[0]?.pastSamples ?? []).length).toBeGreaterThan(0);
 
-    const past15 = planFromPrepared(configWithPresentation({ pastMinutes: 15 }), host);
+    const past15 = planFromPrepared(configWithPresentation({ pastHorizon: "15m" }), host);
     const past60 = baseline.payload.tracks[0]?.pastSamples?.length ?? 0;
     const past15n = past15.payload.tracks[0]?.pastSamples?.length ?? 0;
     expect(past15n).toBeGreaterThan(1);
     expect(past15n).toBeLessThan(past60);
 
-    const future15 = planFromPrepared(configWithPresentation({ futureMinutes: 15 }), host);
+    const future15 = planFromPrepared(configWithPresentation({ futureHorizon: "15m" }), host);
     const future30 = baseline.payload.tracks[0]?.futureSamples?.length ?? 0;
     const future15n = future15.payload.tracks[0]?.futureSamples?.length ?? 0;
     expect(future15n).toBeGreaterThan(1);
@@ -218,6 +218,10 @@ describe("LIB-039 ISS presentation live-update from one prepared view", () => {
           /255,\s*255,\s*255/.test(i.fill),
       ),
     ).toBe(true);
+    expect(
+      glyphColor.plan.items.filter((i) => i.kind === "path2d" && i.pathKind === "descriptor")
+        .length,
+    ).toBeGreaterThanOrEqual(2);
 
     const labelOff = planFromPrepared(configWithPresentation({ labelEnabled: false }), host);
     expect(labelOff.plan.items.some((i) => i.kind === "text")).toBe(false);

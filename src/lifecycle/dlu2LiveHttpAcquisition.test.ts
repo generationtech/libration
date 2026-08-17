@@ -216,6 +216,28 @@ describe("fetchLiveHttpBytes", () => {
     });
     expect(aborted).toEqual({ ok: false, error: "aborted", aborted: true });
   });
+
+  it("times out a hanging fetch without treating it as a parent abort", async () => {
+    vi.useFakeTimers();
+    const fetchFn: LiveHttpFetchFn = vi.fn(
+      (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        }),
+    );
+    const pending = fetchLiveHttpBytes({
+      url: "https://example.test/live.jpg",
+      acceptContentTypes: ["image/jpeg"],
+      timeoutMs: 50,
+      fetchFn,
+    });
+    await vi.advanceTimersByTimeAsync(50);
+    const result = await pending;
+    expect(result).toEqual({ ok: false, error: "timeout" });
+    vi.useRealTimers();
+  });
 });
 
 describe("applyAcquisitionAttribution", () => {

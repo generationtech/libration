@@ -96,7 +96,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `lunar-track` | `2026-01-16T22:00:00.000Z` | Lunar ground track on (24 h past + 24 h future), sublunar marker on, analemma off, grid on; Moon near 170°W at high southern latitude so a dateline crossing and latitude excursion are in view | Lunar track alignment, past/future styling, seam/wrap, overlay readability |
 | `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap; accelerated demo through a full Moon traversal with no migrating seam/cusp on the exposed line (cycle seam under the Moon glyph) |
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
-| `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, duration, colors, thickness, glyph type/size/color, label |
+| `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, **horizons (minutes and orbits)**, colors, thickness, glyph type/size/color, silhouette color, label |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
@@ -346,19 +346,37 @@ To verify those three overlays, use **ordinary non-scenario** current-time mode 
 
 Do not treat a DEV scenario session as evidence that live layers work.
 
+### ISS fresh-process first paint
+
+Ordinary non-scenario current time, **new process** (`http://localhost:1420/` with no `?scenario=`, ISS unchecked at factory defaults):
+
+1. Open Config → Layers → Layer masters.
+2. Check ISS orbital track. Do not wait for a 2-hour tick, resize, or unrelated edit.
+3. Expect a concise “ISS orbital track is loading…” hint while there is no usable in-memory TLE.
+4. Within a few seconds of a responsive live TLE (or about one 8 s primary timeout plus secondary latency when CelesTrak hangs): ISS marker/track on the map, loading hint gone. Or, promptly, “ISS orbital track is unavailable.” with no fixture orbit.
+5. Disable ISS for ~5 s, then re-enable. If a usable live TLE is still in memory, the overlay returns immediately; a background refresh may still run.
+6. Historical Demo (for example 2017-08-21) with ISS still checked: no loading hint implying it should appear; live-only suppression copy; no ISS on the map. Return to current: acquisition/reuse starts without re-checking the box.
+
+Repeat from a fresh `npm run dev` at least once so React StrictMode remount is included.
+
 ### ISS presentation controls (`iss-presentation`)
 
 Use `http://localhost:1420/?scenario=iss-presentation`. Confirm the DEV banner id and UTC `2026-08-06T01:17:00.000Z`. Open Config → Layers → Space objects. Each control must change the map on the next frame; do not wait for a TLE refresh, resize, or an unrelated edit. Restore factory values after each extreme.
 
 - Orbit track OFF: trajectory lines gone; current glyph and `ISS` label remain. ON: lines return immediately.
 - Distinct past (red) and future (green): both on; past off leaves only future; future off leaves only past; each restore is immediate.
-- Past duration 60 → 15 → 30 → 60 and future 30 → 15 → 30: line extent shortens and lengthens immediately.
+- Past horizon 60 min → 15 min → 1 orbit → 3 orbits → 6 orbits (and matching future): line extent grows immediately from local SGP4, without a TLE fetch. Distant revolutions are fainter. No world-spanning seam lines.
+- 1 orbit / 1 orbit: one previous revolution and one future revolution around the current marker; Earth-rotation ground-track shift; no false world-spanning lines.
+- 3 orbits / 3 orbits: multiple sinusoidal passes; older/farther tracks fade; current glyph remains obvious; map stays readable.
+- 6 orbits / 6 orbits: no renderer failure; fading still quietens distant passes; no giant seam lines; acceptable interaction.
+- Asymmetric: past 6 orbits / future 1 orbit, then the reverse. Independent extents and colors.
+- Silhouette glyph Extra large: `#ff00ff` then `#00ff00` must visibly recolor the station; restore default cyan family and Medium / Dot afterward. Dot color must remain independent.
 - Orbit base color: label (and past track when still linked to that color) changes immediately.
 - Line thickness Thin / Normal / Thick.
 - Glyph Dot ↔ ISS silhouette; size Small / Medium / Large / Extra large; conditional dot vs silhouette color.
 - Show ISS label OFF removes the text immediately; ON restores it; the marker remains.
 
-This scenario must not fetch CelesTrak. Production ordinary mode still hides ISS when the provider is unavailable.
+This scenario must not fetch CelesTrak or Where the ISS at. Production ordinary mode still hides ISS when no live TLE can be acquired.
 
 ### Current vs historical dynamic-layer smoke
 
@@ -366,7 +384,7 @@ Ordinary non-scenario current time (`http://localhost:1420/`, no `?scenario=`):
 
 - Enable Earthquakes, Global clouds / IR, and ISS orbital track. Wait for acquisition.
 - Confirm live USGS events, GIBS overlay, and an ISS track with a current-position marker labeled `ISS` that sits **on** the track (not at an arbitrary future endpoint unless the future window is 0).
-- If CelesTrak is blocked, classify ISS as fixture fallback; do not treat a canned Africa/Pacific fixture as a live current position.
+- If CelesTrak is blocked, a secondary live TLE (Where the ISS at) may still succeed; classify the actual provider. If all live TLE sources fail, ISS is unavailable — do not treat a canned Africa/Pacific fixture as a live current position.
 
 Historical Demo (for example 2017-08-21) with those three still checked:
 

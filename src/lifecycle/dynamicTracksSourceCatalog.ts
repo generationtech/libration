@@ -42,19 +42,21 @@ export type DynamicTracksSourceCatalogEntry = Readonly<{
 export const ISS_ORBITAL_TRACK_SOURCE_ID: DynamicSourceId = "iss-orbital-track-v1";
 
 /**
- * Default refresh for orbital track summaries (~60 s). Acquisition still runs outside rAF.
- * Live CelesTrak TLE → SGP4 ground track under the same durable sourceId (DLU-4).
+ * Default TLE refresh while ISS is enabled (~2 hours).
+ * CelesTrak GP updates once per 2 hours and asks clients to download once per
+ * update. Marker motion is local SGP4(product UTC); the TLE itself does not
+ * need a 1-minute poll.
  */
-export const ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS = 60 * 1000;
+export const ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
 
 const ISS_ORBITAL_TRACK_ENTRY: DynamicTracksSourceCatalogEntry = {
   sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
   label: "ISS orbital track",
   kind: "tracks",
   attribution:
-    "CelesTrak GP (TLE) for ISS NORAD 25544 via in-app live acquisition, propagated to a timed geographic ground track (SGP4) under durable id iss-orbital-track-v1. Production hides ISS when CelesTrak is unavailable; recorded GeoJSON fixture is tests/DEV only and is never painted as live.",
+    "Live ISS TLE via ordered in-app acquisition (CelesTrak GP primary; Where the ISS at TLE secondary) for NORAD 25544, propagated to a timed geographic ground track (SGP4) under durable id iss-orbital-track-v1. Production hides ISS when no live TLE can be acquired; recorded GeoJSON fixture is tests/DEV only and is never painted as live.",
   licenseNote:
-    "CelesTrak GP / TLE products are free for redistribution with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/DEV content and are not a production current-ISS substitute.",
+    "CelesTrak GP / TLE products are free for redistribution with attribution (one download per 2-hour GP update). Where the ISS at TLE is a public rate-limited REST API (wheretheiss.at/w/developer). Live feed URLs are not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/DEV content and are not a production current-ISS substitute.",
   defaultRefreshIntervalMs: ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
     "Time-tagged track samples in geographic lon/lat degrees (−180…+180°, −90…+90°), GeoJSON FeatureCollection with timed LineString contract.",

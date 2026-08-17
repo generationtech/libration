@@ -1663,8 +1663,8 @@ describe("eclipse product polish presentation", () => {
         glyphType: "silhouette",
         glyphSize: "large",
         labelEnabled: false,
-        pastMinutes: 15,
-        futureMinutes: 15,
+        pastHorizon: "15m",
+        futureHorizon: "15m",
       }),
     });
     const round = normalizeLibrationConfig(JSON.parse(JSON.stringify(explicit)) as LibrationConfigV2);
@@ -1684,7 +1684,52 @@ describe("eclipse product polish presentation", () => {
     expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.labelEnabled : undefined).toBe(
       false,
     );
-    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(15);
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastHorizon : undefined).toBe(
+      "15m",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(
+      undefined,
+    );
+  });
+
+  it("migrates LIB-038 pastMinutes/futureMinutes and keeps 45 min", () => {
+    const migrated = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers),
+        layers: buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers).layers.map((row) => {
+          if (row.id === "orbitalTracks" && row.source.kind === "dynamicTracks") {
+            return {
+              ...row,
+              source: {
+                kind: "dynamicTracks",
+                sourceId: "iss-orbital-track-v1",
+                parameters: {
+                  pastMinutes: 45,
+                  futureMinutes: 15,
+                  pastColor: "#ff3300",
+                  glyphType: "dot",
+                },
+              },
+            };
+          }
+          return row;
+        }),
+      },
+    });
+    const row = migrated.scene?.layers.find((l) => l.id === "orbitalTracks");
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastHorizon : undefined).toBe(
+      "45m",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.futureHorizon : undefined).toBe(
+      "15m",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastColor : undefined).toBe(
+      "#ff3300",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(
+      undefined,
+    );
   });
 
   it("orbit base color follows the linked past color and leaves a customized past alone", () => {

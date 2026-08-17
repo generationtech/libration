@@ -75,6 +75,66 @@ function defaultFetchFn(): LiveHttpFetchFn {
   return globalThis.fetch.bind(globalThis) as LiveHttpFetchFn;
 }
 
+type TimeoutLink = Readonly<{
+  signal?: AbortSignal;
+  cancel: () => void;
+  didTimeout: () => boolean;
+}>;
+
+/**
+ * Bound a parent AbortSignal with an optional timeout. Timeout abort is
+ * distinct from parent abort so callers can fail over instead of treating
+ * disable/stop as a timeout.
+ */
+function linkTimeoutSignal(
+  parent: AbortSignal | undefined,
+  timeoutMs: number | undefined,
+): TimeoutLink {
+  if (
+    timeoutMs === undefined ||
+    !Number.isFinite(timeoutMs) ||
+    timeoutMs <= 0
+  ) {
+    return {
+      signal: parent,
+      cancel: () => undefined,
+      didTimeout: () => false,
+    };
+  }
+  const timeout = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    timeout.abort();
+  }, timeoutMs);
+  const onParentAbort = () => {
+    clearTimeout(timer);
+    timeout.abort();
+  };
+  if (parent !== undefined) {
+    if (parent.aborted) {
+      clearTimeout(timer);
+      timeout.abort();
+    } else {
+      parent.addEventListener("abort", onParentAbort, { once: true });
+    }
+  }
+  const signal =
+    parent !== undefined && typeof AbortSignal.any === "function"
+      ? AbortSignal.any([parent, timeout.signal])
+      : timeout.signal;
+  return {
+    signal,
+    cancel: () => {
+      clearTimeout(timer);
+      if (parent !== undefined) {
+        parent.removeEventListener("abort", onParentAbort);
+      }
+    },
+    didTimeout: () => timedOut && parent?.aborted !== true,
+  };
+}
+
 /**
  * Fetch bytes for a live acquisition adapter.
  * Honors AbortSignal; rejects unexpected Content-Type; does not parse product
@@ -94,10 +154,13 @@ export async function fetchLiveHttpBytes(
     return { ok: false, error: "acceptContentTypes required" };
   }
 
-  const signal = options.signal;
-  if (signal?.aborted) {
+  const parentSignal = options.signal;
+  if (parentSignal?.aborted) {
     return { ok: false, error: "aborted", aborted: true };
   }
+
+  const timeoutLink = linkTimeoutSignal(parentSignal, options.timeoutMs);
+  const signal = timeoutLink.signal;
 
   const fetchFn = options.fetchFn ?? defaultFetchFn();
   const headers: Record<string, string> = {
@@ -109,8 +172,12 @@ export async function fetchLiveHttpBytes(
   try {
     response = await fetchFn(url, { signal, headers });
   } catch (err) {
-    if (signal?.aborted) {
+    timeoutLink.cancel();
+    if (parentSignal?.aborted) {
       return { ok: false, error: "aborted", aborted: true };
+    }
+    if (timeoutLink.didTimeout()) {
+      return { ok: false, error: "timeout" };
     }
     const message =
       err instanceof Error && err.message.trim().length > 0
@@ -119,11 +186,17 @@ export async function fetchLiveHttpBytes(
     return { ok: false, error: message };
   }
 
-  if (signal?.aborted) {
+  if (parentSignal?.aborted) {
+    timeoutLink.cancel();
     return { ok: false, error: "aborted", aborted: true };
+  }
+  if (timeoutLink.didTimeout()) {
+    timeoutLink.cancel();
+    return { ok: false, error: "timeout" };
   }
 
   if (!response.ok) {
+    timeoutLink.cancel();
     return {
       ok: false,
       error: `HTTP ${response.status}`,
@@ -133,6 +206,7 @@ export async function fetchLiveHttpBytes(
 
   const rawType = response.headers.get("content-type");
   if (!contentTypeMatchesAccept(rawType, options.acceptContentTypes)) {
+    timeoutLink.cancel();
     const got = normalizeHttpContentType(rawType) || "(missing)";
     return {
       ok: false,
@@ -145,8 +219,12 @@ export async function fetchLiveHttpBytes(
   try {
     buffer = await response.arrayBuffer();
   } catch (err) {
-    if (signal?.aborted) {
+    timeoutLink.cancel();
+    if (parentSignal?.aborted) {
       return { ok: false, error: "aborted", aborted: true };
+    }
+    if (timeoutLink.didTimeout()) {
+      return { ok: false, error: "timeout" };
     }
     const message =
       err instanceof Error && err.message.trim().length > 0
@@ -155,7 +233,8 @@ export async function fetchLiveHttpBytes(
     return { ok: false, error: message };
   }
 
-  if (signal?.aborted) {
+  timeoutLink.cancel();
+  if (parentSignal?.aborted) {
     return { ok: false, error: "aborted", aborted: true };
   }
 
@@ -316,6 +395,7 @@ export function createLiveHttpAcquisitionAdapter(
   const acceptContentTypes = options.acceptContentTypes;
   const toEntry = options.toEntry;
   const sourceId = options.sourceId;
+  const timeoutMs = options.timeoutMs;
 
   return {
     sourceId,
@@ -330,6 +410,7 @@ export function createLiveHttpAcquisitionAdapter(
         signal,
         ...(fetchFn !== undefined ? { fetchFn } : {}),
         ...(headers !== undefined ? { headers } : {}),
+        ...(timeoutMs !== undefined ? { timeoutMs } : {}),
       });
 
       if (fetched.ok) {

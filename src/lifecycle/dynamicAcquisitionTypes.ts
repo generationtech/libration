@@ -144,6 +144,11 @@ export type DynamicAcquisitionTimerHooks = Readonly<{
     timeout: number,
   ) => DynamicAcquisitionIntervalHandle;
   clearIntervalFn?: (handle: DynamicAcquisitionIntervalHandle) => void;
+  setTimeoutFn?: (
+    handler: () => void,
+    timeout: number,
+  ) => DynamicAcquisitionIntervalHandle;
+  clearTimeoutFn?: (handle: DynamicAcquisitionIntervalHandle) => void;
 }>;
 
 /**

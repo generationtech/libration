@@ -57,6 +57,12 @@ export type LiveHttpFetchOptions = Readonly<{
   /** Acceptable Content-Type values (matched after stripping parameters). */
   acceptContentTypes: readonly string[];
   signal?: AbortSignal;
+  /**
+   * Optional bound for this request only. When elapsed, the fetch is aborted
+   * and the result is `{ ok: false, error: "timeout" }` (not `aborted`), so a
+   * caller can fail over. Parent `signal` abort still returns `aborted`.
+   */
+  timeoutMs?: number;
   /** Override global `fetch` (tests / Tauri bridge later). */
   fetchFn?: LiveHttpFetchFn;
   headers?: Readonly<Record<string, string>>;
@@ -107,6 +113,8 @@ export type LiveHttpAcquisitionAdapterOptions = Readonly<{
   ) => DynamicAcquisitionResult | Promise<DynamicAcquisitionResult>;
   fetchFn?: LiveHttpFetchFn;
   headers?: Readonly<Record<string, string>>;
+  /** Optional per-request timeout forwarded to {@link fetchLiveHttpBytes}. */
+  timeoutMs?: number;
 }>;
 
 export type ApplyAcquisitionAttributionInput = Readonly<{

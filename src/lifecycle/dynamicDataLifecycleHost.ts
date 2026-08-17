@@ -18,8 +18,9 @@
  * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback;
  * Model A cloud participation (DLU-6) consumes the same live opacity field.
  * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
- * ISS orbital tracks use live CelesTrak TLE→SGP4 (DLU-4). Production does not
- * fall back to fixture; CelesTrak failure with no usable live TLE hides ISS.
+ * ISS orbital tracks use ordered live TLE acquisition (CelesTrak primary,
+ * Where the ISS at secondary). Production does not fall back to fixture;
+ * all-provider failure with no usable live TLE hides ISS.
 
  * DLU-7 closed the live acquisition track for these four consumers.
  * TimeContext attachments are read-only.
@@ -46,6 +47,7 @@ import {
   ISS_ORBITAL_TRACK_DEFAULT_REFRESH_INTERVAL_MS,
   ISS_ORBITAL_TRACK_SOURCE_ID,
 } from "./dynamicTracksSourceCatalog";
+import { ISS_TLE_FAILURE_RETRY_MS } from "./issOrbitalTrackAcquisition";
 import { createGlobalCloudsIrLiveHttpAcquisitionAdapter } from "./globalCloudsIrAcquisition";
 import { createEarthquakesLiveHttpAcquisitionAdapter } from "./earthquakesAcquisition";
 import { createIssOrbitalTrackLiveHttpAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
@@ -100,6 +102,32 @@ export function createDynamicDataLifecycleHost(
   let unsubCloudsIr: (() => void) | undefined;
   let unsubEarthquakes: (() => void) | undefined;
   let unsubOrbitalTracks: (() => void) | undefined;
+  let issFailureRetryHandle: ReturnType<typeof setTimeout> | undefined;
+  const setTimeoutFn =
+    deps.setTimeoutFn ??
+    ((handler: () => void, timeout: number) => setTimeout(handler, timeout));
+  const clearTimeoutFn =
+    deps.clearTimeoutFn ??
+    ((handle: ReturnType<typeof setTimeout>) => {
+      clearTimeout(handle);
+    });
+
+  function clearIssFailureRetry(): void {
+    if (issFailureRetryHandle === undefined) return;
+    clearTimeoutFn(issFailureRetryHandle);
+    issFailureRetryHandle = undefined;
+  }
+
+  function scheduleIssFailureRetry(): void {
+    if (disposed || !orbitalTracksArmed) return;
+    if (issFailureRetryHandle !== undefined) return;
+    issFailureRetryHandle = setTimeoutFn(() => {
+      issFailureRetryHandle = undefined;
+      if (disposed || !orbitalTracksArmed) return;
+      if (!acquisition.isPeriodicActive(ISS_ORBITAL_TRACK_SOURCE_ID)) return;
+      void acquisition.refreshNow(ISS_ORBITAL_TRACK_SOURCE_ID);
+    }, ISS_TLE_FAILURE_RETRY_MS) as ReturnType<typeof setTimeout>;
+  }
 
   /**
    * After lifecycle marks ready, pull entry from the store into a sync materializer.
@@ -299,18 +327,40 @@ export function createDynamicDataLifecycleHost(
           unsubOrbitalTracks = u;
         },
       );
+      const unsubIssRetry = lifecycle.subscribe(
+        ISS_ORBITAL_TRACK_SOURCE_ID,
+        (snap) => {
+          if (snap.state === "error") {
+            scheduleIssFailureRetry();
+          } else {
+            clearIssFailureRetry();
+          }
+        },
+      );
+      const unsubMaterialize = unsubOrbitalTracks;
+      unsubOrbitalTracks = () => {
+        unsubMaterialize?.();
+        unsubIssRetry();
+        clearIssFailureRetry();
+      };
       orbitalTracksArmed = true;
     }
 
     if (!acquisition.isPeriodicActive(ISS_ORBITAL_TRACK_SOURCE_ID)) {
+      // Re-enable with a still-usable live snapshot paints from memory.
+      // Do not re-download until the 2 h cadence (or a later stale/error retry).
+      const snap = lifecycle.getState(ISS_ORBITAL_TRACK_SOURCE_ID);
+      const skipImmediateBecauseFreshCache =
+        snap.state === "ready" && snap.latestVersionId !== undefined;
       acquisition.startPeriodic(ISS_ORBITAL_TRACK_SOURCE_ID, {
         intervalMs,
-        runImmediately,
+        runImmediately: runImmediately && !skipImmediateBecauseFreshCache,
       });
     }
   }
 
   function stopOrbitalTracksConsumer(): void {
+    clearIssFailureRetry();
     acquisition.stopPeriodic(ISS_ORBITAL_TRACK_SOURCE_ID);
   }
 
@@ -323,6 +373,7 @@ export function createDynamicDataLifecycleHost(
     unsubEarthquakes = undefined;
     unsubOrbitalTracks?.();
     unsubOrbitalTracks = undefined;
+    clearIssFailureRetry();
     acquisition.stopAll();
     materializer.revokeAll();
     cloudOpacityMaterializer.clearAll();

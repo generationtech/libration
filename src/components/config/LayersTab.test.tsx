@@ -715,12 +715,12 @@ describe("LayersTab topic navigation", () => {
     selectLayersTopic("spaceObjects");
     const track = screen.getByLabelText("Orbit track") as HTMLInputElement;
     const past = screen.getByLabelText("Track past") as HTMLInputElement;
-    const pastDuration = screen.getByLabelText("Past duration") as HTMLSelectElement;
+    const pastDuration = screen.getByLabelText("Past horizon") as HTMLSelectElement;
     const glyph = screen.getByLabelText("ISS glyph") as HTMLSelectElement;
     const label = screen.getByLabelText("Show ISS label") as HTMLInputElement;
     expect(track.checked).toBe(true);
     expect(past.checked).toBe(true);
-    expect(pastDuration.value).toBe("60");
+    expect(pastDuration.value).toBe("60m");
     expect(glyph.value).toBe("dot");
     expect(screen.getByLabelText("ISS dot color")).toBeInTheDocument();
     expect(screen.queryByLabelText("ISS glyph color")).toBeNull();
@@ -738,7 +738,7 @@ describe("LayersTab topic navigation", () => {
 
     const trackAfterNav = screen.getByLabelText("Orbit track") as HTMLInputElement;
     const pastAfterNav = screen.getByLabelText("Track past") as HTMLInputElement;
-    const pastDurationAfterNav = screen.getByLabelText("Past duration") as HTMLSelectElement;
+    const pastDurationAfterNav = screen.getByLabelText("Past horizon") as HTMLSelectElement;
     await user.click(trackAfterNav);
     expect(trackAfterNav.checked).toBe(false);
     expect(pastAfterNav.disabled).toBe(true);
@@ -829,7 +829,7 @@ describe("LayersTab live overlay masters", () => {
     );
     unmount();
 
-    render(
+    const { unmount: unmountDegraded } = render(
       <LayersTab
         config={normalizeLibrationConfig(defaultLibrationConfigV2())}
         productTimeLiveEnough={true}
@@ -838,6 +838,18 @@ describe("LayersTab live overlay masters", () => {
     );
     expect(screen.getByTestId("iss-status-hint").textContent).toMatch(
       /ISS orbital track is degraded/,
+    );
+    unmountDegraded();
+
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        productTimeLiveEnough={true}
+        issConfigStatusHint="loading"
+      />,
+    );
+    expect(screen.getByTestId("iss-status-hint").textContent).toMatch(
+      /ISS orbital track is loading/,
     );
   });
 });

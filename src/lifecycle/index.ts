@@ -263,8 +263,18 @@ export type {
   IssOrbitalTrackLiveAcquireOptions,
   IssPositionAtTimeResult,
   IssTleLines,
+  IssTleLiveProvider,
+  IssTleLiveProviderId,
   IssTleParseResult,
 } from "./issOrbitalTrackAcquisition";
+
+export {
+  getIssPresentationTrackSamples,
+  issOrbitalPeriodMsFromTle,
+  issPresentationProductTimeBucketMs,
+  issPresentationTrackCacheKey,
+  resetIssPresentationTrackCacheForTests,
+} from "./issPresentationTrack";
 
 export {
   ISS_NORAD_CATALOG_NUMBER,
@@ -273,10 +283,15 @@ export {
   ISS_ORBITAL_TRACK_LOOKAHEAD_MS,
   ISS_ORBITAL_TRACK_LOOKBACK_MS,
   ISS_ORBITAL_TRACK_SAMPLE_STEP_MS,
+  ISS_ORBITAL_TRACK_SECONDARY_LIVE_FEED_URL,
+  ISS_TLE_ACQUIRE_TIMEOUT_MS,
+  ISS_TLE_FAILURE_RETRY_MS,
   ISS_TLE_LINE1_PROPERTY,
   ISS_TLE_LINE2_PROPERTY,
+  ISS_TLE_LIVE_PROVIDERS,
   ISS_TLE_NAME_PROPERTY,
   ISS_ORIGIN_PROPERTY,
+  ISS_TLE_PROVIDER_PROPERTY,
   ORBITAL_TRACKS_SCENE_LAYER_ID,
   createIssOrbitalTrackFixtureAcquisitionAdapter,
   createIssOrbitalTrackLiveHttpAcquisitionAdapter,

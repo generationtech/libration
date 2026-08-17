@@ -1626,10 +1626,13 @@ function withNormalizedIssOrbitalPresentationParameters(
     return source;
   }
   const presentation = normalizeIssOrbitalPresentation(source.parameters);
+  const previous = { ...(source.parameters ?? {}) };
+  delete previous.pastMinutes;
+  delete previous.futureMinutes;
   return {
     ...source,
     parameters: {
-      ...(source.parameters ?? {}),
+      ...previous,
       ...presentation,
     },
   };

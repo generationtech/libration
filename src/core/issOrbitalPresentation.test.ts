@@ -15,8 +15,8 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_ISS_ORBITAL_PRESENTATION,
   DEFAULT_ISS_ORBIT_BASE_COLOR,
-  DEFAULT_ISS_ORBIT_FUTURE_MINUTES,
-  DEFAULT_ISS_ORBIT_PAST_MINUTES,
+  DEFAULT_ISS_ORBIT_FUTURE_HORIZON,
+  DEFAULT_ISS_ORBIT_PAST_HORIZON,
   normalizeIssOrbitalPresentation,
   selectIssTrackTemporalWindow,
 } from "./issOrbitalPresentation";
@@ -25,8 +25,8 @@ describe("issOrbitalPresentation", () => {
   it("fills missing keys with factory defaults", () => {
     expect(normalizeIssOrbitalPresentation(undefined)).toEqual(DEFAULT_ISS_ORBITAL_PRESENTATION);
     expect(normalizeIssOrbitalPresentation({})).toEqual(DEFAULT_ISS_ORBITAL_PRESENTATION);
-    expect(DEFAULT_ISS_ORBIT_PAST_MINUTES).toBe(60);
-    expect(DEFAULT_ISS_ORBIT_FUTURE_MINUTES).toBe(30);
+    expect(DEFAULT_ISS_ORBIT_PAST_HORIZON).toBe("60m");
+    expect(DEFAULT_ISS_ORBIT_FUTURE_HORIZON).toBe("30m");
   });
 
   it("preserves explicit persisted values", () => {
@@ -34,8 +34,8 @@ describe("issOrbitalPresentation", () => {
       trackEnabled: false,
       pastEnabled: false,
       futureEnabled: true,
-      pastMinutes: 15,
-      futureMinutes: 15,
+      pastHorizon: "15m",
+      futureHorizon: "15m",
       baseColor: "#112233",
       pastColor: "#ff0000",
       futureColor: "#00ff00",
@@ -49,8 +49,8 @@ describe("issOrbitalPresentation", () => {
     expect(next.trackEnabled).toBe(false);
     expect(next.pastEnabled).toBe(false);
     expect(next.futureEnabled).toBe(true);
-    expect(next.pastMinutes).toBe(15);
-    expect(next.futureMinutes).toBe(15);
+    expect(next.pastHorizon).toBe("15m");
+    expect(next.futureHorizon).toBe("15m");
     expect(next.baseColor).toBe("#112233");
     expect(next.pastColor).toBe("#ff0000");
     expect(next.futureColor).toBe("#00ff00");
@@ -60,6 +60,34 @@ describe("issOrbitalPresentation", () => {
     expect(next.dotColor).toBe("#abcdef");
     expect(next.glyphColor).toBe("#fedcba");
     expect(next.labelEnabled).toBe(false);
+  });
+
+  it("migrates LIB-038 pastMinutes/futureMinutes onto horizon tokens", () => {
+    const next = normalizeIssOrbitalPresentation({
+      pastMinutes: 15,
+      futureMinutes: 15,
+    });
+    expect(next.pastHorizon).toBe("15m");
+    expect(next.futureHorizon).toBe("15m");
+    expect("pastMinutes" in next).toBe(false);
+    expect("futureMinutes" in next).toBe(false);
+  });
+
+  it("preserves explicit 45 min past instead of rewriting it", () => {
+    const next = normalizeIssOrbitalPresentation({ pastMinutes: 45, futureMinutes: 30 });
+    expect(next.pastHorizon).toBe("45m");
+    expect(next.futureHorizon).toBe("30m");
+  });
+
+  it("prefers an explicit horizon token over leftover minute fields", () => {
+    const next = normalizeIssOrbitalPresentation({
+      pastHorizon: "3orbits",
+      futureHorizon: "1orbit",
+      pastMinutes: 60,
+      futureMinutes: 30,
+    });
+    expect(next.pastHorizon).toBe("3orbits");
+    expect(next.futureHorizon).toBe("1orbit");
   });
 
   it("uses baseColor as fallback for a missing past color", () => {
@@ -72,14 +100,15 @@ describe("issOrbitalPresentation", () => {
   it("rejects unknown duration/thickness/glyph ids", () => {
     const next = normalizeIssOrbitalPresentation({
       pastMinutes: 90,
-      futureMinutes: 60,
+      futureMinutes: 12,
+      pastHorizon: "9orbits",
       lineThickness: "chunky",
       glyphType: "emoji",
       glyphSize: "tiny",
       baseColor: "not-a-color",
     });
-    expect(next.pastMinutes).toBe(DEFAULT_ISS_ORBIT_PAST_MINUTES);
-    expect(next.futureMinutes).toBe(DEFAULT_ISS_ORBIT_FUTURE_MINUTES);
+    expect(next.pastHorizon).toBe(DEFAULT_ISS_ORBIT_PAST_HORIZON);
+    expect(next.futureHorizon).toBe(DEFAULT_ISS_ORBIT_FUTURE_HORIZON);
     expect(next.lineThickness).toBe("normal");
     expect(next.glyphType).toBe("dot");
     expect(next.glyphSize).toBe("normal");
@@ -98,8 +127,8 @@ describe("issOrbitalPresentation", () => {
     const windowed = selectIssTrackTemporalWindow(samples, now, {
       pastEnabled: true,
       futureEnabled: true,
-      pastMinutes: 15,
-      futureMinutes: 30,
+      pastMs: 15 * 60_000,
+      futureMs: 30 * 60_000,
       current,
     });
     expect(windowed.past.map((s) => s.id)).toEqual(["p10", "now"]);
@@ -116,8 +145,8 @@ describe("issOrbitalPresentation", () => {
     const pastOnly = selectIssTrackTemporalWindow(samples, now, {
       pastEnabled: true,
       futureEnabled: false,
-      pastMinutes: 60,
-      futureMinutes: 30,
+      pastMs: 60 * 60_000,
+      futureMs: 30 * 60_000,
       current,
     });
     expect(pastOnly.future).toEqual([]);

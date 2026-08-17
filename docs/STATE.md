@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-039](work/LIB-039-iss-presentation-live-update-repair.md) — ISS presentation live-update / invalidation repair
+[LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md) — ISS multi-orbit track horizons + silhouette color fix
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Stop. No approved work.
+Await human authorization of the next work item.

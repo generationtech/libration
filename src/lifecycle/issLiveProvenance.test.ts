@@ -161,6 +161,7 @@ describe("LIB-036 ISS provenance", () => {
     expect(p.ageMs).toBe(60 * 60 * 1000);
     expect(p.freshnessBand).toBe("fresh");
     expect(p.propagatedProductUtcMs).toBe(productUtcMs);
+    expect(p.tleProvider).toBe("celestrak");
     expect(issTrackShouldPaint(p)).toBe(true);
   });
 
@@ -178,6 +179,7 @@ describe("LIB-036 ISS provenance", () => {
     expect(p.origin).toBe("fixture");
     expect(p.tleEpochUtcMs).toBeNull();
     expect(p.freshnessBand).toBeNull();
+    expect(p.tleProvider).toBeNull();
     expect(issTrackShouldPaint(p)).toBe(false);
   });
 
@@ -237,6 +239,25 @@ describe("LIB-036 ISS provenance", () => {
         provenance: stale,
       }),
     ).toBe("unavailable");
+  });
+
+  it("shows loading hint while first live acquire has no usable TLE", () => {
+    expect(
+      issConfigStatusHint({
+        enabled: true,
+        productTimeLiveEnough: true,
+        lifecycleState: "loading",
+        provenance: null,
+      }),
+    ).toBe("loading");
+    expect(
+      issConfigStatusHint({
+        enabled: true,
+        productTimeLiveEnough: false,
+        lifecycleState: "loading",
+        provenance: null,
+      }),
+    ).toBeNull();
   });
 
   it("marker remains SGP4 at product UTC, not track endpoints", () => {

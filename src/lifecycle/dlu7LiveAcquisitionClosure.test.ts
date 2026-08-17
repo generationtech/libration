@@ -14,7 +14,7 @@
 /**
  * DLU-7 — live acquisition track closure.
  * Smoke the four shipped consumers under durable sourceIds. Clouds/IR and
- * earthquakes keep fixture fallback; ISS hides when CelesTrak is unavailable.
+ * earthquakes keep fixture fallback; ISS hides when no live TLE can be acquired.
  * Prove host arm + resolve stay scrub-safe (no fetch on paint path).
  */
 

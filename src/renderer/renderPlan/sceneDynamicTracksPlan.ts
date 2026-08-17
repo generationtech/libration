@@ -16,8 +16,15 @@
  * Trail polylines + tip discs/silhouette are resolved here; the canvas executor applies primitives only.
  */
 
-import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground.ts";
+import {
+  blackOrWhiteForegroundForBackgroundCss,
+  parseCssColorToRgba8888,
+} from "../../color/contrastForegroundOnCssBackground.ts";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
+import {
+  issOrbitDistanceIndex,
+  issOrbitFadeMultiplier,
+} from "../../core/issOrbitHorizon";
 import {
   DEFAULT_ISS_ORBITAL_PRESENTATION,
   issGlyphSizeScale,
@@ -107,21 +114,31 @@ export function buildDynamicTracksRenderPlan(
           ? (track.pastSamples ??
             fallbackSegment(samples, currentTimeMs, "past", current))
           : [];
-      pushSeamAwarePolyline(
+      const periodMs = options.payload.orbitalPeriodMs;
+      const productUtcMs = currentTimeMs ?? 0;
+      pushFadedOrbitPolylines(
         items,
         futurePts,
         w,
         h,
-        strokeRgba(presentation.futureColor, a(0.38)),
+        presentation.futureColor,
+        a,
+        0.38,
         sw(lineWidth),
+        productUtcMs,
+        periodMs,
       );
-      pushSeamAwarePolyline(
+      pushFadedOrbitPolylines(
         items,
         pastPts,
         w,
         h,
-        strokeRgba(presentation.pastColor, a(0.72)),
+        presentation.pastColor,
+        a,
+        0.72,
         sw(lineWidth),
+        productUtcMs,
+        periodMs,
       );
     }
 
@@ -138,12 +155,24 @@ export function buildDynamicTracksRenderPlan(
 
     if (presentation.glyphType === "silhouette") {
       const heading = options.payload.travelHeadingRad ?? 0;
+      const pathDescriptor = issStationGlyphPathDescriptor(tipX, tipY, r, heading);
+      const fgWidth = sw(Math.max(0.7, 0.85 * sizeScale));
+      const extra = Math.min(1.25, Math.max(0.55, fgWidth * 0.55));
+      const underWidth = fgWidth + extra;
+      const glyphFill = strokeRgba(presentation.glyphColor, a(0.96));
       items.push(
         createDescriptorPathItem({
-          pathDescriptor: issStationGlyphPathDescriptor(tipX, tipY, r, heading),
-          fill: strokeRgba(presentation.glyphColor, a(0.96)),
-          stroke: `rgba(12, 28, 44, ${a(0.85)})`,
-          strokeWidthPx: sw(Math.max(0.9, 1.15 * sizeScale)),
+          pathDescriptor,
+          stroke: issGlyphUnderStrokeRgba(presentation.glyphColor, a(0.85)),
+          strokeWidthPx: underWidth,
+        }),
+      );
+      items.push(
+        createDescriptorPathItem({
+          pathDescriptor,
+          fill: glyphFill,
+          stroke: glyphFill,
+          strokeWidthPx: fgWidth,
         }),
       );
     } else {
@@ -201,6 +230,77 @@ export function buildDynamicTracksRenderPlan(
   }
 
   return { items };
+}
+
+function issGlyphUnderStrokeRgba(glyphCss: string, alpha: number): string {
+  const kind =
+    blackOrWhiteForegroundForBackgroundCss(glyphCss) === "#000000" ? "dark" : "light";
+  return kind === "dark"
+    ? `rgba(12, 28, 44, ${alpha})`
+    : `rgba(236, 240, 246, ${alpha})`;
+}
+
+function pushFadedOrbitPolylines(
+  items: RenderPlan["items"],
+  points: readonly DynamicTrackSampleMarker[],
+  w: number,
+  h: number,
+  colorCss: string,
+  a: (alpha: number) => number,
+  baseAlpha: number,
+  strokeWidthPx: number,
+  productUtcMs: number,
+  orbitalPeriodMs: number | undefined,
+): void {
+  const runs = splitOrbitRuns(points, productUtcMs, orbitalPeriodMs);
+  runs.sort((left, right) => right.orbitIndex - left.orbitIndex);
+  for (const run of runs) {
+    const fade = issOrbitFadeMultiplier(run.orbitIndex);
+    pushSeamAwarePolyline(
+      items,
+      run.points,
+      w,
+      h,
+      strokeRgba(colorCss, a(baseAlpha * fade)),
+      strokeWidthPx,
+    );
+  }
+}
+
+function splitOrbitRuns(
+  points: readonly DynamicTrackSampleMarker[],
+  productUtcMs: number,
+  orbitalPeriodMs: number | undefined,
+): Array<{ orbitIndex: number; points: DynamicTrackSampleMarker[] }> {
+  if (points.length === 0) {
+    return [];
+  }
+  if (!(orbitalPeriodMs !== undefined && orbitalPeriodMs > 0)) {
+    return [{ orbitIndex: 0, points: [...points] }];
+  }
+  const runs: Array<{ orbitIndex: number; points: DynamicTrackSampleMarker[] }> = [];
+  for (let i = 0; i < points.length; i += 1) {
+    const point = points[i]!;
+    const orbitIndex = issOrbitDistanceIndex(
+      Math.abs(point.timeMs - productUtcMs),
+      orbitalPeriodMs,
+    );
+    const last = runs[runs.length - 1];
+    if (last !== undefined && last.orbitIndex === orbitIndex) {
+      last.points.push(point);
+      continue;
+    }
+    const next: { orbitIndex: number; points: DynamicTrackSampleMarker[] } = {
+      orbitIndex,
+      points: [],
+    };
+    if (i > 0) {
+      next.points.push(points[i - 1]!);
+    }
+    next.points.push(point);
+    runs.push(next);
+  }
+  return runs;
 }
 
 function pushSeamAwarePolyline(

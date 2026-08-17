@@ -1423,7 +1423,8 @@ export function LayersTab({
               </p>
             ) : null}
             {issConfigStatusHint === "unavailable" ||
-            issConfigStatusHint === "degraded" ? (
+            issConfigStatusHint === "degraded" ||
+            issConfigStatusHint === "loading" ? (
               <p className="config-section__hint" data-testid="iss-status-hint">
                 {issConfigStatusHintCopy(issConfigStatusHint)}
               </p>

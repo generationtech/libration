@@ -63,6 +63,11 @@ export interface DynamicTracksPayload {
    * (or first-track fallback), aligned with planetary illumination.
    */
   tipReadabilityNightVeil01?: number;
+  /**
+   * Active TLE orbital period in milliseconds, when derived.
+   * Used only for orbit-distance fading; not a persisted config value.
+   */
+  orbitalPeriodMs?: number;
 }
 
 export function isDynamicTracksPayload(
@@ -88,6 +93,12 @@ export function isDynamicTracksPayload(
   if (o.travelHeadingRad !== undefined) {
     const h = o.travelHeadingRad;
     if (typeof h !== "number" || !Number.isFinite(h)) {
+      return false;
+    }
+  }
+  if (o.orbitalPeriodMs !== undefined) {
+    const p = o.orbitalPeriodMs;
+    if (typeof p !== "number" || !Number.isFinite(p) || p <= 0) {
       return false;
     }
   }

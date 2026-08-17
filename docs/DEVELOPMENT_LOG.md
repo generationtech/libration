@@ -243,3 +243,15 @@ Verified: `npx tsc --noEmit` clean; focused presentation tests 135 passed; `npm 
 ISS Space objects presentation now invalidates immediately: `dynamicTracks` runtime equality includes `source.parameters`, so the overlay is reconstructed instead of keeping a constructor snapshot. Duration filtering stays local over the prepared samples. Orbit base color drives the on-map label and follows into past while past is still linked. DEV `?scenario=iss-presentation` uses a process-local recorded TLE (not production fixture-as-live).
 
 Verified: `npx tsc --noEmit` clean; `npm test` 217 files / 2052 passed / 0 failed; `npm run build` succeeded with no `iss-presentation` in `dist/`. Cursor Browser `?scenario=iss-presentation`: every LIB-038 control changed the map on the next frame with 0 CelesTrak requests. Ordinary live ISS unavailable this session. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-040 complete
+
+ISS first enable now fetches immediately (it already did) with an 8 s timeout, ordered CelesTrak → Where the ISS at failover, 2-hour TLE cadence, loading/unavailable hints, and in-memory re-enable without a new download. CelesTrak hangs from this IP; secondary TLE paints in ~8.3 s (timeout-dominated). No fixture-as-live. ADR 0014.
+
+Verified: focused ISS/host tests 33 passed; `npx tsc --noEmit` clean; `npm test` 218 files / 2065 passed / 0 failed; `npm run build` succeeded with no `iss-presentation` in `dist/`. Cursor Browser ordinary factory enable ×3: loading hint, WTIA failover, visible ISS; re-enable 0 extra fetches; 2017 Demo live-only hide; `?scenario=iss-presentation` network-free. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-041 complete
+
+ISS past/future tracks now use minute and orbit horizon tokens resolved from TLE mean motion (`1440 / n`), with local SGP4 expanding the sample window (no extra TLE fetch). Distant revolutions fade by orbit distance (alpha only). ISS silhouette glyph color is a two-pass understroke plus configured fill/stroke so color changes are visible immediately.
+
+Verified: `npx tsc --noEmit` clean; focused 142 passed; `npm test` 220 files / 2081 passed / 0 failed; `npm run build` succeeded with no `iss-presentation` in `dist/`. Cursor Browser `?scenario=iss-presentation`: 1/3/6 orbits, asymmetric 6/1 and 1/6, silhouette magenta/green, 0 TLE fetches. Fixture period ≈ 92.9416 min; 6+6 ≈ 558 samples / ~4 ms SGP4. LIB-037 stays proposed.

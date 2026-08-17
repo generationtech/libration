@@ -87,7 +87,7 @@ describe("LIB-038 ISS overlay presentation", () => {
   it("past duration 15 min trims samples older than the window", async () => {
     const { host, state } = await liveLayer({
       ...DEFAULT_ISS_ORBITAL_PRESENTATION,
-      pastMinutes: 15,
+      pastHorizon: "15m",
     });
     expect(isDynamicTracksPayload(state.data)).toBe(true);
     if (!isDynamicTracksPayload(state.data)) return;

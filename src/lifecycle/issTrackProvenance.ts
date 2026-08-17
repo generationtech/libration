@@ -21,8 +21,10 @@ import type { DynamicSourceLifecycleState } from "./dynamicLifecycleTypes";
 import type { DynamicTrack } from "./dynamicSnapshotTypes";
 import {
   ISS_ORIGIN_PROPERTY,
+  ISS_TLE_PROVIDER_PROPERTY,
   issTleEpochUnixMs,
   tleLinesFromTrackProperties,
+  type IssTleLiveProviderId,
 } from "./issOrbitalTrackAcquisition";
 
 /** Age ≤ this is a current element set (CelesTrak typically refreshes ISS GP more than once per day). */
@@ -44,9 +46,10 @@ export type IssTrackProvenance = Readonly<{
   ageMs: number | null;
   freshnessBand: IssTleFreshnessBand | null;
   propagatedProductUtcMs: number;
+  tleProvider: IssTleLiveProviderId | null;
 }>;
 
-export type IssConfigStatusHint = "unavailable" | "degraded";
+export type IssConfigStatusHint = "unavailable" | "degraded" | "loading";
 
 export function isIssOriginStamp(value: unknown): value is IssTrackOriginStamp {
   return value === "live-tle" || value === "fixture";
@@ -101,6 +104,7 @@ export function resolveIssTrackProvenance(options: {
     ageMs,
     freshnessBand,
     propagatedProductUtcMs: options.productUtcMs,
+    tleProvider: tleProviderFromTrack(options.track),
   };
 }
 
@@ -118,7 +122,7 @@ export function issConfigStatusHint(options: {
     return null;
   }
   if (options.provenance === null) {
-    if (options.lifecycleState === "loading") return null;
+    if (options.lifecycleState === "loading") return "loading";
     return "unavailable";
   }
   if (!issTrackShouldPaint(options.provenance)) {
@@ -134,9 +138,9 @@ export function issConfigStatusHint(options: {
 }
 
 export function issConfigStatusHintCopy(hint: IssConfigStatusHint): string {
-  return hint === "degraded"
-    ? "ISS orbital track is degraded."
-    : "ISS orbital track is unavailable.";
+  if (hint === "degraded") return "ISS orbital track is degraded.";
+  if (hint === "loading") return "ISS orbital track is loading…";
+  return "ISS orbital track is unavailable.";
 }
 
 function originStampFromTrack(track: {
@@ -144,6 +148,17 @@ function originStampFromTrack(track: {
 }): IssTrackOriginStamp | null {
   const raw = track.properties?.[ISS_ORIGIN_PROPERTY];
   return isIssOriginStamp(raw) ? raw : null;
+}
+
+function isIssTleLiveProviderId(value: unknown): value is IssTleLiveProviderId {
+  return value === "celestrak" || value === "wheretheiss-at";
+}
+
+function tleProviderFromTrack(track: {
+  properties?: Readonly<Record<string, unknown>>;
+}): IssTleLiveProviderId | null {
+  const raw = track.properties?.[ISS_TLE_PROVIDER_PROPERTY];
+  return isIssTleLiveProviderId(raw) ? raw : null;
 }
 
 export function issProvenanceFromPreparedTrack(options: {

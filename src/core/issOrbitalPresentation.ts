@@ -12,20 +12,26 @@
  */
 
 /**
- * ISS orbital-track presentation (LIB-038).
- * Durations and colors are display policy; orbital samples remain lifecycle/SGP4 truth.
+ * ISS orbital-track presentation (LIB-038 / LIB-041).
+ * Horizons and colors are display policy; orbital samples remain lifecycle/SGP4 truth.
  */
 
 import { parseCssColorToRgba8888 } from "../color/contrastForegroundOnCssBackground";
+import {
+  DEFAULT_ISS_ORBIT_FUTURE_HORIZON,
+  DEFAULT_ISS_ORBIT_PAST_HORIZON,
+  migrateIssOrbitHorizonId,
+  type IssOrbitHorizonId,
+} from "./issOrbitHorizon";
 
-export const ISS_ORBIT_PAST_MINUTES = [15, 30, 45, 60] as const;
-export type IssOrbitPastMinutes = (typeof ISS_ORBIT_PAST_MINUTES)[number];
-
-export const ISS_ORBIT_FUTURE_MINUTES = [15, 30] as const;
-export type IssOrbitFutureMinutes = (typeof ISS_ORBIT_FUTURE_MINUTES)[number];
-
-export const DEFAULT_ISS_ORBIT_PAST_MINUTES = 60 satisfies IssOrbitPastMinutes;
-export const DEFAULT_ISS_ORBIT_FUTURE_MINUTES = 30 satisfies IssOrbitFutureMinutes;
+export {
+  DEFAULT_ISS_ORBIT_FUTURE_HORIZON,
+  DEFAULT_ISS_ORBIT_PAST_HORIZON,
+  ISS_ORBIT_HORIZON_IDS,
+  ISS_ORBIT_HORIZON_UI_IDS,
+  issOrbitHorizonLabel,
+  type IssOrbitHorizonId,
+} from "./issOrbitHorizon";
 
 export const ISS_ORBIT_LINE_THICKNESS_IDS = ["thin", "normal", "thick"] as const;
 export type IssOrbitLineThicknessId = (typeof ISS_ORBIT_LINE_THICKNESS_IDS)[number];
@@ -80,8 +86,8 @@ export type IssOrbitalPresentation = {
   trackEnabled: boolean;
   pastEnabled: boolean;
   futureEnabled: boolean;
-  pastMinutes: IssOrbitPastMinutes;
-  futureMinutes: IssOrbitFutureMinutes;
+  pastHorizon: IssOrbitHorizonId;
+  futureHorizon: IssOrbitHorizonId;
   baseColor: string;
   pastColor: string;
   futureColor: string;
@@ -97,8 +103,8 @@ export const DEFAULT_ISS_ORBITAL_PRESENTATION: IssOrbitalPresentation = {
   trackEnabled: DEFAULT_ISS_ORBIT_TRACK_ENABLED,
   pastEnabled: DEFAULT_ISS_ORBIT_PAST_ENABLED,
   futureEnabled: DEFAULT_ISS_ORBIT_FUTURE_ENABLED,
-  pastMinutes: DEFAULT_ISS_ORBIT_PAST_MINUTES,
-  futureMinutes: DEFAULT_ISS_ORBIT_FUTURE_MINUTES,
+  pastHorizon: DEFAULT_ISS_ORBIT_PAST_HORIZON,
+  futureHorizon: DEFAULT_ISS_ORBIT_FUTURE_HORIZON,
   baseColor: DEFAULT_ISS_ORBIT_BASE_COLOR,
   pastColor: DEFAULT_ISS_ORBIT_PAST_COLOR,
   futureColor: DEFAULT_ISS_ORBIT_FUTURE_COLOR,
@@ -133,14 +139,6 @@ export function normalizeIssPresentationColorCss(raw: unknown, fallback: string)
     return fallback;
   }
   return toHexRrggbb(parsed.r, parsed.g, parsed.b);
-}
-
-export function normalizeIssOrbitPastMinutes(raw: unknown): IssOrbitPastMinutes {
-  return isOneOf(raw, ISS_ORBIT_PAST_MINUTES) ? raw : DEFAULT_ISS_ORBIT_PAST_MINUTES;
-}
-
-export function normalizeIssOrbitFutureMinutes(raw: unknown): IssOrbitFutureMinutes {
-  return isOneOf(raw, ISS_ORBIT_FUTURE_MINUTES) ? raw : DEFAULT_ISS_ORBIT_FUTURE_MINUTES;
 }
 
 export function normalizeIssOrbitLineThicknessId(raw: unknown): IssOrbitLineThicknessId {
@@ -224,8 +222,8 @@ export function selectIssTrackTemporalWindow<T extends { timeMs: number }>(
   options: {
     pastEnabled: boolean;
     futureEnabled: boolean;
-    pastMinutes: number;
-    futureMinutes: number;
+    pastMs: number;
+    futureMs: number;
     current?: T;
   },
 ): { past: T[]; future: T[] } {
@@ -234,8 +232,8 @@ export function selectIssTrackTemporalWindow<T extends { timeMs: number }>(
   if (!Number.isFinite(productUtcMs)) {
     return { past, future };
   }
-  const pastStart = productUtcMs - Math.max(0, options.pastMinutes) * 60_000;
-  const futureEnd = productUtcMs + Math.max(0, options.futureMinutes) * 60_000;
+  const pastStart = productUtcMs - Math.max(0, options.pastMs);
+  const futureEnd = productUtcMs + Math.max(0, options.futureMs);
   if (options.pastEnabled) {
     for (const sample of samples) {
       if (sample.timeMs >= pastStart && sample.timeMs < productUtcMs) {
@@ -287,8 +285,16 @@ export function normalizeIssOrbitalPresentation(raw: unknown): IssOrbitalPresent
     trackEnabled: normalizeIssBoolean(o.trackEnabled, DEFAULT_ISS_ORBIT_TRACK_ENABLED),
     pastEnabled: normalizeIssBoolean(o.pastEnabled, DEFAULT_ISS_ORBIT_PAST_ENABLED),
     futureEnabled: normalizeIssBoolean(o.futureEnabled, DEFAULT_ISS_ORBIT_FUTURE_ENABLED),
-    pastMinutes: normalizeIssOrbitPastMinutes(o.pastMinutes),
-    futureMinutes: normalizeIssOrbitFutureMinutes(o.futureMinutes),
+    pastHorizon: migrateIssOrbitHorizonId(
+      o.pastHorizon,
+      o.pastMinutes,
+      DEFAULT_ISS_ORBIT_PAST_HORIZON,
+    ),
+    futureHorizon: migrateIssOrbitHorizonId(
+      o.futureHorizon,
+      o.futureMinutes,
+      DEFAULT_ISS_ORBIT_FUTURE_HORIZON,
+    ),
     baseColor,
     pastColor: normalizeIssPresentationColorCss(o.pastColor, baseColor),
     futureColor: normalizeIssPresentationColorCss(o.futureColor, DEFAULT_ISS_ORBIT_FUTURE_COLOR),
