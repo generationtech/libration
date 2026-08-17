@@ -21,6 +21,7 @@ export type LayersTopicId =
   | "eclipse"
   | "moonAndLibration"
   | "astronomyPaths"
+  | "spaceObjects"
   | "advanced";
 
 export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
@@ -30,6 +31,7 @@ export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
   "eclipse",
   "moonAndLibration",
   "astronomyPaths",
+  "spaceObjects",
   "advanced",
 ];
 
@@ -49,6 +51,8 @@ export function labelForLayersTopic(id: LayersTopicId): string {
       return "Moon & libration";
     case "astronomyPaths":
       return "Astronomy paths";
+    case "spaceObjects":
+      return "Space objects";
     case "advanced":
       return "Advanced";
     default: {
@@ -72,6 +76,8 @@ export function descriptionForLayersTopic(id: LayersTopicId): string {
       return "Moon glyph size and optical-libration mark. Independent of eclipse and path overlays.";
     case "astronomyPaths":
       return "Lunar ground track extents and colors, Lunar locus stroke, and Solar analemma stroke.";
+    case "spaceObjects":
+      return "Presentation for tracked space objects. Layer visibility stays under Layer masters.";
     case "advanced":
       return "Overlay-readability veil and lift, including per-layer pilots. Does not change layer on/off.";
     default: {

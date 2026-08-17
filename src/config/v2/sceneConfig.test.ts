@@ -34,6 +34,7 @@ import {
   applyLunarGroundTrackColorToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
+  applyIssOrbitalPresentationToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
@@ -48,6 +49,7 @@ import {
   SUPPORTED_EQUIRECT_BASE_MAP_IDS,
 } from "./sceneConfig";
 import { normalizeSolarEclipsePresentation } from "../../core/eclipse/solarEclipseAppearance";
+import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../../core/issOrbitalPresentation";
 
 const DEFAULT_LAYERS: LayerEnableFlags = {
   baseMap: true,
@@ -1628,5 +1630,59 @@ describe("eclipse product polish presentation", () => {
     expect(
       lowRow?.source.kind === "derived" ? lowRow.source.parameters?.liveCentralBandOpacity : undefined,
     ).toBe(0.04);
+  });
+
+  it("defaults missing ISS presentation keys and preserves explicit values", () => {
+    const missing = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: {
+        ...buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers),
+        layers: buildDefaultSceneConfigFromLayerFlags(DEFAULT_APP_CONFIG.layers).layers.map((row) => {
+          if (row.id === "orbitalTracks" && row.source.kind === "dynamicTracks") {
+            return {
+              ...row,
+              source: { kind: "dynamicTracks", sourceId: "iss-orbital-track-v1" },
+            };
+          }
+          return row;
+        }),
+      },
+    });
+    const missingRow = missing.scene?.layers.find((l) => l.id === "orbitalTracks");
+    expect(
+      missingRow?.source.kind === "dynamicTracks" ? missingRow.source.parameters : undefined,
+    ).toMatchObject(DEFAULT_ISS_ORBITAL_PRESENTATION);
+
+    const explicit = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      scene: applyIssOrbitalPresentationToScene(defaultLibrationConfigV2().scene!, {
+        trackEnabled: false,
+        pastColor: "#ff3300",
+        futureColor: "#22cc66",
+        glyphType: "silhouette",
+        glyphSize: "large",
+        labelEnabled: false,
+        pastMinutes: 15,
+        futureMinutes: 15,
+      }),
+    });
+    const round = normalizeLibrationConfig(JSON.parse(JSON.stringify(explicit)) as LibrationConfigV2);
+    const row = round.scene?.layers.find((l) => l.id === "orbitalTracks");
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.trackEnabled : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastColor : undefined).toBe(
+      "#ff3300",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.futureColor : undefined).toBe(
+      "#22cc66",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.glyphType : undefined).toBe(
+      "silhouette",
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.labelEnabled : undefined).toBe(
+      false,
+    );
+    expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(15);
   });
 });

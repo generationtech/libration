@@ -25,6 +25,7 @@ import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
   eclipseAlignmentPresentationFromScene,
   eclipseInfoPresentationFromScene,
+  issOrbitalPresentationFromScene,
   lunarEclipsePresentationFromScene,
   resolveMoonlightPresentationMode,
   solarEclipsePresentationFromScene,
@@ -108,6 +109,10 @@ export function createLayerForSceneOverlayInstance(
       zIndex,
       opacity,
       name: inst.id === "orbitalTracks" ? "ISS orbital track" : undefined,
+      presentation:
+        inst.id === "orbitalTracks"
+          ? issOrbitalPresentationFromScene(config.scene)
+          : undefined,
     });
   }
   if (s.kind === "derived") {

@@ -75,6 +75,7 @@ import { resolveReferenceCityObserverLocation } from "../../core/referenceCityOb
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
+import { IssPresentationSection } from "./IssPresentationSection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
@@ -1596,6 +1597,12 @@ export function LayersTab({
             }
           />
         </ConfigControlRow>
+          </div>
+        ) : null}
+        {layersTopic === "spaceObjects" ? (
+          <div data-testid="layers-topic-space-objects">
+            <p className="config-section__hint">{descriptionForLayersTopic("spaceObjects")}</p>
+            <IssPresentationSection config={config} updateConfig={updateConfig} />
           </div>
         ) : null}
         {layersTopic === "moonAndLibration" ? (

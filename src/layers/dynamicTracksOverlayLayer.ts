@@ -18,6 +18,12 @@
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import {
+  DEFAULT_ISS_ORBITAL_PRESENTATION,
+  issTravelHeadingRad,
+  selectIssTrackTemporalWindow,
+  type IssOrbitalPresentation,
+} from "../core/issOrbitalPresentation";
+import {
   getOverlayReadabilityFrameOrCompute,
 } from "../core/overlayReadabilityFrame";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
@@ -31,6 +37,7 @@ import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   DYNAMIC_TRACKS_KIND,
   type DynamicTrackOverlay,
+  type DynamicTrackSampleMarker,
   type DynamicTracksPayload,
 } from "./dynamicTracksPayload";
 
@@ -50,6 +57,7 @@ export type CreateDynamicTracksOverlayLayerOptions = {
   zIndex?: number;
   opacity?: number;
   name?: string;
+  presentation?: IssOrbitalPresentation;
 };
 
 function labelFromProperties(
@@ -74,6 +82,7 @@ export function createDynamicTracksOverlayLayer(
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const id = runtimeIdForDynamicTracksSceneLayer(options.sceneLayerId);
   const { sourceId } = options;
+  const presentation = options.presentation ?? DEFAULT_ISS_ORBITAL_PRESENTATION;
 
   return {
     id,
@@ -137,14 +146,36 @@ export function createDynamicTracksOverlayLayer(
         .filter((t) => t.samples.length > 0)
         .map((t) => {
           const label =
-            t.id === "iss" ? "ISS" : labelFromProperties(t.properties);
+            t.id === "iss" && presentation.labelEnabled
+              ? "ISS"
+              : t.id === "iss"
+                ? undefined
+                : labelFromProperties(t.properties);
+          const samples: DynamicTrackSampleMarker[] = t.samples.map((s) => ({
+            lonDeg: s.lonDeg,
+            latDeg: s.latDeg,
+            timeMs: s.timeMs,
+          }));
+          const marker: DynamicTrackSampleMarker | undefined =
+            t.id === "iss" && current !== null
+              ? {
+                  lonDeg: current.lonDeg,
+                  latDeg: current.latDeg,
+                  timeMs: current.timeMs,
+                }
+              : undefined;
+          const windowed = selectIssTrackTemporalWindow(samples, time.now, {
+            pastEnabled: presentation.trackEnabled && presentation.pastEnabled,
+            futureEnabled: presentation.trackEnabled && presentation.futureEnabled,
+            pastMinutes: presentation.pastMinutes,
+            futureMinutes: presentation.futureMinutes,
+            current: marker,
+          });
           return {
             id: t.id,
-            samples: t.samples.map((s) => ({
-              lonDeg: s.lonDeg,
-              latDeg: s.latDeg,
-              timeMs: s.timeMs,
-            })),
+            samples,
+            pastSamples: windowed.past,
+            futureSamples: windowed.future,
             ...(label !== undefined ? { label } : {}),
           };
         });
@@ -164,6 +195,7 @@ export function createDynamicTracksOverlayLayer(
 
       const marker = current ?? tracks[0]!.samples[0]!;
       const tipVeil = frame.readabilityVeil01At(marker.latDeg, marker.lonDeg);
+      const heading = travelHeadingFromSamples(tracks[0]!.samples, marker.timeMs);
 
       const data: DynamicTracksPayload = {
         kind: DYNAMIC_TRACKS_KIND,
@@ -173,6 +205,8 @@ export function createDynamicTracksOverlayLayer(
           latDeg: marker.latDeg,
           timeMs: marker.timeMs,
         },
+        presentation,
+        ...(heading !== null ? { travelHeadingRad: heading } : {}),
         overlayReadabilityLiftScale01:
           frame.substrateOverlayReadabilityLiftScale01,
         tipReadabilityNightVeil01: tipVeil,
@@ -195,4 +229,36 @@ export function createDynamicTracksOverlayLayer(
       };
     },
   };
+}
+
+function unwrapLonNear(lonDeg: number, nearLonDeg: number): number {
+  let x = lonDeg;
+  while (x - nearLonDeg > 180) x -= 360;
+  while (nearLonDeg - x > 180) x += 360;
+  return x;
+}
+
+function travelHeadingFromSamples(
+  samples: readonly DynamicTrackSampleMarker[],
+  timeMs: number,
+): number | null {
+  if (samples.length < 2) return null;
+  let nearest = 0;
+  let best = Number.POSITIVE_INFINITY;
+  for (let i = 0; i < samples.length; i += 1) {
+    const d = Math.abs(samples[i]!.timeMs - timeMs);
+    if (d < best) {
+      best = d;
+      nearest = i;
+    }
+  }
+  const prev = samples[Math.max(0, nearest - 1)]!;
+  const next = samples[Math.min(samples.length - 1, nearest + 1)]!;
+  if (prev === next) return null;
+  return issTravelHeadingRad({
+    fromLonDeg: prev.lonDeg,
+    fromLatDeg: prev.latDeg,
+    toLonDeg: unwrapLonNear(next.lonDeg, prev.lonDeg),
+    toLatDeg: next.latDeg,
+  });
 }

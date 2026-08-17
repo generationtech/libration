@@ -16,6 +16,8 @@
  * Lon −180…180 left→right, lat +90…−90 top→bottom (matches base map / polylines).
  */
 
+import type { IssOrbitalPresentation } from "../core/issOrbitalPresentation";
+
 export const DYNAMIC_TRACKS_KIND = "dynamicTracksEquirect" as const;
 
 export interface DynamicTrackSampleMarker {
@@ -26,8 +28,12 @@ export interface DynamicTrackSampleMarker {
 
 export interface DynamicTrackOverlay {
   id: string;
-  /** Ordered trail samples (oldest → newest). */
+  /** Ordered trail samples (oldest → newest), unfiltered acquired window. */
   samples: readonly DynamicTrackSampleMarker[];
+  /** Past segment including the current sample as the last vertex. */
+  pastSamples?: readonly DynamicTrackSampleMarker[];
+  /** Future segment including the current sample as the first vertex. */
+  futureSamples?: readonly DynamicTrackSampleMarker[];
   /** Optional short label for the tip marker. */
   label?: string;
 }
@@ -40,6 +46,13 @@ export interface DynamicTracksPayload {
    * Independent of the first/last track sample.
    */
   currentPosition?: DynamicTrackSampleMarker;
+  /** ISS presentation resolved upstream of RenderPlan. */
+  presentation?: IssOrbitalPresentation;
+  /**
+   * Screen-space travel heading (radians from +X / east) for silhouette rotation.
+   * Omitted when neighboring samples are not usable.
+   */
+  travelHeadingRad?: number;
   /**
    * Substrate-aware scale for overlay readability lift (0.35–1).
    * Omitted means 1.
@@ -72,6 +85,12 @@ export function isDynamicTracksPayload(
       return false;
     }
   }
+  if (o.travelHeadingRad !== undefined) {
+    const h = o.travelHeadingRad;
+    if (typeof h !== "number" || !Number.isFinite(h)) {
+      return false;
+    }
+  }
   if (o.currentPosition !== undefined) {
     if (o.currentPosition === null || typeof o.currentPosition !== "object") {
       return false;
@@ -95,19 +114,27 @@ export function isDynamicTracksPayload(
       return false;
     }
     if (row.label !== undefined && typeof row.label !== "string") return false;
-    for (const s of row.samples) {
-      if (s === null || typeof s !== "object") return false;
-      const sample = s as Record<string, unknown>;
-      if (
-        typeof sample.lonDeg !== "number" ||
-        typeof sample.latDeg !== "number" ||
-        typeof sample.timeMs !== "number" ||
-        !Number.isFinite(sample.lonDeg) ||
-        !Number.isFinite(sample.latDeg) ||
-        !Number.isFinite(sample.timeMs)
-      ) {
-        return false;
-      }
+    if (!samplesAreValid(row.samples)) return false;
+    if (row.pastSamples !== undefined && !samplesAreValid(row.pastSamples)) return false;
+    if (row.futureSamples !== undefined && !samplesAreValid(row.futureSamples)) return false;
+  }
+  return true;
+}
+
+function samplesAreValid(raw: unknown): boolean {
+  if (!Array.isArray(raw)) return false;
+  for (const s of raw) {
+    if (s === null || typeof s !== "object") return false;
+    const sample = s as Record<string, unknown>;
+    if (
+      typeof sample.lonDeg !== "number" ||
+      typeof sample.latDeg !== "number" ||
+      typeof sample.timeMs !== "number" ||
+      !Number.isFinite(sample.lonDeg) ||
+      !Number.isFinite(sample.latDeg) ||
+      !Number.isFinite(sample.timeMs)
+    ) {
+      return false;
     }
   }
   return true;

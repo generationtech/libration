@@ -21,6 +21,7 @@ import {
 import { planSceneStackComposition } from "../config/sceneStackComposition";
 import { createLayerRegistryFromConfig } from "../app/bootstrap";
 import { runtimeIdForDynamicTracksSceneLayer } from "../layers/dynamicTracksOverlayLayer";
+import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
 import { ISS_ORBITAL_TRACK_SOURCE_ID } from "../lifecycle";
 import { buildDynamicTracksRenderPlan } from "../renderer/renderPlan/sceneDynamicTracksPlan";
 import {
@@ -51,6 +52,7 @@ describe("DLC-3 SceneConfig + composition + registry + RenderPlan", () => {
     expect(row!.source).toEqual({
       kind: "dynamicTracks",
       sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
+      parameters: DEFAULT_ISS_ORBITAL_PRESENTATION,
     });
     expect(deriveLayerEnableFlagsFromScene(scene).orbitalTracks).toBe(true);
   });
@@ -63,6 +65,7 @@ describe("DLC-3 SceneConfig + composition + registry + RenderPlan", () => {
     expect(row!.source).toEqual({
       kind: "dynamicTracks",
       sourceId: ISS_ORBITAL_TRACK_SOURCE_ID,
+      parameters: DEFAULT_ISS_ORBITAL_PRESENTATION,
     });
   });
 

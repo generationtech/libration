@@ -231,3 +231,9 @@ Verified: `npx tsc --noEmit` clean; `npm test` 211 files / 2003 passed / 0 faile
 Production ISS no longer paints fixture as live. Provenance and TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden) resolve upstream of RenderPlan; CelesTrak failure with no usable live TLE hides the overlay. Marker remains SGP4 at product UTC. Clouds/IR and earthquakes unchanged.
 
 Verified: focused ISS tests 78 passed; `npx tsc --noEmit` clean; `npm test` 212 files / 2018 passed / 0 failed; `npm run build` succeeded. Cursor Browser ordinary current mode: enable ISS → unavailable hint, no fixture on the map; 2017 Demo live-only hide with checkbox still on; return to now without re-enable. CelesTrak unreachable (curl timeout); LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-038 complete
+
+Layers → Space objects is the ISS presentation home (orbit track, past/future segments and durations inside the existing −60/+30 min window, colors, thickness, Dot vs internal silhouette, size, label). Layer masters still owns ISS visibility. Orbital authority, provenance, and freshness were not changed.
+
+Verified: `npx tsc --noEmit` clean; focused presentation tests 135 passed; `npm test` 216 files / 2046 passed / 0 failed; `npm run build` succeeded. Cursor Browser: Space objects topic order and controls, orbit-track-off gating, glyph Dot/silhouette conditional colors, defaults restored. CelesTrak unreachable; no fixture on the map; live ISS map appearance not verified. LIB-037 stays proposed.

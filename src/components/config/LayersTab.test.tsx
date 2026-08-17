@@ -683,6 +683,61 @@ describe("LayersTab topic navigation", () => {
     expect(screen.queryByTestId("layers-topic-advanced")).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationAfterEdit);
   });
+
+  it("Space objects topic exists after Astronomy paths and does not mutate config", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const select = screen.getByTestId("layers-topic-select") as HTMLSelectElement;
+    expect([...select.options].map((option) => option.value)).toEqual([...LAYERS_TOPIC_IDS]);
+    expect(LAYERS_TOPIC_IDS).toEqual([
+      "layerMasters",
+      "map",
+      "illumination",
+      "eclipse",
+      "moonAndLibration",
+      "astronomyPaths",
+      "spaceObjects",
+      "advanced",
+    ]);
+    const illuminationBefore = screen.getByTestId("illumination-state").textContent;
+    selectLayersTopic("spaceObjects");
+    expect(screen.queryByTestId("layers-topic-layer-masters")).toBeNull();
+    expect(screen.getByTestId("layers-topic-space-objects")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "International Space Station (ISS)" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Orbit track")).toBeInTheDocument();
+    expect(screen.getByLabelText("ISS glyph")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Solar eclipses")).toBeNull();
+    expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
+  });
+
+  it("ISS presentation controls persist and disable track children when orbit track is off", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("spaceObjects");
+    const track = screen.getByLabelText("Orbit track") as HTMLInputElement;
+    const past = screen.getByLabelText("Track past") as HTMLInputElement;
+    const pastDuration = screen.getByLabelText("Past duration") as HTMLSelectElement;
+    const glyph = screen.getByLabelText("ISS glyph") as HTMLSelectElement;
+    const label = screen.getByLabelText("Show ISS label") as HTMLInputElement;
+    expect(track.checked).toBe(true);
+    expect(past.checked).toBe(true);
+    expect(pastDuration.value).toBe("60");
+    expect(glyph.value).toBe("dot");
+    expect(screen.getByLabelText("ISS dot color")).toBeInTheDocument();
+    expect(screen.queryByLabelText("ISS glyph color")).toBeNull();
+    expect(label.checked).toBe(true);
+
+    await user.selectOptions(glyph, "silhouette");
+    expect(glyph.value).toBe("silhouette");
+    expect(screen.queryByLabelText("ISS dot color")).toBeNull();
+    expect(screen.getByLabelText("ISS glyph color")).toBeInTheDocument();
+
+    await user.click(track);
+    expect(track.checked).toBe(false);
+    expect(past.disabled).toBe(true);
+    expect(pastDuration.disabled).toBe(true);
+    expect((screen.getByLabelText("Orbit line thickness") as HTMLSelectElement).disabled).toBe(true);
+    expect(glyph.disabled).toBe(false);
+  });
 });
 
 describe("LayersTab live overlay masters", () => {

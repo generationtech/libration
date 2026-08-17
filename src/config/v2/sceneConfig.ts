@@ -32,6 +32,11 @@ import {
   normalizeAstronomyPathColorCss,
   normalizeAstronomyPathThicknessId,
 } from "../../core/astronomyOverlayStrokeAppearance";
+import {
+  DEFAULT_ISS_ORBITAL_PRESENTATION,
+  normalizeIssOrbitalPresentation,
+  type IssOrbitalPresentation,
+} from "../../core/issOrbitalPresentation";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
   DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
@@ -248,6 +253,8 @@ export type LayerSourceConfig =
       /** DLC-3: Model B dynamic tracks — durable lifecycle source id (not a CDN URL). */
       kind: "dynamicTracks";
       sourceId: string;
+      /** ISS presentation (LIB-038). Other tracks sources may omit this. */
+      parameters?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     }
   | { kind: "custom"; config: Record<string, unknown> };
@@ -872,6 +879,7 @@ const ORBITAL_TRACKS: SceneLayerInstance = {
   source: {
     kind: "dynamicTracks",
     sourceId: "iss-orbital-track-v1",
+    parameters: { ...DEFAULT_ISS_ORBITAL_PRESENTATION },
   },
 };
 
@@ -1189,6 +1197,35 @@ export function applyLunarGroundTrackColorToScene(
             ...(row.source.parameters ?? {}),
             [which]: nextColor,
           },
+        }),
+      };
+    }),
+  };
+}
+
+export function issOrbitalPresentationFromScene(scene: SceneConfig): IssOrbitalPresentation {
+  const row = scene.layers.find((l) => l.id === "orbitalTracks");
+  const params = row?.source.kind === "dynamicTracks" ? row.source.parameters : undefined;
+  return normalizeIssOrbitalPresentation(params);
+}
+
+export function applyIssOrbitalPresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<IssOrbitalPresentation>,
+): SceneConfig {
+  const current = issOrbitalPresentationFromScene(scene);
+  const next = normalizeIssOrbitalPresentation({ ...current, ...patch });
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "orbitalTracks" || row.source.kind !== "dynamicTracks") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedIssOrbitalPresentationParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
         }),
       };
     }),
@@ -1572,6 +1609,22 @@ function withNormalizedSublunarGroundTrackParameters(source: LayerSourceConfig):
   };
 }
 
+function withNormalizedIssOrbitalPresentationParameters(
+  source: LayerSourceConfig,
+): LayerSourceConfig {
+  if (source.kind !== "dynamicTracks") {
+    return source;
+  }
+  const presentation = normalizeIssOrbitalPresentation(source.parameters);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...presentation,
+    },
+  };
+}
+
 function withNormalizedSublunarPointParameters(source: LayerSourceConfig): LayerSourceConfig {
   if (source.kind !== "derived" || source.product !== "sublunarPoint") {
     return source;
@@ -1783,6 +1836,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = {
       kind: "dynamicTracks",
       sourceId: sid !== "" ? sid : fallback,
+      ...(isPlainObject(sRaw.parameters) ? { parameters: { ...sRaw.parameters } } : {}),
     };
   } else if (isPlainObject(sRaw) && sRaw.kind === "custom") {
     source = { kind: "custom", config: isPlainObject(sRaw.config) ? { ...sRaw.config } : {} };
@@ -1790,6 +1844,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = defaultSourceForLayerId(idNorm);
   }
   source = withNormalizedSublunarGroundTrackParameters(source);
+  source = withNormalizedIssOrbitalPresentationParameters(source);
   source = withNormalizedSublunarPointParameters(source);
   source = withNormalizedSublunarLocusParameters(source);
   source = withNormalizedSolarAnalemmaParameters(source);
