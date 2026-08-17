@@ -12,7 +12,7 @@
  */
 
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
-import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
+import { descriptionForChromeTopic } from "./chromeTopicTypes";
 import { HourMarkersEditor } from "./HourMarkersEditor";
 
 export type HourIndicatorsEditorProps = {
@@ -24,7 +24,7 @@ export function HourIndicatorsEditor({ config, updateConfig }: HourIndicatorsEdi
   return (
     <div data-testid="chrome-editor-hour-indicators">
       <h3 className="config-section__title config-section__title--sub">24-hour indicator entries</h3>
-      <p className="config-section__hint">{descriptionForChromeMajorArea("hourIndicators")}</p>
+      <p className="config-section__hint">{descriptionForChromeTopic("hourIndicators")}</p>
       <HourMarkersEditor config={config} updateConfig={updateConfig} />
     </div>
   );

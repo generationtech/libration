@@ -23,22 +23,42 @@ import {
   type LibrationConfigV2,
 } from "../../config/v2/librationConfig";
 import { ChromeTab } from "./ChromeTab";
+import { CHROME_TOPIC_IDS, type ChromeTopicId } from "./chromeTopicTypes";
+
+function selectChromeTopic(topic: ChromeTopicId): void {
+  fireEvent.change(screen.getByTestId("chrome-topic-select"), { target: { value: topic } });
+}
+
+function setHourLabelFormat(mode: string): void {
+  selectChromeTopic("referenceAndClock");
+  fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
+    target: { value: mode },
+  });
+}
 
 function ChromeTabTestHarness({
   initial,
   children,
+  updateCallCount,
 }: {
   initial: LibrationConfigV2;
   children?: (ctx: { config: LibrationConfigV2 }) => ReactNode;
+  updateCallCount?: { current: number };
 }) {
   const [config, setConfig] = useState<LibrationConfigV2>(() => normalizeLibrationConfig(initial));
-  const updateConfig = useCallback((updater: (draft: LibrationConfigV2) => void) => {
-    setConfig((prev) => {
-      const draft = normalizeLibrationConfig(prev);
-      updater(draft);
-      return normalizeLibrationConfig(draft);
-    });
-  }, []);
+  const updateConfig = useCallback(
+    (updater: (draft: LibrationConfigV2) => void) => {
+      if (updateCallCount) {
+        updateCallCount.current += 1;
+      }
+      setConfig((prev) => {
+        const draft = normalizeLibrationConfig(prev);
+        updater(draft);
+        return normalizeLibrationConfig(draft);
+      });
+    },
+    [updateCallCount],
+  );
   return (
     <>
       <ChromeTab config={config} updateConfig={updateConfig} />
@@ -47,7 +67,7 @@ function ChromeTabTestHarness({
   );
 }
 
-describe("ChromeTab major areas", () => {
+describe("ChromeTab topics", () => {
   afterEach(() => {
     cleanup();
   });
@@ -58,16 +78,64 @@ describe("ChromeTab major areas", () => {
     expect(screen.queryByTestId("chrome-global-text-font-select")).toBeNull();
   });
 
-  it("renders a Chrome major-area selector", () => {
+  it("defaults to Reference & clock with the unified topic order and sticky selector", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);
-    expect(screen.getByTestId("chrome-major-area-select")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: /Chrome major area/i })).toHaveValue("hourIndicators");
+    const select = screen.getByTestId("chrome-topic-select") as HTMLSelectElement;
+    expect(select).toHaveValue("referenceAndClock");
+    expect([...select.options].map((option) => option.value)).toEqual([...CHROME_TOPIC_IDS]);
+    expect([...select.options].map((option) => option.textContent)).toEqual([
+      "Reference & clock",
+      "Bottom HUD",
+      "Hour indicators",
+      "Tick tape",
+      "NATO time zones",
+    ]);
+    expect(screen.getByRole("combobox", { name: "Chrome topic" })).toBe(select);
+    expect(screen.queryByTestId("chrome-major-area-select")).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /Chrome major area/i })).toBeNull();
+    const nav = screen.getByTestId("chrome-topic-nav");
+    expect(nav.classList.contains("config-topic-nav")).toBe(true);
+    expect(nav.querySelector("#config-chrome-topic")).toBe(select);
+    expect(screen.getByRole("heading", { name: "Instrument chrome" }).closest(".config-topic-nav")).toBeNull();
+    expect(screen.getByTestId("chrome-editor-reference-and-clock")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-bottom-hud")).toBeNull();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
+    expect(screen.queryByTestId("chrome-editor-tick-tape")).toBeNull();
+    expect(screen.queryByTestId("chrome-editor-nato-timezone")).toBeNull();
+  });
+
+  it("mounts only the selected topic editor", () => {
+    const initial = defaultLibrationConfigV2();
+    render(<ChromeTabTestHarness initial={initial} />);
+
+    selectChromeTopic("bottomHud");
+    expect(screen.getByTestId("chrome-editor-bottom-hud")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-reference-and-clock")).toBeNull();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
+
+    selectChromeTopic("hourIndicators");
+    expect(screen.getByTestId("chrome-editor-hour-indicators")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-bottom-hud")).toBeNull();
+    expect(screen.queryByTestId("chrome-editor-tick-tape")).toBeNull();
+
+    selectChromeTopic("tickTape");
+    expect(screen.getByTestId("chrome-editor-tick-tape")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeNull();
+
+    selectChromeTopic("natoTimezone");
+    expect(screen.getByTestId("chrome-editor-nato-timezone")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-tick-tape")).toBeNull();
+    expect(
+      screen.getByRole("checkbox", { name: /Show NATO timezone letter row on the top strip/i }),
+    ).toBeInTheDocument();
   });
 
   it("exposes reference-city date/time/seconds toggles for the lower-left HUD (no Local/Refer/UTC rows)", () => {
     const initial = defaultLibrationConfigV2();
     render(<ChromeTabTestHarness initial={initial} />);
+    selectChromeTopic("bottomHud");
     expect(screen.getByTestId("chrome-bottom-hud-show-date")).toBeInTheDocument();
     expect(screen.getByTestId("chrome-bottom-hud-show-time")).toBeInTheDocument();
     expect(screen.getByTestId("chrome-bottom-hud-show-seconds")).toBeInTheDocument();
@@ -86,37 +154,12 @@ describe("ChromeTab major areas", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("bottomHud");
     const sel = screen.getByTestId("chrome-bottom-readout-font-select");
     fireEvent.change(sel, { target: { value: "flip-clock" } });
     expect(last!.chrome.layout.bottomReadoutFontAssetId).toBe("flip-clock");
     fireEvent.change(sel, { target: { value: "" } });
     expect(last!.chrome.layout.bottomReadoutFontAssetId).toBeUndefined();
-  });
-
-  it("defaults to the hour-indicator editor so hour-marker controls are visible", () => {
-    const initial = defaultLibrationConfigV2();
-    render(<ChromeTabTestHarness initial={initial} />);
-    expect(screen.getByTestId("chrome-editor-hour-indicators")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
-  });
-
-  it("selecting tick tape shows the tick tape editor and hides hour-marker controls", () => {
-    const initial = defaultLibrationConfigV2();
-    render(<ChromeTabTestHarness initial={initial} />);
-    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
-    expect(screen.getByTestId("chrome-editor-tick-tape")).toBeInTheDocument();
-    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /Top instrument strip color palette/i })).toBeNull();
-  });
-
-  it("selecting NATO timezone area shows the NATO editor", () => {
-    const initial = defaultLibrationConfigV2();
-    render(<ChromeTabTestHarness initial={initial} />);
-    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "natoTimezone" } });
-    expect(screen.getByTestId("chrome-editor-nato-timezone")).toBeInTheDocument();
-    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
-    expect(screen.getByRole("checkbox", { name: /Show NATO timezone letter row on the top strip/i })).toBeInTheDocument();
   });
 
   it("persists NATO zone letter font on chrome.layout and clears when default is chosen", () => {
@@ -130,14 +173,37 @@ describe("ChromeTab major areas", () => {
         }}
       </ChromeTabTestHarness>,
     );
-    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "natoTimezone" } });
+    selectChromeTopic("natoTimezone");
     fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "computer" } });
     expect(last!.chrome.layout.timezoneLetterRowFontAssetId).toBe("computer");
     fireEvent.change(screen.getByTestId("nato-timezone-letter-font-select"), { target: { value: "" } });
     expect(last!.chrome.layout.timezoneLetterRowFontAssetId).toBeUndefined();
   });
 
-  it("does not persist major-area selection in config when switching areas", () => {
+  it("does not call updateConfig or persist topic selection when switching topics", () => {
+    let last: LibrationConfigV2 | null = null;
+    const updateCallCount = { current: 0 };
+    const initial = defaultLibrationConfigV2();
+    render(
+      <ChromeTabTestHarness initial={initial} updateCallCount={updateCallCount}>
+        {({ config }) => {
+          last = config;
+          return null;
+        }}
+      </ChromeTabTestHarness>,
+    );
+    const before = JSON.stringify(last);
+    selectChromeTopic("tickTape");
+    expect(JSON.stringify(last)).toBe(before);
+    expect(updateCallCount.current).toBe(0);
+    selectChromeTopic("bottomHud");
+    expect(updateCallCount.current).toBe(0);
+    fireEvent.click(screen.getByTestId("chrome-bottom-hud-show-date"));
+    expect(updateCallCount.current).toBe(1);
+    expect(last!.chrome.layout.bottomTimeStackShowDate).toBe(false);
+  });
+
+  it("keeps committed longitude when switching away from Reference & clock", () => {
     let last: LibrationConfigV2 | null = null;
     const initial = defaultLibrationConfigV2();
     render(
@@ -148,9 +214,51 @@ describe("ChromeTab major areas", () => {
         }}
       </ChromeTabTestHarness>,
     );
-    const before = JSON.stringify(last);
-    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
-    expect(JSON.stringify(last)).toBe(before);
+    fireEvent.change(screen.getByLabelText(/Read point meridian policy for top strip registration/i), {
+      target: { value: "fixedLongitude" },
+    });
+    const input = screen.getByLabelText(/Anchor meridian longitude in degrees east/i);
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "42" } });
+    fireEvent.blur(input);
+    expect(last!.chrome.displayTime.topBandAnchor).toEqual({ mode: "fixedLongitude", longitudeDeg: 42 });
+
+    selectChromeTopic("bottomHud");
+    selectChromeTopic("referenceAndClock");
+    expect(last!.chrome.displayTime.topBandAnchor).toEqual({ mode: "fixedLongitude", longitudeDeg: 42 });
+    expect(screen.getByLabelText(/Anchor meridian longitude in degrees east/i)).toHaveValue("42");
+  });
+
+  it("resets the tab-panel scroll on topic change but not on setting edits", () => {
+    render(
+      <div className="config-tab-panel" data-testid="chrome-scroll-host">
+        <ChromeTabTestHarness initial={defaultLibrationConfigV2()} />
+      </div>,
+    );
+    const host = screen.getByTestId("chrome-scroll-host");
+    let scrollTopValue = 0;
+    Object.defineProperty(host, "scrollTop", {
+      configurable: true,
+      get: () => scrollTopValue,
+      set: (next: number) => {
+        scrollTopValue = next;
+      },
+    });
+
+    selectChromeTopic("hourIndicators");
+    expect(scrollTopValue).toBe(0);
+    expect(screen.getByTestId("chrome-editor-hour-indicators")).toBeInTheDocument();
+
+    scrollTopValue = 420;
+    const size = screen.getByRole("slider", { name: /Hour marker size multiplier/i }) as HTMLInputElement;
+    fireEvent.change(size, { target: { value: "1.2" } });
+    expect(size.value).toBe("1.2");
+    expect(scrollTopValue).toBe(420);
+
+    selectChromeTopic("bottomHud");
+    expect(scrollTopValue).toBe(0);
+    expect(screen.getByTestId("chrome-editor-bottom-hud")).toBeInTheDocument();
+    expect(screen.queryByTestId("chrome-editor-hour-indicators")).toBeNull();
   });
 });
 
@@ -170,7 +278,7 @@ describe("ChromeTab tick tape area", () => {
         }}
       </ChromeTabTestHarness>,
     );
-    fireEvent.change(screen.getByTestId("chrome-major-area-select"), { target: { value: "tickTape" } });
+    selectChromeTopic("tickTape");
     fireEvent.change(screen.getByLabelText(/24-hour tickmarks tape area background color/i), {
       target: { value: "#aabbcc" },
     });
@@ -210,6 +318,7 @@ describe("ChromeTab top-band hour markers", () => {
 
   it("does not expose a separate hour marker text-style preset control (font is chosen directly)", () => {
     render(<ChromeTabTestHarness initial={baseCustomHourMarkers()} />);
+    selectChromeTopic("hourIndicators");
     expect(screen.queryByRole("combobox", { name: /hour marker text style/i })).toBeNull();
     expect(screen.queryByLabelText(/hour marker text style/i)).toBeNull();
   });
@@ -219,6 +328,7 @@ describe("ChromeTab top-band hour markers", () => {
       realization: { kind: "text", fontAssetId: "zeroes-one", appearance: {} },
     });
     render(<ChromeTabTestHarness initial={initial} />);
+    selectChromeTopic("hourIndicators");
 
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeEnabled();
@@ -234,6 +344,7 @@ describe("ChromeTab top-band hour markers", () => {
         })}
       />,
     );
+    selectChromeTopic("hourIndicators");
 
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeNull();
@@ -251,6 +362,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
 
     fireEvent.change(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i }), {
       target: { value: "analogClock" },
@@ -273,6 +385,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
 
     fireEvent.change(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i }), {
       target: { value: "computer" },
@@ -294,6 +407,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
 
     const colorInput = screen.getByLabelText(/Top-band hour marker color/i);
     fireEvent.change(colorInput, { target: { value: "#abcdef" } });
@@ -333,6 +447,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
     const sel = screen.getByTestId("chrome-hour-marker-realization-kind-select");
     expect(sel.querySelectorAll("option")).toHaveLength(1);
     expect(sel).toHaveValue("text");
@@ -352,6 +467,7 @@ describe("ChromeTab top-band hour markers", () => {
       },
     });
     render(<ChromeTabTestHarness initial={initial} />);
+    selectChromeTopic("hourIndicators");
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select").querySelectorAll("option")).toHaveLength(
       4,
     );
@@ -384,6 +500,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
     fireEvent.change(screen.getByTestId("chrome-hour-marker-realization-kind-select"), {
       target: { value: "text" },
     });
@@ -392,9 +509,7 @@ describe("ChromeTab top-band hour markers", () => {
       fontAssetId: "zeroes-one",
       appearance: { color: "#c0ffee" },
     });
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "local12" },
-    });
+    setHourLabelFormat("local12");
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({
       kind: "text",
       fontAssetId: "zeroes-one",
@@ -428,12 +543,12 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select").querySelectorAll("option")).toHaveLength(1);
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "local24" },
-    });
+    setHourLabelFormat("local24");
     expect(last!.chrome.displayTime.topBandMode).toBe("local24");
     expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("text");
+    selectChromeTopic("hourIndicators");
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select").querySelectorAll("option")).toHaveLength(4);
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toHaveValue("text");
   });
@@ -467,31 +582,27 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue(
       "radialLine",
     );
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "utc24" },
-    });
+    setHourLabelFormat("utc24");
     expect(last!.chrome.displayTime.topBandMode).toBe("utc24");
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "text", appearance: {} });
+    selectChromeTopic("hourIndicators");
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).not.toBeDisabled();
     expect(screen.getByTestId("chrome-hour-marker-realization-kind-select")).toHaveValue("text");
 
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "local24" },
-    });
+    setHourLabelFormat("local24");
+    selectChromeTopic("hourIndicators");
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue("text");
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "utc24" },
-    });
+    setHourLabelFormat("utc24");
     expect(last!.chrome.layout.hourMarkers.realization.kind).toBe("text");
 
-    fireEvent.change(screen.getByLabelText(/Hour label format for top band hour markers/i), {
-      target: { value: "local12" },
-    });
+    setHourLabelFormat("local12");
+    selectChromeTopic("hourIndicators");
     expect(last!.chrome.layout.hourMarkers.realization).toEqual({ kind: "text", appearance: {} });
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toHaveValue("text");
   });
@@ -522,6 +633,7 @@ describe("ChromeTab top-band hour markers", () => {
         }}
       </ChromeTabTestHarness>,
     );
+    selectChromeTopic("hourIndicators");
 
     expect(screen.getByRole("combobox", { name: /Top-band hour marker realization kind/i })).toBeEnabled();
     expect(screen.getByRole("combobox", { name: /Font for top-band hour disk numerals/i })).toBeEnabled();

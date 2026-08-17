@@ -13,7 +13,7 @@
 
 import { DEFAULT_TICK_TAPE_AREA_BACKGROUND_COLOR } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
-import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
+import { descriptionForChromeTopic } from "./chromeTopicTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 export type TickTapeEditorProps = {
@@ -28,7 +28,7 @@ export function TickTapeEditor({ config, updateConfig }: TickTapeEditorProps) {
   return (
     <div data-testid="chrome-editor-tick-tape">
       <h3 className="config-section__title config-section__title--sub">24-hour tickmarks tape</h3>
-      <p className="config-section__hint">{descriptionForChromeMajorArea("tickTape")}</p>
+      <p className="config-section__hint">{descriptionForChromeTopic("tickTape")}</p>
       <ConfigControlRow label="Show center tickmark tape">
         <input
           type="checkbox"

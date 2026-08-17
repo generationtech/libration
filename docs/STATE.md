@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-031](work/LIB-031-sticky-layers-topic-navigation.md) — Sticky Layers topic navigation
+[LIB-032](work/LIB-032-chrome-tab-topic-organization.md) — Chrome tab topic organization
 
 ## Blockers
 

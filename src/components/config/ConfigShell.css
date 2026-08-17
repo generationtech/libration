@@ -212,8 +212,8 @@
   margin-bottom: var(--config-shell-space-md, 0.75rem);
 }
 
-/* Compact Layers topic selector — sticks inside `.config-tab-panel`, not the viewport. */
-.layers-topic-nav {
+/* Compact Layers/Chrome topic selector — sticks inside `.config-tab-panel`, not the viewport. */
+.config-topic-nav {
   position: sticky;
   /*
    * Panel padding is 1rem; sticky `top: 0` otherwise pins at the content edge and
@@ -233,7 +233,7 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.layers-topic-nav .config-control-row {
+.config-topic-nav .config-control-row {
   margin-bottom: 0;
 }
 

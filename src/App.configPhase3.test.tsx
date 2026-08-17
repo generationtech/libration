@@ -60,6 +60,10 @@ function selectLayersTopic(topic: string): void {
   fireEvent.change(screen.getByTestId("layers-topic-select"), { target: { value: topic } });
 }
 
+function selectChromeTopic(topic: string): void {
+  fireEvent.change(screen.getByTestId("chrome-topic-select"), { target: { value: topic } });
+}
+
 /**
  * Mirrors App’s `bumpConfigView` after {@link commitWorkingV2Update} so tests that drive
  * multi-step Chrome UI see updated controls (ref mutation alone does not re-render).
@@ -697,11 +701,12 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     expect(
       screen.getByRole("combobox", { name: "Reference city for read point meridian" }),
     ).not.toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Chrome topic" })).not.toBeDisabled();
+    selectChromeTopic("bottomHud");
     expect(
       screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" }),
     ).not.toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
-    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
+    await user.selectOptions(screen.getByTestId("chrome-topic-select"), "natoTimezone");
     expect(
       screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" }),
     ).not.toBeDisabled();
@@ -719,11 +724,12 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
 
     expect(screen.getByRole("combobox", { name: "Hour label format for top band hour markers" })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: "Civil time zone source for reference frame" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Chrome topic" })).not.toBeDisabled();
+    selectChromeTopic("bottomHud");
     expect(
       screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" }),
     ).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Chrome major area" })).not.toBeDisabled();
-    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
+    await user.selectOptions(screen.getByTestId("chrome-topic-select"), "natoTimezone");
     expect(
       screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" }),
     ).toBeDisabled();
@@ -747,12 +753,13 @@ describe("LibrationConfig v2 Phase 3 (config UI shell)", () => {
     render(<ConfigShell workingV2Ref={ref} updateConfig={updateConfig} />);
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
 
+    selectChromeTopic("bottomHud");
     const bottomCb = screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" });
     await user.click(bottomCb);
     expect(ref.current!.chrome.layout.bottomInformationBarVisible).toBe(false);
     expect(derivedAppConfigRef.current.displayChromeLayout.bottomInformationBarVisible).toBe(false);
 
-    await user.selectOptions(screen.getByTestId("chrome-major-area-select"), "natoTimezone");
+    await user.selectOptions(screen.getByTestId("chrome-topic-select"), "natoTimezone");
     const tzCb = screen.getByRole("checkbox", { name: "Show NATO timezone letter row on the top strip" });
     await user.click(tzCb);
     expect(ref.current!.chrome.layout.timezoneLetterRowVisible).toBe(false);

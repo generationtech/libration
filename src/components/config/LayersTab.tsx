@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
@@ -75,6 +75,7 @@ import { resolveReferenceCityObserverLocation } from "../../core/referenceCityOb
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
+import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
   DEFAULT_LAYERS_TOPIC,
@@ -490,15 +491,7 @@ export type LayersTabProps = {
 
 export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
-  const topicNavRef = useRef<HTMLDivElement>(null);
   const mutable = Boolean(updateConfig);
-
-  useLayoutEffect(() => {
-    const panel = topicNavRef.current?.closest(".config-tab-panel");
-    if (panel instanceof HTMLElement) {
-      panel.scrollTop = 0;
-    }
-  }, [layersTopic]);
 
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const lunarExtents = lunarGroundTrackExtentsFromScene(scene);
@@ -553,13 +546,9 @@ export function LayersTab({ config, updateConfig, productInstantMs }: LayersTabP
           Choose a topic to edit. Layer visibility is under Layer masters. Other topics hold
           presentation for the same layers. Read-only when the panel has no live update handler.
         </p>
-        <div
-          ref={topicNavRef}
-          className="layers-topic-nav"
-          data-testid="layers-topic-nav"
-        >
+        <ConfigStickyTopicNav topic={layersTopic} testId="layers-topic-nav">
           <LayersTopicSelector value={layersTopic} onChange={setLayersTopic} />
-        </div>
+        </ConfigStickyTopicNav>
         {layersTopic === "map" ? (
           <div data-testid="layers-topic-map">
             <p className="config-section__hint">{descriptionForLayersTopic("map")}</p>

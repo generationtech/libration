@@ -12,26 +12,37 @@
  */
 
 /**
- * UI-only major areas for the Chrome configuration panel. Not persisted — editor navigation only.
+ * UI-only topic areas for the Chrome configuration tab. Not persisted — editor navigation only.
  */
-export type ChromeMajorAreaId = "hourIndicators" | "tickTape" | "natoTimezone";
+export type ChromeTopicId =
+  | "referenceAndClock"
+  | "bottomHud"
+  | "hourIndicators"
+  | "tickTape"
+  | "natoTimezone";
 
-export const CHROME_MAJOR_AREA_IDS: readonly ChromeMajorAreaId[] = [
+export const CHROME_TOPIC_IDS: readonly ChromeTopicId[] = [
+  "referenceAndClock",
+  "bottomHud",
   "hourIndicators",
   "tickTape",
   "natoTimezone",
 ];
 
-export const DEFAULT_CHROME_MAJOR_AREA: ChromeMajorAreaId = "hourIndicators";
+export const DEFAULT_CHROME_TOPIC: ChromeTopicId = "referenceAndClock";
 
-export function labelForChromeMajorArea(id: ChromeMajorAreaId): string {
+export function labelForChromeTopic(id: ChromeTopicId): string {
   switch (id) {
+    case "referenceAndClock":
+      return "Reference & clock";
+    case "bottomHud":
+      return "Bottom HUD";
     case "hourIndicators":
-      return "24-hour indicator entries";
+      return "Hour indicators";
     case "tickTape":
-      return "24-hour tickmarks tape";
+      return "Tick tape";
     case "natoTimezone":
-      return "NATO / structural zone row";
+      return "NATO time zones";
     default: {
       const _exhaustive: never = id;
       return _exhaustive;
@@ -39,8 +50,12 @@ export function labelForChromeMajorArea(id: ChromeMajorAreaId): string {
   }
 }
 
-export function descriptionForChromeMajorArea(id: ChromeMajorAreaId): string {
+export function descriptionForChromeTopic(id: ChromeTopicId): string {
   switch (id) {
+    case "referenceAndClock":
+      return "One instant and one reference frame: civil date and time follow the IANA zone; the top strip read point follows the meridian policy. Hour label style is formatting only — it does not move tape geometry or change which instant is shown.";
+    case "bottomHud":
+      return "Lower-left instrument text (not map layers): civil date in the reference-city timezone; time row follows the global hour-label mode. Size and font apply to this readout.";
     case "hourIndicators":
       return "Hour disks and entries row — civil-phased at the read point; display mode changes labels only, not tape registration. UTC label mode uses text-only hour-marker realization.";
     case "tickTape":

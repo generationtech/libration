@@ -13,26 +13,26 @@
 
 import { ConfigTopicSelector } from "./ConfigTopicSelector";
 import {
-  LAYERS_TOPIC_IDS,
-  labelForLayersTopic,
-  type LayersTopicId,
-} from "./layersTopicTypes";
+  CHROME_TOPIC_IDS,
+  labelForChromeTopic,
+  type ChromeTopicId,
+} from "./chromeTopicTypes";
 
-export type LayersTopicSelectorProps = {
-  value: LayersTopicId;
-  onChange: (next: LayersTopicId) => void;
+export type ChromeTopicSelectorProps = {
+  value: ChromeTopicId;
+  onChange: (next: ChromeTopicId) => void;
 };
 
-export function LayersTopicSelector({ value, onChange }: LayersTopicSelectorProps) {
+export function ChromeTopicSelector({ value, onChange }: ChromeTopicSelectorProps) {
   return (
     <ConfigTopicSelector
-      label="Layers topic"
-      selectId="config-layers-topic"
-      ariaLabel="Layers topic"
-      testId="layers-topic-select"
+      label="Chrome topic"
+      selectId="config-chrome-topic"
+      ariaLabel="Chrome topic"
+      testId="chrome-topic-select"
       value={value}
-      optionIds={LAYERS_TOPIC_IDS}
-      labelFor={labelForLayersTopic}
+      optionIds={CHROME_TOPIC_IDS}
+      labelFor={labelForChromeTopic}
       onChange={onChange}
     />
   );

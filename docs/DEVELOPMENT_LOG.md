@@ -202,6 +202,12 @@ Sticky Layers topic selector inside the existing `.config-tab-panel` scroller; t
 
 Verified: focused Layers/config tests 79 passed; `npx tsc --noEmit` clean; `npm test` 206 files / 1970 passed / 0 failed. Cursor Browser `?scenario=baseline`: Config → Layers, Advanced/Eclipse scrolled with selector pinned; Moon & libration / Eclipse open at top.
 
+## 2026-08-16 — LIB-032 complete
+
+Chrome tab unified topic subpanels (sticky UI-only selector, not persisted). Default Reference & clock; Bottom HUD / Hour indicators / Tick tape / NATO time zones unmount when inactive. Old Chrome-area selector removed. No config, default, or persistence changes. Other tabs unchanged.
+
+Verified: focused Chrome/Layers/config tests 126 then 81 passed after guard-test update; `npx tsc --noEmit` clean; `npm test` 206 files / 1970 passed / 0 failed; `npm run build` succeeded with no scenario registry in `dist/`. Cursor Browser `?scenario=baseline`: Config → Chrome topics sticky and scroll-reset; Layers Advanced sticky still pinned.
+
 
 
 

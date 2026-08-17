@@ -11,34 +11,45 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import {
-  CHROME_MAJOR_AREA_IDS,
-  labelForChromeMajorArea,
-  type ChromeMajorAreaId,
-} from "./chromeMajorAreaTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
 
-export type ChromeMajorAreaSelectorProps = {
-  value: ChromeMajorAreaId;
-  onChange: (next: ChromeMajorAreaId) => void;
+export type ConfigTopicSelectorProps<T extends string> = {
+  label: string;
+  selectId: string;
+  ariaLabel: string;
+  testId: string;
+  value: T;
+  optionIds: readonly T[];
+  labelFor: (id: T) => string;
+  onChange: (next: T) => void;
 };
 
-export function ChromeMajorAreaSelector({ value, onChange }: ChromeMajorAreaSelectorProps) {
+/** Native topic `<select>` used by Layers and Chrome. Presentation only — not persisted. */
+export function ConfigTopicSelector<T extends string>({
+  label,
+  selectId,
+  ariaLabel,
+  testId,
+  value,
+  optionIds,
+  labelFor,
+  onChange,
+}: ConfigTopicSelectorProps<T>) {
   return (
-    <ConfigControlRow label="Chrome area">
+    <ConfigControlRow label={label}>
       <select
-        id="config-chrome-major-area"
+        id={selectId}
         className="config-input"
-        aria-label="Chrome major area"
-        data-testid="chrome-major-area-select"
+        aria-label={ariaLabel}
+        data-testid={testId}
         value={value}
         onChange={(e) => {
-          onChange(e.currentTarget.value as ChromeMajorAreaId);
+          onChange(e.currentTarget.value as T);
         }}
       >
-        {CHROME_MAJOR_AREA_IDS.map((id) => (
+        {optionIds.map((id) => (
           <option key={id} value={id}>
-            {labelForChromeMajorArea(id)}
+            {labelFor(id)}
           </option>
         ))}
       </select>

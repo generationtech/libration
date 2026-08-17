@@ -11,95 +11,16 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
-import {
-  anchorCitySelectOptions,
-  CURATED_ANCHOR_REFERENCE_CITY_OPTIONS,
-} from "./curatedAnchorReferenceCities";
-import {
-  CURATED_FIXED_IANA_TIME_ZONES,
-  fixedZoneSelectOptions,
-  labelForCuratedFixedZone,
-} from "./curatedFixedTimeZones";
-import {
-  PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
-  PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL,
-  resolvedBottomTimeStackSizeMultiplier,
-  TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS,
-  TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX,
-  TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN,
-  type TopBandAnchorConfig,
-  type TopBandTimeMode,
-} from "../../config/appConfig";
-import { applyTopBandModeToLibrationDraft } from "../../config/chromeDisplayTimeCommit";
-import type { FontAssetId } from "../../typography/fontAssetTypes";
-import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
-import { clampLongitudeDegForAnchor } from "./topBandAnchorClamp";
-import { ChromeMajorAreaSelector } from "./ChromeMajorAreaSelector";
-import { ConfigControlRow } from "./ConfigControlRow";
-import { DEFAULT_CHROME_MAJOR_AREA, type ChromeMajorAreaId } from "./chromeMajorAreaTypes";
+import { BottomHudEditor } from "./BottomHudEditor";
+import { ChromeTopicSelector } from "./ChromeTopicSelector";
+import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
+import { DEFAULT_CHROME_TOPIC, type ChromeTopicId } from "./chromeTopicTypes";
 import { HourIndicatorsEditor } from "./HourIndicatorsEditor";
 import { NatoTimezoneEditor } from "./NatoTimezoneEditor";
+import { ReferenceClockEditor } from "./ReferenceClockEditor";
 import { TickTapeEditor } from "./TickTapeEditor";
-
-const DEFAULT_FIXED_ZONE_WHEN_ENABLING = "UTC";
-const TOP_BAND_MODES: readonly TopBandTimeMode[] = ["local12", "local24", "utc24"];
-
-const ANCHOR_MODES: readonly TopBandAnchorConfig["mode"][] = ["auto", "fixedCity", "fixedLongitude"];
-
-function labelForTopBandMode(mode: TopBandTimeMode): string {
-  switch (mode) {
-    case "local12":
-      return "12-hour labels (reference civil)";
-    case "local24":
-      return "24-hour labels (reference civil)";
-    case "utc24":
-      return "24-hour UTC-style labels (formatting)";
-    default: {
-      const _e: never = mode;
-      return _e;
-    }
-  }
-}
-
-function labelForAnchorMode(mode: TopBandAnchorConfig["mode"]): string {
-  switch (mode) {
-    case "auto":
-      return "Auto (from zone / geography)";
-    case "fixedCity":
-      return "Fixed reference city meridian";
-    case "fixedLongitude":
-      return "Fixed longitude";
-    default: {
-      const _e: never = mode;
-      return _e;
-    }
-  }
-}
-
-const DEFAULT_FIXED_CITY_ID =
-  CURATED_ANCHOR_REFERENCE_CITY_OPTIONS.find((c) => c.id === "city.knoxville")?.id ??
-  CURATED_ANCHOR_REFERENCE_CITY_OPTIONS[0]!.id;
-
-function defaultAnchorForMode(
-  mode: TopBandAnchorConfig["mode"],
-  previous: TopBandAnchorConfig,
-): TopBandAnchorConfig {
-  if (mode === "auto") {
-    return { mode: "auto" };
-  }
-  if (mode === "fixedCity") {
-    const cityId =
-      previous.mode === "fixedCity" ? previous.cityId : DEFAULT_FIXED_CITY_ID;
-    return { mode: "fixedCity", cityId };
-  }
-  const longitudeDeg =
-    previous.mode === "fixedLongitude"
-      ? clampLongitudeDegForAnchor(previous.longitudeDeg)
-      : 0;
-  return { mode: "fixedLongitude", longitudeDeg };
-}
 
 export type ChromeTabProps = {
   config: LibrationConfigV2;
@@ -108,410 +29,35 @@ export type ChromeTabProps = {
 };
 
 export function ChromeTab({ config, updateConfig }: ChromeTabProps) {
-  const dt = config.chrome.displayTime;
-  const lay = config.chrome.layout;
-  const wired = Boolean(updateConfig);
-  const tz = dt.referenceTimeZone;
-  const anchor = dt.topBandAnchor;
-  const fixedZoneList =
-    tz.source === "fixed" ? fixedZoneSelectOptions(tz.timeZone) : CURATED_FIXED_IANA_TIME_ZONES;
-
-  const [lonDraft, setLonDraft] = useState<string | null>(null);
-  const [chromeMajorArea, setChromeMajorArea] = useState<ChromeMajorAreaId>(DEFAULT_CHROME_MAJOR_AREA);
-
-  const anchorResetKey =
-    anchor.mode === "auto"
-      ? "auto"
-      : anchor.mode === "fixedCity"
-        ? `city:${anchor.cityId}`
-        : `lon:${anchor.longitudeDeg}`;
-
-  useEffect(() => {
-    setLonDraft(null);
-  }, [anchorResetKey]);
-
-  const cityOptions =
-    anchor.mode === "fixedCity"
-      ? anchorCitySelectOptions(anchor.cityId)
-      : CURATED_ANCHOR_REFERENCE_CITY_OPTIONS;
+  const [chromeTopic, setChromeTopic] = useState<ChromeTopicId>(DEFAULT_CHROME_TOPIC);
 
   return (
     <div className="config-tab-stack">
-      <section
-        className="config-section"
-        aria-labelledby="config-chrome-display-heading"
-      >
-        <h2 id="config-chrome-display-heading" className="config-section__title">
-          Reference frame &amp; clock display
+      <section className="config-section" aria-labelledby="config-chrome-heading">
+        <h2 id="config-chrome-heading" className="config-section__title">
+          Instrument chrome
         </h2>
         <p className="config-section__hint">
-          One instant and one reference frame: civil date and time follow the IANA zone; the top strip read point follows
-          the meridian policy below. Hour label style is formatting only — it does not move tape geometry or change which
-          instant is shown. Civil time zone source picks which IANA wall clock backs the reference frame (bottom readout
-          and tape phase); it is separate from read-point meridian registration and from structural NATO overlays.
+          Choose a topic to edit. Reference &amp; clock defines the frame through which the rest of the
+          display is interpreted. Other topics edit the bottom HUD and top-strip chrome. Civil-time and
+          meridian semantics stay in Reference &amp; clock.
         </p>
-        <ConfigControlRow label="Hour label format (top band)">
-          <select
-            className="config-input"
-            value={dt.topBandMode}
-            disabled={!wired}
-            aria-label="Hour label format for top band hour markers"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const mode = e.currentTarget.value as TopBandTimeMode;
-                    updateConfig((draft) => {
-                      applyTopBandModeToLibrationDraft(draft, mode);
-                    });
-                  }
-                : undefined
-            }
-          >
-            {TOP_BAND_MODES.map((m) => (
-              <option key={m} value={m}>
-                {labelForTopBandMode(m)}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Civil time zone source">
-          <select
-            className="config-input"
-            value={tz.source}
-            disabled={!wired}
-            aria-label="Civil time zone source for reference frame"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const source = e.currentTarget.value as "system" | "fixed";
-                    updateConfig((draft) => {
-                      if (source === "system") {
-                        draft.chrome.displayTime.referenceTimeZone = { source: "system" };
-                      } else {
-                        const prev = draft.chrome.displayTime.referenceTimeZone;
-                        const zone =
-                          prev.source === "fixed"
-                            ? prev.timeZone
-                            : DEFAULT_FIXED_ZONE_WHEN_ENABLING;
-                        draft.chrome.displayTime.referenceTimeZone = {
-                          source: "fixed",
-                          timeZone: zone,
-                        };
-                      }
-                    });
-                  }
-                : undefined
-            }
-          >
-            <option value="system">System</option>
-            <option value="fixed">Fixed (IANA)</option>
-          </select>
-        </ConfigControlRow>
-        {tz.source === "fixed" ? (
-          <ConfigControlRow label="Fixed IANA zone (civil clock)">
-            <select
-              className="config-input"
-              value={tz.timeZone}
-              disabled={!wired}
-              aria-label="Fixed IANA time zone for civil time in reference frame"
-              onChange={
-                wired && updateConfig
-                  ? (e) => {
-                      const timeZone = e.currentTarget.value;
-                      updateConfig((draft) => {
-                        draft.chrome.displayTime.referenceTimeZone = {
-                          source: "fixed",
-                          timeZone,
-                        };
-                      });
-                    }
-                  : undefined
-              }
-            >
-              {fixedZoneList.map((z) => (
-                <option key={z} value={z}>
-                  {labelForCuratedFixedZone(z)}
-                </option>
-              ))}
-            </select>
-          </ConfigControlRow>
+        <ConfigStickyTopicNav topic={chromeTopic} testId="chrome-topic-nav">
+          <ChromeTopicSelector value={chromeTopic} onChange={setChromeTopic} />
+        </ConfigStickyTopicNav>
+        {chromeTopic === "referenceAndClock" ? (
+          <ReferenceClockEditor config={config} updateConfig={updateConfig} />
         ) : null}
-        <ConfigControlRow label="Read point meridian">
-          <select
-            className="config-input"
-            value={anchor.mode}
-            disabled={!wired}
-            aria-label="Read point meridian policy for top strip registration"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const mode = e.currentTarget.value as TopBandAnchorConfig["mode"];
-                    updateConfig((draft) => {
-                      const prev = draft.chrome.displayTime.topBandAnchor;
-                      draft.chrome.displayTime.topBandAnchor = defaultAnchorForMode(mode, prev);
-                    });
-                  }
-                : undefined
-            }
-          >
-            {ANCHOR_MODES.map((m) => (
-              <option key={m} value={m}>
-                {labelForAnchorMode(m)}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        {anchor.mode === "fixedCity" ? (
-          <ConfigControlRow label="Reference city (meridian)">
-            <select
-              className="config-input"
-              value={anchor.cityId}
-              disabled={!wired}
-              aria-label="Reference city for read point meridian"
-              onChange={
-                wired && updateConfig
-                  ? (e) => {
-                      const cityId = e.currentTarget.value;
-                      updateConfig((draft) => {
-                        draft.chrome.displayTime.topBandAnchor = {
-                          mode: "fixedCity",
-                          cityId,
-                        };
-                      });
-                    }
-                  : undefined
-              }
-            >
-              {cityOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </ConfigControlRow>
+        {chromeTopic === "bottomHud" ? (
+          <BottomHudEditor config={config} updateConfig={updateConfig} />
         ) : null}
-        {anchor.mode === "fixedLongitude" ? (
-          <ConfigControlRow label="Anchor meridian longitude (° east)">
-            <input
-              type="text"
-              className="config-input"
-              inputMode="decimal"
-              disabled={!wired}
-              aria-label="Anchor meridian longitude in degrees east"
-              value={lonDraft !== null ? lonDraft : String(anchor.longitudeDeg)}
-              onChange={(e) => {
-                setLonDraft(e.currentTarget.value);
-              }}
-              onFocus={
-                wired && anchor.mode === "fixedLongitude"
-                  ? () => {
-                      setLonDraft(String(anchor.longitudeDeg));
-                    }
-                  : undefined
-              }
-              onBlur={
-                wired && updateConfig
-                  ? (e) => {
-                      const raw = e.currentTarget.value;
-                      setLonDraft(null);
-                      const trimmed = raw.trim();
-                      if (trimmed === "") {
-                        return;
-                      }
-                      const n = parseFloat(trimmed);
-                      if (!Number.isFinite(n)) {
-                        return;
-                      }
-                      const longitudeDeg = clampLongitudeDegForAnchor(n);
-                      updateConfig((draft) => {
-                        if (draft.chrome.displayTime.topBandAnchor.mode !== "fixedLongitude") {
-                          return;
-                        }
-                        draft.chrome.displayTime.topBandAnchor = {
-                          mode: "fixedLongitude",
-                          longitudeDeg,
-                        };
-                      });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-        ) : null}
-      </section>
-      <section
-        className="config-section"
-        aria-labelledby="config-chrome-more-heading"
-      >
-        <h2 id="config-chrome-more-heading" className="config-section__title">
-          Layout chrome
-        </h2>
-        <p className="config-section__hint">
-          Fixed instrument chrome around the map. Choose an area to edit; settings are grouped by where
-          they apply on the strip (does not change civil-time or anchor semantics).
-        </p>
-        <ConfigControlRow label="Bottom HUD (reference city)">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            checked={lay.bottomInformationBarVisible}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show bottom HUD reference-city date and time"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomInformationBarVisible = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <p className="config-section__hint">
-          Lower-left instrument text (not map layers): civil date in the reference-city timezone; time row follows the
-          global hour-label mode (12-hour, 24-hour reference wall time, or UTC 24-hour). Size and font apply to this readout.
-        </p>
-        <ConfigControlRow label="Show date">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            data-testid="chrome-bottom-hud-show-date"
-            checked={lay.bottomTimeStackShowDate !== false}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show reference-city date on bottom HUD"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowDate = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Show time">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            data-testid="chrome-bottom-hud-show-time"
-            checked={lay.bottomTimeStackShowTime !== false}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show reference-city time on bottom HUD"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackShowTime = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Show seconds">
-          <input
-            type="checkbox"
-            className="config-input config-input--checkbox"
-            data-testid="chrome-bottom-hud-show-seconds"
-            checked={lay.bottomTimeShowSeconds !== false}
-            readOnly={!wired}
-            disabled={!wired}
-            tabIndex={wired ? 0 : -1}
-            aria-label="Show seconds on lower-left reference time"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const checked = e.currentTarget.checked;
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeShowSeconds = checked;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Bottom HUD text size">
-          <input
-            type="range"
-            className="config-input"
-            data-testid="chrome-bottom-stack-size-range"
-            min={TOP_BAND_HOUR_MARKER_SIZE_MULT_MIN}
-            max={TOP_BAND_HOUR_MARKER_SIZE_MULT_MAX}
-            step={0.05}
-            value={resolvedBottomTimeStackSizeMultiplier(lay)}
-            disabled={!wired}
-            aria-label="Scale factor for bottom HUD date and time stack text"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const v = Number(e.currentTarget.value);
-                    if (!Number.isFinite(v)) {
-                      return;
-                    }
-                    updateConfig((draft) => {
-                      draft.chrome.layout.bottomTimeStackSizeMultiplier = v;
-                    });
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Bottom readout font">
-          <select
-            className="config-input"
-            data-testid="chrome-bottom-readout-font-select"
-            value={lay.bottomReadoutFontAssetId ?? ""}
-            disabled={!wired}
-            aria-label="Font for lower-left bottom HUD time stack"
-            onChange={
-              wired && updateConfig
-                ? (e) => {
-                    const v = e.currentTarget.value;
-                    updateConfig((draft) => {
-                      if (v === "") {
-                        delete (draft.chrome.layout as { bottomReadoutFontAssetId?: FontAssetId })
-                          .bottomReadoutFontAssetId;
-                      } else {
-                        draft.chrome.layout.bottomReadoutFontAssetId = v as FontAssetId;
-                      }
-                    });
-                  }
-                : undefined
-            }
-          >
-            <option value="">Default (typography role)</option>
-            <option value={PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID}>
-              {PRODUCT_TEXT_RENDERER_DEFAULT_SELECT_LABEL}
-            </option>
-            {TOP_BAND_HOUR_MARKER_SELECTABLE_FONT_IDS.map((id) => {
-              const rec = defaultFontAssetRegistry.getById(id);
-              return rec ? (
-                <option key={id} value={id}>
-                  {rec.displayName}
-                </option>
-              ) : null;
-            })}
-          </select>
-        </ConfigControlRow>
-        <ChromeMajorAreaSelector value={chromeMajorArea} onChange={setChromeMajorArea} />
-        {chromeMajorArea === "hourIndicators" ? (
+        {chromeTopic === "hourIndicators" ? (
           <HourIndicatorsEditor config={config} updateConfig={updateConfig} />
         ) : null}
-        {chromeMajorArea === "tickTape" ? (
+        {chromeTopic === "tickTape" ? (
           <TickTapeEditor config={config} updateConfig={updateConfig} />
         ) : null}
-        {chromeMajorArea === "natoTimezone" ? (
+        {chromeTopic === "natoTimezone" ? (
           <NatoTimezoneEditor config={config} updateConfig={updateConfig} />
         ) : null}
       </section>

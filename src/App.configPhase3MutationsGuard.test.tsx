@@ -66,6 +66,7 @@ describe("Phase 3 mutations guard (ALLOW_PHASE3_MUTATIONS false)", () => {
     render(<App />);
     await user.click(screen.getByRole("button", { name: "Open configuration panel" }));
     await user.click(screen.getByRole("tab", { name: "Chrome" }));
+    await user.selectOptions(screen.getByTestId("chrome-topic-select"), "bottomHud");
     await user.click(screen.getByRole("checkbox", { name: "Show bottom HUD reference-city date and time" }));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();

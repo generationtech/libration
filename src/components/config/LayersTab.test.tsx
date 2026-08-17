@@ -636,9 +636,9 @@ describe("LayersTab topic navigation", () => {
     expect(select).toHaveValue("layerMasters");
     expect([...select.options].map((option) => option.value)).toEqual([...LAYERS_TOPIC_IDS]);
     const nav = screen.getByTestId("layers-topic-nav");
-    expect(nav.classList.contains("layers-topic-nav")).toBe(true);
+    expect(nav.classList.contains("config-topic-nav")).toBe(true);
     expect(nav.querySelector("#config-layers-topic")).toBe(select);
-    expect(screen.getByRole("heading", { name: "Scene layers" }).closest(".layers-topic-nav")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Scene layers" }).closest(".config-topic-nav")).toBeNull();
   });
 
   it("resets the tab-panel scroll on topic change but not on setting edits", () => {

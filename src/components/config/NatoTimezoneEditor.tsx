@@ -23,7 +23,7 @@ import type { FontAssetId } from "../../typography/fontAssetTypes";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import { resolveEffectiveTimezoneLetterRowArea } from "../../config/topBandTimezoneLetterRowResolver";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
-import { descriptionForChromeMajorArea } from "./chromeMajorAreaTypes";
+import { descriptionForChromeTopic } from "./chromeTopicTypes";
 import { ConfigControlRow } from "./ConfigControlRow";
 
 export type NatoTimezoneEditorProps = {
@@ -39,7 +39,7 @@ export function NatoTimezoneEditor({ config, updateConfig }: NatoTimezoneEditorP
   return (
     <div data-testid="chrome-editor-nato-timezone">
       <h3 className="config-section__title config-section__title--sub">NATO / structural zone row</h3>
-      <p className="config-section__hint">{descriptionForChromeMajorArea("natoTimezone")}</p>
+      <p className="config-section__hint">{descriptionForChromeTopic("natoTimezone")}</p>
       <p className="config-section__hint">
         This row is a fixed 15° geometric grid with military-style letters — not your reference civil clock. Civil date and
         time come from the zone and instant above; the highlighted cell only marks the read-point column.

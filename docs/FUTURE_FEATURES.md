@@ -386,7 +386,7 @@ Planned direction:
 
 Candidates:
 
-- **Improved settings organization** — Layers tab topic subpanels are production ([LIB-030](work/LIB-030-config-panel-layers-subpanels.md)). Remaining organization (search, other-tab grouping) is still a candidate.
+- **Improved settings organization** — Layers ([LIB-030](work/LIB-030-config-panel-layers-subpanels.md), [LIB-031](work/LIB-031-sticky-layers-topic-navigation.md)) and Chrome ([LIB-032](work/LIB-032-chrome-tab-topic-organization.md)) topic subpanels are production. Remaining organization (search, other-tab grouping) is still a candidate.
 - search/filter in settings.
 - map selector with thumbnails.
 - source attribution panel.
