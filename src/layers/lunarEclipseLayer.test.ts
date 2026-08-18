@@ -64,6 +64,96 @@ describe("lunar eclipse layer", () => {
     }
   });
 
+  it("uses the same Moon-visible flags for upcoming and active geography", () => {
+    const on = createLunarEclipseLayer({
+      presentation: {
+        forecastHorizonDays: 7,
+        showVisibilityRegion: true,
+        showVisibilityBoundary: true,
+      },
+      alignment: ALIGNMENT_OFF,
+    });
+    const off = createLunarEclipseLayer({
+      presentation: {
+        forecastHorizonDays: 7,
+        showVisibilityRegion: false,
+        showVisibilityBoundary: false,
+      },
+      alignment: ALIGNMENT_OFF,
+    });
+    const upcomingFrame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
+    const activeFrame = resolveEclipseFrame(TOTAL_UTC);
+    const upcomingOn = on.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: upcomingFrame }),
+    );
+    const upcomingOff = off.getState(
+      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: upcomingFrame }),
+    );
+    const activeOn = on.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: activeFrame }));
+    const activeOff = off.getState(
+      createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: activeFrame }),
+    );
+    const quiet = on.getState(createTimeContext(QUIET_UTC, 0, true));
+    if (
+      isEquirectRegionOverlayPayload(upcomingOn.data) &&
+      isEquirectRegionOverlayPayload(upcomingOff.data) &&
+      isEquirectRegionOverlayPayload(activeOn.data) &&
+      isEquirectRegionOverlayPayload(activeOff.data) &&
+      isEquirectRegionOverlayPayload(quiet.data)
+    ) {
+      expect(upcomingOn.data.fills.length).toBe(1);
+      expect(upcomingOn.data.strokes.length).toBeGreaterThan(0);
+      expect(activeOn.data.fills.length).toBe(1);
+      expect(activeOn.data.strokes.length).toBeGreaterThan(0);
+      expect(upcomingOff.data.fills).toHaveLength(0);
+      expect(upcomingOff.data.strokes).toHaveLength(0);
+      expect(activeOff.data.fills).toHaveLength(0);
+      expect(activeOff.data.strokes).toHaveLength(0);
+      expect(quiet.data.fills).toHaveLength(0);
+      expect(quiet.data.strokes).toHaveLength(0);
+      expect(upcomingOn.data.fills[0]?.fill).toBe(activeOn.data.fills[0]?.fill);
+      expect(upcomingOn.data.strokes[0]?.stroke).toBe(activeOn.data.strokes[0]?.stroke);
+    }
+  });
+
+  it("keeps unified Moon-visible geography during a live-only active event and omits upcoming", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 0, showVisibilityRegion: true, showVisibilityBoundary: true },
+      alignment: ALIGNMENT_OFF,
+    });
+    const upcoming = layer.getState(
+      createTimeContext(FORECAST_UTC, 0, true, {
+        eclipseFrame: resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: 0 }),
+      }),
+    );
+    const active = layer.getState(
+      createTimeContext(TOTAL_UTC, 0, true, {
+        eclipseFrame: resolveEclipseFrame(TOTAL_UTC, { lunarHorizonMs: 0 }),
+      }),
+    );
+    if (isEquirectRegionOverlayPayload(upcoming.data) && isEquirectRegionOverlayPayload(active.data)) {
+      expect(upcoming.data.fills).toHaveLength(0);
+      expect(upcoming.data.strokes).toHaveLength(0);
+      expect(active.data.fills.length).toBe(1);
+      expect(active.data.strokes.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps label path-hint geometry when the painted boundary is off", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { showVisibilityRegion: false, showVisibilityBoundary: false },
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+    });
+    const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.strokes).toHaveLength(0);
+      expect(st.data.labels).toHaveLength(1);
+      expect(st.data.labelPathHints?.length).toBeGreaterThan(0);
+      expect(st.data.labelPathHints?.[0]?.points.length).toBeGreaterThan(1);
+    }
+  });
+
   it("emits current-instant Moon-visible geography before P1, not the GE freeze", () => {
     const layer = createLunarEclipseLayer({
       presentation: { forecastHorizonDays: 7 },

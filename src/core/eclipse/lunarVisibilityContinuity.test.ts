@@ -68,6 +68,8 @@ function snapshot(utcMs: number) {
     moon,
     fillCount: payload.fills.length,
     strokeCount: payload.strokes.length,
+    fillStyle: fill?.fill,
+    strokeStyle: stroke?.stroke,
     copyCount: descriptors.length,
     polarCloseLatDeg: fill?.polarCloseLatDeg,
     ring0,
@@ -83,12 +85,15 @@ describe("lunar visibility continuity (LIB-044)", () => {
 
   it("uses current-instant visibility for upcoming and active, with no family switch at P1", () => {
     const offsets = [
-      -10 * 60_000, -5 * 60_000, -60_000, -10_000, 0, 10_000, 60_000, 5 * 60_000, 10 * 60_000,
+      -10 * 60_000, -5 * 60_000, -60_000, -10_000, -1000, 0, 1000, 10_000, 60_000, 5 * 60_000,
+      10 * 60_000,
     ];
     const rows = offsets.map((dt) => snapshot(p1 + dt));
     for (const row of rows) {
       expect(row.fillCount).toBe(1);
       expect(row.strokeCount).toBe(1);
+      expect(row.fillStyle).toBe(rows[0]!.fillStyle);
+      expect(row.strokeStyle).toBe(rows[0]!.strokeStyle);
       expect(row.copyCount).toBeGreaterThan(0);
       expect(row.copyCount).toBeLessThanOrEqual(2);
       expect(row.polarCloseLatDeg).toBe(row.moon.latDeg >= 0 ? 90 : -90);
@@ -113,6 +118,8 @@ describe("lunar visibility continuity (LIB-044)", () => {
     const after = snapshot(p1 + 1000);
     expect(before.fillCount).toBe(after.fillCount);
     expect(before.strokeCount).toBe(after.strokeCount);
+    expect(before.fillStyle).toBe(after.fillStyle);
+    expect(before.strokeStyle).toBe(after.strokeStyle);
     expect(Math.abs(after.moon.latDeg - before.moon.latDeg)).toBeLessThan(0.01);
     expect(Math.abs(wrapLonDelta(after.moon.lonDeg, before.moon.lonDeg))).toBeLessThan(0.02);
     expect(Math.abs(wrapLonDelta(after.ring0!.lonDeg, before.ring0!.lonDeg))).toBeLessThan(0.05);

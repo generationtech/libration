@@ -185,6 +185,50 @@ describe("workingV2Persistence", () => {
       persistWorkingV2(mem, doc);
       expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).not.toBeNull();
     });
+
+    it("migrates legacy lunar forecast visibility booleans on load and omits them on save", () => {
+      const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+      const legacy = {
+        ...base,
+        scene: {
+          ...base.scene!,
+          layers: base.scene!.layers.map((l) => {
+            if (l.id !== "lunarEclipse" || l.source.kind !== "derived") {
+              return l;
+            }
+            return {
+              ...l,
+              source: {
+                ...l.source,
+                parameters: {
+                  ...(l.source.parameters ?? {}),
+                  showVisibilityRegion: true,
+                  showForecastVisibilityRegion: false,
+                  showVisibilityBoundary: true,
+                  showForecastVisibilityBoundary: true,
+                },
+              },
+            };
+          }),
+        },
+      };
+      const mem = makeMemoryStorage();
+      mem.setItem(WORKING_V2_LOCAL_STORAGE_KEY, JSON.stringify(legacy));
+      const loaded = resolveStartupWorkingV2(mem, () => appConfigToV2(getActiveAppConfig()));
+      const row = loaded.scene?.layers.find((l) => l.id === "lunarEclipse");
+      const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+      expect(params?.showVisibilityRegion).toBe(false);
+      expect(params?.showVisibilityBoundary).toBe(true);
+      expect(params).not.toHaveProperty("showForecastVisibilityRegion");
+      expect(params).not.toHaveProperty("showForecastVisibilityBoundary");
+      persistWorkingV2(mem, loaded);
+      const saved = JSON.parse(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)!) as typeof loaded;
+      const savedRow = saved.scene?.layers.find((l) => l.id === "lunarEclipse");
+      const savedParams = savedRow?.source.kind === "derived" ? savedRow.source.parameters : undefined;
+      expect(savedParams?.showVisibilityRegion).toBe(false);
+      expect(savedParams).not.toHaveProperty("showForecastVisibilityRegion");
+      expect(savedParams).not.toHaveProperty("showForecastVisibilityBoundary");
+    });
   });
 
   describe("import boundaries", () => {

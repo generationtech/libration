@@ -530,7 +530,7 @@ describe("LayersTab eclipse product polish", () => {
     expect((screen.getByLabelText("Eclipse shading intensity") as HTMLSelectElement).value).toBe("normal");
   });
 
-  it("defaults lunar forecast horizon to 7 days and disables forecast children when live only", async () => {
+  it("defaults lunar forecast horizon to 7 days and keeps Moon-visible controls enabled when live only", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
     selectLayersTopic("layerMasters");
@@ -539,13 +539,19 @@ describe("LayersTab eclipse product polish", () => {
     selectLayersTopic("eclipse");
     const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
     expect(horizon.value).toBe("7");
+    expect(screen.queryByLabelText("Upcoming Moon-visible region")).toBeNull();
+    expect(screen.queryByLabelText("Upcoming Moon-visible boundary")).toBeNull();
+    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).title).toBe(
+      "Show where the Moon is geometrically above the horizon.",
+    );
+    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).title).toBe(
+      "Show the geometric lunar horizon.",
+    );
     await user.selectOptions(horizon, "0");
-    expect((screen.getByLabelText("Upcoming Moon-visible region") as HTMLInputElement).disabled).toBe(
-      true,
-    );
-    expect((screen.getByLabelText("Upcoming Moon-visible boundary") as HTMLInputElement).disabled).toBe(
-      true,
-    );
+    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).disabled).toBe(false);
+    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).disabled).toBe(false);
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).disabled).toBe(
       false,
     );

@@ -182,7 +182,8 @@ Stations (product UTC): upcoming `2029-06-25T18:00:00.000Z`; pre-active `2029-06
 When inspecting:
 
 - Confirm the map label is `Total lunar eclipse · upcoming` then `· active`, anchored near the Moon, not through the glyph/halo, and not concatenated with São Paulo at GE (zenith ~23°S 50°W).
-- Confirm the Moon-visible fill and white horizon boundary follow the **current** Moon both before and after P1. They must not sit on a frozen greatest-eclipse hemisphere while upcoming, then snap at activation.
+- Confirm the Moon-visible fill and white horizon boundary follow the **current** Moon both before and after P1. They must not sit on a frozen greatest-eclipse hemisphere while upcoming, then snap at activation. Unified Moon-visible region/boundary controls apply throughout; there are no separate Upcoming Moon-visible controls, and turning a control off must not reappear at P1.
+- Confirm fill and boundary opacity do not jump at P1 solely because lifecycle became Active.
 - Confirm the Moon-visible fill is restrained informational overlay (boundary clearer than fill), not a night-side brightening. Overlay ON vs OFF must not change physical illumination.
 - Confirm no geographic lunar alignment line, “beam”, or ribbon on the map. The Earth-shadow cue is short, local to the Moon, origin on the shadow side, tip at the disc, behind Moon details.
 - Confirm upcoming and after have no cue and no Earth-shadow Moon treatment; penumbral/early cue is faint; totality strongest but restrained; egress weaker.

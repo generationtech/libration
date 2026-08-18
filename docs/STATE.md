@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-044](work/LIB-044-lunar-visibility-continuity-and-shudder-repair.md) — Lunar visibility continuity + temporal illumination shudder repair
+[LIB-045](work/LIB-045-unify-lunar-moon-visible-controls.md) — Unify lunar Moon-visible controls
 
 ## Blockers
 

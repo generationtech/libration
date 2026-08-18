@@ -76,7 +76,6 @@ export function EclipseSystemSection(props: {
   const solarShadingOn = config.layers.solarShading;
   const lunarOn = config.layers.lunarEclipse;
   const liveOnly = solar.forecastHorizonDays === 0;
-  const lunarLiveOnly = lunar.forecastHorizonDays === 0;
   const alignmentChildrenOff = !alignment.enabled;
 
   return (
@@ -354,21 +353,19 @@ export function EclipseSystemSection(props: {
         </ConfigControlRow>
         {(
           [
-            ["showForecastVisibilityRegion", "Upcoming Moon-visible region", "Where the Moon is above the geometric horizon at the current product instant while the event is upcoming. Disabled when the horizon is Live only.", lunarLiveOnly],
-            ["showForecastVisibilityBoundary", "Upcoming Moon-visible boundary", "Geometric lunar-horizon contour at the current product instant while upcoming. Disabled when the horizon is Live only.", lunarLiveOnly],
-            ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse.", false],
-            ["showVisibilityBoundary", "Moon-visible boundary", "Geometric lunar-horizon contour at the current product instant during an active eclipse. Not the solar terminator.", false],
-            ["showVisibilityRegion", "Moon-visible region", "Terrestrial region where the Moon is above the geometric horizon at the current product instant.", false],
+            ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse."],
+            ["showVisibilityRegion", "Moon-visible region", "Show where the Moon is geometrically above the horizon."],
+            ["showVisibilityBoundary", "Moon-visible boundary", "Show the geometric lunar horizon."],
           ] as const
-        ).map(([key, label, title, forecastChild]) => (
+        ).map(([key, label, title]) => (
           <ConfigControlRow key={key} label={label}>
             <input
               type="checkbox"
               className="config-input config-input--checkbox"
               checked={lunar[key]}
               readOnly={!mutable}
-              disabled={!mutable || !lunarOn || forecastChild}
-              tabIndex={mutable && lunarOn && !forecastChild ? 0 : -1}
+              disabled={!mutable || !lunarOn}
+              tabIndex={mutable && lunarOn ? 0 : -1}
               aria-label={label}
               title={title}
               onChange={

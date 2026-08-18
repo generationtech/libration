@@ -1381,13 +1381,11 @@ describe("lunar eclipse scene presentation", () => {
       row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined,
     ).toBe(7);
     expect(
-      row?.source.kind === "derived" ? row.source.parameters?.showForecastVisibilityRegion : undefined,
-    ).toBe(true);
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("showForecastVisibilityRegion");
     expect(
-      row?.source.kind === "derived"
-        ? row.source.parameters?.showForecastVisibilityBoundary
-        : undefined,
-    ).toBe(true);
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("showForecastVisibilityBoundary");
   });
 
   it("persists independent lunar presentation toggles", () => {
@@ -1441,7 +1439,7 @@ describe("lunar eclipse scene presentation", () => {
           if (l.id !== "lunarEclipse" || l.source.kind !== "derived") {
             return l;
           }
-          const { forecastHorizonDays: _h, showForecastVisibilityRegion: _r, showForecastVisibilityBoundary: _b, ...parameters } =
+          const { forecastHorizonDays: _h, ...parameters } =
             l.source.parameters ?? {};
           return { ...l, source: { ...l.source, parameters } };
         }),
@@ -1460,6 +1458,66 @@ describe("lunar eclipse scene presentation", () => {
       0,
     );
     void row;
+  });
+
+  it("migrates legacy forecast visibility booleans into unified flags and omits them", () => {
+    const base = defaultLibrationConfigV2();
+    const withLegacy = (
+      region: boolean | undefined,
+      forecastRegion: boolean | undefined,
+      boundary: boolean | undefined,
+      forecastBoundary: boolean | undefined,
+    ) =>
+      normalizeLibrationConfig({
+        ...base,
+        scene: {
+          ...base.scene!,
+          layers: base.scene!.layers.map((l) => {
+            if (l.id !== "lunarEclipse" || l.source.kind !== "derived") {
+              return l;
+            }
+            const {
+              showVisibilityRegion: _region,
+              showVisibilityBoundary: _boundary,
+              showForecastVisibilityRegion: _forecastRegion,
+              showForecastVisibilityBoundary: _forecastBoundary,
+              ...rest
+            } = l.source.parameters ?? {};
+            return {
+              ...l,
+              source: {
+                ...l.source,
+                parameters: {
+                  ...rest,
+                  ...(region === undefined ? {} : { showVisibilityRegion: region }),
+                  ...(forecastRegion === undefined
+                    ? {}
+                    : { showForecastVisibilityRegion: forecastRegion }),
+                  ...(boundary === undefined ? {} : { showVisibilityBoundary: boundary }),
+                  ...(forecastBoundary === undefined
+                    ? {}
+                    : { showForecastVisibilityBoundary: forecastBoundary }),
+                },
+              },
+            };
+          }),
+        },
+      });
+    const paramsOf = (v2: ReturnType<typeof normalizeLibrationConfig>) => {
+      const row = v2.scene?.layers.find((l) => l.id === "lunarEclipse");
+      return row?.source.kind === "derived" ? row.source.parameters : undefined;
+    };
+    expect(paramsOf(withLegacy(true, true, true, true))?.showVisibilityRegion).toBe(true);
+    expect(paramsOf(withLegacy(true, false, true, true))?.showVisibilityRegion).toBe(false);
+    expect(paramsOf(withLegacy(false, true, true, true))?.showVisibilityRegion).toBe(false);
+    expect(paramsOf(withLegacy(false, false, false, false))?.showVisibilityRegion).toBe(false);
+    expect(paramsOf(withLegacy(undefined, false, undefined, true))?.showVisibilityRegion).toBe(false);
+    expect(paramsOf(withLegacy(false, undefined, true, undefined))?.showVisibilityBoundary).toBe(true);
+    const migrated = paramsOf(withLegacy(true, false, true, false));
+    expect(migrated).not.toHaveProperty("showForecastVisibilityRegion");
+    expect(migrated).not.toHaveProperty("showForecastVisibilityBoundary");
+    expect(migrated?.showVisibilityRegion).toBe(false);
+    expect(migrated?.showVisibilityBoundary).toBe(false);
   });
 });
 

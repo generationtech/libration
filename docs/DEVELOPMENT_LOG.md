@@ -273,3 +273,10 @@ Verified: `npx tsc --noEmit` clean; `npm test` 223 files / 2106 passed / 0 faile
 Map Moon-visible geography now follows the current product instant for both upcoming and active lunar eclipses (no frozen GE hemisphere, no activation snap). The remaining white global line was the Moon-visible horizon boundary; it is retained as current-instant geography. Hemisphere unwrap no longer flicker-cuts wrap copies. Physical illumination uses one product-time astronomical state. Placard still describes GE visibility. No new ADR.
 
 Verified: `npx tsc --noEmit` clean; `npm test` 225 files / 2121 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming/preActive/early/total, 100× playback through P1, 2017 solar GE. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-045 complete
+
+Removed redundant Upcoming Moon-visible region/boundary controls. One Moon-visible region flag and one Moon-visible boundary flag now own current-instant lunar eclipse map geography for both upcoming and active presentation, with no P1 ownership or opacity switch. Legacy forecast visibility booleans migrate with `false` wins and are omitted from normalized config.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 226 files / 2133 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming/preActive/early/deepPartial/total, Layers Eclipse UI, 2017 solar GE. LIB-037 stays proposed.
+

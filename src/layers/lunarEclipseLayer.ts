@@ -28,7 +28,6 @@ import {
 import {
   forecastHorizonMsFromDays,
   normalizeSolarEclipsePresentation,
-  scaleRgbaAlpha,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
 import {
@@ -128,7 +127,14 @@ export function createLunarEclipseLayer(
       const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
       const activeLunar = presentedActiveLunar(frame, presentation);
       const moon = sublunarPoint(time.now);
-      if (frame.support.supported && activeLunar && frame.lunarGeometry) {
+      const paintCurrentMoonVisible =
+        frame.support.supported &&
+        ((Boolean(activeLunar) && Boolean(frame.lunarGeometry)) ||
+          (!activeLunar &&
+            presentedLunarForecastSelections(frame, presentation).some(
+              (selection) => selection.nearestUpcoming,
+            )));
+      if (paintCurrentMoonVisible) {
         pushCurrentInstantMoonVisible({
           moonLatDeg: moon.latDeg,
           moonLonDeg: moon.lonDeg,
@@ -140,28 +146,6 @@ export function createLunarEclipseLayer(
           fills,
           strokes,
         });
-      } else if (frame.support.supported && !activeLunar) {
-        const nearest = presentedLunarForecastSelections(frame, presentation).find(
-          (selection) => selection.nearestUpcoming,
-        );
-        if (nearest) {
-          const regionFill = scaleRgbaAlpha(paint.visibilityRegionFill, nearest.prominence01);
-          const boundaryStroke = scaleRgbaAlpha(
-            paint.visibilityBoundaryStroke,
-            nearest.prominence01,
-          );
-          pushCurrentInstantMoonVisible({
-            moonLatDeg: moon.latDeg,
-            moonLonDeg: moon.lonDeg,
-            showRegion: presentation.showForecastVisibilityRegion,
-            showBoundary: presentation.showForecastVisibilityBoundary,
-            regionFill,
-            boundaryStroke,
-            boundaryWidthPx: paint.visibilityBoundaryWidthPx,
-            fills,
-            strokes,
-          });
-        }
       }
       if (labelsEnabled && frame.support.supported) {
         const primary = presentedPrimaryEclipse(frame, solarPresentation, presentation);
