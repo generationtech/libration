@@ -139,7 +139,7 @@ function lunarRows(
       rows.push({ label: "Time until event", value: relative });
     }
     rows.push({
-      label: "Forecast Moon-visible region",
+      label: "Visibility at greatest eclipse",
       value: "Where the Moon is above the geometric horizon at greatest eclipse",
     });
   } else {
@@ -150,12 +150,10 @@ function lunarRows(
   }
   rows.push({ label: "Penumbral magnitude", value: event.penumbralMagnitude.toFixed(3) });
   rows.push({ label: "Umbral magnitude", value: event.umbralMagnitude.toFixed(3) });
-  if (!upcoming) {
-    rows.push({
-      label: "Moon-visible region",
-      value: "Where the eclipsed Moon is above the geometric horizon",
-    });
-  }
+  rows.push({
+    label: "Moon-visible region",
+    value: "Where the Moon is above the geometric horizon now",
+  });
   return rows;
 }
 
@@ -187,17 +185,14 @@ function solarLegend(args: {
 }
 
 function lunarLegend(upcoming: boolean): EclipseLegendItem[] {
-  if (upcoming) {
-    return [
-      { id: "forecast-moon-visible", label: "Forecast Moon-visible region at greatest eclipse" },
-      { id: "forecast-lunar-horizon", label: "Forecast boundary: geometric lunar horizon at GE" },
-    ];
-  }
-  return [
-    { id: "moon-visible", label: "Moon-visible region" },
-    { id: "lunar-horizon", label: "Boundary: geometric lunar horizon" },
-    { id: "alignment", label: "Alignment" },
+  const items: EclipseLegendItem[] = [
+    { id: "moon-visible", label: "Moon-visible now" },
+    { id: "lunar-horizon", label: "Boundary: geometric lunar horizon now" },
   ];
+  if (!upcoming) {
+    items.push({ id: "alignment", label: "Earth-shadow cue" });
+  }
+  return items;
 }
 
 export function buildEclipseEventInformation(

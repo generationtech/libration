@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-043](work/LIB-043-lunar-eclipse-presentation-illumination-reconciliation.md) — Lunar eclipse presentation + illumination reconciliation
+[LIB-044](work/LIB-044-lunar-visibility-continuity-and-shudder-repair.md) — Lunar visibility continuity + temporal illumination shudder repair
 
 ## Blockers
 

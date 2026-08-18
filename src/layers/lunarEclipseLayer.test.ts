@@ -16,6 +16,7 @@ import { createTimeContext } from "../core/time";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import { isEquirectRegionOverlayPayload } from "./equirectRegionPayload";
 import { createLunarEclipseLayer } from "./lunarEclipseLayer";
+import { sublunarPoint } from "../core/sublunarPoint";
 import canvasBackendSource from "../renderer/canvasRenderBackend.ts?raw";
 
 const TOTAL_UTC = Date.parse("2022-05-16T04:11:29.000Z");
@@ -63,7 +64,7 @@ describe("lunar eclipse layer", () => {
     }
   });
 
-  it("emits a quieter forecast Moon-visible region before P1 and no alignment", () => {
+  it("emits current-instant Moon-visible geography before P1, not the GE freeze", () => {
     const layer = createLunarEclipseLayer({
       presentation: { forecastHorizonDays: 7 },
       alignment: { enabled: true, lunarEnabled: true },
@@ -75,9 +76,20 @@ describe("lunar eclipse layer", () => {
     expect(frame.upcomingLunar[0]?.subtype).toBe("total");
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(st.data)) {
+      const moon = sublunarPoint(FORECAST_UTC);
+      const ge = frame.upcomingLunar[0]!;
       expect(st.data.fills.length).toBe(1);
       expect(st.data.strokes.length).toBeGreaterThan(0);
+      expect(st.data.fills[0]?.polarCloseLatDeg).toBe(moon.latDeg >= 0 ? 90 : -90);
+      const ring0 = st.data.fills[0]!.ring[0]!;
+      let dLon = ring0.lonDeg - (moon.lonDeg - 180);
+      while (dLon > 180) dLon -= 360;
+      while (dLon < -180) dLon += 360;
+      expect(Math.abs(dLon)).toBeLessThan(2);
+      expect(Math.abs(moon.lonDeg - ge.zenithLonDeg)).toBeGreaterThan(10);
       expect(st.data.labels).toHaveLength(1);
+      expect(st.data.labels?.[0]?.latDeg).toBeCloseTo(moon.latDeg, 5);
+      expect(st.data.labels?.[0]?.lonDeg).toBeCloseTo(moon.lonDeg, 5);
       expect(st.data.labels?.[0]?.text).toMatch(/Total lunar eclipse/);
       expect(st.data.labels?.[0]?.text).toMatch(/·/);
       expect(st.data.labels?.[0]?.placement).toBe("lunar-glyph");

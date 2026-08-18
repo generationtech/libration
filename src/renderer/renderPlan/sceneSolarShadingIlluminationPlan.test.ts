@@ -585,4 +585,34 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(daySamples).toBeGreaterThan(10);
     expect(attenuatedDayAlpha / daySamples).toBeGreaterThan(ordinaryDayAlpha / daySamples + 40);
   });
+
+  it("keeps sample-grid origin independent of the sublunar point when moonlight is off", () => {
+    const base = {
+      viewportWidthPx: 80,
+      viewportHeightPx: 40,
+      subsolarLatDeg: 10,
+      subsolarLonDeg: -40,
+      lunarIlluminatedFraction: 0,
+      layerOpacity: 1,
+      moonlightPolicy: ILL_POLICY,
+    };
+    const a = buildSolarShadingIlluminationRenderPlan({
+      ...base,
+      sublunarLatDeg: -20,
+      sublunarLonDeg: -50,
+    });
+    const b = buildSolarShadingIlluminationRenderPlan({
+      ...base,
+      sublunarLatDeg: 15,
+      sublunarLonDeg: 120,
+    });
+    expect(a.items[0]?.kind).toBe("rasterPatch");
+    expect(b.items[0]?.kind).toBe("rasterPatch");
+    if (a.items[0]?.kind !== "rasterPatch" || b.items[0]?.kind !== "rasterPatch") {
+      return;
+    }
+    expect(a.items[0].widthPx).toBe(b.items[0].widthPx);
+    expect(a.items[0].heightPx).toBe(b.items[0].heightPx);
+    expect(a.items[0].rgba).toEqual(b.items[0].rgba);
+  });
 });

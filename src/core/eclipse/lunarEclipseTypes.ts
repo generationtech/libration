@@ -61,8 +61,9 @@ export type LunarEclipseLifecycle = "upcoming" | "active";
 
 /**
  * Time-independent representative geography for an upcoming lunar eclipse:
- * the Moon-above-horizon region at greatest eclipse. Not a terrestrial path
- * and not visibility for every contact.
+ * the Moon-above-horizon region at greatest eclipse. Used as event-information
+ * / placard forecast context. Map overlays use current-product-instant
+ * visibility instead (LIB-044) so playback stays temporally continuous.
  */
 export type LunarEclipseEventForecastGeometry = {
   readonly eventId: string;

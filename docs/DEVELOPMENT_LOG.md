@@ -267,3 +267,9 @@ Verified: `npx tsc --noEmit` clean; focused eclipse tests 114 passed; `npm test`
 Reconciled lunar eclipse presentation and illumination: glyph-anchored event labels with city-name clearance, explicit active vs forecast Moon-visible semantics, one physical moonlight pipeline (`ordinaryMoonlight × lunarEclipseTransmission`), removal of the geographic lunar alignment ribbon that caused blocky/jumping large-area shading, and a short Moon-local Earth-shadow directional cue. Solar alignment beam, NASA/Espenak authority, and LIB-042 HUD/placard wording unchanged. No new ADR (ADR 0011 reinforced).
 
 Verified: `npx tsc --noEmit` clean; `npm test` 223 files / 2106 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 A–G, Tokyo observer, partial, penumbral, forecast, dateline, 2017 solar GE. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-044 complete
+
+Map Moon-visible geography now follows the current product instant for both upcoming and active lunar eclipses (no frozen GE hemisphere, no activation snap). The remaining white global line was the Moon-visible horizon boundary; it is retained as current-instant geography. Hemisphere unwrap no longer flicker-cuts wrap copies. Physical illumination uses one product-time astronomical state. Placard still describes GE visibility. No new ADR.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 225 files / 2121 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming/preActive/early/total, 100× playback through P1, 2017 solar GE. LIB-037 stays proposed.

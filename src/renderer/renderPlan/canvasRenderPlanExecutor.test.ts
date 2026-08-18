@@ -64,6 +64,8 @@ function createMockCanvas2DContext(): CanvasRenderingContext2D {
     createRadialGradient: vi.fn(() => gradient),
     arc: vi.fn(),
     clip: vi.fn(),
+    imageSmoothingEnabled: true,
+    imageSmoothingQuality: "low",
   };
   return c as unknown as CanvasRenderingContext2D;
 }
@@ -446,6 +448,22 @@ describe("executeRenderPlanOnCanvas", () => {
     });
 
     const ctx = createMockCanvas2DContext();
+    const smoothingStack: Array<{ enabled: boolean; quality: string }> = [];
+    ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingQuality = "low";
+    ctx.save = vi.fn(() => {
+      smoothingStack.push({
+        enabled: ctx.imageSmoothingEnabled,
+        quality: String(ctx.imageSmoothingQuality),
+      });
+    });
+    ctx.restore = vi.fn(() => {
+      const prev = smoothingStack.pop();
+      if (prev) {
+        ctx.imageSmoothingEnabled = prev.enabled;
+        ctx.imageSmoothingQuality = prev.quality as ImageSmoothingQuality;
+      }
+    });
     Object.assign(ctx, { drawImage });
 
     const w = 4;
@@ -475,6 +493,8 @@ describe("executeRenderPlanOnCanvas", () => {
     expect(drawImage).toHaveBeenCalledWith(subCanvas, 0, 0, w, h, 0, 0, 80, 60);
     expect(ctx.save).toHaveBeenCalled();
     expect(ctx.restore).toHaveBeenCalled();
+    expect(ctx.imageSmoothingEnabled).toBe(false);
+    expect(ctx.imageSmoothingQuality).toBe("low");
 
     vi.unstubAllGlobals();
   });

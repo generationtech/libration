@@ -14,7 +14,8 @@
 /**
  * Representative lunar-eclipse forecast geography: the Moon-above-horizon
  * region at greatest eclipse. Reuses E3 horizon construction. Not a path of
- * totality and not visibility for every contact.
+ * totality and not visibility for every contact. Map presentation no longer
+ * draws this frozen GE hemisphere (LIB-044); placard copy may still describe it.
  */
 
 import { LUNAR_ECLIPSE_AUTHORITY_METADATA } from "./eclipseAuthority";

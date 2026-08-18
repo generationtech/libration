@@ -92,10 +92,18 @@ describe("eclipse event information", () => {
     expect(
       v.rows.some(
         (r) =>
-          r.label === "Forecast Moon-visible region" &&
+          r.label === "Visibility at greatest eclipse" &&
           r.value.includes("greatest eclipse"),
       ),
     ).toBe(true);
+    expect(
+      v.rows.some(
+        (r) =>
+          r.label === "Moon-visible region" &&
+          r.value.includes("now"),
+      ),
+    ).toBe(true);
+    expect(v.legend.some((item) => item.label === "Moon-visible now")).toBe(true);
   });
 
   it("names an upcoming penumbral lunar eclipse honestly", () => {

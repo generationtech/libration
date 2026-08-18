@@ -289,15 +289,16 @@ export function EclipseSystemSection(props: {
         <legend className="config-fieldset__legend">Lunar eclipses</legend>
         <p className="config-section__hint">
           Forecast horizon is how early an upcoming lunar eclipse appears — not the duration of
-          the eclipse. The map region is where the Moon is above the geometric horizon at
-          greatest eclipse, not a lunar path of totality.
+          the eclipse. The map region is where the Moon is above the geometric horizon at the
+          current product instant, whether the eclipse is upcoming or active — not a lunar path
+          of totality, and not a freeze of greatest-eclipse geography.
         </p>
         <ConfigControlRow label="Lunar forecast horizon">
           <select
             className="config-input"
             disabled={!mutable || !lunarOn}
             aria-label="Lunar forecast horizon"
-            title="How early upcoming lunar eclipse geography appears on the map."
+            title="How early upcoming lunar eclipse geography appears on the map. Map geography follows the current product instant, not greatest eclipse."
             value={String(lunar.forecastHorizonDays)}
             onChange={
               mutable && updateConfig
@@ -353,11 +354,11 @@ export function EclipseSystemSection(props: {
         </ConfigControlRow>
         {(
           [
-            ["showForecastVisibilityRegion", "Forecast Moon-visible region", "Representative Moon-above-horizon region at greatest eclipse. Disabled when the horizon is Live only.", lunarLiveOnly],
-            ["showForecastVisibilityBoundary", "Forecast Moon-visible boundary", "Geometric lunar-horizon contour at greatest eclipse. Disabled when the horizon is Live only.", lunarLiveOnly],
+            ["showForecastVisibilityRegion", "Upcoming Moon-visible region", "Where the Moon is above the geometric horizon at the current product instant while the event is upcoming. Disabled when the horizon is Live only.", lunarLiveOnly],
+            ["showForecastVisibilityBoundary", "Upcoming Moon-visible boundary", "Geometric lunar-horizon contour at the current product instant while upcoming. Disabled when the horizon is Live only.", lunarLiveOnly],
             ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse.", false],
-            ["showVisibilityBoundary", "Moon-visible boundary", "Geometric lunar-horizon contour during an active eclipse. Not the solar terminator.", false],
-            ["showVisibilityRegion", "Moon-visible region", "Terrestrial region where the eclipsed Moon is above the geometric horizon.", false],
+            ["showVisibilityBoundary", "Moon-visible boundary", "Geometric lunar-horizon contour at the current product instant during an active eclipse. Not the solar terminator.", false],
+            ["showVisibilityRegion", "Moon-visible region", "Terrestrial region where the Moon is above the geometric horizon at the current product instant.", false],
           ] as const
         ).map(([key, label, title, forecastChild]) => (
           <ConfigControlRow key={key} label={label}>

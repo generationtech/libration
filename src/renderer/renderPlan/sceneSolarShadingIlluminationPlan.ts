@@ -79,7 +79,10 @@ function sampleDaylightTransmission01(
   return Math.max(0, Math.min(1, top + (bottom - top) * tLat));
 }
 
-/** Matches historical canvas pass: half-res sampling then smooth upscale to the viewport. */
+/** Matches historical canvas pass: half-res sampling then smooth upscale to the viewport.
+ * Sample centers are `(i + 0.5) / sw` on a full-world equirect grid — not a moving
+ * bbox, and not dependent on lifecycle or the current sublunar point.
+ */
 export const SOLAR_SHADING_PLAN_DOWNSAMPLE = 2;
 
 /**

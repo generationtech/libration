@@ -175,6 +175,43 @@ describe("lunar visibility geometry", () => {
     }
   });
 
+  it("does not flip hemisphere fill copies as the Moon longitude crawls", () => {
+    const moon0 = { latDeg: -23, lonDeg: -60 };
+    let prevCopies = -1;
+    let transitions = 0;
+    let prevMeanX = 0;
+    for (let k = 0; k <= 48; k += 1) {
+      const lon = moon0.lonDeg + k * 0.25;
+      const ring = lunarVisibilityRegionRing(moon0.latDeg, lon);
+      const pole = lunarVisibilityPolarCloseLatDeg(moon0.latDeg);
+      const descriptors = equirectRingToPathDescriptors(ring, 360, 180, {
+        polarCloseLatDeg: pole,
+      });
+      expect(descriptors.length).toBeGreaterThan(0);
+      expect(descriptors.length).toBeLessThanOrEqual(2);
+      let sx = 0;
+      let n = 0;
+      for (const d of descriptors) {
+        for (const c of d.commands) {
+          if (c.kind === "moveTo" || c.kind === "lineTo") {
+            sx += c.x;
+            n += 1;
+          }
+        }
+      }
+      const meanX = sx / Math.max(1, n);
+      if (prevCopies >= 0) {
+        if (descriptors.length !== prevCopies) {
+          transitions += 1;
+        }
+        expect(Math.abs(meanX - prevMeanX)).toBeLessThan(8);
+      }
+      prevCopies = descriptors.length;
+      prevMeanX = meanX;
+    }
+    expect(transitions).toBeLessThanOrEqual(2);
+  });
+
   it("keeps a polar Moon-up hemisphere finite and uninverted", () => {
     const moon = { latDeg: 82, lonDeg: 40 };
     const ring = lunarVisibilityRegionRing(moon.latDeg, moon.lonDeg);

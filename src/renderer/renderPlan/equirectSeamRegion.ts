@@ -73,12 +73,6 @@ export function selectNonOverlappingWorldCopies<T extends { minX: number; maxX: 
   return copies.filter((item) => keptItems.has(item));
 }
 
-function ringUnwrapped(ring: EquirectRing): { lats: number[]; lons: number[] } {
-  const lats = ring.map((p) => p.latDeg);
-  const lons = foldLongitudesIntoSmallestArc(ring.map((p) => p.lonDeg));
-  return { lats, lons };
-}
-
 function pathForCopy(
   lats: readonly number[],
   lons: readonly number[],
@@ -121,8 +115,10 @@ function pathForCopy(
 
 /**
  * Project a lat/lon ring to zero or more screen-space path descriptors (world copies).
- * Closed rings fold into their smallest longitude arc so a winding oval does not
- * fill the world. Polar caps (circular lon span > 270°) close through the nearer pole.
+ * Compact ovals fold into their smallest longitude arc so a winding ring does not
+ * fill the world. Hemisphere / polar-cap rings (circular lon span > 270°) keep
+ * sequential unwrap so the cut does not jump between near-equal sample gaps as
+ * the center longitude moves, then close through the nearer pole.
  */
 export function equirectRingToPathDescriptors(
   ring: EquirectRing,
@@ -135,19 +131,21 @@ export function equirectRingToPathDescriptors(
   if (w <= 0 || h <= 0 || ring.length < 3) {
     return [];
   }
-  const { lats, lons } = ringUnwrapped(ring);
-  const span = circularLongitudeSpanDeg(ring.map((p) => p.lonDeg));
+  const rawLons = ring.map((p) => p.lonDeg);
+  const span = circularLongitudeSpanDeg(rawLons);
+  const lats = ring.map((p) => p.latDeg);
   let useLats = lats;
-  let useLons = lons;
+  let useLons =
+    span > 270 ? unwrappedLongitudes(rawLons) : foldLongitudesIntoSmallestArc(rawLons);
   if (span > 270) {
     const meanLat = lats.reduce((s, v) => s + v, 0) / lats.length;
     const hinted = options?.polarCloseLatDeg;
     const poleLat =
       typeof hinted === "number" && Number.isFinite(hinted) ? hinted : meanLat < 0 ? -90 : 90;
+    const lo = Math.min(...useLons);
+    const hi = Math.max(...useLons);
     useLats = [...lats, poleLat, poleLat, lats[0]!];
-    const lo = Math.min(...lons);
-    const hi = Math.max(...lons);
-    useLons = [...lons, hi, lo, lons[0]!];
+    useLons = [...useLons, hi, lo, useLons[0]!];
   }
   const copies: EquirectProjectedCopy[] = [];
   for (const offset of WORLD_COPIES_DEG) {

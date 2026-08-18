@@ -27,7 +27,6 @@ import type { CloudParticipationPresentationMode } from "../core/cloudParticipat
 import type { EmissiveNightLightsPresentationMode } from "../core/emissiveNightLightsPolicy";
 import type { MoonlightPresentationMode } from "../core/moonlightPolicy";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
-import { lunarEclipseMoonlightTransmission } from "../core/eclipse/lunarEclipseMoonlightTransmission";
 import {
   DEFAULT_SOLAR_ECLIPSE_SHADING_ENABLED,
   DEFAULT_SOLAR_ECLIPSE_SHADING_INTENSITY,
@@ -35,9 +34,7 @@ import {
   type SolarEclipseShadingIntensityId,
 } from "../core/eclipse/solarEclipseDaylightTransmission";
 import { solarEclipseObscurationFieldAt } from "../core/eclipse/solarEclipseObscurationField";
-import { approximateLunarPhase } from "../core/lunarPhase";
-import { sublunarPoint } from "../core/sublunarPoint";
-import { subsolarPoint } from "../core/subsolarPoint";
+import { buildIlluminationFrameState } from "../core/illuminationFrameState";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
 import { GLOBAL_CLOUDS_IR_SOURCE_ID } from "../lifecycle/dynamicEquirectSourceCatalog";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
@@ -109,11 +106,16 @@ export function createSolarShadingLayer(
     type: "illumination",
     updatePolicy,
     getState(time: TimeContext): LayerState {
-      const { latDeg, lonDeg } = subsolarPoint(time.now);
-      const { latDeg: moonLatDeg, lonDeg: moonLonDeg } = sublunarPoint(time.now);
-      const phase = approximateLunarPhase(time.now);
       const eclipseFrame = time.eclipseFrame ?? resolveEclipseFrame(time.now, { horizonMs: 0 });
-      const moonlightTransmission01 = lunarEclipseMoonlightTransmission(eclipseFrame.lunarGeometry);
+      const illumination = buildIlluminationFrameState(time.now, eclipseFrame.lunarGeometry);
+      const {
+        subsolarLatDeg: latDeg,
+        subsolarLonDeg: lonDeg,
+        sublunarLatDeg: moonLatDeg,
+        sublunarLonDeg: moonLonDeg,
+        lunarIlluminatedFraction: phaseFraction,
+        moonlightTransmission01,
+      } = illumination;
       let daylightTransmissionField: SolarShadingPayload["daylightTransmissionField"];
       if (activeEclipseShadingEnabled && eclipseFrame.activeSolar) {
         const obscurationField = solarEclipseObscurationFieldAt(time.now, eclipseFrame.activeSolar);
@@ -149,7 +151,7 @@ export function createSolarShadingLayer(
         subsolarLonDeg: lonDeg,
         sublunarLatDeg: moonLatDeg,
         sublunarLonDeg: moonLonDeg,
-        lunarIlluminatedFraction: phase.illuminatedFraction,
+        lunarIlluminatedFraction: phaseFraction,
         moonlightTransmission01,
         ...(daylightTransmissionField ? { daylightTransmissionField } : {}),
         moonlightMode,

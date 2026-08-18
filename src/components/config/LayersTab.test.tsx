@@ -540,10 +540,10 @@ describe("LayersTab eclipse product polish", () => {
     const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
     expect(horizon.value).toBe("7");
     await user.selectOptions(horizon, "0");
-    expect((screen.getByLabelText("Forecast Moon-visible region") as HTMLInputElement).disabled).toBe(
+    expect((screen.getByLabelText("Upcoming Moon-visible region") as HTMLInputElement).disabled).toBe(
       true,
     );
-    expect((screen.getByLabelText("Forecast Moon-visible boundary") as HTMLInputElement).disabled).toBe(
+    expect((screen.getByLabelText("Upcoming Moon-visible boundary") as HTMLInputElement).disabled).toBe(
       true,
     );
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).disabled).toBe(
