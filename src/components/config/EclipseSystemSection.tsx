@@ -431,7 +431,7 @@ export function EclipseSystemSection(props: {
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="Lunar alignment beam">
+        <ConfigControlRow label="Lunar Earth-shadow cue">
           <input
             type="checkbox"
             className="config-input config-input--checkbox"
@@ -439,8 +439,8 @@ export function EclipseSystemSection(props: {
             readOnly={!mutable}
             disabled={!mutable || alignmentChildrenOff || !lunarOn}
             tabIndex={mutable && !alignmentChildrenOff && lunarOn ? 0 : -1}
-            aria-label="Lunar alignment beam"
-            title="Lunar Earth-shadow axis during an active lunar eclipse. Requires Lunar eclipses."
+            aria-label="Lunar Earth-shadow cue"
+            title="Short Earth-shadow directional cue at the Moon during an active lunar eclipse. Requires Lunar eclipses."
             onChange={
               mutable && updateConfig
                 ? (e) => {
@@ -881,12 +881,12 @@ export function EclipseSystemSection(props: {
             }
           />
         </ConfigControlRow>
-        <ConfigControlRow label="Lunar alignment color">
+        <ConfigControlRow label="Lunar shadow-axis color">
           <input
             type="color"
             className="config-input"
             disabled={!mutable || alignmentChildrenOff}
-            aria-label="Lunar alignment color"
+            aria-label="Lunar shadow-axis color"
             value={alignment.lunarColor}
             onChange={
               mutable && updateConfig

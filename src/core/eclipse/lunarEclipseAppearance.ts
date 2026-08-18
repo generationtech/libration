@@ -48,7 +48,7 @@ export const DEFAULT_LUNAR_ECLIPSE_SHOW_TYPE_PENUMBRAL = true;
 
 export const DEFAULT_LUNAR_VISIBILITY_BOUNDARY_COLOR = "#bad2ec";
 export const DEFAULT_LUNAR_VISIBILITY_REGION_COLOR = "#243550";
-export const DEFAULT_LUNAR_VISIBILITY_REGION_OPACITY = 0.2;
+export const DEFAULT_LUNAR_VISIBILITY_REGION_OPACITY = 0.12;
 
 export type LunarEclipsePresentation = {
   readonly showMoonEclipseShadow: boolean;
@@ -131,7 +131,7 @@ export function lunarEclipseTypeVisible(
 export const LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_STROKE = "rgba(186, 210, 236, 0.78)";
 export const LUNAR_ECLIPSE_VISIBILITY_BOUNDARY_WIDTH_PX = 1.4;
 /** Quiet dark fill on the Moon-up side. Informational, not a moonlight lift. */
-export const LUNAR_ECLIPSE_VISIBILITY_REGION_FILL = "rgba(22, 34, 54, 0.20)";
+export const LUNAR_ECLIPSE_VISIBILITY_REGION_FILL = "rgba(22, 34, 54, 0.12)";
 
 const LUNAR_FORECAST_REGION_ALPHA_SCALE = 0.45;
 const LUNAR_FORECAST_BOUNDARY_ALPHA_SCALE = 0.55;

@@ -19,6 +19,7 @@ import {
   lunarVisibilityPolarCloseLatDeg,
   lunarVisibilityRegionRing,
   sphericalMoonAltitudeCosine,
+  sphericalSeparationDeg,
 } from "./lunarVisibilityGeometry";
 import { equirectRingToPathDescriptors } from "../../renderer/renderPlan/equirectSeamRegion";
 
@@ -132,4 +133,84 @@ describe("lunar visibility geometry", () => {
     }
     expect(sawSouth).toBe(true);
   });
+
+  it("keeps 89° probes inside and 91° probes outside the Moon-up hemisphere", () => {
+    const moon = { latDeg: -23, lonDeg: -50 };
+    expect(isMoonGeometricallyAboveHorizon(moon.latDeg, moon.lonDeg, moon.latDeg, moon.lonDeg)).toBe(true);
+    const ap = antipode(moon.latDeg, moon.lonDeg);
+    expect(isMoonGeometricallyAboveHorizon(ap.latDeg, ap.lonDeg, moon.latDeg, moon.lonDeg)).toBe(false);
+    for (const az of [0, 45, 90, 135, 180, 225, 270, 315]) {
+      const inside = destinationPoint(moon, 89, az);
+      const bound = destinationPoint(moon, 90, az);
+      const outside = destinationPoint(moon, 91, az);
+      expect(sphericalSeparationDeg(inside.latDeg, inside.lonDeg, moon.latDeg, moon.lonDeg)).toBeCloseTo(89, 0);
+      expect(isMoonGeometricallyAboveHorizon(inside.latDeg, inside.lonDeg, moon.latDeg, moon.lonDeg)).toBe(true);
+      expect(Math.abs(sphericalMoonAltitudeCosine(bound.latDeg, bound.lonDeg, moon.latDeg, moon.lonDeg))).toBeLessThan(
+        0.02,
+      );
+      expect(isMoonGeometricallyAboveHorizon(outside.latDeg, outside.lonDeg, moon.latDeg, moon.lonDeg)).toBe(false);
+    }
+  });
+
+  it("moves the 2029 visibility center continuously without a hemisphere flip", () => {
+    const t0 = Date.parse("2029-06-26T00:34:32.000Z");
+    const t1 = Date.parse("2029-06-26T06:09:38.000Z");
+    let prev = sublunarPoint(t0);
+    let prevLon = prev.lonDeg;
+    for (let t = t0 + 3 * 60_000; t <= t1; t += 3 * 60_000) {
+      const moon = sublunarPoint(t);
+      expect(Number.isFinite(moon.latDeg)).toBe(true);
+      expect(Number.isFinite(moon.lonDeg)).toBe(true);
+      const dLat = Math.abs(moon.latDeg - prev.latDeg);
+      let dLon = moon.lonDeg - prevLon;
+      while (dLon > 180) dLon -= 360;
+      while (dLon < -180) dLon += 360;
+      expect(dLat).toBeLessThan(1.5);
+      expect(Math.abs(dLon)).toBeLessThan(3);
+      expect(isMoonGeometricallyAboveHorizon(moon.latDeg, moon.lonDeg, moon.latDeg, moon.lonDeg)).toBe(true);
+      const ap = antipode(moon.latDeg, moon.lonDeg);
+      expect(isMoonGeometricallyAboveHorizon(ap.latDeg, ap.lonDeg, moon.latDeg, moon.lonDeg)).toBe(false);
+      prev = moon;
+      prevLon = moon.lonDeg;
+    }
+  });
+
+  it("keeps a polar Moon-up hemisphere finite and uninverted", () => {
+    const moon = { latDeg: 82, lonDeg: 40 };
+    const ring = lunarVisibilityRegionRing(moon.latDeg, moon.lonDeg);
+    expect(ring.length).toBeGreaterThan(8);
+    for (const p of ring) {
+      expect(Number.isFinite(p.latDeg)).toBe(true);
+      expect(Number.isFinite(p.lonDeg)).toBe(true);
+      expect(Math.abs(p.latDeg)).toBeLessThanOrEqual(90);
+    }
+    expect(isMoonGeometricallyAboveHorizon(moon.latDeg, moon.lonDeg, moon.latDeg, moon.lonDeg)).toBe(true);
+    const ap = antipode(moon.latDeg, moon.lonDeg);
+    expect(isMoonGeometricallyAboveHorizon(ap.latDeg, ap.lonDeg, moon.latDeg, moon.lonDeg)).toBe(false);
+    expect(lunarVisibilityPolarCloseLatDeg(moon.latDeg)).toBe(90);
+    const descriptors = equirectRingToPathDescriptors(ring, 360, 180, {
+      polarCloseLatDeg: 90,
+    });
+    expect(descriptors.length).toBeGreaterThan(0);
+  });
 });
+
+function destinationPoint(
+  origin: { latDeg: number; lonDeg: number },
+  distanceDeg: number,
+  bearingDeg: number,
+): { latDeg: number; lonDeg: number } {
+  const deg = Math.PI / 180;
+  const phi1 = origin.latDeg * deg;
+  const lam1 = origin.lonDeg * deg;
+  const d = distanceDeg * deg;
+  const br = bearingDeg * deg;
+  const phi2 = Math.asin(Math.sin(phi1) * Math.cos(d) + Math.cos(phi1) * Math.sin(d) * Math.cos(br));
+  const lam2 =
+    lam1 +
+    Math.atan2(Math.sin(br) * Math.sin(d) * Math.cos(phi1), Math.cos(d) - Math.sin(phi1) * Math.sin(phi2));
+  let lon = (lam2 / deg) % 360;
+  if (lon > 180) lon -= 360;
+  if (lon <= -180) lon += 360;
+  return { latDeg: phi2 / deg, lonDeg: lon };
+}

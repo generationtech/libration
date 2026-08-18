@@ -80,6 +80,7 @@ describe("lunar eclipse layer", () => {
       expect(st.data.labels).toHaveLength(1);
       expect(st.data.labels?.[0]?.text).toMatch(/Total lunar eclipse/);
       expect(st.data.labels?.[0]?.text).toMatch(/·/);
+      expect(st.data.labels?.[0]?.placement).toBe("lunar-glyph");
       expect(st.data.labelAvoidDiscs).toHaveLength(1);
     }
   });
@@ -131,18 +132,32 @@ describe("lunar eclipse layer", () => {
     expect(frame.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
   });
 
-  it("adds a lunar alignment axis without removing the visibility region", () => {
+  it("does not emit geographic lunar alignment fills; visibility region remains", () => {
     const off = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
     const on = createLunarEclipseLayer({ alignment: { enabled: true, lunarEnabled: true } });
     const frame = resolveEclipseFrame(TOTAL_UTC);
     const time = createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame });
     const without = off.getState(time);
-    const withBeam = on.getState(time);
-    expect(isEquirectRegionOverlayPayload(withBeam.data)).toBe(true);
-    if (isEquirectRegionOverlayPayload(withBeam.data) && isEquirectRegionOverlayPayload(without.data)) {
-      expect(withBeam.data.fills.length).toBeGreaterThan(without.data.fills.length);
-      expect(withBeam.data.strokes.length).toBeGreaterThan(without.data.strokes.length);
+    const withCueToggle = on.getState(time);
+    expect(isEquirectRegionOverlayPayload(withCueToggle.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(withCueToggle.data) && isEquirectRegionOverlayPayload(without.data)) {
+      expect(withCueToggle.data.fills.length).toBe(without.data.fills.length);
       expect(without.data.fills.length).toBe(1);
+    }
+  });
+
+  it("hands city-name boxes to lunar label placement", () => {
+    const layer = createLunarEclipseLayer({
+      alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
+      cityLabelHints: [{ latDeg: -23.5505, lonDeg: -46.6333, name: "São Paulo" }],
+    });
+    const ge = Date.parse("2029-06-26T03:22:05.000Z");
+    const frame = resolveEclipseFrame(ge);
+    const st = layer.getState(createTimeContext(ge, 0, true, { eclipseFrame: frame }));
+    if (isEquirectRegionOverlayPayload(st.data)) {
+      expect(st.data.labels?.[0]?.placement).toBe("lunar-glyph");
+      expect(st.data.labelAvoidCityLabels?.[0]?.name).toBe("São Paulo");
     }
   });
 });
@@ -152,6 +167,7 @@ describe("Canvas lunar containment", () => {
     expect(canvasBackendSource).not.toMatch(/besselian/i);
     expect(canvasBackendSource).not.toMatch(/umbra|antumbra|penumbra/i);
     expect(canvasBackendSource).toMatch(/earthShadowOverlay/);
+    expect(canvasBackendSource).toMatch(/earthShadowCue/);
     expect(canvasBackendSource).toMatch(/isEquirectRegionOverlayPayload/);
   });
 });

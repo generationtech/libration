@@ -54,6 +54,11 @@ export interface SublunarMarkerPayload {
    * numbers only; the backend must not interpret astronomy.
    */
   earthShadowOverlay?: EarthShadowOverlayAppearance;
+  /**
+   * Optional Earth-shadow directional cue (LIB-043). Screen-space wedge drawn
+   * behind the disc from the same east/north offsets as the overlay.
+   */
+  earthShadowCue?: EarthShadowCueAppearance;
 }
 
 export type EarthShadowOverlayAppearance = {
@@ -65,6 +70,14 @@ export type EarthShadowOverlayAppearance = {
   readonly umbralCoverage01: number;
   /** Fraction of the lunar disc inside the penumbra (0–1). */
   readonly penumbralCoverage01: number;
+};
+
+export type EarthShadowCueAppearance = {
+  readonly offsetEastMoonRadii: number;
+  readonly offsetNorthMoonRadii: number;
+  readonly strength01: number;
+  readonly lengthMoonRadii: number;
+  readonly alphaScale: number;
 };
 
 export function isSublunarMarkerPayload(data: unknown): data is SublunarMarkerPayload {

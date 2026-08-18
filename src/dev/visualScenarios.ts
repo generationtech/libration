@@ -55,6 +55,7 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-eclipse-partial",
   "lunar-eclipse-horizon",
   "lunar-eclipse-forecast-total",
+  "lunar-eclipse-2029",
 ] as const;
 
 export type VisualScenarioId = (typeof VISUAL_SCENARIO_IDS)[number];
@@ -81,6 +82,7 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-eclipse-partial": "2008-08-16T21:10:06.000Z",
   "lunar-eclipse-horizon": "2015-04-04T12:00:15.000Z",
   "lunar-eclipse-forecast-total": "2022-05-13T04:00:00.000Z",
+  "lunar-eclipse-2029": "2029-06-26T03:22:05.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
@@ -113,6 +115,23 @@ export const LUNAR_ECLIPSE_2022_PHASE_UTC = {
 } as const;
 
 export type LunarEclipsePhaseId = keyof typeof LUNAR_ECLIPSE_2022_PHASE_UTC;
+
+/**
+ * DEV-only 2029-06-26 total lunar eclipse stations (NASA GE 03:22:05Z).
+ * P1 00:34:32Z, U1 01:32:20Z, U2 02:31:08Z, U3 04:13:02Z, U4 05:11:50Z, P4 06:09:38Z.
+ * Zenith ≈ 23°S 50°W (near São Paulo). Production does not import this map.
+ */
+export const LUNAR_ECLIPSE_2029_STATION_UTC = {
+  upcoming: "2029-06-25T18:00:00.000Z",
+  preActive: "2029-06-26T00:29:32.000Z",
+  early: "2029-06-26T00:50:00.000Z",
+  deepPartial: "2029-06-26T02:20:00.000Z",
+  total: "2029-06-26T03:22:05.000Z",
+  egress: "2029-06-26T04:40:00.000Z",
+  after: "2029-06-26T06:20:00.000Z",
+} as const;
+
+export type LunarEclipse2029StationId = keyof typeof LUNAR_ECLIPSE_2029_STATION_UTC;
 
 /**
  * DEV-only 2017-08-21 total solar eclipse lifecycle stations.
@@ -426,6 +445,14 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
         applyLunarEclipseForecastScene,
       ),
   },
+  "lunar-eclipse-2029": {
+    id: "lunar-eclipse-2029",
+    startIsoUtc: VISUAL_SCENARIO_UTC["lunar-eclipse-2029"],
+    purpose:
+      "June 2029 total lunar eclipse (NASA 2029 Jun 26 GE). Optional DEV eclipseStation=upcoming|preActive|early|deepPartial|total|egress|after.",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["lunar-eclipse-2029"], applyLunarEclipse2029Scene),
+  },
 };
 
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
@@ -520,6 +547,13 @@ function applyLunarEclipseForecastScene(
   }
 }
 
+function applyLunarEclipse2029Scene(draft: LibrationConfigV2): void {
+  applyLunarEclipseForecastScene(draft, 7);
+  if (draft.scene) {
+    draft.scene = applyEclipseInfoPresentationToScene(draft.scene, { labelsEnabled: true });
+  }
+}
+
 function parseForecastHorizonDays(
   raw: string | null,
 ): 0 | 1 | 3 | 7 | 14 | 30 | 90 | 365 | null {
@@ -562,6 +596,13 @@ export function parseLunarEclipsePhaseId(raw: string | null): LunarEclipsePhaseI
 export function parseSolarEclipse2017StationId(raw: string | null): SolarEclipse2017StationId | null {
   if (raw && raw in SOLAR_ECLIPSE_2017_STATION_UTC) {
     return raw as SolarEclipse2017StationId;
+  }
+  return null;
+}
+
+export function parseLunarEclipse2029StationId(raw: string | null): LunarEclipse2029StationId | null {
+  if (raw && raw in LUNAR_ECLIPSE_2029_STATION_UTC) {
+    return raw as LunarEclipse2029StationId;
   }
   return null;
 }
@@ -677,6 +718,40 @@ export function resolveVisualScenarioSession(
           });
         }
       }),
+    };
+  }
+  if (requested === "lunar-eclipse-2029") {
+    const params = parseSearchParams(input.search);
+    const station = parseLunarEclipse2029StationId(params.get("eclipseStation"));
+    const startIsoUtc = LUNAR_ECLIPSE_2029_STATION_UTC[station ?? "total"];
+    const eclipseObserver = parseMoonLibrationObserverCityId(params.get("observerCity"));
+    const horizonDays = parseForecastHorizonDays(params.get("horizon"));
+    const config = withDemoAt(startIsoUtc, applyLunarEclipse2029Scene);
+    const topBandAnchor =
+      eclipseObserver === "none"
+        ? ({ mode: "auto" } as const)
+        : eclipseObserver !== null
+          ? ({ mode: "fixedCity", cityId: eclipseObserver } as const)
+          : config.chrome.displayTime.topBandAnchor;
+    let scene = config.scene;
+    if (scene && horizonDays !== null) {
+      scene = applyLunarEclipsePresentationToScene(scene, { forecastHorizonDays: horizonDays });
+    }
+    return {
+      kind: "applied",
+      id: "lunar-eclipse-2029",
+      startIsoUtc,
+      config: {
+        ...config,
+        ...(scene ? { scene } : {}),
+        chrome: {
+          ...config.chrome,
+          displayTime: {
+            ...config.chrome.displayTime,
+            topBandAnchor,
+          },
+        },
+      },
     };
   }
   if (requested === "solar-eclipse-2017") {

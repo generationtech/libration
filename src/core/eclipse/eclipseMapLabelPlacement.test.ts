@@ -12,7 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { nearestEclipsePathPointScreen, placeEclipseMapLabel } from "./eclipseMapLabelPlacement";
+import { nearestEclipsePathPointScreen, placeEclipseMapLabel, eclipseMapLabelBox } from "./eclipseMapLabelPlacement";
+import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 
 describe("placeEclipseMapLabel", () => {
   it("keeps a non-overlapping label at the preferred position", () => {
@@ -189,5 +190,61 @@ describe("placeEclipseMapLabel", () => {
       avoidPolylines: [{ points: [{ x: 350, y: 90 }] }],
     });
     expect(placed.x).toBeGreaterThan(20);
+  });
+
+  it("places a lunar label with glyph-relative candidates, never through the Moon", () => {
+    const moon = { x: 693, y: 678, radiusPx: 50 };
+    const placed = placeEclipseMapLabel({
+      preferredX: moon.x,
+      preferredY: moon.y,
+      text: "Total lunar eclipse · upcoming",
+      sizePx: 13,
+      viewportWidthPx: 1920,
+      viewportHeightPx: 1080,
+      avoidDiscs: [moon],
+      placement: "lunar-glyph",
+    });
+    const box = eclipseMapLabelBox(
+      placed.x,
+      placed.y,
+      "Total lunar eclipse · upcoming",
+      13,
+      placed.textAlign,
+      placed.textBaseline,
+    );
+    expect(box.left).toBeGreaterThan(8);
+    expect(box.right).toBeLessThan(1912);
+    const nearestX = Math.max(box.left, Math.min(moon.x, box.right));
+    const nearestY = Math.max(box.top, Math.min(moon.y, box.bottom));
+    expect(Math.hypot(moon.x - nearestX, moon.y - nearestY)).toBeGreaterThanOrEqual(moon.radiusPx);
+  });
+
+  it("does not concatenate with São Paulo on the 2029 GE framing", () => {
+    const moon = { x: 693.33, y: 678, radiusPx: 50 };
+    const saoPaulo = cityPinNameLabelScreenBox({
+      pinX: 711.29,
+      pinY: 681.3,
+      name: "São Paulo",
+      viewportWidthPx: 1920,
+    });
+    const text = "Total lunar eclipse · upcoming";
+    const placed = placeEclipseMapLabel({
+      preferredX: moon.x,
+      preferredY: moon.y,
+      text,
+      sizePx: 13,
+      viewportWidthPx: 1920,
+      viewportHeightPx: 1080,
+      avoidDiscs: [moon],
+      avoidBoxes: [saoPaulo],
+      placement: "lunar-glyph",
+    });
+    const box = eclipseMapLabelBox(placed.x, placed.y, text, 13, placed.textAlign, placed.textBaseline);
+    expect(box.left < saoPaulo.right && box.right > saoPaulo.left && box.top < saoPaulo.bottom && box.bottom > saoPaulo.top).toBe(
+      false,
+    );
+    const nearestX = Math.max(box.left, Math.min(moon.x, box.right));
+    const nearestY = Math.max(box.top, Math.min(moon.y, box.bottom));
+    expect(Math.hypot(moon.x - nearestX, moon.y - nearestY)).toBeGreaterThanOrEqual(moon.radiusPx);
   });
 });

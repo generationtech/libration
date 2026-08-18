@@ -46,6 +46,21 @@ export type EquirectRegionLabel = {
   readonly lonDeg: number;
   readonly text: string;
   readonly fill?: string;
+  /**
+   * Lunar glyph-relative candidates vs solar path-opposite. Unset keeps solar
+   * path-aware placement when path hints exist.
+   */
+  readonly placement?: "solar-path" | "lunar-glyph";
+};
+
+/**
+ * Geographic pin whose city-name label box should be avoided. Screen layout
+ * matches city pins (name to the right of the disc).
+ */
+export type EquirectRegionAvoidCityLabel = {
+  readonly latDeg: number;
+  readonly lonDeg: number;
+  readonly name: string;
 };
 
 /**
@@ -99,6 +114,7 @@ export type EquirectRegionOverlayPayload = {
   readonly strokes: readonly EquirectRegionStroke[];
   readonly labels?: readonly EquirectRegionLabel[];
   readonly labelAvoidDiscs?: readonly EquirectRegionAvoidDisc[];
+  readonly labelAvoidCityLabels?: readonly EquirectRegionAvoidCityLabel[];
   readonly labelPathHints?: readonly EquirectRegionLabelPathHint[];
   readonly pointMarkers?: readonly EquirectRegionPointMarker[];
   readonly readability?: OverlayReadabilityHints;
@@ -162,6 +178,23 @@ export function isEquirectRegionOverlayPayload(data: unknown): data is EquirectR
         return false;
       }
       if (g.fill !== undefined && typeof g.fill !== "string") {
+        return false;
+      }
+      if (g.placement !== undefined && g.placement !== "solar-path" && g.placement !== "lunar-glyph") {
+        return false;
+      }
+    }
+  }
+  if (o.labelAvoidCityLabels !== undefined) {
+    if (!Array.isArray(o.labelAvoidCityLabels)) {
+      return false;
+    }
+    for (const city of o.labelAvoidCityLabels) {
+      if (city === null || typeof city !== "object") {
+        return false;
+      }
+      const g = city as Record<string, unknown>;
+      if (typeof g.latDeg !== "number" || typeof g.lonDeg !== "number" || typeof g.name !== "string") {
         return false;
       }
     }

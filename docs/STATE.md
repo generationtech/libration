@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-042](work/LIB-042-eclipse-presentation-semantics-and-label-placement.md) — Eclipse presentation semantics + path-aware event label placement
+[LIB-043](work/LIB-043-lunar-eclipse-presentation-illumination-reconciliation.md) — Lunar eclipse presentation + illumination reconciliation
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Stop. No approved work.
+None. Repository is AWAITING SCOPE.

@@ -475,6 +475,29 @@ describe("resolveVisualScenarioSession", () => {
     }
   });
 
+  it("seeds lunar-eclipse-2029 stations for the June 2029 total", () => {
+    const config = VISUAL_SCENARIOS["lunar-eclipse-2029"].buildConfig();
+    expect(config.layers.lunarEclipse).toBe(true);
+    expect(config.data.demoTime.startIsoUtc).toBe("2029-06-26T03:22:05.000Z");
+    expect(config.scene?.eclipseInfo.labelsEnabled).toBe(true);
+    const upcoming = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-2029&eclipseStation=upcoming",
+    });
+    expect(upcoming.kind).toBe("applied");
+    if (upcoming.kind === "applied") {
+      expect(upcoming.startIsoUtc).toBe("2029-06-25T18:00:00.000Z");
+    }
+    const pre = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=lunar-eclipse-2029&eclipseStation=preActive",
+    });
+    expect(pre.kind).toBe("applied");
+    if (pre.kind === "applied") {
+      expect(pre.startIsoUtc).toBe("2029-06-26T00:29:32.000Z");
+    }
+  });
+
   it("seeds lunar-locus with the production overlay, Moon marker, track off, and analemma off", () => {
     const config = VISUAL_SCENARIOS["lunar-locus"].buildConfig();
     expect(config.layers.sublunarMarker).toBe(true);

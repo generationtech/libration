@@ -141,4 +141,20 @@ describe("createSublunarMarkerLayer", () => {
     }
     expect(st.data.librationOrientationDeg).toBe(0);
   });
+
+  it("attaches an Earth-shadow cue only while a lunar eclipse is active", () => {
+    const on = createSublunarMarkerLayer({ earthShadowCueEnabled: true });
+    const ge = Date.parse("2022-05-16T04:11:29.000Z");
+    const st = on.getState(createTimeContext(ge, 0, true));
+    expect(isSublunarMarkerPayload(st.data)).toBe(true);
+    if (!isSublunarMarkerPayload(st.data)) {
+      return;
+    }
+    expect(st.data.earthShadowCue?.strength01).toBeGreaterThan(0.7);
+    expect(st.data.earthShadowCue?.lengthMoonRadii).toBeGreaterThan(1);
+    const quiet = on.getState(createTimeContext(Date.UTC(2024, 0, 15), 0, true));
+    if (isSublunarMarkerPayload(quiet.data)) {
+      expect(quiet.data.earthShadowCue).toBeUndefined();
+    }
+  });
 });

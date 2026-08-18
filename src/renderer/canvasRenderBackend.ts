@@ -482,6 +482,7 @@ export class CanvasRenderBackend implements RenderBackend {
           appearance: sublunarMarkerAppearanceFromPayload(layer.data),
           readability: layer.data.readability ?? null,
           earthShadowOverlay: layer.data.earthShadowOverlay ?? null,
+          earthShadowCue: layer.data.earthShadowCue ?? null,
         }),
       );
       return;

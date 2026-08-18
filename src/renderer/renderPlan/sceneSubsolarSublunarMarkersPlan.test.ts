@@ -19,6 +19,7 @@ import { executeRenderPlanOnCanvas } from "./canvasRenderPlanExecutor";
 import {
   buildSubsolarMarkerRenderPlan,
   buildSublunarMarkerRenderPlan,
+  earthShadowCueScreenUnit,
   earthShadowScreenOffsetPx,
 } from "./sceneSubsolarSublunarMarkersPlan";
 import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE, sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
@@ -696,5 +697,46 @@ describe("executeRenderPlanOnCanvas subsolar + sublunar marker plans", () => {
     expect(ctx.clip).toHaveBeenCalled();
     const clipCalls = (ctx.clip as Mock).mock.calls.length;
     expect(clipCalls).toBeGreaterThanOrEqual(2);
+  });
+
+  it("draws the Earth-shadow cue behind the Moon disc and pointing inward", () => {
+    const cue = {
+      offsetEastMoonRadii: 1.2,
+      offsetNorthMoonRadii: 0,
+      strength01: 0.9,
+      lengthMoonRadii: 2.4,
+      alphaScale: 1,
+    };
+    const plan = buildSublunarMarkerRenderPlan({
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      lonDeg: 0,
+      latDeg: 0,
+      illuminatedFraction: 1,
+      waxing: true,
+      appearance: { ...DEFAULT_SUBLUNAR_MARKER_APPEARANCE, librationEnabled: false },
+      earthShadowCue: cue,
+    });
+    const dir = earthShadowCueScreenUnit(1.2, 0, 0)!;
+    const cx = 400;
+    const cy = 200;
+    const r = sublunarMarkerRadiusPx(800, "normal");
+    const fills = plan.items.filter((item) => item.kind === "path2d" && "fill" in item && typeof item.fill === "string");
+    expect(fills.length).toBeGreaterThan(1);
+    const discIdx = plan.items.findIndex(
+      (item) => item.kind === "radialGradientFill" && item.clipR === r && item.r1 <= r * 1.1,
+    );
+    const cueIdx = plan.items.findIndex(
+      (item) =>
+        item.kind === "path2d" &&
+        "fill" in item &&
+        typeof item.fill === "string" &&
+        item.fill.includes("108, 136, 164"),
+    );
+    expect(cueIdx).toBeGreaterThanOrEqual(0);
+    expect(discIdx).toBeGreaterThan(cueIdx);
+    expect(dir.ux).toBeGreaterThan(0.9);
+    expect(cx + dir.ux * r).toBeGreaterThan(cx);
+    void cy;
   });
 });

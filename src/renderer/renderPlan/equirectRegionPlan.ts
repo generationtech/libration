@@ -13,6 +13,7 @@
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { placeEclipseMapLabel } from "../../core/eclipse/eclipseMapLabelPlacement";
+import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import {
@@ -178,14 +179,23 @@ export function buildEquirectRegionOverlayRenderPlan(
         y: ((90 - p.latDeg) / 180) * h,
       })),
     }));
+    const avoidBoxes = (options.payload.labelAvoidCityLabels ?? []).map((city) =>
+      cityPinNameLabelScreenBox({
+        pinX: mapXFromLongitudeDeg(city.lonDeg, w),
+        pinY: ((90 - city.latDeg) / 180) * h,
+        name: city.name,
+        viewportWidthPx: w,
+      }),
+    );
     for (const label of labels) {
       if (!label.text.trim()) {
         continue;
       }
       const preferredX = mapXFromLongitudeDeg(label.lonDeg, w);
       const preferredY = ((90 - label.latDeg) / 180) * h;
+      const lunar = label.placement === "lunar-glyph";
       const placed =
-        avoidDiscs.length > 0 || avoidPolylines.length > 0
+        avoidDiscs.length > 0 || avoidPolylines.length > 0 || avoidBoxes.length > 0 || lunar
           ? placeEclipseMapLabel({
               preferredX,
               preferredY,
@@ -195,6 +205,8 @@ export function buildEquirectRegionOverlayRenderPlan(
               viewportHeightPx: h,
               avoidDiscs,
               avoidPolylines,
+              avoidBoxes,
+              placement: lunar ? "lunar-glyph" : "solar-path",
             })
           : { x: preferredX, y: preferredY, textAlign: "center" as const, textBaseline: "middle" as const };
       const fill = label.fill ?? "rgba(245, 248, 255, 0.92)";

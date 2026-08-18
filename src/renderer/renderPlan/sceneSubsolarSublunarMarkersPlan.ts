@@ -41,7 +41,7 @@ import {
   sublunarMarkerRadiusPx,
   type SublunarMarkerAppearance,
 } from "../../core/sublunarMarkerAppearance";
-import type { EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
+import type { EarthShadowCueAppearance, EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
 
 function mapLatToY(latDeg: number, viewportHeightPx: number): number {
   return ((90 - latDeg) / 180) * viewportHeightPx;
@@ -151,6 +151,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   appearance?: Partial<SublunarMarkerAppearance>;
   readability?: OverlayReadabilityHints | null;
   earthShadowOverlay?: EarthShadowOverlayAppearance | null;
+  earthShadowCue?: EarthShadowCueAppearance | null;
 }): RenderPlan {
   const w = options.viewportWidthPx;
   const h = options.viewportHeightPx;
@@ -193,6 +194,16 @@ export function buildSublunarMarkerRenderPlan(options: {
     clipCy: cy,
     clipR: r * 2.1,
   });
+
+  if (options.earthShadowCue && options.earthShadowCue.strength01 > 0) {
+    pushEarthShadowCue(items, {
+      cx,
+      cy,
+      r,
+      cue: options.earthShadowCue,
+      orientationDeg: options.librationOrientationDeg ?? 0,
+    });
+  }
 
   items.push({
     kind: "radialGradientFill",
@@ -399,6 +410,77 @@ export function earthShadowScreenOffsetPx(
       dyPx: -offsetNorthMoonRadii * moonRadiusPx,
     },
     orientationDeg,
+  );
+}
+
+export function earthShadowCueScreenUnit(
+  offsetEastMoonRadii: number,
+  offsetNorthMoonRadii: number,
+  orientationDeg: number,
+): { ux: number; uy: number } | null {
+  const offset = earthShadowScreenOffsetPx(
+    offsetEastMoonRadii,
+    offsetNorthMoonRadii,
+    1,
+    orientationDeg,
+  );
+  const mag = Math.hypot(offset.dxPx, offset.dyPx);
+  if (!(mag > 1e-9)) {
+    return null;
+  }
+  return { ux: offset.dxPx / mag, uy: offset.dyPx / mag };
+}
+
+function pushEarthShadowCue(
+  items: RenderPlan["items"],
+  args: {
+    cx: number;
+    cy: number;
+    r: number;
+    cue: EarthShadowCueAppearance;
+    orientationDeg: number;
+  },
+): void {
+  const dir = earthShadowCueScreenUnit(
+    args.cue.offsetEastMoonRadii,
+    args.cue.offsetNorthMoonRadii,
+    args.orientationDeg,
+  );
+  if (!dir) {
+    return;
+  }
+  const strength = Math.max(0, Math.min(1, args.cue.strength01));
+  const lengthPx = Math.max(args.r * 1.6, args.cue.lengthMoonRadii * args.r);
+  const tipX = args.cx + dir.ux * args.r * 0.96;
+  const tipY = args.cy + dir.uy * args.r * 0.96;
+  const originX = args.cx + dir.ux * (args.r + lengthPx);
+  const originY = args.cy + dir.uy * (args.r + lengthPx);
+  const px = -dir.uy;
+  const py = dir.ux;
+  const a = strength * Math.max(0.2, args.cue.alphaScale);
+  const outerHalf = args.r * (0.38 + 0.1 * strength);
+  const coreHalf = args.r * 0.13;
+  const innerHalf = args.r * 0.035;
+  const wedge = (originHalf: number, tipHalf: number): Path2D => {
+    const path = new Path2D();
+    path.moveTo(originX + px * originHalf, originY + py * originHalf);
+    path.lineTo(originX - px * originHalf, originY - py * originHalf);
+    path.lineTo(tipX - px * tipHalf, tipY - py * tipHalf);
+    path.lineTo(tipX + px * tipHalf, tipY + py * tipHalf);
+    path.closePath();
+    return path;
+  };
+  items.push(
+    createPath2DItem({
+      path: wedge(outerHalf, innerHalf * 1.8),
+      fill: `rgba(108, 136, 164, ${(0.1 + 0.16 * a).toFixed(3)})`,
+    }),
+  );
+  items.push(
+    createPath2DItem({
+      path: wedge(coreHalf, innerHalf),
+      fill: `rgba(28, 22, 38, ${(0.16 + 0.22 * a).toFixed(3)})`,
+    }),
   );
 }
 

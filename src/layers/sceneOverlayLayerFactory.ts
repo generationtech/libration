@@ -237,6 +237,11 @@ function createDerivedOverlayByProduct(
         earthShadowEnabled:
           (config.scene.layers.find((l) => l.id === "lunarEclipse")?.enabled ?? false) &&
           lunarEclipsePresentationFromScene(config.scene).showMoonEclipseShadow,
+        earthShadowCueEnabled:
+          (config.scene.layers.find((l) => l.id === "lunarEclipse")?.enabled ?? false) &&
+          eclipseAlignmentPresentationFromScene(config.scene).enabled &&
+          eclipseAlignmentPresentationFromScene(config.scene).lunarEnabled,
+        alignment: eclipseAlignmentPresentationFromScene(config.scene),
       });
     case "sublunarGroundTrack":
       return createLunarGroundTrackLayer({
@@ -287,6 +292,21 @@ function createDerivedOverlayByProduct(
         alignment: eclipseAlignmentPresentationFromScene(config.scene),
         labelsEnabled: eclipseInfoPresentationFromScene(config.scene).labelsEnabled,
         solarPresentation: solarEclipsePresentationFromScene(config.scene),
+        cityLabelHints:
+          config.layers.cityPins && config.pinPresentation.showLabels
+            ? [
+                ...resolveCitiesForPins(config).map((c) => ({
+                  latDeg: c.latitude,
+                  lonDeg: c.longitude,
+                  name: c.name,
+                })),
+                ...resolveEnabledCustomPinsForMap(config).map((p) => ({
+                  latDeg: p.latitude,
+                  lonDeg: p.longitude,
+                  name: p.label,
+                })),
+              ]
+            : [],
       });
     default:
       return null;

@@ -13,11 +13,7 @@
 
 import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
-import {
-  normalizeEclipseAlignmentPresentation,
-  type EclipseAlignmentPresentation,
-} from "../core/eclipse/eclipseAlignmentAppearance";
-import { buildEclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentPresentation";
+import { type EclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentAppearance";
 import { lunarEclipseMapLabel } from "../core/eclipse/eclipseEventLabels";
 import {
   presentedActiveLunar,
@@ -35,7 +31,6 @@ import {
   scaleRgbaAlpha,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
-import { subsolarPoint } from "../core/subsolarPoint";
 import {
   lunarHorizonBoundaryPolylines,
   lunarVisibilityPolarCloseLatDeg,
@@ -46,6 +41,7 @@ import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
   EQUIRECT_REGION_OVERLAY_KIND,
+  type EquirectRegionAvoidCityLabel,
   type EquirectRegionAvoidDisc,
   type EquirectRegionFill,
   type EquirectRegionLabel,
@@ -66,14 +62,16 @@ export function createLunarEclipseLayer(
     alignment?: Partial<EclipseAlignmentPresentation> | Readonly<Record<string, unknown>>;
     labelsEnabled?: boolean;
     solarPresentation?: Partial<SolarEclipsePresentation> | Readonly<Record<string, unknown>>;
+    /** Read-only city-name boxes for lunar event-label clearance. */
+    cityLabelHints?: readonly EquirectRegionAvoidCityLabel[];
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
   const op = options.opacity ?? 1;
   const presentation = normalizeLunarEclipsePresentation(options.presentation);
   const solarPresentation = normalizeSolarEclipsePresentation(options.solarPresentation);
-  const alignment = normalizeEclipseAlignmentPresentation(options.alignment);
   const labelsEnabled = options.labelsEnabled !== false;
+  const cityLabelHints = options.cityLabelHints ?? [];
   const lunarHorizonMs = forecastHorizonMsFromDays(presentation.forecastHorizonDays);
   const paint = resolveLunarEclipsePaint(presentation);
   return {
@@ -98,7 +96,6 @@ export function createLunarEclipseLayer(
       const activeLunar = presentedActiveLunar(frame, presentation);
       if (frame.support.supported && activeLunar && frame.lunarGeometry) {
         const moon = sublunarPoint(time.now);
-        const sun = subsolarPoint(time.now);
         if (presentation.showVisibilityRegion) {
           const ring = lunarVisibilityRegionRing(moon.latDeg, moon.lonDeg);
           if (ring.length >= 4) {
@@ -107,30 +104,6 @@ export function createLunarEclipseLayer(
               fill: paint.visibilityRegionFill,
               polarCloseLatDeg: lunarVisibilityPolarCloseLatDeg(moon.latDeg),
             });
-          }
-        }
-        const alignmentView = buildEclipseAlignmentPresentation({
-          frame,
-          alignment,
-          solarLayerEnabled: false,
-          lunarLayerEnabled: true,
-          subsolar: { latDeg: sun.latDeg, lonDeg: sun.lonDeg },
-          sublunar: { latDeg: moon.latDeg, lonDeg: moon.lonDeg },
-        });
-        if (alignmentView.lunar) {
-          for (const band of alignmentView.lunar.bands) {
-            if (band.ring.length >= 4) {
-              fills.push({ ring: band.ring, fill: band.fill });
-            }
-          }
-          for (const s of alignmentView.lunar.strokes) {
-            if (s.points.length >= 2) {
-              strokes.push({
-                points: s.points,
-                stroke: s.stroke,
-                strokeWidthPx: s.strokeWidthPx,
-              });
-            }
           }
         }
         if (presentation.showVisibilityBoundary) {
@@ -188,8 +161,8 @@ export function createLunarEclipseLayer(
         const primary = presentedPrimaryEclipse(frame, solarPresentation, presentation);
         if (primary?.kind === "lunar") {
           const moon = sublunarPoint(time.now);
-          labels.push(
-            lunarEclipseMapLabel({
+          labels.push({
+            ...lunarEclipseMapLabel({
               event: primary.event,
               lifecycle: primary.lifecycle,
               productUtcMs: frame.productUtcMs,
@@ -198,11 +171,12 @@ export function createLunarEclipseLayer(
               lonDeg:
                 primary.lifecycle === "active" ? moon.lonDeg : primary.event.zenithLonDeg,
             }),
-          );
+            placement: "lunar-glyph",
+          });
           labelAvoidDiscs.push({
             latDeg: primary.lifecycle === "active" ? moon.latDeg : primary.event.zenithLatDeg,
             lonDeg: primary.lifecycle === "active" ? moon.lonDeg : primary.event.zenithLonDeg,
-            haloMultiplier: 2.4,
+            haloMultiplier: 3.6,
           });
         }
       }
@@ -211,7 +185,21 @@ export function createLunarEclipseLayer(
         kind: EQUIRECT_REGION_OVERLAY_KIND,
         fills,
         strokes,
-        ...(labels.length > 0 ? { labels, labelAvoidDiscs } : {}),
+        ...(labels.length > 0
+          ? {
+              labels,
+              labelAvoidDiscs,
+              ...(cityLabelHints.length > 0 ? { labelAvoidCityLabels: cityLabelHints } : {}),
+              ...(activeLunar && frame.lunarGeometry && labels.length > 0
+                ? {
+                    labelPathHints: lunarHorizonBoundaryPolylines(
+                      labels[0]!.latDeg,
+                      labels[0]!.lonDeg,
+                    ).map((points) => ({ points })),
+                  }
+                : {}),
+            }
+          : {}),
         readability: {
           nightVeil01: readabilityFrame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: readabilityFrame.substrateOverlayReadabilityLiftScale01,

@@ -436,11 +436,11 @@ describe("LayersTab eclipse alignment", () => {
     selectLayersTopic("eclipse");
     const master = screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement;
     const solarBeam = screen.getByLabelText("Solar alignment beam") as HTMLInputElement;
-    const lunarBeam = screen.getByLabelText("Lunar alignment beam") as HTMLInputElement;
+    const lunarCue = screen.getByLabelText("Lunar Earth-shadow cue") as HTMLInputElement;
     const intensity = screen.getByLabelText("Alignment intensity") as HTMLSelectElement;
     expect(master.checked).toBe(true);
     expect(solarBeam.checked).toBe(true);
-    expect(lunarBeam.checked).toBe(true);
+    expect(lunarCue.checked).toBe(true);
     expect(intensity.value).toBe("normal");
     await user.click(master);
     expect(master.checked).toBe(false);

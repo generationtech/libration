@@ -197,37 +197,14 @@ describe("eclipse alignment presentation — solar", () => {
 });
 
 describe("eclipse alignment presentation — lunar", () => {
-  it("emits no lunar effect when there is no active event", () => {
+  it("emits no geographic lunar alignment ribbon", () => {
     resetEclipseEventServiceCacheForTests();
     expect(build(QUIET).lunar).toBeNull();
+    expect(build(LUNAR_TOTAL).lunar).toBeNull();
+    expect(build(LUNAR_PARTIAL).lunar).toBeNull();
   });
 
-  it("emits a Sun→Earth→Moon axis at 2022 totality, not a terrestrial path target", () => {
-    resetEclipseEventServiceCacheForTests();
-    const frame = resolveEclipseFrame(LUNAR_TOTAL);
-    const view = build(LUNAR_TOTAL, { frame });
-    expect(frame.activeLunar?.subtype).toBe("total");
-    expect(frame.lunarGeometry?.phase).toBe("total-umbral");
-    expect(view.lunar?.kind).toBe("lunar-axis");
-    expect(view.lunar?.eventId).toBe(frame.activeLunar?.id);
-    expect(view.lunar?.target).toEqual(glyphs(LUNAR_TOTAL).sublunar);
-    expect(view.lunar!.strength01).toBeGreaterThan(0.75);
-    expect(view.lunar!.bands.length).toBeGreaterThanOrEqual(4);
-    const span = angularDistanceDeg(view.lunar!.origin, view.lunar!.target!);
-    expect(span).toBeLessThan(40);
-  });
-
-  it("keeps a partial umbral event distinct and weaker than totality", () => {
-    resetEclipseEventServiceCacheForTests();
-    const partial = build(LUNAR_PARTIAL);
-    const total = build(LUNAR_TOTAL);
-    expect(partial.lunar?.kind).toBe("lunar-axis");
-    expect(partial.lunar!.strength01).toBeGreaterThan(0.35);
-    expect(partial.lunar!.strength01).toBeLessThan(total.lunar!.strength01);
-    expect(partial.lunar!.bands.some((b) => b.fill.includes("110, 42, 32"))).toBe(false);
-  });
-
-  it("maps penumbral / partial / total strengths in increasing order", () => {
+  it("maps penumbral / partial / total cue strengths in increasing order from coverage", () => {
     const pen = lunarAlignmentStrength01({
       phase: "penumbral",
       gamma: 1.2,

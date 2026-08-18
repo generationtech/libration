@@ -185,3 +185,14 @@ export function lunarVisibilityPolarCloseLatDeg(moonLatDeg: number): number | un
 export function wrapLongitudeDeg(lonDeg: number): number {
   return wrapLonDeg(lonDeg);
 }
+
+/** Great-circle separation in degrees (spherical). */
+export function sphericalSeparationDeg(
+  latDeg: number,
+  lonDeg: number,
+  moonLatDeg: number,
+  moonLonDeg: number,
+): number {
+  const c = Math.max(-1, Math.min(1, sphericalMoonAltitudeCosine(latDeg, lonDeg, moonLatDeg, moonLonDeg)));
+  return (Math.acos(c) / Math.PI) * 180;
+}

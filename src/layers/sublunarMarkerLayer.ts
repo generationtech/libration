@@ -27,7 +27,12 @@ import type { SceneOverlayReadabilityPresentationConfig } from "../config/v2/sce
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { lunarEclipseDiscCoverage } from "../core/eclipse/lunarEclipseMoonlightTransmission";
-import { SUBLUNAR_MARKER_KIND, type EarthShadowOverlayAppearance, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
+import {
+  lunarEarthShadowCueLengthMoonRadii,
+  lunarEarthShadowCueStrength01,
+} from "../core/eclipse/lunarEarthShadowCue";
+import { eclipseAlignmentIntensityScale, type EclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentAppearance";
+import { SUBLUNAR_MARKER_KIND, type EarthShadowCueAppearance, type EarthShadowOverlayAppearance, type SublunarMarkerPayload } from "./sublunarMarkerPayload";
 import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
@@ -54,6 +59,9 @@ export function createSublunarMarkerLayer(
     sublunarMarkerReadabilityPresentation?: SceneOverlayReadabilityPresentationConfig;
     /** When true, attach Earth-shadow overlay numbers from the active lunar eclipse. */
     earthShadowEnabled?: boolean;
+    /** When true, attach the Moon-local Earth-shadow directional cue. */
+    earthShadowCueEnabled?: boolean;
+    alignment?: EclipseAlignmentPresentation;
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -64,6 +72,8 @@ export function createSublunarMarkerLayer(
   const observer = options.observer ?? null;
   const sublunarMarkerReadabilityPresentation = options.sublunarMarkerReadabilityPresentation;
   const earthShadowEnabled = options.earthShadowEnabled === true;
+  const earthShadowCueEnabled = options.earthShadowCueEnabled === true;
+  const cueIntensity = options.alignment?.intensity ?? "normal";
   let previousOrientationDeg: number | undefined;
   return {
     id: SUBLUNAR_MARKER_ID,
@@ -113,12 +123,38 @@ export function createSublunarMarkerLayer(
           overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,
         },
         ...(earthShadowEnabled ? earthShadowOverlayFromTime(time) : {}),
+        ...(earthShadowCueEnabled ? earthShadowCueFromTime(time, cueIntensity) : {}),
       };
       return {
         visible: true,
         opacity: op,
         data,
       };
+    },
+  };
+}
+
+function earthShadowCueFromTime(
+  time: TimeContext,
+  intensity: EclipseAlignmentPresentation["intensity"],
+): { earthShadowCue: EarthShadowCueAppearance } | Record<string, never> {
+  const eclipseFrame = time.eclipseFrame ?? resolveEclipseFrame(time.now, { horizonMs: 0 });
+  const geom = eclipseFrame.lunarGeometry;
+  if (!eclipseFrame.support.supported || !eclipseFrame.activeLunar || !geom || geom.phase === "none") {
+    return {};
+  }
+  const strength01 = lunarEarthShadowCueStrength01(geom);
+  if (strength01 <= 0) {
+    return {};
+  }
+  const scale = eclipseAlignmentIntensityScale(intensity);
+  return {
+    earthShadowCue: {
+      offsetEastMoonRadii: geom.shadowOffsetEastMoonRadii,
+      offsetNorthMoonRadii: geom.shadowOffsetNorthMoonRadii,
+      strength01,
+      lengthMoonRadii: lunarEarthShadowCueLengthMoonRadii(intensity),
+      alphaScale: scale.alpha,
     },
   };
 }

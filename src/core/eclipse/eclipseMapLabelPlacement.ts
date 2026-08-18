@@ -17,8 +17,9 @@
  *
  * Solar path-aware order: opposite the nearest path sample, then ±45°, ±90°,
  * a farther opposite offset, then generic right/left/above/below.
- * Rejects glyph discs, path clearance, and screen edges. Last resort may drop
- * path clearance then clamp on-screen.
+ * Lunar glyph order: right, left, above, below, diagonals, farther radial.
+ * Rejects glyph discs, optional city-label boxes, path clearance, and screen
+ * edges. Last resort may drop path clearance then clamp on-screen.
  */
 
 export type LabelAvoidDisc = {
@@ -38,18 +39,24 @@ export type LabelPathPolyline = {
   readonly points: readonly { readonly x: number; readonly y: number }[];
 };
 
-type LabelBox = {
+export type LabelAvoidBox = {
   readonly left: number;
   readonly right: number;
   readonly top: number;
   readonly bottom: number;
 };
 
+export type EclipseMapLabelPlacementMode = "solar-path" | "lunar-glyph";
+
+type LabelBox = LabelAvoidBox;
+
 const SCREEN_MARGIN_PX = 8;
 const GLYPH_GAP_PX = 8;
 const PATH_CLEARANCE_PX = 12;
 const LABEL_OFFSET_MIN_PX = 36;
 const LABEL_OFFSET_MAX_PX = 64;
+const LUNAR_LABEL_OFFSET_MIN_PX = 40;
+const LUNAR_LABEL_OFFSET_MAX_PX = 64;
 const WIDTH_PER_EM = 0.58;
 const HEIGHT_EM = 1.15;
 
@@ -102,6 +109,30 @@ function anyDiscIntersects(discs: readonly LabelAvoidDisc[], box: LabelBox): boo
     }
   }
   return false;
+}
+
+function boxesIntersect(a: LabelBox, b: LabelBox): boolean {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function anyBoxIntersects(boxes: readonly LabelAvoidBox[], box: LabelBox): boolean {
+  for (const other of boxes) {
+    if (boxesIntersect(other, box)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function eclipseMapLabelBox(
+  x: number,
+  y: number,
+  text: string,
+  sizePx: number,
+  textAlign: PlacedMapLabel["textAlign"],
+  textBaseline: PlacedMapLabel["textBaseline"],
+): LabelAvoidBox {
+  return estimateLabelBox(x, y, text, sizePx, textAlign, textBaseline);
 }
 
 function maxAvoidRadiusPx(discs: readonly LabelAvoidDisc[]): number {
@@ -255,6 +286,28 @@ function candidatesForOffset(offsetPx: number): readonly Candidate[] {
   ];
 }
 
+function lunarGlyphCandidates(offsetPx: number): readonly Candidate[] {
+  const d = offsetPx * 0.72;
+  const far = offsetPx * 1.55;
+  const farther = offsetPx * 2.15;
+  return [
+    { dx: offsetPx, dy: 0, textAlign: "left", textBaseline: "middle" },
+    { dx: -offsetPx, dy: 0, textAlign: "right", textBaseline: "middle" },
+    { dx: 0, dy: -offsetPx, textAlign: "center", textBaseline: "bottom" },
+    { dx: 0, dy: offsetPx, textAlign: "center", textBaseline: "top" },
+    { dx: d, dy: -d, textAlign: "left", textBaseline: "bottom" },
+    { dx: -d, dy: -d, textAlign: "right", textBaseline: "bottom" },
+    { dx: d, dy: d, textAlign: "left", textBaseline: "top" },
+    { dx: -d, dy: d, textAlign: "right", textBaseline: "top" },
+    { dx: far, dy: 0, textAlign: "left", textBaseline: "middle" },
+    { dx: -far, dy: 0, textAlign: "right", textBaseline: "middle" },
+    { dx: 0, dy: -far, textAlign: "center", textBaseline: "bottom" },
+    { dx: 0, dy: far, textAlign: "center", textBaseline: "top" },
+    { dx: farther, dy: 0, textAlign: "left", textBaseline: "middle" },
+    { dx: -farther, dy: 0, textAlign: "right", textBaseline: "middle" },
+  ];
+}
+
 function clampLabelPoint(
   x: number,
   y: number,
@@ -292,7 +345,9 @@ export function placeEclipseMapLabel(args: {
   readonly viewportHeightPx: number;
   readonly avoidDiscs: readonly LabelAvoidDisc[];
   readonly avoidPolylines?: readonly LabelPathPolyline[];
+  readonly avoidBoxes?: readonly LabelAvoidBox[];
   readonly pathClearancePx?: number;
+  readonly placement?: EclipseMapLabelPlacementMode;
 }): PlacedMapLabel {
   const halo = maxAvoidRadiusPx(args.avoidDiscs);
   const genericOffsetPx = halo + GLYPH_GAP_PX;
@@ -300,10 +355,16 @@ export function placeEclipseMapLabel(args: {
     LABEL_OFFSET_MAX_PX,
     Math.max(LABEL_OFFSET_MIN_PX, halo + GLYPH_GAP_PX + 8),
   );
+  const lunarOffsetPx = Math.min(
+    LUNAR_LABEL_OFFSET_MAX_PX,
+    Math.max(LUNAR_LABEL_OFFSET_MIN_PX, halo + GLYPH_GAP_PX),
+  );
   const clearance = args.pathClearancePx ?? PATH_CLEARANCE_PX;
   const polylines = args.avoidPolylines ?? [];
+  const boxes = args.avoidBoxes ?? [];
+  const lunar = args.placement === "lunar-glyph";
   const nearest =
-    polylines.length > 0
+    !lunar && polylines.length > 0
       ? nearestEclipsePathPointScreen({
           originX: args.preferredX,
           originY: args.preferredY,
@@ -312,12 +373,16 @@ export function placeEclipseMapLabel(args: {
         })
       : null;
   const list: Candidate[] = [];
-  if (nearest && nearest.dist > 1) {
-    const ux = (nearest.x - args.preferredX) / nearest.dist;
-    const uy = (nearest.y - args.preferredY) / nearest.dist;
-    list.push(...oppositePathCandidates(ux, uy, pathOffsetPx));
+  if (lunar) {
+    list.push(...lunarGlyphCandidates(lunarOffsetPx));
+  } else {
+    if (nearest && nearest.dist > 1) {
+      const ux = (nearest.x - args.preferredX) / nearest.dist;
+      const uy = (nearest.y - args.preferredY) / nearest.dist;
+      list.push(...oppositePathCandidates(ux, uy, pathOffsetPx));
+    }
+    list.push(...candidatesForOffset(genericOffsetPx));
   }
-  list.push(...candidatesForOffset(genericOffsetPx));
   const tryCandidate = (candidate: Candidate, enforcePath: boolean): PlacedMapLabel | null => {
     const x = args.preferredX + candidate.dx;
     const y = args.preferredY + candidate.dy;
@@ -333,6 +398,9 @@ export function placeEclipseMapLabel(args: {
       return null;
     }
     if (anyDiscIntersects(args.avoidDiscs, box)) {
+      return null;
+    }
+    if (anyBoxIntersects(boxes, box)) {
       return null;
     }
     if (enforcePath && polylines.length > 0 && polylineHitsBox(polylines, box, clearance, args.viewportWidthPx)) {

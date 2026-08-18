@@ -261,3 +261,9 @@ Verified: `npx tsc --noEmit` clean; focused 142 passed; `npm test` 220 files / 2
 Reconciled eclipse HUD, placard, and map-label copy through one `EclipsePresentationState` projection. HUD is local (obscuration percent that never shows partial as `100%`; begins/max/ends). Placard distinguishes global vs local. Map labels are `{title} · upcoming|active` near the Sun/Moon cluster, opposite the solar path in screen space. No astronomy or ADR change.
 
 Verified: `npx tsc --noEmit` clean; focused eclipse tests 114 passed; `npm test` 221 files / 2090 passed / 0 failed; `npm run build` succeeded with no `solar-eclipse-2017` / `iss-presentation` in `dist/`. Cursor Browser 2017 upcoming/earlyCentral/GE/lateCentral/after, dateline, partial, lunar forecast/total, Tokyo observer. LIB-037 stays proposed.
+
+## 2026-08-17 — LIB-043 complete
+
+Reconciled lunar eclipse presentation and illumination: glyph-anchored event labels with city-name clearance, explicit active vs forecast Moon-visible semantics, one physical moonlight pipeline (`ordinaryMoonlight × lunarEclipseTransmission`), removal of the geographic lunar alignment ribbon that caused blocky/jumping large-area shading, and a short Moon-local Earth-shadow directional cue. Solar alignment beam, NASA/Espenak authority, and LIB-042 HUD/placard wording unchanged. No new ADR (ADR 0011 reinforced).
+
+Verified: `npx tsc --noEmit` clean; `npm test` 223 files / 2106 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 A–G, Tokyo observer, partial, penumbral, forecast, dateline, 2017 solar GE. LIB-037 stays proposed.
