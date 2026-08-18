@@ -151,8 +151,6 @@ describe("createLayerForSceneOverlayInstance (source-driven)", () => {
         product: "lunarEclipseVisibility",
         parameters: {
           showMoonEclipseShadow: true,
-          showVisibilityBoundary: true,
-          showVisibilityRegion: true,
         },
       },
     };

@@ -67,7 +67,10 @@ describe("eclipse event information", () => {
     const total = view("2022-05-16T04:11:29.000Z", 0);
     expect(total.kind).toBe("lunar");
     expect(total.title).toBe("Total lunar eclipse");
-    expect(total.rows.some((r) => r.label === "Moon-visible region")).toBe(true);
+    expect(total.rows.some((r) => r.label === "Moon-visible region")).toBe(false);
+    expect(total.legend.some((item) => item.label === "Moon-visible now")).toBe(false);
+    expect(total.legend.some((item) => item.label.includes("geometric lunar horizon"))).toBe(false);
+    expect(total.legend.some((item) => item.label === "Earth-shadow cue")).toBe(true);
     const penumbral = view("2017-02-11T00:44:00.000Z", 0);
     expect(penumbral.title === "Penumbral lunar eclipse" || penumbral.kind === "lunar").toBe(true);
   });
@@ -96,14 +99,9 @@ describe("eclipse event information", () => {
           r.value.includes("greatest eclipse"),
       ),
     ).toBe(true);
-    expect(
-      v.rows.some(
-        (r) =>
-          r.label === "Moon-visible region" &&
-          r.value.includes("now"),
-      ),
-    ).toBe(true);
-    expect(v.legend.some((item) => item.label === "Moon-visible now")).toBe(true);
+    expect(v.rows.some((r) => r.label === "Moon-visible region")).toBe(false);
+    expect(v.legend.some((item) => item.label === "Moon-visible now")).toBe(false);
+    expect(v.legend.some((item) => item.label.includes("geometric lunar horizon"))).toBe(false);
   });
 
   it("names an upcoming penumbral lunar eclipse honestly", () => {

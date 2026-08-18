@@ -288,16 +288,16 @@ export function EclipseSystemSection(props: {
         <legend className="config-fieldset__legend">Lunar eclipses</legend>
         <p className="config-section__hint">
           Forecast horizon is how early an upcoming lunar eclipse appears — not the duration of
-          the eclipse. The map region is where the Moon is above the geometric horizon at the
-          current product instant, whether the eclipse is upcoming or active — not a lunar path
-          of totality, and not a freeze of greatest-eclipse geography.
+          the eclipse. Lunar eclipses have no solar-style terrestrial path. The event is shown
+          on the Moon, with physically attenuated moonlight, HUD/placard details, and an
+          optional Earth-shadow cue.
         </p>
         <ConfigControlRow label="Lunar forecast horizon">
           <select
             className="config-input"
             disabled={!mutable || !lunarOn}
             aria-label="Lunar forecast horizon"
-            title="How early upcoming lunar eclipse geography appears on the map. Map geography follows the current product instant, not greatest eclipse."
+            title="How early an upcoming lunar eclipse appears as Moon presentation, labels, and event information."
             value={String(lunar.forecastHorizonDays)}
             onChange={
               mutable && updateConfig
@@ -351,36 +351,28 @@ export function EclipseSystemSection(props: {
             ))}
           </div>
         </ConfigControlRow>
-        {(
-          [
-            ["showMoonEclipseShadow", "Moon Earth-shadow treatment", "Earth-shadow overlay on the Moon glyph during an active lunar eclipse."],
-            ["showVisibilityRegion", "Moon-visible region", "Show where the Moon is geometrically above the horizon."],
-            ["showVisibilityBoundary", "Moon-visible boundary", "Show the geometric lunar horizon."],
-          ] as const
-        ).map(([key, label, title]) => (
-          <ConfigControlRow key={key} label={label}>
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={lunar[key]}
-              readOnly={!mutable}
-              disabled={!mutable || !lunarOn}
-              tabIndex={mutable && lunarOn ? 0 : -1}
-              aria-label={label}
-              title={title}
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      const value = e.currentTarget.checked;
-                      patchScene(updateConfig, (base) =>
-                        applyLunarEclipsePresentationToScene(base, { [key]: value }),
-                      );
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-        ))}
+        <ConfigControlRow label="Moon Earth-shadow treatment">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lunar.showMoonEclipseShadow}
+            readOnly={!mutable}
+            disabled={!mutable || !lunarOn}
+            tabIndex={mutable && lunarOn ? 0 : -1}
+            aria-label="Moon Earth-shadow treatment"
+            title="Earth-shadow overlay on the Moon glyph during an active lunar eclipse."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showMoonEclipseShadow = e.currentTarget.checked;
+                    patchScene(updateConfig, (base) =>
+                      applyLunarEclipsePresentationToScene(base, { showMoonEclipseShadow }),
+                    );
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
       </fieldset>
 
       <fieldset className="config-fieldset config-fieldset--plain">
@@ -533,8 +525,8 @@ export function EclipseSystemSection(props: {
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Eclipse appearance</legend>
         <p className="config-section__hint">
-          Colors and opacities are independent for solar forecast, solar live, lunar visibility,
-          and alignment. Defaults preserve the verified eclipse look.
+          Colors and opacities are independent for solar forecast, solar live, and alignment.
+          Defaults preserve the verified eclipse look.
         </p>
         <ConfigControlRow label="Solar forecast color">
           <input
@@ -793,72 +785,6 @@ export function EclipseSystemSection(props: {
               </option>
             ))}
           </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar visibility color">
-          <input
-            type="color"
-            className="config-input"
-            disabled={!mutable || !lunarOn}
-            aria-label="Lunar visibility color"
-            value={lunar.visibilityRegionColor}
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const visibilityRegionColor = e.currentTarget.value;
-                    patchScene(updateConfig, (base) =>
-                      applyLunarEclipsePresentationToScene(base, { visibilityRegionColor }),
-                    );
-                  }
-                : undefined
-            }
-          />
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar visibility thickness">
-          <select
-            className="config-input"
-            disabled={!mutable || !lunarOn}
-            aria-label="Lunar visibility thickness"
-            value={lunar.visibilityBoundaryThickness}
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const visibilityBoundaryThickness = e.currentTarget
-                      .value as AstronomyPathThicknessId;
-                    patchScene(updateConfig, (base) =>
-                      applyLunarEclipsePresentationToScene(base, { visibilityBoundaryThickness }),
-                    );
-                  }
-                : undefined
-            }
-          >
-            {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
-              <option key={`lunar-th-${id}`} value={id}>
-                {id[0]!.toUpperCase() + id.slice(1)}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Lunar visibility opacity">
-          <input
-            type="range"
-            className="config-input"
-            min={ECLIPSE_FILL_OPACITY_MIN}
-            max={ECLIPSE_FILL_OPACITY_MAX}
-            step={0.01}
-            disabled={!mutable || !lunarOn}
-            aria-label="Lunar visibility opacity"
-            value={lunar.visibilityRegionOpacity}
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const visibilityRegionOpacity = Number(e.currentTarget.value);
-                    patchScene(updateConfig, (base) =>
-                      applyLunarEclipsePresentationToScene(base, { visibilityRegionOpacity }),
-                    );
-                  }
-                : undefined
-            }
-          />
         </ConfigControlRow>
         <ConfigControlRow label="Solar alignment color">
           <input

@@ -166,7 +166,8 @@ export function lunarHorizonBoundaryPolylines(
 
 /**
  * Flattened horizon samples for geometric tests. Prefer
- * {@link lunarHorizonBoundaryPolylines} for rendering.
+ * {@link lunarHorizonBoundaryPolylines} when a polyline family is needed.
+ * Lunar eclipse map presentation no longer paints this contour.
  */
 export function lunarHorizonBoundary(
   moonLatDeg: number,

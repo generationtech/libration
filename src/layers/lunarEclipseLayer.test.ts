@@ -23,6 +23,7 @@ const TOTAL_UTC = Date.parse("2022-05-16T04:11:29.000Z");
 const FORECAST_UTC = Date.parse("2022-05-13T04:00:00.000Z");
 const PARTIAL_FORECAST_UTC = Date.parse("2008-08-13T21:00:00.000Z");
 const QUIET_UTC = Date.parse("2024-01-15T00:00:00.000Z");
+const GE_2029 = Date.parse("2029-06-26T03:22:05.000Z");
 const HORIZON_7D = 7 * 86_400_000;
 
 const ALIGNMENT_OFF = { enabled: false } as const;
@@ -38,88 +39,50 @@ describe("lunar eclipse layer", () => {
     }
   });
 
-  it("emits visibility region and boundary at 2022 totality", () => {
+  it("emits no Moon-visible fill or horizon boundary at 2022 totality", () => {
     const layer = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
     const frame = resolveEclipseFrame(TOTAL_UTC);
     const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: frame }));
     expect(frame.activeLunar?.subtype).toBe("total");
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.fills.length).toBe(1);
-      expect(st.data.strokes.length).toBe(1);
-      expect(st.data.fills[0]?.polarCloseLatDeg).toBeDefined();
-    }
-  });
-
-  it("omits the region when the visibility-region toggle is off", () => {
-    const layer = createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: false, showVisibilityBoundary: true },
-      alignment: ALIGNMENT_OFF,
-    });
-    const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
-    expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
-    if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.fills).toHaveLength(0);
-      expect(st.data.strokes.length).toBe(1);
+      expect(st.data.strokes).toHaveLength(0);
+      expect(st.data.labelPathHints).toBeUndefined();
     }
   });
 
-  it("uses the same Moon-visible flags for upcoming and active geography", () => {
-    const on = createLunarEclipseLayer({
-      presentation: {
-        forecastHorizonDays: 7,
-        showVisibilityRegion: true,
-        showVisibilityBoundary: true,
-      },
-      alignment: ALIGNMENT_OFF,
-    });
-    const off = createLunarEclipseLayer({
-      presentation: {
-        forecastHorizonDays: 7,
-        showVisibilityRegion: false,
-        showVisibilityBoundary: false,
-      },
+  it("emits no Moon-visible geography for upcoming or active events", () => {
+    const layer = createLunarEclipseLayer({
+      presentation: { forecastHorizonDays: 7 },
       alignment: ALIGNMENT_OFF,
     });
     const upcomingFrame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
     const activeFrame = resolveEclipseFrame(TOTAL_UTC);
-    const upcomingOn = on.getState(
+    const upcoming = layer.getState(
       createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: upcomingFrame }),
     );
-    const upcomingOff = off.getState(
-      createTimeContext(FORECAST_UTC, 0, true, { eclipseFrame: upcomingFrame }),
-    );
-    const activeOn = on.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: activeFrame }));
-    const activeOff = off.getState(
-      createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: activeFrame }),
-    );
-    const quiet = on.getState(createTimeContext(QUIET_UTC, 0, true));
+    const active = layer.getState(createTimeContext(TOTAL_UTC, 0, true, { eclipseFrame: activeFrame }));
+    const quiet = layer.getState(createTimeContext(QUIET_UTC, 0, true));
     if (
-      isEquirectRegionOverlayPayload(upcomingOn.data) &&
-      isEquirectRegionOverlayPayload(upcomingOff.data) &&
-      isEquirectRegionOverlayPayload(activeOn.data) &&
-      isEquirectRegionOverlayPayload(activeOff.data) &&
+      isEquirectRegionOverlayPayload(upcoming.data) &&
+      isEquirectRegionOverlayPayload(active.data) &&
       isEquirectRegionOverlayPayload(quiet.data)
     ) {
-      expect(upcomingOn.data.fills.length).toBe(1);
-      expect(upcomingOn.data.strokes.length).toBeGreaterThan(0);
-      expect(activeOn.data.fills.length).toBe(1);
-      expect(activeOn.data.strokes.length).toBeGreaterThan(0);
-      expect(upcomingOff.data.fills).toHaveLength(0);
-      expect(upcomingOff.data.strokes).toHaveLength(0);
-      expect(activeOff.data.fills).toHaveLength(0);
-      expect(activeOff.data.strokes).toHaveLength(0);
+      expect(upcoming.data.fills).toHaveLength(0);
+      expect(upcoming.data.strokes).toHaveLength(0);
+      expect(active.data.fills).toHaveLength(0);
+      expect(active.data.strokes).toHaveLength(0);
       expect(quiet.data.fills).toHaveLength(0);
       expect(quiet.data.strokes).toHaveLength(0);
-      expect(upcomingOn.data.fills[0]?.fill).toBe(activeOn.data.fills[0]?.fill);
-      expect(upcomingOn.data.strokes[0]?.stroke).toBe(activeOn.data.strokes[0]?.stroke);
     }
   });
 
-  it("keeps unified Moon-visible geography during a live-only active event and omits upcoming", () => {
+  it("keeps labels during a live-only active event and omits upcoming", () => {
     const layer = createLunarEclipseLayer({
-      presentation: { forecastHorizonDays: 0, showVisibilityRegion: true, showVisibilityBoundary: true },
+      presentation: { forecastHorizonDays: 0 },
       alignment: ALIGNMENT_OFF,
+      labelsEnabled: true,
     });
     const upcoming = layer.getState(
       createTimeContext(FORECAST_UTC, 0, true, {
@@ -134,30 +97,17 @@ describe("lunar eclipse layer", () => {
     if (isEquirectRegionOverlayPayload(upcoming.data) && isEquirectRegionOverlayPayload(active.data)) {
       expect(upcoming.data.fills).toHaveLength(0);
       expect(upcoming.data.strokes).toHaveLength(0);
-      expect(active.data.fills.length).toBe(1);
-      expect(active.data.strokes.length).toBeGreaterThan(0);
+      expect(upcoming.data.labels ?? []).toHaveLength(0);
+      expect(active.data.fills).toHaveLength(0);
+      expect(active.data.strokes).toHaveLength(0);
+      expect(active.data.labels).toHaveLength(1);
     }
   });
 
-  it("keeps label path-hint geometry when the painted boundary is off", () => {
-    const layer = createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: false, showVisibilityBoundary: false },
-      alignment: ALIGNMENT_OFF,
-      labelsEnabled: true,
-    });
-    const st = layer.getState(createTimeContext(TOTAL_UTC, 0, true));
-    if (isEquirectRegionOverlayPayload(st.data)) {
-      expect(st.data.strokes).toHaveLength(0);
-      expect(st.data.labels).toHaveLength(1);
-      expect(st.data.labelPathHints?.length).toBeGreaterThan(0);
-      expect(st.data.labelPathHints?.[0]?.points.length).toBeGreaterThan(1);
-    }
-  });
-
-  it("emits current-instant Moon-visible geography before P1, not the GE freeze", () => {
+  it("places the event label at the current Moon without horizon path hints", () => {
     const layer = createLunarEclipseLayer({
       presentation: { forecastHorizonDays: 7 },
-      alignment: { enabled: true, lunarEnabled: true },
+      alignment: ALIGNMENT_OFF,
       labelsEnabled: true,
     });
     const frame = resolveEclipseFrame(FORECAST_UTC, { lunarHorizonMs: HORIZON_7D });
@@ -167,16 +117,9 @@ describe("lunar eclipse layer", () => {
     expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(st.data)) {
       const moon = sublunarPoint(FORECAST_UTC);
-      const ge = frame.upcomingLunar[0]!;
-      expect(st.data.fills.length).toBe(1);
-      expect(st.data.strokes.length).toBeGreaterThan(0);
-      expect(st.data.fills[0]?.polarCloseLatDeg).toBe(moon.latDeg >= 0 ? 90 : -90);
-      const ring0 = st.data.fills[0]!.ring[0]!;
-      let dLon = ring0.lonDeg - (moon.lonDeg - 180);
-      while (dLon > 180) dLon -= 360;
-      while (dLon < -180) dLon += 360;
-      expect(Math.abs(dLon)).toBeLessThan(2);
-      expect(Math.abs(moon.lonDeg - ge.zenithLonDeg)).toBeGreaterThan(10);
+      expect(st.data.fills).toHaveLength(0);
+      expect(st.data.strokes).toHaveLength(0);
+      expect(st.data.labelPathHints).toBeUndefined();
       expect(st.data.labels).toHaveLength(1);
       expect(st.data.labels?.[0]?.latDeg).toBeCloseTo(moon.latDeg, 5);
       expect(st.data.labels?.[0]?.lonDeg).toBeCloseTo(moon.lonDeg, 5);
@@ -198,7 +141,7 @@ describe("lunar eclipse layer", () => {
     if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.labels ?? []).toHaveLength(0);
       expect(st.data.labelAvoidDiscs ?? []).toHaveLength(0);
-      expect(st.data.fills.length).toBe(1);
+      expect(st.data.fills).toHaveLength(0);
     }
   });
 
@@ -234,7 +177,7 @@ describe("lunar eclipse layer", () => {
     expect(frame.upcomingLunar[0]?.id).toBe("nasa-5mcle-lunar-9700");
   });
 
-  it("does not emit geographic lunar alignment fills; visibility region remains", () => {
+  it("does not emit geographic lunar alignment fills", () => {
     const off = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
     const on = createLunarEclipseLayer({ alignment: { enabled: true, lunarEnabled: true } });
     const frame = resolveEclipseFrame(TOTAL_UTC);
@@ -243,23 +186,26 @@ describe("lunar eclipse layer", () => {
     const withCueToggle = on.getState(time);
     expect(isEquirectRegionOverlayPayload(withCueToggle.data)).toBe(true);
     if (isEquirectRegionOverlayPayload(withCueToggle.data) && isEquirectRegionOverlayPayload(without.data)) {
-      expect(withCueToggle.data.fills.length).toBe(without.data.fills.length);
-      expect(without.data.fills.length).toBe(1);
+      expect(withCueToggle.data.fills).toHaveLength(0);
+      expect(without.data.fills).toHaveLength(0);
+      expect(withCueToggle.data.strokes).toHaveLength(0);
     }
   });
 
-  it("hands city-name boxes to lunar label placement", () => {
+  it("hands city-name boxes to lunar label placement without horizon path hints", () => {
     const layer = createLunarEclipseLayer({
       alignment: ALIGNMENT_OFF,
       labelsEnabled: true,
       cityLabelHints: [{ latDeg: -23.5505, lonDeg: -46.6333, name: "São Paulo" }],
     });
-    const ge = Date.parse("2029-06-26T03:22:05.000Z");
-    const frame = resolveEclipseFrame(ge);
-    const st = layer.getState(createTimeContext(ge, 0, true, { eclipseFrame: frame }));
+    const frame = resolveEclipseFrame(GE_2029);
+    const st = layer.getState(createTimeContext(GE_2029, 0, true, { eclipseFrame: frame }));
     if (isEquirectRegionOverlayPayload(st.data)) {
       expect(st.data.labels?.[0]?.placement).toBe("lunar-glyph");
       expect(st.data.labelAvoidCityLabels?.[0]?.name).toBe("São Paulo");
+      expect(st.data.labelPathHints).toBeUndefined();
+      expect(st.data.fills).toHaveLength(0);
+      expect(st.data.strokes).toHaveLength(0);
     }
   });
 });

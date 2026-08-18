@@ -24,7 +24,7 @@ Backlog intent is treated as requirements to accommodate, not to silently narrow
 | Configurable forecast horizon; future visualization before the event; live progression; completion | Forecast lifecycle on `EclipseFrame`, not on the renderer |
 | Solar path / band / partial region / centerline / moving footprint | Solar geographic geometry → semantic map geometry → presentation |
 | Active solar daylight attenuation | Local solar-disc obscuration → illumination `rasterPatch` ([ADR 0012](../../decisions/0012-active-solar-eclipse-obscuration-is-physical-illumination.md)) |
-| Lunar: no solar-style narrow terrestrial path; Earth-shadow vs Moon; Moon-visible region | Lunar geographic geometry; visibility hemisphere is not a path of totality |
+| Lunar: no solar-style narrow terrestrial path; Earth-shadow vs Moon | Lunar event geometry is Moon-local; ordinary Moon-above-horizon astronomy is not painted as an eclipse footprint |
 | Live Sun/Moon/Earth alignment emphasis (“Mars Attacks”) | Presentation layer over eclipse-authority geometry; independently disableable |
 | Configuration richness | One Eclipse System config subtree feeding a service + presentation layers; schema not defined here |
 | Reference-city circumstances | Existing chrome reference city (`resolveReferenceCityObserverLocation`); no second observer |
@@ -409,13 +409,13 @@ Semantic map geometry should include some combination of:
 
 ### Relation to Lunar Visibility / Moon Horizon backlog
 
-The spherical Moon-above-horizon contour is the same geometric object the backlog wants as an explanatory overlay. For eclipses it is **event-gated**.
+The spherical Moon-above-horizon contour is the same geometric object the backlog wants as an explanatory overlay. Lunar eclipse presentation no longer paints it ([LIB-046](../../work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md)). Ordinary moonlight and local circumstances still use Moon-above-horizon geometry internally.
 
-**Recommendation:** do **not** require a separate Lunar Visibility LIB before lunar eclipse presentation. Implement the contour as part of lunar-eclipse geometry (or a small shared helper introduced in that slice). Shipping it as a continuous ambient overlay remains a separate product decision.
+**Recommendation:** do **not** require a separate Lunar Visibility LIB before lunar eclipse presentation. Shipping that contour as a continuous ambient overlay remains a separate product decision.
 
 ### Shipped presentation (LIB-021 / LIB-043)
 
-The Moon glyph receives spatial Earth-shadow geometry (clipped penumbra/umbra circles in the same observer frame as libration), not whole-disc grey/dark/red state tints. Ordinary moonlight in the planetary illumination raster is `ordinaryMoonlight × lunarEclipseTransmission` even when lunar overlay presentation is off ([ADR 0011](../../decisions/0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md)). Transmission is coverage-derived and continuous. The Moon-visible region is a dark informational overlay, not a moonlight lift: **upcoming and active** both show where the Moon is geometrically above the horizon at the **current product instant**, under one Moon-visible region control and one Moon-visible boundary control. Greatest-eclipse visibility may still be described on the placard; it is not map geography. Live event rows belong in the lower-right map information panel, not Layers. The lunar alignment control is an Earth-shadow directional cue on the Moon glyph, not a geographic beam.
+The Moon glyph receives spatial Earth-shadow geometry (clipped penumbra/umbra circles in the same observer frame as libration), not whole-disc grey/dark/red state tints. Ordinary moonlight in the planetary illumination raster is `ordinaryMoonlight × lunarEclipseTransmission` even when lunar overlay presentation is off ([ADR 0011](../../decisions/0011-lunar-eclipse-moonlight-attenuation-is-physical-illumination.md)). Transmission is coverage-derived and continuous. Lunar eclipse map presentation no longer paints a terrestrial Moon-visible hemisphere or geometric lunar-horizon boundary ([LIB-046](../../work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md)). That overlay was informational only and was not itself an eclipse phenomenon. Ordinary Moon-above-horizon astronomy remains for illumination (`lunarDot ≥ 0`), sublunar geometry, and local circumstances. Greatest-eclipse visibility may still be described on the placard; it is not map geography. Live event rows belong in the lower-right map information panel, not Layers. The lunar alignment control is an Earth-shadow directional cue on the Moon glyph, not a geographic beam.
 
 ---
 
@@ -628,7 +628,7 @@ Do **not** create these work items here. Finite vertical slices, derived from th
 - **Principal risks:** Schema sprawl; legacy layer flags.
 - **Completion evidence:** Normalization/persistence tests; visual default vs rich configuration; end-to-end solar/lunar workflows.
 
-E1–E6 are production. The planned Eclipse System sequence is complete. Do not invent E7 here. [LIB-020](../../work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) added lunar forecasting on the same EclipseAuthority / EclipseEventService path as solar, with a separate lunar horizon (default 7 days). [LIB-044](../../work/LIB-044-lunar-visibility-continuity-and-shudder-repair.md) keeps **map** Moon-visible geography on the current product instant for both upcoming and active events so animated time does not snap from a frozen greatest-eclipse hemisphere; the placard may still describe visibility at GE. [LIB-045](../../work/LIB-045-unify-lunar-moon-visible-controls.md) removes separate upcoming map-geography toggles so the same two controls own that overlay throughout the presented lifecycle. That region is where the Moon is geometrically above the horizon — not a terrestrial path, not visibility for every contact, and not totality everywhere inside it. Intentionally deferred ideas (event browser/history, swept penumbra union, atmospheric/ambient eclipse shading, map click-inspect) remain in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). The NASA/Espenak–Meeus authority classifies hybrid solar and penumbral lunar events; E6 labels them honestly in ordinary UI.
+E1–E6 are production. The planned Eclipse System sequence is complete. Do not invent E7 here. [LIB-020](../../work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) added lunar forecasting on the same EclipseAuthority / EclipseEventService path as solar, with a separate lunar horizon (default 7 days). [LIB-046](../../work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md) removes eclipse-specific Moon-visible map geography so a lunar eclipse is not mistaken for a terrestrial footprint or shadow region. Ordinary Moon-above-horizon mechanics remain. The placard may still describe visibility at GE. Intentionally deferred ideas (event browser/history, swept penumbra union, atmospheric/ambient eclipse shading, map click-inspect) remain in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#eclipse-system). The NASA/Espenak–Meeus authority classifies hybrid solar and penumbral lunar events; E6 labels them honestly in ordinary UI.
 
 ---
 
@@ -952,12 +952,12 @@ Uncertainty: NASA GSFC site copies of the mysqldump CSV vs later per-event ELP20
 
 ### 22.16 E3 inputs
 
-E3 implemented lunar event truth, circular Earth-shadow geometry at the Moon, and the terrestrial Moon-up region without another research phase:
+E3 implemented lunar event truth and circular Earth-shadow geometry at the Moon without another research phase:
 
 1. NASA GSFC lunar catalog metadata + contact durations for 1900–2100 in versioned `EclipseAuthority` asset `nasa-espenak-meeus-5mcle-lunar` v1.
 2. Duration-symmetry contacts and magnitude-recovered circular shadow radii in `src/core/eclipse/`.
-3. Active lunar event at product UTC; Moon-glyph Earth-shadow overlay; Moon-above-horizon region from ambient `sublunarPoint` (geometric horizon, spherical Earth, no refraction).
+3. Active lunar event at product UTC; Moon-glyph Earth-shadow overlay; Moon-above-horizon geometry from ambient `sublunarPoint` (geometric horizon, spherical Earth, no refraction) for illumination and local circumstances.
 4. Tests pin `authorityVersion` and the lunar fixtures in [§22.11](#2211-verification-fixtures).
-5. No solar-style terrestrial corridor. Lunar map geography (LIB-044 / LIB-045) reuses this same Moon-visible construction at the **current product instant** for upcoming and active events under one region/boundary pair; GE visibility remains placard/event-information context, not a frozen map preview.
+5. No solar-style terrestrial corridor. Lunar eclipse map presentation no longer paints a Moon-visible hemisphere or geometric lunar-horizon boundary ([LIB-046](../../work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md)). GE visibility remains placard/event-information context.
 
-Master Lunar eclipses control defaults **on** as of E6. Moon eclipse-shadow / visibility boundary / visibility region default **on** when the layer is enabled. A separate lunar forecast horizon defaults to 7 days.
+Master Lunar eclipses control defaults **on** as of E6. Moon Earth-shadow treatment defaults **on** when the layer is enabled. A separate lunar forecast horizon defaults to 7 days.

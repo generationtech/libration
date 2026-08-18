@@ -66,9 +66,9 @@ export interface LayerEnableFlags {
    */
   solarEclipse: boolean;
   /**
-   * NASA-derived lunar eclipse visibility region and Moon-glyph shadow
-   * (scene product `lunarEclipseVisibility`). Default on: geography appears
-   * only while an event is relevant.
+   * NASA-derived lunar eclipse overlay and Moon-glyph Earth-shadow
+   * (scene product `lunarEclipseVisibility`). Default on: event presentation
+   * appears only while an event is relevant.
    */
   lunarEclipse: boolean;
   /** Year-long subsolar locus at the canonical UTC time-of-day (scene product `solarAnalemmaGroundTrack`). */

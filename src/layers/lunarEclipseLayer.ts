@@ -15,14 +15,9 @@ import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityF
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import { type EclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentAppearance";
 import { lunarEclipseMapLabel } from "../core/eclipse/eclipseEventLabels";
-import {
-  presentedActiveLunar,
-  presentedLunarForecastSelections,
-  presentedPrimaryEclipse,
-} from "../core/eclipse/eclipsePresentedEvents";
+import { presentedPrimaryEclipse } from "../core/eclipse/eclipsePresentedEvents";
 import {
   normalizeLunarEclipsePresentation,
-  resolveLunarEclipsePaint,
   type LunarEclipsePresentation,
 } from "../core/eclipse/lunarEclipseAppearance";
 import {
@@ -30,11 +25,6 @@ import {
   normalizeSolarEclipsePresentation,
   type SolarEclipsePresentation,
 } from "../core/eclipse/solarEclipseAppearance";
-import {
-  lunarHorizonBoundaryPolylines,
-  lunarVisibilityPolarCloseLatDeg,
-  lunarVisibilityRegionRing,
-} from "../core/eclipse/lunarVisibilityGeometry";
 import { sublunarPoint } from "../core/sublunarPoint";
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
@@ -51,40 +41,6 @@ import {
 export const LUNAR_ECLIPSE_LAYER_ID = "layer.lunarEclipse.visibility";
 
 const updatePolicy: UpdatePolicy = { type: "perFrame" };
-
-function pushCurrentInstantMoonVisible(args: {
-  moonLatDeg: number;
-  moonLonDeg: number;
-  showRegion: boolean;
-  showBoundary: boolean;
-  regionFill: string;
-  boundaryStroke: string;
-  boundaryWidthPx: number;
-  fills: EquirectRegionFill[];
-  strokes: EquirectRegionStroke[];
-}): void {
-  if (args.showRegion) {
-    const ring = lunarVisibilityRegionRing(args.moonLatDeg, args.moonLonDeg);
-    if (ring.length >= 4) {
-      args.fills.push({
-        ring,
-        fill: args.regionFill,
-        polarCloseLatDeg: lunarVisibilityPolarCloseLatDeg(args.moonLatDeg),
-      });
-    }
-  }
-  if (args.showBoundary) {
-    for (const points of lunarHorizonBoundaryPolylines(args.moonLatDeg, args.moonLonDeg)) {
-      if (points.length >= 2) {
-        args.strokes.push({
-          points,
-          stroke: args.boundaryStroke,
-          strokeWidthPx: args.boundaryWidthPx,
-        });
-      }
-    }
-  }
-}
 
 export function createLunarEclipseLayer(
   options: {
@@ -105,7 +61,6 @@ export function createLunarEclipseLayer(
   const labelsEnabled = options.labelsEnabled !== false;
   const cityLabelHints = options.cityLabelHints ?? [];
   const lunarHorizonMs = forecastHorizonMsFromDays(presentation.forecastHorizonDays);
-  const paint = resolveLunarEclipsePaint(presentation);
   return {
     id: LUNAR_ECLIPSE_LAYER_ID,
     name: "Lunar eclipses",
@@ -125,28 +80,7 @@ export function createLunarEclipseLayer(
       const strokes: EquirectRegionStroke[] = [];
       const labels: EquirectRegionLabel[] = [];
       const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
-      const activeLunar = presentedActiveLunar(frame, presentation);
       const moon = sublunarPoint(time.now);
-      const paintCurrentMoonVisible =
-        frame.support.supported &&
-        ((Boolean(activeLunar) && Boolean(frame.lunarGeometry)) ||
-          (!activeLunar &&
-            presentedLunarForecastSelections(frame, presentation).some(
-              (selection) => selection.nearestUpcoming,
-            )));
-      if (paintCurrentMoonVisible) {
-        pushCurrentInstantMoonVisible({
-          moonLatDeg: moon.latDeg,
-          moonLonDeg: moon.lonDeg,
-          showRegion: presentation.showVisibilityRegion,
-          showBoundary: presentation.showVisibilityBoundary,
-          regionFill: paint.visibilityRegionFill,
-          boundaryStroke: paint.visibilityBoundaryStroke,
-          boundaryWidthPx: paint.visibilityBoundaryWidthPx,
-          fills,
-          strokes,
-        });
-      }
       if (labelsEnabled && frame.support.supported) {
         const primary = presentedPrimaryEclipse(frame, solarPresentation, presentation);
         if (primary?.kind === "lunar") {
@@ -177,14 +111,6 @@ export function createLunarEclipseLayer(
               labels,
               labelAvoidDiscs,
               ...(cityLabelHints.length > 0 ? { labelAvoidCityLabels: cityLabelHints } : {}),
-              ...(labels.length > 0
-                ? {
-                    labelPathHints: lunarHorizonBoundaryPolylines(
-                      labels[0]!.latDeg,
-                      labels[0]!.lonDeg,
-                    ).map((points) => ({ points })),
-                  }
-                : {}),
             }
           : {}),
         readability: {

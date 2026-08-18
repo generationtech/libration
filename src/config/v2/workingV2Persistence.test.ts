@@ -186,7 +186,7 @@ describe("workingV2Persistence", () => {
       expect(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)).not.toBeNull();
     });
 
-    it("migrates legacy lunar forecast visibility booleans on load and omits them on save", () => {
+    it("accepts legacy lunar Moon-visible keys on load and omits them on save", () => {
       const base = normalizeLibrationConfig(defaultLibrationConfigV2());
       const legacy = {
         ...base,
@@ -202,10 +202,11 @@ describe("workingV2Persistence", () => {
                 ...l.source,
                 parameters: {
                   ...(l.source.parameters ?? {}),
-                  showVisibilityRegion: true,
-                  showForecastVisibilityRegion: false,
+                  showVisibilityRegion: false,
+                  showForecastVisibilityRegion: true,
                   showVisibilityBoundary: true,
                   showForecastVisibilityBoundary: true,
+                  visibilityRegionColor: "#abcdef",
                 },
               },
             };
@@ -217,17 +218,21 @@ describe("workingV2Persistence", () => {
       const loaded = resolveStartupWorkingV2(mem, () => appConfigToV2(getActiveAppConfig()));
       const row = loaded.scene?.layers.find((l) => l.id === "lunarEclipse");
       const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
-      expect(params?.showVisibilityRegion).toBe(false);
-      expect(params?.showVisibilityBoundary).toBe(true);
+      expect(params).not.toHaveProperty("showVisibilityRegion");
+      expect(params).not.toHaveProperty("showVisibilityBoundary");
       expect(params).not.toHaveProperty("showForecastVisibilityRegion");
       expect(params).not.toHaveProperty("showForecastVisibilityBoundary");
+      expect(params).not.toHaveProperty("visibilityRegionColor");
+      expect(params?.showMoonEclipseShadow).toBe(true);
       persistWorkingV2(mem, loaded);
       const saved = JSON.parse(mem.getItem(WORKING_V2_LOCAL_STORAGE_KEY)!) as typeof loaded;
       const savedRow = saved.scene?.layers.find((l) => l.id === "lunarEclipse");
       const savedParams = savedRow?.source.kind === "derived" ? savedRow.source.parameters : undefined;
-      expect(savedParams?.showVisibilityRegion).toBe(false);
+      expect(savedParams).not.toHaveProperty("showVisibilityRegion");
+      expect(savedParams).not.toHaveProperty("showVisibilityBoundary");
       expect(savedParams).not.toHaveProperty("showForecastVisibilityRegion");
       expect(savedParams).not.toHaveProperty("showForecastVisibilityBoundary");
+      expect(savedParams).not.toHaveProperty("visibilityRegionColor");
     });
   });
 

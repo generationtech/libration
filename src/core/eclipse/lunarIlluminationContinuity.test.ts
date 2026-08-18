@@ -154,7 +154,7 @@ describe("lunar illumination continuity (LIB-044)", () => {
     expect(shading.data.moonlightTransmission01).toBe(state.moonlightTransmission01);
   });
 
-  it("does not change the physical raster when the Moon-visible overlay is toggled", () => {
+  it("does not change the physical raster when the lunar eclipse overlay layer is constructed", () => {
     const utc = event.greatestEclipseUtcMs;
     const frame = resolveEclipseFrame(utc, { lunarHorizonMs: 7 * 86_400_000 });
     const time = createTimeContext(utc, 0, true, { eclipseFrame: frame });
@@ -162,11 +162,9 @@ describe("lunar illumination continuity (LIB-044)", () => {
     const shadingOff = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(time);
     expect(shadingOn.data).toEqual(shadingOff.data);
     createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: true, showVisibilityBoundary: true },
       alignment: { enabled: false },
     }).getState(time);
     createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: false, showVisibilityBoundary: false },
       alignment: { enabled: false },
     }).getState(time);
     const a = rasterAt(utc);

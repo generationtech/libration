@@ -145,19 +145,30 @@ describe("eclipse event labels", () => {
         }),
       }),
     );
-    for (const st of [solarOff, lunarOff]) {
-      expect(isEquirectRegionOverlayPayload(st.data)).toBe(true);
-      if (isEquirectRegionOverlayPayload(st.data)) {
-        expect(st.data.labels ?? []).toHaveLength(0);
-        const plan = buildEquirectRegionOverlayRenderPlan({
-          viewportWidthPx: 360,
-          viewportHeightPx: 180,
-          layerOpacity: 1,
-          payload: st.data,
-        });
-        expect(plan.items.filter((item) => item.kind === "text")).toHaveLength(0);
-        expect(st.data.fills.length).toBeGreaterThan(0);
-      }
+    expect(isEquirectRegionOverlayPayload(solarOff.data)).toBe(true);
+    expect(isEquirectRegionOverlayPayload(lunarOff.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(solarOff.data)) {
+      expect(solarOff.data.labels ?? []).toHaveLength(0);
+      expect(solarOff.data.fills.length).toBeGreaterThan(0);
+      const plan = buildEquirectRegionOverlayRenderPlan({
+        viewportWidthPx: 360,
+        viewportHeightPx: 180,
+        layerOpacity: 1,
+        payload: solarOff.data,
+      });
+      expect(plan.items.filter((item) => item.kind === "text")).toHaveLength(0);
+    }
+    if (isEquirectRegionOverlayPayload(lunarOff.data)) {
+      expect(lunarOff.data.labels ?? []).toHaveLength(0);
+      expect(lunarOff.data.fills).toHaveLength(0);
+      expect(lunarOff.data.strokes).toHaveLength(0);
+      const plan = buildEquirectRegionOverlayRenderPlan({
+        viewportWidthPx: 360,
+        viewportHeightPx: 180,
+        layerOpacity: 1,
+        payload: lunarOff.data,
+      });
+      expect(plan.items.filter((item) => item.kind === "text")).toHaveLength(0);
     }
   });
 

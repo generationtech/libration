@@ -106,11 +106,11 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `solar-eclipse-forecast-annular` | `2023-10-09T18:00:00.000Z` | Upcoming 2023 Oct 14 annular, 7-day horizon. Optional DEV `observerCity=` | Annular forecast corridor; not totality styling |
 | `solar-eclipse-forecast-partial` | `2022-10-20T11:00:00.000Z` | Upcoming 2022 Oct 25 partial-only, 7-day horizon. Optional DEV `observerCity=` | Partial forecast region; no fabricated central corridor |
 | `solar-eclipse-forecast-multiple` | `2023-10-01T00:00:00.000Z` | 365-day horizon with more than one upcoming solar eclipse. Optional DEV `observerCity=` | Multi-event density; nearest event emphasized |
-| `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total). Optional DEV `observerCity=knoxville\|tokyo\|none`. Optional DEV `eclipsePhase=pre\|penumbral\|partial\|nearTotal\|total\|egress` selects a 2022-05-16 station (P1 01:32:08Z, U1 02:27:53Z, U2 03:29:02Z, GE 04:11:29Z, U3 04:53:56Z, U4 05:55:05Z, P4 06:50:50Z) | Earth-shadow on the Moon glyph; Moon-up visibility region **must not change when observerCity changes**; **Earth-shadow directional cue into the Moon, not a terrestrial path or emitted beam**; Knoxville locally visible vs Tokyo GE below horizon; moonlight attenuation and spatial umbra bite |
-| `lunar-eclipse-partial` | `2008-08-16T21:10:06.000Z` | Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial). Optional DEV `observerCity=` | Partial umbra only; no false totality tint; visibility region still present; cue weaker than totality |
-| `lunar-eclipse-horizon` | `2015-04-04T12:00:15.000Z` | Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith). Optional DEV `observerCity=` | Broad Moon-up hemisphere near ±180°; no inverted fill |
-| `lunar-eclipse-forecast-total` | `2022-05-13T04:00:00.000Z` | Upcoming 2022 May 16 total, 7-day lunar forecast horizon, three days before greatest eclipse. Optional DEV `observerCity=` `horizon=` | Current-instant Moon-visible region (not a frozen GE preview); no Earth-shadow Moon treatment; no lunar Earth-shadow cue; event label/info/status; Knoxville locally visible vs Tokyo not visible without changing global geography |
-| `lunar-eclipse-2029` | `2029-06-26T03:22:05.000Z` (default `eclipseStation=total`) | NASA 2029 Jun 26 total; 7-day horizon so upcoming geography stays in view. Optional DEV `eclipseStation=upcoming\|preActive\|early\|deepPartial\|total\|egress\|after`, `observerCity=` | Primary LIB-043/044 sequence: event label vs Moon vs São Paulo; current-instant Moon-visible hemisphere before and during the eclipse; no GE-freeze snap at activation; no geographic lunar alignment line; Earth-shadow cue into the Moon; temporally continuous illumination. Stations: upcoming `2029-06-25T18:00Z`, pre-active `00:29:32Z`, early `00:50Z`, deep partial `02:20Z`, GE `03:22:05Z`, egress `04:40Z`, after `06:20Z` |
+| `lunar-eclipse-total` | `2022-05-16T04:11:29.000Z` | Production lunar eclipse overlay at NASA 2022 May 16 greatest eclipse (total). Optional DEV `observerCity=knoxville\|tokyo\|none`. Optional DEV `eclipsePhase=pre\|penumbral\|partial\|nearTotal\|total\|egress` selects a 2022-05-16 station (P1 01:32:08Z, U1 02:27:53Z, U2 03:29:02Z, GE 04:11:29Z, U3 04:53:56Z, U4 05:55:05Z, P4 06:50:50Z) | Earth-shadow on the Moon glyph; **no terrestrial Moon-visible fill or white lunar-horizon boundary**; **Earth-shadow directional cue into the Moon, not a terrestrial path or emitted beam**; Knoxville locally visible vs Tokyo GE below horizon; moonlight attenuation and spatial umbra bite |
+| `lunar-eclipse-partial` | `2008-08-16T21:10:06.000Z` | Production lunar eclipse overlay at NASA 2008 Aug 16 greatest eclipse (partial). Optional DEV `observerCity=` | Partial umbra only; no false totality tint; no Moon-visible map geography; cue weaker than totality |
+| `lunar-eclipse-horizon` | `2015-04-04T12:00:15.000Z` | Production lunar eclipse overlay at NASA 2015 Apr 04 greatest eclipse (dateline zenith). Optional DEV `observerCity=` | Moon near ±180°; no terrestrial Moon-visible fill or inverted overlay |
+| `lunar-eclipse-forecast-total` | `2022-05-13T04:00:00.000Z` | Upcoming 2022 May 16 total, 7-day lunar forecast horizon, three days before greatest eclipse. Optional DEV `observerCity=` `horizon=` | Upcoming Moon glyph/event label; no Moon-visible map geography; no Earth-shadow Moon treatment; no lunar Earth-shadow cue; event info/status; Knoxville locally visible vs Tokyo not visible without changing global presentation |
+| `lunar-eclipse-2029` | `2029-06-26T03:22:05.000Z` (default `eclipseStation=total`) | NASA 2029 Jun 26 total; 7-day horizon so upcoming events stay in view. Optional DEV `eclipseStation=upcoming\|preActive\|early\|deepPartial\|total\|egress\|after`, `observerCity=` | Primary LIB-046 sequence: no terrestrial Moon-visible fill or white lunar-horizon boundary; event label vs Moon vs São Paulo; Earth-shadow cue into the Moon; physically attenuated moonlight; temporally continuous illumination. Stations: upcoming `2029-06-25T18:00Z`, pre-active `00:29:32Z`, early `00:50Z`, deep partial `02:20Z`, GE `03:22:05Z`, egress `04:40Z`, after `06:20Z` |
 
 Adding a scenario requires a work item. Do not grow this set casually.
 
@@ -132,7 +132,7 @@ When inspecting the post-LIB-020 visual reconciliation:
 - Confirm Event information ON shows a compact lower-right map panel; OFF removes it. Labels and persistent status stay independent.
 - Confirm the panel does not overlap the lower-left HUD. When Config is open, the panel sits left of the Config shell.
 - Confirm `lunar-eclipse-total&eclipsePhase=pre` is an ordinary near-full Moon; `penumbral` is a soft one-sided darkening; `partial` keeps a bright uneclipsed region with a curved umbral bite; `total` is restrained red/brown with readable libration; `egress` restores.
-- Confirm night-side moonlight does not brighten when the eclipse begins; totality is darker than pre-eclipse; the Moon-visible region remains distinguishable without lifting the dark hemisphere.
+- Confirm night-side moonlight does not brighten when the eclipse begins; totality is darker than pre-eclipse; there is no terrestrial Moon-visible fill lifting or darkening a hemisphere.
 - Confirm `Total lunar eclipse` map text does not run through the Moon glyph/halo, and that Event labels OFF still removes it.
 
 When inspecting the post-E6 reconciliation:
@@ -142,14 +142,14 @@ When inspecting the post-E6 reconciliation:
 - Confirm Persistent eclipse status OFF removes the lower-left contextual row and restores the ordinary two-line date/time spacing.
 - Confirm the eclipse status row sits below date/time with a clear gap for short (`Eclipse · Partial 89%`), medium (`Lunar eclipse · Total · visible`), and long (`Eclipse not visible from Knoxville`) copy.
 - Confirm factory/reset Solar and Lunar masters are checked, and an ordinary no-event date stays clean.
-- Confirm `lunar-eclipse-forecast-total` then `observerCity=tokyo`: global forecast region unchanged; local status says not visible.
+- Confirm `lunar-eclipse-forecast-total` then `observerCity=tokyo`: global Moon presentation unchanged; local status says not visible.
 - Confirm forecast → active by jumping to `lunar-eclipse-total`: Earth-shadow and alignment appear; the GE forecast region is replaced by live geometry.
 
 When inspecting E6:
 
 - Confirm `baseline` (ordinary supported date, factory eclipse masters on) has no eclipse geography, no empty chrome, and no empty event panel.
 - Confirm the 2024-04-08 workflow: outside the 7-day horizon → no solar effects; `solar-eclipse-forecast` → corridor + event information + Knoxville partial; `solar-eclipse-total` → live footprint + corridor context + alignment + label; after last contact → no stale event UI.
-- Confirm `lunar-eclipse-total` then `observerCity=tokyo`: global Moon-up region and Moon treatment unchanged; local status becomes not visible.
+- Confirm `lunar-eclipse-total` then `observerCity=tokyo`: global Moon treatment unchanged; local status becomes not visible.
 - Confirm `solar-eclipse-forecast-multiple`: multiple restrained corridors, nearest event emphasized, one primary label.
 - Confirm product UTC outside 1900–2100 shows “Eclipse data unavailable outside 1900–2100.” when Solar or Lunar eclipses are enabled, and does not imply that no eclipse exists.
 - Confirm Layers groups disable child controls when the parent is off, and that forecast corridor/partial disable when the horizon is Live only.
@@ -173,7 +173,7 @@ When inspecting:
 - Confirm `solar-eclipse-partial`: `Partial solar eclipse · active` near the glyph; no fabricated central corridor.
 - Confirm `lunar-eclipse-forecast-total` / `lunar-eclipse-total`: `Total lunar eclipse · upcoming` / `· active` near the Moon glyph; HUD remains lunar wording; do not apply solar path-opposite placement.
 
-### Lunar eclipse presentation + illumination (LIB-043 / LIB-044)
+### Lunar eclipse presentation (LIB-043 / LIB-044 / LIB-046)
 
 Use `?scenario=lunar-eclipse-2029` plus `eclipseStation=`. Viewport in Cursor’s side pane is acceptable; record that it is not canonical 1920×1080. Preserve world framing and config across stations.
 
@@ -181,16 +181,16 @@ Stations (product UTC): upcoming `2029-06-25T18:00:00.000Z`; pre-active `2029-06
 
 When inspecting:
 
-- Confirm the map label is `Total lunar eclipse · upcoming` then `· active`, anchored near the Moon, not through the glyph/halo, and not concatenated with São Paulo at GE (zenith ~23°S 50°W).
-- Confirm the Moon-visible fill and white horizon boundary follow the **current** Moon both before and after P1. They must not sit on a frozen greatest-eclipse hemisphere while upcoming, then snap at activation. Unified Moon-visible region/boundary controls apply throughout; there are no separate Upcoming Moon-visible controls, and turning a control off must not reappear at P1.
-- Confirm fill and boundary opacity do not jump at P1 solely because lifecycle became Active.
-- Confirm the Moon-visible fill is restrained informational overlay (boundary clearer than fill), not a night-side brightening. Overlay ON vs OFF must not change physical illumination.
+- Confirm there is **no** giant dark Moon-visible terrestrial overlay and **no** white geometric lunar-horizon line at any station.
+- Confirm the map label is `Total lunar eclipse · upcoming` then `· active`, anchored near the Moon, not through the glyph/halo, and not concatenated with São Paulo at GE (zenith ~23°S 50°W). Label placement must not depend on a painted horizon.
+- Confirm ordinary solar/night illumination remains. Eclipse moonlight attenuation remains physically visible where applicable.
 - Confirm no geographic lunar alignment line, “beam”, or ribbon on the map. The Earth-shadow cue is short, local to the Moon, origin on the shadow side, tip at the disc, behind Moon details.
 - Confirm upcoming and after have no cue and no Earth-shadow Moon treatment; penumbral/early cue is faint; totality strongest but restrained; egress weaker.
-- Confirm Knoxville vs Tokyo at the same UTC: Moon glyph, cue, visibility hemisphere, illumination, and event label stay identical; only HUD/placard local rows differ.
+- Confirm Knoxville vs Tokyo at the same UTC: Moon glyph, cue, illumination, and event label stay identical; only HUD/placard local rows differ. No visibility-map overlay exists in either case.
+- Confirm Layers → Eclipse → Lunar eclipses has no Moon-visible region or Moon-visible boundary controls, and no Lunar visibility color/thickness/opacity.
+- Confirm the placard still describes visibility at greatest eclipse as event information and does not list “Moon-visible now” or “Boundary: geometric lunar horizon now”.
 - Confirm `lunar-eclipse-partial` and `lunar-eclipse-total&eclipsePhase=penumbral` do not invent totality wash.
-- Confirm `lunar-eclipse-horizon` wraps at ±180° without a world-spanning false segment.
-- Confirm accelerated demo or a dense station sweep does not show large-area shading shudder, tearing, or block replacement around upcoming→active or the contacts. Legitimate solar-terminator motion over hours is not the defect.
+- Confirm accelerated demo or a dense station sweep does not show large-area shading shudder, tearing, or a snap from missing geography around upcoming→active or the contacts. Legitimate solar-terminator motion over hours is not the defect.
 
 ### Live eclipse alignment / beam (E5)
 
@@ -304,7 +304,7 @@ When inspecting:
 When inspecting E4:
 
 - Open the same eclipse scene twice, changing only `observerCity`.
-- Confirm **global-path immutability**: solar live footprint / forecast corridor / lunar Moon-shadow and visibility region stay geographically the same. Only local chrome, Layers details, and other reference-city decorations may change.
+- Confirm **global-path immutability**: solar live footprint / forecast corridor / lunar Moon-shadow stay geographically the same. Only local chrome, Layers details, and other reference-city decorations may change.
 - Confirm local copy says the event is not visible from the city when that is true — never that the global event is absent.
 - Confirm ordinary `http://localhost:1420/` has no empty eclipse chrome furniture when no eclipse is relevant.
 

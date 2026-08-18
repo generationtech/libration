@@ -1360,7 +1360,7 @@ describe("solar eclipse scene presentation", () => {
 });
 
 describe("lunar eclipse scene presentation", () => {
-  it("defaults the layer on with child presentation on", () => {
+  it("defaults the layer on with child presentation on and omits deleted Moon-visible keys", () => {
     const v2 = defaultLibrationConfigV2();
     expect(v2.layers.lunarEclipse).toBe(true);
     const row = v2.scene?.layers.find((l) => l.id === "lunarEclipse");
@@ -1372,20 +1372,23 @@ describe("lunar eclipse scene presentation", () => {
       true,
     );
     expect(
-      row?.source.kind === "derived" ? row.source.parameters?.showVisibilityBoundary : undefined,
-    ).toBe(true);
-    expect(row?.source.kind === "derived" ? row.source.parameters?.showVisibilityRegion : undefined).toBe(
-      true,
-    );
-    expect(
       row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined,
     ).toBe(7);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("showVisibilityRegion");
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("showVisibilityBoundary");
     expect(
       row?.source.kind === "derived" ? row.source.parameters : undefined,
     ).not.toHaveProperty("showForecastVisibilityRegion");
     expect(
       row?.source.kind === "derived" ? row.source.parameters : undefined,
     ).not.toHaveProperty("showForecastVisibilityBoundary");
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("visibilityRegionColor");
   });
 
   it("persists independent lunar presentation toggles", () => {
@@ -1395,7 +1398,7 @@ describe("lunar eclipse scene presentation", () => {
       layers: { ...base.layers, lunarEclipse: true },
       scene: applyLunarEclipsePresentationToScene(
         applyLayerEnableFlagsToScene(base.scene!, { ...base.layers, lunarEclipse: true }),
-        { showMoonEclipseShadow: false, showVisibilityBoundary: true, showVisibilityRegion: false },
+        { showMoonEclipseShadow: false },
       ),
     };
     const round = normalizeLibrationConfig(painted);
@@ -1405,9 +1408,9 @@ describe("lunar eclipse scene presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.parameters?.showMoonEclipseShadow : undefined).toBe(
       false,
     );
-    expect(row?.source.kind === "derived" ? row.source.parameters?.showVisibilityRegion : undefined).toBe(
-      false,
-    );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters : undefined,
+    ).not.toHaveProperty("showVisibilityRegion");
   });
 
   it("normalizes a missing lunarEclipse layer flag to on and preserves explicit off", () => {
@@ -1460,7 +1463,7 @@ describe("lunar eclipse scene presentation", () => {
     void row;
   });
 
-  it("migrates legacy forecast visibility booleans into unified flags and omits them", () => {
+  it("accepts legacy Moon-visible keys on load and omits them from normalized output", () => {
     const base = defaultLibrationConfigV2();
     const withLegacy = (
       region: boolean | undefined,
@@ -1507,17 +1510,13 @@ describe("lunar eclipse scene presentation", () => {
       const row = v2.scene?.layers.find((l) => l.id === "lunarEclipse");
       return row?.source.kind === "derived" ? row.source.parameters : undefined;
     };
-    expect(paramsOf(withLegacy(true, true, true, true))?.showVisibilityRegion).toBe(true);
-    expect(paramsOf(withLegacy(true, false, true, true))?.showVisibilityRegion).toBe(false);
-    expect(paramsOf(withLegacy(false, true, true, true))?.showVisibilityRegion).toBe(false);
-    expect(paramsOf(withLegacy(false, false, false, false))?.showVisibilityRegion).toBe(false);
-    expect(paramsOf(withLegacy(undefined, false, undefined, true))?.showVisibilityRegion).toBe(false);
-    expect(paramsOf(withLegacy(false, undefined, true, undefined))?.showVisibilityBoundary).toBe(true);
-    const migrated = paramsOf(withLegacy(true, false, true, false));
-    expect(migrated).not.toHaveProperty("showForecastVisibilityRegion");
-    expect(migrated).not.toHaveProperty("showForecastVisibilityBoundary");
-    expect(migrated?.showVisibilityRegion).toBe(false);
-    expect(migrated?.showVisibilityBoundary).toBe(false);
+    const mixed = paramsOf(withLegacy(false, true, true, false));
+    expect(mixed).not.toHaveProperty("showVisibilityRegion");
+    expect(mixed).not.toHaveProperty("showVisibilityBoundary");
+    expect(mixed).not.toHaveProperty("showForecastVisibilityRegion");
+    expect(mixed).not.toHaveProperty("showForecastVisibilityBoundary");
+    expect(mixed?.showMoonEclipseShadow).toBe(true);
+    expect(paramsOf(withLegacy(undefined, false, undefined, true))?.showMoonEclipseShadow).toBe(true);
   });
 });
 
@@ -1642,7 +1641,7 @@ describe("eclipse product polish presentation", () => {
               forecastCorridorColor: "#112233",
               livePartialOpacity: 0.08,
             }),
-            { visibilityRegionColor: "#abcdef", showTypePenumbral: false },
+            { showTypePenumbral: false },
           ),
           { solarColor: "#fedcba", intensity: "subtle" },
         ),
@@ -1658,12 +1657,12 @@ describe("eclipse product polish presentation", () => {
     expect(solar?.source.kind === "derived" ? solar.source.parameters?.forecastCorridorColor : undefined).toBe(
       "#112233",
     );
-    expect(lunar?.source.kind === "derived" ? lunar.source.parameters?.visibilityRegionColor : undefined).toBe(
-      "#abcdef",
-    );
     expect(lunar?.source.kind === "derived" ? lunar.source.parameters?.showTypePenumbral : undefined).toBe(
       false,
     );
+    expect(
+      lunar?.source.kind === "derived" ? lunar.source.parameters : undefined,
+    ).not.toHaveProperty("visibilityRegionColor");
     expect(round.scene?.eclipseAlignment.solarColor).toBe("#fedcba");
     expect(round.scene?.eclipseAlignment.lunarColor).not.toBe("#fedcba");
     expect(round.scene?.eclipseAlignment.intensity).toBe("subtle");

@@ -280,3 +280,9 @@ Removed redundant Upcoming Moon-visible region/boundary controls. One Moon-visib
 
 Verified: `npx tsc --noEmit` clean; `npm test` 226 files / 2133 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming/preActive/early/deepPartial/total, Layers Eclipse UI, 2017 solar GE. LIB-037 stays proposed.
 
+## 2026-08-18 — LIB-046 complete
+
+Lunar eclipse map presentation no longer paints a terrestrial Moon-visible hemisphere or geometric lunar-horizon boundary. Ordinary Moon-above-horizon astronomy remains for illumination and other non-eclipse behavior. Legacy visibility keys are ignored on load. No new ADR.
+
+Verified: `npx tsc --noEmit` clean; focused 15 files / 243 passed; `npm test` 226 files / 2128 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming→after, Tokyo observer, Layers Eclipse UI, 2017 solar GE, night. LIB-037 stays proposed.
+

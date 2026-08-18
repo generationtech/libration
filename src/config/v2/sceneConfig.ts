@@ -41,8 +41,6 @@ import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
   DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
   DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
-  DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
-  DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
   normalizeLunarEclipsePresentation,
 } from "../../core/eclipse/lunarEclipseAppearance";
 import {
@@ -825,7 +823,7 @@ const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   },
 };
 
-/** NASA-derived lunar eclipse overlay: current-instant Moon-up region and geometric horizon. Default on. */
+/** NASA-derived lunar eclipse overlay: Moon Earth-shadow, labels, and forecast window. Default on. */
 const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "lunarEclipse",
   family: "astronomy",
@@ -837,8 +835,6 @@ const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
     product: "lunarEclipseVisibility",
     parameters: {
       showMoonEclipseShadow: DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
-      showVisibilityBoundary: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_BOUNDARY,
-      showVisibilityRegion: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_REGION,
       forecastHorizonDays: DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
     },
   },
@@ -1698,7 +1694,7 @@ function withNormalizedSolarEclipseParameters(source: LayerSourceConfig): LayerS
   };
 }
 
-function omitLegacyLunarForecastVisibilityKeys(
+function omitRemovedLunarEclipsePresentationKeys(
   parameters: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
   if (!parameters) {
@@ -1707,6 +1703,12 @@ function omitLegacyLunarForecastVisibilityKeys(
   const {
     showForecastVisibilityRegion: _forecastRegion,
     showForecastVisibilityBoundary: _forecastBoundary,
+    showVisibilityRegion: _region,
+    showVisibilityBoundary: _boundary,
+    visibilityBoundaryColor: _boundaryColor,
+    visibilityBoundaryThickness: _boundaryThickness,
+    visibilityRegionColor: _regionColor,
+    visibilityRegionOpacity: _regionOpacity,
     ...rest
   } = parameters;
   return rest;
@@ -1720,7 +1722,7 @@ function withNormalizedLunarEclipseParameters(source: LayerSourceConfig): LayerS
   return {
     ...source,
     parameters: {
-      ...omitLegacyLunarForecastVisibilityKeys(source.parameters),
+      ...omitRemovedLunarEclipsePresentationKeys(source.parameters),
       ...p,
     },
   };

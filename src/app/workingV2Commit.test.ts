@@ -626,7 +626,7 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
   });
 
-  it("sceneRuntimeAffectingEqual is false when only lunar Moon-visible toggles change", () => {
+  it("sceneRuntimeAffectingEqual is false when only remaining lunar eclipse controls change", () => {
     const base = buildDefaultSceneConfigFromLayerFlags({
       baseMap: true,
       solarShading: true,
@@ -644,11 +644,11 @@ describe("commitWorkingV2Update", () => {
       lunarEclipse: true,
       solarAnalemma: false,
     });
-    const regionOff = applyLunarEclipsePresentationToScene(base, { showVisibilityRegion: false });
-    const boundaryOff = applyLunarEclipsePresentationToScene(base, { showVisibilityBoundary: false });
-    expect(sceneRuntimeAffectingEqual(base, regionOff)).toBe(false);
-    expect(sceneRuntimeAffectingEqual(base, boundaryOff)).toBe(false);
-    expect(sceneRuntimeAffectingEqual(regionOff, regionOff)).toBe(true);
+    const shadowOff = applyLunarEclipsePresentationToScene(base, { showMoonEclipseShadow: false });
+    const typesOff = applyLunarEclipsePresentationToScene(base, { showTypeTotal: false });
+    expect(sceneRuntimeAffectingEqual(base, shadowOff)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(base, typesOff)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(shadowOff, shadowOff)).toBe(true);
   });
 
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {

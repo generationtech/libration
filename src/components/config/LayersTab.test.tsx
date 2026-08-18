@@ -530,7 +530,7 @@ describe("LayersTab eclipse product polish", () => {
     expect((screen.getByLabelText("Eclipse shading intensity") as HTMLSelectElement).value).toBe("normal");
   });
 
-  it("defaults lunar forecast horizon to 7 days and keeps Moon-visible controls enabled when live only", async () => {
+  it("defaults lunar forecast horizon to 7 days and keeps remaining lunar controls enabled when live only", async () => {
     const user = userEvent.setup();
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
     selectLayersTopic("layerMasters");
@@ -539,22 +539,21 @@ describe("LayersTab eclipse product polish", () => {
     selectLayersTopic("eclipse");
     const horizon = screen.getByLabelText("Lunar forecast horizon") as HTMLSelectElement;
     expect(horizon.value).toBe("7");
+    expect(screen.queryByLabelText("Moon-visible region")).toBeNull();
+    expect(screen.queryByLabelText("Moon-visible boundary")).toBeNull();
     expect(screen.queryByLabelText("Upcoming Moon-visible region")).toBeNull();
     expect(screen.queryByLabelText("Upcoming Moon-visible boundary")).toBeNull();
-    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).title).toBe(
-      "Show where the Moon is geometrically above the horizon.",
-    );
-    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).title).toBe(
-      "Show the geometric lunar horizon.",
+    expect(screen.queryByLabelText("Lunar visibility color")).toBeNull();
+    expect(screen.queryByLabelText("Lunar visibility thickness")).toBeNull();
+    expect(screen.queryByLabelText("Lunar visibility opacity")).toBeNull();
+    expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).checked).toBe(
+      true,
     );
     await user.selectOptions(horizon, "0");
-    expect((screen.getByLabelText("Moon-visible region") as HTMLInputElement).disabled).toBe(false);
-    expect((screen.getByLabelText("Moon-visible boundary") as HTMLInputElement).disabled).toBe(false);
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).disabled).toBe(
       false,
     );
+    expect((screen.getByLabelText("Lunar Earth-shadow cue") as HTMLInputElement).disabled).toBe(false);
   });
 
   it("keeps event labels independent of event information", async () => {
@@ -573,11 +572,11 @@ describe("LayersTab eclipse product polish", () => {
     expect(info.checked).toBe(false);
   });
 
-  it("does not leak solar forecast color into lunar visibility color", () => {
+  it("does not leak solar forecast color into lunar shadow-axis color", () => {
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
     selectLayersTopic("eclipse");
     const solarColor = screen.getByLabelText("Solar forecast color") as HTMLInputElement;
-    const lunarColor = screen.getByLabelText("Lunar visibility color") as HTMLInputElement;
+    const lunarColor = screen.getByLabelText("Lunar shadow-axis color") as HTMLInputElement;
     const beforeLunar = lunarColor.value;
     fireEvent.change(solarColor, { target: { value: "#112233" } });
     expect(solarColor.value).toBe("#112233");

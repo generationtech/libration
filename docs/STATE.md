@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-17
+Updated: 2026-08-18
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-045](work/LIB-045-unify-lunar-moon-visible-controls.md) — Unify lunar Moon-visible controls
+[LIB-046](work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md) — Remove lunar eclipse Moon-visible map geography
 
 ## Blockers
 

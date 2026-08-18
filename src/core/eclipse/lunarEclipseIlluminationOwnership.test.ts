@@ -34,16 +34,14 @@ function solarDotFromAltDeg(altDeg: number): number {
 }
 
 describe("lunar eclipse illumination ownership", () => {
-  it("does not change physical shading when the informational visibility overlay is off", () => {
+  it("does not change physical shading when the lunar eclipse overlay layer is present", () => {
     const frame = resolveEclipseFrame(GE_2022);
     const time = createTimeContext(GE_2022, 0, true, { eclipseFrame: frame });
     const shading = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(time);
     const regionOn = createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: true },
       alignment: { enabled: false },
     }).getState(time);
     const regionOff = createLunarEclipseLayer({
-      presentation: { showVisibilityRegion: false, showVisibilityBoundary: false },
       alignment: { enabled: false },
     }).getState(time);
     expect(isSolarShadingPayload(shading.data)).toBe(true);

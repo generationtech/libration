@@ -140,7 +140,7 @@ function lunarRows(
     }
     rows.push({
       label: "Visibility at greatest eclipse",
-      value: "Where the Moon is above the geometric horizon at greatest eclipse",
+      value: "Moon above the geometric horizon over the night-side hemisphere at greatest eclipse",
     });
   } else {
     const phase = lunarPhaseCopy(frame.lunarGeometry);
@@ -150,10 +150,6 @@ function lunarRows(
   }
   rows.push({ label: "Penumbral magnitude", value: event.penumbralMagnitude.toFixed(3) });
   rows.push({ label: "Umbral magnitude", value: event.umbralMagnitude.toFixed(3) });
-  rows.push({
-    label: "Moon-visible region",
-    value: "Where the Moon is above the geometric horizon now",
-  });
   return rows;
 }
 
@@ -185,14 +181,10 @@ function solarLegend(args: {
 }
 
 function lunarLegend(upcoming: boolean): EclipseLegendItem[] {
-  const items: EclipseLegendItem[] = [
-    { id: "moon-visible", label: "Moon-visible now" },
-    { id: "lunar-horizon", label: "Boundary: geometric lunar horizon now" },
-  ];
-  if (!upcoming) {
-    items.push({ id: "alignment", label: "Earth-shadow cue" });
+  if (upcoming) {
+    return [];
   }
-  return items;
+  return [{ id: "alignment", label: "Earth-shadow cue" }];
 }
 
 export function buildEclipseEventInformation(
