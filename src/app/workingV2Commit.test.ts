@@ -36,6 +36,7 @@ import {
   applyIssOrbitalPresentationToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
+  applyEclipseTourPresentationToScene,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
@@ -649,6 +650,28 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(base, shadowOff)).toBe(false);
     expect(sceneRuntimeAffectingEqual(base, typesOff)).toBe(false);
     expect(sceneRuntimeAffectingEqual(shadowOff, shadowOff)).toBe(true);
+  });
+
+  it("sceneRuntimeAffectingEqual is true when only Eclipse Tour preferences change", () => {
+    const base = buildDefaultSceneConfigFromLayerFlags({
+      baseMap: true,
+      solarShading: true,
+      grid: false,
+      staticEquirectOverlay: false,
+      globalCloudsIr: false,
+      earthquakes: false,
+      orbitalTracks: false,
+      cityPins: false,
+      subsolarMarker: false,
+      sublunarMarker: false,
+      lunarGroundTrack: false,
+      lunarLocus: false,
+      solarEclipse: true,
+      lunarEclipse: true,
+      solarAnalemma: false,
+    });
+    const patched = applyEclipseTourPresentationToScene(base, { loop: false });
+    expect(sceneRuntimeAffectingEqual(base, patched)).toBe(true);
   });
 
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {

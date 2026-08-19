@@ -24,6 +24,7 @@ import { ConfigTabPanel } from "./ConfigTabPanel";
 import { ConfigTabStrip } from "./ConfigTabStrip";
 import { ChromeTab } from "./ChromeTab";
 import { DataTab, type DemoTransportUiProps } from "./DataTab";
+import type { EclipseTourSessionUi } from "./EclipseTourSection";
 import { GeneralTab } from "./GeneralTab";
 import { GeographyTab } from "./GeographyTab";
 import { LayersTab } from "./LayersTab";
@@ -53,6 +54,8 @@ export type ConfigShellProps = {
   userPresetsUi?: UserPresetsUiProps;
   /** Demo play / pause / reset; runtime-only, does not mutate persisted config. */
   demoTransport?: DemoTransportUiProps;
+  /** Runtime Eclipse Tour session; Layers → Eclipse only. */
+  eclipseTourSession?: EclipseTourSessionUi;
 };
 
 function renderActiveTabContent(
@@ -64,6 +67,7 @@ function renderActiveTabContent(
   issConfigStatusHint: ConfigShellProps["issConfigStatusHint"],
   userPresetsUi: ConfigShellProps["userPresetsUi"],
   demoTransport: ConfigShellProps["demoTransport"],
+  eclipseTourSession: ConfigShellProps["eclipseTourSession"],
 ): ReactNode {
   switch (tabId) {
     case "layers":
@@ -74,6 +78,7 @@ function renderActiveTabContent(
           productInstantMs={productInstantMs}
           productTimeLiveEnough={productTimeLiveEnough}
           issConfigStatusHint={issConfigStatusHint}
+          eclipseTourSession={eclipseTourSession}
         />
       );
     case "pins":
@@ -110,6 +115,7 @@ export function ConfigShell({
   issConfigStatusHint,
   userPresetsUi,
   demoTransport,
+  eclipseTourSession,
 }: ConfigShellProps) {
   const [activeTabId, setActiveTabId] = useState<ConfigTabId>("layers");
   const config = workingV2Ref.current;
@@ -175,6 +181,7 @@ export function ConfigShell({
             issConfigStatusHint,
             userPresetsUi,
             demoTransport,
+            eclipseTourSession,
           )}
         </ConfigTabPanel>
       ))}

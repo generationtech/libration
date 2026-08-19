@@ -1182,6 +1182,20 @@ export function assertIsNormalizedLibrationConfig(
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseInfo");
   }
+  const eclipseTour = (sc as SceneConfig).eclipseTour;
+  if (
+    typeof eclipseTour !== "object" ||
+    eclipseTour === null ||
+    typeof eclipseTour.startDateYmd !== "string" ||
+    typeof eclipseTour.endDateYmd !== "string" ||
+    typeof eclipseTour.includeSolar !== "boolean" ||
+    typeof eclipseTour.includeLunar !== "boolean" ||
+    typeof eclipseTour.loop !== "boolean" ||
+    typeof eclipseTour.leadInId !== "string" ||
+    typeof eclipseTour.postWaitId !== "string"
+  ) {
+    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseTour");
+  }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
     baseMapPres !== undefined &&

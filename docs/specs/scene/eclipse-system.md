@@ -540,6 +540,10 @@ Propose layers, not tests. Do not mint expected values from Libration’s own ec
 - Visual verification uses production semantics via DEV fixtures.
 - Event discovery does not run wastefully at frame rate.
 
+### Eclipse Tour (navigation, not authority)
+
+Eclipse Tour ([LIB-047](../../work/LIB-047-eclipse-tour-demo-playback.md), [ADR 0015](../../decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md)) is a Layers → Eclipse navigation tool. It enumerates the existing bundled solar/lunar catalogs and commands Demo time. It does **not** own eclipse astronomy, alter solar/lunar authority, override forecast horizons, or force presentation (layers, type filters, labels, alignment). Eligibility uses tour family checkboxes **and** existing subtype filters; layer masters do not gate the tour. Range intersection uses authoritative `[globalStart, globalEnd]`. Lead-in Immediate means event start, not greatest eclipse.
+
 **New candidate boundary:** `EclipseEventService` / `EclipseFrame` on the frame context. If implementation is approved, record it as an ADR and, if it remains durable, a short pointer from `ARCHITECTURE.md`. Not done in LIB-012.
 
 Eclipse geography is **event astronomy** (principle 9): large map-spanning bands are justified only while an event is in the forecast/live window, not as a permanent diagram.

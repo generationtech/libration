@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-046](work/LIB-046-remove-lunar-eclipse-moon-visible-geography.md) — Remove lunar eclipse Moon-visible map geography
+[LIB-047](work/LIB-047-eclipse-tour-demo-playback.md) — Eclipse Tour / event-sequenced demo playback
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-None. Repository is AWAITING SCOPE.
+AWAITING SCOPE. Do not start work without an approved item.

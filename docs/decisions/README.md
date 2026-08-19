@@ -20,6 +20,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0012](0012-active-solar-eclipse-obscuration-is-physical-illumination.md) | Active solar-eclipse obscuration is physical illumination |
 | [0013](0013-current-only-internet-data-requires-live-enough-product-time.md) | Current-only internet data requires live-enough product time |
 | [0014](0014-iss-live-tle-ordered-provider-failover.md) | ISS live TLE uses ordered provider failover |
+| [0015](0015-domain-tour-sequencer-drives-shared-demo-time.md) | Domain tour sequencer drives shared Demo time |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

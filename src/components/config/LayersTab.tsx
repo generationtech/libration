@@ -75,6 +75,7 @@ import { resolveReferenceCityObserverLocation } from "../../core/referenceCityOb
 import { BaseMapStyleControl } from "./BaseMapStyleControl";
 import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
+import type { EclipseTourSessionUi } from "./EclipseTourSection";
 import { IssPresentationSection } from "./IssPresentationSection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
@@ -510,6 +511,8 @@ export type LayersTabProps = {
    * is live-enough. Historical suppression uses {@link productTimeLiveEnough}.
    */
   issConfigStatusHint?: IssConfigStatusHint | null;
+  /** Runtime Eclipse Tour session; omitted in read-only / unit-harness renders. */
+  eclipseTourSession?: EclipseTourSessionUi;
 };
 
 export function LayersTab({
@@ -518,6 +521,7 @@ export function LayersTab({
   productInstantMs,
   productTimeLiveEnough,
   issConfigStatusHint,
+  eclipseTourSession,
 }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
@@ -1474,6 +1478,7 @@ export function LayersTab({
         <EclipseSystemSection
           config={config}
           updateConfig={updateConfig}
+          eclipseTourSession={eclipseTourSession}
         />
           </div>
         ) : null}

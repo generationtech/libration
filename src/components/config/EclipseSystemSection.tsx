@@ -43,6 +43,7 @@ import {
   solarEclipseShadingIntensityLabel,
 } from "../../core/eclipse/solarEclipseAppearance";
 import { ConfigControlRow } from "./ConfigControlRow";
+import { EclipseTourSection, type EclipseTourSessionUi } from "./EclipseTourSection";
 
 type UpdateConfig = (updater: (draft: LibrationConfigV2) => void) => void;
 
@@ -63,8 +64,9 @@ function patchScene(
 export function EclipseSystemSection(props: {
   config: LibrationConfigV2;
   updateConfig?: UpdateConfig;
+  eclipseTourSession?: EclipseTourSessionUi;
 }): ReactElement {
-  const { config, updateConfig } = props;
+  const { config, updateConfig, eclipseTourSession } = props;
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const solar = solarEclipsePresentationFromScene(scene);
@@ -825,6 +827,11 @@ export function EclipseSystemSection(props: {
           />
         </ConfigControlRow>
       </fieldset>
+      <EclipseTourSection
+        config={config}
+        updateConfig={updateConfig}
+        session={eclipseTourSession}
+      />
     </>
   );
 }

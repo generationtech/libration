@@ -76,6 +76,11 @@ import {
   type EclipseInfoPresentation,
 } from "../../core/eclipse/eclipseInfoAppearance";
 import {
+  normalizeEclipseTourPresentation,
+  type EclipseTourPresentation,
+} from "../../core/eclipse/eclipseTourAppearance";
+import { getEclipseTourAuthorityRange } from "../../core/eclipse/eclipseTourCatalog";
+import {
   DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   normalizeSublunarMarkerAppearance,
   type SublunarMarkerAppearance,
@@ -475,6 +480,11 @@ export type SceneConfig = {
    * masters. Always present on normalized configs.
    */
   eclipseInfo: EclipseInfoPresentation;
+  /**
+   * Durable Eclipse Tour preferences (date range, families, lead-in/post-wait, loop).
+   * Runtime sequencing is session-only and is not stored here.
+   */
+  eclipseTour: EclipseTourPresentation;
   metadata?: Record<string, unknown>;
 };
 
@@ -1064,6 +1074,7 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
       labelsEnabled: DEFAULT_ECLIPSE_LABELS_ENABLED,
       eventInformationEnabled: DEFAULT_ECLIPSE_EVENT_INFORMATION_ENABLED,
     }),
+    eclipseTour: normalizeEclipseTourPresentation(undefined, getEclipseTourAuthorityRange().calendarBounds),
   };
 }
 
@@ -1349,6 +1360,27 @@ export function applyEclipseInfoPresentationToScene(
   };
 }
 
+export function eclipseTourPresentationFromScene(scene: SceneConfig): EclipseTourPresentation {
+  return normalizeEclipseTourPresentation(
+    scene.eclipseTour as unknown as Record<string, unknown>,
+    getEclipseTourAuthorityRange().calendarBounds,
+  );
+}
+
+export function applyEclipseTourPresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<EclipseTourPresentation>,
+): SceneConfig {
+  const current = eclipseTourPresentationFromScene(scene);
+  return {
+    ...scene,
+    eclipseTour: normalizeEclipseTourPresentation(
+      { ...current, ...patch },
+      getEclipseTourAuthorityRange().calendarBounds,
+    ),
+  };
+}
+
 export function applyLunarEclipsePresentationToScene(
   scene: SceneConfig,
   patch: Partial<Omit<ReturnType<typeof normalizeLunarEclipsePresentation>, "forecastHorizonDays">> & {
@@ -1544,6 +1576,10 @@ export function cloneSceneConfig(scene: SceneConfig): SceneConfig {
     eclipseCircumstances: normalizeReferenceCityEclipsePresentation(scene.eclipseCircumstances),
     eclipseAlignment: normalizeEclipseAlignmentPresentation(scene.eclipseAlignment),
     eclipseInfo: normalizeEclipseInfoPresentation(scene.eclipseInfo),
+    eclipseTour: normalizeEclipseTourPresentation(
+      scene.eclipseTour as unknown as Record<string, unknown>,
+      getEclipseTourAuthorityRange().calendarBounds,
+    ),
     metadata: scene.metadata ? { ...scene.metadata } : undefined,
   };
 }
@@ -1957,6 +1993,10 @@ export function normalizeSceneConfig(
   const eclipseInfo = normalizeEclipseInfoPresentation(
     isPlainObject(input.eclipseInfo) ? input.eclipseInfo : undefined,
   );
+  const eclipseTour = normalizeEclipseTourPresentation(
+    isPlainObject(input.eclipseTour) ? input.eclipseTour : undefined,
+    getEclipseTourAuthorityRange().calendarBounds,
+  );
   return {
     version: 1,
     projectionId,
@@ -1969,6 +2009,7 @@ export function normalizeSceneConfig(
     eclipseCircumstances,
     eclipseAlignment,
     eclipseInfo,
+    eclipseTour,
     ...(metadata ? { metadata } : {}),
   };
 }

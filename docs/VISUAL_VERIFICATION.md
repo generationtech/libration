@@ -327,6 +327,18 @@ Reload at least the scenario under change when checking repeatability.
 
 After scenario work that touches startup or persistence, also open `http://localhost:1420/` **without** `?scenario=` and confirm ordinary startup (no scenario banner; persisted user configuration still applies).
 
+### Eclipse Tour smoke (LIB-047)
+
+Does not require a new `?scenario=` id. Use a short range that includes at least one solar and one lunar event (for example 2017-08-01 … 2017-09-15: 21 Aug solar, 7 Aug lunar).
+
+1. Open Config → Layers → Eclipse. Confirm Eclipse Tour is at the **bottom** of that topic. Data/Demo has no Eclipse Tour fields.
+2. Factory: Solar and Lunar on, Loop on, lead-in 1 day, post-wait 1 hour, speed same as Data Demo, tour inactive (product time unchanged).
+3. Start: product time jumps to the first matching event lead-in; Demo plays. Pause/Resume keep the same event. Reset returns to that event’s lead-in, not the tour-range start.
+4. After post-wait the clock **jumps** to the next event lead-in (no months of empty playback). Loop off pauses at the last allowed instant.
+5. Previous/Next jump event lead-ins. Stop leaves product time paused and deactivates sequencing.
+6. Data Demo pause/speed stay in sync. Editing Data Demo start, or leaving Demo mode, deactivates the tour; it does not yank time back on the next frame.
+7. Same-UTC check: 2017-08-21 GE via Data Demo vs via Tour at the same instant — eclipse overlay equivalent; live-only ISS/clouds/quakes remain suppressed on historical instants.
+
 ## Visual acceptance checklist
 
 Qualitative. Inspect as applicable:

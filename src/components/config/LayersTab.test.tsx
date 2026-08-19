@@ -452,6 +452,14 @@ describe("LayersTab eclipse alignment", () => {
     selectLayersTopic("eclipse");
     expect((screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement).checked).toBe(false);
   });
+
+  it("renders Eclipse Tour at the bottom of the Eclipse topic without auto-starting", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
+    expect(screen.getByTestId("eclipse-tour-section")).toBeInTheDocument();
+    expect(screen.getByText("Eclipse Tour")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Eclipse Tour" })).toBeDisabled();
+  });
 });
 
 describe("LayersTab reference-city eclipse circumstances", () => {
@@ -856,5 +864,19 @@ describe("LayersTab live overlay masters", () => {
     expect(screen.getByTestId("iss-status-hint").textContent).toMatch(
       /ISS orbital track is loading/,
     );
+  });
+});
+
+describe("LayersTab Eclipse Tour", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders Eclipse Tour at the bottom of the Eclipse topic without auto-starting", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
+    expect(screen.getByTestId("eclipse-tour-section")).toBeInTheDocument();
+    expect(screen.getByText("Eclipse Tour")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start Eclipse Tour" })).toBeDisabled();
   });
 });

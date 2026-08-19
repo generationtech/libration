@@ -841,8 +841,13 @@ select.config-input option:disabled {
   text-decoration-thickness: 2px;
 }
 
-.config-base-map-style__source-link:focus-visible {
-  outline: 2px solid var(--config-focus-ring, #2563eb);
-  outline-offset: 2px;
-  border-radius: 2px;
+.config-eclipse-tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--config-shell-space-sm, 0.5rem);
+  align-items: center;
+}
+
+.config-eclipse-tour-status {
+  margin: 0 0 var(--config-shell-space-md, 0.75rem);
 }

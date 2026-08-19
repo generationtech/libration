@@ -286,3 +286,9 @@ Lunar eclipse map presentation no longer paints a terrestrial Moon-visible hemis
 
 Verified: `npx tsc --noEmit` clean; focused 15 files / 243 passed; `npm test` 226 files / 2128 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` in `dist/`. Cursor Browser 2029 upcoming→after, Tokyo observer, Layers Eclipse UI, 2017 solar GE, night. LIB-037 stays proposed.
 
+## 2026-08-18 — LIB-047 complete
+
+Eclipse Tour under Layers → Eclipse sequences bundled solar/lunar catalog events by commanding the existing Demo-time controller. No second clock. Data/Demo stays domain-neutral. ADR 0015.
+
+Verified: `npx tsc --noEmit` clean; focused catalog/sequence/runtime/commit/LayersTab 90 passed; `npm test` 229 files / 2150 passed / 0 failed; `npm run build` succeeded. Cursor Browser ordinary mode: factory inactive; 2017-08-01…2017-09-15 lunar then solar; Data Demo start/speed shared; present-time Demo start deactivates tour. LIB-037 stays proposed.
+

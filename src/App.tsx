@@ -50,6 +50,26 @@ import {
   type DemoPlaybackState,
 } from "./app/demoPlayback";
 import {
+  buildEclipseTourSchedule,
+  eclipseTourShouldDeactivate,
+  eclipseTourStructuralFingerprint,
+} from "./app/eclipseTourRuntime";
+import {
+  eclipseTourCanGoNext,
+  eclipseTourCanGoPrevious,
+  inactiveEclipseTourState,
+  pauseEclipseTourSequence,
+  resetEclipseTourCurrentEvent,
+  resumeEclipseTourSequence,
+  skipEclipseTourEvent,
+  startEclipseTourSequence,
+  stepEclipseTourSequence,
+  stopEclipseTourSequence,
+  type EclipseTourPhase,
+  type EclipseTourSequenceState,
+} from "./core/eclipse/eclipseTourSequence";
+import type { EclipseTourSessionUi } from "./components/config/EclipseTourSection";
+import {
   attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
   getVisualScenarioRuntime,
@@ -70,9 +90,11 @@ import { isProductTimeLiveEnough } from "./core/liveProductTimePolicy";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import {
   eclipseInfoPresentationFromScene,
+  eclipseTourPresentationFromScene,
   lunarEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
   referenceCityEclipsePresentationFromScene,
+  buildDefaultSceneConfigFromLayerFlags,
 } from "./config/v2/sceneConfig";
 import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
 import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInformation";
@@ -112,6 +134,23 @@ function isTextEntryElement(target: EventTarget | null): boolean {
   return Boolean(
     target.closest("input, textarea, select, [contenteditable='true']"),
   );
+}
+
+function tourViewFromState(state: EclipseTourSequenceState): {
+  phase: EclipseTourPhase;
+  currentIndex: number;
+  eventCount: number;
+  currentTitle: string | null;
+  currentDateLabel: string | null;
+} {
+  const event = state.events[state.index];
+  return {
+    phase: state.phase,
+    currentIndex: state.index,
+    eventCount: state.events.length,
+    currentTitle: event?.title ?? null,
+    currentDateLabel: event?.dateLabel ?? null,
+  };
 }
 
 export default function App() {
@@ -198,6 +237,25 @@ export default function App() {
     demoTransportActionRef.current = "reset";
   }, []);
 
+  const eclipseTourStateRef = useRef(inactiveEclipseTourState());
+  const pendingTourJumpRef = useRef<{ iso: string; pause: boolean } | null>(null);
+  const [eclipseTourView, setEclipseTourView] = useState(() =>
+    tourViewFromState(inactiveEclipseTourState()),
+  );
+
+  const publishEclipseTourView = useCallback((state: EclipseTourSequenceState) => {
+    const next = tourViewFromState(state);
+    setEclipseTourView((prev) =>
+      prev.phase === next.phase &&
+      prev.currentIndex === next.currentIndex &&
+      prev.eventCount === next.eventCount &&
+      prev.currentTitle === next.currentTitle &&
+      prev.currentDateLabel === next.currentDateLabel
+        ? prev
+        : next,
+    );
+  }, []);
+
   const storage = getLocalStorageIfAvailable();
   const userPresetsList = useMemo(
     () => loadUserPresets(storage),
@@ -238,6 +296,110 @@ export default function App() {
       bumpConfigView();
     },
     [syncDynamicLifecycleConsumers],
+  );
+
+  const applyTourOwnedDemoStart = useCallback(
+    (iso: string) => {
+      updateConfig((draft) => {
+        draft.data.mode = "demo";
+        draft.data.demoTime.enabled = true;
+        draft.data.demoTime.startIsoUtc = iso;
+      });
+    },
+    [updateConfig],
+  );
+
+  const handleEclipseTourStart = useCallback(() => {
+    const current = eclipseTourStateRef.current;
+    if (current.phase === "paused") {
+      eclipseTourStateRef.current = resumeEclipseTourSequence(current);
+      requestDemoResume();
+      publishEclipseTourView(eclipseTourStateRef.current);
+      return;
+    }
+    const v2 = workingV2Ref.current;
+    const events = buildEclipseTourSchedule(v2);
+    const key = eclipseTourStructuralFingerprint(v2);
+    const tour = eclipseTourPresentationFromScene(
+      v2.scene ?? buildDefaultSceneConfigFromLayerFlags(v2.layers),
+    );
+    const started = startEclipseTourSequence(events, tour.loop, key);
+    eclipseTourStateRef.current = started.state;
+    if (started.jumpToIsoUtc) {
+      applyTourOwnedDemoStart(started.jumpToIsoUtc);
+    }
+    requestDemoResume();
+    publishEclipseTourView(started.state);
+  }, [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoResume]);
+
+  const handleEclipseTourPause = useCallback(() => {
+    eclipseTourStateRef.current = pauseEclipseTourSequence(eclipseTourStateRef.current);
+    requestDemoPause();
+    publishEclipseTourView(eclipseTourStateRef.current);
+  }, [publishEclipseTourView, requestDemoPause]);
+
+  const handleEclipseTourReset = useCallback(() => {
+    const result = resetEclipseTourCurrentEvent(eclipseTourStateRef.current);
+    eclipseTourStateRef.current = result.state;
+    if (result.jumpToIsoUtc) {
+      applyTourOwnedDemoStart(result.jumpToIsoUtc);
+      requestDemoReset();
+    }
+    publishEclipseTourView(result.state);
+  }, [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoReset]);
+
+  const handleEclipseTourStop = useCallback(() => {
+    eclipseTourStateRef.current = stopEclipseTourSequence(eclipseTourStateRef.current);
+    requestDemoPause();
+    publishEclipseTourView(eclipseTourStateRef.current);
+  }, [publishEclipseTourView, requestDemoPause]);
+
+  const handleEclipseTourSkip = useCallback(
+    (delta: number) => {
+      const result = skipEclipseTourEvent(eclipseTourStateRef.current, delta);
+      eclipseTourStateRef.current = result.state;
+      if (result.jumpToIsoUtc) {
+        applyTourOwnedDemoStart(result.jumpToIsoUtc);
+        if (result.state.phase === "playing") {
+          requestDemoResume();
+        }
+      }
+      publishEclipseTourView(result.state);
+    },
+    [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoResume],
+  );
+
+  const handleEclipseTourDeactivate = useCallback(() => {
+    eclipseTourStateRef.current = stopEclipseTourSequence(eclipseTourStateRef.current);
+    publishEclipseTourView(eclipseTourStateRef.current);
+  }, [publishEclipseTourView]);
+
+  const eclipseTourSession = useMemo<EclipseTourSessionUi>(
+    () => ({
+      phase: eclipseTourView.phase,
+      currentIndex: eclipseTourView.currentIndex,
+      eventCount: eclipseTourView.eventCount,
+      currentTitle: eclipseTourView.currentTitle,
+      currentDateLabel: eclipseTourView.currentDateLabel,
+      canGoPrevious: eclipseTourCanGoPrevious(eclipseTourStateRef.current),
+      canGoNext: eclipseTourCanGoNext(eclipseTourStateRef.current),
+      onStart: handleEclipseTourStart,
+      onPause: handleEclipseTourPause,
+      onReset: handleEclipseTourReset,
+      onStop: handleEclipseTourStop,
+      onPrevious: () => handleEclipseTourSkip(-1),
+      onNext: () => handleEclipseTourSkip(1),
+      onDeactivate: handleEclipseTourDeactivate,
+    }),
+    [
+      eclipseTourView,
+      handleEclipseTourDeactivate,
+      handleEclipseTourPause,
+      handleEclipseTourReset,
+      handleEclipseTourSkip,
+      handleEclipseTourStart,
+      handleEclipseTourStop,
+    ],
   );
 
   const userPresetsUi = useMemo(
@@ -361,7 +523,26 @@ export default function App() {
       if (cancelled) return;
       const realNowMs = Date.now();
 
-      const data = derivedAppConfigRef.current.data;
+      const pendingJump = pendingTourJumpRef.current;
+      if (pendingJump) {
+        pendingTourJumpRef.current = null;
+        commitWorkingV2Update(
+          workingV2Ref,
+          derivedAppConfigRef,
+          registryRef,
+          (draft) => {
+            draft.data.mode = "demo";
+            draft.data.demoTime.enabled = true;
+            draft.data.demoTime.startIsoUtc = pendingJump.iso;
+          },
+        );
+        bumpConfigView();
+        if (pendingJump.pause) {
+          demoTransportActionRef.current = "pause";
+        }
+      }
+
+      let data = derivedAppConfigRef.current.data;
       const demoActive = isDemoTimeActive(data);
       const wasDemoActive = prevDemoTimeActiveRef.current;
 
@@ -382,7 +563,7 @@ export default function App() {
         );
       }
 
-      const { nowMs: effectiveNowMs, simulated, next: nextDemoState } =
+      let { nowMs: effectiveNowMs, simulated, next: nextDemoState } =
         computeEffectiveRenderTimeMs(realNowMs, data, demoPlaybackRef.current);
 
       if (transportAction === "pause" && demoActive) {
@@ -392,6 +573,71 @@ export default function App() {
         );
       } else {
         demoPlaybackRef.current = nextDemoState;
+      }
+
+      let tourState = eclipseTourStateRef.current;
+      if (tourState.phase !== "inactive") {
+        const fingerprint = eclipseTourStructuralFingerprint(workingV2Ref.current);
+        if (
+          eclipseTourShouldDeactivate(
+            tourState,
+            demoActive,
+            data.demoTime.startIsoUtc,
+            fingerprint,
+          )
+        ) {
+          tourState = stopEclipseTourSequence(tourState);
+          eclipseTourStateRef.current = tourState;
+          publishEclipseTourView(tourState);
+        } else {
+          if (transportAction === "pause") {
+            tourState = pauseEclipseTourSequence(tourState);
+          } else if (transportAction === "resume") {
+            tourState = resumeEclipseTourSequence(tourState);
+          }
+          const liveLoop = eclipseTourPresentationFromScene(
+            workingV2Ref.current.scene ??
+              buildDefaultSceneConfigFromLayerFlags(workingV2Ref.current.layers),
+          ).loop;
+          if (tourState.loop !== liveLoop) {
+            tourState = { ...tourState, loop: liveLoop };
+          }
+          if (tourState.phase === "playing") {
+            const step = stepEclipseTourSequence(tourState, effectiveNowMs);
+            tourState = step.state;
+            if (step.jumpToIsoUtc) {
+              commitWorkingV2Update(
+                workingV2Ref,
+                derivedAppConfigRef,
+                registryRef,
+                (draft) => {
+                  draft.data.mode = "demo";
+                  draft.data.demoTime.enabled = true;
+                  draft.data.demoTime.startIsoUtc = step.jumpToIsoUtc!;
+                },
+              );
+              bumpConfigView();
+              data = derivedAppConfigRef.current.data;
+              const recomputed = computeEffectiveRenderTimeMs(
+                realNowMs,
+                data,
+                demoPlaybackRef.current,
+              );
+              effectiveNowMs = recomputed.nowMs;
+              simulated = recomputed.simulated;
+              nextDemoState = recomputed.next;
+              demoPlaybackRef.current = nextDemoState;
+            }
+            if (step.pause) {
+              demoPlaybackRef.current = applyDemoPlaybackPause(
+                effectiveNowMs,
+                demoPlaybackRef.current,
+              );
+            }
+          }
+          eclipseTourStateRef.current = tourState;
+          publishEclipseTourView(tourState);
+        }
       }
 
       if (demoActive !== wasDemoActive) {
@@ -687,6 +933,7 @@ export default function App() {
               onResume: requestDemoResume,
               onReset: requestDemoReset,
             }}
+            eclipseTourSession={eclipseTourSession}
           />
         </div>
       ) : null}
