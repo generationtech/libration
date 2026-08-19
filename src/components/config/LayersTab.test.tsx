@@ -716,7 +716,10 @@ describe("LayersTab topic navigation", () => {
     expect(screen.queryByTestId("layers-topic-layer-masters")).toBeNull();
     expect(screen.getByTestId("layers-topic-space-objects")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "International Space Station (ISS)" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Planets" })).toBeInTheDocument();
     expect(screen.getByLabelText("Orbit track")).toBeInTheDocument();
+    expect(screen.getByLabelText("Mercury", { exact: true })).toBeInTheDocument();
+    expect(screen.getByLabelText("Mercury locus")).toBeInTheDocument();
     expect(screen.getByLabelText("ISS glyph")).toBeInTheDocument();
     expect(screen.queryByLabelText("Solar eclipses")).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
@@ -758,6 +761,32 @@ describe("LayersTab topic navigation", () => {
     expect(pastDurationAfterNav.disabled).toBe(true);
     expect((screen.getByLabelText("Orbit line thickness") as HTMLSelectElement).disabled).toBe(true);
     expect((screen.getByLabelText("ISS glyph") as HTMLSelectElement).disabled).toBe(false);
+  });
+
+  it("Planets per-body locus toggles persist independently of body enable", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("spaceObjects");
+    const mercury = screen.getByLabelText("Mercury", { exact: true }) as HTMLInputElement;
+    const mercuryLocus = screen.getByLabelText("Mercury locus") as HTMLInputElement;
+    expect(mercury.checked).toBe(false);
+    expect(mercuryLocus.checked).toBe(false);
+    expect(mercuryLocus.disabled).toBe(true);
+
+    await user.click(mercury);
+    expect(mercury.checked).toBe(true);
+    expect(mercuryLocus.disabled).toBe(false);
+    await user.click(mercuryLocus);
+    expect(mercuryLocus.checked).toBe(true);
+
+    await user.click(mercury);
+    expect(mercury.checked).toBe(false);
+    expect(mercuryLocus.disabled).toBe(true);
+    expect(mercuryLocus.checked).toBe(true);
+
+    await user.click(mercury);
+    expect(mercury.checked).toBe(true);
+    expect(mercuryLocus.checked).toBe(true);
   });
 });
 

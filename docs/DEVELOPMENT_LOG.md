@@ -292,3 +292,9 @@ Eclipse Tour under Layers → Eclipse sequences bundled solar/lunar catalog even
 
 Verified: `npx tsc --noEmit` clean; focused catalog/sequence/runtime/commit/LayersTab 90 passed; `npm test` 229 files / 2150 passed / 0 failed; `npm run build` succeeded. Cursor Browser ordinary mode: factory inactive; 2017-08-01…2017-09-15 lunar then solar; Data Demo start/speed shared; present-time Demo start deactivates tour. LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-048 complete
+
+Mercury–Neptune plus Pluto as terrestrial sub-object points, optional planet ground tracks, and independently enabled daily same-time planetary loci under Layers → Space objects. Bundled `astronomy-engine` 2.1.19 (ADR 0016). Factory Planets/bodies off. Not current-only live data.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 236 files / 2185 passed / 0 failed; `npm run build` succeeded with no `planetary-objects` scenario registry in `dist/`. Cursor Browser `?scenario=planetary-objects`: glyphs, 1-day tracks, inner-planet loci, 10y all-loci stress, Planets master off. JPL Horizons apparent RA/Dec check at 2026-08-19 15:30Z. LIB-037 stays proposed.
+

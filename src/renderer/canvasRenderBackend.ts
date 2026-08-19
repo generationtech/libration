@@ -20,6 +20,7 @@ import { isEquirectangularGridPayload } from "../layers/equirectGridPayload";
 import { isEquirectangularPolylinePayload } from "../layers/equirectPolylinePayload";
 import { isLunarGroundTrackPayload } from "../layers/lunarGroundTrackPayload";
 import { isLunarLocusPayload } from "../layers/lunarLocusPayload";
+import { isPlanetaryObjectsPayload } from "../layers/planetaryObjectsPayload";
 import { isEquirectRegionOverlayPayload } from "../layers/equirectRegionPayload";
 import { DEFAULT_BASE_MAP_PRESENTATION } from "../config/baseMapPresentation";
 import { isEquirectangularRasterPayload } from "../layers/rasterPayload";
@@ -34,6 +35,7 @@ import { buildEquirectangularGridOverlayRenderPlan } from "./renderPlan/equirect
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./renderPlan/equirectPolylineOverlayPlan";
 import { buildLunarGroundTrackRenderPlan } from "./renderPlan/lunarGroundTrackPlan";
 import { buildLunarLocusRenderPlan } from "./renderPlan/lunarLocusPlan";
+import { buildPlanetaryObjectsRenderPlan } from "./renderPlan/planetaryObjectsPlan";
 import { buildEquirectRegionOverlayRenderPlan } from "./renderPlan/equirectRegionPlan";
 import { isResolvedRenderPlanPayload } from "./renderPlan/resolvedRenderPlanPayload";
 import type { EmissiveRasterSampleBuffer } from "./emissiveIlluminationRaster";
@@ -393,6 +395,18 @@ export class CanvasRenderBackend implements RenderBackend {
       executeRenderPlanOnCanvas(
         ctx,
         buildLunarLocusRenderPlan({
+          viewportWidthPx: w,
+          viewportHeightPx: h,
+          layerOpacity: layer.opacity,
+          payload: layer.data,
+        }),
+      );
+      return;
+    }
+    if (isPlanetaryObjectsPayload(layer.data)) {
+      executeRenderPlanOnCanvas(
+        ctx,
+        buildPlanetaryObjectsRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
           layerOpacity: layer.opacity,

@@ -16,6 +16,7 @@
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
+    "astronomy-engine": "^2.1.19",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "satellite.js": "^5.0.0"

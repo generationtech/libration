@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { applyEclipseAlignmentPresentationToScene, applyEclipseInfoPresentationToScene, applyLayerEnableFlagsToScene, applyLunarEclipsePresentationToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
+import { applyEclipseAlignmentPresentationToScene, applyEclipseInfoPresentationToScene, applyLayerEnableFlagsToScene, applyLunarEclipsePresentationToScene, applyPlanetaryObjectsPresentationToScene, applySolarEclipsePresentationToScene, applySublunarMarkerAppearanceToScene } from "../config/v2/sceneConfig";
 import {
   assertIsNormalizedLibrationConfig,
   defaultLibrationConfigV2,
@@ -42,6 +42,7 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-locus",
   "moon-libration",
   "iss-presentation",
+  "planetary-objects",
   "solar-eclipse-total",
   "solar-eclipse-annular",
   "solar-eclipse-partial",
@@ -69,6 +70,7 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
   "moon-libration": "2021-12-10T00:00:00.000Z",
   "iss-presentation": ISS_PRESENTATION_SCENARIO_UTC,
+  "planetary-objects": "2026-08-19T15:30:00.000Z",
   "solar-eclipse-total": "2024-04-08T18:17:15.000Z",
   "solar-eclipse-annular": "2023-10-14T17:59:27.300Z",
   "solar-eclipse-partial": "2022-10-25T11:00:06.900Z",
@@ -338,6 +340,13 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
       "DEV-only ISS overlay from a recorded TLE at a frozen UTC so Space objects presentation controls can be exercised without CelesTrak. Not a production live fallback.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["iss-presentation"], applyIssPresentationScene),
   },
+  "planetary-objects": {
+    id: "planetary-objects",
+    startIsoUtc: VISUAL_SCENARIO_UTC["planetary-objects"],
+    purpose:
+      "Planets master on with Mercury through Neptune plus Pluto enabled at a frozen UTC so Space objects planetary glyphs, tracks, and loci can be inspected. Offline ephemeris; not a live feed.",
+    buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["planetary-objects"], applyPlanetaryObjectsScene),
+  },
   "solar-eclipse-total": {
     id: "solar-eclipse-total",
     startIsoUtc: VISUAL_SCENARIO_UTC["solar-eclipse-total"],
@@ -481,6 +490,29 @@ function applyIssPresentationScene(draft: LibrationConfigV2): void {
   draft.layers.orbitalTracks = true;
   draft.layers.cityPins = false;
   draft.layers.solarAnalemma = false;
+}
+
+function applyPlanetaryObjectsScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.planetaryObjects = true;
+  draft.layers.cityPins = false;
+  draft.layers.solarAnalemma = false;
+  if (draft.scene) {
+    draft.scene = applyPlanetaryObjectsPresentationToScene(draft.scene, {
+      bodies: {
+        mercury: { enabled: true },
+        venus: { enabled: true },
+        mars: { enabled: true },
+        jupiter: { enabled: true },
+        saturn: { enabled: true },
+        uranus: { enabled: true },
+        neptune: { enabled: true },
+        pluto: { enabled: true },
+      },
+    });
+    draft.scene = applyLayerEnableFlagsToScene(draft.scene, draft.layers);
+  }
 }
 
 function applySolarEclipseScene(draft: LibrationConfigV2): void {

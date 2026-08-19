@@ -145,6 +145,7 @@ describe("resolveVisualScenarioSession", () => {
       expect(session.config.layers.globalCloudsIr).toBe(false);
       expect(session.config.layers.earthquakes).toBe(false);
       expect(session.config.layers.orbitalTracks).toBe(id === "iss-presentation");
+      expect(session.config.layers.planetaryObjects).toBe(id === "planetary-objects");
       expect(session.config.scene?.illumination.cloudParticipation.mode).toBe("off");
     }
   });
@@ -195,6 +196,21 @@ describe("resolveVisualScenarioSession", () => {
     expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["iss-presentation"]);
     const row = config.scene?.layers.find((l) => l.id === "orbitalTracks");
     expect(row?.enabled).toBe(true);
+  });
+
+  it("enables planetary objects with all bodies on and no live feeds", () => {
+    const config = VISUAL_SCENARIOS["planetary-objects"].buildConfig();
+    expect(config.layers.planetaryObjects).toBe(true);
+    expect(config.layers.orbitalTracks).toBe(false);
+    expect(config.layers.globalCloudsIr).toBe(false);
+    expect(config.layers.earthquakes).toBe(false);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["planetary-objects"]);
+    const row = config.scene?.layers.find((l) => l.id === "planetaryObjects");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.parameters?.bodies : undefined).toMatchObject({
+      mercury: { enabled: true },
+      pluto: { enabled: true },
+    });
   });
 
   it("iss-presentation apply installs a DEV prepared ISS view without network", () => {

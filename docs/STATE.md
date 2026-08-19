@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-18
+Updated: 2026-08-19
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-047](work/LIB-047-eclipse-tour-demo-playback.md) — Eclipse Tour / event-sequenced demo playback
+[LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) — Planetary space objects, ground tracks, and loci
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-AWAITING SCOPE. Do not start work without an approved item.
+Await human scope. Do not start proposed LIB-037 or `docs/FUTURE_FEATURES.md` ideas.

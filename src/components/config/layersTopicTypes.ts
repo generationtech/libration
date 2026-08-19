@@ -77,7 +77,7 @@ export function descriptionForLayersTopic(id: LayersTopicId): string {
     case "astronomyPaths":
       return "Lunar ground track extents and colors, Lunar locus stroke, and Solar analemma stroke.";
     case "spaceObjects":
-      return "Presentation for tracked space objects. Layer visibility stays under Layer masters.";
+      return "Presentation for tracked space objects. ISS and planets. Layer visibility stays under Layer masters.";
     case "advanced":
       return "Overlay-readability veil and lift, including per-layer pilots. Does not change layer on/off.";
     default: {

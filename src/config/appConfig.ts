@@ -47,6 +47,11 @@ export interface LayerEnableFlags {
   earthquakes: boolean;
   /** DLC-3: Model B ISS orbital tracks (`orbitalTracks` / `dynamicTracks`). */
   orbitalTracks: boolean;
+  /**
+   * Planetary sub-object points, ground tracks, and loci
+   * (scene product `planetaryObjects`). Default off.
+   */
+  planetaryObjects: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -661,6 +666,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   globalCloudsIr: false,
   earthquakes: false,
   orbitalTracks: false,
+  planetaryObjects: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

@@ -37,6 +37,14 @@ import {
   normalizeIssOrbitalPresentation,
   type IssOrbitalPresentation,
 } from "../../core/issOrbitalPresentation";
+import {
+  DEFAULT_PLANETARY_OBJECTS_PRESENTATION,
+  mergePlanetaryObjectsPresentation,
+  normalizePlanetaryObjectsPresentation,
+  planetaryObjectsPresentationToParameters,
+  type PlanetaryObjectsPresentation,
+  type PlanetaryObjectsPresentationPatch,
+} from "../../core/planetaryObjectsPresentation";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
   DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
@@ -497,6 +505,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "lunarEclipse",
   "earthquakes",
   "orbitalTracks",
+  "planetaryObjects",
   "cityPins",
   "subsolarMarker",
   "lunarGroundTrack",
@@ -885,6 +894,24 @@ const ORBITAL_TRACKS: SceneLayerInstance = {
   },
 };
 
+/**
+ * Offline planetary subpoints, ground tracks, and loci (LIB-048).
+ * Presentation lives on derived source.parameters.
+ */
+const PLANETARY_OBJECTS: SceneLayerInstance = {
+  id: "planetaryObjects",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 3.65,
+  opacity: 0.95,
+  source: {
+    kind: "derived",
+    product: "planetaryObjects",
+    parameters: planetaryObjectsPresentationToParameters(DEFAULT_PLANETARY_OBJECTS_PRESENTATION),
+  },
+};
+
 const CITY: SceneLayerInstance = {
   id: "cityPins",
   family: "annotation",
@@ -977,6 +1004,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   CITY,
   EARTHQUAKES,
   ORBITAL_TRACKS,
+  PLANETARY_OBJECTS,
   SUBSOLAR,
   LUNAR_GROUND_TRACK_ROW,
   LUNAR_LOCUS_ROW,
@@ -1012,6 +1040,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "earthquakes";
     case "orbitalTracks":
       return "orbitalTracks";
+    case "planetaryObjects":
+      return "planetaryObjects";
     case "solarAnalemma":
       return "solarAnalemma";
     default:
@@ -1089,6 +1119,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     lunarEclipse: false,
     earthquakes: false,
     orbitalTracks: false,
+    planetaryObjects: false,
     cityPins: false,
     subsolarMarker: false,
     lunarGroundTrack: false,
@@ -1239,6 +1270,36 @@ export function applyIssOrbitalPresentationToScene(
         source: withNormalizedIssOrbitalPresentationParameters({
           ...row.source,
           parameters: { ...(row.source.parameters ?? {}), ...next },
+        }),
+      };
+    }),
+  };
+}
+
+export function planetaryObjectsPresentationFromScene(scene: SceneConfig): PlanetaryObjectsPresentation {
+  const row = scene.layers.find((l) => l.id === "planetaryObjects");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return normalizePlanetaryObjectsPresentation(params);
+}
+
+export function applyPlanetaryObjectsPresentationToScene(
+  scene: SceneConfig,
+  patch: PlanetaryObjectsPresentationPatch,
+): SceneConfig {
+  const current = planetaryObjectsPresentationFromScene(scene);
+  const next = mergePlanetaryObjectsPresentation(current, patch);
+  const parameters = planetaryObjectsPresentationToParameters(next);
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "planetaryObjects" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedPlanetaryObjectsParameters({
+          ...row.source,
+          parameters,
         }),
       };
     }),
@@ -1666,6 +1727,17 @@ function withNormalizedIssOrbitalPresentationParameters(
   };
 }
 
+function withNormalizedPlanetaryObjectsParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "planetaryObjects") {
+    return source;
+  }
+  const presentation = normalizePlanetaryObjectsPresentation(source.parameters);
+  return {
+    ...source,
+    parameters: planetaryObjectsPresentationToParameters(presentation),
+  };
+}
+
 function withNormalizedSublunarPointParameters(source: LayerSourceConfig): LayerSourceConfig {
   if (source.kind !== "derived" || source.product !== "sublunarPoint") {
     return source;
@@ -1906,6 +1978,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   }
   source = withNormalizedSublunarGroundTrackParameters(source);
   source = withNormalizedIssOrbitalPresentationParameters(source);
+  source = withNormalizedPlanetaryObjectsParameters(source);
   source = withNormalizedSublunarPointParameters(source);
   source = withNormalizedSublunarLocusParameters(source);
   source = withNormalizedSolarAnalemmaParameters(source);

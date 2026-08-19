@@ -59,6 +59,7 @@ const COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS = new Set<string>([
   "solarAnalemmaGroundTrack",
   "solarEclipseLiveFootprint",
   "lunarEclipseVisibility",
+  "planetaryObjects",
 ]);
 
 /**

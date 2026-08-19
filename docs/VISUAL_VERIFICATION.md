@@ -97,6 +97,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap; accelerated demo through a full Moon traversal with no migrating seam/cusp on the exposed line (cycle seam under the Moon glyph) |
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
 | `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, **horizons (minutes and orbits)**, colors, thickness, glyph type/size/color, silhouette color, label |
+| `planetary-objects` | `2026-08-19T15:30:00.000Z` | Planets master on; Mercury through Neptune plus Pluto enabled; factory shared presentation (current subpoints/labels on, tracks/loci off); clouds/earthquakes/ISS off. Offline ephemeris | All current planet glyphs/labels; Space objects Planets controls; representative ground tracks and loci; per-body locus toggles; Demo jumps |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
@@ -427,6 +428,24 @@ Use `http://localhost:1420/?scenario=iss-presentation`. Confirm the DEV banner i
 - Show ISS label OFF removes the text immediately; ON restores it; the marker remains.
 
 This scenario must not fetch CelesTrak or Where the ISS at. Production ordinary mode still hides ISS when no live TLE can be acquired.
+
+### Planetary objects (`planetary-objects`)
+
+Use `http://localhost:1420/?scenario=planetary-objects`. Confirm the DEV banner id and UTC `2026-08-19T15:30:00.000Z`. Open Config → Layers → Space objects. Each control must change the map on the next frame. These are geographic sub-object visualizations, not orbits around Earth and not solar analemmas.
+
+- All eight bodies plus Pluto: distinct glyphs/labels at plausible subpoints; astronomical-symbol glyphs; no projection NaNs.
+- Show current subpoints OFF: glyphs/labels gone; enabling a locus still shows that body's trace. ON restores glyphs.
+- Show planet labels OFF/ON.
+- Glyph Astronomical symbol → Dot → Astronomical symbol; size Small / Medium / Large / Extra large. Immediate; no astronomy hitch.
+- Mars color magenta: Mars glyph, label, track, and locus follow; other bodies unchanged.
+- Planet ground tracks ON with Mars, Venus, Jupiter: 1 day past/future; smooth westward motion; future fainter than past; no world-spanning seam lines. 7-day horizon remains readable.
+- Planetary loci: Mercury 1y/2y; Venus 1y/2y/5y; Mars 1y/2y/5y; at least Jupiter, Saturn, Neptune, Pluto at 1y/5y/10y. Uniform locus color (no past/future split). Daily same-time sampling; current glyph sits on the figure when current subpoints are on.
+- Per-body locus: all loci OFF, then Mercury locus only, then add Venus, then Mercury locus OFF (Venus remains). Body master OFF hides that body's glyph/track/locus and restores the locus checkbox when turned back ON.
+- All-loci 10-year stress: all bodies and loci on; map remains interactive after the first cache fill; no giant dateline segments.
+- Demo 1950 / present-ish / 2050 reconstruct; dates outside 1600–2500 show “Planetary positions unavailable outside 1600–2500.” and hide planetary features.
+- Moderate Demo acceleration: current glyphs/short tracks move; loci do not shudder from per-frame rebuilds.
+
+Factory defaults keep Planets off. ISS presentation in the same topic must remain unchanged.
 
 ### Current vs historical dynamic-layer smoke
 

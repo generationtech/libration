@@ -44,6 +44,7 @@ const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "globalCloudsIr",
   "earthquakes",
   "orbitalTracks",
+  "planetaryObjects",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -116,6 +117,34 @@ function shallowRecordEqual(a: Record<string, unknown> | undefined, b: Record<st
   return true;
 }
 
+function jsonValueEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) {
+    return true;
+  }
+  if (a === null || b === null || typeof a !== typeof b) {
+    return a === b;
+  }
+  if (typeof a !== "object") {
+    return false;
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+      return false;
+    }
+    return a.every((v, i) => jsonValueEqual(v, b[i]));
+  }
+  const ao = a as Record<string, unknown>;
+  const bo = b as Record<string, unknown>;
+  const aKeys = Object.keys(ao);
+  const bKeys = Object.keys(bo);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  return aKeys.every(
+    (key) => Object.prototype.hasOwnProperty.call(bo, key) && jsonValueEqual(ao[key], bo[key]),
+  );
+}
+
 function sceneLayerSourceEqual(a: SceneLayerInstance["source"], b: SceneLayerInstance["source"]): boolean {
   if (a.kind !== b.kind) {
     return false;
@@ -123,7 +152,7 @@ function sceneLayerSourceEqual(a: SceneLayerInstance["source"], b: SceneLayerIns
   if (a.kind === "derived" && b.kind === "derived") {
     return (
       a.product === b.product &&
-      shallowRecordEqual(a.parameters, b.parameters) &&
+      jsonValueEqual(a.parameters, b.parameters) &&
       shallowRecordEqual(a.metadata, b.metadata)
     );
   }

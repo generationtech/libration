@@ -36,6 +36,8 @@ import {
   applySolarAnalemmaStrokeToScene,
   applyIssOrbitalPresentationToScene,
   issOrbitalPresentationFromScene,
+  applyPlanetaryObjectsPresentationToScene,
+  planetaryObjectsPresentationFromScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyReferenceCityEclipsePresentationToScene,
@@ -60,6 +62,7 @@ const DEFAULT_LAYERS: LayerEnableFlags = {
   globalCloudsIr: false,
   earthquakes: false,
   orbitalTracks: false,
+  planetaryObjects: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
@@ -115,8 +118,9 @@ describe("SceneConfig (Phase 1)", () => {
     } as LibrationConfigV2);
     expect(v2.scene?.orderingMode).toBe("user");
     expect(v2.scene?.baseMap.opacity).toBe(1);
-    expect(v2.scene?.layers).toHaveLength(14);
+    expect(v2.scene?.layers).toHaveLength(15);
     expect(v2.scene?.layers.some((l) => l.id === "lunarEclipse")).toBe(true);
+    expect(v2.scene?.layers.some((l) => l.id === "planetaryObjects")).toBe(true);
     expect(v2.scene?.illumination.moonlight.mode).toBe("illustrative");
     expect(v2.scene?.illumination.emissiveNightLights.mode).toBe(
       DEFAULT_SCENE_EMISSIVE_NIGHT_LIGHTS_PRESENTATION_MODE,
@@ -1747,6 +1751,32 @@ describe("eclipse product polish presentation", () => {
     expect(row?.source.kind === "dynamicTracks" ? row.source.parameters?.pastMinutes : undefined).toBe(
       undefined,
     );
+  });
+
+  it("defaults missing planetary presentation and preserves explicit body flags", () => {
+    const factory = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const row = factory.scene?.layers.find((l) => l.id === "planetaryObjects");
+    expect(row?.enabled).toBe(false);
+    expect(row?.source.kind).toBe("derived");
+    expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe("planetaryObjects");
+    expect(planetaryObjectsPresentationFromScene(factory.scene!).bodies.mars.enabled).toBe(false);
+
+    const explicit = normalizeLibrationConfig({
+      ...factory,
+      scene: applyPlanetaryObjectsPresentationToScene(factory.scene!, {
+        bodies: { mars: { enabled: true, color: "#ff00ff", locusEnabled: true } },
+        glyphType: "dot",
+        loci: { duration: "5y" },
+      }),
+    });
+    const round = normalizeLibrationConfig(JSON.parse(JSON.stringify(explicit)) as LibrationConfigV2);
+    const pres = planetaryObjectsPresentationFromScene(round.scene!);
+    expect(pres.bodies.mars.enabled).toBe(true);
+    expect(pres.bodies.mars.color).toBe("#ff00ff");
+    expect(pres.bodies.mars.locusEnabled).toBe(true);
+    expect(pres.glyphType).toBe("dot");
+    expect(pres.loci.duration).toBe("5y");
+    expect(pres.bodies.venus.enabled).toBe(false);
   });
 
   it("migrates LIB-038 pastMinutes/futureMinutes and keeps 45 min", () => {

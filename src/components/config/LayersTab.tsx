@@ -77,6 +77,7 @@ import { ConfigControlRow } from "./ConfigControlRow";
 import { EclipseSystemSection } from "./EclipseSystemSection";
 import type { EclipseTourSessionUi } from "./EclipseTourSection";
 import { IssPresentationSection } from "./IssPresentationSection";
+import { PlanetaryObjectsSection } from "./PlanetaryObjectsSection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
@@ -106,6 +107,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "globalCloudsIr",
   "earthquakes",
   "orbitalTracks",
+  "planetaryObjects",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -182,6 +184,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     globalCloudsIr: "Global clouds / IR",
     earthquakes: "Earthquakes",
     orbitalTracks: "ISS orbital track",
+    planetaryObjects: "Planets",
     cityPins: "City pins",
     subsolarMarker: "Subsolar marker",
     sublunarMarker: "Sublunar marker",
@@ -203,6 +206,9 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   }
   if (key === "solarEclipse") {
     return "Shows NASA-derived solar eclipse geography: the live footprint when an eclipse is active, and forecast path/region for upcoming events inside the forecast horizon. Default on; nothing is drawn when no event is relevant.";
+  }
+  if (key === "planetaryObjects") {
+    return "Mercury through Neptune plus Pluto as terrestrial sub-object points, optional ground tracks, and planetary loci. Presentation lives under Space objects.";
   }
   if (key === "lunarEclipse") {
     return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
@@ -1609,6 +1615,11 @@ export function LayersTab({
           <div data-testid="layers-topic-space-objects">
             <p className="config-section__hint">{descriptionForLayersTopic("spaceObjects")}</p>
             <IssPresentationSection config={config} updateConfig={updateConfig} />
+            <PlanetaryObjectsSection
+              config={config}
+              updateConfig={updateConfig}
+              productInstantMs={productInstantMs}
+            />
           </div>
         ) : null}
         {layersTopic === "moonAndLibration" ? (

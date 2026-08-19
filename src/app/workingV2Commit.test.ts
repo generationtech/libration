@@ -34,6 +34,7 @@ import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import {
   applyEclipseInfoPresentationToScene,
   applyIssOrbitalPresentationToScene,
+  applyPlanetaryObjectsPresentationToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyEclipseTourPresentationToScene,
@@ -108,6 +109,7 @@ const SCENE_EQUALITY_LAYER_FLAGS = {
   globalCloudsIr: false,
   earthquakes: false,
   orbitalTracks: false,
+  planetaryObjects: false,
   cityPins: false,
   subsolarMarker: false,
   sublunarMarker: false,
@@ -385,6 +387,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -421,6 +424,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -455,6 +459,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -486,6 +491,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -517,6 +523,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -548,6 +555,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: true,
       sublunarMarker: false,
@@ -579,6 +587,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -610,6 +619,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -636,6 +646,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -661,6 +672,7 @@ describe("commitWorkingV2Update", () => {
       globalCloudsIr: false,
       earthquakes: false,
       orbitalTracks: false,
+      planetaryObjects: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -922,6 +934,44 @@ describe("commitWorkingV2Update", () => {
     expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.trackEnabled).toBe(false);
     expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.pastColor).toBe("#cc0000");
     expect(issOrbitalParams(derivedAppConfigRef.current.scene)?.glyphType).toBe("silhouette");
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only planetary presentation parameters change", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      ...SCENE_EQUALITY_LAYER_FLAGS,
+      planetaryObjects: true,
+    });
+    const b = applyPlanetaryObjectsPresentationToScene(a, {
+      bodies: { mars: { enabled: true, color: "#ff00ff" } },
+    });
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+  });
+
+  it("planetary presentation-only commit rebuilds the registry without toggling the Planets master", () => {
+    const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const base = normalizeLibrationConfig({
+      ...seed,
+      layers: { ...seed.layers, planetaryObjects: true },
+    });
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+    const prevDerivedScene = deriveAppConfigFromV2(workingV2Ref.current!).scene;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+      draft.scene = applyPlanetaryObjectsPresentationToScene(baseScene, {
+        glyphType: "dot",
+        bodies: { mars: { enabled: true, color: "#ff00ff" } },
+      });
+      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+    });
+
+    expect(derivedAppConfigRef.current.layers.planetaryObjects).toBe(true);
+    expect(sceneRuntimeAffectingEqual(prevDerivedScene, derivedAppConfigRef.current.scene)).toBe(
+      false,
+    );
+    expect(registryRef.current).not.toBe(registryBefore);
   });
 });
 

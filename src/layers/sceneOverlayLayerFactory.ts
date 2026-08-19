@@ -27,6 +27,7 @@ import {
   eclipseInfoPresentationFromScene,
   issOrbitalPresentationFromScene,
   lunarEclipsePresentationFromScene,
+  planetaryObjectsPresentationFromScene,
   resolveMoonlightPresentationMode,
   solarEclipsePresentationFromScene,
   sublunarMarkerAppearanceFromScene,
@@ -36,6 +37,7 @@ import { createLatLonGridLayer } from "./latLonGridLayer";
 import { createLunarEclipseLayer } from "./lunarEclipseLayer";
 import { createLunarGroundTrackLayer } from "./lunarGroundTrackLayer";
 import { createLunarLocusLayer } from "./lunarLocusLayer";
+import { createPlanetaryObjectsLayer } from "./planetaryObjectsLayer";
 import { createSolarAnalemmaLayer } from "./solarAnalemmaLayer";
 import { createSolarEclipseLayer } from "./solarEclipseLayer";
 import { createSolarShadingLayer } from "./solarShadingLayer";
@@ -274,6 +276,12 @@ function createDerivedOverlayByProduct(
         ),
         strokeThickness: astronomyPathThicknessFromOptionalParameters(source.parameters),
         solarAnalemmaReadabilityPresentation: config.scene.overlayReadability.perLayer?.solarAnalemma,
+      });
+    case "planetaryObjects":
+      return createPlanetaryObjectsLayer({
+        zIndex,
+        opacity,
+        presentation: planetaryObjectsPresentationFromScene(config.scene),
       });
     case "solarEclipseLiveFootprint":
       return createSolarEclipseLayer({
