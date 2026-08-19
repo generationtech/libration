@@ -45,7 +45,7 @@ For this family, distinguish three roles:
 
 | Role | Suitable for continuous display? | Examples in this family |
 |------|----------------------------------|-------------------------|
-| **Ambient astronomy** | Yes | Sun and Moon glyphs, phase, libration, lunar locus, solar analemma, planetary subpoints/tracks/loci, illumination |
+| **Ambient astronomy** | Yes | Sun and Moon glyphs, phase, libration, lunar locus, solar analemma, planetary subpoints/tracks/loci, Milky Way zenith ribbon, illumination |
 | **Explanatory astronomy** | Optional | Lunar horizon, nodes, altitude/azimuth, distance information |
 | **Event astronomy** | Only when something unusual is approaching or occurring | Eclipse forecast bands, live eclipse alignment, dramatic beam/shadow visualization |
 
@@ -85,6 +85,29 @@ Related but distinct concepts:
 Preserve an expectation of **options**, without freezing controls: off; boundary line; line plus subtle region; illumination contours; styling choices.
 
 This is explanatory astronomy. A default ambient map should not be forced to show it.
+
+### Milky Way observing quality
+
+**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the celestial geometry required for this question without answering it. The zenith ribbon is not “where the Milky Way is visible.”
+
+A later feature could combine:
+
+- astronomical darkness / Sun altitude
+- Galactic center altitude (possible thresholds: above horizon, >10°, >20°, >30°)
+- Milky Way altitude/orientation for a local observer
+- Moon altitude, lunar phase / moonlight, lunar-eclipse attenuation
+- optionally clouds
+- potentially light pollution if an authority is introduced later
+
+That would answer: “Where on Earth can the Milky Way be seen well right now?” It must not reuse LIB-049 night-side emphasis as a stand-in for that forecast.
+
+Related but distinct, also unapproved:
+
+- a terrestrial envelope of locations from which *some* portion of the band is above the geometric horizon (deferred from LIB-049 as semantically ambiguous)
+- modest longitude-dependent band width without pretending to be photometry
+- renaming Layers → Space objects to something like “Space & sky”
+
+Do not implement stars, constellations, photographic Milky Way imagery, or star catalogs as a side effect of this idea.
 
 ### Reference-city Moon altitude and azimuth
 
@@ -251,6 +274,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - reference-city meridian line.
 - read-point alignment marker.
 - UTC meridian reference.
+- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped zenith-projection geometry only.
 
 ### Dynamic and live layers
 
@@ -258,7 +282,7 @@ New consumers reuse the existing lifecycle subsystem; its contract, and the sour
 
 Adding any of these is a product decision requiring explicit scope, not a consequence of the seam supporting it. Prefer free-for-personal-use sources; paid sources are acceptable when the benefit is clear.
 
-ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). ISS live provenance, TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden), and hide-on-live-TLE-failure are production as of [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Immediate-on-enable acquisition, 2-hour TLE refresh, 8 s timeout, and ordered CelesTrak → Where the ISS at failover are production as of [LIB-040](work/LIB-040-iss-acquisition-reliability-fast-first-paint.md) / [ADR 0014](decisions/0014-iss-live-tle-ordered-provider-failover.md). Layers → **Space objects** is the ISS presentation home as of [LIB-038](work/LIB-038-space-objects-iss-presentation.md) (orbit track, past/future segments, glyph). Multi-orbit past/future horizons derived from TLE mean motion, local SGP4 window expansion, orbit-distance fading, and ISS silhouette glyph-color are production as of [LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md). Planetary sub-object points, continuous planet ground tracks, and daily same-time planetary loci for Mercury–Neptune plus Pluto are production as of [LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) / [ADR 0016](decisions/0016-offline-planetary-ephemeris-authority.md). They share Space objects (Planets) with one Planets layer master. They are offline astronomy at product time, not current-only live data, and they are not solar analemmas. Remaining unapproved: local altitude/azimuth, conjunction/event detection, planet-visible hemispheres, other dwarf planets, moons. It is the intended configuration home for future satellites and spacecraft; those objects are not implemented. Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
+ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). ISS live provenance, TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden), and hide-on-live-TLE-failure are production as of [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Immediate-on-enable acquisition, 2-hour TLE refresh, 8 s timeout, and ordered CelesTrak → Where the ISS at failover are production as of [LIB-040](work/LIB-040-iss-acquisition-reliability-fast-first-paint.md) / [ADR 0014](decisions/0014-iss-live-tle-ordered-provider-failover.md). Layers → **Space objects** is the ISS presentation home as of [LIB-038](work/LIB-038-space-objects-iss-presentation.md) (orbit track, past/future segments, glyph). Multi-orbit past/future horizons derived from TLE mean motion, local SGP4 window expansion, orbit-distance fading, and ISS silhouette glyph-color are production as of [LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md). Planetary sub-object points, continuous planet ground tracks, and daily same-time planetary loci for Mercury–Neptune plus Pluto are production as of [LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) / [ADR 0016](decisions/0016-offline-planetary-ephemeris-authority.md). They share Space objects (Planets) with one Planets layer master. They are offline astronomy at product time, not current-only live data, and they are not solar analemmas. Remaining unapproved: local altitude/azimuth, conjunction/event detection, planet-visible hemispheres, other dwarf planets, moons. The Milky Way zenith ribbon (Galactic plane, approximate band, sparse ribs, Galactic center) is production as of [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) / [ADR 0017](decisions/0017-offline-iau-galactic-zenith-projection-authority.md). It shares Space objects after Planets, with one Milky Way layer master (factory off). It is zenith-projection geometry, not naked-eye visibility and not a star field. Remaining unapproved for that family: above-horizon visibility envelopes, Galactic-center altitude thresholds, observing-quality forecasts, photometric longitude-dependent band width, and renaming Space objects to something like “Space & sky.” It is the intended configuration home for future satellites and spacecraft; those objects are not implemented. Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
 
 - production fixture-on-live-failure policy for clouds/IR and earthquakes (ISS already hides when no live TLE can be acquired)
 - stale/error UX for clouds/IR and earthquakes (ISS has concise Layers loading/unavailable/degraded hints)

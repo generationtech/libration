@@ -717,6 +717,7 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByTestId("layers-topic-space-objects")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "International Space Station (ISS)" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Planets" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Milky Way" })).toBeInTheDocument();
     expect(screen.getByLabelText("Orbit track")).toBeInTheDocument();
     expect(screen.getByLabelText("Mercury", { exact: true })).toBeInTheDocument();
     expect(screen.getByLabelText("Mercury locus")).toBeInTheDocument();
@@ -787,6 +788,32 @@ describe("LayersTab topic navigation", () => {
     await user.click(mercury);
     expect(mercury.checked).toBe(true);
     expect(mercuryLocus.checked).toBe(true);
+  });
+
+  it("Milky Way master enables structure controls and persists band width", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("spaceObjects");
+    const master = screen.getByLabelText("Show Milky Way") as HTMLInputElement;
+    const plane = screen.getByLabelText("Show Galactic plane") as HTMLInputElement;
+    const width = screen.getByLabelText("Band width") as HTMLSelectElement;
+    expect(master.checked).toBe(false);
+    expect(plane.disabled).toBe(true);
+    expect(width.disabled).toBe(true);
+
+    await user.click(master);
+    expect(master.checked).toBe(true);
+    expect(plane.disabled).toBe(false);
+    expect(plane.checked).toBe(true);
+    expect(width.disabled).toBe(false);
+    expect(width.value).toBe("normal");
+    await user.selectOptions(width, "wide");
+    expect(width.value).toBe("wide");
+
+    selectLayersTopic("advanced");
+    selectLayersTopic("spaceObjects");
+    expect((screen.getByLabelText("Band width") as HTMLSelectElement).value).toBe("wide");
+    expect((screen.getByLabelText("Show Milky Way") as HTMLInputElement).checked).toBe(true);
   });
 });
 

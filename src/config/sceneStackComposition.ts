@@ -60,6 +60,7 @@ const COMPOSITION_ELIGIBLE_DERIVED_PRODUCTS = new Set<string>([
   "solarEclipseLiveFootprint",
   "lunarEclipseVisibility",
   "planetaryObjects",
+  "milkyWay",
 ]);
 
 /**

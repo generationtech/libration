@@ -45,6 +45,14 @@ import {
   type PlanetaryObjectsPresentation,
   type PlanetaryObjectsPresentationPatch,
 } from "../../core/planetaryObjectsPresentation";
+import {
+  DEFAULT_MILKY_WAY_PRESENTATION,
+  mergeMilkyWayPresentation,
+  normalizeMilkyWayPresentation,
+  milkyWayPresentationToParameters,
+  type MilkyWayPresentation,
+  type MilkyWayPresentationPatch,
+} from "../../core/milkyWayPresentation";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
   DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
@@ -501,6 +509,7 @@ export const SCENE_STACK_LAYER_IDS = [
   "grid",
   "staticEquirectOverlay",
   "globalCloudsIr",
+  "milkyWay",
   "solarEclipse",
   "lunarEclipse",
   "earthquakes",
@@ -818,6 +827,24 @@ const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   },
 };
 
+/**
+ * Offline Milky Way zenith ribbon (LIB-049). Extended celestial structure, not a point object.
+ * Presentation lives on derived source.parameters.
+ */
+const MILKY_WAY: SceneLayerInstance = {
+  id: "milkyWay",
+  family: "astronomy",
+  type: "astronomyVector",
+  enabled: false,
+  order: 2.6,
+  opacity: 0.95,
+  source: {
+    kind: "derived",
+    product: "milkyWay",
+    parameters: milkyWayPresentationToParameters(DEFAULT_MILKY_WAY_PRESENTATION),
+  },
+};
+
 /** NASA-derived solar eclipse overlay: live footprint plus optional forecast corridor. Default on. */
 const SOLAR_ECLIPSE_ROW: SceneLayerInstance = {
   id: "solarEclipse",
@@ -999,6 +1026,7 @@ const DEFAULT_STACK: readonly SceneLayerInstance[] = [
   GRID,
   STATIC_EQUIRECT,
   GLOBAL_CLOUDS_IR,
+  MILKY_WAY,
   SOLAR_ECLIPSE_ROW,
   LUNAR_ECLIPSE_ROW,
   CITY,
@@ -1032,6 +1060,8 @@ function mapLayerIdToKey(id: string): keyof LayerEnableFlags | "base" | null {
       return "staticEquirectOverlay";
     case "globalCloudsIr":
       return "globalCloudsIr";
+    case "milkyWay":
+      return "milkyWay";
     case "solarEclipse":
       return "solarEclipse";
     case "lunarEclipse":
@@ -1120,6 +1150,7 @@ export function deriveLayerEnableFlagsFromScene(scene: SceneConfig): LayerEnable
     earthquakes: false,
     orbitalTracks: false,
     planetaryObjects: false,
+    milkyWay: false,
     cityPins: false,
     subsolarMarker: false,
     lunarGroundTrack: false,
@@ -1298,6 +1329,36 @@ export function applyPlanetaryObjectsPresentationToScene(
       return {
         ...row,
         source: withNormalizedPlanetaryObjectsParameters({
+          ...row.source,
+          parameters,
+        }),
+      };
+    }),
+  };
+}
+
+export function milkyWayPresentationFromScene(scene: SceneConfig): MilkyWayPresentation {
+  const row = scene.layers.find((l) => l.id === "milkyWay");
+  const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+  return normalizeMilkyWayPresentation(params);
+}
+
+export function applyMilkyWayPresentationToScene(
+  scene: SceneConfig,
+  patch: MilkyWayPresentationPatch,
+): SceneConfig {
+  const current = milkyWayPresentationFromScene(scene);
+  const next = mergeMilkyWayPresentation(current, patch);
+  const parameters = milkyWayPresentationToParameters(next);
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "milkyWay" || row.source.kind !== "derived") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedMilkyWayParameters({
           ...row.source,
           parameters,
         }),
@@ -1738,6 +1799,17 @@ function withNormalizedPlanetaryObjectsParameters(source: LayerSourceConfig): La
   };
 }
 
+function withNormalizedMilkyWayParameters(source: LayerSourceConfig): LayerSourceConfig {
+  if (source.kind !== "derived" || source.product !== "milkyWay") {
+    return source;
+  }
+  const presentation = normalizeMilkyWayPresentation(source.parameters);
+  return {
+    ...source,
+    parameters: milkyWayPresentationToParameters(presentation),
+  };
+}
+
 function withNormalizedSublunarPointParameters(source: LayerSourceConfig): LayerSourceConfig {
   if (source.kind !== "derived" || source.product !== "sublunarPoint") {
     return source;
@@ -1979,6 +2051,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
   source = withNormalizedSublunarGroundTrackParameters(source);
   source = withNormalizedIssOrbitalPresentationParameters(source);
   source = withNormalizedPlanetaryObjectsParameters(source);
+  source = withNormalizedMilkyWayParameters(source);
   source = withNormalizedSublunarPointParameters(source);
   source = withNormalizedSublunarLocusParameters(source);
   source = withNormalizedSolarAnalemmaParameters(source);

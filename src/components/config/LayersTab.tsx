@@ -78,6 +78,7 @@ import { EclipseSystemSection } from "./EclipseSystemSection";
 import type { EclipseTourSessionUi } from "./EclipseTourSection";
 import { IssPresentationSection } from "./IssPresentationSection";
 import { PlanetaryObjectsSection } from "./PlanetaryObjectsSection";
+import { MilkyWaySection } from "./MilkyWaySection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
@@ -108,6 +109,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "earthquakes",
   "orbitalTracks",
   "planetaryObjects",
+  "milkyWay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",
@@ -185,6 +187,7 @@ function labelForLayer(key: keyof LayerEnableFlags): string {
     earthquakes: "Earthquakes",
     orbitalTracks: "ISS orbital track",
     planetaryObjects: "Planets",
+    milkyWay: "Milky Way",
     cityPins: "City pins",
     subsolarMarker: "Subsolar marker",
     sublunarMarker: "Sublunar marker",
@@ -209,6 +212,9 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   }
   if (key === "planetaryObjects") {
     return "Mercury through Neptune plus Pluto as terrestrial sub-object points, optional ground tracks, and planetary loci. Presentation lives under Space objects.";
+  }
+  if (key === "milkyWay") {
+    return "Galactic plane and approximate Milky Way band as terrestrial zenith projections. Presentation lives under Space objects. Not naked-eye visibility.";
   }
   if (key === "lunarEclipse") {
     return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
@@ -1616,6 +1622,11 @@ export function LayersTab({
             <p className="config-section__hint">{descriptionForLayersTopic("spaceObjects")}</p>
             <IssPresentationSection config={config} updateConfig={updateConfig} />
             <PlanetaryObjectsSection
+              config={config}
+              updateConfig={updateConfig}
+              productInstantMs={productInstantMs}
+            />
+            <MilkyWaySection
               config={config}
               updateConfig={updateConfig}
               productInstantMs={productInstantMs}

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) — Planetary space objects, ground tracks, and loci
+[LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) — Milky Way terrestrial visibility geometry
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Await human scope. Do not start proposed LIB-037 or `docs/FUTURE_FEATURES.md` ideas.
+Await human scope. Do not start work.

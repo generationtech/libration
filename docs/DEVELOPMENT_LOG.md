@@ -298,3 +298,9 @@ Mercury–Neptune plus Pluto as terrestrial sub-object points, optional planet g
 
 Verified: `npx tsc --noEmit` clean; `npm test` 236 files / 2185 passed / 0 failed; `npm run build` succeeded with no `planetary-objects` scenario registry in `dist/`. Cursor Browser `?scenario=planetary-objects`: glyphs, 1-day tracks, inner-planet loci, 10y all-loci stress, Planets master off. JPL Horizons apparent RA/Dec check at 2026-08-19 15:30Z. LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-049 complete
+
+Milky Way zenith-projection ribbon under Layers → Space objects: IAU 1958 Galactic plane, approximate band, sparse ribs, Galactic center, optional anticenter, night-side alpha. Offline, Demo-time, 1600–2500. Not a star field or visibility forecast. ADR 0017.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 241 files / 2216 passed / 0 failed; `npm run build` succeeded with no `milky-way` scenario registry in `dist/`. Cursor Browser `?scenario=milky-way` (plane/band/ribs/center/anticenter/night/Demo +6 h/accelerated playback) and `?scenario=solar-eclipse-total` with Milky Way on. LIB-037 stays proposed.
+

@@ -35,6 +35,7 @@ import {
   applyEclipseInfoPresentationToScene,
   applyIssOrbitalPresentationToScene,
   applyPlanetaryObjectsPresentationToScene,
+  applyMilkyWayPresentationToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
   applyEclipseTourPresentationToScene,
@@ -110,6 +111,7 @@ const SCENE_EQUALITY_LAYER_FLAGS = {
   earthquakes: false,
   orbitalTracks: false,
   planetaryObjects: false,
+  milkyWay: false,
   cityPins: false,
   subsolarMarker: false,
   sublunarMarker: false,
@@ -388,6 +390,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -425,6 +428,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -460,6 +464,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -492,6 +497,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -524,6 +530,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -556,6 +563,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: true,
       sublunarMarker: false,
@@ -588,6 +596,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -620,6 +629,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -647,6 +657,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -673,6 +684,7 @@ describe("commitWorkingV2Update", () => {
       earthquakes: false,
       orbitalTracks: false,
       planetaryObjects: false,
+  milkyWay: false,
       cityPins: false,
       subsolarMarker: false,
       sublunarMarker: false,
@@ -944,6 +956,16 @@ describe("commitWorkingV2Update", () => {
     const b = applyPlanetaryObjectsPresentationToScene(a, {
       bodies: { mars: { enabled: true, color: "#ff00ff" } },
     });
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only Milky Way presentation parameters change", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      ...SCENE_EQUALITY_LAYER_FLAGS,
+      milkyWay: true,
+    });
+    const b = applyMilkyWayPresentationToScene(a, { bandWidth: "wide" });
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
   });

@@ -43,6 +43,7 @@ const LAYER_KEYS: (keyof LayerEnableFlags)[] = [
   "lunarEclipse",
   "solarAnalemma",
   "planetaryObjects",
+  "milkyWay",
 ];
 
 function isPlainObject(x: unknown): x is Record<string, unknown> {

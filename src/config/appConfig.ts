@@ -52,6 +52,10 @@ export interface LayerEnableFlags {
    * (scene product `planetaryObjects`). Default off.
    */
   planetaryObjects: boolean;
+  /**
+   * Milky Way zenith ribbon (scene product `milkyWay`). Default off.
+   */
+  milkyWay: boolean;
   cityPins: boolean;
   subsolarMarker: boolean;
   sublunarMarker: boolean;
@@ -667,6 +671,7 @@ const DEFAULT_LAYER_ENABLE_FLAGS: LayerEnableFlags = {
   earthquakes: false,
   orbitalTracks: false,
   planetaryObjects: false,
+  milkyWay: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,

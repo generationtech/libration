@@ -45,6 +45,7 @@ const LAYER_FLAG_KEYS: (keyof LayerEnableFlags)[] = [
   "earthquakes",
   "orbitalTracks",
   "planetaryObjects",
+  "milkyWay",
   "cityPins",
   "subsolarMarker",
   "sublunarMarker",

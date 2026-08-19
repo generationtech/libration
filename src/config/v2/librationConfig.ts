@@ -609,6 +609,7 @@ function normalizeLayerEnableFlags(raw: unknown): LayerEnableFlags {
       typeof r.orbitalTracks === "boolean" ? r.orbitalTracks : d.orbitalTracks,
     planetaryObjects:
       typeof r.planetaryObjects === "boolean" ? r.planetaryObjects : d.planetaryObjects,
+    milkyWay: typeof r.milkyWay === "boolean" ? r.milkyWay : d.milkyWay,
     cityPins: typeof r.cityPins === "boolean" ? r.cityPins : d.cityPins,
     subsolarMarker: typeof r.subsolarMarker === "boolean" ? r.subsolarMarker : d.subsolarMarker,
     sublunarMarker: typeof r.sublunarMarker === "boolean" ? r.sublunarMarker : d.sublunarMarker,
@@ -630,6 +631,7 @@ function layerFlagsEqualShallow(a: LayerEnableFlags, b: LayerEnableFlags): boole
     a.earthquakes === b.earthquakes &&
     a.orbitalTracks === b.orbitalTracks &&
     a.planetaryObjects === b.planetaryObjects &&
+    a.milkyWay === b.milkyWay &&
     a.cityPins === b.cityPins &&
     a.subsolarMarker === b.subsolarMarker &&
     a.sublunarMarker === b.sublunarMarker &&

@@ -146,6 +146,7 @@ describe("resolveVisualScenarioSession", () => {
       expect(session.config.layers.earthquakes).toBe(false);
       expect(session.config.layers.orbitalTracks).toBe(id === "iss-presentation");
       expect(session.config.layers.planetaryObjects).toBe(id === "planetary-objects");
+      expect(session.config.layers.milkyWay).toBe(id === "milky-way");
       expect(session.config.scene?.illumination.cloudParticipation.mode).toBe("off");
     }
   });
@@ -211,6 +212,25 @@ describe("resolveVisualScenarioSession", () => {
       mercury: { enabled: true },
       pluto: { enabled: true },
     });
+  });
+
+  it("enables Milky Way with factory presentation and no live feeds", () => {
+    const config = VISUAL_SCENARIOS["milky-way"].buildConfig();
+    expect(config.layers.milkyWay).toBe(true);
+    expect(config.layers.planetaryObjects).toBe(false);
+    expect(config.layers.orbitalTracks).toBe(false);
+    expect(config.layers.globalCloudsIr).toBe(false);
+    expect(config.layers.earthquakes).toBe(false);
+    expect(config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC["milky-way"]);
+    const row = config.scene?.layers.find((l) => l.id === "milkyWay");
+    expect(row?.enabled).toBe(true);
+    expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe("milkyWay");
+    expect(row?.source.kind === "derived" ? row.source.parameters?.bandWidth : undefined).toBe(
+      "normal",
+    );
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.galacticAnticenterEnabled : undefined,
+    ).toBe(false);
   });
 
   it("iss-presentation apply installs a DEV prepared ISS view without network", () => {

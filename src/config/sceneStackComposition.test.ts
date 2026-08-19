@@ -29,6 +29,7 @@ const ALL: LayerEnableFlags = {
   earthquakes: false,
   orbitalTracks: false,
   planetaryObjects: false,
+  milkyWay: false,
   cityPins: true,
   subsolarMarker: true,
   sublunarMarker: true,
