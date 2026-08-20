@@ -88,27 +88,30 @@ This is explanatory astronomy. A default ambient map should not be forced to sho
 
 ### Milky Way observing quality
 
-**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the zenith ribbon. [LIB-050](work/LIB-050-milky-way-visibility-geometry.md) shipped Galactic-center **altitude contours** plus astronomical-night line emphasis and moonlight de-emphasis. That is interpretable geometry, not an aggregated observing-quality forecast.
+**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the zenith ribbon. [LIB-050](work/LIB-050-milky-way-visibility-geometry.md) shipped Galactic-center **altitude contours**. [LIB-051](work/LIB-051-milky-way-viewing-window-events.md) / [ADR 0018](decisions/0018-milky-way-viewing-window-is-a-reference-city-event.md) shipped a **reference-city Milky Way Viewing Window** event family (GC altitude ∩ solar darkness ∩ existing physical moonlight). That is still not an aggregated observing-quality forecast and not a whole-Earth “where can it be seen well” map.
 
-Keep three concepts distinct:
+Keep four concepts distinct:
 
 1. **Galactic ribbon** — where the band is overhead.
 2. **Galactic-center altitude contours** — how high the bright central Milky Way is in the sky from each location (production as of LIB-050).
-3. **Observing favorability** — a later aggregate. Not implemented.
+3. **Milky Way Viewing Window** — when the Galactic center is favorably elevated from the *reference city* under dark-sky geometry (production as of LIB-051).
+4. **Observing favorability** — a later aggregate. Not implemented.
 
-A later feature could combine:
+A later feature could still combine:
 
-- Galactic center altitude (LIB-050 contours already expose this geographically)
+- Galactic center altitude (LIB-050 contours already expose this geographically; LIB-051 already uses it for the city)
 - fraction of the sampled Galactic plane/band above 10° / 20° / 30° (possible additional contours such as 25/50/75% of the band above 20°)
-- astronomical darkness / Sun altitude (LIB-050 already styles GC contours by Sun altitude; it does not collapse that into a score)
-- Moon altitude, lunar phase / moonlight, lunar-eclipse attenuation (LIB-050 optionally de-emphasizes moonlit contour segments using the existing physical moonlight signal)
+- astronomical darkness / Sun altitude
+- Moon altitude, lunar phase / moonlight, lunar-eclipse attenuation
 - optionally clouds
 - potentially light pollution if an authority is introduced later
 
-That would answer: “Where on Earth can the Milky Way be seen well right now?” Do not treat LIB-049 night-side emphasis or LIB-050 contour alpha as that forecast.
+That would answer: “Where on Earth can the Milky Way be seen well right now?” Do not treat LIB-049 night-side emphasis, LIB-050 contour alpha, or LIB-051 city windows as that forecast.
 
 Related but distinct, also unapproved:
 
+- **Milky Way Band Viewing Window** — a separate event family for northern observers when the Galactic *center* is poor but Cygnus/Cassiopeia band is high. Do not merge into GC windows.
+- **Milky Way Viewing Tour** — sequence Prime windows with the same shared Demo-time pattern as Eclipse Tour ([ADR 0015](decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md)). Not a generic EventTour framework.
 - a terrestrial envelope of locations from which *some* portion of the band is above the geometric horizon (deferred from LIB-049 as semantically ambiguous)
 - modest longitude-dependent band width without pretending to be photometry
 - renaming Layers → Space objects to something like “Space & sky”
@@ -281,7 +284,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - reference-city meridian line.
 - read-point alignment marker.
 - UTC meridian reference.
-- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped the zenith ribbon; LIB-050 shipped Galactic-center altitude contours. An aggregated observing-quality forecast remains unapproved.
+- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped the zenith ribbon; LIB-050 shipped Galactic-center altitude contours; LIB-051 shipped reference-city Viewing Window events. An aggregated observing-quality forecast remains unapproved.
 
 ### Dynamic and live layers
 

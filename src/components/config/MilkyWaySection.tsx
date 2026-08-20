@@ -11,7 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import type { ReactElement } from "react";
+import { useMemo, type ReactElement } from "react";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
@@ -22,6 +22,7 @@ import {
   milkyWayPresentationFromScene,
 } from "../../config/v2/sceneConfig";
 import { ASTRONOMY_PATH_THICKNESS_IDS } from "../../core/astronomyOverlayStrokeAppearance";
+import { displayTimeModeFromTopBandTimeMode } from "../../core/displayTimeMode";
 import {
   isPlanetaryEphemerisSupportedUtc,
 } from "../../core/planetaryEphemeris";
@@ -29,10 +30,26 @@ import { MILKY_WAY_UNAVAILABLE_COPY } from "../../core/milkyWayGalactic";
 import {
   MILKY_WAY_BAND_WIDTH_IDS,
   milkyWayBandWidthLabel,
+  milkyWayEnabledViewingLevels,
   type MilkyWayBandWidthId,
   type MilkyWayPresentationPatch,
 } from "../../core/milkyWayPresentation";
+import {
+  formatMilkyWayViewingActiveLines,
+  formatMilkyWayViewingNextWindowLines,
+  milkyWayViewingFeasibilityCopy,
+  MILKY_WAY_VIEWING_WINDOW_HONEST_COPY,
+  resolveMilkyWayViewingStatus,
+} from "../../core/milkyWayViewingStatus";
+import {
+  findNextMilkyWayViewingWindow,
+  listMilkyWayViewingWindows,
+  milkyWayViewingConditionsAt,
+} from "../../core/milkyWayViewingWindows";
+import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
+import { REFERENCE_CITIES } from "../../data/referenceCities";
 import { ConfigControlRow } from "./ConfigControlRow";
+import type { DemoTransportUiProps } from "./DataTab";
 
 type UpdateConfig = (updater: (draft: LibrationConfigV2) => void) => void;
 
@@ -58,8 +75,9 @@ export function MilkyWaySection(props: {
   config: LibrationConfigV2;
   updateConfig?: UpdateConfig;
   productInstantMs?: number;
+  demoTransport?: DemoTransportUiProps;
 }): ReactElement {
-  const { config, updateConfig, productInstantMs } = props;
+  const { config, updateConfig, productInstantMs, demoTransport } = props;
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const pres = milkyWayPresentationFromScene(scene);
@@ -83,6 +101,70 @@ export function MilkyWaySection(props: {
       draft.scene = nextScene;
       draft.layers = deriveLayerEnableFlagsFromScene(nextScene);
     });
+  };
+
+  const observer = resolveReferenceCityObserverLocation(config.chrome.displayTime);
+  const city = observer
+    ? (REFERENCE_CITIES.find((c) => c.id === observer.cityId) ?? null)
+    : null;
+  const displayTimeMode = displayTimeModeFromTopBandTimeMode(
+    config.chrome.displayTime.topBandMode,
+  );
+  const dayBucket =
+    productInstantMs !== undefined ? Math.floor(productInstantMs / 86_400_000) : null;
+  const enabledLevels = milkyWayEnabledViewingLevels(pres);
+  const viewingSearch = useMemo(() => {
+    if (!pres.viewingEventsEnabled || !observer || productInstantMs === undefined || dayBucket === null) {
+      return null;
+    }
+    const startUtcMs = dayBucket * 86_400_000 - 86_400_000;
+    const endUtcMs = startUtcMs + 46 * 86_400_000;
+    return listMilkyWayViewingWindows({
+      observer,
+      startUtcMs,
+      endUtcMs,
+      levels: enabledLevels,
+    });
+  }, [
+    pres.viewingEventsEnabled,
+    observer?.cityId,
+    observer?.latitudeDeg,
+    observer?.longitudeDeg,
+    dayBucket,
+    enabledLevels.join(","),
+    productInstantMs === undefined,
+  ]);
+  const viewingStatus =
+    viewingSearch && productInstantMs !== undefined
+      ? resolveMilkyWayViewingStatus(viewingSearch.windows, productInstantMs)
+      : null;
+  const instant =
+    pres.viewingEventsEnabled && observer && productInstantMs !== undefined
+      ? milkyWayViewingConditionsAt(productInstantMs, observer)
+      : null;
+
+  const goToNextPrime = (): void => {
+    if (!updateConfig || !observer || productInstantMs === undefined) {
+      return;
+    }
+    const nextPrime =
+      viewingStatus?.nextPrime && viewingStatus.nextPrime.startUtcMs > productInstantMs
+        ? viewingStatus.nextPrime
+        : findNextMilkyWayViewingWindow({
+            observer,
+            afterUtcMs: productInstantMs,
+            level: "prime",
+            horizonMs: 365 * 86_400_000,
+          });
+    if (!nextPrime) {
+      return;
+    }
+    updateConfig((draft) => {
+      draft.data.mode = "demo";
+      draft.data.demoTime.enabled = true;
+      draft.data.demoTime.startIsoUtc = new Date(nextPrime.startUtcMs).toISOString();
+    });
+    demoTransport?.onPause();
   };
 
   return (
@@ -574,6 +656,146 @@ export function MilkyWaySection(props: {
             </option>
           ))}
         </select>
+      </ConfigControlRow>
+
+      <p className="config-section__hint">Viewing windows</p>
+      <p className="config-section__hint">{MILKY_WAY_VIEWING_WINDOW_HONEST_COPY}</p>
+      <ConfigControlRow label="Enable Milky Way viewing events">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.viewingEventsEnabled}
+          readOnly={!mutable}
+          disabled={!mutable}
+          tabIndex={mutable ? 0 : -1}
+          aria-label="Enable Milky Way viewing events"
+          title="Compute reference-city Milky Way Viewing Windows. Does not enable the ribbon or contours."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ viewingEventsEnabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show Viewing windows">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showViewingWindows}
+          readOnly={!mutable}
+          disabled={!mutable || !pres.viewingEventsEnabled}
+          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
+          aria-label="Show Viewing windows"
+          title="Include Viewing-level intervals in status and next-window lookup."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showViewingWindows: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show Strong windows">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showStrongWindows}
+          readOnly={!mutable}
+          disabled={!mutable || !pres.viewingEventsEnabled}
+          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
+          aria-label="Show Strong windows"
+          title="Include Strong-level intervals in status and next-window lookup."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showStrongWindows: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show Prime windows">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showPrimeWindows}
+          readOnly={!mutable}
+          disabled={!mutable || !pres.viewingEventsEnabled}
+          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
+          aria-label="Show Prime windows"
+          title="Include Prime-level intervals in status and next-window lookup."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showPrimeWindows: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      {pres.viewingEventsEnabled ? (
+        <div role="status">
+          {!observer ? (
+            <p className="config-section__hint">
+              Select a reference city to evaluate Milky Way viewing windows.
+            </p>
+          ) : viewingSearch?.feasibility && viewingSearch.feasibility !== "ok" ? (
+            <p className="config-section__hint">
+              {milkyWayViewingFeasibilityCopy(viewingSearch.feasibility)}
+            </p>
+          ) : viewingStatus?.active && city ? (
+            formatMilkyWayViewingActiveLines(
+              viewingStatus.active,
+              productInstantMs ?? viewingStatus.active.startUtcMs,
+              city.timeZone,
+              displayTimeMode,
+              instant?.gcAltitudeDeg ?? null,
+            ).map((line) => (
+              <p key={line} className="config-section__hint">
+                {line}
+              </p>
+            ))
+          ) : viewingStatus?.nextPrime && city ? (
+            formatMilkyWayViewingNextWindowLines(
+              viewingStatus.nextPrime,
+              city.timeZone,
+              displayTimeMode,
+            ).map((line) => (
+              <p key={line} className="config-section__hint">
+                {line}
+              </p>
+            ))
+          ) : viewingStatus?.next && city ? (
+            formatMilkyWayViewingNextWindowLines(
+              viewingStatus.next,
+              city.timeZone,
+              displayTimeMode,
+            ).map((line) => (
+              <p key={line} className="config-section__hint">
+                {line}
+              </p>
+            ))
+          ) : (
+            <p className="config-section__hint">
+              No Galactic-center viewing windows in this range.
+            </p>
+          )}
+        </div>
+      ) : null}
+      <ConfigControlRow label="Go to next Prime window">
+        <button
+          type="button"
+          className="config-input"
+          disabled={!mutable || !pres.viewingEventsEnabled || !observer}
+          aria-label="Go to next Prime window"
+          title="Set Demo time to the start of the next Prime window after the current product time."
+          onClick={mutable ? goToNextPrime : undefined}
+        >
+          Go to next Prime
+        </button>
       </ConfigControlRow>
     </>
   );

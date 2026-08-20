@@ -234,6 +234,9 @@ describe("resolveVisualScenarioSession", () => {
     expect(
       row?.source.kind === "derived" ? row.source.parameters?.visibilityContoursEnabled : undefined,
     ).toBe(true);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.viewingEventsEnabled : undefined,
+    ).toBe(true);
   });
 
   it("iss-presentation apply installs a DEV prepared ISS view without network", () => {
@@ -676,6 +679,27 @@ describe("eclipse scenario DEV observerCity", () => {
     if (none.kind === "applied") {
       expect(none.config.chrome.displayTime.topBandAnchor).toEqual({ mode: "auto" });
       expect(none.config.layers.lunarEclipse).toBe(true);
+    }
+  });
+});
+
+describe("milky-way scenario DEV observerCity", () => {
+  it("applies São Paulo as the reference city without disabling viewing events", () => {
+    const session = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=milky-way&observerCity=sao_paulo",
+    });
+    expect(session.kind).toBe("applied");
+    if (session.kind === "applied") {
+      expect(session.config.chrome.displayTime.topBandAnchor).toEqual({
+        mode: "fixedCity",
+        cityId: "city.sao_paulo",
+      });
+      expect(session.config.layers.milkyWay).toBe(true);
+      const row = session.config.scene?.layers.find((l) => l.id === "milkyWay");
+      expect(row?.source.kind === "derived" ? row.source.parameters?.viewingEventsEnabled : undefined).toBe(
+        true,
+      );
     }
   });
 });

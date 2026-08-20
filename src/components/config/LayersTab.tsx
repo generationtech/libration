@@ -78,6 +78,7 @@ import { EclipseSystemSection } from "./EclipseSystemSection";
 import type { EclipseTourSessionUi } from "./EclipseTourSection";
 import { IssPresentationSection } from "./IssPresentationSection";
 import { PlanetaryObjectsSection } from "./PlanetaryObjectsSection";
+import type { DemoTransportUiProps } from "./DataTab";
 import { MilkyWaySection } from "./MilkyWaySection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
@@ -525,6 +526,8 @@ export type LayersTabProps = {
   issConfigStatusHint?: IssConfigStatusHint | null;
   /** Runtime Eclipse Tour session; omitted in read-only / unit-harness renders. */
   eclipseTourSession?: EclipseTourSessionUi;
+  /** Runtime Demo pause; used by Milky Way Go to next Prime. */
+  demoTransport?: DemoTransportUiProps;
 };
 
 export function LayersTab({
@@ -534,6 +537,7 @@ export function LayersTab({
   productTimeLiveEnough,
   issConfigStatusHint,
   eclipseTourSession,
+  demoTransport,
 }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
@@ -1630,6 +1634,7 @@ export function LayersTab({
               config={config}
               updateConfig={updateConfig}
               productInstantMs={productInstantMs}
+              demoTransport={demoTransport}
             />
           </div>
         ) : null}

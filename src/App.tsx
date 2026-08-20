@@ -669,6 +669,9 @@ export default function App() {
           if (calendarMonthUtc1To12FromUnixMs(prev) !== calendarMonthUtc1To12FromUnixMs(clockNowMs)) {
             return clockNowMs;
           }
+          if (Math.abs(clockNowMs - prev) >= 1000) {
+            return clockNowMs;
+          }
           return prev;
         });
       }

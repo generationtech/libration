@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-050](work/LIB-050-milky-way-visibility-geometry.md) — Milky Way visibility geometry
+[LIB-051](work/LIB-051-milky-way-viewing-window-events.md) — Milky Way viewing window events
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Await human scope. Do not start work.
+Stop. No approved work.

@@ -23,6 +23,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0015](0015-domain-tour-sequencer-drives-shared-demo-time.md) | Domain tour sequencer drives shared Demo time |
 | [0016](0016-offline-planetary-ephemeris-authority.md) | Offline planetary apparent-position authority |
 | [0017](0017-offline-iau-galactic-zenith-projection-authority.md) | Offline IAU Galactic zenith-projection authority |
+| [0018](0018-milky-way-viewing-window-is-a-reference-city-event.md) | Milky Way Viewing Window is a reference-city event |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

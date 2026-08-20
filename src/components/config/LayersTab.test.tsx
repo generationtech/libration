@@ -822,6 +822,60 @@ describe("LayersTab topic navigation", () => {
     expect((screen.getByLabelText("Show 60° contour") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText("Show horizon / 0°") as HTMLInputElement).checked).toBe(false);
   });
+
+  it("Milky Way viewing-event controls are independent of the overlay master", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("spaceObjects");
+    const master = screen.getByLabelText("Show Milky Way") as HTMLInputElement;
+    const events = screen.getByLabelText("Enable Milky Way viewing events") as HTMLInputElement;
+    const viewing = screen.getByLabelText("Show Viewing windows") as HTMLInputElement;
+    const go = screen.getByRole("button", { name: "Go to next Prime window" }) as HTMLButtonElement;
+    expect(master.checked).toBe(false);
+    expect(events.checked).toBe(false);
+    expect(events.disabled).toBe(false);
+    expect(viewing.disabled).toBe(true);
+    expect(go.disabled).toBe(true);
+
+    await user.click(events);
+    expect(events.checked).toBe(true);
+    expect(master.checked).toBe(false);
+    expect(viewing.disabled).toBe(false);
+    expect((screen.getByLabelText("Show Strong windows") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Show Prime windows") as HTMLInputElement).checked).toBe(true);
+    expect(go.disabled).toBe(false);
+  });
+
+  it("Go to next Prime writes the existing Demo start", async () => {
+    const user = userEvent.setup();
+    const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
+    function Harness() {
+      const [config, setConfig] = useState(initial);
+      return (
+        <>
+          <LayersTab
+            config={config}
+            updateConfig={(updater) => {
+              const draft = normalizeLibrationConfig(config);
+              updater(draft);
+              setConfig(normalizeLibrationConfig(draft));
+            }}
+            productInstantMs={Date.parse("2026-08-19T06:00:00.000Z")}
+          />
+          <pre data-testid="demo-start">{config.data.demoTime.startIsoUtc}</pre>
+          <pre data-testid="demo-mode">{config.data.mode}</pre>
+        </>
+      );
+    }
+    render(<Harness />);
+    selectLayersTopic("spaceObjects");
+    await user.click(screen.getByLabelText("Enable Milky Way viewing events"));
+    await user.click(screen.getByRole("button", { name: "Go to next Prime window" }));
+    const start = screen.getByTestId("demo-start").textContent ?? "";
+    expect(screen.getByTestId("demo-mode").textContent).toBe("demo");
+    expect(Date.parse(start)).toBeGreaterThan(Date.parse("2026-08-19T06:00:00.000Z"));
+    expect(Date.parse(start)).toBeLessThan(Date.parse("2026-09-20T00:00:00.000Z"));
+  });
 });
 
 describe("LayersTab live overlay masters", () => {

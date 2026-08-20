@@ -549,7 +549,10 @@ function applyMilkyWayScene(draft: LibrationConfigV2): void {
       contour75Enabled: true,
       contour0Enabled: false,
       emphasizeAstronomicalNight: true,
-      deemphasizeMoonlight: true,
+      viewingEventsEnabled: true,
+      showViewingWindows: true,
+      showStrongWindows: true,
+      showPrimeWindows: true,
     });
     draft.scene = applyLayerEnableFlagsToScene(draft.scene, draft.layers);
   }
@@ -863,7 +866,9 @@ export function resolveVisualScenarioSession(
   const definition = VISUAL_SCENARIOS[requested];
   const searchParams = parseSearchParams(input.search);
   const eclipseObserver =
-    requested.startsWith("solar-eclipse-") || requested.startsWith("lunar-eclipse-")
+    requested.startsWith("solar-eclipse-") ||
+    requested.startsWith("lunar-eclipse-") ||
+    requested === "milky-way"
       ? parseMoonLibrationObserverCityId(searchParams.get("observerCity"))
       : null;
   const horizonDays =

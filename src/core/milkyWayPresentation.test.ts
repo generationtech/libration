@@ -39,6 +39,10 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.contour75Enabled).toBe(true);
     expect(n.emphasizeAstronomicalNight).toBe(true);
     expect(n.deemphasizeMoonlight).toBe(true);
+    expect(n.viewingEventsEnabled).toBe(false);
+    expect(n.showViewingWindows).toBe(true);
+    expect(n.showStrongWindows).toBe(true);
+    expect(n.showPrimeWindows).toBe(true);
   });
 
   it("preserves explicit persisted values and rejects unknown tokens", () => {

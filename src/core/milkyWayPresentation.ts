@@ -21,6 +21,7 @@ import {
   normalizeAstronomyPathThicknessId,
   type AstronomyPathThicknessId,
 } from "./astronomyOverlayStrokeAppearance";
+import type { MilkyWayViewingLevel } from "./milkyWayViewingPolicy";
 
 export const MILKY_WAY_BAND_WIDTH_IDS = ["narrow", "normal", "wide"] as const;
 export type MilkyWayBandWidthId = (typeof MILKY_WAY_BAND_WIDTH_IDS)[number];
@@ -88,6 +89,10 @@ export type MilkyWayPresentation = {
   deemphasizeMoonlight: boolean;
   visibilityColor: string;
   visibilityThickness: AstronomyPathThicknessId;
+  viewingEventsEnabled: boolean;
+  showViewingWindows: boolean;
+  showStrongWindows: boolean;
+  showPrimeWindows: boolean;
 };
 
 export type MilkyWayPresentationPatch = Partial<MilkyWayPresentation>;
@@ -115,6 +120,10 @@ export const DEFAULT_MILKY_WAY_PRESENTATION: MilkyWayPresentation = {
   deemphasizeMoonlight: true,
   visibilityColor: DEFAULT_MILKY_WAY_VISIBILITY_COLOR,
   visibilityThickness: DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS,
+  viewingEventsEnabled: false,
+  showViewingWindows: true,
+  showStrongWindows: true,
+  showPrimeWindows: true,
 };
 
 function isBandWidthId(raw: unknown): raw is MilkyWayBandWidthId {
@@ -165,6 +174,10 @@ export function normalizeMilkyWayPresentation(raw: unknown): MilkyWayPresentatio
     visibilityThickness: normalizeAstronomyPathThicknessId(
       o.visibilityThickness ?? d.visibilityThickness,
     ),
+    viewingEventsEnabled: asBoolean(o.viewingEventsEnabled, d.viewingEventsEnabled),
+    showViewingWindows: asBoolean(o.showViewingWindows, d.showViewingWindows),
+    showStrongWindows: asBoolean(o.showStrongWindows, d.showStrongWindows),
+    showPrimeWindows: asBoolean(o.showPrimeWindows, d.showPrimeWindows),
   };
 }
 
@@ -186,6 +199,22 @@ export function milkyWayEnabledContourAltitudesDeg(
   }
   if (pres.contour75Enabled) {
     out.push(75);
+  }
+  return out;
+}
+
+export function milkyWayEnabledViewingLevels(
+  pres: MilkyWayPresentation,
+): MilkyWayViewingLevel[] {
+  const out: MilkyWayViewingLevel[] = [];
+  if (pres.showViewingWindows) {
+    out.push("viewing");
+  }
+  if (pres.showStrongWindows) {
+    out.push("strong");
+  }
+  if (pres.showPrimeWindows) {
+    out.push("prime");
   }
   return out;
 }

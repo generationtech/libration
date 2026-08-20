@@ -310,3 +310,9 @@ Galactic-center altitude contours under Layers → Space objects → Milky Way: 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 242 files / 2231 passed / 0 failed; `npm run build` succeeded with no `milky-way` scenario registry in `dist/`. Cursor Browser `?scenario=milky-way`: nested contours, southern advantage, contour toggle, Demo +6 h. LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-051 complete
+
+Reference-city Milky Way Viewing Window events: GC altitude ∩ solar darkness ∩ existing physical moonlight. Viewing / Strong / Prime with latitude-aware Prime. Config under Layers → Space objects → Milky Way. Go to next Prime uses existing Demo time. ADR 0018.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 245 files / 2266 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `observerCity` / `?scenario=` in `dist/`. Cursor Browser `?scenario=milky-way` (Knoxville Prime 24.5°) and `observerCity=sao_paulo` (Prime 83.6°). LIB-037 stays proposed.
+

@@ -79,6 +79,7 @@ function renderActiveTabContent(
           productTimeLiveEnough={productTimeLiveEnough}
           issConfigStatusHint={issConfigStatusHint}
           eclipseTourSession={eclipseTourSession}
+          demoTransport={demoTransport}
         />
       );
     case "pins":

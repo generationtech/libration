@@ -1796,6 +1796,8 @@ describe("eclipse product polish presentation", () => {
     expect(milkyWayPresentationFromScene(factory.scene!).contour0Enabled).toBe(false);
     expect(milkyWayPresentationFromScene(factory.scene!).emphasizeAstronomicalNight).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).deemphasizeMoonlight).toBe(true);
+    expect(milkyWayPresentationFromScene(factory.scene!).viewingEventsEnabled).toBe(false);
+    expect(milkyWayPresentationFromScene(factory.scene!).showPrimeWindows).toBe(true);
 
     const explicit = normalizeLibrationConfig({
       ...factory,
