@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_MILKY_WAY_PRESENTATION } from "../../core/milkyWayPresentation";
 import type { MilkyWayGeometry, MilkyWayTaggedPoint } from "../../core/milkyWayGeometry";
+import type { MilkyWayVisibilityGeometry, MilkyWayVisibilitySample } from "../../core/milkyWayVisibilityGeometry";
 import { MILKY_WAY_KIND, type MilkyWayPayload } from "../../layers/milkyWayPayload";
 import { buildMilkyWayRenderPlan } from "./milkyWayPlan";
 
@@ -41,6 +42,7 @@ function payload(partial: Partial<MilkyWayPayload> = {}): MilkyWayPayload {
     supported: true,
     presentation: DEFAULT_MILKY_WAY_PRESENTATION,
     geometry: geometry(),
+    visibility: null,
     ...partial,
   };
 }
@@ -135,5 +137,56 @@ describe("buildMilkyWayRenderPlan", () => {
       return m ? Number(m[1]) : 0;
     });
     expect(Math.max(...alphas)).toBeGreaterThan(Math.min(...alphas) + 0.15);
+  });
+
+  it("draws visibility contours as lines without fill and without a world-spanning chord", () => {
+    const sample = (latDeg: number, lonDeg: number, solarAltitudeDeg: number): MilkyWayVisibilitySample => ({
+      latDeg,
+      lonDeg,
+      solarAltitudeDeg,
+      moonFactor: 1,
+    });
+    const visibility: MilkyWayVisibilityGeometry = {
+      galacticCenter: { latDeg: -29, lonDeg: 170 },
+      contours: [
+        {
+          altitudeDeg: 60,
+          points: [
+            sample(-20, 165, -30),
+            sample(-18, 175, -30),
+            sample(-19, -175, 10),
+            sample(-21, -165, 10),
+            sample(-20, 165, -30),
+          ],
+        },
+      ],
+    };
+    const plan = buildMilkyWayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        presentation: {
+          ...DEFAULT_MILKY_WAY_PRESENTATION,
+          planeEnabled: false,
+          bandEnabled: false,
+          ribsEnabled: false,
+          galacticCenterEnabled: false,
+          galacticCenterLabelEnabled: false,
+          visibilityContoursEnabled: true,
+        },
+        visibility,
+      }),
+    });
+    expect(plan.items.some((item) => item.kind === "rasterPatch")).toBe(false);
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      expect(Math.abs(item.x2 - item.x1)).toBeLessThan(180);
+    }
+    expect(plan.items.some((item) => item.kind === "text" && item.text === "60°")).toBe(true);
   });
 });

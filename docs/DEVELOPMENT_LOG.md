@@ -304,3 +304,9 @@ Milky Way zenith-projection ribbon under Layers → Space objects: IAU 1958 Gala
 
 Verified: `npx tsc --noEmit` clean; `npm test` 241 files / 2216 passed / 0 failed; `npm run build` succeeded with no `milky-way` scenario registry in `dist/`. Cursor Browser `?scenario=milky-way` (plane/band/ribs/center/anticenter/night/Demo +6 h/accelerated playback) and `?scenario=solar-eclipse-total` with Milky Way on. LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-050 complete
+
+Galactic-center altitude contours under Layers → Space objects → Milky Way: small circles of constant GC altitude (default 30/45/60/75°) around the LIB-049 subpoint, with astronomical-night line emphasis and optional moonlight de-emphasis. Not a score, raster, or ribbon replacement. No new ADR.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 242 files / 2231 passed / 0 failed; `npm run build` succeeded with no `milky-way` scenario registry in `dist/`. Cursor Browser `?scenario=milky-way`: nested contours, southern advantage, contour toggle, Demo +6 h. LIB-037 stays proposed.
+

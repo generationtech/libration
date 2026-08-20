@@ -31,6 +31,14 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.galacticAnticenterEnabled).toBe(false);
     expect(n.emphasizeNightSide).toBe(true);
     expect(n.planeThickness).toBe("thin");
+    expect(n.visibilityContoursEnabled).toBe(false);
+    expect(n.contour0Enabled).toBe(false);
+    expect(n.contour30Enabled).toBe(true);
+    expect(n.contour45Enabled).toBe(true);
+    expect(n.contour60Enabled).toBe(true);
+    expect(n.contour75Enabled).toBe(true);
+    expect(n.emphasizeAstronomicalNight).toBe(true);
+    expect(n.deemphasizeMoonlight).toBe(true);
   });
 
   it("preserves explicit persisted values and rejects unknown tokens", () => {
@@ -57,5 +65,16 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(next.bandWidth).toBe("narrow");
     expect(next.planeEnabled).toBe(true);
     expect(next.emphasizeNightSide).toBe(true);
+  });
+
+  it("enables visibility contours without dropping ribbon flags", () => {
+    const next = mergeMilkyWayPresentation(DEFAULT_MILKY_WAY_PRESENTATION, {
+      visibilityContoursEnabled: true,
+      contour0Enabled: true,
+    });
+    expect(next.visibilityContoursEnabled).toBe(true);
+    expect(next.contour0Enabled).toBe(true);
+    expect(next.planeEnabled).toBe(true);
+    expect(next.contour30Enabled).toBe(true);
   });
 });

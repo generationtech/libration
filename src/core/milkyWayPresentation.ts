@@ -12,7 +12,8 @@
  */
 
 /**
- * Milky Way zenith-ribbon presentation (LIB-049). Conservative controls only.
+ * Milky Way zenith-ribbon presentation (LIB-049) plus Galactic-center altitude
+ * visibility contours (LIB-050). Conservative controls only.
  */
 
 import {
@@ -36,6 +37,18 @@ export const DEFAULT_MILKY_WAY_PLANE_COLOR = "#c9bdd8";
 export const DEFAULT_MILKY_WAY_BAND_COLOR = "#9aa3c0";
 export const DEFAULT_MILKY_WAY_PLANE_THICKNESS: AstronomyPathThicknessId = "thin";
 export const DEFAULT_MILKY_WAY_BAND_THICKNESS: AstronomyPathThicknessId = "thin";
+
+/** Distinct from plane/band, still in the same cool-lavender family. Not white. */
+export const DEFAULT_MILKY_WAY_VISIBILITY_COLOR = "#b8a0d4";
+export const DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS: AstronomyPathThicknessId = "thin";
+
+export const MILKY_WAY_GC_ALTITUDE_CONTOUR_DEGS = [0, 30, 45, 60, 75] as const;
+export type MilkyWayGcAltitudeContourDeg = (typeof MILKY_WAY_GC_ALTITUDE_CONTOUR_DEGS)[number];
+
+/** Default-on levels once the user enables visibility contours. Horizon 0° stays off. */
+export const DEFAULT_MILKY_WAY_VISIBLE_CONTOUR_DEGS: readonly MilkyWayGcAltitudeContourDeg[] = [
+  30, 45, 60, 75,
+];
 
 export function milkyWayBandWidthLabel(id: MilkyWayBandWidthId): string {
   switch (id) {
@@ -65,6 +78,16 @@ export type MilkyWayPresentation = {
   galacticCenterLabelEnabled: boolean;
   galacticAnticenterEnabled: boolean;
   emphasizeNightSide: boolean;
+  visibilityContoursEnabled: boolean;
+  contour0Enabled: boolean;
+  contour30Enabled: boolean;
+  contour45Enabled: boolean;
+  contour60Enabled: boolean;
+  contour75Enabled: boolean;
+  emphasizeAstronomicalNight: boolean;
+  deemphasizeMoonlight: boolean;
+  visibilityColor: string;
+  visibilityThickness: AstronomyPathThicknessId;
 };
 
 export type MilkyWayPresentationPatch = Partial<MilkyWayPresentation>;
@@ -82,6 +105,16 @@ export const DEFAULT_MILKY_WAY_PRESENTATION: MilkyWayPresentation = {
   galacticCenterLabelEnabled: true,
   galacticAnticenterEnabled: false,
   emphasizeNightSide: true,
+  visibilityContoursEnabled: false,
+  contour0Enabled: false,
+  contour30Enabled: true,
+  contour45Enabled: true,
+  contour60Enabled: true,
+  contour75Enabled: true,
+  emphasizeAstronomicalNight: true,
+  deemphasizeMoonlight: true,
+  visibilityColor: DEFAULT_MILKY_WAY_VISIBILITY_COLOR,
+  visibilityThickness: DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS,
 };
 
 function isBandWidthId(raw: unknown): raw is MilkyWayBandWidthId {
@@ -114,7 +147,47 @@ export function normalizeMilkyWayPresentation(raw: unknown): MilkyWayPresentatio
       d.galacticAnticenterEnabled,
     ),
     emphasizeNightSide: asBoolean(o.emphasizeNightSide, d.emphasizeNightSide),
+    visibilityContoursEnabled: asBoolean(
+      o.visibilityContoursEnabled,
+      d.visibilityContoursEnabled,
+    ),
+    contour0Enabled: asBoolean(o.contour0Enabled, d.contour0Enabled),
+    contour30Enabled: asBoolean(o.contour30Enabled, d.contour30Enabled),
+    contour45Enabled: asBoolean(o.contour45Enabled, d.contour45Enabled),
+    contour60Enabled: asBoolean(o.contour60Enabled, d.contour60Enabled),
+    contour75Enabled: asBoolean(o.contour75Enabled, d.contour75Enabled),
+    emphasizeAstronomicalNight: asBoolean(
+      o.emphasizeAstronomicalNight,
+      d.emphasizeAstronomicalNight,
+    ),
+    deemphasizeMoonlight: asBoolean(o.deemphasizeMoonlight, d.deemphasizeMoonlight),
+    visibilityColor: normalizeAstronomyPathColorCss(o.visibilityColor, d.visibilityColor),
+    visibilityThickness: normalizeAstronomyPathThicknessId(
+      o.visibilityThickness ?? d.visibilityThickness,
+    ),
   };
+}
+
+export function milkyWayEnabledContourAltitudesDeg(
+  pres: MilkyWayPresentation,
+): MilkyWayGcAltitudeContourDeg[] {
+  const out: MilkyWayGcAltitudeContourDeg[] = [];
+  if (pres.contour0Enabled) {
+    out.push(0);
+  }
+  if (pres.contour30Enabled) {
+    out.push(30);
+  }
+  if (pres.contour45Enabled) {
+    out.push(45);
+  }
+  if (pres.contour60Enabled) {
+    out.push(60);
+  }
+  if (pres.contour75Enabled) {
+    out.push(75);
+  }
+  return out;
 }
 
 export function mergeMilkyWayPresentation(

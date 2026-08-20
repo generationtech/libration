@@ -16,9 +16,11 @@ import { isPlanetaryEphemerisSupportedUtc } from "../core/planetaryEphemeris";
 import { sampleMilkyWayGeometry } from "../core/milkyWayGeometry";
 import {
   DEFAULT_MILKY_WAY_PRESENTATION,
+  milkyWayEnabledContourAltitudesDeg,
   normalizeMilkyWayPresentation,
   type MilkyWayPresentation,
 } from "../core/milkyWayPresentation";
+import { sampleMilkyWayVisibilityContours } from "../core/milkyWayVisibilityGeometry";
 import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import { MILKY_WAY_KIND, type MilkyWayPayload } from "./milkyWayPayload";
@@ -53,23 +55,34 @@ export function createMilkyWayLayer(
     getState(time: TimeContext): LayerState {
       const frame = getOverlayReadabilityFrameOrCompute(time);
       const supported = isPlanetaryEphemerisSupportedUtc(time.now);
-      const needsGeometry =
-        supported &&
-        (presentation.planeEnabled ||
-          presentation.bandEnabled ||
-          presentation.ribsEnabled ||
-          presentation.galacticCenterEnabled ||
-          presentation.galacticAnticenterEnabled);
-      const geometry = needsGeometry
-        ? sampleMilkyWayGeometry(time.now, presentation.bandWidth, {
-            tagNight: presentation.emphasizeNightSide,
-          })
-        : null;
+      const contourAlts = milkyWayEnabledContourAltitudesDeg(presentation);
+      const needsVisibility = presentation.visibilityContoursEnabled && contourAlts.length > 0;
+      const needsRibbon =
+        presentation.planeEnabled ||
+        presentation.bandEnabled ||
+        presentation.ribsEnabled ||
+        presentation.galacticCenterEnabled ||
+        presentation.galacticAnticenterEnabled;
+      const geometry =
+        supported && (needsRibbon || needsVisibility)
+          ? sampleMilkyWayGeometry(time.now, presentation.bandWidth, {
+              tagNight: presentation.emphasizeNightSide,
+            })
+          : null;
+      const visibility =
+        supported && needsVisibility && geometry?.galacticCenter
+          ? sampleMilkyWayVisibilityContours(time.now, geometry.galacticCenter, contourAlts, {
+              tagSun: presentation.emphasizeAstronomicalNight,
+              tagMoon: presentation.deemphasizeMoonlight,
+              lunarGeometry: time.eclipseFrame?.lunarGeometry,
+            })
+          : null;
       const data: MilkyWayPayload = {
         kind: MILKY_WAY_KIND,
         supported,
         presentation,
         geometry,
+        visibility,
         readability: {
           nightVeil01: frame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,

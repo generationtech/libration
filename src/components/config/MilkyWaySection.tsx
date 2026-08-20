@@ -90,8 +90,10 @@ export function MilkyWaySection(props: {
       <h3 className="config-section__title config-section__title--sub">Milky Way</h3>
       <p className="config-section__hint">
         The Milky Way ribbon shows where directions along the Galactic plane and its approximate
-        bright band are directly overhead at the selected time. Much larger areas of Earth can see
-        portions of the Milky Way above their horizons.
+        bright band are directly overhead at the selected time. Galactic-center altitude contours
+        show how high the bright central Milky Way is above the geometric horizon from each
+        location. Much larger areas of Earth can see portions of the Milky Way above their
+        horizons.
       </p>
       {unsupported ? (
         <p className="config-section__hint" role="status">
@@ -119,7 +121,7 @@ export function MilkyWaySection(props: {
         />
       </ConfigControlRow>
 
-      <p className="config-section__hint">Structure</p>
+      <p className="config-section__hint">Reference geometry</p>
       <ConfigControlRow label="Show Galactic plane">
         <input
           type="checkbox"
@@ -367,6 +369,212 @@ export function MilkyWaySection(props: {
         Brighter segments indicate portions of the overhead projection currently on Earth’s night
         side; this is not an observing-quality forecast.
       </p>
+
+      <p className="config-section__hint">Visibility</p>
+      <p className="config-section__hint">
+        Contours show the Galactic center’s altitude above the geometric horizon. They are not a
+        brightness, seeing, or light-pollution score.
+      </p>
+      <ConfigControlRow label="Show Galactic-center altitude contours">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.visibilityContoursEnabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff}
+          tabIndex={mutable && !childOff ? 0 : -1}
+          aria-label="Show Galactic-center altitude contours"
+          title="Small circles of constant Galactic-center altitude around the current zenith subpoint."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ visibilityContoursEnabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show 30° contour">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.contour30Enabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show 30° contour"
+          title="Locations where the Galactic center is 30° above the geometric horizon."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ contour30Enabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show 45° contour">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.contour45Enabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show 45° contour"
+          title="Locations where the Galactic center is 45° above the geometric horizon."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ contour45Enabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show 60° contour">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.contour60Enabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show 60° contour"
+          title="Locations where the Galactic center is 60° above the geometric horizon."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ contour60Enabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show 75° contour">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.contour75Enabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show 75° contour"
+          title="Locations where the Galactic center is 75° above the geometric horizon."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ contour75Enabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show horizon / 0°">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.contour0Enabled}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show horizon / 0°"
+          title="Geometric horizon for the Galactic center. Off by default to reduce clutter."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ contour0Enabled: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Emphasize astronomical night">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.emphasizeAstronomicalNight}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Emphasize astronomical night"
+          title="Stronger segments indicate astronomical darkness (Sun ≤ −18°). Not a visibility forecast."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ emphasizeAstronomicalNight: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <p className="config-section__hint">
+        Stronger segments indicate astronomical darkness (Sun ≤ −18°).
+      </p>
+      <ConfigControlRow label="De-emphasize moonlight">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.deemphasizeMoonlight}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="De-emphasize moonlight"
+          title="Moonlit segments are quieter using the existing moonlight model. Geometry is not removed."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ deemphasizeMoonlight: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <p className="config-section__hint">
+        Moonlit segments are de-emphasized using the existing moonlight model.
+      </p>
+      <ConfigControlRow label="Visibility color">
+        <input
+          type="color"
+          className="config-input"
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          aria-label="Visibility color"
+          title="Stroke color of Galactic-center altitude contours."
+          value={pres.visibilityColor}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ visibilityColor: e.currentTarget.value });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Visibility thickness">
+        <select
+          className="config-input"
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          aria-label="Visibility thickness"
+          title="Stroke thickness of Galactic-center altitude contours."
+          value={pres.visibilityThickness}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({
+                    visibilityThickness: e.currentTarget
+                      .value as (typeof ASTRONOMY_PATH_THICKNESS_IDS)[number],
+                  });
+                }
+              : undefined
+          }
+        >
+          {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
+            <option key={id} value={id}>
+              {thicknessLabel(id)}
+            </option>
+          ))}
+        </select>
+      </ConfigControlRow>
     </>
   );
 }

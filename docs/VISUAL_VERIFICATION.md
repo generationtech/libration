@@ -98,7 +98,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
 | `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, **horizons (minutes and orbits)**, colors, thickness, glyph type/size/color, silhouette color, label |
 | `planetary-objects` | `2026-08-19T15:30:00.000Z` | Planets master on; Mercury through Neptune plus Pluto enabled; factory shared presentation (current subpoints/labels on, tracks/loci off); clouds/earthquakes/ISS off. Offline ephemeris | All current planet glyphs/labels; Space objects Planets controls; representative ground tracks and loci; per-body locus toggles; Demo jumps |
-| `milky-way` | `2026-08-19T06:00:00.000Z` | Milky Way master on; factory enabled presentation (plane, Normal band, ribs, Galactic center + label, night-side emphasis; anticenter off); clouds/earthquakes/ISS/Planets off. Offline IAU geometry | Zenith ribbon vs shading; plane/band/ribs; Galactic center marker/label; night-side alpha; dateline wrap; Demo jumps six hours apart |
+| `milky-way` | `2026-08-19T06:00:00.000Z` | Milky Way master on; factory enabled ribbon (plane, Normal band, ribs, Galactic center + label, night-side emphasis; anticenter off) **plus Galactic-center altitude contours** (30/45/60/75° on, horizon off, astronomical-night emphasis and moonlight de-emphasis on). Clouds/earthquakes/ISS/Planets off. Offline IAU geometry | Zenith ribbon vs shading; nested GC altitude contours; southern-hemisphere advantage; night/day contour alpha; dateline wrap; Demo jumps six hours apart |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
 | `solar-eclipse-annular` | `2023-10-14T17:59:27.300Z` | Production solar eclipse overlay at NASA 2023 Oct 14 greatest eclipse (annular). Optional DEV `observerCity=` | Annularity band (not totality styling); path geography; alignment beam targets live antumbra, not totality styling |
 | `solar-eclipse-partial` | `2022-10-25T11:00:06.900Z` | Production solar eclipse overlay at NASA 2022 Oct 25 greatest eclipse (partial-only). Optional DEV `observerCity=` | Partial footprint without a false central band or centerline; **no fabricated central alignment beam** (local glyph-field only) |
@@ -454,16 +454,20 @@ Use `http://localhost:1420/?scenario=milky-way`. Confirm the DEV banner id and U
 
 The ribbon is a **zenith projection**: it shows where Galactic-plane and approximate-band directions are directly overhead. It is not “where the Milky Way is visible.” Night-side emphasis is not an observing-quality forecast.
 
+Galactic-center **altitude contours** are a second line presentation: a point on the 60° contour sees the Galactic center 60° above the geometric horizon at this instant. They are nested small circles around the GC marker. Higher altitude → smaller circle. No fill. Astronomical-night emphasis strengthens segments where the Sun is low; moonlight de-emphasis quiets moonlit segments using the existing moonlight model. This is still not a single visibility score.
+
 - Galactic plane alone (band and ribs off): one thin great-circle-like curve, not a filled region, not a world-spanning false line.
 - Plane + band edges: two flanking curves around the plane; Normal width clearly broader than Narrow and narrower than Wide.
 - Ribs on: sparse cross-connectors communicate width and orientation without reading as a grid or fence.
 - Galactic center marker and “Galactic center” label offset from the glyph/band; anticenter off by default, quieter when enabled, unlabeled.
 - Night-side emphasis: night-side segments stronger than day-side; toggling it off equalizes alpha. This is the overhead projection on Earth’s night side, not visibility.
-- Demo jumps ~six hours apart: the ribbon rotates westward with sidereal time. 1600 / 2000 / current / ~2500 remain geometrically coherent.
+- Altitude contours (scenario default on): nested 30/45/60/75° circles centered on the GC marker; 75° smallest. Southern latitudes near the GC subpoint sit inside the high-altitude rings; northern mid-latitudes sit outside or near 30°. Day-side contour strokes are quiet; astronomical-night stretches are strongest. Horizon 0° off by default.
+- Toggle “Show Galactic-center altitude contours” off: rings disappear; ribbon remains. Toggle the ribbon structures off with contours on: rings remain.
+- Demo jumps ~six hours apart: the ribbon **and** the contours rotate westward with the GC marker. 1600 / 2000 / current / ~2500 remain geometrically coherent.
 - Combined Planets + Milky Way: planets remain readable; Milky Way stays under planetary glyphs.
-- Combined eclipse scenario with Milky Way on: eclipse geography remains the event overlay; the ribbon does not become a shading layer.
+- Combined eclipse scenario with Milky Way on: eclipse geography remains the event overlay; neither ribbon nor contours become a shading layer.
 
-Factory defaults keep Milky Way off.
+Factory defaults keep Milky Way off. Enabling the master does **not** turn altitude contours on.
 
 ### Current vs historical dynamic-layer smoke
 

@@ -53,7 +53,7 @@ export interface LayerEnableFlags {
    */
   planetaryObjects: boolean;
   /**
-   * Milky Way zenith ribbon (scene product `milkyWay`). Default off.
+   * Milky Way zenith ribbon and optional Galactic-center altitude contours (scene product `milkyWay`). Default off.
    */
   milkyWay: boolean;
   cityPins: boolean;

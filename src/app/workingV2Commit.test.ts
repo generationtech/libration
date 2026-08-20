@@ -965,7 +965,7 @@ describe("commitWorkingV2Update", () => {
       ...SCENE_EQUALITY_LAYER_FLAGS,
       milkyWay: true,
     });
-    const b = applyMilkyWayPresentationToScene(a, { bandWidth: "wide" });
+    const b = applyMilkyWayPresentationToScene(a, { visibilityContoursEnabled: true });
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
   });

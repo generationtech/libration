@@ -1791,6 +1791,11 @@ describe("eclipse product polish presentation", () => {
     expect(row?.source.kind === "derived" ? row.source.product : undefined).toBe("milkyWay");
     expect(milkyWayPresentationFromScene(factory.scene!).bandWidth).toBe("normal");
     expect(milkyWayPresentationFromScene(factory.scene!).galacticAnticenterEnabled).toBe(false);
+    expect(milkyWayPresentationFromScene(factory.scene!).visibilityContoursEnabled).toBe(false);
+    expect(milkyWayPresentationFromScene(factory.scene!).contour30Enabled).toBe(true);
+    expect(milkyWayPresentationFromScene(factory.scene!).contour0Enabled).toBe(false);
+    expect(milkyWayPresentationFromScene(factory.scene!).emphasizeAstronomicalNight).toBe(true);
+    expect(milkyWayPresentationFromScene(factory.scene!).deemphasizeMoonlight).toBe(true);
 
     const explicit = normalizeLibrationConfig({
       ...factory,

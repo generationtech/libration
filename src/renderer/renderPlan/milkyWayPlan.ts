@@ -40,11 +40,32 @@ import {
   equirectXFromUnwrappedLon,
   unwrappedLongitudes,
 } from "./equirectSeamPath";
+import type { MilkyWayGcAltitudeContourDeg } from "../../core/milkyWayPresentation";
+import {
+  milkyWayVisibilityNightFactor,
+  type MilkyWayVisibilitySample,
+} from "../../core/milkyWayVisibilityGeometry";
 
 const GALACTIC_CENTER_LABEL = "Galactic center";
 const DAY_ALPHA = 0.28;
 const NIGHT_ALPHA = 0.78;
 const UNIFORM_ALPHA = 0.62;
+
+const CONTOUR_BASE_ALPHA: Record<MilkyWayGcAltitudeContourDeg, number> = {
+  0: 0.22,
+  30: 0.35,
+  45: 0.5,
+  60: 0.68,
+  75: 0.85,
+};
+
+const CONTOUR_WIDTH_MULT: Record<MilkyWayGcAltitudeContourDeg, number> = {
+  0: 0.82,
+  30: 0.9,
+  45: 1,
+  60: 1.08,
+  75: 1.18,
+};
 
 function strokeRgba(css: string, alpha: number): string {
   const px = parseCssColorToRgba8888(css);
@@ -107,6 +128,76 @@ function pushSeamAwarePolyline(
   }
 }
 
+function visibilitySegmentAlpha(
+  a: MilkyWayVisibilitySample,
+  b: MilkyWayVisibilitySample,
+  emphasizeNight: boolean,
+  deemphasizeMoon: boolean,
+  baseAlpha: number,
+): number {
+  const night = emphasizeNight
+    ? (milkyWayVisibilityNightFactor(a.solarAltitudeDeg) +
+        milkyWayVisibilityNightFactor(b.solarAltitudeDeg)) /
+      2
+    : 1;
+  const moon = deemphasizeMoon ? (a.moonFactor + b.moonFactor) / 2 : 1;
+  return baseAlpha * night * moon;
+}
+
+function pushVisibilityContour(
+  items: RenderPlan["items"],
+  points: readonly MilkyWayVisibilitySample[],
+  w: number,
+  h: number,
+  colorCss: string,
+  strokeWidthPx: number,
+  baseAlpha: number,
+  emphasizeNight: boolean,
+  deemphasizeMoon: boolean,
+  alphaScale: (alpha: number) => number,
+): void {
+  if (points.length < 2) {
+    return;
+  }
+  const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  for (let i = 0; i < lons.length - 1; i += 1) {
+    const p0 = points[i]!;
+    const p1 = points[i + 1]!;
+    if (
+      Math.abs(p0.latDeg) > 86 &&
+      Math.abs(p1.latDeg) > 86 &&
+      Math.abs(lons[i + 1]! - lons[i]!) > 20
+    ) {
+      continue;
+    }
+    const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
+    const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
+    const { x0, x1 } = adjustPairToShortStripPath(raw0, raw1, w);
+    const y0 = mapLatToY(p0.latDeg, h);
+    const y1 = mapLatToY(p1.latDeg, h);
+    if (!Number.isFinite(x0) || !Number.isFinite(x1) || !Number.isFinite(y0) || !Number.isFinite(y1)) {
+      continue;
+    }
+    if (Math.abs(x1 - x0) > w * 0.48) {
+      continue;
+    }
+    const line: RenderLineItem = {
+      kind: "line",
+      x1: x0,
+      y1: y0,
+      x2: x1,
+      y2: y1,
+      stroke: strokeRgba(
+        colorCss,
+        alphaScale(visibilitySegmentAlpha(p0, p1, emphasizeNight, deemphasizeMoon, baseAlpha)),
+      ),
+      strokeWidthPx,
+      lineCap: "round",
+    };
+    items.push(line);
+  }
+}
+
 function screenPolyline(points: readonly MilkyWayTaggedPoint[], w: number, h: number): LabelPathPolyline {
   return {
     points: points.map((p) => ({
@@ -124,7 +215,7 @@ export interface MilkyWayRenderPlanOptions {
 }
 
 /**
- * Build order: band edges, ribs, Galactic plane, glyphs, labels.
+ * Build order: band edges, ribs, Galactic plane, visibility contours, glyphs, labels.
  */
 export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): RenderPlan {
   const w = options.viewportWidthPx;
@@ -165,6 +256,76 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   }
   if (pres.planeEnabled) {
     pushSeamAwarePolyline(items, geom.plane, w, h, pres.planeColor, planeWidth, alphaFor);
+  }
+
+  const vis = options.payload.visibility;
+  if (pres.visibilityContoursEnabled && vis) {
+    const visWidth = astronomyPathStrokeWidthPx(veil, pres.visibilityThickness);
+    for (const contour of vis.contours) {
+      pushVisibilityContour(
+        items,
+        contour.points,
+        w,
+        h,
+        pres.visibilityColor,
+        Math.max(0.7, visWidth * CONTOUR_WIDTH_MULT[contour.altitudeDeg]),
+        CONTOUR_BASE_ALPHA[contour.altitudeDeg],
+        pres.emphasizeAstronomicalNight,
+        pres.deemphasizeMoonlight,
+        a,
+      );
+    }
+    const contourLabelSize = Math.min(10, Math.max(7, w * 0.011));
+    const preferredLon = vis.galacticCenter.lonDeg + 50;
+    for (const contour of vis.contours) {
+      const unique = contour.points.slice(0, Math.max(0, contour.points.length - 1));
+      let best: MilkyWayVisibilitySample | null = null;
+      let bestScore = Infinity;
+      for (const p of unique) {
+        if (Math.abs(p.latDeg) > 72) {
+          continue;
+        }
+        const dLon = Math.abs(((p.lonDeg - preferredLon + 540) % 360) - 180);
+        const score = dLon + Math.abs(p.latDeg) * 0.15;
+        if (score < bestScore) {
+          bestScore = score;
+          best = p;
+        }
+      }
+      if (!best) {
+        continue;
+      }
+      const lx = mapXFromLongitudeDeg(best.lonDeg, w);
+      const ly = mapLatToY(best.latDeg, h);
+      if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
+        continue;
+      }
+      const label = `${contour.altitudeDeg}°`;
+      const text: RenderTextItem = {
+        kind: "text",
+        x: lx + 4,
+        y: ly - 3,
+        text: label,
+        fill: strokeRgba(pres.visibilityColor, a(0.78)),
+        font: {
+          assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+          displayName: "Renderer default",
+          sizePx: contourLabelSize,
+          weight: 500,
+          style: "normal",
+        },
+        textAlign: "left",
+        textBaseline: "bottom",
+        stroke: {
+          color: `rgba(12, 20, 28, ${a(0.62)})`,
+          widthPx: Math.max(1.6, contourLabelSize * 0.24),
+          lineJoin: "round",
+          miterLimit: 2,
+        },
+        opacity: op,
+      };
+      items.push(text);
+    }
   }
 
   const glyphScale = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, w / 1400)));

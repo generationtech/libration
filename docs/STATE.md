@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) — Milky Way terrestrial visibility geometry
+[LIB-050](work/LIB-050-milky-way-visibility-geometry.md) — Milky Way visibility geometry
 
 ## Blockers
 

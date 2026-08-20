@@ -231,6 +231,9 @@ describe("resolveVisualScenarioSession", () => {
     expect(
       row?.source.kind === "derived" ? row.source.parameters?.galacticAnticenterEnabled : undefined,
     ).toBe(false);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.visibilityContoursEnabled : undefined,
+    ).toBe(true);
   });
 
   it("iss-presentation apply installs a DEV prepared ISS view without network", () => {

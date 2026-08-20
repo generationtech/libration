@@ -15,6 +15,7 @@ import type { OverlayReadabilityHints } from "./overlayReadabilityHints";
 import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
 import type { MilkyWayGeometry } from "../core/milkyWayGeometry";
 import type { MilkyWayPresentation } from "../core/milkyWayPresentation";
+import type { MilkyWayVisibilityGeometry } from "../core/milkyWayVisibilityGeometry";
 
 export const MILKY_WAY_KIND = "milkyWay" as const;
 
@@ -23,6 +24,7 @@ export type MilkyWayPayload = {
   readonly supported: boolean;
   readonly presentation: MilkyWayPresentation;
   readonly geometry: MilkyWayGeometry | null;
+  readonly visibility: MilkyWayVisibilityGeometry | null;
   readonly readability?: OverlayReadabilityHints;
 };
 

@@ -45,7 +45,7 @@ For this family, distinguish three roles:
 
 | Role | Suitable for continuous display? | Examples in this family |
 |------|----------------------------------|-------------------------|
-| **Ambient astronomy** | Yes | Sun and Moon glyphs, phase, libration, lunar locus, solar analemma, planetary subpoints/tracks/loci, Milky Way zenith ribbon, illumination |
+| **Ambient astronomy** | Yes | Sun and Moon glyphs, phase, libration, lunar locus, solar analemma, planetary subpoints/tracks/loci, Milky Way zenith ribbon and GC altitude contours, illumination |
 | **Explanatory astronomy** | Optional | Lunar horizon, nodes, altitude/azimuth, distance information |
 | **Event astronomy** | Only when something unusual is approaching or occurring | Eclipse forecast bands, live eclipse alignment, dramatic beam/shadow visualization |
 
@@ -88,24 +88,31 @@ This is explanatory astronomy. A default ambient map should not be forced to sho
 
 ### Milky Way observing quality
 
-**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the celestial geometry required for this question without answering it. The zenith ribbon is not “where the Milky Way is visible.”
+**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the zenith ribbon. [LIB-050](work/LIB-050-milky-way-visibility-geometry.md) shipped Galactic-center **altitude contours** plus astronomical-night line emphasis and moonlight de-emphasis. That is interpretable geometry, not an aggregated observing-quality forecast.
+
+Keep three concepts distinct:
+
+1. **Galactic ribbon** — where the band is overhead.
+2. **Galactic-center altitude contours** — how high the bright central Milky Way is in the sky from each location (production as of LIB-050).
+3. **Observing favorability** — a later aggregate. Not implemented.
 
 A later feature could combine:
 
-- astronomical darkness / Sun altitude
-- Galactic center altitude (possible thresholds: above horizon, >10°, >20°, >30°)
-- Milky Way altitude/orientation for a local observer
-- Moon altitude, lunar phase / moonlight, lunar-eclipse attenuation
+- Galactic center altitude (LIB-050 contours already expose this geographically)
+- fraction of the sampled Galactic plane/band above 10° / 20° / 30° (possible additional contours such as 25/50/75% of the band above 20°)
+- astronomical darkness / Sun altitude (LIB-050 already styles GC contours by Sun altitude; it does not collapse that into a score)
+- Moon altitude, lunar phase / moonlight, lunar-eclipse attenuation (LIB-050 optionally de-emphasizes moonlit contour segments using the existing physical moonlight signal)
 - optionally clouds
 - potentially light pollution if an authority is introduced later
 
-That would answer: “Where on Earth can the Milky Way be seen well right now?” It must not reuse LIB-049 night-side emphasis as a stand-in for that forecast.
+That would answer: “Where on Earth can the Milky Way be seen well right now?” Do not treat LIB-049 night-side emphasis or LIB-050 contour alpha as that forecast.
 
 Related but distinct, also unapproved:
 
 - a terrestrial envelope of locations from which *some* portion of the band is above the geometric horizon (deferred from LIB-049 as semantically ambiguous)
 - modest longitude-dependent band width without pretending to be photometry
 - renaming Layers → Space objects to something like “Space & sky”
+- a static “best latitude for Galactic-center culmination” helper (the moving altitude contours already communicate it)
 
 Do not implement stars, constellations, photographic Milky Way imagery, or star catalogs as a side effect of this idea.
 
@@ -274,7 +281,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - reference-city meridian line.
 - read-point alignment marker.
 - UTC meridian reference.
-- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped zenith-projection geometry only.
+- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped the zenith ribbon; LIB-050 shipped Galactic-center altitude contours. An aggregated observing-quality forecast remains unapproved.
 
 ### Dynamic and live layers
 

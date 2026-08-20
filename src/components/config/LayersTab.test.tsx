@@ -814,6 +814,13 @@ describe("LayersTab topic navigation", () => {
     selectLayersTopic("spaceObjects");
     expect((screen.getByLabelText("Band width") as HTMLSelectElement).value).toBe("wide");
     expect((screen.getByLabelText("Show Milky Way") as HTMLInputElement).checked).toBe(true);
+    const contours = screen.getByLabelText("Show Galactic-center altitude contours") as HTMLInputElement;
+    expect(contours.checked).toBe(false);
+    expect(contours.disabled).toBe(false);
+    await user.click(contours);
+    expect(contours.checked).toBe(true);
+    expect((screen.getByLabelText("Show 60° contour") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Show horizon / 0°") as HTMLInputElement).checked).toBe(false);
   });
 });
 

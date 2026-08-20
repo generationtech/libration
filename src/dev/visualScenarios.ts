@@ -542,6 +542,14 @@ function applyMilkyWayScene(draft: LibrationConfigV2): void {
       galacticCenterLabelEnabled: true,
       galacticAnticenterEnabled: false,
       emphasizeNightSide: true,
+      visibilityContoursEnabled: true,
+      contour30Enabled: true,
+      contour45Enabled: true,
+      contour60Enabled: true,
+      contour75Enabled: true,
+      contour0Enabled: false,
+      emphasizeAstronomicalNight: true,
+      deemphasizeMoonlight: true,
     });
     draft.scene = applyLayerEnableFlagsToScene(draft.scene, draft.layers);
   }

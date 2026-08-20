@@ -37,6 +37,7 @@ describe("createMilkyWayLayer", () => {
     expect(st.data.supported).toBe(true);
     expect(st.data.geometry).not.toBeNull();
     expect(st.data.geometry!.plane.length).toBeGreaterThan(10);
+    expect(st.data.visibility).toBeNull();
     expect(st.data.geometry!.galacticCenter).not.toBeNull();
   });
 
@@ -55,6 +56,30 @@ describe("createMilkyWayLayer", () => {
     }
     expect(st.data.supported).toBe(true);
     expect(st.data.geometry).toBeNull();
+    expect(st.data.visibility).toBeNull();
+  });
+
+  it("samples visibility contours when the ribbon is off", () => {
+    const presentation = mergeMilkyWayPresentation(DEFAULT_MILKY_WAY_PRESENTATION, {
+      planeEnabled: false,
+      bandEnabled: false,
+      ribsEnabled: false,
+      galacticCenterEnabled: false,
+      galacticAnticenterEnabled: false,
+      visibilityContoursEnabled: true,
+    });
+    const layer = createMilkyWayLayer({ presentation });
+    const st = layer.getState(createTimeContext(UTC, 0, true));
+    if (!isMilkyWayPayload(st.data)) {
+      throw new Error("expected payload");
+    }
+    expect(st.data.geometry).not.toBeNull();
+    expect(st.data.visibility).not.toBeNull();
+    expect(st.data.visibility!.contours.map((c) => c.altitudeDeg)).toEqual([30, 45, 60, 75]);
+    expect(st.data.visibility!.galacticCenter.latDeg).toBeCloseTo(
+      st.data.geometry!.galacticCenter!.latDeg,
+      8,
+    );
   });
 
   it("marks unsupported dates honestly", () => {
@@ -64,6 +89,7 @@ describe("createMilkyWayLayer", () => {
       throw new Error("expected payload");
     }
     expect(st.data.supported).toBe(false);
+    expect(st.data.visibility).toBeNull();
     expect(st.data.geometry).toBeNull();
   });
 });
