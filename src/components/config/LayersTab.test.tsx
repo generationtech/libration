@@ -543,14 +543,24 @@ describe("LayersTab eclipse product polish", () => {
     expect(screen.queryByLabelText("Moon-visible boundary")).toBeNull();
     expect(screen.queryByLabelText("Upcoming Moon-visible region")).toBeNull();
     expect(screen.queryByLabelText("Upcoming Moon-visible boundary")).toBeNull();
-    expect(screen.queryByLabelText("Lunar visibility color")).toBeNull();
-    expect(screen.queryByLabelText("Lunar visibility thickness")).toBeNull();
     expect(screen.queryByLabelText("Lunar visibility opacity")).toBeNull();
+    expect((screen.getByLabelText("Lunar eclipse visibility footprint") as HTMLInputElement).checked).toBe(
+      true,
+    );
+    expect((screen.getByLabelText("Lunar visibility footprint color") as HTMLInputElement).value).toBe(
+      "#6a9aa8",
+    );
+    expect((screen.getByLabelText("Lunar visibility footprint thickness") as HTMLSelectElement).value).toBe(
+      "normal",
+    );
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).checked).toBe(
       true,
     );
     await user.selectOptions(horizon, "0");
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).disabled).toBe(
+      false,
+    );
+    expect((screen.getByLabelText("Lunar eclipse visibility footprint") as HTMLInputElement).disabled).toBe(
       false,
     );
     expect((screen.getByLabelText("Lunar Earth-shadow cue") as HTMLInputElement).disabled).toBe(false);

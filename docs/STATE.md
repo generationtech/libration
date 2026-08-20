@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-19
+Updated: 2026-08-20
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-053](work/LIB-053-multi-family-event-playback-and-mw-freeze-repair.md) — Multi-family event playback, MW freeze repair, contour label control
+[LIB-054](work/LIB-054-static-lunar-eclipse-visibility-footprint.md) — Static lunar eclipse visibility footprint
 
 ## Blockers
 

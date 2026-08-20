@@ -161,7 +161,7 @@ describe("eclipse event labels", () => {
     if (isEquirectRegionOverlayPayload(lunarOff.data)) {
       expect(lunarOff.data.labels ?? []).toHaveLength(0);
       expect(lunarOff.data.fills).toHaveLength(0);
-      expect(lunarOff.data.strokes).toHaveLength(0);
+      expect(lunarOff.data.strokes).toHaveLength(1);
       const plan = buildEquirectRegionOverlayRenderPlan({
         viewportWidthPx: 360,
         viewportHeightPx: 180,

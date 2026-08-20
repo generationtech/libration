@@ -57,6 +57,7 @@ import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import {
   DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
   DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
+  DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_FOOTPRINT,
   normalizeLunarEclipsePresentation,
 } from "../../core/eclipse/lunarEclipseAppearance";
 import {
@@ -871,6 +872,7 @@ const LUNAR_ECLIPSE_ROW: SceneLayerInstance = {
     product: "lunarEclipseVisibility",
     parameters: {
       showMoonEclipseShadow: DEFAULT_LUNAR_ECLIPSE_SHOW_MOON_SHADOW,
+      showVisibilityFootprint: DEFAULT_LUNAR_ECLIPSE_SHOW_VISIBILITY_FOOTPRINT,
       forecastHorizonDays: DEFAULT_LUNAR_ECLIPSE_FORECAST_HORIZON_DAYS,
     },
   },

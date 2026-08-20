@@ -328,3 +328,9 @@ Merged solar, lunar, and Milky Way viewing windows into one chronological Event 
 
 Verified: `npx tsc --noEmit` clean via `npm run build`; `npm test` 250 files / 2305 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `?scenario=` in `dist/`. Cursor Browser ordinary Event playback Start (end 2499, no freeze) and merged Next/Previous; `?scenario=milky-way` contour values off. LIB-037 stays proposed.
 
+## 2026-08-20 — LIB-054 complete
+
+Lunar eclipses gain an event-static visibility footprint: one closed line enclosing every terrestrial location from which some part of the eclipse is geometrically visible during `[globalStartMs, globalEndMs]` (P1→P4 when those contacts exist). Appears with the existing lunar forecast horizon, stays invariant for the event id, disappears after last contact. Line only, factory ON. Not the removed moving Moon-visible hemisphere. No new ADR.
+
+Verified: `npx tsc --noEmit` clean; focused 9 files / 164 passed; `npm test` 251 files / 2320 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` / `iss-presentation` in `dist/`. Cursor Browser 2029 upcoming→after, live-only upcoming, Tokyo GE, partial, dateline, forecast-total, 2017 solar GE, night, Layers Eclipse checkbox. LIB-037 stays proposed.
+

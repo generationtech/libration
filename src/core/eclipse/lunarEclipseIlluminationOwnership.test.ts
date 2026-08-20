@@ -22,6 +22,7 @@ import { createSolarShadingLayer } from "../../layers/solarShadingLayer";
 import { sampleIlluminationRgba8 } from "../../renderer/illuminationShading";
 import { getMoonlightPolicy } from "../moonlightPolicy";
 import { isSolarShadingPayload } from "../../layers/solarShadingPayload";
+import { isEquirectRegionOverlayPayload } from "../../layers/equirectRegionPayload";
 import { sublunarPoint } from "../sublunarPoint";
 import { isMoonGeometricallyAboveHorizon } from "./lunarVisibilityGeometry";
 
@@ -39,9 +40,11 @@ describe("lunar eclipse illumination ownership", () => {
     const time = createTimeContext(GE_2022, 0, true, { eclipseFrame: frame });
     const shading = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(time);
     const regionOn = createLunarEclipseLayer({
+      presentation: { showVisibilityFootprint: true },
       alignment: { enabled: false },
     }).getState(time);
     const regionOff = createLunarEclipseLayer({
+      presentation: { showVisibilityFootprint: false },
       alignment: { enabled: false },
     }).getState(time);
     expect(isSolarShadingPayload(shading.data)).toBe(true);
@@ -51,8 +54,10 @@ describe("lunar eclipse illumination ownership", () => {
     const shadingOffRegion = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(time);
     expect(shading.data).toEqual(shadingOffRegion.data);
     expect(shading.data.moonlightTransmission01).toBeLessThan(0.2);
-    void regionOn;
-    void regionOff;
+    if (isEquirectRegionOverlayPayload(regionOn.data) && isEquirectRegionOverlayPayload(regionOff.data)) {
+      expect(regionOn.data.strokes).toHaveLength(1);
+      expect(regionOff.data.strokes).toHaveLength(0);
+    }
   });
 
   it("attenuates night-side moonlight from coverage, not contact labels", () => {

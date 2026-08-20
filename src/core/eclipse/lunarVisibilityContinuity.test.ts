@@ -62,22 +62,25 @@ function snapshot(utcMs: number) {
   };
 }
 
-describe("lunar visibility continuity (LIB-046)", () => {
+describe("lunar visibility continuity (LIB-046 / LIB-054)", () => {
   const event = getLunarEclipseEventById(TOTAL_2029)!;
   const p1 = event.p1UtcMs!;
 
-  it("emits no Moon-visible fill or horizon boundary through upcoming and active", () => {
+  it("emits no Moon-visible fill; footprint stroke is static through P1", () => {
     const offsets = [
       -10 * 60_000, -5 * 60_000, -60_000, -10_000, -1000, 0, 1000, 10_000, 60_000, 5 * 60_000,
       10 * 60_000,
     ];
     const rows = offsets.map((dt) => snapshot(p1 + dt));
+    const firstStroke = layerPayload(p1 - 10 * 60_000).strokes[0]?.points;
+    expect(firstStroke?.length).toBeGreaterThan(8);
     for (const row of rows) {
       expect(row.fillCount).toBe(0);
-      expect(row.strokeCount).toBe(0);
+      expect(row.strokeCount).toBe(1);
       expect(row.labelPathHints).toBeUndefined();
       expect(row.labelLat).toBeCloseTo(row.moon.latDeg, 5);
       expect(row.labelLon).toBeCloseTo(row.moon.lonDeg, 5);
+      expect(layerPayload(row.utcMs).strokes[0]!.points).toEqual(firstStroke);
     }
     for (let i = 1; i < rows.length; i += 1) {
       const prev = rows[i - 1]!;
@@ -92,8 +95,9 @@ describe("lunar visibility continuity (LIB-046)", () => {
     const after = snapshot(p1 + 1000);
     expect(before.fillCount).toBe(0);
     expect(after.fillCount).toBe(0);
-    expect(before.strokeCount).toBe(0);
-    expect(after.strokeCount).toBe(0);
+    expect(before.strokeCount).toBe(1);
+    expect(after.strokeCount).toBe(1);
+    expect(layerPayload(p1 - 1000).strokes[0]!.points).toEqual(layerPayload(p1 + 1000).strokes[0]!.points);
     expect(Math.abs(after.moon.latDeg - before.moon.latDeg)).toBeLessThan(0.01);
     expect(Math.abs(wrapLonDelta(after.moon.lonDeg, before.moon.lonDeg))).toBeLessThan(0.02);
     const ge = snapshot(event.greatestEclipseUtcMs);
@@ -113,7 +117,7 @@ describe("lunar visibility continuity (LIB-046)", () => {
   it("does not emit a global lunar alignment primitive or horizon stroke", () => {
     const utc = event.greatestEclipseUtcMs;
     const payload = layerPayload(utc);
-    expect(payload.strokes).toHaveLength(0);
+    expect(payload.strokes).toHaveLength(1);
     expect(payload.fills).toHaveLength(0);
     const view = buildEclipseAlignmentPresentation({
       frame: resolveEclipseFrame(utc, { lunarHorizonMs: HORIZON_7D }),
@@ -142,11 +146,11 @@ describe("lunar visibility continuity (LIB-046)", () => {
     expect(view.lunar).toBeNull();
   });
 
-  it("keeps a dateline-centered event without painting lunar-horizon geography", () => {
+  it("keeps a dateline-centered event footprint closed without a Moon-visible fill", () => {
     const utc = Date.parse("2015-04-04T10:00:00.000Z");
     const row = snapshot(utc);
     expect(row.fillCount).toBe(0);
-    expect(row.strokeCount).toBe(0);
+    expect(row.strokeCount).toBe(1);
     expect(Math.abs(Math.abs(row.moon.lonDeg) - 180)).toBeLessThan(80);
   });
 });

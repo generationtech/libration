@@ -126,6 +126,7 @@ function lunarRows(
   event: LunarEclipseEvent,
   frame: EclipseFrame,
   upcoming: boolean,
+  showFootprint: boolean,
 ): EclipseEventInformationRow[] {
   const rows: EclipseEventInformationRow[] = [
     { label: "Global event", value: lunarEclipseTypeTitle(event.subtype) },
@@ -138,15 +139,17 @@ function lunarRows(
     if (relative) {
       rows.push({ label: "Time until event", value: relative });
     }
-    rows.push({
-      label: "Visibility at greatest eclipse",
-      value: "Moon above the geometric horizon over the night-side hemisphere at greatest eclipse",
-    });
   } else {
     const phase = lunarPhaseCopy(frame.lunarGeometry);
     if (phase) {
       rows.push({ label: "Current phase", value: phase });
     }
+  }
+  if (showFootprint) {
+    rows.push({
+      label: "Visibility footprint",
+      value: "Some part of this lunar eclipse is visible inside the boundary.",
+    });
   }
   rows.push({ label: "Penumbral magnitude", value: event.penumbralMagnitude.toFixed(3) });
   rows.push({ label: "Umbral magnitude", value: event.umbralMagnitude.toFixed(3) });
@@ -180,11 +183,15 @@ function solarLegend(args: {
   return items;
 }
 
-function lunarLegend(upcoming: boolean): EclipseLegendItem[] {
-  if (upcoming) {
-    return [];
+function lunarLegend(args: { upcoming: boolean; footprint: boolean }): EclipseLegendItem[] {
+  const items: EclipseLegendItem[] = [];
+  if (args.footprint) {
+    items.push({ id: "visibility-footprint", label: "Visibility footprint" });
   }
-  return [{ id: "alignment", label: "Earth-shadow cue" }];
+  if (!args.upcoming) {
+    items.push({ id: "alignment", label: "Earth-shadow cue" });
+  }
+  return items;
 }
 
 export function buildEclipseEventInformation(
@@ -281,8 +288,11 @@ export function buildEclipseEventInformation(
       kind: "lunar",
       relativeTime: null,
       upcomingCount: upcomingSolar.length + upcomingLunar.length,
-      rows: lunarRows(activeLunar, input.frame, false),
-      legend: lunarLegend(false),
+      rows: lunarRows(activeLunar, input.frame, false, input.lunar.showVisibilityFootprint),
+      legend: lunarLegend({
+        upcoming: false,
+        footprint: input.lunar.showVisibilityFootprint,
+      }),
       circumstances: showCircumstances ? input.circumstances : null,
       presentation,
     };
@@ -320,8 +330,11 @@ export function buildEclipseEventInformation(
       kind: "lunar",
       relativeTime: relative || null,
       upcomingCount: upcomingSolar.length + upcomingLunar.length,
-      rows: lunarRows(primary.event, input.frame, true),
-      legend: lunarLegend(true),
+      rows: lunarRows(primary.event, input.frame, true, input.lunar.showVisibilityFootprint),
+      legend: lunarLegend({
+        upcoming: true,
+        footprint: input.lunar.showVisibilityFootprint,
+      }),
       circumstances: showCircumstances ? input.circumstances : null,
       presentation,
     };

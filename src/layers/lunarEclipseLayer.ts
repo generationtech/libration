@@ -15,11 +15,14 @@ import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityF
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import { type EclipseAlignmentPresentation } from "../core/eclipse/eclipseAlignmentAppearance";
 import { lunarEclipseMapLabel } from "../core/eclipse/eclipseEventLabels";
-import { presentedPrimaryEclipse } from "../core/eclipse/eclipsePresentedEvents";
+import { presentedPrimaryEclipse, presentedPrimaryLunar } from "../core/eclipse/eclipsePresentedEvents";
 import {
+  LUNAR_ECLIPSE_DRAW_VISIBILITY_FOOTPRINT,
   normalizeLunarEclipsePresentation,
+  resolveLunarEclipsePaint,
   type LunarEclipsePresentation,
 } from "../core/eclipse/lunarEclipseAppearance";
+import { lunarEclipseVisibilityFootprint } from "../core/eclipse/lunarEclipseVisibilityFootprint";
 import {
   forecastHorizonMsFromDays,
   normalizeSolarEclipsePresentation,
@@ -81,6 +84,21 @@ export function createLunarEclipseLayer(
       const labels: EquirectRegionLabel[] = [];
       const labelAvoidDiscs: EquirectRegionAvoidDisc[] = [];
       const moon = sublunarPoint(time.now);
+      if (presentation.showVisibilityFootprint && frame.support.supported) {
+        const lunarEvent = presentedPrimaryLunar(frame, presentation);
+        if (lunarEvent) {
+          const footprint = lunarEclipseVisibilityFootprint(lunarEvent);
+          if (footprint.boundary.length >= 4) {
+            const paint = resolveLunarEclipsePaint(presentation);
+            strokes.push({
+              points: footprint.boundary,
+              stroke: paint.visibilityFootprintStroke,
+              strokeWidthPx: paint.visibilityFootprintStrokeWidthPx,
+              drawOrder: LUNAR_ECLIPSE_DRAW_VISIBILITY_FOOTPRINT,
+            });
+          }
+        }
+      }
       if (labelsEnabled && frame.support.supported) {
         const primary = presentedPrimaryEclipse(frame, solarPresentation, presentation);
         if (primary?.kind === "lunar") {

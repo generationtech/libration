@@ -18,6 +18,9 @@ describe("normalizeLunarEclipsePresentation", () => {
   it("defaults Moon Earth-shadow and type filters on and omits deleted Moon-visible keys", () => {
     const p = normalizeLunarEclipsePresentation(undefined);
     expect(p.showMoonEclipseShadow).toBe(true);
+    expect(p.showVisibilityFootprint).toBe(true);
+    expect(p.visibilityFootprintColor).toBe("#6a9aa8");
+    expect(p.visibilityFootprintThickness).toBe("normal");
     expect(p.showTypeTotal).toBe(true);
     expect(p.showTypePartial).toBe(true);
     expect(p.showTypePenumbral).toBe(true);
@@ -35,6 +38,14 @@ describe("normalizeLunarEclipsePresentation", () => {
   it("preserves explicit Moon Earth-shadow false", () => {
     const p = normalizeLunarEclipsePresentation({ showMoonEclipseShadow: false });
     expect(p.showMoonEclipseShadow).toBe(false);
+  });
+
+  it("defaults a missing visibility-footprint key to on and preserves explicit off", () => {
+    expect(normalizeLunarEclipsePresentation(undefined).showVisibilityFootprint).toBe(true);
+    expect(normalizeLunarEclipsePresentation({}).showVisibilityFootprint).toBe(true);
+    expect(
+      normalizeLunarEclipsePresentation({ showVisibilityFootprint: false }).showVisibilityFootprint,
+    ).toBe(false);
   });
 
   it("accepts deleted Moon-visible keys without emitting them", () => {

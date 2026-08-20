@@ -288,9 +288,10 @@ export function EclipseSystemSection(props: {
         <legend className="config-fieldset__legend">Lunar eclipses</legend>
         <p className="config-section__hint">
           Forecast horizon is how early an upcoming lunar eclipse appears — not the duration of
-          the eclipse. Lunar eclipses have no solar-style terrestrial path. The event is shown
-          on the Moon, with physically attenuated moonlight, HUD/placard details, and an
-          optional Earth-shadow cue.
+          the eclipse. Lunar eclipses have no solar-style terrestrial path. The visibility
+          footprint outlines every location from which some part of the event is geometrically
+          visible. The event is also shown on the Moon, with physically attenuated moonlight,
+          HUD/placard details, and an optional Earth-shadow cue.
         </p>
         <ConfigControlRow label="Lunar forecast horizon">
           <select
@@ -350,6 +351,28 @@ export function EclipseSystemSection(props: {
               </label>
             ))}
           </div>
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar eclipse visibility footprint">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={lunar.showVisibilityFootprint}
+            readOnly={!mutable}
+            disabled={!mutable || !lunarOn}
+            tabIndex={mutable && lunarOn ? 0 : -1}
+            aria-label="Lunar eclipse visibility footprint"
+            title="Outline the region of Earth from which some part of the lunar eclipse is visible during the event."
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const showVisibilityFootprint = e.currentTarget.checked;
+                    patchScene(updateConfig, (base) =>
+                      applyLunarEclipsePresentationToScene(base, { showVisibilityFootprint }),
+                    );
+                  }
+                : undefined
+            }
+          />
         </ConfigControlRow>
         <ConfigControlRow label="Moon Earth-shadow treatment">
           <input
@@ -525,8 +548,8 @@ export function EclipseSystemSection(props: {
       <fieldset className="config-fieldset config-fieldset--plain">
         <legend className="config-fieldset__legend">Eclipse appearance</legend>
         <p className="config-section__hint">
-          Colors and opacities are independent for solar forecast, solar live, and alignment.
-          Defaults preserve the verified eclipse look.
+          Colors and opacities are independent for solar forecast, solar live, alignment, and
+          the lunar visibility footprint. Defaults preserve the verified eclipse look.
         </p>
         <ConfigControlRow label="Solar forecast color">
           <input
@@ -782,6 +805,52 @@ export function EclipseSystemSection(props: {
             {SOLAR_ECLIPSE_GROUND_POSITION_SIZE_IDS.map((id) => (
               <option key={`live-pos-size-${id}`} value={id}>
                 {solarEclipseGroundPositionSizeLabel(id)}
+              </option>
+            ))}
+          </select>
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar visibility footprint color">
+          <input
+            type="color"
+            className="config-input"
+            disabled={!mutable || !lunarOn || !lunar.showVisibilityFootprint}
+            aria-label="Lunar visibility footprint color"
+            title="Stroke color of the event-whole lunar eclipse visibility footprint."
+            value={lunar.visibilityFootprintColor}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const visibilityFootprintColor = e.currentTarget.value;
+                    patchScene(updateConfig, (base) =>
+                      applyLunarEclipsePresentationToScene(base, { visibilityFootprintColor }),
+                    );
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar visibility footprint thickness">
+          <select
+            className="config-input"
+            disabled={!mutable || !lunarOn || !lunar.showVisibilityFootprint}
+            aria-label="Lunar visibility footprint thickness"
+            title="Stroke thickness of the event-whole lunar eclipse visibility footprint."
+            value={lunar.visibilityFootprintThickness}
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    const visibilityFootprintThickness = e.currentTarget
+                      .value as AstronomyPathThicknessId;
+                    patchScene(updateConfig, (base) =>
+                      applyLunarEclipsePresentationToScene(base, { visibilityFootprintThickness }),
+                    );
+                  }
+                : undefined
+            }
+          >
+            {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
+              <option key={`lunar-footprint-th-${id}`} value={id}>
+                {id[0]!.toUpperCase() + id.slice(1)}
               </option>
             ))}
           </select>

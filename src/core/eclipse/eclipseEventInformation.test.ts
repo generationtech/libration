@@ -67,6 +67,8 @@ describe("eclipse event information", () => {
     const total = view("2022-05-16T04:11:29.000Z", 0);
     expect(total.kind).toBe("lunar");
     expect(total.title).toBe("Total lunar eclipse");
+    expect(total.legend.some((item) => item.label === "Visibility footprint")).toBe(true);
+    expect(total.rows.some((r) => r.label === "Visibility footprint")).toBe(true);
     expect(total.rows.some((r) => r.label === "Moon-visible region")).toBe(false);
     expect(total.legend.some((item) => item.label === "Moon-visible now")).toBe(false);
     expect(total.legend.some((item) => item.label.includes("geometric lunar horizon"))).toBe(false);
@@ -95,10 +97,12 @@ describe("eclipse event information", () => {
     expect(
       v.rows.some(
         (r) =>
-          r.label === "Visibility at greatest eclipse" &&
-          r.value.includes("greatest eclipse"),
+          r.label === "Visibility footprint" &&
+          r.value.includes("inside the boundary"),
       ),
     ).toBe(true);
+    expect(v.legend.some((item) => item.label === "Visibility footprint")).toBe(true);
+    expect(v.rows.some((r) => r.label === "Visibility at greatest eclipse")).toBe(false);
     expect(v.rows.some((r) => r.label === "Moon-visible region")).toBe(false);
     expect(v.legend.some((item) => item.label === "Moon-visible now")).toBe(false);
     expect(v.legend.some((item) => item.label.includes("geometric lunar horizon"))).toBe(false);
