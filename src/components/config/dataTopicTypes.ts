@@ -13,7 +13,7 @@
 
 /**
  * UI-only topic areas for the Data configuration tab. Not persisted — editor navigation only.
- * Distinct from Event family, which is durable playback source config.
+ * Distinct from enabled event types, which are durable playback source config.
  */
 export type DataTopicId = "time" | "eventPlayback";
 

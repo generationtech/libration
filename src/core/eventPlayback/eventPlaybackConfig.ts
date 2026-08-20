@@ -13,6 +13,7 @@
 
 /**
  * Durable Data-tab event-playback preferences. Runtime phase/index are session-only.
+ * Enabled event types merge into one chronological stream — there is no family submode.
  */
 
 import {
@@ -20,7 +21,6 @@ import {
   normalizeEclipseTourPresentation,
   utcYmdFromUnixMs,
   type EclipseTourDateBounds,
-  type EclipseTourPresentation,
 } from "../eclipse/eclipseTourAppearance";
 import { getEclipseTourAuthorityRange } from "../eclipse/eclipseTourCatalog";
 import {
@@ -34,33 +34,29 @@ import {
   type EventPlaybackOffsetId,
 } from "./eventPlaybackOffsets";
 
-export const EVENT_PLAYBACK_FAMILY_IDS = ["eclipses", "milkyWay"] as const;
-export type EventPlaybackFamilyId = (typeof EVENT_PLAYBACK_FAMILY_IDS)[number];
-
-export const DEFAULT_EVENT_PLAYBACK_FAMILY: EventPlaybackFamilyId = "eclipses";
 export const DEFAULT_EVENT_PLAYBACK_LOOP = DEFAULT_ECLIPSE_TOUR_LOOP;
+export const DEFAULT_EVENT_PLAYBACK_SOLAR_ENABLED = true;
+export const DEFAULT_EVENT_PLAYBACK_LUNAR_ENABLED = true;
+export const DEFAULT_EVENT_PLAYBACK_MILKY_WAY_ENABLED = true;
 export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING = false;
 export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG = true;
 export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME = true;
 
-export type EventPlaybackEclipseConfig = EclipseTourPresentation;
-
-export type EventPlaybackMilkyWayConfig = {
+export type EventPlaybackConfig = {
   readonly startDateYmd: string;
   readonly endDateYmd: string;
-  readonly includeViewing: boolean;
-  readonly includeStrong: boolean;
-  readonly includePrime: boolean;
   readonly loop: boolean;
   readonly leadInId: EventPlaybackOffsetId;
   readonly postWaitId: EventPlaybackOffsetId;
+  readonly solarEnabled: boolean;
+  readonly lunarEnabled: boolean;
+  readonly milkyWayEnabled: boolean;
+  readonly includeViewing: boolean;
+  readonly includeStrong: boolean;
+  readonly includePrime: boolean;
 };
 
-export type EventPlaybackConfig = {
-  readonly family: EventPlaybackFamilyId;
-  readonly eclipse: EventPlaybackEclipseConfig;
-  readonly milkyWay: EventPlaybackMilkyWayConfig;
-};
+export type EventPlaybackConfigPatch = Partial<EventPlaybackConfig>;
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -80,38 +76,21 @@ export function getMilkyWayPlaybackCalendarBounds(): EclipseTourDateBounds {
   };
 }
 
-function normalizeMilkyWayPlayback(
-  raw: Readonly<Record<string, unknown>> | undefined,
-  bounds: EclipseTourDateBounds,
-  nowMs: number,
-): EventPlaybackMilkyWayConfig {
-  const eclipseShaped = normalizeEclipseTourPresentation(
-    {
-      startDateYmd: raw?.startDateYmd,
-      endDateYmd: raw?.endDateYmd,
-      loop: raw?.loop,
-      leadInId: raw?.leadInId,
-      postWaitId: raw?.postWaitId,
-      includeSolar: true,
-      includeLunar: true,
-    },
-    bounds,
-    nowMs,
-  );
+export function getEventPlaybackCalendarBounds(): EclipseTourDateBounds {
+  const eclipse = getEclipseTourAuthorityRange().calendarBounds;
+  const mw = getMilkyWayPlaybackCalendarBounds();
   return {
-    startDateYmd: eclipseShaped.startDateYmd,
-    endDateYmd: eclipseShaped.endDateYmd,
-    includeViewing: flag(raw?.includeViewing, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING),
-    includeStrong: flag(raw?.includeStrong, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG),
-    includePrime: flag(raw?.includePrime, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME),
-    loop: flag(raw?.loop, DEFAULT_EVENT_PLAYBACK_LOOP),
-    leadInId: normalizeEventPlaybackOffsetId(raw?.leadInId, DEFAULT_EVENT_PLAYBACK_LEAD_IN_ID),
-    postWaitId: normalizeEventPlaybackOffsetId(raw?.postWaitId, DEFAULT_EVENT_PLAYBACK_POST_WAIT_ID),
+    minYmd: eclipse.minYmd < mw.minYmd ? eclipse.minYmd : mw.minYmd,
+    maxYmd: eclipse.maxYmd > mw.maxYmd ? eclipse.maxYmd : mw.maxYmd,
   };
 }
 
-function normalizeFamily(raw: unknown): EventPlaybackFamilyId {
-  return raw === "milkyWay" ? "milkyWay" : DEFAULT_EVENT_PLAYBACK_FAMILY;
+function isLegacyFamilyShape(o: Record<string, unknown>): boolean {
+  return (
+    o.family === "eclipses" ||
+    o.family === "milkyWay" ||
+    (typeof o.solarEnabled !== "boolean" && (isPlainObject(o.eclipse) || isPlainObject(o.milkyWay)))
+  );
 }
 
 export type NormalizeEventPlaybackOptions = {
@@ -121,28 +100,85 @@ export type NormalizeEventPlaybackOptions = {
 
 /**
  * Normalize durable event-playback preferences.
- * `legacyEclipseTour` migrates pre-LIB-052 `scene.eclipseTour` when `eclipse` is absent.
+ * `legacyEclipseTour` migrates pre-LIB-052 `scene.eclipseTour` when playback prefs are absent.
+ * LIB-052 `{ family, eclipse, milkyWay }` migrates to a shared range plus enabled-type set.
  */
 export function normalizeEventPlayback(
   raw: unknown,
   options: NormalizeEventPlaybackOptions = {},
 ): EventPlaybackConfig {
   const nowMs = options.nowMs ?? Date.now();
+  const bounds = getEventPlaybackCalendarBounds();
   const o = isPlainObject(raw) ? raw : {};
-  const eclipseRaw = isPlainObject(o.eclipse)
-    ? o.eclipse
-    : options.legacyEclipseTour;
-  const eclipseBounds = getEclipseTourAuthorityRange().calendarBounds;
-  const eclipse = normalizeEclipseTourPresentation(eclipseRaw, eclipseBounds, nowMs);
-  const milkyWay = normalizeMilkyWayPlayback(
-    isPlainObject(o.milkyWay) ? o.milkyWay : undefined,
-    getMilkyWayPlaybackCalendarBounds(),
+
+  if (!isPlainObject(raw) && options.legacyEclipseTour) {
+    const eclipse = normalizeEclipseTourPresentation(options.legacyEclipseTour, bounds, nowMs);
+    return {
+      startDateYmd: eclipse.startDateYmd,
+      endDateYmd: eclipse.endDateYmd,
+      loop: eclipse.loop,
+      leadInId: eclipse.leadInId,
+      postWaitId: eclipse.postWaitId,
+      solarEnabled: eclipse.includeSolar,
+      lunarEnabled: eclipse.includeLunar,
+      milkyWayEnabled: false,
+      includeViewing: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING,
+      includeStrong: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG,
+      includePrime: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME,
+    };
+  }
+
+  if (isLegacyFamilyShape(o)) {
+    const eclipseRaw = isPlainObject(o.eclipse) ? o.eclipse : options.legacyEclipseTour;
+    const eclipse = normalizeEclipseTourPresentation(eclipseRaw, getEclipseTourAuthorityRange().calendarBounds, nowMs);
+    const mwShaped = normalizeEclipseTourPresentation(
+      isPlainObject(o.milkyWay) ? o.milkyWay : undefined,
+      getMilkyWayPlaybackCalendarBounds(),
+      nowMs,
+    );
+    const mwRaw = isPlainObject(o.milkyWay) ? o.milkyWay : {};
+    const family = o.family === "milkyWay" ? "milkyWay" : "eclipses";
+    const shared = family === "milkyWay" ? mwShaped : eclipse;
+    return {
+      startDateYmd: shared.startDateYmd,
+      endDateYmd: shared.endDateYmd,
+      loop: flag(shared.loop, DEFAULT_EVENT_PLAYBACK_LOOP),
+      leadInId: normalizeEventPlaybackOffsetId(shared.leadInId, DEFAULT_EVENT_PLAYBACK_LEAD_IN_ID),
+      postWaitId: normalizeEventPlaybackOffsetId(shared.postWaitId, DEFAULT_EVENT_PLAYBACK_POST_WAIT_ID),
+      solarEnabled: family === "eclipses" ? eclipse.includeSolar : false,
+      lunarEnabled: family === "eclipses" ? eclipse.includeLunar : false,
+      milkyWayEnabled: family === "milkyWay",
+      includeViewing: flag(mwRaw.includeViewing, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING),
+      includeStrong: flag(mwRaw.includeStrong, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG),
+      includePrime: flag(mwRaw.includePrime, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME),
+    };
+  }
+
+  const shaped = normalizeEclipseTourPresentation(
+    {
+      startDateYmd: o.startDateYmd,
+      endDateYmd: o.endDateYmd,
+      loop: o.loop,
+      leadInId: o.leadInId,
+      postWaitId: o.postWaitId,
+      includeSolar: true,
+      includeLunar: true,
+    },
+    bounds,
     nowMs,
   );
   return {
-    family: normalizeFamily(o.family),
-    eclipse,
-    milkyWay,
+    startDateYmd: shaped.startDateYmd,
+    endDateYmd: shaped.endDateYmd,
+    loop: flag(o.loop, DEFAULT_EVENT_PLAYBACK_LOOP),
+    leadInId: normalizeEventPlaybackOffsetId(o.leadInId, DEFAULT_EVENT_PLAYBACK_LEAD_IN_ID),
+    postWaitId: normalizeEventPlaybackOffsetId(o.postWaitId, DEFAULT_EVENT_PLAYBACK_POST_WAIT_ID),
+    solarEnabled: flag(o.solarEnabled, DEFAULT_EVENT_PLAYBACK_SOLAR_ENABLED),
+    lunarEnabled: flag(o.lunarEnabled, DEFAULT_EVENT_PLAYBACK_LUNAR_ENABLED),
+    milkyWayEnabled: flag(o.milkyWayEnabled, DEFAULT_EVENT_PLAYBACK_MILKY_WAY_ENABLED),
+    includeViewing: flag(o.includeViewing, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING),
+    includeStrong: flag(o.includeStrong, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG),
+    includePrime: flag(o.includePrime, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME),
   };
 }
 
@@ -151,59 +187,54 @@ export function defaultEventPlaybackConfig(nowMs: number = Date.now()): EventPla
 }
 
 export function cloneEventPlayback(c: EventPlaybackConfig): EventPlaybackConfig {
-  return {
-    family: c.family,
-    eclipse: { ...c.eclipse },
-    milkyWay: { ...c.milkyWay },
-  };
+  return { ...c };
 }
 
-export function applyEventPlaybackEclipse(
+export function applyEventPlayback(
   current: EventPlaybackConfig,
-  patch: Partial<EventPlaybackEclipseConfig>,
+  patch: EventPlaybackConfigPatch,
   nowMs: number = Date.now(),
 ): EventPlaybackConfig {
-  return normalizeEventPlayback(
-    {
-      family: current.family,
-      eclipse: { ...current.eclipse, ...patch },
-      milkyWay: current.milkyWay,
-    },
-    { nowMs },
-  );
-}
-
-export function applyEventPlaybackMilkyWay(
-  current: EventPlaybackConfig,
-  patch: Partial<EventPlaybackMilkyWayConfig>,
-  nowMs: number = Date.now(),
-): EventPlaybackConfig {
-  return normalizeEventPlayback(
-    {
-      family: current.family,
-      eclipse: current.eclipse,
-      milkyWay: { ...current.milkyWay, ...patch },
-    },
-    { nowMs },
-  );
-}
-
-export function eventPlaybackEclipseFromData(data: { eventPlayback: EventPlaybackConfig }): EventPlaybackEclipseConfig {
-  return data.eventPlayback.eclipse;
+  return normalizeEventPlayback({ ...current, ...patch }, { nowMs });
 }
 
 export function milkyWayPlaybackLevels(
-  mw: EventPlaybackMilkyWayConfig,
+  pb: Pick<EventPlaybackConfig, "includeViewing" | "includeStrong" | "includePrime">,
 ): Array<"viewing" | "strong" | "prime"> {
   const out: Array<"viewing" | "strong" | "prime"> = [];
-  if (mw.includeViewing) {
+  if (pb.includeViewing) {
     out.push("viewing");
   }
-  if (mw.includeStrong) {
+  if (pb.includeStrong) {
     out.push("strong");
   }
-  if (mw.includePrime) {
+  if (pb.includePrime) {
     out.push("prime");
   }
   return out;
+}
+
+export function eventPlaybackHasEnabledType(pb: EventPlaybackConfig): boolean {
+  if (pb.solarEnabled || pb.lunarEnabled) {
+    return true;
+  }
+  return pb.milkyWayEnabled && milkyWayPlaybackLevels(pb).length > 0;
+}
+
+export function eventPlaybackStartBlockedReason(
+  pb: EventPlaybackConfig,
+  hasReferenceCity: boolean,
+): string | null {
+  if (!pb.solarEnabled && !pb.lunarEnabled && !pb.milkyWayEnabled) {
+    return "Select at least one event type";
+  }
+  if (pb.milkyWayEnabled && milkyWayPlaybackLevels(pb).length === 0) {
+    if (!pb.solarEnabled && !pb.lunarEnabled) {
+      return "No selected MW levels.";
+    }
+  }
+  if (pb.milkyWayEnabled && !hasReferenceCity && !pb.solarEnabled && !pb.lunarEnabled) {
+    return "Select a reference city to sequence Milky Way windows.";
+  }
+  return null;
 }

@@ -101,6 +101,27 @@ const BOUNDARY_TOLERANCE_MS = 2_000;
 const MIN_INTERVAL_MS = 60_000;
 const EQD_BUCKET_MS = 6 * HOUR_MS;
 const GAST_DEG_PER_HOUR = 15.0410786;
+const FORWARD_SEARCH_CHUNKS_MS = [30 * DAY_MS, 90 * DAY_MS, 365 * DAY_MS] as const;
+
+type MilkyWayEnumerateStats = {
+  callCount: number;
+  lastSpanMs: number;
+  totalSpanMs: number;
+};
+
+let enumerateStats: MilkyWayEnumerateStats = {
+  callCount: 0,
+  lastSpanMs: 0,
+  totalSpanMs: 0,
+};
+
+export function milkyWayEnumerateStatsForTests(): MilkyWayEnumerateStats {
+  return { ...enumerateStats };
+}
+
+export function resetMilkyWayEnumerateStatsForTests(): void {
+  enumerateStats = { callCount: 0, lastSpanMs: 0, totalSpanMs: 0 };
+}
 
 type EqdSample = { readonly raDeg: number; readonly decDeg: number };
 
@@ -418,6 +439,11 @@ function enumerateUncached(
   startUtcMs: number,
   endUtcMs: number,
 ): MilkyWayViewingSearchResult {
+  enumerateStats = {
+    callCount: enumerateStats.callCount + 1,
+    lastSpanMs: Math.max(0, endUtcMs - startUtcMs),
+    totalSpanMs: enumerateStats.totalSpanMs + Math.max(0, endUtcMs - startUtcMs),
+  };
   const clipped = clampSupportedRange(startUtcMs, endUtcMs);
   if (!clipped) {
     const anySupported =
@@ -602,23 +628,102 @@ export function listMilkyWayViewingWindows(args: {
   };
 }
 
+function nextSearchChunkMs(expansion: number): number {
+  return FORWARD_SEARCH_CHUNKS_MS[Math.min(expansion, FORWARD_SEARCH_CHUNKS_MS.length - 1)]!;
+}
+
+/**
+ * Incremental forward search. Does not enumerate the whole `[after, end]` span.
+ */
+export function searchMilkyWayWindowsForward(args: {
+  observer: MilkyWayViewingObserver;
+  startUtcMs: number;
+  endUtcMs: number;
+  levels?: readonly MilkyWayViewingLevel[];
+}): MilkyWayViewingWindow[] {
+  if (!(args.endUtcMs > args.startUtcMs)) {
+    return [];
+  }
+  const out: MilkyWayViewingWindow[] = [];
+  let cursor = args.startUtcMs;
+  let expansion = 0;
+  while (cursor < args.endUtcMs) {
+    const chunkMs = nextSearchChunkMs(expansion);
+    const chunkEnd = Math.min(args.endUtcMs, cursor + chunkMs);
+    const listed = listMilkyWayViewingWindows({
+      observer: args.observer,
+      startUtcMs: cursor,
+      endUtcMs: chunkEnd,
+      levels: args.levels,
+    });
+    out.push(...listed.windows);
+    cursor = chunkEnd;
+    expansion += 1;
+  }
+  return out;
+}
+
 export function findNextMilkyWayViewingWindow(args: {
   observer: MilkyWayViewingObserver;
   afterUtcMs: number;
   level?: MilkyWayViewingLevel;
   horizonMs?: number;
+  endUtcMs?: number;
 }): MilkyWayViewingWindow | null {
   const horizonMs = args.horizonMs ?? 365 * DAY_MS;
-  const listed = listMilkyWayViewingWindows({
-    observer: args.observer,
-    startUtcMs: args.afterUtcMs,
-    endUtcMs: args.afterUtcMs + horizonMs,
-    levels: args.level ? [args.level] : undefined,
-  });
-  for (const w of listed.windows) {
-    if (w.startUtcMs > args.afterUtcMs) {
-      return w;
+  const searchEnd = args.endUtcMs ?? args.afterUtcMs + horizonMs;
+  const levels = args.level ? [args.level] : undefined;
+  let cursor = args.afterUtcMs;
+  let expansion = 0;
+  while (cursor < searchEnd) {
+    const chunkMs = nextSearchChunkMs(expansion);
+    const chunkEnd = Math.min(searchEnd, cursor + chunkMs);
+    const listed = listMilkyWayViewingWindows({
+      observer: args.observer,
+      startUtcMs: cursor,
+      endUtcMs: chunkEnd,
+      levels,
+    });
+    for (const w of listed.windows) {
+      if (w.startUtcMs > args.afterUtcMs) {
+        return w;
+      }
     }
+    cursor = chunkEnd;
+    expansion += 1;
+  }
+  return null;
+}
+
+/**
+ * Incremental backward search. `beforeUtcMs` is exclusive for event start.
+ */
+export function findPreviousMilkyWayViewingWindow(args: {
+  observer: MilkyWayViewingObserver;
+  beforeUtcMs: number;
+  startUtcMs: number;
+  level?: MilkyWayViewingLevel;
+}): MilkyWayViewingWindow | null {
+  const levels = args.level ? [args.level] : undefined;
+  let cursor = args.beforeUtcMs;
+  let expansion = 0;
+  while (cursor > args.startUtcMs) {
+    const chunkMs = nextSearchChunkMs(expansion);
+    const chunkStart = Math.max(args.startUtcMs, cursor - chunkMs);
+    const listed = listMilkyWayViewingWindows({
+      observer: args.observer,
+      startUtcMs: chunkStart,
+      endUtcMs: cursor,
+      levels,
+    });
+    for (let i = listed.windows.length - 1; i >= 0; i -= 1) {
+      const w = listed.windows[i]!;
+      if (w.startUtcMs < args.beforeUtcMs) {
+        return w;
+      }
+    }
+    cursor = chunkStart;
+    expansion += 1;
   }
   return null;
 }
@@ -638,4 +743,5 @@ export function windowContainingUtc(
 export function resetMilkyWayViewingWindowCacheForTests(): void {
   eqdCache.clear();
   resultCache.clear();
+  resetMilkyWayEnumerateStatsForTests();
 }

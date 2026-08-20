@@ -32,6 +32,7 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.emphasizeNightSide).toBe(true);
     expect(n.planeThickness).toBe("thin");
     expect(n.visibilityContoursEnabled).toBe(false);
+    expect(n.showVisibilityContourLabels).toBe(true);
     expect(n.contour0Enabled).toBe(false);
     expect(n.contour30Enabled).toBe(true);
     expect(n.contour45Enabled).toBe(true);
@@ -71,6 +72,12 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(next.bandWidth).toBe("narrow");
     expect(next.planeEnabled).toBe(true);
     expect(next.emphasizeNightSide).toBe(true);
+  });
+
+  it("preserves explicit false for contour value labels", () => {
+    const n = normalizeMilkyWayPresentation({ showVisibilityContourLabels: false });
+    expect(n.showVisibilityContourLabels).toBe(false);
+    expect(n.visibilityContoursEnabled).toBe(false);
   });
 
   it("enables visibility contours without dropping ribbon flags", () => {

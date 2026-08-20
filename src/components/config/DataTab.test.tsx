@@ -192,11 +192,15 @@ describe("DataTab demo time UX", () => {
     expect(screen.getByLabelText("Data topic")).toBeTruthy();
     expect(screen.queryByLabelText("Event family")).toBeNull();
     fireEvent.change(screen.getByLabelText("Data topic"), { target: { value: "eventPlayback" } });
-    expect(screen.getByLabelText("Event family")).toBeTruthy();
-    expect((screen.getByLabelText("Event family") as HTMLSelectElement).value).toBe("eclipses");
+    expect(screen.queryByLabelText("Event family")).toBeNull();
     expect(screen.getByLabelText("Include solar eclipses in playback")).toBeTruthy();
     expect(screen.getByLabelText("Include lunar eclipses in playback")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Event family"), { target: { value: "milkyWay" } });
+    expect(screen.getByLabelText("Include Milky Way viewing windows in playback")).toBeTruthy();
+    expect((screen.getByLabelText("Include solar eclipses in playback") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Include lunar eclipses in playback") as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByLabelText("Include Milky Way viewing windows in playback") as HTMLInputElement).checked).toBe(
+      true,
+    );
     expect(screen.getByLabelText("Include Prime windows in playback")).toBeTruthy();
     expect((screen.getByLabelText("Include Viewing windows in playback") as HTMLInputElement).checked).toBe(
       false,

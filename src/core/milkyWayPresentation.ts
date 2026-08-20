@@ -111,6 +111,7 @@ export type MilkyWayPresentation = {
   galacticAnticenterEnabled: boolean;
   emphasizeNightSide: boolean;
   visibilityContoursEnabled: boolean;
+  showVisibilityContourLabels: boolean;
   contour0Enabled: boolean;
   contour30Enabled: boolean;
   contour45Enabled: boolean;
@@ -144,6 +145,7 @@ export const DEFAULT_MILKY_WAY_PRESENTATION: MilkyWayPresentation = {
   galacticAnticenterEnabled: false,
   emphasizeNightSide: true,
   visibilityContoursEnabled: false,
+  showVisibilityContourLabels: true,
   contour0Enabled: false,
   contour30Enabled: true,
   contour45Enabled: true,
@@ -201,6 +203,10 @@ export function normalizeMilkyWayPresentation(raw: unknown): MilkyWayPresentatio
     visibilityContoursEnabled: asBoolean(
       o.visibilityContoursEnabled,
       d.visibilityContoursEnabled,
+    ),
+    showVisibilityContourLabels: asBoolean(
+      o.showVisibilityContourLabels,
+      d.showVisibilityContourLabels,
     ),
     contour0Enabled: asBoolean(o.contour0Enabled, d.contour0Enabled),
     contour30Enabled: asBoolean(o.contour30Enabled, d.contour30Enabled),

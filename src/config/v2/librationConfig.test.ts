@@ -702,7 +702,7 @@ describe("librationConfig v2 (Phase 1)", () => {
     );
   });
 
-  it("migrates scene.eclipseTour into data.eventPlayback.eclipse and omits the old key", () => {
+  it("migrates scene.eclipseTour into data.eventPlayback solar/lunar prefs and omits the old key", () => {
     const base = defaultLibrationConfigV2();
     const migrated = normalizeLibrationConfig({
       ...base,
@@ -724,13 +724,14 @@ describe("librationConfig v2 (Phase 1)", () => {
         },
       },
     } as unknown as LibrationConfigV2);
-    expect(migrated.data.eventPlayback.eclipse.startDateYmd).toBe("2017-08-01");
-    expect(migrated.data.eventPlayback.eclipse.endDateYmd).toBe("2017-09-15");
-    expect(migrated.data.eventPlayback.eclipse.includeSolar).toBe(true);
-    expect(migrated.data.eventPlayback.eclipse.includeLunar).toBe(false);
-    expect(migrated.data.eventPlayback.eclipse.loop).toBe(false);
-    expect(migrated.data.eventPlayback.eclipse.leadInId).toBe("2d");
-    expect(migrated.data.eventPlayback.eclipse.postWaitId).toBe("6h");
+    expect(migrated.data.eventPlayback.startDateYmd).toBe("2017-08-01");
+    expect(migrated.data.eventPlayback.endDateYmd).toBe("2017-09-15");
+    expect(migrated.data.eventPlayback.solarEnabled).toBe(true);
+    expect(migrated.data.eventPlayback.lunarEnabled).toBe(false);
+    expect(migrated.data.eventPlayback.milkyWayEnabled).toBe(false);
+    expect(migrated.data.eventPlayback.loop).toBe(false);
+    expect(migrated.data.eventPlayback.leadInId).toBe("2d");
+    expect(migrated.data.eventPlayback.postWaitId).toBe("6h");
     expect("eclipseTour" in (migrated.scene as object)).toBe(false);
   });
 

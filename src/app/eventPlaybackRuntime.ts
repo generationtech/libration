@@ -12,8 +12,8 @@
  */
 
 /**
- * App-side adapters: build event-playback schedules from the v2 document.
- * Enumeration is cached off the animation frame.
+ * App-side adapters: merged event-playback lookup from the v2 document.
+ * Next/previous discovery is incremental; do not enumerate centuries of MW windows.
  */
 
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
@@ -31,30 +31,21 @@ import {
 } from "../core/eclipse/eclipseTourCatalog";
 import { eclipseTourRangeUtcMs } from "../core/eclipse/eclipseTourRange";
 import { eclipseTourStructuralKey } from "../core/eclipse/eclipseTourSequence";
-import type { EventPlaybackFamilyId } from "../core/eventPlayback/eventPlaybackConfig";
 import { milkyWayPlaybackLevels } from "../core/eventPlayback/eventPlaybackConfig";
-import type { EventPlaybackTimedEvent } from "../core/eventPlayback/eventPlaybackSequence";
 import {
-  groupMilkyWayWindowsForTour,
-  scheduleMilkyWayTourEvents,
-  type MilkyWayPlaybackScheduledEvent,
-} from "../core/eventPlayback/milkyWayTourEvents";
-import { listMilkyWayViewingWindows } from "../core/milkyWayViewingWindows";
+  createMergedEventPlaybackNavigator,
+  findNextPlaybackEvent,
+  findPreviousPlaybackEvent,
+  type EventPlaybackListedEvent,
+  type EventPlaybackLookupQuery,
+} from "../core/eventPlayback/eventPlaybackLookup";
+import type { EventPlaybackNavigator } from "../core/eventPlayback/eventPlaybackSequence";
 import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
 import { getCalendarYmdInZone } from "../core/wallTimeInZone";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import type { EclipseTourScheduledEvent } from "../core/eclipse/eclipseTourCatalog";
 
-export type EventPlaybackListedEvent = EventPlaybackTimedEvent & {
-  readonly title: string;
-  readonly dateLabel: string;
-  readonly milkyWay?: Pick<
-    MilkyWayPlaybackScheduledEvent,
-    "cityId" | "bestLevel" | "peakAltitudeDeg" | "startUtcMs" | "endUtcMs"
-  > & { readonly cityName: string };
-};
-
-const scheduleCache = new Map<string, EventPlaybackListedEvent[]>();
+export type { EventPlaybackListedEvent, EventPlaybackLookupQuery } from "../core/eventPlayback/eventPlaybackLookup";
 
 function sceneFromV2(v2: LibrationConfigV2) {
   return v2.scene ?? buildDefaultSceneConfigFromLayerFlags(v2.layers);
@@ -86,96 +77,129 @@ function typeFilterKey(v2: LibrationConfigV2): string {
   ].join("|");
 }
 
+export function eventPlaybackRangeUtcMs(
+  v2: LibrationConfigV2,
+): { readonly startUtcMs: number; readonly endUtcMs: number } | null {
+  const pb = v2.data.eventPlayback;
+  return eclipseTourRangeUtcMs(
+    pb.startDateYmd,
+    pb.endDateYmd,
+    eventPlaybackUseUtcCivilFrame(v2),
+    eventPlaybackCivilZone(v2),
+  );
+}
+
 export function eventPlaybackStructuralFingerprint(v2: LibrationConfigV2): string {
   const pb = v2.data.eventPlayback;
   const observer = resolveReferenceCityObserverLocation(v2.chrome.displayTime);
-  if (pb.family === "milkyWay") {
-    return [
-      "milkyWay",
-      pb.milkyWay.endDateYmd,
-      pb.milkyWay.includeViewing ? "V" : "",
-      pb.milkyWay.includeStrong ? "S" : "",
-      pb.milkyWay.includePrime ? "P" : "",
-      pb.milkyWay.leadInId,
-      pb.milkyWay.postWaitId,
-      observer?.cityId ?? "",
-    ].join("|");
-  }
+  const mwCity = pb.milkyWayEnabled ? (observer?.cityId ?? "") : "";
   return [
-    "eclipses",
+    pb.startDateYmd,
+    pb.endDateYmd,
+    pb.solarEnabled ? "S" : "",
+    pb.lunarEnabled ? "L" : "",
+    pb.milkyWayEnabled ? "M" : "",
+    pb.includeViewing ? "V" : "",
+    pb.includeStrong ? "St" : "",
+    pb.includePrime ? "P" : "",
+    pb.leadInId,
+    pb.postWaitId,
+    typeFilterKey(v2),
+    mwCity,
     eclipseTourStructuralKey({
-      startDateYmd: "",
-      endDateYmd: pb.eclipse.endDateYmd,
-      includeSolar: pb.eclipse.includeSolar,
-      includeLunar: pb.eclipse.includeLunar,
-      leadInId: pb.eclipse.leadInId,
-      postWaitId: pb.eclipse.postWaitId,
+      startDateYmd: pb.startDateYmd,
+      endDateYmd: pb.endDateYmd,
+      includeSolar: pb.solarEnabled,
+      includeLunar: pb.lunarEnabled,
+      leadInId: pb.leadInId,
+      postWaitId: pb.postWaitId,
       solarTypes: typeFilterKey(v2).split("|")[0] ?? "",
       lunarTypes: typeFilterKey(v2).split("|")[1] ?? "",
     }),
   ].join("|");
 }
 
-function scheduleCacheKey(v2: LibrationConfigV2): string {
-  const pb = v2.data.eventPlayback;
-  if (pb.family === "milkyWay") {
-    const observer = resolveReferenceCityObserverLocation(v2.chrome.displayTime);
-    return [
-      eventPlaybackStructuralFingerprint(v2),
-      pb.milkyWay.startDateYmd,
-      observer?.latitudeDeg.toFixed(4) ?? "",
-      observer?.longitudeDeg.toFixed(4) ?? "",
-    ].join("|");
+export function eventPlaybackLookupQuery(v2: LibrationConfigV2): EventPlaybackLookupQuery | null {
+  const bounds = eventPlaybackRangeUtcMs(v2);
+  if (!bounds) {
+    return null;
   }
-  return [eventPlaybackStructuralFingerprint(v2), pb.eclipse.startDateYmd].join("|");
-}
-
-function eclipseToListed(event: EclipseTourScheduledEvent): EventPlaybackListedEvent {
+  const pb = v2.data.eventPlayback;
+  const scene = sceneFromV2(v2);
+  const observer = resolveReferenceCityObserverLocation(v2.chrome.displayTime);
+  const cityName = observer
+    ? REFERENCE_CITIES.find((c) => c.id === observer.cityId)?.name ?? observer.cityId
+    : "";
   return {
-    leadInUtcMs: event.leadInUtcMs,
-    transitionEndUtcMs: event.transitionEndUtcMs,
-    title: event.title,
-    dateLabel: event.dateLabel,
+    rangeStartUtcMs: bounds.startUtcMs,
+    rangeEndUtcMs: bounds.endUtcMs,
+    leadInId: pb.leadInId,
+    postWaitId: pb.postWaitId,
+    solarEnabled: pb.solarEnabled,
+    lunarEnabled: pb.lunarEnabled,
+    milkyWayEnabled: pb.milkyWayEnabled,
+    milkyWayLevels: milkyWayPlaybackLevels(pb),
+    solarPresentation: solarEclipsePresentationFromScene(scene),
+    lunarPresentation: lunarEclipsePresentationFromScene(scene),
+    observer,
+    cityName,
   };
 }
 
-function milkyWayToListed(
-  event: MilkyWayPlaybackScheduledEvent,
-  cityName: string,
-): EventPlaybackListedEvent {
-  return {
-    leadInUtcMs: event.leadInUtcMs,
-    transitionEndUtcMs: event.transitionEndUtcMs,
-    title: event.title,
-    dateLabel: event.dateLabel,
-    milkyWay: {
-      cityId: event.cityId,
-      cityName,
-      bestLevel: event.bestLevel,
-      peakAltitudeDeg: event.peakAltitudeDeg,
-      startUtcMs: event.startUtcMs,
-      endUtcMs: event.endUtcMs,
-    },
-  };
+export function eventPlaybackNavigatorForV2(v2: LibrationConfigV2): EventPlaybackNavigator<EventPlaybackListedEvent> | null {
+  const query = eventPlaybackLookupQuery(v2);
+  if (!query) {
+    return null;
+  }
+  return createMergedEventPlaybackNavigator(query);
 }
 
+export function findFirstPlaybackEvent(v2: LibrationConfigV2): EventPlaybackListedEvent | null {
+  const query = eventPlaybackLookupQuery(v2);
+  if (!query) {
+    return null;
+  }
+  return findNextPlaybackEvent(query, query.rangeStartUtcMs, { includeIntersecting: true });
+}
+
+export function findNextPlaybackEventForV2(
+  v2: LibrationConfigV2,
+  current: EventPlaybackListedEvent,
+): EventPlaybackListedEvent | null {
+  const query = eventPlaybackLookupQuery(v2);
+  if (!query) {
+    return null;
+  }
+  return findNextPlaybackEvent(query, current.eventStartUtcMs, {
+    includeIntersecting: false,
+    excludeEventId: current.eventId,
+  });
+}
+
+export function findPreviousPlaybackEventForV2(
+  v2: LibrationConfigV2,
+  current: EventPlaybackListedEvent,
+): EventPlaybackListedEvent | null {
+  const query = eventPlaybackLookupQuery(v2);
+  if (!query) {
+    return null;
+  }
+  return findPreviousPlaybackEvent(query, current.eventStartUtcMs, current.eventId);
+}
+
+/** Eclipse-only catalog listing for tests. Not used by Start. */
 export function buildEclipsePlaybackSchedule(v2: LibrationConfigV2): EclipseTourScheduledEvent[] {
   const scene = sceneFromV2(v2);
-  const tour = v2.data.eventPlayback.eclipse;
-  const bounds = eclipseTourRangeUtcMs(
-    tour.startDateYmd,
-    tour.endDateYmd,
-    eventPlaybackUseUtcCivilFrame(v2),
-    eventPlaybackCivilZone(v2),
-  );
-  if (!bounds || (!tour.includeSolar && !tour.includeLunar)) {
+  const pb = v2.data.eventPlayback;
+  const bounds = eventPlaybackRangeUtcMs(v2);
+  if (!bounds || (!pb.solarEnabled && !pb.lunarEnabled)) {
     return [];
   }
   const events = listEclipseTourEvents({
     startUtcMs: bounds.startUtcMs,
     endUtcMs: bounds.endUtcMs,
-    includeSolar: tour.includeSolar,
-    includeLunar: tour.includeLunar,
+    includeSolar: pb.solarEnabled,
+    includeLunar: pb.lunarEnabled,
     solarPresentation: solarEclipsePresentationFromScene(scene),
     lunarPresentation: lunarEclipsePresentationFromScene(scene),
   });
@@ -183,76 +207,20 @@ export function buildEclipsePlaybackSchedule(v2: LibrationConfigV2): EclipseTour
     events,
     bounds.startUtcMs,
     bounds.endUtcMs,
-    tour.leadInId,
-    tour.postWaitId,
+    pb.leadInId,
+    pb.postWaitId,
   );
-}
-
-export function buildMilkyWayPlaybackSchedule(v2: LibrationConfigV2): EventPlaybackListedEvent[] {
-  const mw = v2.data.eventPlayback.milkyWay;
-  const levels = milkyWayPlaybackLevels(mw);
-  const observer = resolveReferenceCityObserverLocation(v2.chrome.displayTime);
-  if (!observer || levels.length === 0) {
-    return [];
-  }
-  const bounds = eclipseTourRangeUtcMs(
-    mw.startDateYmd,
-    mw.endDateYmd,
-    eventPlaybackUseUtcCivilFrame(v2),
-    eventPlaybackCivilZone(v2),
-  );
-  if (!bounds) {
-    return [];
-  }
-  const listed = listMilkyWayViewingWindows({
-    observer,
-    startUtcMs: bounds.startUtcMs,
-    endUtcMs: bounds.endUtcMs + 1,
-    levels,
-  });
-  const grouped = groupMilkyWayWindowsForTour(listed.windows);
-  const scheduled = scheduleMilkyWayTourEvents(
-    grouped,
-    bounds.startUtcMs,
-    bounds.endUtcMs,
-    mw.leadInId,
-    mw.postWaitId,
-  );
-  const cityName = REFERENCE_CITIES.find((c) => c.id === observer.cityId)?.name ?? observer.cityId;
-  return scheduled.map((event) => milkyWayToListed(event, cityName));
-}
-
-export function buildEventPlaybackSchedule(v2: LibrationConfigV2): EventPlaybackListedEvent[] {
-  const key = scheduleCacheKey(v2);
-  const hit = scheduleCache.get(key);
-  if (hit) {
-    return hit;
-  }
-  const family: EventPlaybackFamilyId = v2.data.eventPlayback.family;
-  const events =
-    family === "milkyWay"
-      ? buildMilkyWayPlaybackSchedule(v2)
-      : buildEclipsePlaybackSchedule(v2).map(eclipseToListed);
-  scheduleCache.set(key, events);
-  if (scheduleCache.size > 8) {
-    const oldest = scheduleCache.keys().next().value;
-    if (oldest !== undefined) {
-      scheduleCache.delete(oldest);
-    }
-  }
-  return events;
 }
 
 export function eventPlaybackLiveLoop(v2: LibrationConfigV2): boolean {
-  const pb = v2.data.eventPlayback;
-  return pb.family === "milkyWay" ? pb.milkyWay.loop : pb.eclipse.loop;
+  return v2.data.eventPlayback.loop;
 }
 
 export function resetEventPlaybackScheduleCacheForTests(): void {
-  scheduleCache.clear();
+  // Incremental lookup is uncached; kept for call-site compatibility.
 }
 
-/** @deprecated Use {@link buildEclipsePlaybackSchedule} / {@link buildEventPlaybackSchedule}. */
+/** @deprecated Use {@link buildEclipsePlaybackSchedule}. */
 export function buildEclipseTourSchedule(v2: LibrationConfigV2): EclipseTourScheduledEvent[] {
   return buildEclipsePlaybackSchedule(v2);
 }

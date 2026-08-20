@@ -20,6 +20,7 @@ import type { EclipseTourScheduledEvent } from "./eclipseTourCatalog";
 import {
   eventPlaybackCanGoNext,
   eventPlaybackCanGoPrevious,
+  eventPlaybackNavigatorFromArray,
   inactiveEventPlaybackState,
   isoUtcFromUnixMs,
   pauseEventPlaybackSequence,
@@ -36,12 +37,27 @@ import {
 
 export type EclipseTourPhase = EventPlaybackPhase;
 
-export type EclipseTourSequenceState = EventPlaybackSequenceState<EclipseTourScheduledEvent>;
+export type EclipseTourSequenceState = EventPlaybackSequenceState<EclipseTourScheduledEvent> & {
+  readonly events: readonly EclipseTourScheduledEvent[];
+};
 
-export type EclipseTourStepResult = EventPlaybackStepResult<EclipseTourScheduledEvent>;
+export type EclipseTourStepResult = EventPlaybackStepResult<EclipseTourScheduledEvent> & {
+  readonly state: EclipseTourSequenceState;
+};
+
+function withEvents(
+  result: EventPlaybackStepResult<EclipseTourScheduledEvent>,
+  events: readonly EclipseTourScheduledEvent[],
+): EclipseTourStepResult {
+  return { ...result, state: { ...result.state, events } };
+}
+
+function nav(state: EclipseTourSequenceState) {
+  return eventPlaybackNavigatorFromArray(state.events);
+}
 
 export function inactiveEclipseTourState(structuralKey: string = ""): EclipseTourSequenceState {
-  return inactiveEventPlaybackState(structuralKey);
+  return { ...inactiveEventPlaybackState(structuralKey), events: [] };
 }
 
 export { isoUtcFromUnixMs };
@@ -51,30 +67,31 @@ export function startEclipseTourSequence(
   loop: boolean,
   structuralKey: string,
 ): EclipseTourStepResult {
-  return startEventPlaybackSequence(events, loop, structuralKey);
+  const navigator = eventPlaybackNavigatorFromArray(events);
+  return withEvents(startEventPlaybackSequence(events[0] ?? null, loop, structuralKey, navigator), events);
 }
 
 export function pauseEclipseTourSequence(state: EclipseTourSequenceState): EclipseTourSequenceState {
-  return pauseEventPlaybackSequence(state);
+  return { ...pauseEventPlaybackSequence(state), events: state.events };
 }
 
 export function resumeEclipseTourSequence(state: EclipseTourSequenceState): EclipseTourSequenceState {
-  return resumeEventPlaybackSequence(state);
+  return { ...resumeEventPlaybackSequence(state), events: state.events };
 }
 
 export function stopEclipseTourSequence(state: EclipseTourSequenceState): EclipseTourSequenceState {
-  return stopEventPlaybackSequence(state);
+  return { ...stopEventPlaybackSequence(state), events: [] };
 }
 
 export function resetEclipseTourCurrentEvent(state: EclipseTourSequenceState): EclipseTourStepResult {
-  return resetEventPlaybackCurrentEvent(state);
+  return withEvents(resetEventPlaybackCurrentEvent(state), state.events);
 }
 
 export function skipEclipseTourEvent(
   state: EclipseTourSequenceState,
   delta: number,
 ): EclipseTourStepResult {
-  return skipEventPlaybackEvent(state, delta);
+  return withEvents(skipEventPlaybackEvent(state, delta, nav(state)), state.events);
 }
 
 export function eclipseTourCanGoPrevious(state: EclipseTourSequenceState): boolean {
@@ -89,7 +106,7 @@ export function stepEclipseTourSequence(
   state: EclipseTourSequenceState,
   productUtcMs: number,
 ): EclipseTourStepResult {
-  return stepEventPlaybackSequence(state, productUtcMs);
+  return withEvents(stepEventPlaybackSequence(state, productUtcMs, nav(state)), state.events);
 }
 
 export function eclipseTourStructuralKey(parts: {

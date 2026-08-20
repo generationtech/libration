@@ -451,6 +451,25 @@ export function MilkyWaySection(props: {
           }
         />
       </ConfigControlRow>
+      <ConfigControlRow label="Show contour values">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showVisibilityContourLabels}
+          readOnly={!mutable}
+          disabled={!mutable || childOff || !pres.visibilityContoursEnabled}
+          tabIndex={mutable && !childOff && pres.visibilityContoursEnabled ? 0 : -1}
+          aria-label="Show contour values"
+          title="Numeric altitude labels on Galactic-center contours. Lines stay visible when this is off."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showVisibilityContourLabels: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
       <ConfigControlRow label="Show 30° contour">
         <input
           type="checkbox"

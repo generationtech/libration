@@ -809,8 +809,12 @@ describe("LayersTab topic navigation", () => {
     const contours = screen.getByLabelText("Show Galactic-center altitude contours") as HTMLInputElement;
     expect(contours.checked).toBe(false);
     expect(contours.disabled).toBe(false);
+    expect((screen.getByLabelText("Show contour values") as HTMLInputElement).disabled).toBe(true);
     await user.click(contours);
     expect(contours.checked).toBe(true);
+    const values = screen.getByLabelText("Show contour values") as HTMLInputElement;
+    expect(values.checked).toBe(true);
+    expect(values.disabled).toBe(false);
     expect((screen.getByLabelText("Show 60° contour") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText("Show horizon / 0°") as HTMLInputElement).checked).toBe(false);
   });

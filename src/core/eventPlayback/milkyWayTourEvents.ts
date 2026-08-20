@@ -19,7 +19,11 @@
 import { formatEclipseCalendarDate } from "../eclipse/eclipseEventCopy";
 import { eventPlaybackOffsetMs, type EventPlaybackOffsetId } from "./eventPlaybackOffsets";
 import { milkyWayViewingLevelRank, type MilkyWayViewingLevel } from "../milkyWayViewingPolicy";
-import type { MilkyWayViewingWindow } from "../milkyWayViewingWindows";
+import {
+  listMilkyWayViewingWindows,
+  type MilkyWayViewingObserver,
+  type MilkyWayViewingWindow,
+} from "../milkyWayViewingWindows";
 
 /** Adjacent partitioned intervals closer than this are one nightly opportunity. */
 const GROUP_GAP_MS = 2 * 60_000;
@@ -45,11 +49,11 @@ export type MilkyWayPlaybackScheduledEvent = MilkyWayTourEvent & {
 function milkyWayLevelTitle(level: MilkyWayViewingLevel): string {
   switch (level) {
     case "prime":
-      return "Prime window";
+      return "Milky Way · Prime";
     case "strong":
-      return "Strong window";
+      return "Milky Way · Strong";
     case "viewing":
-      return "Viewing window";
+      return "Milky Way · Viewing";
     default: {
       const _exhaustive: never = level;
       return _exhaustive;
@@ -103,16 +107,16 @@ export function groupMilkyWayWindowsForTour(
   });
 }
 
-export function scheduleMilkyWayTourEvents(
-  events: readonly MilkyWayTourEvent[],
+export function scheduleMilkyWayTourEvent(
+  event: MilkyWayTourEvent,
   rangeStartUtcMs: number,
   rangeEndUtcMs: number,
   leadInId: EventPlaybackOffsetId,
   postWaitId: EventPlaybackOffsetId,
-): MilkyWayPlaybackScheduledEvent[] {
+): MilkyWayPlaybackScheduledEvent {
   const leadInMs = eventPlaybackOffsetMs(leadInId);
   const postWaitMs = eventPlaybackOffsetMs(postWaitId);
-  return events.map((event) => ({
+  return {
     ...event,
     title: milkyWayLevelTitle(event.bestLevel),
     dateLabel: formatEclipseCalendarDate({
@@ -122,5 +126,143 @@ export function scheduleMilkyWayTourEvents(
     }),
     leadInUtcMs: Math.max(rangeStartUtcMs, event.startUtcMs - leadInMs),
     transitionEndUtcMs: Math.min(rangeEndUtcMs, event.endUtcMs + postWaitMs),
-  }));
+  };
+}
+
+export function scheduleMilkyWayTourEvents(
+  events: readonly MilkyWayTourEvent[],
+  rangeStartUtcMs: number,
+  rangeEndUtcMs: number,
+  leadInId: EventPlaybackOffsetId,
+  postWaitId: EventPlaybackOffsetId,
+): MilkyWayPlaybackScheduledEvent[] {
+  return events.map((event) =>
+    scheduleMilkyWayTourEvent(event, rangeStartUtcMs, rangeEndUtcMs, leadInId, postWaitId),
+  );
+}
+
+const DAY_MS = 86_400_000;
+const SEARCH_CHUNKS_MS = [30 * DAY_MS, 90 * DAY_MS, 365 * DAY_MS] as const;
+const CHUNK_PAD_MS = DAY_MS;
+
+function searchChunkMs(expansion: number): number {
+  return SEARCH_CHUNKS_MS[Math.min(expansion, SEARCH_CHUNKS_MS.length - 1)]!;
+}
+
+export type FindMilkyWayTourEventQuery = {
+  readonly observer: MilkyWayViewingObserver;
+  readonly rangeStartUtcMs: number;
+  readonly rangeEndUtcMs: number;
+  readonly levels: readonly MilkyWayViewingLevel[];
+  readonly excludeEventId?: string;
+};
+
+function groupedInSpan(
+  observer: MilkyWayViewingObserver,
+  startUtcMs: number,
+  endUtcMs: number,
+  levels: readonly MilkyWayViewingLevel[],
+): MilkyWayTourEvent[] {
+  if (!(endUtcMs > startUtcMs) || levels.length === 0) {
+    return [];
+  }
+  const listed = listMilkyWayViewingWindows({
+    observer,
+    startUtcMs,
+    endUtcMs,
+    levels,
+  });
+  return groupMilkyWayWindowsForTour(listed.windows);
+}
+
+function isEligibleTourEvent(
+  event: MilkyWayTourEvent,
+  query: FindMilkyWayTourEventQuery,
+): boolean {
+  if (query.excludeEventId && event.id === query.excludeEventId) {
+    return false;
+  }
+  if (event.endUtcMs <= query.rangeStartUtcMs) {
+    return false;
+  }
+  if (event.startUtcMs > query.rangeEndUtcMs) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Next grouped MW opportunity at or after `afterUtcMs`.
+ * When `includeIntersecting` is true, an event already underway is returned rather than skipped.
+ */
+export function findNextMilkyWayTourEvent(
+  query: FindMilkyWayTourEventQuery & {
+    readonly afterUtcMs: number;
+    readonly includeIntersecting: boolean;
+  },
+): MilkyWayTourEvent | null {
+  if (query.levels.length === 0) {
+    return null;
+  }
+  const lookback = query.includeIntersecting ? DAY_MS : 0;
+  let cursor = Math.max(query.rangeStartUtcMs, query.afterUtcMs - lookback);
+  let expansion = 0;
+  while (cursor < query.rangeEndUtcMs) {
+    const chunkMs = searchChunkMs(expansion);
+    const chunkEnd = Math.min(query.rangeEndUtcMs, cursor + chunkMs);
+    const grouped = groupedInSpan(
+      query.observer,
+      Math.max(query.rangeStartUtcMs, cursor - CHUNK_PAD_MS),
+      Math.min(query.rangeEndUtcMs + CHUNK_PAD_MS, chunkEnd + CHUNK_PAD_MS),
+      query.levels,
+    );
+    for (const event of grouped) {
+      if (!isEligibleTourEvent(event, query)) {
+        continue;
+      }
+      if (query.includeIntersecting && event.startUtcMs <= query.afterUtcMs && event.endUtcMs > query.afterUtcMs) {
+        return event;
+      }
+      if (event.startUtcMs > query.afterUtcMs) {
+        return event;
+      }
+    }
+    cursor = chunkEnd;
+    expansion += 1;
+  }
+  return null;
+}
+
+export function findPreviousMilkyWayTourEvent(
+  query: FindMilkyWayTourEventQuery & {
+    readonly beforeUtcMs: number;
+  },
+): MilkyWayTourEvent | null {
+  if (query.levels.length === 0) {
+    return null;
+  }
+  let cursor = Math.min(query.rangeEndUtcMs, query.beforeUtcMs);
+  let expansion = 0;
+  while (cursor > query.rangeStartUtcMs) {
+    const chunkMs = searchChunkMs(expansion);
+    const chunkStart = Math.max(query.rangeStartUtcMs, cursor - chunkMs);
+    const grouped = groupedInSpan(
+      query.observer,
+      Math.max(query.rangeStartUtcMs, chunkStart - CHUNK_PAD_MS),
+      Math.min(query.rangeEndUtcMs + CHUNK_PAD_MS, cursor + CHUNK_PAD_MS),
+      query.levels,
+    );
+    for (let i = grouped.length - 1; i >= 0; i -= 1) {
+      const event = grouped[i]!;
+      if (!isEligibleTourEvent(event, query)) {
+        continue;
+      }
+      if (event.startUtcMs < query.beforeUtcMs) {
+        return event;
+      }
+    }
+    cursor = chunkStart;
+    expansion += 1;
+  }
+  return null;
 }

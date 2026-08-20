@@ -1,6 +1,6 @@
 # 0019 — Domain event playback belongs to Data
 
-- **Status:** Accepted
+- **Status:** Accepted; single-family selection superseded by [0020](0020-event-playback-merges-enabled-domain-sources.md)
 - **Date:** 2026-08-19 (record written with [LIB-052](../work/LIB-052-unified-demo-event-playback-and-milky-way-event-presentation.md))
 
 ## Context
@@ -18,19 +18,19 @@ Domain-specific time travel under Layers topics mixes **what is rendered** with 
 All event-playback and Demo-navigation controls live under Data:
 
 - Data → Time: generic Demo (mode, arbitrary instant, shared speed, Start/Resume, Pause, Reset, Use current time)
-- Data → Event playback: family adapters (Eclipses, Milky Way viewing windows) that sequence existing domain events by commanding the same Demo controller
+- Data → Event playback: enabled event sources (solar eclipses, lunar eclipses, Milky Way viewing windows) that merge into one chronological stream by commanding the same Demo controller
 
 Layers retain domain visibility, rendering, and presentation filters (including Milky Way viewing-event labels and eclipse map labels). Layers do not seek product time.
 
 Event playback:
 
-- persists durable preferences under `data.eventPlayback` (family, range, filters, loop, lead-in, post-wait)
+- persists durable preferences under `data.eventPlayback` (enabled types, shared range, MW levels, loop, lead-in, post-wait)
 - reuses `data.demoTime.speedMultiplier` — no second speed field
 - starts inactive; runtime index/phase is session-only
 - does not require Layers presentation masters to be on
 - does not redefine eclipse astronomy or Milky Way Viewing Window authority ([ADR 0018](0018-milky-way-viewing-window-is-a-reference-city-event.md))
 
-This record supersedes ADR 0015 **only** for control placement (Layers → Eclipse). The shared-Demo-clock decision in ADR 0015 is unchanged.
+This record supersedes ADR 0015 **only** for control placement (Layers → Eclipse). The shared-Demo-clock decision in ADR 0015 is unchanged. Single-family selection is superseded by [ADR 0020](0020-event-playback-merges-enabled-domain-sources.md).
 
 ## Consequences
 

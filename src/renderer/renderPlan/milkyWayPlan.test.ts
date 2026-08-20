@@ -189,6 +189,27 @@ describe("buildMilkyWayRenderPlan", () => {
       expect(Math.abs(item.x2 - item.x1)).toBeLessThan(180);
     }
     expect(plan.items.some((item) => item.kind === "text" && item.text === "60°")).toBe(true);
+    const unlabeled = buildMilkyWayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        presentation: {
+          ...DEFAULT_MILKY_WAY_PRESENTATION,
+          planeEnabled: false,
+          bandEnabled: false,
+          ribsEnabled: false,
+          galacticCenterEnabled: false,
+          galacticCenterLabelEnabled: false,
+          visibilityContoursEnabled: true,
+          showVisibilityContourLabels: false,
+        },
+        visibility,
+      }),
+    });
+    const unlabeledLines = unlabeled.items.filter((item) => item.kind === "line");
+    expect(unlabeledLines.length).toBe(lines.length);
+    expect(unlabeled.items.some((item) => item.kind === "text" && /\d+°/.test(item.text))).toBe(false);
   });
 
   it("places a viewing-event label from Galactic-center subpoint even without ribbon geometry", () => {

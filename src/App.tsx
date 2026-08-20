@@ -50,9 +50,10 @@ import {
   type DemoPlaybackState,
 } from "./app/demoPlayback";
 import {
-  buildEventPlaybackSchedule,
   eventPlaybackLiveLoop,
+  eventPlaybackNavigatorForV2,
   eventPlaybackStructuralFingerprint,
+  findFirstPlaybackEvent,
 } from "./app/eventPlaybackRuntime";
 import {
   eventPlaybackCanGoNext,
@@ -139,7 +140,7 @@ function isTextEntryElement(target: EventTarget | null): boolean {
 }
 
 function extraStatusLines(
-  event: EventPlaybackListedEvent | undefined,
+  event: EventPlaybackListedEvent | null | undefined,
   productUtcMs: number,
   observer: ReturnType<typeof resolveReferenceCityObserverLocation>,
 ): string[] {
@@ -165,22 +166,25 @@ function tourViewFromState(
   state: EventPlaybackSequenceState<EventPlaybackListedEvent>,
   productUtcMs: number,
   observer: ReturnType<typeof resolveReferenceCityObserverLocation>,
+  emptyMessage: string | null,
 ): {
   phase: EventPlaybackPhase;
   currentIndex: number;
-  eventCount: number;
+  eventCount: number | null;
   currentTitle: string | null;
   currentDateLabel: string | null;
   extraStatusLines: readonly string[];
+  emptyMessage: string | null;
 } {
-  const event = state.events[state.index];
+  const event = state.current;
   return {
     phase: state.phase,
     currentIndex: state.index,
-    eventCount: state.events.length,
+    eventCount: null,
     currentTitle: event?.title ?? null,
     currentDateLabel: event?.dateLabel ?? null,
     extraStatusLines: extraStatusLines(event, productUtcMs, observer),
+    emptyMessage: state.phase === "inactive" ? emptyMessage : null,
   };
 }
 
@@ -272,8 +276,9 @@ export default function App() {
     inactiveEventPlaybackState<EventPlaybackListedEvent>(),
   );
   const pendingTourJumpRef = useRef<{ iso: string; pause: boolean } | null>(null);
+  const eventPlaybackEmptyMessageRef = useRef<string | null>(null);
   const [eventPlaybackView, setEventPlaybackView] = useState(() =>
-    tourViewFromState(inactiveEventPlaybackState<EventPlaybackListedEvent>(), Date.now(), null),
+    tourViewFromState(inactiveEventPlaybackState<EventPlaybackListedEvent>(), Date.now(), null, null),
   );
 
   const publishEventPlaybackView = useCallback(
@@ -281,13 +286,19 @@ export default function App() {
       const observer = workingV2Ref.current
         ? resolveReferenceCityObserverLocation(workingV2Ref.current.chrome.displayTime)
         : null;
-      const next = tourViewFromState(state, productInstantMsRef.current, observer);
+      const next = tourViewFromState(
+        state,
+        productInstantMsRef.current,
+        observer,
+        eventPlaybackEmptyMessageRef.current,
+      );
       setEventPlaybackView((prev) =>
         prev.phase === next.phase &&
         prev.currentIndex === next.currentIndex &&
         prev.eventCount === next.eventCount &&
         prev.currentTitle === next.currentTitle &&
         prev.currentDateLabel === next.currentDateLabel &&
+        prev.emptyMessage === next.emptyMessage &&
         prev.extraStatusLines.join("\n") === next.extraStatusLines.join("\n")
           ? prev
           : next,
@@ -358,9 +369,17 @@ export default function App() {
       return;
     }
     const v2 = workingV2Ref.current;
-    const events = buildEventPlaybackSchedule(v2);
+    const first = findFirstPlaybackEvent(v2);
+    const navigator = eventPlaybackNavigatorForV2(v2);
     const key = eventPlaybackStructuralFingerprint(v2);
-    const started = startEventPlaybackSequence(events, eventPlaybackLiveLoop(v2), key);
+    if (!first || !navigator) {
+      eventPlaybackEmptyMessageRef.current = "No matching events";
+      eventPlaybackStateRef.current = stopEventPlaybackSequence(eventPlaybackStateRef.current);
+      publishEventPlaybackView(eventPlaybackStateRef.current);
+      return;
+    }
+    eventPlaybackEmptyMessageRef.current = null;
+    const started = startEventPlaybackSequence(first, eventPlaybackLiveLoop(v2), key, navigator);
     eventPlaybackStateRef.current = started.state;
     if (started.jumpToIsoUtc) {
       applyTourOwnedDemoStart(started.jumpToIsoUtc);
@@ -393,7 +412,12 @@ export default function App() {
 
   const handleEventPlaybackSkip = useCallback(
     (delta: number) => {
-      const result = skipEventPlaybackEvent(eventPlaybackStateRef.current, delta);
+      const v2 = workingV2Ref.current;
+      const navigator = eventPlaybackNavigatorForV2(v2);
+      if (!navigator) {
+        return;
+      }
+      const result = skipEventPlaybackEvent(eventPlaybackStateRef.current, delta, navigator);
       eventPlaybackStateRef.current = result.state;
       if (result.jumpToIsoUtc) {
         applyTourOwnedDemoStart(result.jumpToIsoUtc);
@@ -419,6 +443,7 @@ export default function App() {
       currentTitle: eventPlaybackView.currentTitle,
       currentDateLabel: eventPlaybackView.currentDateLabel,
       extraStatusLines: eventPlaybackView.extraStatusLines,
+      emptyMessage: eventPlaybackView.emptyMessage,
       canGoPrevious: eventPlaybackCanGoPrevious(eventPlaybackStateRef.current),
       canGoNext: eventPlaybackCanGoNext(eventPlaybackStateRef.current),
       onStart: handleEventPlaybackStart,
@@ -638,36 +663,39 @@ export default function App() {
             tourState = { ...tourState, loop: liveLoop };
           }
           if (tourState.phase === "playing") {
-            const step = stepEventPlaybackSequence(tourState, effectiveNowMs);
-            tourState = step.state;
-            if (step.jumpToIsoUtc) {
-              commitWorkingV2Update(
-                workingV2Ref,
-                derivedAppConfigRef,
-                registryRef,
-                (draft) => {
-                  draft.data.mode = "demo";
-                  draft.data.demoTime.enabled = true;
-                  draft.data.demoTime.startIsoUtc = step.jumpToIsoUtc!;
-                },
-              );
-              bumpConfigView();
-              data = derivedAppConfigRef.current.data;
-              const recomputed = computeEffectiveRenderTimeMs(
-                realNowMs,
-                data,
-                demoPlaybackRef.current,
-              );
-              effectiveNowMs = recomputed.nowMs;
-              simulated = recomputed.simulated;
-              nextDemoState = recomputed.next;
-              demoPlaybackRef.current = nextDemoState;
-            }
-            if (step.pause) {
-              demoPlaybackRef.current = applyDemoPlaybackPause(
-                effectiveNowMs,
-                demoPlaybackRef.current,
-              );
+            const navigator = eventPlaybackNavigatorForV2(workingV2Ref.current);
+            if (navigator) {
+              const step = stepEventPlaybackSequence(tourState, effectiveNowMs, navigator);
+              tourState = step.state;
+              if (step.jumpToIsoUtc) {
+                commitWorkingV2Update(
+                  workingV2Ref,
+                  derivedAppConfigRef,
+                  registryRef,
+                  (draft) => {
+                    draft.data.mode = "demo";
+                    draft.data.demoTime.enabled = true;
+                    draft.data.demoTime.startIsoUtc = step.jumpToIsoUtc!;
+                  },
+                );
+                bumpConfigView();
+                data = derivedAppConfigRef.current.data;
+                const recomputed = computeEffectiveRenderTimeMs(
+                  realNowMs,
+                  data,
+                  demoPlaybackRef.current,
+                );
+                effectiveNowMs = recomputed.nowMs;
+                simulated = recomputed.simulated;
+                nextDemoState = recomputed.next;
+                demoPlaybackRef.current = nextDemoState;
+              }
+              if (step.pause) {
+                demoPlaybackRef.current = applyDemoPlaybackPause(
+                  effectiveNowMs,
+                  demoPlaybackRef.current,
+                );
+              }
             }
           }
           eventPlaybackStateRef.current = tourState;

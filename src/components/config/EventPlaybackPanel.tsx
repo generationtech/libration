@@ -12,28 +12,22 @@
  */
 
 import type { ReactElement } from "react";
-import {
-  buildEclipsePlaybackSchedule,
-  buildEventPlaybackSchedule,
-  eventPlaybackStartYmdFromNow,
-} from "../../app/eventPlaybackRuntime";
+import { eventPlaybackStartYmdFromNow } from "../../app/eventPlaybackRuntime";
 import {
   DEMO_TIME_SPEED_MAX,
   DEMO_TIME_SPEED_MIN,
 } from "../../config/appConfig";
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import {
-  applyEventPlaybackEclipse,
-  applyEventPlaybackMilkyWay,
-  getMilkyWayPlaybackCalendarBounds,
-  type EventPlaybackFamilyId,
+  applyEventPlayback,
+  eventPlaybackStartBlockedReason,
+  getEventPlaybackCalendarBounds,
 } from "../../core/eventPlayback/eventPlaybackConfig";
 import {
   EVENT_PLAYBACK_OFFSET_IDS,
   eventPlaybackOffsetLabel,
   type EventPlaybackOffsetId,
 } from "../../core/eventPlayback/eventPlaybackOffsets";
-import { getEclipseTourAuthorityRange } from "../../core/eclipse/eclipseTourCatalog";
 import type { EventPlaybackPhase } from "../../core/eventPlayback/eventPlaybackSequence";
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
 import { REFERENCE_CITIES } from "../../data/referenceCities";
@@ -44,10 +38,11 @@ type UpdateConfig = (updater: (draft: LibrationConfigV2) => void) => void;
 export type EventPlaybackSessionUi = {
   phase: EventPlaybackPhase;
   currentIndex: number;
-  eventCount: number;
+  eventCount: number | null;
   currentTitle: string | null;
   currentDateLabel: string | null;
   extraStatusLines: readonly string[];
+  emptyMessage: string | null;
   canGoPrevious: boolean;
   canGoNext: boolean;
   onStart: () => void;
@@ -61,8 +56,6 @@ export type EventPlaybackSessionUi = {
 
 /** @deprecated Use {@link EventPlaybackSessionUi}. */
 export type EclipseTourSessionUi = EventPlaybackSessionUi;
-
-const MW_COUNT_SPAN_MS = 12 * 365.25 * 86_400_000;
 
 function patchPlayback(updateConfig: UpdateConfig | undefined, mutate: (draft: LibrationConfigV2) => void): void {
   if (!updateConfig) {
@@ -87,34 +80,14 @@ export function EventPlaybackPanel(props: {
   const { config, updateConfig, session } = props;
   const mutable = Boolean(updateConfig);
   const pb = config.data.eventPlayback;
-  const family = pb.family;
-  const eclipseBounds = getEclipseTourAuthorityRange().calendarBounds;
-  const mwBounds = getMilkyWayPlaybackCalendarBounds();
-  const dateBounds = family === "milkyWay" ? mwBounds : eclipseBounds;
-  const eclipse = pb.eclipse;
-  const mw = pb.milkyWay;
+  const dateBounds = getEventPlaybackCalendarBounds();
   const phase = session?.phase ?? "inactive";
   const playing = phase === "playing";
   const paused = phase === "paused";
   const active = playing || paused;
-  const familiesOff =
-    family === "eclipses" ? !eclipse.includeSolar && !eclipse.includeLunar : !mw.includeViewing && !mw.includeStrong && !mw.includePrime;
   const city = cityNameFromConfig(config);
-
-  let matchingCount: number | null = 0;
-  if (familiesOff) {
-    matchingCount = 0;
-  } else if (family === "eclipses") {
-    matchingCount = buildEclipsePlaybackSchedule(config).length;
-  } else {
-    const start = Date.parse(`${mw.startDateYmd}T00:00:00.000Z`);
-    const end = Date.parse(`${mw.endDateYmd}T00:00:00.000Z`);
-    const span = Number.isFinite(start) && Number.isFinite(end) ? end - start : Infinity;
-    matchingCount = span > MW_COUNT_SPAN_MS ? null : buildEventPlaybackSchedule(config).length;
-  }
-
-  const startDisabled =
-    !mutable || !session || familiesOff || matchingCount === 0 || playing || (family === "milkyWay" && !city);
+  const blocked = eventPlaybackStartBlockedReason(pb, Boolean(city));
+  const startDisabled = !mutable || !session || Boolean(blocked) || playing;
   const pauseDisabled = !session || !playing;
   const resetDisabled = !session || !active;
   const stopDisabled = !session || !active;
@@ -122,38 +95,23 @@ export function EventPlaybackPanel(props: {
   const nextDisabled = !session || !active || !session.canGoNext;
 
   const statusLines: string[] = [];
-  if (family === "milkyWay" && !city) {
-    statusLines.push("Select a reference city to sequence Milky Way windows.");
-  } else if (familiesOff) {
-    statusLines.push(
-      family === "eclipses"
-        ? "Select Solar and/or Lunar to enumerate events."
-        : "Select Viewing, Strong, and/or Prime to enumerate events.",
-    );
-  } else if (matchingCount === null) {
-    statusLines.push("Long range — Start to sequence selected windows.");
-  } else if (matchingCount === 0) {
-    statusLines.push(family === "eclipses" ? "No matching eclipse events" : "No matching viewing windows");
-  } else {
-    statusLines.push(
-      family === "eclipses" ? `${matchingCount} matching events` : `${matchingCount} matching windows`,
-    );
-    if (active && session?.currentTitle) {
-      if (family === "milkyWay") {
-        statusLines.push("Milky Way");
-      }
-      statusLines.push(session.currentTitle);
-      if (session.currentDateLabel) {
-        statusLines.push(session.currentDateLabel);
-      }
-      for (const line of session.extraStatusLines) {
-        statusLines.push(line);
-      }
-      statusLines.push(`Event ${session.currentIndex + 1} of ${session.eventCount}`);
-    }
+  if (blocked) {
+    statusLines.push(blocked);
+  } else if (session?.emptyMessage) {
+    statusLines.push(session.emptyMessage);
   }
-
-  const familyLabel = family === "eclipses" ? "Eclipse" : "Milky Way";
+  if (active && session?.currentTitle) {
+    statusLines.push(session.currentTitle);
+    if (session.currentDateLabel) {
+      statusLines.push(session.currentDateLabel);
+    }
+    for (const line of session.extraStatusLines) {
+      statusLines.push(line);
+    }
+    statusLines.push(`Event ${session.currentIndex + 1}`);
+  } else if (!blocked && !session?.emptyMessage) {
+    statusLines.push("Start to sequence the selected event types.");
+  }
 
   return (
     <div data-testid="event-playback-panel">
@@ -161,37 +119,10 @@ export function EventPlaybackPanel(props: {
         Sequences domain events by commanding the existing Demo clock. Layers own rendering.
         Playback does not require domain overlays to be visible.
       </p>
-
-      <ConfigControlRow label="Event family">
-        <select
-          className="config-input"
-          disabled={!mutable}
-          aria-label="Event family"
-          data-testid="event-family-select"
-          value={family}
-          onChange={
-            mutable && updateConfig
-              ? (e) => {
-                  const next = e.currentTarget.value as EventPlaybackFamilyId;
-                  session?.onDeactivate();
-                  patchPlayback(updateConfig, (draft) => {
-                    draft.data.eventPlayback = { ...draft.data.eventPlayback, family: next };
-                  });
-                }
-              : undefined
-          }
-        >
-          <option value="eclipses">Eclipses</option>
-          <option value="milkyWay">Milky Way</option>
-        </select>
-      </ConfigControlRow>
-
-      {family === "milkyWay" ? (
-        <p className="config-section__hint">
-          Reference city: {city ?? "none"} (playback uses this observer; it does not change Layers
-          presentation).
-        </p>
-      ) : null}
+      <p className="config-section__hint">
+        Solar and lunar catalogs cover roughly 1900–2100. Milky Way viewing windows cover 1600–2500.
+        Each source reports no events outside its authority.
+      </p>
 
       <ConfigControlRow label="Starting date">
         <input
@@ -200,23 +131,16 @@ export function EventPlaybackPanel(props: {
           disabled={!mutable}
           min={dateBounds.minYmd}
           max={dateBounds.maxYmd}
-          value={family === "milkyWay" ? mw.startDateYmd : eclipse.startDateYmd}
-          aria-label={`${familyLabel} playback starting date`}
+          value={pb.startDateYmd}
+          aria-label="Event playback starting date"
           onChange={
             mutable && updateConfig
               ? (e) => {
-                  const startDateYmd = e.currentTarget.value;
                   session?.onDeactivate();
                   patchPlayback(updateConfig, (draft) => {
-                    if (family === "milkyWay") {
-                      draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                        startDateYmd,
-                      });
-                    } else {
-                      draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                        startDateYmd,
-                      });
-                    }
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      startDateYmd: e.currentTarget.value,
+                    });
                   });
                 }
               : undefined
@@ -234,15 +158,9 @@ export function EventPlaybackPanel(props: {
               ? () => {
                   const startDateYmd = eventPlaybackStartYmdFromNow(config);
                   patchPlayback(updateConfig, (draft) => {
-                    if (family === "milkyWay") {
-                      draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                        startDateYmd,
-                      });
-                    } else {
-                      draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                        startDateYmd,
-                      });
-                    }
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      startDateYmd,
+                    });
                   });
                 }
               : undefined
@@ -258,23 +176,36 @@ export function EventPlaybackPanel(props: {
           disabled={!mutable}
           min={dateBounds.minYmd}
           max={dateBounds.maxYmd}
-          value={family === "milkyWay" ? mw.endDateYmd : eclipse.endDateYmd}
-          aria-label={`${familyLabel} playback end date`}
+          value={pb.endDateYmd}
+          aria-label="Event playback end date"
           onChange={
             mutable && updateConfig
               ? (e) => {
-                  const endDateYmd = e.currentTarget.value;
                   session?.onDeactivate();
                   patchPlayback(updateConfig, (draft) => {
-                    if (family === "milkyWay") {
-                      draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                        endDateYmd,
-                      });
-                    } else {
-                      draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                        endDateYmd,
-                      });
-                    }
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      endDateYmd: e.currentTarget.value,
+                    });
+                  });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Loop">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pb.loop}
+          disabled={!mutable}
+          aria-label="Loop event playback"
+          onChange={
+            mutable && updateConfig
+              ? (e) => {
+                  patchPlayback(updateConfig, (draft) => {
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      loop: e.currentTarget.checked,
+                    });
                   });
                 }
               : undefined
@@ -282,180 +213,162 @@ export function EventPlaybackPanel(props: {
         />
       </ConfigControlRow>
 
-      {family === "eclipses" ? (
-        <div className="config-checkbox-grid">
-          <ConfigControlRow label="Solar">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={eclipse.includeSolar}
-              disabled={!mutable}
-              aria-label="Include solar eclipses in playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      session?.onDeactivate();
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                          includeSolar: e.currentTarget.checked,
-                        });
+      <p className="config-section__hint">Event types</p>
+      <div className="config-checkbox-grid">
+        <ConfigControlRow label="Solar eclipses">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={pb.solarEnabled}
+            disabled={!mutable}
+            aria-label="Include solar eclipses in playback"
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    session?.onDeactivate();
+                    patchPlayback(updateConfig, (draft) => {
+                      draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                        solarEnabled: e.currentTarget.checked,
                       });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-          <ConfigControlRow label="Lunar">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={eclipse.includeLunar}
-              disabled={!mutable}
-              aria-label="Include lunar eclipses in playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      session?.onDeactivate();
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                          includeLunar: e.currentTarget.checked,
-                        });
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Lunar eclipses">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={pb.lunarEnabled}
+            disabled={!mutable}
+            aria-label="Include lunar eclipses in playback"
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    session?.onDeactivate();
+                    patchPlayback(updateConfig, (draft) => {
+                      draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                        lunarEnabled: e.currentTarget.checked,
                       });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-          <ConfigControlRow label="Loop">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={eclipse.loop}
-              disabled={!mutable}
-              aria-label="Loop eclipse playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                          loop: e.currentTarget.checked,
-                        });
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+        <ConfigControlRow label="Milky Way viewing windows">
+          <input
+            type="checkbox"
+            className="config-input config-input--checkbox"
+            checked={pb.milkyWayEnabled}
+            disabled={!mutable}
+            aria-label="Include Milky Way viewing windows in playback"
+            onChange={
+              mutable && updateConfig
+                ? (e) => {
+                    session?.onDeactivate();
+                    patchPlayback(updateConfig, (draft) => {
+                      draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                        milkyWayEnabled: e.currentTarget.checked,
                       });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-        </div>
-      ) : (
-        <div className="config-checkbox-grid">
-          <ConfigControlRow label="Viewing">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={mw.includeViewing}
-              disabled={!mutable}
-              aria-label="Include Viewing windows in playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      session?.onDeactivate();
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                          includeViewing: e.currentTarget.checked,
+                    });
+                  }
+                : undefined
+            }
+          />
+        </ConfigControlRow>
+      </div>
+
+      {pb.milkyWayEnabled ? (
+        <>
+          <p className="config-section__hint">
+            Reference city: {city ?? "none"} (playback uses this observer; it does not change Layers
+            presentation).
+          </p>
+          <p className="config-section__hint">Milky Way levels</p>
+          <div className="config-checkbox-grid">
+            <ConfigControlRow label="Viewing">
+              <input
+                type="checkbox"
+                className="config-input config-input--checkbox"
+                checked={pb.includeViewing}
+                disabled={!mutable}
+                aria-label="Include Viewing windows in playback"
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        session?.onDeactivate();
+                        patchPlayback(updateConfig, (draft) => {
+                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                            includeViewing: e.currentTarget.checked,
+                          });
                         });
-                      });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-          <ConfigControlRow label="Strong">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={mw.includeStrong}
-              disabled={!mutable}
-              aria-label="Include Strong windows in playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      session?.onDeactivate();
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                          includeStrong: e.currentTarget.checked,
+                      }
+                    : undefined
+                }
+              />
+            </ConfigControlRow>
+            <ConfigControlRow label="Strong">
+              <input
+                type="checkbox"
+                className="config-input config-input--checkbox"
+                checked={pb.includeStrong}
+                disabled={!mutable}
+                aria-label="Include Strong windows in playback"
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        session?.onDeactivate();
+                        patchPlayback(updateConfig, (draft) => {
+                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                            includeStrong: e.currentTarget.checked,
+                          });
                         });
-                      });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-          <ConfigControlRow label="Prime">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={mw.includePrime}
-              disabled={!mutable}
-              aria-label="Include Prime windows in playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      session?.onDeactivate();
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                          includePrime: e.currentTarget.checked,
+                      }
+                    : undefined
+                }
+              />
+            </ConfigControlRow>
+            <ConfigControlRow label="Prime">
+              <input
+                type="checkbox"
+                className="config-input config-input--checkbox"
+                checked={pb.includePrime}
+                disabled={!mutable}
+                aria-label="Include Prime windows in playback"
+                onChange={
+                  mutable && updateConfig
+                    ? (e) => {
+                        session?.onDeactivate();
+                        patchPlayback(updateConfig, (draft) => {
+                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                            includePrime: e.currentTarget.checked,
+                          });
                         });
-                      });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-          <ConfigControlRow label="Loop">
-            <input
-              type="checkbox"
-              className="config-input config-input--checkbox"
-              checked={mw.loop}
-              disabled={!mutable}
-              aria-label="Loop Milky Way playback"
-              onChange={
-                mutable && updateConfig
-                  ? (e) => {
-                      patchPlayback(updateConfig, (draft) => {
-                        draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                          loop: e.currentTarget.checked,
-                        });
-                      });
-                    }
-                  : undefined
-              }
-            />
-          </ConfigControlRow>
-        </div>
-      )}
+                      }
+                    : undefined
+                }
+              />
+            </ConfigControlRow>
+          </div>
+        </>
+      ) : null}
 
       <ConfigControlRow label="Start before event">
         <select
           className="config-input"
           disabled={!mutable}
           aria-label="Start before event"
-          value={family === "milkyWay" ? mw.leadInId : eclipse.leadInId}
+          value={pb.leadInId}
           onChange={
             mutable && updateConfig
               ? (e) => {
                   session?.onDeactivate();
-                  const leadInId = e.currentTarget.value as EventPlaybackOffsetId;
                   patchPlayback(updateConfig, (draft) => {
-                    if (family === "milkyWay") {
-                      draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                        leadInId,
-                      });
-                    } else {
-                      draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                        leadInId,
-                      });
-                    }
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      leadInId: e.currentTarget.value as EventPlaybackOffsetId,
+                    });
                   });
                 }
               : undefined
@@ -473,22 +386,15 @@ export function EventPlaybackPanel(props: {
           className="config-input"
           disabled={!mutable}
           aria-label="Continue after event"
-          value={family === "milkyWay" ? mw.postWaitId : eclipse.postWaitId}
+          value={pb.postWaitId}
           onChange={
             mutable && updateConfig
               ? (e) => {
                   session?.onDeactivate();
-                  const postWaitId = e.currentTarget.value as EventPlaybackOffsetId;
                   patchPlayback(updateConfig, (draft) => {
-                    if (family === "milkyWay") {
-                      draft.data.eventPlayback = applyEventPlaybackMilkyWay(draft.data.eventPlayback, {
-                        postWaitId,
-                      });
-                    } else {
-                      draft.data.eventPlayback = applyEventPlaybackEclipse(draft.data.eventPlayback, {
-                        postWaitId,
-                      });
-                    }
+                    draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
+                      postWaitId: e.currentTarget.value as EventPlaybackOffsetId,
+                    });
                   });
                 }
               : undefined
@@ -548,7 +454,7 @@ export function EventPlaybackPanel(props: {
               type="button"
               className="config-button config-button--primary"
               disabled={startDisabled}
-              aria-label={`Resume ${familyLabel} playback`}
+              aria-label="Resume event playback"
               onClick={() => session?.onStart()}
             >
               Resume
@@ -558,7 +464,7 @@ export function EventPlaybackPanel(props: {
               type="button"
               className="config-button config-button--primary"
               disabled={startDisabled}
-              aria-label={`Start ${familyLabel} playback`}
+              aria-label="Start event playback"
               onClick={() => session?.onStart()}
             >
               Start
@@ -568,7 +474,7 @@ export function EventPlaybackPanel(props: {
             type="button"
             className="config-button"
             disabled={pauseDisabled}
-            aria-label={`Pause ${familyLabel} playback`}
+            aria-label="Pause event playback"
             onClick={() => session?.onPause()}
           >
             Pause
@@ -595,7 +501,7 @@ export function EventPlaybackPanel(props: {
             type="button"
             className="config-button"
             disabled={stopDisabled}
-            aria-label={`Stop ${familyLabel} playback`}
+            aria-label="Stop event playback"
             onClick={() => session?.onStop()}
           >
             Stop

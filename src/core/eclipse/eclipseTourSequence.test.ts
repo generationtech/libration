@@ -57,22 +57,22 @@ describe("eclipse tour sequencer", () => {
   it("starts at the first lead-in and does not transition on the same instant", () => {
     const started = startEclipseTourSequence([a, b], true, "k");
     expect(started.jumpToIsoUtc).toBe(isoUtcFromUnixMs(500));
-    expect(started.state.index).toBe(0);
+    expect(started.state.current?.eventId).toBe("a");
     expect(started.state.phase).toBe("playing");
     const sameFrame = stepEclipseTourSequence(started.state, 500);
     expect(sameFrame.jumpToIsoUtc).toBeNull();
-    expect(sameFrame.state.index).toBe(0);
+    expect(sameFrame.state.current?.eventId).toBe("a");
   });
 
   it("jumps to the next lead-in after post-wait and loops when enabled", () => {
     const started = startEclipseTourSequence([a, b], true, "k");
     const toB = stepEclipseTourSequence(started.state, 2_500);
     expect(toB.jumpToIsoUtc).toBe(isoUtcFromUnixMs(9_000));
-    expect(toB.state.index).toBe(1);
+    expect(toB.state.current?.eventId).toBe("b");
     const stillB = stepEclipseTourSequence(toB.state, 9_000);
     expect(stillB.jumpToIsoUtc).toBeNull();
     const loopToA = stepEclipseTourSequence(toB.state, 13_000);
-    expect(loopToA.state.index).toBe(0);
+    expect(loopToA.state.current?.eventId).toBe("a");
     expect(loopToA.jumpToIsoUtc).toBe(isoUtcFromUnixMs(500));
   });
 
@@ -81,7 +81,7 @@ describe("eclipse tour sequencer", () => {
     const done = stepEclipseTourSequence(started.state, 2_500);
     expect(done.pause).toBe(true);
     expect(done.state.phase).toBe("paused");
-    expect(done.state.index).toBe(0);
+    expect(done.state.current?.eventId).toBe("a");
     expect(done.jumpToIsoUtc).toBe(isoUtcFromUnixMs(2_500));
     const again = stepEclipseTourSequence(done.state, 2_501);
     expect(again.jumpToIsoUtc).toBeNull();
@@ -90,7 +90,7 @@ describe("eclipse tour sequencer", () => {
   it("single-event loop returns to the same lead-in", () => {
     const started = startEclipseTourSequence([a], true, "k");
     const again = stepEclipseTourSequence(started.state, 2_500);
-    expect(again.state.index).toBe(0);
+    expect(again.state.current?.eventId).toBe("a");
     expect(again.jumpToIsoUtc).toBe(isoUtcFromUnixMs(500));
     expect(again.state.phase).toBe("playing");
   });
@@ -100,13 +100,13 @@ describe("eclipse tour sequencer", () => {
     const toB = stepEclipseTourSequence(started.state, 2_500);
     const paused = pauseEclipseTourSequence(toB.state);
     expect(paused.phase).toBe("paused");
-    expect(paused.index).toBe(1);
+    expect(paused.current?.eventId).toBe("b");
     const resumed = resumeEclipseTourSequence(paused);
     expect(resumed.phase).toBe("playing");
-    expect(resumed.index).toBe(1);
+    expect(resumed.current?.eventId).toBe("b");
     const reset = resetEclipseTourCurrentEvent(resumed);
     expect(reset.jumpToIsoUtc).toBe(isoUtcFromUnixMs(9_000));
-    expect(reset.state.index).toBe(1);
+    expect(reset.state.current?.eventId).toBe("b");
   });
 
   it("next/previous wrap only when looping; stop deactivates", () => {
@@ -114,15 +114,15 @@ describe("eclipse tour sequencer", () => {
     expect(eclipseTourCanGoPrevious(started.state)).toBe(false);
     expect(eclipseTourCanGoNext(started.state)).toBe(true);
     const next = skipEclipseTourEvent(started.state, 1);
-    expect(next.state.index).toBe(1);
+    expect(next.state.current?.eventId).toBe("b");
     const last = skipEclipseTourEvent(next.state, 1);
-    expect(last.state.index).toBe(2);
+    expect(last.state.current?.eventId).toBe("c");
     expect(eclipseTourCanGoNext(last.state)).toBe(false);
     const noWrap = skipEclipseTourEvent(last.state, 1);
     expect(noWrap.jumpToIsoUtc).toBeNull();
     const looping = startEclipseTourSequence([a, b], true, "k");
     const wrapPrev = skipEclipseTourEvent(looping.state, -1);
-    expect(wrapPrev.state.index).toBe(1);
+    expect(wrapPrev.state.current?.eventId).toBe("b");
     const stopped = stopEclipseTourSequence(looping.state);
     expect(stopped.phase).toBe("inactive");
     expect(stopped.ownedStartIsoUtc).toBeNull();
@@ -132,7 +132,7 @@ describe("eclipse tour sequencer", () => {
     const closeB = ev("b2", "lunar", 2_400, 3_000, 2_200, 3_200);
     const started = startEclipseTourSequence([a, closeB], false, "k");
     const step = stepEclipseTourSequence(started.state, 2_500);
-    expect(step.state.index).toBe(1);
+    expect(step.state.current?.eventId).toBe("b2");
     expect(step.jumpToIsoUtc).toBe(isoUtcFromUnixMs(2_500));
   });
 

@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { defaultLibrationConfigV2, normalizeLibrationConfig } from "../config/v2/librationConfig";
-import { applyEventPlaybackEclipse } from "../core/eventPlayback/eventPlaybackConfig";
+import { applyEventPlayback } from "../core/eventPlayback/eventPlaybackConfig";
 import {
   inactiveEclipseTourState,
   startEclipseTourSequence,
@@ -26,13 +26,13 @@ import {
 } from "./eclipseTourRuntime";
 
 describe("eclipseTourRuntime", () => {
-  it("enumerates a mixed 2017 range in catalog order; fingerprint ignores start date", () => {
+  it("enumerates a mixed 2017 range in catalog order; date-range changes the fingerprint", () => {
     const base = normalizeLibrationConfig(defaultLibrationConfigV2());
-    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
+    base.data.eventPlayback = applyEventPlayback(base.data.eventPlayback, {
       startDateYmd: "2017-08-01",
       endDateYmd: "2017-09-14",
-      includeSolar: true,
-      includeLunar: true,
+      solarEnabled: true,
+      lunarEnabled: true,
     });
     const events = buildEclipseTourSchedule(base);
     expect(events.length).toBeGreaterThan(0);
@@ -40,19 +40,20 @@ describe("eclipseTourRuntime", () => {
       expect(events[i]!.sortTimeUtcMs).toBeGreaterThanOrEqual(events[i - 1]!.sortTimeUtcMs);
     }
     const keyA = eclipseTourStructuralFingerprint(base);
-    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
+    base.data.eventPlayback = applyEventPlayback(base.data.eventPlayback, {
       startDateYmd: "2017-08-21",
     });
-    expect(eclipseTourStructuralFingerprint(base)).toBe(keyA);
-    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
-      includeLunar: false,
+    expect(eclipseTourStructuralFingerprint(base)).not.toBe(keyA);
+    base.data.eventPlayback = applyEventPlayback(base.data.eventPlayback, {
+      startDateYmd: "2017-08-01",
+      lunarEnabled: false,
     });
     expect(eclipseTourStructuralFingerprint(base)).not.toBe(keyA);
   });
 
   it("deactivates when Demo stops or the Demo start ISO is foreign", () => {
     const v2 = normalizeLibrationConfig(defaultLibrationConfigV2());
-    v2.data.eventPlayback = applyEventPlaybackEclipse(v2.data.eventPlayback, {
+    v2.data.eventPlayback = applyEventPlayback(v2.data.eventPlayback, {
       startDateYmd: "2017-08-01",
       endDateYmd: "2017-09-14",
     });
@@ -89,5 +90,22 @@ describe("eclipseTourRuntime", () => {
     const v2 = normalizeLibrationConfig(defaultLibrationConfigV2());
     const ymd = eclipseTourStartYmdFromNow(v2, Date.UTC(2026, 7, 18, 15, 0, 0));
     expect(ymd).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("includes reference city in the fingerprint only when MW playback is enabled", () => {
+    const v2 = normalizeLibrationConfig(defaultLibrationConfigV2());
+    v2.data.eventPlayback = applyEventPlayback(v2.data.eventPlayback, {
+      solarEnabled: true,
+      lunarEnabled: false,
+      milkyWayEnabled: false,
+    });
+    const solarOnly = eclipseTourStructuralFingerprint(v2);
+    v2.chrome.displayTime.topBandAnchor = { mode: "fixedCity", cityId: "city.tokyo" };
+    expect(eclipseTourStructuralFingerprint(v2)).toBe(solarOnly);
+    v2.data.eventPlayback = applyEventPlayback(v2.data.eventPlayback, { milkyWayEnabled: true });
+    const withTokyo = eclipseTourStructuralFingerprint(v2);
+    expect(withTokyo).not.toBe(solarOnly);
+    v2.chrome.displayTime.topBandAnchor = { mode: "fixedCity", cityId: "city.knoxville" };
+    expect(eclipseTourStructuralFingerprint(v2)).not.toBe(withTokyo);
   });
 });

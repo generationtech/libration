@@ -322,3 +322,9 @@ Unified Demo event playback under Data (Time + Event playback families) and Milk
 
 Verified: `npx tsc --noEmit` clean; `npm test` 249 files / 2288 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `?scenario=` in `dist/`. Cursor Browser `?scenario=milky-way` (upcoming Knoxville Prime), `&mwEvent=active` (active Prime), `&observerCity=sao_paulo`. LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-053 complete
+
+Merged solar, lunar, and Milky Way viewing windows into one chronological Event playback stream (no Event family selector). Incremental MW next/previous search repairs the Start freeze. Layers → Milky Way Visibility: Show contour values. ADR 0020.
+
+Verified: `npx tsc --noEmit` clean via `npm run build`; `npm test` 250 files / 2305 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `?scenario=` in `dist/`. Cursor Browser ordinary Event playback Start (end 2499, no freeze) and merged Next/Previous; `?scenario=milky-way` contour values off. LIB-037 stays proposed.
+

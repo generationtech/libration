@@ -95,9 +95,9 @@ See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enou
 
 **Rationale.** Mixing time travel into Layers topics made Eclipse Tour and Milky Way “Go to next” look like rendering features. The instrument already has one product instant. Navigation belongs with that instant. Rendering belongs with the scene.
 
-**Consequence.** Layers must not seek `TimeContext.now`. Data must not grow domain rendering controls. Adding another event family means a Data playback adapter plus, if needed, Layers presentation — not a second clock and not a generic astronomical engine.
+**Consequence.** Layers must not seek `TimeContext.now`. Data must not grow domain rendering controls. Enabled event types merge into one chronological Demo-time stream; adding another source means a Data playback adapter plus, if needed, Layers presentation — not a second clock, not a family submode, and not a generic astronomical engine.
 
-See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md) (shared Demo clock) and [ADR 0019](docs/decisions/0019-domain-event-playback-belongs-to-data.md) (Data vs Layers ownership).
+See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md) (shared Demo clock), [ADR 0019](docs/decisions/0019-domain-event-playback-belongs-to-data.md) (Data vs Layers ownership), and [ADR 0020](docs/decisions/0020-event-playback-merges-enabled-domain-sources.md) (merged event sources).
 
 ---
 

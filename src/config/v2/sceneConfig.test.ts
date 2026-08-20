@@ -1792,6 +1792,7 @@ describe("eclipse product polish presentation", () => {
     expect(milkyWayPresentationFromScene(factory.scene!).bandWidth).toBe("normal");
     expect(milkyWayPresentationFromScene(factory.scene!).galacticAnticenterEnabled).toBe(false);
     expect(milkyWayPresentationFromScene(factory.scene!).visibilityContoursEnabled).toBe(false);
+    expect(milkyWayPresentationFromScene(factory.scene!).showVisibilityContourLabels).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).contour30Enabled).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).contour0Enabled).toBe(false);
     expect(milkyWayPresentationFromScene(factory.scene!).emphasizeAstronomicalNight).toBe(true);

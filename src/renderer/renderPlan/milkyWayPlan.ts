@@ -284,56 +284,58 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
         a,
       );
     }
-    const contourLabelSize = Math.min(10, Math.max(7, w * 0.011));
-    const preferredLon = vis.galacticCenter.lonDeg + 50;
-    for (const contour of vis.contours) {
-      const unique = contour.points.slice(0, Math.max(0, contour.points.length - 1));
-      let best: MilkyWayVisibilitySample | null = null;
-      let bestScore = Infinity;
-      for (const p of unique) {
-        if (Math.abs(p.latDeg) > 72) {
+    if (pres.showVisibilityContourLabels) {
+      const contourLabelSize = Math.min(10, Math.max(7, w * 0.011));
+      const preferredLon = vis.galacticCenter.lonDeg + 50;
+      for (const contour of vis.contours) {
+        const unique = contour.points.slice(0, Math.max(0, contour.points.length - 1));
+        let best: MilkyWayVisibilitySample | null = null;
+        let bestScore = Infinity;
+        for (const p of unique) {
+          if (Math.abs(p.latDeg) > 72) {
+            continue;
+          }
+          const dLon = Math.abs(((p.lonDeg - preferredLon + 540) % 360) - 180);
+          const score = dLon + Math.abs(p.latDeg) * 0.15;
+          if (score < bestScore) {
+            bestScore = score;
+            best = p;
+          }
+        }
+        if (!best) {
           continue;
         }
-        const dLon = Math.abs(((p.lonDeg - preferredLon + 540) % 360) - 180);
-        const score = dLon + Math.abs(p.latDeg) * 0.15;
-        if (score < bestScore) {
-          bestScore = score;
-          best = p;
+        const lx = mapXFromLongitudeDeg(best.lonDeg, w);
+        const ly = mapLatToY(best.latDeg, h);
+        if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
+          continue;
         }
+        const label = `${contour.altitudeDeg}°`;
+        const text: RenderTextItem = {
+          kind: "text",
+          x: lx + 4,
+          y: ly - 3,
+          text: label,
+          fill: strokeRgba(pres.visibilityColor, a(0.78)),
+          font: {
+            assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+            displayName: "Renderer default",
+            sizePx: contourLabelSize,
+            weight: 500,
+            style: "normal",
+          },
+          textAlign: "left",
+          textBaseline: "bottom",
+          stroke: {
+            color: `rgba(12, 20, 28, ${a(0.62)})`,
+            widthPx: Math.max(1.6, contourLabelSize * 0.24),
+            lineJoin: "round",
+            miterLimit: 2,
+          },
+          opacity: op,
+        };
+        items.push(text);
       }
-      if (!best) {
-        continue;
-      }
-      const lx = mapXFromLongitudeDeg(best.lonDeg, w);
-      const ly = mapLatToY(best.latDeg, h);
-      if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
-        continue;
-      }
-      const label = `${contour.altitudeDeg}°`;
-      const text: RenderTextItem = {
-        kind: "text",
-        x: lx + 4,
-        y: ly - 3,
-        text: label,
-        fill: strokeRgba(pres.visibilityColor, a(0.78)),
-        font: {
-          assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
-          displayName: "Renderer default",
-          sizePx: contourLabelSize,
-          weight: 500,
-          style: "normal",
-        },
-        textAlign: "left",
-        textBaseline: "bottom",
-        stroke: {
-          color: `rgba(12, 20, 28, ${a(0.62)})`,
-          widthPx: Math.max(1.6, contourLabelSize * 0.24),
-          lineJoin: "round",
-          miterLimit: 2,
-        },
-        opacity: op,
-      };
-      items.push(text);
     }
   }
   }

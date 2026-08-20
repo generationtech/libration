@@ -13,7 +13,7 @@
 
 /**
  * Headless event-playback sequencer. Issues Demo start-instant jumps; does not own a clock.
- * Family adapters supply timed events. This module does not know eclipse or Milky Way astronomy.
+ * Holds the current event only. Neighbours come from a navigator (merged source lookup).
  */
 
 export type EventPlaybackPhase = "inactive" | "playing" | "paused";
@@ -21,18 +21,29 @@ export type EventPlaybackPhase = "inactive" | "playing" | "paused";
 export type EventPlaybackTimedEvent = {
   readonly leadInUtcMs: number;
   readonly transitionEndUtcMs: number;
+  readonly eventId?: string;
   readonly title?: string;
   readonly dateLabel?: string;
 };
 
 export type EventPlaybackSequenceState<T extends EventPlaybackTimedEvent = EventPlaybackTimedEvent> = {
   readonly phase: EventPlaybackPhase;
-  readonly events: readonly T[];
+  readonly current: T | null;
+  /** 0-based ordinal of the current event in this session (Previous decrements). */
   readonly index: number;
   readonly loop: boolean;
   /** Demo `startIsoUtc` last written by playback; used to detect foreign Demo start edits. */
   readonly ownedStartIsoUtc: string | null;
   readonly structuralKey: string;
+  readonly hasPrevious: boolean;
+  readonly hasNext: boolean;
+};
+
+export type EventPlaybackNavigator<T extends EventPlaybackTimedEvent> = {
+  findNext(current: T): T | null;
+  findPrevious(current: T): T | null;
+  findEarliest(): T | null;
+  findLatest(): T | null;
 };
 
 export type EventPlaybackStepResult<T extends EventPlaybackTimedEvent = EventPlaybackTimedEvent> = {
@@ -48,11 +59,13 @@ export function inactiveEventPlaybackState<T extends EventPlaybackTimedEvent>(
 ): EventPlaybackSequenceState<T> {
   return {
     phase: "inactive",
-    events: [],
+    current: null,
     index: 0,
     loop: true,
     ownedStartIsoUtc: null,
     structuralKey,
+    hasPrevious: false,
+    hasNext: false,
   };
 }
 
@@ -60,43 +73,78 @@ export function isoUtcFromUnixMs(utcMs: number): string {
   return new Date(utcMs).toISOString();
 }
 
-function atIndex<T extends EventPlaybackTimedEvent>(
+function eventKey<T extends EventPlaybackTimedEvent>(event: T): string {
+  return event.eventId ?? `${event.leadInUtcMs}|${event.transitionEndUtcMs}|${event.title ?? ""}`;
+}
+
+export function eventPlaybackNavigatorFromArray<T extends EventPlaybackTimedEvent>(
+  events: readonly T[],
+): EventPlaybackNavigator<T> {
+  const indexOf = (event: T): number => events.findIndex((e) => eventKey(e) === eventKey(event));
+  return {
+    findNext(current) {
+      const i = indexOf(current);
+      if (i < 0 || i + 1 >= events.length) {
+        return null;
+      }
+      return events[i + 1] ?? null;
+    },
+    findPrevious(current) {
+      const i = indexOf(current);
+      if (i <= 0) {
+        return null;
+      }
+      return events[i - 1] ?? null;
+    },
+    findEarliest() {
+      return events[0] ?? null;
+    },
+    findLatest() {
+      return events.length === 0 ? null : events[events.length - 1]!;
+    },
+  };
+}
+
+function adopt<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
-  index: number,
+  event: T,
   phase: EventPlaybackPhase,
+  index: number,
+  navigator: EventPlaybackNavigator<T> | null,
+  jumpMs: number,
 ): EventPlaybackSequenceState<T> {
-  const event = state.events[index];
-  if (!event) {
-    return { ...inactiveEventPlaybackState<T>(state.structuralKey), loop: state.loop };
-  }
+  const loop = state.loop;
+  const hasPrevious = loop || Boolean(navigator?.findPrevious(event));
+  const hasNext = loop || Boolean(navigator?.findNext(event));
   return {
     ...state,
     phase,
+    current: event,
     index,
-    ownedStartIsoUtc: isoUtcFromUnixMs(event.leadInUtcMs),
+    ownedStartIsoUtc: isoUtcFromUnixMs(jumpMs),
+    hasPrevious,
+    hasNext,
   };
 }
 
 export function startEventPlaybackSequence<T extends EventPlaybackTimedEvent>(
-  events: readonly T[],
+  first: T | null,
   loop: boolean,
   structuralKey: string,
+  navigator: EventPlaybackNavigator<T> | null = null,
 ): EventPlaybackStepResult<T> {
-  if (events.length === 0) {
+  if (!first) {
     return {
       state: { ...inactiveEventPlaybackState<T>(structuralKey), loop },
       jumpToIsoUtc: null,
       pause: false,
     };
   }
-  const state: EventPlaybackSequenceState<T> = {
-    phase: "playing",
-    events,
-    index: 0,
+  const base: EventPlaybackSequenceState<T> = {
+    ...inactiveEventPlaybackState<T>(structuralKey),
     loop,
-    ownedStartIsoUtc: isoUtcFromUnixMs(events[0]!.leadInUtcMs),
-    structuralKey,
   };
+  const state = adopt(base, first, "playing", 0, navigator, first.leadInUtcMs);
   return { state, jumpToIsoUtc: state.ownedStartIsoUtc, pause: false };
 }
 
@@ -112,7 +160,7 @@ export function pauseEventPlaybackSequence<T extends EventPlaybackTimedEvent>(
 export function resumeEventPlaybackSequence<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
 ): EventPlaybackSequenceState<T> {
-  if (state.phase !== "paused" || state.events.length === 0) {
+  if (state.phase !== "paused" || !state.current) {
     return state;
   }
   return { ...state, phase: "playing" };
@@ -127,65 +175,61 @@ export function stopEventPlaybackSequence<T extends EventPlaybackTimedEvent>(
 export function resetEventPlaybackCurrentEvent<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
 ): EventPlaybackStepResult<T> {
-  if (state.phase === "inactive" || state.events.length === 0) {
+  if (state.phase === "inactive" || !state.current) {
     return { state, jumpToIsoUtc: null, pause: false };
-  }
-  const event = state.events[state.index];
-  if (!event) {
-    return { state: stopEventPlaybackSequence(state), jumpToIsoUtc: null, pause: false };
   }
   const next: EventPlaybackSequenceState<T> = {
     ...state,
-    ownedStartIsoUtc: isoUtcFromUnixMs(event.leadInUtcMs),
+    ownedStartIsoUtc: isoUtcFromUnixMs(state.current.leadInUtcMs),
   };
   return { state: next, jumpToIsoUtc: next.ownedStartIsoUtc, pause: false };
-}
-
-function wrapIndex(index: number, length: number, loop: boolean): number | null {
-  if (length === 0) {
-    return null;
-  }
-  if (index >= 0 && index < length) {
-    return index;
-  }
-  if (!loop) {
-    return null;
-  }
-  const mod = ((index % length) + length) % length;
-  return mod;
 }
 
 export function skipEventPlaybackEvent<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
   delta: number,
+  navigator: EventPlaybackNavigator<T>,
 ): EventPlaybackStepResult<T> {
-  if (state.phase === "inactive" || state.events.length === 0) {
+  if (state.phase === "inactive" || !state.current || delta === 0) {
     return { state, jumpToIsoUtc: null, pause: false };
   }
-  const target = wrapIndex(state.index + delta, state.events.length, state.loop);
-  if (target === null) {
+  const current = state.current;
+  let target: T | null = null;
+  if (delta > 0) {
+    target = navigator.findNext(current);
+    if (!target && state.loop) {
+      target = navigator.findEarliest();
+    }
+  } else {
+    target = navigator.findPrevious(current);
+    if (!target && state.loop) {
+      target = navigator.findLatest();
+    }
+  }
+  if (!target) {
     return { state, jumpToIsoUtc: null, pause: false };
   }
-  const next = atIndex(state, target, state.phase);
+  const nextIndex = state.index + (delta > 0 ? 1 : -1);
+  const next = adopt(state, target, state.phase, Math.max(0, nextIndex), navigator, target.leadInUtcMs);
   return { state: next, jumpToIsoUtc: next.ownedStartIsoUtc, pause: false };
 }
 
 export function eventPlaybackCanGoPrevious<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
 ): boolean {
-  if (state.phase === "inactive" || state.events.length === 0) {
+  if (state.phase === "inactive" || !state.current) {
     return false;
   }
-  return state.loop || state.index > 0;
+  return state.hasPrevious;
 }
 
 export function eventPlaybackCanGoNext<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
 ): boolean {
-  if (state.phase === "inactive" || state.events.length === 0) {
+  if (state.phase === "inactive" || !state.current) {
     return false;
   }
-  return state.loop || state.index < state.events.length - 1;
+  return state.hasNext;
 }
 
 /**
@@ -195,58 +239,53 @@ export function eventPlaybackCanGoNext<T extends EventPlaybackTimedEvent>(
 export function stepEventPlaybackSequence<T extends EventPlaybackTimedEvent>(
   state: EventPlaybackSequenceState<T>,
   productUtcMs: number,
+  navigator: EventPlaybackNavigator<T>,
 ): EventPlaybackStepResult<T> {
-  if (state.phase !== "playing" || state.events.length === 0) {
+  if (state.phase !== "playing" || !state.current) {
     return { state, jumpToIsoUtc: null, pause: false };
   }
-  const current = state.events[state.index];
-  if (!current) {
-    return { state: stopEventPlaybackSequence(state), jumpToIsoUtc: null, pause: false };
-  }
+  const current = state.current;
   if (productUtcMs < current.transitionEndUtcMs) {
     return { state, jumpToIsoUtc: null, pause: false };
   }
 
-  const lastIndex = state.events.length - 1;
-  if (state.index >= lastIndex) {
+  let next = navigator.findNext(current);
+  while (next && next.transitionEndUtcMs <= productUtcMs) {
+    next = navigator.findNext(next);
+  }
+
+  if (!next) {
     if (!state.loop) {
       return {
-        state: { ...state, phase: "paused", ownedStartIsoUtc: isoUtcFromUnixMs(current.transitionEndUtcMs) },
+        state: {
+          ...state,
+          phase: "paused",
+          ownedStartIsoUtc: isoUtcFromUnixMs(current.transitionEndUtcMs),
+          hasNext: false,
+        },
         jumpToIsoUtc: isoUtcFromUnixMs(current.transitionEndUtcMs),
         pause: true,
       };
     }
-    const first = state.events[0]!;
-    const next = atIndex(state, 0, "playing");
-    return { state: next, jumpToIsoUtc: isoUtcFromUnixMs(first.leadInUtcMs), pause: false };
-  }
-
-  let nextIndex = state.index + 1;
-  while (nextIndex < state.events.length) {
-    const candidate = state.events[nextIndex]!;
-    if (productUtcMs < candidate.transitionEndUtcMs) {
-      const jumpMs = Math.max(productUtcMs, candidate.leadInUtcMs);
-      const next: EventPlaybackSequenceState<T> = {
-        ...state,
-        index: nextIndex,
-        ownedStartIsoUtc: isoUtcFromUnixMs(jumpMs),
+    const first = navigator.findEarliest();
+    if (!first) {
+      return {
+        state: {
+          ...state,
+          phase: "paused",
+          ownedStartIsoUtc: isoUtcFromUnixMs(current.transitionEndUtcMs),
+        },
+        jumpToIsoUtc: isoUtcFromUnixMs(current.transitionEndUtcMs),
+        pause: true,
       };
-      return { state: next, jumpToIsoUtc: next.ownedStartIsoUtc, pause: false };
     }
-    nextIndex += 1;
+    const wrapped = adopt(state, first, "playing", 0, navigator, first.leadInUtcMs);
+    return { state: wrapped, jumpToIsoUtc: isoUtcFromUnixMs(first.leadInUtcMs), pause: false };
   }
 
-  if (state.loop) {
-    const first = state.events[0]!;
-    const next = atIndex(state, 0, "playing");
-    return { state: next, jumpToIsoUtc: isoUtcFromUnixMs(first.leadInUtcMs), pause: false };
-  }
-  const last = state.events[lastIndex]!;
-  return {
-    state: { ...state, index: lastIndex, phase: "paused", ownedStartIsoUtc: isoUtcFromUnixMs(last.transitionEndUtcMs) },
-    jumpToIsoUtc: isoUtcFromUnixMs(last.transitionEndUtcMs),
-    pause: true,
-  };
+  const jumpMs = Math.max(productUtcMs, next.leadInUtcMs);
+  const adopted = adopt(state, next, "playing", state.index + 1, navigator, jumpMs);
+  return { state: adopted, jumpToIsoUtc: adopted.ownedStartIsoUtc, pause: false };
 }
 
 export function eventPlaybackShouldDeactivate<T extends EventPlaybackTimedEvent>(

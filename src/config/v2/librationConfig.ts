@@ -834,26 +834,17 @@ export function assertIsNormalizedLibrationConfig(
     !Number.isFinite(dat.demoTime.speedMultiplier) ||
     typeof dat.eventPlayback !== "object" ||
     dat.eventPlayback === null ||
-    (dat.eventPlayback.family !== "eclipses" && dat.eventPlayback.family !== "milkyWay") ||
-    typeof dat.eventPlayback.eclipse !== "object" ||
-    dat.eventPlayback.eclipse === null ||
-    typeof dat.eventPlayback.eclipse.startDateYmd !== "string" ||
-    typeof dat.eventPlayback.eclipse.endDateYmd !== "string" ||
-    typeof dat.eventPlayback.eclipse.includeSolar !== "boolean" ||
-    typeof dat.eventPlayback.eclipse.includeLunar !== "boolean" ||
-    typeof dat.eventPlayback.eclipse.loop !== "boolean" ||
-    typeof dat.eventPlayback.eclipse.leadInId !== "string" ||
-    typeof dat.eventPlayback.eclipse.postWaitId !== "string" ||
-    typeof dat.eventPlayback.milkyWay !== "object" ||
-    dat.eventPlayback.milkyWay === null ||
-    typeof dat.eventPlayback.milkyWay.startDateYmd !== "string" ||
-    typeof dat.eventPlayback.milkyWay.endDateYmd !== "string" ||
-    typeof dat.eventPlayback.milkyWay.includeViewing !== "boolean" ||
-    typeof dat.eventPlayback.milkyWay.includeStrong !== "boolean" ||
-    typeof dat.eventPlayback.milkyWay.includePrime !== "boolean" ||
-    typeof dat.eventPlayback.milkyWay.loop !== "boolean" ||
-    typeof dat.eventPlayback.milkyWay.leadInId !== "string" ||
-    typeof dat.eventPlayback.milkyWay.postWaitId !== "string"
+    typeof dat.eventPlayback.startDateYmd !== "string" ||
+    typeof dat.eventPlayback.endDateYmd !== "string" ||
+    typeof dat.eventPlayback.loop !== "boolean" ||
+    typeof dat.eventPlayback.leadInId !== "string" ||
+    typeof dat.eventPlayback.postWaitId !== "string" ||
+    typeof dat.eventPlayback.solarEnabled !== "boolean" ||
+    typeof dat.eventPlayback.lunarEnabled !== "boolean" ||
+    typeof dat.eventPlayback.milkyWayEnabled !== "boolean" ||
+    typeof dat.eventPlayback.includeViewing !== "boolean" ||
+    typeof dat.eventPlayback.includeStrong !== "boolean" ||
+    typeof dat.eventPlayback.includePrime !== "boolean"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid data");
   }

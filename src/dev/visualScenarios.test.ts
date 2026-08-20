@@ -235,6 +235,9 @@ describe("resolveVisualScenarioSession", () => {
       row?.source.kind === "derived" ? row.source.parameters?.visibilityContoursEnabled : undefined,
     ).toBe(true);
     expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showVisibilityContourLabels : undefined,
+    ).toBe(true);
+    expect(
       row?.source.kind === "derived" ? row.source.parameters?.viewingEventsEnabled : undefined,
     ).toBe(true);
     expect(

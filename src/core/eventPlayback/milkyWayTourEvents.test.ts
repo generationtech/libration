@@ -71,6 +71,6 @@ describe("groupMilkyWayWindowsForTour", () => {
     expect(scheduled).toHaveLength(1);
     expect(scheduled[0]!.leadInUtcMs).toBe(10_000 - 3_600_000);
     expect(scheduled[0]!.transitionEndUtcMs).toBe(12_000);
-    expect(scheduled[0]!.title).toBe("Prime window");
+    expect(scheduled[0]!.title).toBe("Milky Way · Prime");
   });
 });

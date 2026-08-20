@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-052](work/LIB-052-unified-demo-event-playback-and-milky-way-event-presentation.md) — Unified Demo event playback and Milky Way event presentation
+[LIB-053](work/LIB-053-multi-family-event-playback-and-mw-freeze-repair.md) — Multi-family event playback, MW freeze repair, contour label control
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-None. AWAITING SCOPE.
+Wait for an approved work item.

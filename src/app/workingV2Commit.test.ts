@@ -41,7 +41,7 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
-import { applyEventPlaybackEclipse } from "../core/eventPlayback/eventPlaybackConfig";
+import { applyEventPlayback } from "../core/eventPlayback/eventPlaybackConfig";
 import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
 import {
   commitWorkingV2Update,
@@ -680,7 +680,7 @@ describe("commitWorkingV2Update", () => {
       ...base,
       data: {
         ...base.data,
-        eventPlayback: applyEventPlaybackEclipse(base.data.eventPlayback, { loop: false }),
+        eventPlayback: applyEventPlayback(base.data.eventPlayback, { loop: false }),
       },
     };
     expect(sceneRuntimeAffectingEqual(base.scene!, patched.scene!)).toBe(true);
@@ -956,6 +956,8 @@ describe("commitWorkingV2Update", () => {
     const b = applyMilkyWayPresentationToScene(a, { visibilityContoursEnabled: true });
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+    const c = applyMilkyWayPresentationToScene(b, { showVisibilityContourLabels: false });
+    expect(sceneRuntimeAffectingEqual(b, c)).toBe(false);
   });
 
   it("planetary presentation-only commit rebuilds the registry without toggling the Planets master", () => {
