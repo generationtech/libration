@@ -18,11 +18,14 @@
 
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont";
+import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeAppearance";
 import {
+  eclipseMapLabelBox,
   placeEclipseMapLabel,
+  type LabelAvoidBox,
   type LabelAvoidDisc,
   type LabelPathPolyline,
 } from "../../core/eclipse/eclipseMapLabelPlacement";
@@ -223,7 +226,11 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
-  if (!options.payload.supported || !options.payload.geometry) {
+  if (!options.payload.supported) {
+    return { items: [] };
+  }
+  const eventLabel = options.payload.eventLabel;
+  if (!options.payload.geometry && !eventLabel) {
     return { items: [] };
   }
   const op = Math.max(0, Math.min(1, options.layerOpacity));
@@ -238,12 +245,14 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   const pres = options.payload.presentation;
   const geom = options.payload.geometry;
   const emphasize = pres.emphasizeNightSide;
-  const planeWidth = astronomyPathStrokeWidthPx(veil, pres.planeThickness);
-  const bandWidth = Math.max(0.7, astronomyPathStrokeWidthPx(veil, pres.bandThickness) * 0.85);
   const items: RenderPlan["items"] = [];
 
   const alphaFor = (p0: MilkyWayTaggedPoint, p1: MilkyWayTaggedPoint) =>
     a(segmentAlpha(p0.night, p1.night, emphasize));
+
+  if (geom) {
+  const planeWidth = astronomyPathStrokeWidthPx(veil, pres.planeThickness);
+  const bandWidth = Math.max(0.7, astronomyPathStrokeWidthPx(veil, pres.bandThickness) * 0.85);
 
   if (pres.bandEnabled) {
     pushSeamAwarePolyline(items, geom.northEdge, w, h, pres.bandColor, bandWidth, alphaFor);
@@ -327,16 +336,36 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
       items.push(text);
     }
   }
+  }
 
   const glyphScale = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, w / 1400)));
   const placedGlyphs: LabelAvoidDisc[] = [];
   const avoidPaths: LabelPathPolyline[] = [];
-  if (pres.planeEnabled && geom.plane.length >= 2) {
+  if (geom && pres.planeEnabled && geom.plane.length >= 2) {
     avoidPaths.push(screenPolyline(geom.plane, w, h));
   }
-  if (pres.bandEnabled && geom.northEdge.length >= 2) {
+  if (geom && pres.bandEnabled && geom.northEdge.length >= 2) {
     avoidPaths.push(screenPolyline(geom.northEdge, w, h));
     avoidPaths.push(screenPolyline(geom.southEdge, w, h));
+  }
+  const visForAvoid = options.payload.visibility;
+  if (pres.visibilityContoursEnabled && visForAvoid) {
+    for (const contour of visForAvoid.contours) {
+      if (contour.points.length >= 2) {
+        avoidPaths.push(
+          screenPolyline(
+            contour.points.map((p) => ({
+              latDeg: p.latDeg,
+              lonDeg: p.lonDeg,
+              night: true,
+              lDeg: 0,
+            })),
+            w,
+            h,
+          ),
+        );
+      }
+    }
   }
 
   const drawGlyph = (
@@ -367,12 +396,23 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   };
 
   let centerScreen: { x: number; y: number; r: number } | null = null;
-  if (pres.galacticCenterEnabled && geom.galacticCenter) {
-    centerScreen = drawGlyph(geom.galacticCenter, "center", pres.planeColor);
+  if (geom) {
+    if (pres.galacticCenterEnabled && geom.galacticCenter) {
+      centerScreen = drawGlyph(geom.galacticCenter, "center", pres.planeColor);
+    }
+    if (pres.galacticAnticenterEnabled && geom.galacticAnticenter) {
+      drawGlyph(geom.galacticAnticenter, "anticenter", pres.bandColor);
+    }
   }
-  if (pres.galacticAnticenterEnabled && geom.galacticAnticenter) {
-    drawGlyph(geom.galacticAnticenter, "anticenter", pres.bandColor);
-  }
+
+  const cityAvoidBoxes: LabelAvoidBox[] = (options.payload.labelAvoidCityLabels ?? []).map((city) =>
+    cityPinNameLabelScreenBox({
+      pinX: mapXFromLongitudeDeg(city.lonDeg, w),
+      pinY: mapLatToY(city.latDeg, h),
+      name: city.name,
+      viewportWidthPx: w,
+    }),
+  );
 
   if (pres.galacticCenterEnabled && pres.galacticCenterLabelEnabled && centerScreen) {
     const labelSize = Math.min(11, Math.max(8, w * 0.012));
@@ -385,7 +425,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
       viewportHeightPx: h,
       avoidDiscs: placedGlyphs,
       avoidPolylines: avoidPaths,
-      avoidBoxes: [],
+      avoidBoxes: cityAvoidBoxes,
       placement: "lunar-glyph",
     });
     const text: RenderTextItem = {
@@ -412,6 +452,64 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
       opacity: op,
     };
     items.push(text);
+    cityAvoidBoxes.push(
+      eclipseMapLabelBox(
+        placed.x,
+        placed.y,
+        GALACTIC_CENTER_LABEL,
+        labelSize,
+        placed.textAlign,
+        placed.textBaseline,
+      ),
+    );
+  }
+
+  if (eventLabel && eventLabel.text.trim()) {
+    const preferredX = mapXFromLongitudeDeg(eventLabel.lonDeg, w);
+    const preferredY = mapLatToY(eventLabel.latDeg, h);
+    if (Number.isFinite(preferredX) && Number.isFinite(preferredY)) {
+      const avoidDiscs = [...placedGlyphs];
+      if (avoidDiscs.length === 0) {
+        const r = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, w / 1400))) + 3;
+        avoidDiscs.push({ x: preferredX, y: preferredY, radiusPx: r });
+      }
+      const labelSize = Math.min(11, Math.max(8, w * 0.012));
+      const placed = placeEclipseMapLabel({
+        preferredX,
+        preferredY,
+        text: eventLabel.text,
+        sizePx: labelSize,
+        viewportWidthPx: w,
+        viewportHeightPx: h,
+        avoidDiscs,
+        avoidPolylines: avoidPaths,
+        avoidBoxes: cityAvoidBoxes,
+        placement: "lunar-glyph",
+      });
+      items.push({
+        kind: "text",
+        x: placed.x,
+        y: placed.y,
+        text: eventLabel.text,
+        fill: strokeRgba(pres.planeColor, a(0.96)),
+        font: {
+          assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+          displayName: "Renderer default",
+          sizePx: labelSize,
+          weight: 500,
+          style: "normal",
+        },
+        textAlign: placed.textAlign,
+        textBaseline: placed.textBaseline === "middle" ? "middle" : placed.textBaseline,
+        stroke: {
+          color: `rgba(12, 20, 28, ${a(0.72)})`,
+          widthPx: Math.max(2, labelSize * 0.28),
+          lineJoin: "round",
+          miterLimit: 2,
+        },
+        opacity: op,
+      });
+    }
   }
 
   return { items };

@@ -316,3 +316,9 @@ Reference-city Milky Way Viewing Window events: GC altitude ∩ solar darkness �
 
 Verified: `npx tsc --noEmit` clean; `npm test` 245 files / 2266 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `observerCity` / `?scenario=` in `dist/`. Cursor Browser `?scenario=milky-way` (Knoxville Prime 24.5°) and `observerCity=sao_paulo` (Prime 83.6°). LIB-037 stays proposed.
 
+## 2026-08-19 — LIB-052 complete
+
+Unified Demo event playback under Data (Time + Event playback families) and Milky Way upcoming/active map labels. Eclipse Tour and Go to next Prime removed from Layers. One Demo clock. ADR 0019; ADR 0015 Layers placement superseded.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 249 files / 2288 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `?scenario=` in `dist/`. Cursor Browser `?scenario=milky-way` (upcoming Knoxville Prime), `&mwEvent=active` (active Prime), `&observerCity=sao_paulo`. LIB-037 stays proposed.
+

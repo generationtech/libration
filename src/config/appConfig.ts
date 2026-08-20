@@ -13,6 +13,10 @@
 
 import { REFERENCE_CITIES, type ReferenceCity } from "../data/referenceCities";
 import type { FontAssetId } from "../typography/fontAssetTypes.ts";
+import {
+  defaultEventPlaybackConfig,
+  type EventPlaybackConfig,
+} from "../core/eventPlayback/eventPlaybackConfig";
 
 export type { FontAssetId } from "../typography/fontAssetTypes.ts";
 import type { HourMarkersConfig, HourMarkersRealizationConfig } from "./topBandHourMarkersTypes.ts";
@@ -606,12 +610,18 @@ export interface DataConfig {
   showDataAnnotations: boolean;
   /** Demo playback parameters; ignored at runtime unless {@link mode} is `"demo"` and `enabled` is true. */
   demoTime: DemoTimeConfig;
+  /**
+   * Durable domain event-playback preferences (Data tab). Runtime sequencing is
+   * session-only. Playback speed is {@link DemoTimeConfig.speedMultiplier} only.
+   */
+  eventPlayback: EventPlaybackConfig;
 }
 
 export const DEFAULT_DATA_CONFIG: DataConfig = {
   mode: "static",
   showDataAnnotations: false,
   demoTime: { ...DEFAULT_DEMO_TIME_CONFIG },
+  eventPlayback: defaultEventPlaybackConfig(),
 };
 
 /**

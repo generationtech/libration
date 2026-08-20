@@ -43,6 +43,8 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.showViewingWindows).toBe(true);
     expect(n.showStrongWindows).toBe(true);
     expect(n.showPrimeWindows).toBe(true);
+    expect(n.showViewingEventLabels).toBe(true);
+    expect(n.eventLabelAdvanceHorizonId).toBe("2d");
   });
 
   it("preserves explicit persisted values and rejects unknown tokens", () => {

@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import { useState } from "react";
 import type { DataMode } from "../../config/appConfig";
 import {
   DEMO_TIME_SPEED_MAX,
@@ -19,8 +20,12 @@ import {
 import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import { resolveReferenceFrameCivilTimeZone } from "../../core/displayTimeReference";
 import { ConfigControlRow } from "./ConfigControlRow";
+import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
+import { DataTopicSelector } from "./DataTopicSelector";
+import { DEFAULT_DATA_TOPIC, descriptionForDataTopic, type DataTopicId } from "./dataTopicTypes";
 import { DemoTimeStartFields } from "./DemoTimeStartFields";
 import { demoTimeStartIsoUtcNow } from "./demoTimeStartIso";
+import { EventPlaybackPanel, type EventPlaybackSessionUi } from "./EventPlaybackPanel";
 
 /** Local runtime demo playback transport (not config); wired from App. */
 export type DemoTransportUiProps = {
@@ -35,9 +40,12 @@ export type DataTabProps = {
   updateConfig?: (updater: (draft: LibrationConfigV2) => void) => void;
   /** Runtime-only demo playback transport; does not use `updateConfig`. */
   demoTransport?: DemoTransportUiProps;
+  /** Runtime event-playback session; Data → Event playback only. */
+  eventPlaybackSession?: EventPlaybackSessionUi;
 };
 
-export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
+export function DataTab({ config, updateConfig, demoTransport, eventPlaybackSession }: DataTabProps) {
+  const [dataTopic, setDataTopic] = useState<DataTopicId>(DEFAULT_DATA_TOPIC);
   const data = config.data;
   const wired = Boolean(updateConfig);
   const demoPipeline = data.mode === "demo";
@@ -57,6 +65,12 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
           overlays — off by default. Clouds and earthquakes use bundled fixtures when a live fetch is
           unavailable. ISS hides when live TLE sources are unavailable.
         </p>
+        <ConfigStickyTopicNav topic={dataTopic} testId="data-topic-nav">
+          <DataTopicSelector value={dataTopic} onChange={setDataTopic} />
+        </ConfigStickyTopicNav>
+        {dataTopic === "time" ? (
+          <>
+        <p className="config-section__hint">{descriptionForDataTopic("time")}</p>
         <ConfigControlRow label="Mode">
           <select
             className="config-input"
@@ -227,6 +241,17 @@ export function DataTab({ config, updateConfig, demoTransport }: DataTabProps) {
             )}
           </div>
         </ConfigControlRow>
+          </>
+        ) : (
+          <>
+            <p className="config-section__hint">{descriptionForDataTopic("eventPlayback")}</p>
+            <EventPlaybackPanel
+              config={config}
+              updateConfig={updateConfig}
+              session={eventPlaybackSession}
+            />
+          </>
+        )}
       </section>
     </div>
   );

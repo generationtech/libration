@@ -1,6 +1,6 @@
 # 0015 — Domain tour sequencer drives shared Demo time
 
-- **Status:** Accepted
+- **Status:** Accepted; Layers placement superseded by [0019](0019-domain-event-playback-belongs-to-data.md)
 - **Date:** 2026-08-18 (record written with [LIB-047](../work/LIB-047-eclipse-tour-demo-playback.md))
 
 ## Context

@@ -237,6 +237,9 @@ describe("resolveVisualScenarioSession", () => {
     expect(
       row?.source.kind === "derived" ? row.source.parameters?.viewingEventsEnabled : undefined,
     ).toBe(true);
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.showViewingEventLabels : undefined,
+    ).toBe(true);
   });
 
   it("iss-presentation apply installs a DEV prepared ISS view without network", () => {
@@ -700,6 +703,21 @@ describe("milky-way scenario DEV observerCity", () => {
       expect(row?.source.kind === "derived" ? row.source.parameters?.viewingEventsEnabled : undefined).toBe(
         true,
       );
+      expect(row?.source.kind === "derived" ? row.source.parameters?.showViewingEventLabels : undefined).toBe(
+        true,
+      );
+    }
+  });
+
+  it("mwEvent=active seeds the Knoxville Prime station without a new scenario id", () => {
+    const session = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=milky-way&mwEvent=active",
+    });
+    expect(session.kind).toBe("applied");
+    if (session.kind === "applied") {
+      expect(session.startIsoUtc).toBe("2026-08-20T02:27:16.000Z");
+      expect(session.config.data.demoTime.startIsoUtc).toBe("2026-08-20T02:27:16.000Z");
     }
   });
 });

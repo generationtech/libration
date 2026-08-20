@@ -18,6 +18,7 @@ import {
   DEFAULT_APP_CONFIG,
   resolvedBottomTimeStackSizeMultiplier,
 } from "./appConfig";
+import { cloneEventPlayback } from "../core/eventPlayback/eventPlaybackConfig";
 import { buildDefaultSceneConfigFromLayerFlags, cloneSceneConfig } from "./v2/sceneConfig";
 
 /**
@@ -132,6 +133,7 @@ function cloneConfig(config: AppConfig): AppConfig {
         startIsoUtc: config.data.demoTime.startIsoUtc,
         speedMultiplier: config.data.demoTime.speedMultiplier,
       },
+      eventPlayback: cloneEventPlayback(config.data.eventPlayback),
     },
   };
 }

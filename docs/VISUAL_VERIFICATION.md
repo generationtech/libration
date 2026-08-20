@@ -329,17 +329,17 @@ Reload at least the scenario under change when checking repeatability.
 
 After scenario work that touches startup or persistence, also open `http://localhost:1420/` **without** `?scenario=` and confirm ordinary startup (no scenario banner; persisted user configuration still applies).
 
-### Eclipse Tour smoke (LIB-047)
+### Event playback smoke (LIB-047 / LIB-052)
 
 Does not require a new `?scenario=` id. Use a short range that includes at least one solar and one lunar event (for example 2017-08-01 … 2017-09-15: 21 Aug solar, 7 Aug lunar).
 
-1. Open Config → Layers → Eclipse. Confirm Eclipse Tour is at the **bottom** of that topic. Data/Demo has no Eclipse Tour fields.
-2. Factory: Solar and Lunar on, Loop on, lead-in 1 day, post-wait 1 hour, speed same as Data Demo, tour inactive (product time unchanged).
-3. Start: product time jumps to the first matching event lead-in; Demo plays. Pause/Resume keep the same event. Reset returns to that event’s lead-in, not the tour-range start.
+1. Open Config → Data → Event playback. Confirm Event family **Eclipses**. Layers → Eclipse has **no** Eclipse Tour section. Data → Time still has generic Demo.
+2. Factory: Solar and Lunar on, Loop on, lead-in 1 day, post-wait 1 hour, speed same as Data → Time, playback inactive (product time unchanged).
+3. Start: product time jumps to the first matching event lead-in; Demo plays. Pause/Resume keep the same event. Reset returns to that event’s lead-in, not the range start.
 4. After post-wait the clock **jumps** to the next event lead-in (no months of empty playback). Loop off pauses at the last allowed instant.
 5. Previous/Next jump event lead-ins. Stop leaves product time paused and deactivates sequencing.
-6. Data Demo pause/speed stay in sync. Editing Data Demo start, or leaving Demo mode, deactivates the tour; it does not yank time back on the next frame.
-7. Same-UTC check: 2017-08-21 GE via Data Demo vs via Tour at the same instant — eclipse overlay equivalent; live-only ISS/clouds/quakes remain suppressed on historical instants.
+6. Data → Time pause/speed stay in sync. Editing Demo start, **Use current time**, or leaving Demo mode, deactivates playback; it does not yank time back on the next frame.
+7. Same-UTC check: 2017-08-21 GE via Data → Time vs via Event playback at the same instant — eclipse overlay equivalent; live-only ISS/clouds/quakes remain suppressed on historical instants.
 
 ## Visual acceptance checklist
 
@@ -456,7 +456,7 @@ The ribbon is a **zenith projection**: it shows where Galactic-plane and approxi
 
 Galactic-center **altitude contours** are a second line presentation: a point on the 60° contour sees the Galactic center 60° above the geometric horizon at this instant. They are nested small circles around the GC marker. Higher altitude → smaller circle. No fill. Astronomical-night emphasis strengthens segments where the Sun is low; moonlight de-emphasis quiets moonlit segments using the existing moonlight model. This is still not a single visibility score.
 
-**Viewing windows** are a third, Config-only event family for the reference city. They do not restyle contours. The scenario enables them so status is visible; factory default remains off.
+**Viewing windows** are a reference-city event family. Map labels are Layers presentation; sequencing is Data → Event playback. The scenario enables events so status and labels are visible; factory default remains off.
 
 - Galactic plane alone (band and ribs off): one thin great-circle-like curve, not a filled region, not a world-spanning false line.
 - Plane + band edges: two flanking curves around the plane; Normal width clearly broader than Narrow and narrower than Wide.
@@ -468,11 +468,12 @@ Galactic-center **altitude contours** are a second line presentation: a point on
 - Demo jumps ~six hours apart: the ribbon **and** the contours rotate westward with the GC marker. 1600 / 2000 / current / ~2500 remain geometrically coherent.
 - Combined Planets + Milky Way: planets remain readable; Milky Way stays under planetary glyphs.
 - Combined eclipse scenario with Milky Way on: eclipse geography remains the event overlay; neither ribbon nor contours become a shading layer.
-- Knoxville (default city): Viewing windows section shows honest status (active or next Prime) with GC altitude and darkness/moonlight facts, not a visibility score. **Go to next Prime** jumps Demo start; Data/Demo reflects the same instant; HUD eclipse line is unchanged.
-- `?scenario=milky-way&observerCity=sao_paulo`: southern latitude; Prime windows have much higher peak GC altitude. Contours still nest around the GC marker. Event times change.
+- Knoxville (default city), `?scenario=milky-way` at 2026-08-19T06:00Z: upcoming map label near the GC marker, local copy such as `Knoxville · MW Prime · tomorrow`; Layers has **no** Go to next Prime. Data → Event playback → Milky Way sequences windows. HUD eclipse line is unchanged.
+- `?scenario=milky-way&mwEvent=active` (2026-08-20T02:27:16Z, interior of the Prime interval): active Prime label (`Knoxville · MW Prime`) at the same GC-subpoint family — no geographical jump, no countdown.
+- `?scenario=milky-way&observerCity=sao_paulo`: southern latitude; Prime windows have much higher peak GC altitude; label city copy changes. Contours still nest around the GC marker. Event times change. An active MW sequence stops if the city changes while running.
 - Twilight / full-Moon checks: if product time has high GC but Sun too high, no Strong/Prime; if a bright Moon is up, Strong/Prime drop while contours still show elevation.
 
-Factory defaults keep Milky Way off. Enabling the master does **not** turn altitude contours or viewing events on.
+Factory defaults keep Milky Way off. Enabling the master does **not** turn altitude contours or viewing events on. Data Event playback may still tour MW windows while Layers presentation is off.
 
 ### Current vs historical dynamic-layer smoke
 

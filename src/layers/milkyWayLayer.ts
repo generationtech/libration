@@ -14,6 +14,7 @@
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import { isPlanetaryEphemerisSupportedUtc } from "../core/planetaryEphemeris";
 import { sampleMilkyWayGeometry } from "../core/milkyWayGeometry";
+import { resolveMilkyWayEventMapLabel } from "../core/milkyWayEventLabel";
 import {
   DEFAULT_MILKY_WAY_PRESENTATION,
   milkyWayEnabledContourAltitudesDeg,
@@ -21,9 +22,10 @@ import {
   type MilkyWayPresentation,
 } from "../core/milkyWayPresentation";
 import { sampleMilkyWayVisibilityContours } from "../core/milkyWayVisibilityGeometry";
+import type { MilkyWayViewingObserver } from "../core/milkyWayViewingWindows";
 import { getOverlayReadabilityFrameOrCompute } from "../core/overlayReadabilityFrame";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
-import { MILKY_WAY_KIND, type MilkyWayPayload } from "./milkyWayPayload";
+import { MILKY_WAY_KIND, type MilkyWayAvoidCityLabel, type MilkyWayPayload } from "./milkyWayPayload";
 
 export const MILKY_WAY_LAYER_ID = "layer.milkyWay.derived";
 
@@ -38,6 +40,9 @@ export function createMilkyWayLayer(
     zIndex?: number;
     opacity?: number;
     presentation?: MilkyWayPresentation;
+    observer?: MilkyWayViewingObserver | null;
+    cityName?: string;
+    cityLabelHints?: readonly MilkyWayAvoidCityLabel[];
   } = {},
 ): Layer {
   const zIndex = options.zIndex ?? SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED;
@@ -45,6 +50,9 @@ export function createMilkyWayLayer(
   const presentation = normalizeMilkyWayPresentation(
     options.presentation ?? DEFAULT_MILKY_WAY_PRESENTATION,
   );
+  const observer = options.observer ?? null;
+  const cityName = options.cityName ?? "";
+  const cityLabelHints = options.cityLabelHints ?? [];
   return {
     id: MILKY_WAY_LAYER_ID,
     name: "Milky Way",
@@ -63,8 +71,17 @@ export function createMilkyWayLayer(
         presentation.ribsEnabled ||
         presentation.galacticCenterEnabled ||
         presentation.galacticAnticenterEnabled;
+      const eventLabel =
+        supported
+          ? resolveMilkyWayEventMapLabel({
+              presentation,
+              observer,
+              cityName,
+              productUtcMs: time.now,
+            })
+          : null;
       const geometry =
-        supported && (needsRibbon || needsVisibility)
+        supported && (needsRibbon || needsVisibility || eventLabel !== null)
           ? sampleMilkyWayGeometry(time.now, presentation.bandWidth, {
               tagNight: presentation.emphasizeNightSide,
             })
@@ -83,6 +100,8 @@ export function createMilkyWayLayer(
         presentation,
         geometry,
         visibility,
+        eventLabel,
+        ...(cityLabelHints.length > 0 ? { labelAvoidCityLabels: cityLabelHints } : {}),
         readability: {
           nightVeil01: frame.globalReadabilityVeil01,
           overlayReadabilityLiftScale01: frame.substrateOverlayReadabilityLiftScale01,

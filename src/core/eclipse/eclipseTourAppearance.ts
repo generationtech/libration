@@ -12,39 +12,28 @@
  */
 
 /**
- * Durable Eclipse Tour configuration. Runtime sequencing lives in
- * `eclipseTourSequence` / `eclipseTourRuntime` and is not persisted.
+ * Durable Eclipse playback configuration. Shared lead-in/post-wait ids live in
+ * `eventPlaybackOffsets`. Runtime sequencing is not persisted.
  */
 
-export const ECLIPSE_TOUR_OFFSET_IDS = [
-  "immediate",
-  "1h",
-  "2h",
-  "6h",
-  "1d",
-  "2d",
-  "1w",
-] as const;
+import {
+  DEFAULT_EVENT_PLAYBACK_LEAD_IN_ID,
+  DEFAULT_EVENT_PLAYBACK_POST_WAIT_ID,
+  EVENT_PLAYBACK_OFFSET_IDS,
+  eventPlaybackOffsetLabel,
+  eventPlaybackOffsetMs,
+  normalizeEventPlaybackOffsetId,
+  type EventPlaybackOffsetId,
+} from "../eventPlayback/eventPlaybackOffsets";
 
-export type EclipseTourOffsetId = (typeof ECLIPSE_TOUR_OFFSET_IDS)[number];
-
-const OFFSET_MS: Record<EclipseTourOffsetId, number> = {
-  immediate: 0,
-  "1h": 3_600_000,
-  "2h": 7_200_000,
-  "6h": 21_600_000,
-  "1d": 86_400_000,
-  "2d": 172_800_000,
-  "1w": 604_800_000,
-};
-
-const OFFSET_SET = new Set<string>(ECLIPSE_TOUR_OFFSET_IDS);
+export const ECLIPSE_TOUR_OFFSET_IDS = EVENT_PLAYBACK_OFFSET_IDS;
+export type EclipseTourOffsetId = EventPlaybackOffsetId;
 
 export const DEFAULT_ECLIPSE_TOUR_INCLUDE_SOLAR = true;
 export const DEFAULT_ECLIPSE_TOUR_INCLUDE_LUNAR = true;
 export const DEFAULT_ECLIPSE_TOUR_LOOP = true;
-export const DEFAULT_ECLIPSE_TOUR_LEAD_IN_ID: EclipseTourOffsetId = "1d";
-export const DEFAULT_ECLIPSE_TOUR_POST_WAIT_ID: EclipseTourOffsetId = "1h";
+export const DEFAULT_ECLIPSE_TOUR_LEAD_IN_ID: EclipseTourOffsetId = DEFAULT_EVENT_PLAYBACK_LEAD_IN_ID;
+export const DEFAULT_ECLIPSE_TOUR_POST_WAIT_ID: EclipseTourOffsetId = DEFAULT_EVENT_PLAYBACK_POST_WAIT_ID;
 
 export type EclipseTourPresentation = {
   readonly startDateYmd: string;
@@ -57,26 +46,11 @@ export type EclipseTourPresentation = {
 };
 
 export function eclipseTourOffsetMs(id: EclipseTourOffsetId): number {
-  return OFFSET_MS[id];
+  return eventPlaybackOffsetMs(id);
 }
 
 export function eclipseTourOffsetLabel(id: EclipseTourOffsetId): string {
-  switch (id) {
-    case "immediate":
-      return "Immediate";
-    case "1h":
-      return "1 hour";
-    case "2h":
-      return "2 hours";
-    case "6h":
-      return "6 hours";
-    case "1d":
-      return "1 day";
-    case "2d":
-      return "2 days";
-    case "1w":
-      return "1 week";
-  }
+  return eventPlaybackOffsetLabel(id);
 }
 
 function flag(raw: unknown, fallback: boolean): boolean {
@@ -87,7 +61,7 @@ function flag(raw: unknown, fallback: boolean): boolean {
 }
 
 function normalizeOffsetId(raw: unknown, fallback: EclipseTourOffsetId): EclipseTourOffsetId {
-  return typeof raw === "string" && OFFSET_SET.has(raw) ? (raw as EclipseTourOffsetId) : fallback;
+  return normalizeEventPlaybackOffsetId(raw, fallback);
 }
 
 const YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;

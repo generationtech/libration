@@ -43,6 +43,7 @@ function payload(partial: Partial<MilkyWayPayload> = {}): MilkyWayPayload {
     presentation: DEFAULT_MILKY_WAY_PRESENTATION,
     geometry: geometry(),
     visibility: null,
+    eventLabel: null,
     ...partial,
   };
 }
@@ -188,5 +189,36 @@ describe("buildMilkyWayRenderPlan", () => {
       expect(Math.abs(item.x2 - item.x1)).toBeLessThan(180);
     }
     expect(plan.items.some((item) => item.kind === "text" && item.text === "60°")).toBe(true);
+  });
+
+  it("places a viewing-event label from Galactic-center subpoint even without ribbon geometry", () => {
+    const plan = buildMilkyWayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        geometry: null,
+        presentation: {
+          ...DEFAULT_MILKY_WAY_PRESENTATION,
+          planeEnabled: false,
+          bandEnabled: false,
+          ribsEnabled: false,
+          galacticCenterEnabled: false,
+          galacticCenterLabelEnabled: false,
+        },
+        eventLabel: {
+          text: "Knoxville · MW Prime · in 2d",
+          latDeg: -29,
+          lonDeg: 170,
+          lifecycle: "upcoming",
+          level: "prime",
+          cityName: "Knoxville",
+        },
+      }),
+    });
+    const texts = plan.items.filter((item) => item.kind === "text");
+    expect(texts.some((item) => item.kind === "text" && item.text === "Knoxville · MW Prime · in 2d")).toBe(
+      true,
+    );
   });
 });

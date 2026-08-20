@@ -43,6 +43,37 @@ export const DEFAULT_MILKY_WAY_BAND_THICKNESS: AstronomyPathThicknessId = "thin"
 export const DEFAULT_MILKY_WAY_VISIBILITY_COLOR = "#b8a0d4";
 export const DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS: AstronomyPathThicknessId = "thin";
 
+export const MILKY_WAY_EVENT_LABEL_HORIZON_IDS = ["live", "6h", "1d", "2d", "7d"] as const;
+export type MilkyWayEventLabelHorizonId = (typeof MILKY_WAY_EVENT_LABEL_HORIZON_IDS)[number];
+export const DEFAULT_MILKY_WAY_EVENT_LABEL_HORIZON: MilkyWayEventLabelHorizonId = "2d";
+
+const EVENT_LABEL_HORIZON_MS: Record<MilkyWayEventLabelHorizonId, number> = {
+  live: 0,
+  "6h": 6 * 3_600_000,
+  "1d": 86_400_000,
+  "2d": 2 * 86_400_000,
+  "7d": 7 * 86_400_000,
+};
+
+export function milkyWayEventLabelHorizonMs(id: MilkyWayEventLabelHorizonId): number {
+  return EVENT_LABEL_HORIZON_MS[id];
+}
+
+export function milkyWayEventLabelHorizonLabel(id: MilkyWayEventLabelHorizonId): string {
+  switch (id) {
+    case "live":
+      return "Live only";
+    case "6h":
+      return "6 hours";
+    case "1d":
+      return "1 day";
+    case "2d":
+      return "2 days";
+    case "7d":
+      return "7 days";
+  }
+}
+
 export const MILKY_WAY_GC_ALTITUDE_CONTOUR_DEGS = [0, 30, 45, 60, 75] as const;
 export type MilkyWayGcAltitudeContourDeg = (typeof MILKY_WAY_GC_ALTITUDE_CONTOUR_DEGS)[number];
 
@@ -93,6 +124,8 @@ export type MilkyWayPresentation = {
   showViewingWindows: boolean;
   showStrongWindows: boolean;
   showPrimeWindows: boolean;
+  showViewingEventLabels: boolean;
+  eventLabelAdvanceHorizonId: MilkyWayEventLabelHorizonId;
 };
 
 export type MilkyWayPresentationPatch = Partial<MilkyWayPresentation>;
@@ -124,10 +157,19 @@ export const DEFAULT_MILKY_WAY_PRESENTATION: MilkyWayPresentation = {
   showViewingWindows: true,
   showStrongWindows: true,
   showPrimeWindows: true,
+  showViewingEventLabels: true,
+  eventLabelAdvanceHorizonId: DEFAULT_MILKY_WAY_EVENT_LABEL_HORIZON,
 };
 
 function isBandWidthId(raw: unknown): raw is MilkyWayBandWidthId {
   return typeof raw === "string" && (MILKY_WAY_BAND_WIDTH_IDS as readonly string[]).includes(raw);
+}
+
+function isEventLabelHorizonId(raw: unknown): raw is MilkyWayEventLabelHorizonId {
+  return (
+    typeof raw === "string" &&
+    (MILKY_WAY_EVENT_LABEL_HORIZON_IDS as readonly string[]).includes(raw)
+  );
 }
 
 function asBoolean(raw: unknown, fallback: boolean): boolean {
@@ -178,6 +220,10 @@ export function normalizeMilkyWayPresentation(raw: unknown): MilkyWayPresentatio
     showViewingWindows: asBoolean(o.showViewingWindows, d.showViewingWindows),
     showStrongWindows: asBoolean(o.showStrongWindows, d.showStrongWindows),
     showPrimeWindows: asBoolean(o.showPrimeWindows, d.showPrimeWindows),
+    showViewingEventLabels: asBoolean(o.showViewingEventLabels, d.showViewingEventLabels),
+    eventLabelAdvanceHorizonId: isEventLabelHorizonId(o.eventLabelAdvanceHorizonId)
+      ? o.eventLabelAdvanceHorizonId
+      : d.eventLabelAdvanceHorizonId,
   };
 }
 

@@ -62,6 +62,7 @@ import { normalizeLunarEclipsePresentation } from "../core/eclipse/lunarEclipseA
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
 import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
+import { REFERENCE_CITIES } from "../data/referenceCities";
 
 type OverlayPart = { zIndex: number; opacity: number };
 
@@ -285,12 +286,34 @@ function createDerivedOverlayByProduct(
         opacity,
         presentation: planetaryObjectsPresentationFromScene(config.scene),
       });
-    case "milkyWay":
+    case "milkyWay": {
+      const observer = resolveReferenceCityObserverLocation(config.displayTime);
+      const city = observer
+        ? (REFERENCE_CITIES.find((c) => c.id === observer.cityId) ?? null)
+        : null;
       return createMilkyWayLayer({
         zIndex,
         opacity,
         presentation: milkyWayPresentationFromScene(config.scene),
+        observer,
+        cityName: city?.name,
+        cityLabelHints:
+          config.layers.cityPins && config.pinPresentation.showLabels
+            ? [
+                ...resolveCitiesForPins(config).map((c) => ({
+                  latDeg: c.latitude,
+                  lonDeg: c.longitude,
+                  name: c.name,
+                })),
+                ...resolveEnabledCustomPinsForMap(config).map((p) => ({
+                  latDeg: p.latitude,
+                  lonDeg: p.longitude,
+                  name: p.label,
+                })),
+              ]
+            : [],
       });
+    }
     case "solarEclipseLiveFootprint":
       return createSolarEclipseLayer({
         zIndex,

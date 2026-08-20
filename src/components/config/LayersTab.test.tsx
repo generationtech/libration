@@ -452,14 +452,6 @@ describe("LayersTab eclipse alignment", () => {
     selectLayersTopic("eclipse");
     expect((screen.getByLabelText("Eclipse alignment effects") as HTMLInputElement).checked).toBe(false);
   });
-
-  it("renders Eclipse Tour at the bottom of the Eclipse topic without auto-starting", () => {
-    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
-    selectLayersTopic("eclipse");
-    expect(screen.getByTestId("eclipse-tour-section")).toBeInTheDocument();
-    expect(screen.getByText("Eclipse Tour")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start Eclipse Tour" })).toBeDisabled();
-  });
 });
 
 describe("LayersTab reference-city eclipse circumstances", () => {
@@ -830,51 +822,23 @@ describe("LayersTab topic navigation", () => {
     const master = screen.getByLabelText("Show Milky Way") as HTMLInputElement;
     const events = screen.getByLabelText("Enable Milky Way viewing events") as HTMLInputElement;
     const viewing = screen.getByLabelText("Show Viewing windows") as HTMLInputElement;
-    const go = screen.getByRole("button", { name: "Go to next Prime window" }) as HTMLButtonElement;
+    const labels = screen.getByLabelText("Show viewing-event labels") as HTMLInputElement;
     expect(master.checked).toBe(false);
     expect(events.checked).toBe(false);
     expect(events.disabled).toBe(false);
     expect(viewing.disabled).toBe(true);
-    expect(go.disabled).toBe(true);
+    expect(labels.disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Go to next Prime window" })).toBeNull();
 
     await user.click(events);
     expect(events.checked).toBe(true);
     expect(master.checked).toBe(false);
     expect(viewing.disabled).toBe(false);
+    expect(labels.disabled).toBe(false);
+    expect(labels.checked).toBe(true);
     expect((screen.getByLabelText("Show Strong windows") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText("Show Prime windows") as HTMLInputElement).checked).toBe(true);
-    expect(go.disabled).toBe(false);
-  });
-
-  it("Go to next Prime writes the existing Demo start", async () => {
-    const user = userEvent.setup();
-    const initial = normalizeLibrationConfig(defaultLibrationConfigV2());
-    function Harness() {
-      const [config, setConfig] = useState(initial);
-      return (
-        <>
-          <LayersTab
-            config={config}
-            updateConfig={(updater) => {
-              const draft = normalizeLibrationConfig(config);
-              updater(draft);
-              setConfig(normalizeLibrationConfig(draft));
-            }}
-            productInstantMs={Date.parse("2026-08-19T06:00:00.000Z")}
-          />
-          <pre data-testid="demo-start">{config.data.demoTime.startIsoUtc}</pre>
-          <pre data-testid="demo-mode">{config.data.mode}</pre>
-        </>
-      );
-    }
-    render(<Harness />);
-    selectLayersTopic("spaceObjects");
-    await user.click(screen.getByLabelText("Enable Milky Way viewing events"));
-    await user.click(screen.getByRole("button", { name: "Go to next Prime window" }));
-    const start = screen.getByTestId("demo-start").textContent ?? "";
-    expect(screen.getByTestId("demo-mode").textContent).toBe("demo");
-    expect(Date.parse(start)).toBeGreaterThan(Date.parse("2026-08-19T06:00:00.000Z"));
-    expect(Date.parse(start)).toBeLessThan(Date.parse("2026-09-20T00:00:00.000Z"));
+    expect((screen.getByLabelText("Event label advance notice") as HTMLSelectElement).value).toBe("2d");
   });
 });
 
@@ -984,16 +948,16 @@ describe("LayersTab live overlay masters", () => {
   });
 });
 
-describe("LayersTab Eclipse Tour", () => {
+describe("LayersTab Eclipse topic has no playback", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("renders Eclipse Tour at the bottom of the Eclipse topic without auto-starting", () => {
+  it("does not render Eclipse Tour playback controls under Layers", () => {
     render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
     selectLayersTopic("eclipse");
-    expect(screen.getByTestId("eclipse-tour-section")).toBeInTheDocument();
-    expect(screen.getByText("Eclipse Tour")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start Eclipse Tour" })).toBeDisabled();
+    expect(screen.queryByTestId("eclipse-tour-section")).toBeNull();
+    expect(screen.queryByText("Eclipse Tour")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start Eclipse Tour" })).toBeNull();
   });
 });

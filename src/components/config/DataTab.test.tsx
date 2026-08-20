@@ -185,4 +185,25 @@ describe("DataTab demo time UX", () => {
     expect(screen.getByText(/bundled fixtures/i)).toBeTruthy();
     expect(screen.queryByText(/No live network feeds/i)).toBeNull();
   });
+
+  it("hosts event playback under the Event playback topic, not Time", () => {
+    const initial = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    render(<DataTabTestHarness initial={initial} />);
+    expect(screen.getByLabelText("Data topic")).toBeTruthy();
+    expect(screen.queryByLabelText("Event family")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Data topic"), { target: { value: "eventPlayback" } });
+    expect(screen.getByLabelText("Event family")).toBeTruthy();
+    expect((screen.getByLabelText("Event family") as HTMLSelectElement).value).toBe("eclipses");
+    expect(screen.getByLabelText("Include solar eclipses in playback")).toBeTruthy();
+    expect(screen.getByLabelText("Include lunar eclipses in playback")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Event family"), { target: { value: "milkyWay" } });
+    expect(screen.getByLabelText("Include Prime windows in playback")).toBeTruthy();
+    expect((screen.getByLabelText("Include Viewing windows in playback") as HTMLInputElement).checked).toBe(
+      false,
+    );
+    expect((screen.getByLabelText("Include Strong windows in playback") as HTMLInputElement).checked).toBe(
+      true,
+    );
+    expect(screen.queryByText("Go to next Prime window")).toBeNull();
+  });
 });

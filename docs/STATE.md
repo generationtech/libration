@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-051](work/LIB-051-milky-way-viewing-window-events.md) — Milky Way viewing window events
+[LIB-052](work/LIB-052-unified-demo-event-playback-and-milky-way-event-presentation.md) — Unified Demo event playback and Milky Way event presentation
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Stop. No approved work.
+None. AWAITING SCOPE.

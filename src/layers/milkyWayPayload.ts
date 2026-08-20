@@ -16,8 +16,15 @@ import { isOverlayReadabilityHints } from "./overlayReadabilityHints";
 import type { MilkyWayGeometry } from "../core/milkyWayGeometry";
 import type { MilkyWayPresentation } from "../core/milkyWayPresentation";
 import type { MilkyWayVisibilityGeometry } from "../core/milkyWayVisibilityGeometry";
+import type { MilkyWayEventMapLabel } from "../core/milkyWayEventLabel";
 
 export const MILKY_WAY_KIND = "milkyWay" as const;
+
+export type MilkyWayAvoidCityLabel = {
+  readonly latDeg: number;
+  readonly lonDeg: number;
+  readonly name: string;
+};
 
 export type MilkyWayPayload = {
   readonly kind: typeof MILKY_WAY_KIND;
@@ -25,6 +32,8 @@ export type MilkyWayPayload = {
   readonly presentation: MilkyWayPresentation;
   readonly geometry: MilkyWayGeometry | null;
   readonly visibility: MilkyWayVisibilityGeometry | null;
+  readonly eventLabel: MilkyWayEventMapLabel | null;
+  readonly labelAvoidCityLabels?: readonly MilkyWayAvoidCityLabel[];
   readonly readability?: OverlayReadabilityHints;
 };
 

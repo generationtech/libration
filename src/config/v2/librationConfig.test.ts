@@ -41,6 +41,7 @@ import {
   normalizeLibrationConfig,
   normalizePinPresentation,
   v2ToAppConfig,
+  type LibrationConfigV2,
 } from "./librationConfig";
 
 function sortLayerIds(registry: ReturnType<typeof createLayerRegistryFromConfig>): string[] {
@@ -392,6 +393,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       mode: "demo",
       showDataAnnotations: true,
       demoTime: { ...DEFAULT_DEMO_TIME_CONFIG },
+      eventPlayback: DEFAULT_DATA_CONFIG.eventPlayback,
     });
   });
 
@@ -414,6 +416,7 @@ describe("librationConfig v2 (Phase 1)", () => {
         startIsoUtc: DEFAULT_DEMO_TIME_CONFIG.startIsoUtc,
         speedMultiplier: DEFAULT_DEMO_TIME_CONFIG.speedMultiplier,
       },
+      eventPlayback: DEFAULT_DATA_CONFIG.eventPlayback,
     });
     const validStart = "2040-01-01T00:00:00.000Z";
     expect(
@@ -699,6 +702,38 @@ describe("librationConfig v2 (Phase 1)", () => {
     );
   });
 
+  it("migrates scene.eclipseTour into data.eventPlayback.eclipse and omits the old key", () => {
+    const base = defaultLibrationConfigV2();
+    const migrated = normalizeLibrationConfig({
+      ...base,
+      data: {
+        mode: base.data.mode,
+        showDataAnnotations: base.data.showDataAnnotations,
+        demoTime: { ...base.data.demoTime },
+      },
+      scene: {
+        ...base.scene!,
+        eclipseTour: {
+          startDateYmd: "2017-08-01",
+          endDateYmd: "2017-09-15",
+          includeSolar: true,
+          includeLunar: false,
+          loop: false,
+          leadInId: "2d",
+          postWaitId: "6h",
+        },
+      },
+    } as unknown as LibrationConfigV2);
+    expect(migrated.data.eventPlayback.eclipse.startDateYmd).toBe("2017-08-01");
+    expect(migrated.data.eventPlayback.eclipse.endDateYmd).toBe("2017-09-15");
+    expect(migrated.data.eventPlayback.eclipse.includeSolar).toBe(true);
+    expect(migrated.data.eventPlayback.eclipse.includeLunar).toBe(false);
+    expect(migrated.data.eventPlayback.eclipse.loop).toBe(false);
+    expect(migrated.data.eventPlayback.eclipse.leadInId).toBe("2d");
+    expect(migrated.data.eventPlayback.eclipse.postWaitId).toBe("6h");
+    expect("eclipseTour" in (migrated.scene as object)).toBe(false);
+  });
+
   it("dependency boundary: librationConfig.ts imports only appConfig, productFontConstants, and hour-marker adapters", () => {
     const src = librationConfigSource;
     const importFrom = /from\s+["']([^"']+)["']/g;
@@ -714,6 +749,7 @@ describe("librationConfig v2 (Phase 1)", () => {
       "../productFontConstants.ts",
       "../topBandHourMarkersPersistenceAdapter.ts",
       "../topBandUtcRealizationCoercion.ts",
+      "../../core/eventPlayback/eventPlaybackConfig",
     ]);
     for (const spec of specifiers) {
       expect(allowed.has(spec), `unexpected import ${spec}`).toBe(true);

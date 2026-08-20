@@ -13,10 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { defaultLibrationConfigV2, normalizeLibrationConfig } from "../config/v2/librationConfig";
-import {
-  applyEclipseTourPresentationToScene,
-  buildDefaultSceneConfigFromLayerFlags,
-} from "../config/v2/sceneConfig";
+import { applyEventPlaybackEclipse } from "../core/eventPlayback/eventPlaybackConfig";
 import {
   inactiveEclipseTourState,
   startEclipseTourSequence,
@@ -31,8 +28,7 @@ import {
 describe("eclipseTourRuntime", () => {
   it("enumerates a mixed 2017 range in catalog order; fingerprint ignores start date", () => {
     const base = normalizeLibrationConfig(defaultLibrationConfigV2());
-    const scene0 = base.scene ?? buildDefaultSceneConfigFromLayerFlags(base.layers);
-    base.scene = applyEclipseTourPresentationToScene(scene0, {
+    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
       startDateYmd: "2017-08-01",
       endDateYmd: "2017-09-14",
       includeSolar: true,
@@ -44,13 +40,11 @@ describe("eclipseTourRuntime", () => {
       expect(events[i]!.sortTimeUtcMs).toBeGreaterThanOrEqual(events[i - 1]!.sortTimeUtcMs);
     }
     const keyA = eclipseTourStructuralFingerprint(base);
-    const sceneA = base.scene ?? buildDefaultSceneConfigFromLayerFlags(base.layers);
-    base.scene = applyEclipseTourPresentationToScene(sceneA, {
+    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
       startDateYmd: "2017-08-21",
     });
     expect(eclipseTourStructuralFingerprint(base)).toBe(keyA);
-    const sceneB = base.scene ?? buildDefaultSceneConfigFromLayerFlags(base.layers);
-    base.scene = applyEclipseTourPresentationToScene(sceneB, {
+    base.data.eventPlayback = applyEventPlaybackEclipse(base.data.eventPlayback, {
       includeLunar: false,
     });
     expect(eclipseTourStructuralFingerprint(base)).not.toBe(keyA);
@@ -58,17 +52,12 @@ describe("eclipseTourRuntime", () => {
 
   it("deactivates when Demo stops or the Demo start ISO is foreign", () => {
     const v2 = normalizeLibrationConfig(defaultLibrationConfigV2());
-    const scene = v2.scene ?? buildDefaultSceneConfigFromLayerFlags(v2.layers);
-    v2.scene = applyEclipseTourPresentationToScene(scene, {
+    v2.data.eventPlayback = applyEventPlaybackEclipse(v2.data.eventPlayback, {
       startDateYmd: "2017-08-01",
       endDateYmd: "2017-09-14",
     });
     const events = buildEclipseTourSchedule(v2);
-    const started = startEclipseTourSequence(
-      events,
-      true,
-      eclipseTourStructuralFingerprint(v2),
-    );
+    const started = startEclipseTourSequence(events, true, eclipseTourStructuralFingerprint(v2));
     expect(
       eclipseTourShouldDeactivate(
         started.state,

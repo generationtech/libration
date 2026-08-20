@@ -553,6 +553,8 @@ function applyMilkyWayScene(draft: LibrationConfigV2): void {
       showViewingWindows: true,
       showStrongWindows: true,
       showPrimeWindows: true,
+      showViewingEventLabels: true,
+      eventLabelAdvanceHorizonId: "2d",
     });
     draft.scene = applyLayerEnableFlagsToScene(draft.scene, draft.layers);
   }
@@ -735,6 +737,36 @@ export function resolveVisualScenarioSession(
   if (!isVisualScenarioId(requested)) {
     return { kind: "unknown", requestedId: requested };
   }
+  if (requested === "milky-way") {
+    const params = parseSearchParams(input.search);
+    const startIsoUtc =
+      params.get("mwEvent") === "active"
+        ? "2026-08-20T02:27:16.000Z"
+        : VISUAL_SCENARIO_UTC["milky-way"];
+    const config = withDemoAt(startIsoUtc, applyMilkyWayScene);
+    const eclipseObserver = parseMoonLibrationObserverCityId(params.get("observerCity"));
+    const topBandAnchor =
+      eclipseObserver === "none"
+        ? ({ mode: "auto" } as const)
+        : eclipseObserver !== null
+          ? ({ mode: "fixedCity", cityId: eclipseObserver } as const)
+          : config.chrome.displayTime.topBandAnchor;
+    return {
+      kind: "applied",
+      id: "milky-way",
+      startIsoUtc,
+      config: {
+        ...config,
+        chrome: {
+          ...config.chrome,
+          displayTime: {
+            ...config.chrome.displayTime,
+            topBandAnchor,
+          },
+        },
+      },
+    };
+  }
   if (requested === "lunar-locus") {
     const params = parseSearchParams(input.search);
     const epoch = parseLunarLocusEpochId(params.get("locusEpoch"));
@@ -867,8 +899,7 @@ export function resolveVisualScenarioSession(
   const searchParams = parseSearchParams(input.search);
   const eclipseObserver =
     requested.startsWith("solar-eclipse-") ||
-    requested.startsWith("lunar-eclipse-") ||
-    requested === "milky-way"
+    requested.startsWith("lunar-eclipse-")
       ? parseMoonLibrationObserverCityId(searchParams.get("observerCity"))
       : null;
   const horizonDays =

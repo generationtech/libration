@@ -144,6 +144,24 @@ function galacticCenterEqd(utcMs: number): EqdSample | null {
   return val;
 }
 
+export function galacticCenterSubpointAt(
+  utcMs: number,
+): { readonly latDeg: number; readonly lonDeg: number } | null {
+  if (!isPlanetaryEphemerisSupportedUtc(utcMs)) {
+    return null;
+  }
+  const eqd = galacticCenterEqd(utcMs);
+  const gastDeg = planetaryGastDeg(utcMs);
+  if (!eqd || gastDeg === null) {
+    return null;
+  }
+  return subpointFromApparentEquator({
+    raDeg: eqd.raDeg,
+    decDeg: eqd.decDeg,
+    gastDeg,
+  });
+}
+
 export function milkyWayViewingConditionsAt(
   utcMs: number,
   observer: MilkyWayViewingObserver,

@@ -31,25 +31,25 @@ import {
   MILKY_WAY_BAND_WIDTH_IDS,
   milkyWayBandWidthLabel,
   milkyWayEnabledViewingLevels,
+  milkyWayEventLabelHorizonLabel,
+  MILKY_WAY_EVENT_LABEL_HORIZON_IDS,
   type MilkyWayBandWidthId,
+  type MilkyWayEventLabelHorizonId,
   type MilkyWayPresentationPatch,
 } from "../../core/milkyWayPresentation";
 import {
   formatMilkyWayViewingActiveLines,
-  formatMilkyWayViewingNextWindowLines,
   milkyWayViewingFeasibilityCopy,
   MILKY_WAY_VIEWING_WINDOW_HONEST_COPY,
   resolveMilkyWayViewingStatus,
 } from "../../core/milkyWayViewingStatus";
 import {
-  findNextMilkyWayViewingWindow,
   listMilkyWayViewingWindows,
   milkyWayViewingConditionsAt,
 } from "../../core/milkyWayViewingWindows";
 import { resolveReferenceCityObserverLocation } from "../../core/referenceCityObserver";
 import { REFERENCE_CITIES } from "../../data/referenceCities";
 import { ConfigControlRow } from "./ConfigControlRow";
-import type { DemoTransportUiProps } from "./DataTab";
 
 type UpdateConfig = (updater: (draft: LibrationConfigV2) => void) => void;
 
@@ -75,9 +75,8 @@ export function MilkyWaySection(props: {
   config: LibrationConfigV2;
   updateConfig?: UpdateConfig;
   productInstantMs?: number;
-  demoTransport?: DemoTransportUiProps;
 }): ReactElement {
-  const { config, updateConfig, productInstantMs, demoTransport } = props;
+  const { config, updateConfig, productInstantMs } = props;
   const mutable = Boolean(updateConfig);
   const scene = config.scene ?? buildDefaultSceneConfigFromLayerFlags(config.layers);
   const pres = milkyWayPresentationFromScene(scene);
@@ -142,30 +141,6 @@ export function MilkyWaySection(props: {
     pres.viewingEventsEnabled && observer && productInstantMs !== undefined
       ? milkyWayViewingConditionsAt(productInstantMs, observer)
       : null;
-
-  const goToNextPrime = (): void => {
-    if (!updateConfig || !observer || productInstantMs === undefined) {
-      return;
-    }
-    const nextPrime =
-      viewingStatus?.nextPrime && viewingStatus.nextPrime.startUtcMs > productInstantMs
-        ? viewingStatus.nextPrime
-        : findNextMilkyWayViewingWindow({
-            observer,
-            afterUtcMs: productInstantMs,
-            level: "prime",
-            horizonMs: 365 * 86_400_000,
-          });
-    if (!nextPrime) {
-      return;
-    }
-    updateConfig((draft) => {
-      draft.data.mode = "demo";
-      draft.data.demoTime.enabled = true;
-      draft.data.demoTime.startIsoUtc = new Date(nextPrime.startUtcMs).toISOString();
-    });
-    demoTransport?.onPause();
-  };
 
   return (
     <>
@@ -688,7 +663,7 @@ export function MilkyWaySection(props: {
           disabled={!mutable || !pres.viewingEventsEnabled}
           tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
           aria-label="Show Viewing windows"
-          title="Include Viewing-level intervals in status and next-window lookup."
+          title="Include Viewing-level intervals on the map event label. Does not change Data playback filters."
           onChange={
             mutable
               ? (e) => {
@@ -707,7 +682,7 @@ export function MilkyWaySection(props: {
           disabled={!mutable || !pres.viewingEventsEnabled}
           tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
           aria-label="Show Strong windows"
-          title="Include Strong-level intervals in status and next-window lookup."
+          title="Include Strong-level intervals on the map event label. Does not change Data playback filters."
           onChange={
             mutable
               ? (e) => {
@@ -726,7 +701,7 @@ export function MilkyWaySection(props: {
           disabled={!mutable || !pres.viewingEventsEnabled}
           tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
           aria-label="Show Prime windows"
-          title="Include Prime-level intervals in status and next-window lookup."
+          title="Include Prime-level intervals on the map event label. Does not change Data playback filters."
           onChange={
             mutable
               ? (e) => {
@@ -735,6 +710,49 @@ export function MilkyWaySection(props: {
               : undefined
           }
         />
+      </ConfigControlRow>
+      <ConfigControlRow label="Show viewing-event labels">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showViewingEventLabels}
+          readOnly={!mutable}
+          disabled={!mutable || !pres.viewingEventsEnabled}
+          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
+          aria-label="Show viewing-event labels"
+          title="Upcoming and active map labels near the Galactic-center subpoint. Independent of ribbon and contours."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showViewingEventLabels: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Event label advance notice">
+        <select
+          className="config-input"
+          disabled={!mutable || !pres.viewingEventsEnabled || !pres.showViewingEventLabels}
+          aria-label="Event label advance notice"
+          title="How far ahead of a selected window the upcoming map label appears."
+          value={pres.eventLabelAdvanceHorizonId}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({
+                    eventLabelAdvanceHorizonId: e.currentTarget.value as MilkyWayEventLabelHorizonId,
+                  });
+                }
+              : undefined
+          }
+        >
+          {MILKY_WAY_EVENT_LABEL_HORIZON_IDS.map((id) => (
+            <option key={id} value={id}>
+              {milkyWayEventLabelHorizonLabel(id)}
+            </option>
+          ))}
+        </select>
       </ConfigControlRow>
       {pres.viewingEventsEnabled ? (
         <div role="status">
@@ -747,56 +765,23 @@ export function MilkyWaySection(props: {
               {milkyWayViewingFeasibilityCopy(viewingSearch.feasibility)}
             </p>
           ) : viewingStatus?.active && city ? (
-            formatMilkyWayViewingActiveLines(
-              viewingStatus.active,
-              productInstantMs ?? viewingStatus.active.startUtcMs,
-              city.timeZone,
-              displayTimeMode,
-              instant?.gcAltitudeDeg ?? null,
-            ).map((line) => (
-              <p key={line} className="config-section__hint">
-                {line}
-              </p>
-            ))
-          ) : viewingStatus?.nextPrime && city ? (
-            formatMilkyWayViewingNextWindowLines(
-              viewingStatus.nextPrime,
-              city.timeZone,
-              displayTimeMode,
-            ).map((line) => (
-              <p key={line} className="config-section__hint">
-                {line}
-              </p>
-            ))
-          ) : viewingStatus?.next && city ? (
-            formatMilkyWayViewingNextWindowLines(
-              viewingStatus.next,
-              city.timeZone,
-              displayTimeMode,
-            ).map((line) => (
-              <p key={line} className="config-section__hint">
-                {line}
-              </p>
-            ))
+            <p className="config-section__hint">
+              {formatMilkyWayViewingActiveLines(
+                viewingStatus.active,
+                productInstantMs ?? viewingStatus.active.startUtcMs,
+                city.timeZone,
+                displayTimeMode,
+                instant?.gcAltitudeDeg ?? null,
+              )[0] ?? "Active viewing window"}
+            </p>
           ) : (
             <p className="config-section__hint">
-              No Galactic-center viewing windows in this range.
+              Map labels use the next selected window within the advance notice. Time navigation is
+              under Data → Event playback.
             </p>
           )}
         </div>
       ) : null}
-      <ConfigControlRow label="Go to next Prime window">
-        <button
-          type="button"
-          className="config-input"
-          disabled={!mutable || !pres.viewingEventsEnabled || !observer}
-          aria-label="Go to next Prime window"
-          title="Set Demo time to the start of the next Prime window after the current product time."
-          onClick={mutable ? goToNextPrime : undefined}
-        >
-          Go to next Prime
-        </button>
-      </ConfigControlRow>
     </>
   );
 }

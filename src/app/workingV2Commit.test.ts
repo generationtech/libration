@@ -38,10 +38,10 @@ import {
   applyMilkyWayPresentationToScene,
   applyLunarEclipsePresentationToScene,
   applySolarEclipsePresentationToScene,
-  applyEclipseTourPresentationToScene,
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
 } from "../config/v2/sceneConfig";
+import { applyEventPlaybackEclipse } from "../core/eventPlayback/eventPlaybackConfig";
 import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
 import {
   commitWorkingV2Update,
@@ -674,28 +674,16 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(shadowOff, shadowOff)).toBe(true);
   });
 
-  it("sceneRuntimeAffectingEqual is true when only Eclipse Tour preferences change", () => {
-    const base = buildDefaultSceneConfigFromLayerFlags({
-      baseMap: true,
-      solarShading: true,
-      grid: false,
-      staticEquirectOverlay: false,
-      globalCloudsIr: false,
-      earthquakes: false,
-      orbitalTracks: false,
-      planetaryObjects: false,
-  milkyWay: false,
-      cityPins: false,
-      subsolarMarker: false,
-      sublunarMarker: false,
-      lunarGroundTrack: false,
-      lunarLocus: false,
-      solarEclipse: true,
-      lunarEclipse: true,
-      solarAnalemma: false,
-    });
-    const patched = applyEclipseTourPresentationToScene(base, { loop: false });
-    expect(sceneRuntimeAffectingEqual(base, patched)).toBe(true);
+  it("sceneRuntimeAffectingEqual is true when only Data event-playback preferences change", () => {
+    const base = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const patched = {
+      ...base,
+      data: {
+        ...base.data,
+        eventPlayback: applyEventPlaybackEclipse(base.data.eventPlayback, { loop: false }),
+      },
+    };
+    expect(sceneRuntimeAffectingEqual(base.scene!, patched.scene!)).toBe(true);
   });
 
   it("LayersTab-style emissive-only commit persists mode, replaces registry, and updates solar shading payload", () => {

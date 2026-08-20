@@ -50,25 +50,27 @@ import {
   type DemoPlaybackState,
 } from "./app/demoPlayback";
 import {
-  buildEclipseTourSchedule,
-  eclipseTourShouldDeactivate,
-  eclipseTourStructuralFingerprint,
-} from "./app/eclipseTourRuntime";
+  buildEventPlaybackSchedule,
+  eventPlaybackLiveLoop,
+  eventPlaybackStructuralFingerprint,
+} from "./app/eventPlaybackRuntime";
 import {
-  eclipseTourCanGoNext,
-  eclipseTourCanGoPrevious,
-  inactiveEclipseTourState,
-  pauseEclipseTourSequence,
-  resetEclipseTourCurrentEvent,
-  resumeEclipseTourSequence,
-  skipEclipseTourEvent,
-  startEclipseTourSequence,
-  stepEclipseTourSequence,
-  stopEclipseTourSequence,
-  type EclipseTourPhase,
-  type EclipseTourSequenceState,
-} from "./core/eclipse/eclipseTourSequence";
-import type { EclipseTourSessionUi } from "./components/config/EclipseTourSection";
+  eventPlaybackCanGoNext,
+  eventPlaybackCanGoPrevious,
+  eventPlaybackShouldDeactivate,
+  inactiveEventPlaybackState,
+  pauseEventPlaybackSequence,
+  resetEventPlaybackCurrentEvent,
+  resumeEventPlaybackSequence,
+  skipEventPlaybackEvent,
+  startEventPlaybackSequence,
+  stepEventPlaybackSequence,
+  stopEventPlaybackSequence,
+  type EventPlaybackPhase,
+  type EventPlaybackSequenceState,
+} from "./core/eventPlayback/eventPlaybackSequence";
+import type { EventPlaybackListedEvent } from "./app/eventPlaybackRuntime";
+import type { EventPlaybackSessionUi } from "./components/config/EventPlaybackPanel";
 import {
   attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
@@ -90,11 +92,9 @@ import { isProductTimeLiveEnough } from "./core/liveProductTimePolicy";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import {
   eclipseInfoPresentationFromScene,
-  eclipseTourPresentationFromScene,
   lunarEclipsePresentationFromScene,
   solarEclipsePresentationFromScene,
   referenceCityEclipsePresentationFromScene,
-  buildDefaultSceneConfigFromLayerFlags,
 } from "./config/v2/sceneConfig";
 import { forecastHorizonMsFromDays } from "./core/eclipse/solarEclipseAppearance";
 import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInformation";
@@ -107,6 +107,8 @@ import {
   reviveDisposedDynamicLifecycleHost,
   type IssConfigStatusHint,
 } from "./lifecycle";
+import { milkyWayViewingConditionsAt } from "./core/milkyWayViewingWindows";
+import { milkyWayViewingLevelLabel } from "./core/milkyWayViewingStatus";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
 import { formatEclipseHudStatus } from "./core/referenceCityEclipseStatus";
@@ -136,12 +138,40 @@ function isTextEntryElement(target: EventTarget | null): boolean {
   );
 }
 
-function tourViewFromState(state: EclipseTourSequenceState): {
-  phase: EclipseTourPhase;
+function extraStatusLines(
+  event: EventPlaybackListedEvent | undefined,
+  productUtcMs: number,
+  observer: ReturnType<typeof resolveReferenceCityObserverLocation>,
+): string[] {
+  if (!event?.milkyWay) {
+    return [];
+  }
+  const lines: string[] = [event.milkyWay.cityName];
+  lines.push(`Peak GC altitude ${event.milkyWay.peakAltitudeDeg.toFixed(1)}°`);
+  if (
+    observer &&
+    productUtcMs >= event.milkyWay.startUtcMs &&
+    productUtcMs < event.milkyWay.endUtcMs
+  ) {
+    const instant = milkyWayViewingConditionsAt(productUtcMs, observer);
+    if (instant?.level) {
+      lines.push(`Active ${milkyWayViewingLevelLabel(instant.level)}`);
+    }
+  }
+  return lines;
+}
+
+function tourViewFromState(
+  state: EventPlaybackSequenceState<EventPlaybackListedEvent>,
+  productUtcMs: number,
+  observer: ReturnType<typeof resolveReferenceCityObserverLocation>,
+): {
+  phase: EventPlaybackPhase;
   currentIndex: number;
   eventCount: number;
   currentTitle: string | null;
   currentDateLabel: string | null;
+  extraStatusLines: readonly string[];
 } {
   const event = state.events[state.index];
   return {
@@ -150,6 +180,7 @@ function tourViewFromState(state: EclipseTourSequenceState): {
     eventCount: state.events.length,
     currentTitle: event?.title ?? null,
     currentDateLabel: event?.dateLabel ?? null,
+    extraStatusLines: extraStatusLines(event, productUtcMs, observer),
   };
 }
 
@@ -237,24 +268,33 @@ export default function App() {
     demoTransportActionRef.current = "reset";
   }, []);
 
-  const eclipseTourStateRef = useRef(inactiveEclipseTourState());
+  const eventPlaybackStateRef = useRef(
+    inactiveEventPlaybackState<EventPlaybackListedEvent>(),
+  );
   const pendingTourJumpRef = useRef<{ iso: string; pause: boolean } | null>(null);
-  const [eclipseTourView, setEclipseTourView] = useState(() =>
-    tourViewFromState(inactiveEclipseTourState()),
+  const [eventPlaybackView, setEventPlaybackView] = useState(() =>
+    tourViewFromState(inactiveEventPlaybackState<EventPlaybackListedEvent>(), Date.now(), null),
   );
 
-  const publishEclipseTourView = useCallback((state: EclipseTourSequenceState) => {
-    const next = tourViewFromState(state);
-    setEclipseTourView((prev) =>
-      prev.phase === next.phase &&
-      prev.currentIndex === next.currentIndex &&
-      prev.eventCount === next.eventCount &&
-      prev.currentTitle === next.currentTitle &&
-      prev.currentDateLabel === next.currentDateLabel
-        ? prev
-        : next,
-    );
-  }, []);
+  const publishEventPlaybackView = useCallback(
+    (state: EventPlaybackSequenceState<EventPlaybackListedEvent>) => {
+      const observer = workingV2Ref.current
+        ? resolveReferenceCityObserverLocation(workingV2Ref.current.chrome.displayTime)
+        : null;
+      const next = tourViewFromState(state, productInstantMsRef.current, observer);
+      setEventPlaybackView((prev) =>
+        prev.phase === next.phase &&
+        prev.currentIndex === next.currentIndex &&
+        prev.eventCount === next.eventCount &&
+        prev.currentTitle === next.currentTitle &&
+        prev.currentDateLabel === next.currentDateLabel &&
+        prev.extraStatusLines.join("\n") === next.extraStatusLines.join("\n")
+          ? prev
+          : next,
+      );
+    },
+    [],
+  );
 
   const storage = getLocalStorageIfAvailable();
   const userPresetsList = useMemo(
@@ -309,96 +349,94 @@ export default function App() {
     [updateConfig],
   );
 
-  const handleEclipseTourStart = useCallback(() => {
-    const current = eclipseTourStateRef.current;
+  const handleEventPlaybackStart = useCallback(() => {
+    const current = eventPlaybackStateRef.current;
     if (current.phase === "paused") {
-      eclipseTourStateRef.current = resumeEclipseTourSequence(current);
+      eventPlaybackStateRef.current = resumeEventPlaybackSequence(current);
       requestDemoResume();
-      publishEclipseTourView(eclipseTourStateRef.current);
+      publishEventPlaybackView(eventPlaybackStateRef.current);
       return;
     }
     const v2 = workingV2Ref.current;
-    const events = buildEclipseTourSchedule(v2);
-    const key = eclipseTourStructuralFingerprint(v2);
-    const tour = eclipseTourPresentationFromScene(
-      v2.scene ?? buildDefaultSceneConfigFromLayerFlags(v2.layers),
-    );
-    const started = startEclipseTourSequence(events, tour.loop, key);
-    eclipseTourStateRef.current = started.state;
+    const events = buildEventPlaybackSchedule(v2);
+    const key = eventPlaybackStructuralFingerprint(v2);
+    const started = startEventPlaybackSequence(events, eventPlaybackLiveLoop(v2), key);
+    eventPlaybackStateRef.current = started.state;
     if (started.jumpToIsoUtc) {
       applyTourOwnedDemoStart(started.jumpToIsoUtc);
     }
     requestDemoResume();
-    publishEclipseTourView(started.state);
-  }, [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoResume]);
+    publishEventPlaybackView(started.state);
+  }, [applyTourOwnedDemoStart, publishEventPlaybackView, requestDemoResume]);
 
-  const handleEclipseTourPause = useCallback(() => {
-    eclipseTourStateRef.current = pauseEclipseTourSequence(eclipseTourStateRef.current);
+  const handleEventPlaybackPause = useCallback(() => {
+    eventPlaybackStateRef.current = pauseEventPlaybackSequence(eventPlaybackStateRef.current);
     requestDemoPause();
-    publishEclipseTourView(eclipseTourStateRef.current);
-  }, [publishEclipseTourView, requestDemoPause]);
+    publishEventPlaybackView(eventPlaybackStateRef.current);
+  }, [publishEventPlaybackView, requestDemoPause]);
 
-  const handleEclipseTourReset = useCallback(() => {
-    const result = resetEclipseTourCurrentEvent(eclipseTourStateRef.current);
-    eclipseTourStateRef.current = result.state;
+  const handleEventPlaybackReset = useCallback(() => {
+    const result = resetEventPlaybackCurrentEvent(eventPlaybackStateRef.current);
+    eventPlaybackStateRef.current = result.state;
     if (result.jumpToIsoUtc) {
       applyTourOwnedDemoStart(result.jumpToIsoUtc);
       requestDemoReset();
     }
-    publishEclipseTourView(result.state);
-  }, [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoReset]);
+    publishEventPlaybackView(result.state);
+  }, [applyTourOwnedDemoStart, publishEventPlaybackView, requestDemoReset]);
 
-  const handleEclipseTourStop = useCallback(() => {
-    eclipseTourStateRef.current = stopEclipseTourSequence(eclipseTourStateRef.current);
+  const handleEventPlaybackStop = useCallback(() => {
+    eventPlaybackStateRef.current = stopEventPlaybackSequence(eventPlaybackStateRef.current);
     requestDemoPause();
-    publishEclipseTourView(eclipseTourStateRef.current);
-  }, [publishEclipseTourView, requestDemoPause]);
+    publishEventPlaybackView(eventPlaybackStateRef.current);
+  }, [publishEventPlaybackView, requestDemoPause]);
 
-  const handleEclipseTourSkip = useCallback(
+  const handleEventPlaybackSkip = useCallback(
     (delta: number) => {
-      const result = skipEclipseTourEvent(eclipseTourStateRef.current, delta);
-      eclipseTourStateRef.current = result.state;
+      const result = skipEventPlaybackEvent(eventPlaybackStateRef.current, delta);
+      eventPlaybackStateRef.current = result.state;
       if (result.jumpToIsoUtc) {
         applyTourOwnedDemoStart(result.jumpToIsoUtc);
         if (result.state.phase === "playing") {
           requestDemoResume();
         }
       }
-      publishEclipseTourView(result.state);
+      publishEventPlaybackView(result.state);
     },
-    [applyTourOwnedDemoStart, publishEclipseTourView, requestDemoResume],
+    [applyTourOwnedDemoStart, publishEventPlaybackView, requestDemoResume],
   );
 
-  const handleEclipseTourDeactivate = useCallback(() => {
-    eclipseTourStateRef.current = stopEclipseTourSequence(eclipseTourStateRef.current);
-    publishEclipseTourView(eclipseTourStateRef.current);
-  }, [publishEclipseTourView]);
+  const handleEventPlaybackDeactivate = useCallback(() => {
+    eventPlaybackStateRef.current = stopEventPlaybackSequence(eventPlaybackStateRef.current);
+    publishEventPlaybackView(eventPlaybackStateRef.current);
+  }, [publishEventPlaybackView]);
 
-  const eclipseTourSession = useMemo<EclipseTourSessionUi>(
+  const eventPlaybackSession = useMemo<EventPlaybackSessionUi>(
     () => ({
-      phase: eclipseTourView.phase,
-      currentIndex: eclipseTourView.currentIndex,
-      eventCount: eclipseTourView.eventCount,
-      currentTitle: eclipseTourView.currentTitle,
-      currentDateLabel: eclipseTourView.currentDateLabel,
-      canGoPrevious: eclipseTourCanGoPrevious(eclipseTourStateRef.current),
-      canGoNext: eclipseTourCanGoNext(eclipseTourStateRef.current),
-      onStart: handleEclipseTourStart,
-      onPause: handleEclipseTourPause,
-      onReset: handleEclipseTourReset,
-      onStop: handleEclipseTourStop,
-      onPrevious: () => handleEclipseTourSkip(-1),
-      onNext: () => handleEclipseTourSkip(1),
-      onDeactivate: handleEclipseTourDeactivate,
+      phase: eventPlaybackView.phase,
+      currentIndex: eventPlaybackView.currentIndex,
+      eventCount: eventPlaybackView.eventCount,
+      currentTitle: eventPlaybackView.currentTitle,
+      currentDateLabel: eventPlaybackView.currentDateLabel,
+      extraStatusLines: eventPlaybackView.extraStatusLines,
+      canGoPrevious: eventPlaybackCanGoPrevious(eventPlaybackStateRef.current),
+      canGoNext: eventPlaybackCanGoNext(eventPlaybackStateRef.current),
+      onStart: handleEventPlaybackStart,
+      onPause: handleEventPlaybackPause,
+      onReset: handleEventPlaybackReset,
+      onStop: handleEventPlaybackStop,
+      onPrevious: () => handleEventPlaybackSkip(-1),
+      onNext: () => handleEventPlaybackSkip(1),
+      onDeactivate: handleEventPlaybackDeactivate,
     }),
     [
-      eclipseTourView,
-      handleEclipseTourDeactivate,
-      handleEclipseTourPause,
-      handleEclipseTourReset,
-      handleEclipseTourSkip,
-      handleEclipseTourStart,
-      handleEclipseTourStop,
+      eventPlaybackView,
+      handleEventPlaybackDeactivate,
+      handleEventPlaybackPause,
+      handleEventPlaybackReset,
+      handleEventPlaybackSkip,
+      handleEventPlaybackStart,
+      handleEventPlaybackStop,
     ],
   );
 
@@ -575,35 +613,32 @@ export default function App() {
         demoPlaybackRef.current = nextDemoState;
       }
 
-      let tourState = eclipseTourStateRef.current;
+      let tourState = eventPlaybackStateRef.current;
       if (tourState.phase !== "inactive") {
-        const fingerprint = eclipseTourStructuralFingerprint(workingV2Ref.current);
+        const fingerprint = eventPlaybackStructuralFingerprint(workingV2Ref.current);
         if (
-          eclipseTourShouldDeactivate(
+          eventPlaybackShouldDeactivate(
             tourState,
             demoActive,
             data.demoTime.startIsoUtc,
             fingerprint,
           )
         ) {
-          tourState = stopEclipseTourSequence(tourState);
-          eclipseTourStateRef.current = tourState;
-          publishEclipseTourView(tourState);
+          tourState = stopEventPlaybackSequence(tourState);
+          eventPlaybackStateRef.current = tourState;
+          publishEventPlaybackView(tourState);
         } else {
           if (transportAction === "pause") {
-            tourState = pauseEclipseTourSequence(tourState);
+            tourState = pauseEventPlaybackSequence(tourState);
           } else if (transportAction === "resume") {
-            tourState = resumeEclipseTourSequence(tourState);
+            tourState = resumeEventPlaybackSequence(tourState);
           }
-          const liveLoop = eclipseTourPresentationFromScene(
-            workingV2Ref.current.scene ??
-              buildDefaultSceneConfigFromLayerFlags(workingV2Ref.current.layers),
-          ).loop;
+          const liveLoop = eventPlaybackLiveLoop(workingV2Ref.current);
           if (tourState.loop !== liveLoop) {
             tourState = { ...tourState, loop: liveLoop };
           }
           if (tourState.phase === "playing") {
-            const step = stepEclipseTourSequence(tourState, effectiveNowMs);
+            const step = stepEventPlaybackSequence(tourState, effectiveNowMs);
             tourState = step.state;
             if (step.jumpToIsoUtc) {
               commitWorkingV2Update(
@@ -635,8 +670,8 @@ export default function App() {
               );
             }
           }
-          eclipseTourStateRef.current = tourState;
-          publishEclipseTourView(tourState);
+          eventPlaybackStateRef.current = tourState;
+          publishEventPlaybackView(tourState);
         }
       }
 
@@ -936,7 +971,7 @@ export default function App() {
               onResume: requestDemoResume,
               onReset: requestDemoReset,
             }}
-            eclipseTourSession={eclipseTourSession}
+            eventPlaybackSession={eventPlaybackSession}
           />
         </div>
       ) : null}

@@ -89,6 +89,16 @@ See [ADR 0004](docs/decisions/0004-one-canonical-utc-instant-per-frame.md).
 
 See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enough-product-time.md).
 
+### 3.5 Layers answers what is rendered; Data answers when it is viewed
+
+**Boundary.** Scene presentation — visibility, rendering, and appearance filters — lives under Layers. Product-time navigation — generic Demo and domain event playback — lives under Data. Domain event authorities remain upstream of both and may serve both. Event playback commands the existing Demo-time controller; it does not own a clock.
+
+**Rationale.** Mixing time travel into Layers topics made Eclipse Tour and Milky Way “Go to next” look like rendering features. The instrument already has one product instant. Navigation belongs with that instant. Rendering belongs with the scene.
+
+**Consequence.** Layers must not seek `TimeContext.now`. Data must not grow domain rendering controls. Adding another event family means a Data playback adapter plus, if needed, Layers presentation — not a second clock and not a generic astronomical engine.
+
+See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md) (shared Demo clock) and [ADR 0019](docs/decisions/0019-domain-event-playback-belongs-to-data.md) (Data vs Layers ownership).
+
 ---
 
 ## 4. Rendering invariants

@@ -15,8 +15,8 @@
  * LibrationConfig v2 — portable, render-engine-agnostic product configuration (Phase 1).
  *
  * Dependency boundary (Phase 1): this module must not import renderer shells, app bootstrap,
- * layer implementations, render bridges, or backends. Only the shared {@link AppConfig} contract
- * in `../appConfig` (and future sibling pure-config modules) is allowed.
+ * layer implementations, render bridges, or backends. Shared {@link AppConfig} plus sibling
+ * pure-config / event-playback preference modules are allowed.
  */
 import type {
   AppConfig,
@@ -57,6 +57,10 @@ import {
 import { normalizeHourMarkersInput } from "../topBandHourMarkersPersistenceAdapter.ts";
 import { coerceHourMarkersForUtc24IfProcedural } from "../topBandUtcRealizationCoercion.ts";
 import { isKnownEmissiveCompositionAssetId } from "../emissiveCompositionAssetResolve";
+import {
+  cloneEventPlayback,
+  normalizeEventPlayback,
+} from "../../core/eventPlayback/eventPlaybackConfig";
 import {
   applyLayerEnableFlagsToScene,
   buildDefaultSceneConfigFromLayerFlags,
@@ -473,11 +477,18 @@ function normalizeDemoTime(input: unknown): DemoTimeConfig {
 /**
  * Coerces unknown v2 `data` input to a stable {@link DataConfig}.
  */
-export function normalizeData(input: unknown): DataConfig {
+export function normalizeData(
+  input: unknown,
+  options: { readonly legacyEclipseTour?: Readonly<Record<string, unknown>>; readonly nowMs?: number } = {},
+): DataConfig {
   if (!isPlainObject(input)) {
     return {
       ...DEFAULT_DATA_CONFIG,
       demoTime: { ...DEFAULT_DATA_CONFIG.demoTime },
+      eventPlayback: normalizeEventPlayback(undefined, {
+        legacyEclipseTour: options.legacyEclipseTour,
+        nowMs: options.nowMs,
+      }),
     };
   }
   const m = input.mode;
@@ -491,7 +502,11 @@ export function normalizeData(input: unknown): DataConfig {
   const demoTime = normalizeDemoTime(
     isPlainObject(input.demoTime) ? input.demoTime : {},
   );
-  return { mode, showDataAnnotations, demoTime };
+  const eventPlayback = normalizeEventPlayback(input.eventPlayback, {
+    legacyEclipseTour: options.legacyEclipseTour,
+    nowMs: options.nowMs,
+  });
+  return { mode, showDataAnnotations, demoTime, eventPlayback };
 }
 
 function cloneData(d: DataConfig): DataConfig {
@@ -503,6 +518,7 @@ function cloneData(d: DataConfig): DataConfig {
       startIsoUtc: d.demoTime.startIsoUtc,
       speedMultiplier: d.demoTime.speedMultiplier,
     },
+    eventPlayback: cloneEventPlayback(d.eventPlayback),
   };
 }
 
@@ -686,10 +702,20 @@ function coerceUtcHourMarkersInNormalizedConfig(config: LibrationConfigV2): Libr
   };
 }
 
+function legacyEclipseTourFromSceneInput(scene: unknown): Readonly<Record<string, unknown>> | undefined {
+  if (!isPlainObject(scene)) {
+    return undefined;
+  }
+  const tour = (scene as { eclipseTour?: unknown }).eclipseTour;
+  return isPlainObject(tour) ? tour : undefined;
+}
+
 export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationConfigV2 {
   const L0 = normalizeLayerEnableFlags(config.layers);
+  const sceneInput = (config as { scene?: unknown }).scene;
+  const legacyEclipseTour = legacyEclipseTourFromSceneInput(sceneInput);
   const scene = cloneSceneConfig(
-    normalizeSceneForV2((config as { scene?: unknown }).scene, L0),
+    normalizeSceneForV2(sceneInput, L0),
   );
   const layers = deriveLayerEnableFlagsFromScene(scene);
   const n: LibrationConfigV2 = {
@@ -711,7 +737,7 @@ export function normalizeLibrationConfig(config: LibrationConfigV2): LibrationCo
       layout: normalizeDisplayChromeLayout(config.chrome.layout),
     },
     geography: normalizeGeography(config.geography),
-    data: normalizeData(config.data),
+    data: normalizeData(config.data, { legacyEclipseTour }),
   };
   return coerceUtcHourMarkersInNormalizedConfig(n);
 }
@@ -805,7 +831,29 @@ export function assertIsNormalizedLibrationConfig(
     typeof dat.demoTime.enabled !== "boolean" ||
     typeof dat.demoTime.startIsoUtc !== "string" ||
     typeof dat.demoTime.speedMultiplier !== "number" ||
-    !Number.isFinite(dat.demoTime.speedMultiplier)
+    !Number.isFinite(dat.demoTime.speedMultiplier) ||
+    typeof dat.eventPlayback !== "object" ||
+    dat.eventPlayback === null ||
+    (dat.eventPlayback.family !== "eclipses" && dat.eventPlayback.family !== "milkyWay") ||
+    typeof dat.eventPlayback.eclipse !== "object" ||
+    dat.eventPlayback.eclipse === null ||
+    typeof dat.eventPlayback.eclipse.startDateYmd !== "string" ||
+    typeof dat.eventPlayback.eclipse.endDateYmd !== "string" ||
+    typeof dat.eventPlayback.eclipse.includeSolar !== "boolean" ||
+    typeof dat.eventPlayback.eclipse.includeLunar !== "boolean" ||
+    typeof dat.eventPlayback.eclipse.loop !== "boolean" ||
+    typeof dat.eventPlayback.eclipse.leadInId !== "string" ||
+    typeof dat.eventPlayback.eclipse.postWaitId !== "string" ||
+    typeof dat.eventPlayback.milkyWay !== "object" ||
+    dat.eventPlayback.milkyWay === null ||
+    typeof dat.eventPlayback.milkyWay.startDateYmd !== "string" ||
+    typeof dat.eventPlayback.milkyWay.endDateYmd !== "string" ||
+    typeof dat.eventPlayback.milkyWay.includeViewing !== "boolean" ||
+    typeof dat.eventPlayback.milkyWay.includeStrong !== "boolean" ||
+    typeof dat.eventPlayback.milkyWay.includePrime !== "boolean" ||
+    typeof dat.eventPlayback.milkyWay.loop !== "boolean" ||
+    typeof dat.eventPlayback.milkyWay.leadInId !== "string" ||
+    typeof dat.eventPlayback.milkyWay.postWaitId !== "string"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid data");
   }
@@ -1186,20 +1234,6 @@ export function assertIsNormalizedLibrationConfig(
     typeof eclipseInfo.eventInformationEnabled !== "boolean"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseInfo");
-  }
-  const eclipseTour = (sc as SceneConfig).eclipseTour;
-  if (
-    typeof eclipseTour !== "object" ||
-    eclipseTour === null ||
-    typeof eclipseTour.startDateYmd !== "string" ||
-    typeof eclipseTour.endDateYmd !== "string" ||
-    typeof eclipseTour.includeSolar !== "boolean" ||
-    typeof eclipseTour.includeLunar !== "boolean" ||
-    typeof eclipseTour.loop !== "boolean" ||
-    typeof eclipseTour.leadInId !== "string" ||
-    typeof eclipseTour.postWaitId !== "string"
-  ) {
-    throw new Error("assertIsNormalizedLibrationConfig: invalid scene.eclipseTour");
   }
   const baseMapPres = (sc as SceneConfig).baseMap.presentation;
   if (
