@@ -1386,6 +1386,12 @@ describe("lunar eclipse scene presentation", () => {
       row?.source.kind === "derived" ? row.source.parameters?.forecastHorizonDays : undefined,
     ).toBe(7);
     expect(
+      row?.source.kind === "derived" ? row.source.parameters?.visibilityFootprintColor : undefined,
+    ).toBe("#6a9aa8");
+    expect(
+      row?.source.kind === "derived" ? row.source.parameters?.visibilityFootprintThickness : undefined,
+    ).toBe("normal");
+    expect(
       row?.source.kind === "derived" ? row.source.parameters : undefined,
     ).not.toHaveProperty("showVisibilityRegion");
     expect(
@@ -1502,6 +1508,54 @@ describe("lunar eclipse scene presentation", () => {
     expect(
       offRow?.source.kind === "derived" ? offRow.source.parameters?.showVisibilityFootprint : undefined,
     ).toBe(false);
+  });
+
+  it("normalizes a missing lunar visibility-footprint color to factory and preserves explicit colors", () => {
+    const base = defaultLibrationConfigV2();
+    const stripped = normalizeLibrationConfig({
+      ...base,
+      scene: {
+        ...base.scene!,
+        layers: base.scene!.layers.map((l) => {
+          if (l.id !== "lunarEclipse" || l.source.kind !== "derived") {
+            return l;
+          }
+          const { visibilityFootprintColor: _drop, ...parameters } = l.source.parameters ?? {};
+          return { ...l, source: { ...l.source, parameters } };
+        }),
+      },
+    });
+    const restored = stripped.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(
+      restored?.source.kind === "derived" ? restored.source.parameters?.visibilityFootprintColor : undefined,
+    ).toBe("#6a9aa8");
+    const painted = normalizeLibrationConfig({
+      ...base,
+      scene: applyLunarEclipsePresentationToScene(base.scene!, { visibilityFootprintColor: "#ff00ff" }),
+    });
+    const paintedRow = painted.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(
+      paintedRow?.source.kind === "derived"
+        ? paintedRow.source.parameters?.visibilityFootprintColor
+        : undefined,
+    ).toBe("#ff00ff");
+    expect(
+      paintedRow?.source.kind === "derived"
+        ? paintedRow.source.parameters?.visibilityFootprintThickness
+        : undefined,
+    ).toBe("normal");
+    const round = normalizeLibrationConfig(painted);
+    const roundRow = round.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(
+      roundRow?.source.kind === "derived" ? roundRow.source.parameters?.visibilityFootprintColor : undefined,
+    ).toBe("#ff00ff");
+    const factory = normalizeLibrationConfig(defaultLibrationConfigV2());
+    const factoryRow = factory.scene?.layers.find((l) => l.id === "lunarEclipse");
+    expect(
+      factoryRow?.source.kind === "derived"
+        ? factoryRow.source.parameters?.visibilityFootprintColor
+        : undefined,
+    ).toBe("#6a9aa8");
   });
 
   it("accepts legacy Moon-visible keys on load and omits them from normalized output", () => {

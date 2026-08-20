@@ -189,10 +189,21 @@ When inspecting:
 - Confirm no geographic lunar alignment line, “beam”, or ribbon on the map. The Earth-shadow cue is short, local to the Moon, origin on the shadow side, tip at the disc, behind Moon details.
 - Confirm upcoming and after have no cue and no Earth-shadow Moon treatment; penumbral/early cue is faint; totality strongest but restrained; egress weaker.
 - Confirm Knoxville vs Tokyo at the same UTC: Moon glyph, cue, illumination, and event label stay identical; only HUD/placard local rows differ. No visibility-map overlay exists in either case.
-- Confirm Layers → Eclipse → Lunar eclipses has no Moon-visible region or Moon-visible boundary controls, and no Lunar visibility color/thickness/opacity.
+- Confirm Layers → Eclipse → Lunar eclipses has no Moon-visible region or Moon-visible boundary controls, and no Lunar visibility fill/opacity. Eclipse appearance has **Lunar visibility footprint color** / **thickness** for the event-static line only.
 - Confirm the placard still describes visibility at greatest eclipse as event information and does not list “Moon-visible now” or “Boundary: geometric lunar horizon now”.
 - Confirm `lunar-eclipse-partial` and `lunar-eclipse-total&eclipsePhase=penumbral` do not invent totality wash.
 - Confirm accelerated demo or a dense station sweep does not show large-area shading shudder, tearing, or a snap from missing geography around upcoming→active or the contacts. Legitimate solar-terminator motion over hours is not the defect.
+
+### Lunar eclipse visibility footprint color (LIB-055)
+
+Use `?scenario=lunar-eclipse-2029` with the footprint visible, then the other lunar stations below. Viewport in Cursor’s side pane is acceptable; record that it is not canonical 1920×1080.
+
+When inspecting:
+
+- Confirm Config → Layers → Eclipse → Eclipse appearance has **Lunar visibility footprint color** defaulting to `#6a9aa8`, independent of **Lunar visibility footprint thickness**.
+- Confirm changing the color to `#ff00ff` (or another unmistakable hue) repaints the existing closed line immediately: same geometry, no fill, no Demo/Event Playback restart, no product-time advance, no lunar-layer toggle.
+- Confirm the same color change on upcoming (`eclipseStation=upcoming`), active/total (`total`), partial (`lunar-eclipse-partial` or `deepPartial`), and a penumbral station if practical (`lunar-eclipse-total&eclipsePhase=penumbral`). Geometry stays the event-static footprint.
+- Confirm footprint checkbox off hides the line and disables the color control; after-event (`eclipseStation=after`) has no line regardless of color.
 
 ### Live eclipse alignment / beam (E5)
 

@@ -403,7 +403,7 @@ A lunar eclipse is an Earth-shadow event on the Moon, visible from the night-sid
 Semantic map geometry should include some combination of:
 
 - Indication of Earth-shadow / lunar penetration (map-space decoration associated with the Moon / shadow axis, not a thin Earth track).
-- **Event-static visibility footprint** ([LIB-054](../../work/LIB-054-static-lunar-eclipse-visibility-footprint.md)): the closed boundary of locations from which some part of the eclipse is geometrically visible at any time during `[globalStartMs, globalEndMs]`. Line only; appears with the lunar forecast horizon; invariant for the event id; gone after last contact. Not a solar-style path and not instantaneous Moon-visible geography.
+- **Event-static visibility footprint** ([LIB-054](../../work/LIB-054-static-lunar-eclipse-visibility-footprint.md)): the closed boundary of locations from which some part of the eclipse is geometrically visible at any time during `[globalStartMs, globalEndMs]`. Line only; appears with the lunar forecast horizon; invariant for the event id; gone after last contact. Stroke color is a presentation token (factory `#6a9aa8`, [LIB-055](../../work/LIB-055-configurable-lunar-eclipse-footprint-line-color.md)); it is not geometry. Not a solar-style path and not instantaneous Moon-visible geography.
 - Ordinary Moon-above-horizon astronomy for illumination and local circumstances (not painted as a moving eclipse overlay).
 - Reference-city circumstances when an observer exists.
 

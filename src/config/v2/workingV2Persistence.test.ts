@@ -19,6 +19,7 @@ import {
   defaultLibrationConfigV2,
   normalizeLibrationConfig,
 } from "./librationConfig";
+import { applyLunarEclipsePresentationToScene } from "./sceneConfig";
 import persistenceSource from "./workingV2Persistence.ts?raw";
 import {
   loadPersistedWorkingV2,
@@ -233,6 +234,26 @@ describe("workingV2Persistence", () => {
       expect(savedParams).not.toHaveProperty("showForecastVisibilityRegion");
       expect(savedParams).not.toHaveProperty("showForecastVisibilityBoundary");
       expect(savedParams).not.toHaveProperty("visibilityRegionColor");
+    });
+
+    it("round-trips an explicit lunar visibility footprint color and restores factory on a fresh document", () => {
+      const base = normalizeLibrationConfig(defaultLibrationConfigV2());
+      const painted = {
+        ...base,
+        scene: applyLunarEclipsePresentationToScene(base.scene!, { visibilityFootprintColor: "#ff00ff" }),
+      };
+      const mem = makeMemoryStorage();
+      persistWorkingV2(mem, painted);
+      const loaded = resolveStartupWorkingV2(mem, () => appConfigToV2(getActiveAppConfig()));
+      const row = loaded.scene?.layers.find((l) => l.id === "lunarEclipse");
+      const params = row?.source.kind === "derived" ? row.source.parameters : undefined;
+      expect(params?.visibilityFootprintColor).toBe("#ff00ff");
+      expect(params?.visibilityFootprintThickness).toBe("normal");
+      const factory = resolveStartupWorkingV2(null, () => appConfigToV2(getActiveAppConfig()));
+      const factoryRow = factory.scene?.layers.find((l) => l.id === "lunarEclipse");
+      const factoryParams =
+        factoryRow?.source.kind === "derived" ? factoryRow.source.parameters : undefined;
+      expect(factoryParams?.visibilityFootprintColor).toBe("#6a9aa8");
     });
   });
 

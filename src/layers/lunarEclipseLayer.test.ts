@@ -15,10 +15,20 @@ import { describe, expect, it } from "vitest";
 import { createTimeContext } from "../core/time";
 import { resolveEclipseFrame } from "../core/eclipse/eclipseEventService";
 import { getLunarEclipseEventById } from "../core/eclipse/eclipseAuthority";
+import { lunarEclipseVisibilityFootprint } from "../core/eclipse/lunarEclipseVisibilityFootprint";
+import { hexToRgba } from "../core/eclipse/eclipseStyle";
+import { resolveLunarEclipsePaint, normalizeLunarEclipsePresentation } from "../core/eclipse/lunarEclipseAppearance";
 import { isEquirectRegionOverlayPayload } from "./equirectRegionPayload";
 import { createLunarEclipseLayer } from "./lunarEclipseLayer";
+import { createSolarEclipseLayer } from "./solarEclipseLayer";
+import { createSolarShadingLayer } from "./solarShadingLayer";
+import { isSolarShadingPayload } from "./solarShadingPayload";
+import { createSublunarMarkerLayer } from "./sublunarMarkerLayer";
+import { isSublunarMarkerPayload } from "./sublunarMarkerPayload";
 import { sublunarPoint } from "../core/sublunarPoint";
+import { buildEquirectRegionOverlayRenderPlan } from "../renderer/renderPlan/equirectRegionPlan";
 import canvasBackendSource from "../renderer/canvasRenderBackend.ts?raw";
+import type { RenderPath2DItem } from "../renderer/renderPlan/renderPlanTypes";
 
 const TOTAL_UTC = Date.parse("2022-05-16T04:11:29.000Z");
 const FORECAST_UTC = Date.parse("2022-05-13T04:00:00.000Z");
@@ -290,6 +300,121 @@ describe("lunar eclipse layer", () => {
       expect(atGe.data.strokes).toHaveLength(1);
       expect(entry.data.strokes[0]!.points).toEqual(atGe.data.strokes[0]!.points);
       expect(entry.data.fills).toHaveLength(0);
+    }
+  });
+});
+
+describe("lunar eclipse visibility footprint presentation color", () => {
+  const ALIGNMENT_OFF = { enabled: false } as const;
+  const MAGENTA = "#ff00ff";
+  const VIEW = { viewportWidthPx: 720, viewportHeightPx: 360, layerOpacity: 1 } as const;
+
+  function planFromLayer(layer: ReturnType<typeof createLunarEclipseLayer>, utcMs: number) {
+    const frame = resolveEclipseFrame(utcMs);
+    const st = layer.getState(createTimeContext(utcMs, 0, true, { eclipseFrame: frame }));
+    if (!isEquirectRegionOverlayPayload(st.data)) {
+      throw new Error("expected equirect region payload");
+    }
+    return {
+      payload: st.data,
+      plan: buildEquirectRegionOverlayRenderPlan({ ...VIEW, payload: st.data }),
+    };
+  }
+
+  function strokeItems(plan: ReturnType<typeof buildEquirectRegionOverlayRenderPlan>): RenderPath2DItem[] {
+    return plan.items.filter((item): item is RenderPath2DItem => item.kind === "path2d" && Boolean(item.stroke));
+  }
+
+  it("changes only the RenderPlan stroke when footprint color changes", () => {
+    const event = getLunarEclipseEventById("nasa-5mcle-lunar-9700")!;
+    const footprint = lunarEclipseVisibilityFootprint(event);
+    const factory = createLunarEclipseLayer({ alignment: ALIGNMENT_OFF });
+    const magenta = createLunarEclipseLayer({
+      presentation: { visibilityFootprintColor: MAGENTA },
+      alignment: ALIGNMENT_OFF,
+    });
+    const thick = createLunarEclipseLayer({
+      presentation: { visibilityFootprintThickness: "thick" },
+      alignment: ALIGNMENT_OFF,
+    });
+    const factoryState = planFromLayer(factory, TOTAL_UTC);
+    const magentaState = planFromLayer(magenta, TOTAL_UTC);
+    const thickState = planFromLayer(thick, TOTAL_UTC);
+    expect(factoryState.payload.fills).toHaveLength(0);
+    expect(magentaState.payload.fills).toHaveLength(0);
+    expect(factoryState.payload.strokes).toHaveLength(1);
+    expect(magentaState.payload.strokes).toHaveLength(1);
+    expect(factoryState.payload.strokes[0]!.points).toBe(footprint.boundary);
+    expect(magentaState.payload.strokes[0]!.points).toBe(footprint.boundary);
+    expect(magentaState.payload.strokes[0]!.points).toBe(factoryState.payload.strokes[0]!.points);
+    expect(lunarEclipseVisibilityFootprint(event).geometryHash).toBe(footprint.geometryHash);
+    const factoryPaint = resolveLunarEclipsePaint(normalizeLunarEclipsePresentation(undefined));
+    const magentaPaint = resolveLunarEclipsePaint(
+      normalizeLunarEclipsePresentation({ visibilityFootprintColor: MAGENTA }),
+    );
+    expect(factoryState.payload.strokes[0]!.stroke).toBe(factoryPaint.visibilityFootprintStroke);
+    expect(magentaState.payload.strokes[0]!.stroke).toBe(magentaPaint.visibilityFootprintStroke);
+    expect(magentaState.payload.strokes[0]!.stroke).toBe(hexToRgba(MAGENTA, 0.78));
+    expect(magentaState.payload.strokes[0]!.strokeWidthPx).toBe(
+      factoryState.payload.strokes[0]!.strokeWidthPx,
+    );
+    expect(thickState.payload.strokes[0]!.stroke).toBe(factoryState.payload.strokes[0]!.stroke);
+    expect(thickState.payload.strokes[0]!.strokeWidthPx).not.toBe(
+      factoryState.payload.strokes[0]!.strokeWidthPx,
+    );
+    const factoryStrokes = strokeItems(factoryState.plan);
+    const magentaStrokes = strokeItems(magentaState.plan);
+    expect(factoryStrokes.length).toBeGreaterThan(0);
+    expect(magentaStrokes).toHaveLength(factoryStrokes.length);
+    for (let i = 0; i < factoryStrokes.length; i += 1) {
+      const factoryItem = factoryStrokes[i]!;
+      const magentaItem = magentaStrokes[i]!;
+      expect(factoryItem.pathKind).toBe("descriptor");
+      expect(magentaItem.pathKind).toBe("descriptor");
+      if (factoryItem.pathKind === "descriptor" && magentaItem.pathKind === "descriptor") {
+        expect(magentaItem.pathDescriptor).toEqual(factoryItem.pathDescriptor);
+      }
+      expect(magentaItem.stroke).not.toBe(factoryItem.stroke);
+      expect(magentaItem.stroke).toContain("255, 0, 255");
+      expect(factoryItem.stroke).toContain("106, 154, 168");
+      expect(magentaItem.strokeWidthPx).toBe(factoryItem.strokeWidthPx);
+    }
+
+    const shadingTime = createTimeContext(TOTAL_UTC, 0, true, {
+      eclipseFrame: resolveEclipseFrame(TOTAL_UTC),
+    });
+    const shadingA = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(shadingTime);
+    const shadingB = createSolarShadingLayer({ moonlightMode: "illustrative" }).getState(shadingTime);
+    expect(isSolarShadingPayload(shadingA.data)).toBe(true);
+    expect(shadingA.data).toEqual(shadingB.data);
+
+    const moonA = createSublunarMarkerLayer({ earthShadowEnabled: true, earthShadowCueEnabled: true }).getState(
+      shadingTime,
+    );
+    const moonB = createSublunarMarkerLayer({ earthShadowEnabled: true, earthShadowCueEnabled: true }).getState(
+      shadingTime,
+    );
+    expect(isSublunarMarkerPayload(moonA.data) && isSublunarMarkerPayload(moonB.data)).toBe(true);
+    if (isSublunarMarkerPayload(moonA.data) && isSublunarMarkerPayload(moonB.data)) {
+      expect(moonA.data.earthShadowOverlay).toEqual(moonB.data.earthShadowOverlay);
+      expect(moonA.data.earthShadowCue).toEqual(moonB.data.earthShadowCue);
+    }
+
+    const solarUtc = Date.parse("2017-08-21T18:25:29.700Z");
+    const solarTime = createTimeContext(solarUtc, 0, true, { eclipseFrame: resolveEclipseFrame(solarUtc) });
+    const solarFactory = createSolarEclipseLayer({
+      lunarPresentation: { visibilityFootprintColor: "#6a9aa8" },
+      alignment: ALIGNMENT_OFF,
+    }).getState(solarTime);
+    const solarMagenta = createSolarEclipseLayer({
+      lunarPresentation: { visibilityFootprintColor: MAGENTA },
+      alignment: ALIGNMENT_OFF,
+    }).getState(solarTime);
+    expect(isEquirectRegionOverlayPayload(solarFactory.data)).toBe(true);
+    if (isEquirectRegionOverlayPayload(solarFactory.data) && isEquirectRegionOverlayPayload(solarMagenta.data)) {
+      expect(solarMagenta.data.fills).toEqual(solarFactory.data.fills);
+      expect(solarMagenta.data.strokes).toEqual(solarFactory.data.strokes);
+      expect(solarMagenta.data.pointMarkers).toEqual(solarFactory.data.pointMarkers);
     }
   });
 });

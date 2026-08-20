@@ -815,7 +815,7 @@ export function EclipseSystemSection(props: {
             className="config-input"
             disabled={!mutable || !lunarOn || !lunar.showVisibilityFootprint}
             aria-label="Lunar visibility footprint color"
-            title="Stroke color of the event-whole lunar eclipse visibility footprint."
+            title="Color of the event-wide lunar eclipse visibility boundary."
             value={lunar.visibilityFootprintColor}
             onChange={
               mutable && updateConfig

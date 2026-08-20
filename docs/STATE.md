@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-054](work/LIB-054-static-lunar-eclipse-visibility-footprint.md) — Static lunar eclipse visibility footprint
+[LIB-055](work/LIB-055-configurable-lunar-eclipse-footprint-line-color.md) — Configurable lunar eclipse footprint line color
 
 ## Blockers
 

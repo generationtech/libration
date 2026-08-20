@@ -553,6 +553,9 @@ describe("LayersTab eclipse product polish", () => {
     expect((screen.getByLabelText("Lunar visibility footprint thickness") as HTMLSelectElement).value).toBe(
       "normal",
     );
+    expect(screen.getByLabelText("Lunar visibility footprint color").getAttribute("title")).toBe(
+      "Color of the event-wide lunar eclipse visibility boundary.",
+    );
     expect((screen.getByLabelText("Moon Earth-shadow treatment") as HTMLInputElement).checked).toBe(
       true,
     );
@@ -564,6 +567,26 @@ describe("LayersTab eclipse product polish", () => {
       false,
     );
     expect((screen.getByLabelText("Lunar Earth-shadow cue") as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it("changes lunar visibility footprint color independently of thickness", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    selectLayersTopic("eclipse");
+    const color = screen.getByLabelText("Lunar visibility footprint color") as HTMLInputElement;
+    const thickness = screen.getByLabelText("Lunar visibility footprint thickness") as HTMLSelectElement;
+    expect(color.disabled).toBe(false);
+    fireEvent.change(color, { target: { value: "#ff00ff" } });
+    expect(color.value).toBe("#ff00ff");
+    expect(thickness.value).toBe("normal");
+    fireEvent.change(thickness, { target: { value: "thick" } });
+    expect(thickness.value).toBe("thick");
+    expect(color.value).toBe("#ff00ff");
+    const footprint = screen.getByLabelText("Lunar eclipse visibility footprint") as HTMLInputElement;
+    await user.click(footprint);
+    expect(footprint.checked).toBe(false);
+    expect(color.disabled).toBe(true);
+    expect(thickness.disabled).toBe(true);
   });
 
   it("keeps event labels independent of event information", async () => {

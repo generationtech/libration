@@ -13,10 +13,11 @@
 
 /**
  * Lunar-eclipse presentation parameters: type filters, forecast horizon,
- * event-static visibility footprint, and Moon Earth-shadow treatment.
+ * event-static visibility footprint (line color/thickness), and Moon Earth-shadow treatment.
  *
  * LIB-046 removed instantaneous Moon-visible fill/horizon. LIB-054 adds a
  * different product: the event-whole visibility footprint (line only).
+ * LIB-055 exposes footprint stroke color as a presentation property.
  */
 
 import type { LunarEclipseSubtype } from "./lunarEclipseTypes";

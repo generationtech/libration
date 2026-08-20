@@ -669,9 +669,11 @@ describe("commitWorkingV2Update", () => {
     });
     const shadowOff = applyLunarEclipsePresentationToScene(base, { showMoonEclipseShadow: false });
     const typesOff = applyLunarEclipsePresentationToScene(base, { showTypeTotal: false });
+    const colorOnly = applyLunarEclipsePresentationToScene(base, { visibilityFootprintColor: "#ff00ff" });
     expect(sceneRuntimeAffectingEqual(base, shadowOff)).toBe(false);
     expect(sceneRuntimeAffectingEqual(base, typesOff)).toBe(false);
-    expect(sceneRuntimeAffectingEqual(shadowOff, shadowOff)).toBe(true);
+    expect(sceneRuntimeAffectingEqual(base, colorOnly)).toBe(false);
+    expect(sceneRuntimeAffectingEqual(colorOnly, colorOnly)).toBe(true);
   });
 
   it("sceneRuntimeAffectingEqual is true when only Data event-playback preferences change", () => {

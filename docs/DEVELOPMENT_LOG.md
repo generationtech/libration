@@ -334,3 +334,9 @@ Lunar eclipses gain an event-static visibility footprint: one closed line enclos
 
 Verified: `npx tsc --noEmit` clean; focused 9 files / 164 passed; `npm test` 251 files / 2320 passed / 0 failed; `npm run build` succeeded with no `lunar-eclipse-2029` / `eclipseStation` / `iss-presentation` in `dist/`. Cursor Browser 2029 upcoming→after, live-only upcoming, Tokyo GE, partial, dateline, forecast-total, 2017 solar GE, night, Layers Eclipse checkbox. LIB-037 stays proposed.
 
+## 2026-08-20 — LIB-055 complete
+
+Lunar eclipse visibility footprint stroke color is a presentation control (factory `#6a9aa8`) under Layers → Eclipse → Eclipse appearance. Changing it repaints the existing static line immediately without recomputing footprint geometry. No new ADR.
+
+Verified: `npx tsc --noEmit` clean; focused 6 files / 186 passed; `npm test` 251 files / 2325 passed / 0 failed. Cursor Browser `lunar-eclipse-2029` upcoming factory then `#ff00ff`, footprint off, total, partial, 2022 penumbral phase, after. LIB-037 stays proposed.
+

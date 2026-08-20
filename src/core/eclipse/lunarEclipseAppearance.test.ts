@@ -12,7 +12,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { normalizeLunarEclipsePresentation } from "./lunarEclipseAppearance";
+import { hexToRgba } from "./eclipseStyle";
+import { normalizeLunarEclipsePresentation, resolveLunarEclipsePaint } from "./lunarEclipseAppearance";
 
 describe("normalizeLunarEclipsePresentation", () => {
   it("defaults Moon Earth-shadow and type filters on and omits deleted Moon-visible keys", () => {
@@ -20,6 +21,10 @@ describe("normalizeLunarEclipsePresentation", () => {
     expect(p.showMoonEclipseShadow).toBe(true);
     expect(p.showVisibilityFootprint).toBe(true);
     expect(p.visibilityFootprintColor).toBe("#6a9aa8");
+    expect(normalizeLunarEclipsePresentation({}).visibilityFootprintColor).toBe("#6a9aa8");
+    expect(normalizeLunarEclipsePresentation({ visibilityFootprintColor: "not-a-color" }).visibilityFootprintColor).toBe(
+      "#6a9aa8",
+    );
     expect(p.visibilityFootprintThickness).toBe("normal");
     expect(p.showTypeTotal).toBe(true);
     expect(p.showTypePartial).toBe(true);
@@ -46,6 +51,25 @@ describe("normalizeLunarEclipsePresentation", () => {
     expect(
       normalizeLunarEclipsePresentation({ showVisibilityFootprint: false }).showVisibilityFootprint,
     ).toBe(false);
+  });
+
+  it("preserves an explicit visibility-footprint color and maps it to paint independently of thickness", () => {
+    const painted = normalizeLunarEclipsePresentation({
+      visibilityFootprintColor: "#ff00ff",
+      visibilityFootprintThickness: "thick",
+    });
+    expect(painted.visibilityFootprintColor).toBe("#ff00ff");
+    expect(painted.visibilityFootprintThickness).toBe("thick");
+    const paint = resolveLunarEclipsePaint(painted);
+    const defaultPaint = resolveLunarEclipsePaint(normalizeLunarEclipsePresentation(undefined));
+    expect(paint.visibilityFootprintStroke).toBe(hexToRgba("#ff00ff", 0.78));
+    expect(paint.visibilityFootprintStroke).not.toBe(defaultPaint.visibilityFootprintStroke);
+    expect(paint.visibilityFootprintStrokeWidthPx).not.toBe(defaultPaint.visibilityFootprintStrokeWidthPx);
+    const colorOnly = resolveLunarEclipsePaint(
+      normalizeLunarEclipsePresentation({ visibilityFootprintColor: "#ff00ff" }),
+    );
+    expect(colorOnly.visibilityFootprintStroke).toBe(paint.visibilityFootprintStroke);
+    expect(colorOnly.visibilityFootprintStrokeWidthPx).toBe(defaultPaint.visibilityFootprintStrokeWidthPx);
   });
 
   it("accepts deleted Moon-visible keys without emitting them", () => {
