@@ -83,13 +83,23 @@ See [ADR 0004](docs/decisions/0004-one-canonical-utc-instant-per-frame.md).
 
 **Boundary.** Internet-backed observations that are current-only under their present implementations may be shown only when the product instant is close enough to wall-clock now. Product time remains the scene authority. Wall clock is a validity gate, not a second display clock.
 
-**Rationale.** The three production-optional live sources (clouds/IR, earthquakes, ISS TLE) describe wall-clock-now reality. Painting them onto a materially different product instant — a 2017 eclipse, an accelerated future Demo — would make the instrument temporally incoherent in the same way a stray `Date.now()` would.
+**Rationale.** The three production-optional live sources (Clouds, earthquakes, ISS TLE) describe wall-clock-now reality. Painting them onto a materially different product instant — a 2017 eclipse, an accelerated future Demo — would make the instrument temporally incoherent in the same way a stray `Date.now()` would.
 
 **Consequence.** The frame may read wall-clock now once at the top (already required to distinguish real vs demo time) and pass it into the current-only gate. Downstream of that point, layers still consume only the product instant and prepared views. Durable enable preferences are not mutated by temporary suppression. Historical-capable sources may later declare a different time policy.
 
 See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enough-product-time.md).
 
-### 3.5 Layers answers what is rendered; Data answers when it is viewed
+### 3.5 Observational data distinguishes product, observation, and acquisition time
+
+**Boundary.** Product time remains the single scene instant. Observational snapshots additionally record the instant the data represents (`validTimeMs`) and the instant Libration fetched the bytes (`acquiredAtMs`). Those three values are allowed to differ. Freshness for Clouds v1 uses observation age, not fetch age.
+
+**Rationale.** A near-current satellite mosaic is not “now” merely because the app just downloaded it. GIBS Band13 slots are 10 minutes, but ingest can lag by hours. Stamping observation from wall clock, or omitting provider `TIME`, made status dishonest and invited empty-future mosaics.
+
+**Consequence.** Clouds GetMap always sends explicit `TIME`. Status may say mosaic HH:MM UTC or observed Nh ago; it must not claim live-now for a lagging mosaic. Do not add a second display clock or a parallel Weather store to hold these fields.
+
+See [ADR 0022](docs/decisions/0022-observational-data-three-clocks.md).
+
+### 3.6 Layers answers what is rendered; Data answers when it is viewed
 
 **Boundary.** Scene presentation — visibility, rendering, and appearance filters — lives under Layers. Product-time navigation — generic Demo and domain event playback — lives under Data. Domain event authorities remain upstream of both and may serve both. Event playback commands the existing Demo-time controller; it does not own a clock.
 

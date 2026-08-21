@@ -99,6 +99,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
 | `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, **horizons (minutes and orbits)**, colors, thickness, glyph type/size/color, silhouette color, label |
 | `earthquake-presentation` | `2026-08-21T16:00:00.000Z` | Earthquakes overlay on from recorded USGS-shaped points (fixture origin, never labeled live); Layer masters Earthquakes enabled; factory local filters including hover labels; clouds/ISS off. DEV-only; not a production live fallback | Layers → Earthquakes: minimum magnitude, maximum age, earthquakes-only, persistent labels, label threshold, show label on hover; compact `M4.6 · place` labels; status is DEV fixture, not live |
+| `clouds` | `2026-08-21T20:40:00.000Z` | Clouds overlay on from a recorded IR-derived PNG (fixture origin, never labeled live); Layer masters Clouds enabled; factory opacity 0.42; earthquakes/ISS off. DEV-only; not a production live fallback | Layers → Weather: Cloud opacity, **Clouds (DEV fixture)** status, partial-coverage holes stay transparent; no rainbow CTT |
 | `planetary-objects` | `2026-08-19T15:30:00.000Z` | Planets master on; Mercury through Neptune plus Pluto enabled; factory shared presentation (current subpoints/labels on, tracks/loci off); clouds/earthquakes/ISS off. Offline ephemeris | All current planet glyphs/labels; Space objects Planets controls; representative ground tracks and loci; per-body locus toggles; Demo jumps |
 | `milky-way` | `2026-08-19T06:00:00.000Z` | Milky Way master on; factory enabled ribbon (plane, Normal band, ribs, Galactic center + label, night-side emphasis; anticenter off) **plus Galactic-center altitude contours** (30/45/60/75° on, horizon off, astronomical-night emphasis and moonlight de-emphasis on) **plus viewing events on**. Clouds/earthquakes/ISS/Planets off. Optional DEV `observerCity=knoxville\|sao_paulo\|tokyo\|none`. Offline IAU geometry | Zenith ribbon vs shading; nested GC altitude contours; southern-hemisphere advantage; night/day contour alpha; dateline wrap; Demo jumps six hours apart; **reference-city Viewing Window status** |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
@@ -405,11 +406,25 @@ When the lunar locus is in view, accelerated demo playback through at least one 
 
 ### Ordinary-mode live dynamic layers
 
-DEV `?scenario=` fixtures force Global clouds / IR, Earthquakes, ISS orbital track, and cloud participation **off**. That isolation is intentional and applies only when a scenario is applied.
+DEV `?scenario=` fixtures force Clouds, Earthquakes, ISS orbital track, and cloud participation **off**, except the named presentation scenarios that turn their own overlay on (`clouds`, `earthquake-presentation`, `iss-presentation`). That isolation is intentional and applies only when a scenario is applied.
 
-To verify those three overlays, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, stale live, unavailable, or (clouds/IR only) fixture fallback. Earthquakes and ISS must never look live when the data is a fixture. Disable must remove the presentation; re-enable must show it again.
+To verify those three overlays live, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, stale live, or unavailable. Production must never look live when the data is a fixture. Clouds status must use mosaic / observed age, not “live · now”. Disable must remove the presentation; re-enable must show it again.
 
 Do not treat a DEV scenario session as evidence that live layers work.
+
+### Clouds live provenance and Weather topic
+
+Ordinary non-scenario current time (`http://localhost:1420/` with no `?scenario=`):
+
+1. Open Config → Layers → Layer masters. Check **Clouds**. Expect “Clouds loading…” then a recent mosaic (for example `Clouds · observed 2h ago · partial coverage`) or unavailable. A black world, rainbow CTT, or unlabeled fixture is a failure.
+2. Open Layers → Weather. Factory Cloud opacity **0.42**. Status must mention partial coverage. Helper copy: Africa, Europe, and polar regions are not covered.
+3. Confirm white/gray translucent cloud structures over Americas / Pacific / East Asia disks; Africa / Europe / polar holes stay transparent (base map visible, not black, not inferred clear sky).
+4. Opacity low (~0.15) / factory / high (~0.80): derived cloud alpha still multiplies; geography remains readable at factory.
+5. Day side and night side of the same mosaic: clouds remain visible without overpowering illumination. No day/visible mode switch.
+6. Historical Demo (for example 2017-08-21) with Clouds still checked: live-only suppression copy; no overlay; no fixture. Return to current: acquisition/reuse without re-checking the box.
+7. Illumination raster must not darken when Clouds is on (physical participation is off). Cloud participation controls must be absent from Illumination.
+
+Use `http://localhost:1420/?scenario=clouds` when GIBS is unavailable. Confirm the DEV banner and UTC `2026-08-21T20:40:00.000Z`. Status must say **Clouds (DEV fixture)**, not live. Partial-coverage holes remain transparent.
 
 ### ISS fresh-process first paint
 
@@ -512,13 +527,13 @@ Factory defaults keep Milky Way off. Enabling the master does **not** turn altit
 
 Ordinary non-scenario current time (`http://localhost:1420/`, no `?scenario=`):
 
-- Enable Earthquakes, Global clouds / IR, and ISS orbital track. Wait for acquisition.
-- Confirm live USGS events, GIBS overlay, and an ISS track with a current-position marker labeled `ISS` that sits **on** the track (not at an arbitrary future endpoint unless the future window is 0).
-- If CelesTrak is blocked, a secondary live TLE (Where the ISS at) may still succeed; classify the actual provider. If all live TLE sources fail, ISS is unavailable — do not treat a canned Africa/Pacific fixture as a live current position.
+- Enable Earthquakes, Clouds, and ISS orbital track. Wait for acquisition.
+- Confirm live USGS events, a white/gray GIBS Band13-derived cloud overlay with honest mosaic/observed status, and an ISS track with a current-position marker labeled `ISS` that sits **on** the track (not at an arbitrary future endpoint unless the future window is 0).
+- If GIBS is blocked, Clouds is unavailable — do not treat a recorded fixture as live. If CelesTrak is blocked, a secondary live TLE (Where the ISS at) may still succeed; classify the actual provider. If all live TLE sources fail, ISS is unavailable — do not treat a canned Africa/Pacific fixture as a live current position.
 
 Historical Demo (for example 2017-08-21) with those three still checked:
 
-- Earthquakes, cloud overlay, cloud illumination participation, and ISS must disappear. Fixture must not substitute.
+- Earthquakes, Clouds overlay, and ISS must disappear. Fixture must not substitute. Physical cloud illumination participation stays off either way.
 - Layer masters checkboxes stay checked. Hint: “Live-only data is hidden while viewing another product time.”
 - Return to current time (static mode or Demo reset to near-now) without re-toggling: the three sources restore.
 

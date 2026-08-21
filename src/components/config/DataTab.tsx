@@ -62,9 +62,8 @@ export function DataTab({ config, updateConfig, demoTransport, eventPlaybackSess
         </h2>
         <p className="config-section__hint">
           Local product data and demo time. Live cloud, earthquake, and ISS feeds are optional Layers
-          overlays — off by default. Clouds use a bundled fixture when a live fetch is unavailable.
-          Earthquakes and ISS hide when their live sources are unavailable; they never present fixture
-          data as live.
+          overlays — off by default. Clouds, earthquakes, and ISS hide when their live sources are
+          unavailable; they never present fixture data as live.
         </p>
         <ConfigStickyTopicNav topic={dataTopic} testId="data-topic-nav">
           <DataTopicSelector value={dataTopic} onChange={setDataTopic} />

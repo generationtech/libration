@@ -27,6 +27,7 @@ import {
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setVisualScenarioExtraOverlayBuilder,
+  setVisualScenarioPreparedEquirect,
   setVisualScenarioPreparedPointFeatures,
   setVisualScenarioPreparedTracks,
   setVisualScenarioRuntime,
@@ -40,6 +41,10 @@ import {
   EARTHQUAKE_PRESENTATION_SCENARIO_UTC,
   buildEarthquakePresentationPreparedPointFeaturesView,
 } from "./earthquakePresentationScenario";
+import {
+  CLOUDS_PRESENTATION_SCENARIO_UTC,
+  buildCloudsPresentationPreparedEquirectView,
+} from "./cloudsPresentationScenario";
 import "./visualScenarioBanner.css";
 
 export const VISUAL_SCENARIO_IDS = [
@@ -53,6 +58,7 @@ export const VISUAL_SCENARIO_IDS = [
   "moon-libration",
   "iss-presentation",
   "earthquake-presentation",
+  "clouds",
   "planetary-objects",
   "milky-way",
   "solar-eclipse-total",
@@ -84,6 +90,7 @@ export const VISUAL_SCENARIO_UTC = {
   "moon-libration": "2021-12-10T00:00:00.000Z",
   "iss-presentation": ISS_PRESENTATION_SCENARIO_UTC,
   "earthquake-presentation": EARTHQUAKE_PRESENTATION_SCENARIO_UTC,
+  clouds: CLOUDS_PRESENTATION_SCENARIO_UTC,
   "planetary-objects": "2026-08-19T15:30:00.000Z",
   "milky-way": "2026-08-19T06:00:00.000Z",
   "solar-eclipse-total": "2024-04-08T18:17:15.000Z",
@@ -386,6 +393,13 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
         applyEarthquakePresentationScene,
       ),
   },
+  clouds: {
+    id: "clouds",
+    startIsoUtc: VISUAL_SCENARIO_UTC.clouds,
+    purpose:
+      "DEV-only Clouds overlay from a recorded IR-derived PNG at a frozen mosaic TIME so Layers → Weather can be exercised without GIBS. Fixture origin; never labeled live.",
+    buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC.clouds, applyCloudsPresentationScene),
+  },
   "planetary-objects": {
     id: "planetary-objects",
     startIsoUtc: VISUAL_SCENARIO_UTC["planetary-objects"],
@@ -561,6 +575,14 @@ function applyEarthquakePresentationScene(draft: LibrationConfigV2): void {
   draft.layers.solarShading = true;
   draft.layers.grid = true;
   draft.layers.earthquakes = true;
+  draft.layers.cityPins = false;
+  draft.layers.solarAnalemma = false;
+}
+
+function applyCloudsPresentationScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.globalCloudsIr = true;
   draft.layers.cityPins = false;
   draft.layers.solarAnalemma = false;
 }
@@ -1052,6 +1074,11 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   setVisualScenarioPreparedPointFeatures(
     session.kind === "applied" && session.id === "earthquake-presentation"
       ? buildEarthquakePresentationPreparedPointFeaturesView()
+      : null,
+  );
+  setVisualScenarioPreparedEquirect(
+    session.kind === "applied" && session.id === "clouds"
+      ? buildCloudsPresentationPreparedEquirectView()
       : null,
   );
   const curveId = parseNightVeilTransferId(parseSearchParams(search).get("nightVeilCurve"));

@@ -36,4 +36,4 @@ Wall-clock comparison is one of the few places a second clock is legitimate: not
 - The frame loop must thread wall-clock now into the lifecycle attachment and into consumer arming. That is a narrow, named exception to “no wall clock downstream of time resolution,” not a second display clock.
 - Current TLE cannot be propagated years away from epoch as a historical ISS reconstruction.
 
-**Explicitly not decided.** Historical USGS querying, GIBS `TIME`, TLE history, production fixture-on-failure policy, retries/backoff, and a diagnostics framework remain later work.
+**Explicitly not decided.** Historical USGS querying, historical GIBS `TIME` for past product instants, TLE history, retries/backoff beyond source timeouts, and a diagnostics framework remain later work. Clouds v1 **does** send explicit GIBS `TIME` for the current mosaic ([ADR 0022](0022-observational-data-three-clocks.md)); that is latest-usable current observation, not historical query.

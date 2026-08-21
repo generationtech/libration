@@ -97,7 +97,7 @@ export function createLayerForSceneOverlayInstance(
       sourceId: s.sourceId,
       zIndex,
       opacity,
-      name: inst.id === "globalCloudsIr" ? "Global clouds / IR" : undefined,
+      name: inst.id === "globalCloudsIr" ? "Clouds" : undefined,
     });
   }
   if (s.kind === "dynamicPointFeatures") {
@@ -203,7 +203,7 @@ function createDerivedOverlayByProduct(
         emissiveCompositionAssetId: config.scene.illumination.emissiveNightLights.assetId,
         emissivePresentationIntensity: config.scene.illumination.emissiveNightLights.presentation.intensity,
         emissiveDriverExponent: config.scene.illumination.emissiveNightLights.presentation.driverExponent,
-        cloudParticipationMode: config.scene.illumination.cloudParticipation.mode,
+        cloudParticipationMode: "off",
         cloudParticipationSourceId: config.scene.illumination.cloudParticipation.sourceId,
         cloudParticipationIntensity: config.scene.illumination.cloudParticipation.presentation.intensity,
         activeEclipseShadingEnabled: solarPresentation.activeEclipseShadingEnabled,

@@ -26,6 +26,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0018](0018-milky-way-viewing-window-is-a-reference-city-event.md) | Milky Way Viewing Window is a reference-city event |
 | [0019](0019-domain-event-playback-belongs-to-data.md) | Domain event playback belongs to Data |
 | [0021](0021-one-primary-milky-way-viewing-event.md) | One primary Milky Way viewing event, peak-UTC footprint, and HUD notice arbitration |
+| [0022](0022-observational-data-three-clocks.md) | Observational data distinguishes product time, observation time, and acquisition time |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

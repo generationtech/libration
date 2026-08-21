@@ -78,7 +78,7 @@ export type DynamicSnapshotTemporalMeta = Readonly<{
 /** Equirect raster body metadata (bytes are store-owned; see DynamicSnapshotStore). */
 export type EquirectRasterSnapshotBody = Readonly<{
   kind: "equirectRaster";
-  /** MIME hint when known (e.g. `image/jpeg`). */
+  /** MIME hint when known (e.g. `image/png`). */
   contentType?: string;
   /** Prefer −180…+180; document otherwise at the source adapter. */
   lonMinDeg?: number;
@@ -86,6 +86,9 @@ export type EquirectRasterSnapshotBody = Readonly<{
   latMinDeg?: number;
   latMaxDeg?: number;
   byteLength?: number;
+  /** Pixel-level coverage remains provider alpha. This is a coarse product note. */
+  coverageKind?: "global" | "partial";
+  coverageNote?: string;
 }>;
 
 export type DynamicPointFeature = Readonly<{

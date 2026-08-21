@@ -182,8 +182,8 @@ describe("DataTab demo time UX", () => {
       screen.getByText(/Live cloud, earthquake, and ISS feeds are optional Layers overlays/i),
     ).toBeTruthy();
     expect(screen.getByText(/off by default/i)).toBeTruthy();
-    expect(screen.getByText(/Clouds use a bundled fixture/i)).toBeTruthy();
     expect(screen.getByText(/never present fixture data as live/i)).toBeTruthy();
+    expect(screen.queryByText(/Clouds use a bundled fixture/i)).toBeNull();
     expect(screen.queryByText(/No live network feeds/i)).toBeNull();
   });
 

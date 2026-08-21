@@ -13,6 +13,7 @@
 
 import type { LibrationConfigV2 } from "../config/v2/librationConfig";
 import type { DynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHostTypes";
+import type { PreparedEquirectRasterView } from "../lifecycle/dynamicEquirectMaterializer";
 import type { PreparedPointFeaturesView } from "../lifecycle/dynamicPointFeaturesMaterializer";
 import type { PreparedTracksView } from "../lifecycle/dynamicTracksMaterializer";
 import type { RenderPlan } from "../renderer/renderPlan/renderPlanTypes";
@@ -50,6 +51,7 @@ let runtime: VisualScenarioRuntime = INACTIVE_VISUAL_SCENARIO_RUNTIME;
 let extraOverlayBuilder: VisualScenarioExtraOverlayBuilder | null = null;
 let preparedTracksOverride: PreparedTracksView | null = null;
 let preparedPointFeaturesOverride: PreparedPointFeaturesView | null = null;
+let preparedEquirectOverride: PreparedEquirectRasterView | null = null;
 
 export function getVisualScenarioRuntime(): VisualScenarioRuntime {
   return runtime;
@@ -77,11 +79,18 @@ export function setVisualScenarioPreparedPointFeatures(
   preparedPointFeaturesOverride = view;
 }
 
+export function setVisualScenarioPreparedEquirect(
+  view: PreparedEquirectRasterView | null,
+): void {
+  preparedEquirectOverride = view;
+}
+
 export function resetVisualScenarioRuntime(): void {
   runtime = INACTIVE_VISUAL_SCENARIO_RUNTIME;
   extraOverlayBuilder = null;
   preparedTracksOverride = null;
   preparedPointFeaturesOverride = null;
+  preparedEquirectOverride = null;
 }
 
 /**
@@ -124,6 +133,28 @@ export function attachVisualScenarioPreparedPointFeatures(
         return override;
       }
       return attachment.getPreparedPointFeatures(sourceId);
+    },
+  };
+}
+
+/**
+ * DEV hatch: reuse a process-local prepared Clouds view when a visual scenario
+ * installed one. Production never sets the override, so this is a no-op.
+ */
+export function attachVisualScenarioPreparedEquirect(
+  attachment: DynamicDataLifecycleAttachment,
+): DynamicDataLifecycleAttachment {
+  const override = preparedEquirectOverride;
+  if (override === null) {
+    return attachment;
+  }
+  return {
+    ...attachment,
+    getPreparedEquirectRaster(sourceId) {
+      if (sourceId === override.sourceId) {
+        return override;
+      }
+      return attachment.getPreparedEquirectRaster(sourceId);
     },
   };
 }

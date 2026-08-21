@@ -20,6 +20,11 @@ import {
   getDynamicEquirectSourceCatalogEntry,
   produceGlobalCloudsIrFixtureAcquisition,
 } from "./index";
+import {
+  encodeCloudsTestPng,
+  mockCloudsLiveFetch,
+  CLOUDS_TEST_OBSERVATION_MS,
+} from "./cloudsAcquisition.testSupport";
 
 describe("DLC-1 global clouds/IR consumer boundary", () => {
   it("catalog exposes durable sourceId with attribution (not a CDN URL)", () => {
@@ -31,7 +36,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     expect(entry!.sourceId.includes("://")).toBe(false);
   });
 
-  it("fixture acquisition yields real-format JPEG equirect bytes", () => {
+  it("fixture acquisition yields real-format PNG equirect bytes", () => {
     const result = produceGlobalCloudsIrFixtureAcquisition({
       nowMs: () => 1_700_000_000_000,
       versionIdFor: () => "clouds-ir-test-1",
@@ -41,10 +46,10 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     expect(result.entry.record.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(result.entry.record.body.kind).toBe("equirectRaster");
     expect(result.entry.payloadBytes?.byteLength).toBeGreaterThan(20);
-    // JPEG SOI marker
-    expect(result.entry.payloadBytes![0]).toBe(0xff);
-    expect(result.entry.payloadBytes![1]).toBe(0xd8);
+    expect(result.entry.payloadBytes![0]).toBe(0x89);
+    expect(result.entry.payloadBytes![1]).toBe(0x50);
     expect(result.entry.record.meta.attribution).toBeTruthy();
+    expect(result.entry.record.meta.origin).toBe("fixture");
   });
 
   it("host arms consumer, materializes sync view, and scrub resolve does not re-acquire", async () => {
@@ -52,9 +57,9 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
     // Avoid real network in DLC-1 boundary tests: fail live fetch → fixture fallback.
-    const cloudsIrLiveFetchFn = vi.fn(async () => {
-      throw new Error("offline-test");
-    });
+    const cloudsIrLiveFetchFn = vi.fn(
+      mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
+    );
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn,
       setIntervalFn: (handler) => {
@@ -116,9 +121,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
 
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
     const host = createDynamicDataLifecycleHost({
-      cloudsIrLiveFetchFn: async () => {
-        throw new Error("offline-test");
-      },
+      cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
@@ -126,10 +129,11 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
       intervalMs: 60_000,
       runImmediately: true,
     });
+    const productMs = CLOUDS_TEST_OBSERVATION_MS + 60_000;
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(Date.now())
+          .attachForProductInstant(productMs)
           .getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID),
       ).not.toBeNull();
     });
@@ -137,12 +141,12 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     const layer = createDynamicEquirectRasterOverlayLayer({
       sceneLayerId: "globalCloudsIr",
       sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
-      opacity: 0.45,
+      opacity: 0.42,
     });
 
-    const attachment = host.attachForProductInstant(Date.now());
+    const attachment = host.attachForProductInstant(productMs);
     const resolveSpy = vi.spyOn(attachment, "resolveSnapshot");
-    const time = createTimeContext(Date.now(), 0, false, {
+    const time = createTimeContext(productMs, 0, false, {
       dynamicDataLifecycle: attachment,
     });
     const state = layer.getState(time);
@@ -154,7 +158,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     expect(resolveSpy).not.toHaveBeenCalled();
 
     // Without attachment → invisible, still no throw / fetch.
-    const cold = layer.getState(createTimeContext(Date.now(), 0, false));
+    const cold = layer.getState(createTimeContext(productMs, 0, false));
     expect(cold.visible).toBe(false);
 
     host.dispose();

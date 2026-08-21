@@ -73,6 +73,7 @@ import {
 import type { EventPlaybackListedEvent } from "./app/eventPlaybackRuntime";
 import type { EventPlaybackSessionUi } from "./components/config/EventPlaybackPanel";
 import {
+  attachVisualScenarioPreparedEquirect,
   attachVisualScenarioPreparedPointFeatures,
   attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
@@ -105,14 +106,20 @@ import { buildEclipseEventInformation } from "./core/eclipse/eclipseEventInforma
 import {
   armDynamicLifecycleConsumers,
   createDynamicDataLifecycleHost,
+  GLOBAL_CLOUDS_IR_SOURCE_ID,
   ISS_ORBITAL_TRACK_SOURCE_ID,
   USGS_EARTHQUAKES_SOURCE_ID,
+  cloudsConfigStatusHint,
   earthquakeConfigStatusHint,
   issConfigStatusHint,
   issProvenanceFromPreparedTrack,
+  originStampFromPreparedEquirect,
   originStampFromPreparedPointFeatures,
+  resolveCloudsProvenance,
   resolveEarthquakeProvenance,
   reviveDisposedDynamicLifecycleHost,
+  type CloudsConfigStatusHint,
+  type CloudsProvenance,
   type EarthquakeConfigStatusHint,
   type EarthquakeProvenance,
   type IssConfigStatusHint,
@@ -239,6 +246,12 @@ export default function App() {
     useState<EarthquakeConfigStatusHint | null>(null);
   const [earthquakeProvenanceView, setEarthquakeProvenanceView] =
     useState<EarthquakeProvenance | null>(null);
+  const cloudsConfigStatusHintRef = useRef<CloudsConfigStatusHint | null>(null);
+  const cloudsProvenanceRef = useRef<CloudsProvenance | null>(null);
+  const [cloudsTrackStatusHint, setCloudsTrackStatusHint] =
+    useState<CloudsConfigStatusHint | null>(null);
+  const [cloudsProvenanceView, setCloudsProvenanceView] =
+    useState<CloudsProvenance | null>(null);
   const [eclipsePanelInstantMs, setEclipsePanelInstantMs] = useState(() =>
     scenarioRuntime.kind === "applied"
       ? Date.parse(scenarioRuntime.startIsoUtc)
@@ -351,10 +364,9 @@ export default function App() {
       dynamicLifecycleHostRef.current,
     );
     dynamicLifecycleHostRef.current = host;
-    const scene = derivedAppConfigRef.current.scene;
     armDynamicLifecycleConsumers(host, {
       cloudsIrOverlay: derivedAppConfigRef.current.layers.globalCloudsIr,
-      cloudParticipationOn: scene.illumination.cloudParticipation.mode !== "off",
+      cloudParticipationOn: false,
       earthquakes: derivedAppConfigRef.current.layers.earthquakes,
       orbitalTracks: derivedAppConfigRef.current.layers.orbitalTracks,
       productTimeLiveEnough: liveProductTimeEligibleRef.current,
@@ -814,11 +826,13 @@ export default function App() {
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
         eclipseFrame,
-        dynamicDataLifecycle: attachVisualScenarioPreparedPointFeatures(
-          attachVisualScenarioPreparedTracks(
-            dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
-              wallClockUtcMs: realNowMs,
-            }),
+        dynamicDataLifecycle: attachVisualScenarioPreparedEquirect(
+          attachVisualScenarioPreparedPointFeatures(
+            attachVisualScenarioPreparedTracks(
+              dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
+                wallClockUtcMs: realNowMs,
+              }),
+            ),
           ),
         ),
       });
@@ -881,6 +895,44 @@ export default function App() {
       if (provenanceChanged) {
         earthquakeProvenanceRef.current = nextEqProvenance;
         setEarthquakeProvenanceView(nextEqProvenance);
+      }
+      const cloudsView =
+        issAttachment?.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID) ??
+        null;
+      const cloudsLife =
+        issAttachment?.getLifecycleState(GLOBAL_CLOUDS_IR_SOURCE_ID).state ??
+        "idle";
+      const nextCloudsProvenance =
+        cloudsView === null
+          ? null
+          : resolveCloudsProvenance({
+              originStamp: originStampFromPreparedEquirect(cloudsView),
+              acquiredAtMs: cloudsView.acquiredAtMs,
+              validTimeMs: cloudsView.validTimeMs,
+              productUtcMs: clockNowMs,
+              lifecycleState: cloudsLife,
+              versionId: cloudsView.versionId,
+            });
+      const nextCloudsHint = cloudsConfigStatusHint({
+        enabled: derivedAppConfigRef.current.layers.globalCloudsIr,
+        productTimeLiveEnough: liveEnough,
+        lifecycleState: cloudsLife,
+        provenance: nextCloudsProvenance,
+      });
+      if (nextCloudsHint !== cloudsConfigStatusHintRef.current) {
+        cloudsConfigStatusHintRef.current = nextCloudsHint;
+        setCloudsTrackStatusHint(nextCloudsHint);
+      }
+      const prevCloudsProv = cloudsProvenanceRef.current;
+      const cloudsProvenanceChanged =
+        (prevCloudsProv === null) !== (nextCloudsProvenance === null) ||
+        prevCloudsProv?.origin !== nextCloudsProvenance?.origin ||
+        prevCloudsProv?.observationAgeMs !== nextCloudsProvenance?.observationAgeMs ||
+        prevCloudsProv?.freshnessBand !== nextCloudsProvenance?.freshnessBand ||
+        prevCloudsProv?.versionId !== nextCloudsProvenance?.versionId;
+      if (cloudsProvenanceChanged) {
+        cloudsProvenanceRef.current = nextCloudsProvenance;
+        setCloudsProvenanceView(nextCloudsProvenance);
       }
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
@@ -1140,6 +1192,8 @@ export default function App() {
             issConfigStatusHint={issTrackStatusHint}
             earthquakeConfigStatusHint={earthquakeTrackStatusHint}
             earthquakeProvenance={earthquakeProvenanceView}
+            cloudsConfigStatusHint={cloudsTrackStatusHint}
+            cloudsProvenance={cloudsProvenanceView}
             userPresetsUi={ALLOW_PHASE3_MUTATIONS ? userPresetsUi : undefined}
             demoTransport={{
               paused: demoTransportPaused,

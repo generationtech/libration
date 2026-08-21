@@ -12,12 +12,10 @@
  */
 
 /**
- * DLU-5 — live global clouds/IR acquisition under durable `global-clouds-ir-v1`.
- * Prove JPEG validate, live HTTP adapter, fixture fallback, host wiring, and
- * no fetch on resolve / paint path.
+ * DLU-5 — live Clouds v1 acquisition under durable `global-clouds-ir-v1`.
+ * PNG + explicit TIME. Production does not fixture-fallback.
  */
 
-import * as jpeg from "jpeg-js";
 import { describe, expect, it, vi } from "vitest";
 import { createTimeContext } from "../core/time";
 import { createDynamicEquirectRasterOverlayLayer } from "../layers/dynamicEquirectRasterOverlayLayer";
@@ -28,55 +26,16 @@ import {
   createGlobalCloudsIrLiveHttpAcquisitionAdapter,
   getDynamicEquirectSourceCatalogEntry,
   produceGlobalCloudsIrLiveAcquisitionFromFetched,
-  validateGlobalCloudsIrJpegBytes,
+  wmsUrlHasExplicitTime,
   type LiveHttpFetchFn,
-  type LiveHttpFetchOk,
 } from "./index";
+import {
+  CLOUDS_TEST_OBSERVATION_MS,
+  encodeCloudsTestPng,
+  mockCloudsLiveFetch,
+} from "./cloudsAcquisition.testSupport";
 
-/** Tiny real-format JPEG for live-adapter tests (not the fixture producer). */
-function encodeLiveTestJpeg(): Uint8Array {
-  const width = 4;
-  const height = 2;
-  const data = new Uint8Array(width * height * 4);
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = 80 + (i % 40);
-    data[i + 1] = 90;
-    data[i + 2] = 110;
-    data[i + 3] = 255;
-  }
-  const encoded = jpeg.encode({ data, width, height }, 85);
-  return new Uint8Array(encoded.data);
-}
-
-function mockJpegResponse(options: {
-  body: Uint8Array;
-  ok?: boolean;
-  status?: number;
-  contentType?: string | null;
-}): Response {
-  const ok = options.ok !== false;
-  const status = options.status ?? (ok ? 200 : 500);
-  const headers = new Headers();
-  if (options.contentType !== null) {
-    headers.set(
-      "content-type",
-      options.contentType ?? "image/jpeg",
-    );
-  }
-  return {
-    ok,
-    status,
-    headers,
-    url: GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
-    arrayBuffer: async () =>
-      options.body.buffer.slice(
-        options.body.byteOffset,
-        options.body.byteOffset + options.body.byteLength,
-      ),
-  } as Response;
-}
-
-describe("DLU-5 live global clouds/IR acquisition", () => {
+describe("DLU-5 live Clouds v1 acquisition", () => {
   it("catalog still exposes durable sourceId (not the live feed URL)", () => {
     const entry = getDynamicEquirectSourceCatalogEntry(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(entry).not.toBeNull();
@@ -84,38 +43,20 @@ describe("DLU-5 live global clouds/IR acquisition", () => {
     expect(entry!.sourceId.includes("://")).toBe(false);
     expect(GLOBAL_CLOUDS_IR_LIVE_FEED_URL.startsWith("https://")).toBe(true);
     expect(GLOBAL_CLOUDS_IR_LIVE_FEED_URL).toContain("gibs.earthdata.nasa.gov");
+    expect(wmsUrlHasExplicitTime(GLOBAL_CLOUDS_IR_LIVE_FEED_URL)).toBe(true);
     expect(entry!.attribution.toLowerCase()).toContain("gibs");
+    expect(entry!.coverageKind).toBe("partial");
   });
 
-  it("validates JPEG SOI bytes", () => {
-    const bytes = encodeLiveTestJpeg();
-    const ok = validateGlobalCloudsIrJpegBytes(bytes);
-    expect(ok).toEqual({ ok: true, byteLength: bytes.byteLength });
-  });
-
-  it("rejects empty or non-JPEG bodies", () => {
-    expect(validateGlobalCloudsIrJpegBytes(new Uint8Array())).toEqual({
-      ok: false,
-      error: "empty or truncated jpeg body",
-    });
-    expect(
-      validateGlobalCloudsIrJpegBytes(new TextEncoder().encode("not-a-jpeg")),
-    ).toEqual({
-      ok: false,
-      error: "not a jpeg (missing SOI)",
-    });
-  });
-
-  it("live adapter maps HTTP JPEG bytes to store entry under durable sourceId", async () => {
-    const bytes = encodeLiveTestJpeg();
-    const fetchFn: LiveHttpFetchFn = vi.fn(async () =>
-      mockJpegResponse({ body: bytes }),
-    );
+  it("live adapter maps HTTP PNG bytes to store entry with observation TIME", async () => {
+    const bytes = encodeCloudsTestPng();
+    const fetchFn: LiveHttpFetchFn = vi.fn(mockCloudsLiveFetch({ png: bytes }));
     const adapter = createGlobalCloudsIrLiveHttpAcquisitionAdapter({
       fetchFn,
-      nowMs: () => 1_700_000_300_000,
+      nowMs: () => CLOUDS_TEST_OBSERVATION_MS + 120_000,
       versionIdFor: () => "clouds-ir-live-test-1",
       useFixtureFallback: false,
+      requireGibsDimensions: false,
     });
 
     const result = await adapter.acquire();
@@ -123,74 +64,52 @@ describe("DLU-5 live global clouds/IR acquisition", () => {
     if (!result.ok) return;
     expect(result.entry.record.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(result.entry.record.meta.versionId).toBe("clouds-ir-live-test-1");
-    expect(result.entry.record.body.kind).toBe("equirectRaster");
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
+    expect(result.entry.record.meta.acquiredAtMs).toBe(CLOUDS_TEST_OBSERVATION_MS + 120_000);
+    expect(result.entry.record.meta.origin).toBe("live");
     if (result.entry.record.body.kind === "equirectRaster") {
-      expect(result.entry.record.body.contentType).toBe("image/jpeg");
-      expect(result.entry.record.body.lonMinDeg).toBe(-180);
-      expect(result.entry.record.body.lonMaxDeg).toBe(180);
+      expect(result.entry.record.body.contentType).toBe("image/png");
     }
-    expect(result.entry.payloadBytes![0]).toBe(0xff);
-    expect(result.entry.payloadBytes![1]).toBe(0xd8);
-    expect(result.entry.record.meta.attribution).toBeTruthy();
-    expect(fetchFn).toHaveBeenCalledTimes(1);
-    const callUrl = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0]![0];
-    expect(callUrl).toBe(GLOBAL_CLOUDS_IR_LIVE_FEED_URL);
+    expect(result.entry.payloadBytes![0]).toBe(0x89);
+    const callUrls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
+    expect(callUrls.some((u) => wmsUrlHasExplicitTime(u))).toBe(true);
   });
 
-  it("live adapter falls back to fixture when HTTP fails (non-abort)", async () => {
-    const fetchFn: LiveHttpFetchFn = vi.fn(async () =>
-      mockJpegResponse({
-        body: new Uint8Array(),
-        ok: false,
-        status: 503,
-      }),
-    );
+  it("live adapter does not fixture-fallback when HTTP fails", async () => {
+    const fetchFn: LiveHttpFetchFn = vi.fn(async () => {
+      throw new Error("503");
+    });
     const adapter = createGlobalCloudsIrLiveHttpAcquisitionAdapter({
       fetchFn,
-      nowMs: () => 1_700_000_400_000,
-      versionIdFor: () => "clouds-ir-fixture-fallback",
-      useFixtureFallback: true,
+      nowMs: () => CLOUDS_TEST_OBSERVATION_MS,
+      useFixtureFallback: false,
+      requireGibsDimensions: false,
     });
-
     const result = await adapter.acquire();
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.entry.record.meta.versionId).toBe(
-      "clouds-ir-fixture-fallback",
-    );
-    expect(result.entry.record.body.kind).toBe("equirectRaster");
-    expect(result.entry.payloadBytes![0]).toBe(0xff);
-    expect(result.entry.payloadBytes![1]).toBe(0xd8);
+    expect(result.ok).toBe(false);
   });
 
-  it("produceGlobalCloudsIrLiveAcquisitionFromFetched stamps catalog attribution", () => {
-    const bytes = encodeLiveTestJpeg();
-    const fetched: LiveHttpFetchOk = {
-      ok: true,
-      bytes,
-      contentType: "image/jpeg",
-      responseUrl: GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
-      status: 200,
-    };
-    const result = produceGlobalCloudsIrLiveAcquisitionFromFetched(fetched, {
-      nowMs: () => 1_700_000_500_000,
-      versionIdFor: () => "from-fetched",
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.entry.record.meta.validTimeMs).toBe(1_700_000_500_000);
-    expect(result.entry.record.meta.attribution?.toLowerCase()).toContain(
-      "gibs",
+  it("produceGlobalCloudsIrLiveAcquisitionFromFetched requires observation TIME", () => {
+    const bytes = encodeCloudsTestPng();
+    const missing = produceGlobalCloudsIrLiveAcquisitionFromFetched(
+      {
+        ok: true,
+        bytes,
+        contentType: "image/png",
+        responseUrl: GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
+        status: 200,
+      },
+      { nowMs: () => CLOUDS_TEST_OBSERVATION_MS },
     );
+    expect(missing.ok).toBe(false);
   });
 
-  it("host arms live consumer, materializes equirect, resolve does not re-fetch", async () => {
-    const bytes = encodeLiveTestJpeg();
-    const fetchFn: LiveHttpFetchFn = vi.fn(async () =>
-      mockJpegResponse({ body: bytes }),
-    );
+  it("host arms live consumer, materializes equirect highlight, resolve does not re-fetch", async () => {
+    const bytes = encodeCloudsTestPng();
+    const fetchFn: LiveHttpFetchFn = vi.fn(mockCloudsLiveFetch({ png: bytes }));
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: fetchFn,
+      nowMs: () => CLOUDS_TEST_OBSERVATION_MS + 60_000,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
@@ -203,34 +122,33 @@ describe("DLU-5 live global clouds/IR acquisition", () => {
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(1_700_000_000_000)
+          .attachForProductInstant(CLOUDS_TEST_OBSERVATION_MS + 60_000)
           .getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID),
       ).not.toBeNull();
     });
 
-    expect(fetchFn).toHaveBeenCalledTimes(1);
-    const fetchesAfterArm = (fetchFn as ReturnType<typeof vi.fn>).mock.calls
-      .length;
+    expect(fetchFn).toHaveBeenCalled();
+    const fetchesAfterArm = (fetchFn as ReturnType<typeof vi.fn>).mock.calls.length;
 
-    const att = host.attachForProductInstant(1_700_000_000_000);
+    const att = host.attachForProductInstant(CLOUDS_TEST_OBSERVATION_MS + 60_000);
     const view = att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(view).not.toBeNull();
-    expect(view!.src.length).toBeGreaterThan(0);
+    expect(view!.origin).toBe("live");
+    expect(view!.coverageKind).toBe("partial");
+    expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
 
     const resolved = await att.resolveSnapshot(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(resolved.status).toBe("ok");
-    expect((fetchFn as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
-      fetchesAfterArm,
-    );
+    expect((fetchFn as ReturnType<typeof vi.fn>).mock.calls.length).toBe(fetchesAfterArm);
 
     const layer = createDynamicEquirectRasterOverlayLayer({
       sceneLayerId: "globalCloudsIr",
       sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
-      opacity: 0.45,
+      opacity: 0.42,
     });
     const resolveSpy = vi.spyOn(att, "resolveSnapshot");
     const state = layer.getState(
-      createTimeContext(1_700_000_000_000, 0, false, {
+      createTimeContext(CLOUDS_TEST_OBSERVATION_MS + 60_000, 0, false, {
         dynamicDataLifecycle: att,
       }),
     );
@@ -240,9 +158,6 @@ describe("DLU-5 live global clouds/IR acquisition", () => {
       src: expect.any(String),
     });
     expect(resolveSpy).not.toHaveBeenCalled();
-    expect((fetchFn as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
-      fetchesAfterArm,
-    );
 
     host.dispose();
   });

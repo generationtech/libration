@@ -22,108 +22,43 @@ import {
   createDynamicDataLifecycleHost,
   decodeJpegBytesToCloudOpacityBuffer,
   produceGlobalCloudsIrFixtureAcquisition,
-  sampleCloudOpacity01,
 } from "./index";
 
-describe("DLC-4 Model A cloud participation boundary", () => {
-  it("decodes fixture JPEG into opacity buffer and samples 0..1", () => {
+describe("DLC-4 Model A cloud participation is non-operative for Clouds v1", () => {
+  it("PNG Clouds fixture is not a JPEG opacity field", () => {
     const result = produceGlobalCloudsIrFixtureAcquisition({
       nowMs: () => 1_700_000_000_000,
       versionIdFor: () => "clouds-ir-opacity-1",
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    const buf = decodeJpegBytesToCloudOpacityBuffer(result.entry.payloadBytes!);
-    expect(buf).not.toBeNull();
-    expect(buf!.width).toBeGreaterThan(0);
-    expect(buf!.height).toBeGreaterThan(0);
-    expect(buf!.opacityU8.length).toBe(buf!.width * buf!.height);
-    const west = sampleCloudOpacity01(buf!, -150, 0);
-    const east = sampleCloudOpacity01(buf!, 150, 0);
-    expect(west).toBeGreaterThanOrEqual(0);
-    expect(west).toBeLessThanOrEqual(1);
-    expect(east).toBeGreaterThan(west); // fixture has longitudinal gradient
+    expect(decodeJpegBytesToCloudOpacityBuffer(result.entry.payloadBytes!)).toBeNull();
   });
 
-  it("host materializes cloud opacity sync; scrub resolve does not re-acquire", async () => {
-    const acquireSpy = vi.fn();
-    const timers: Array<{ id: number; handler: () => void }> = [];
-    let nextTimerId = 1;
-    // Avoid real network: fail live fetch → fixture fallback (same durable sourceId).
-    const cloudsIrLiveFetchFn = vi.fn(async () => {
-      throw new Error("offline-test");
-    });
+  it("host materializes Clouds overlay and does not feed the opacity materializer", async () => {
+    const { encodeCloudsTestPng, mockCloudsLiveFetch } = await import("./cloudsAcquisition.testSupport");
     const host = createDynamicDataLifecycleHost({
-      cloudsIrLiveFetchFn,
-      setIntervalFn: (handler) => {
-        const id = nextTimerId++;
-        timers.push({ id, handler });
-        return id;
-      },
-      clearIntervalFn: (handle) => {
-        const idx = timers.findIndex((t) => t.id === handle);
-        if (idx >= 0) timers.splice(idx, 1);
-      },
-    });
-
-    const originalRegister = host.acquisition.registerAdapter.bind(host.acquisition);
-    host.acquisition.registerAdapter = (adapter) => {
-      originalRegister({
-        sourceId: adapter.sourceId,
-        acquire: async (signal) => {
-          acquireSpy();
-          return adapter.acquire(signal);
-        },
-      });
-    };
-
-    host.ensureGlobalCloudsIrConsumer({
-      intervalMs: 60_000,
-      runImmediately: true,
-    });
-
-    await vi.waitFor(() => {
-      const att = host.attachForProductInstant(1_700_000_000_000);
-      expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-    });
-
-    const acquiresAfterArm = acquireSpy.mock.calls.length;
-    expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
-    expect(cloudsIrLiveFetchFn).toHaveBeenCalled();
-
-    const attA = host.attachForProductInstant(1_700_000_000_000);
-    const attB = host.attachForProductInstant(1_700_000_000_000 + 3_600_000);
-    expect(attA.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-    expect(attB.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-    expect(acquireSpy.mock.calls.length).toBe(acquiresAfterArm);
-
-    const resolved = await attA.resolveSnapshot(GLOBAL_CLOUDS_IR_SOURCE_ID);
-    expect(resolved.status).toBe("ok");
-    expect(acquireSpy.mock.calls.length).toBe(acquiresAfterArm);
-
-    host.dispose();
-  });
-
-  it("solar shading layer reads prepared opacity sync when Model A enabled; no resolveSnapshot", async () => {
-    const host = createDynamicDataLifecycleHost({
-      cloudsIrLiveFetchFn: async () => {
-        throw new Error("offline-test");
-      },
+      cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
-    host.ensureGlobalCloudsIrConsumer({
-      intervalMs: 60_000,
-      runImmediately: true,
-    });
+    host.ensureGlobalCloudsIrConsumer({ intervalMs: 60_000, runImmediately: true });
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(Date.now())
-          .getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID),
+          .attachForProductInstant(1_700_000_000_000)
+          .getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID),
       ).not.toBeNull();
     });
+    expect(
+      host
+        .attachForProductInstant(1_700_000_000_000)
+        .getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID),
+    ).toBeNull();
+    host.dispose();
+  });
 
+  it("solar shading layer with stored natural mode still has null opacity when the host does not materialize it", () => {
     const layer = createSolarShadingLayer({
       cloudParticipationMode: "natural",
       cloudParticipationSourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
@@ -131,28 +66,11 @@ describe("DLC-4 Model A cloud participation boundary", () => {
       emissiveNightLightsMode: "off",
       moonlightMode: "off",
     });
-
-    const attachment = host.attachForProductInstant(Date.now());
-    const resolveSpy = vi.spyOn(attachment, "resolveSnapshot");
-    const time = createTimeContext(Date.now(), 0, false, {
-      dynamicDataLifecycle: attachment,
-    });
-    const state = layer.getState(time);
+    const state = layer.getState(createTimeContext(Date.now(), 0, false));
     expect(isSolarShadingPayload(state.data)).toBe(true);
     if (isSolarShadingPayload(state.data)) {
-      expect(state.data.cloudParticipationMode).toBe("natural");
-      expect(state.data.cloudOpacityRaster).not.toBeNull();
-      expect(state.data.cloudOpacityRaster!.width).toBeGreaterThan(0);
+      expect(state.data.cloudOpacityRaster).toBeNull();
     }
-    expect(resolveSpy).not.toHaveBeenCalled();
-
-    const cold = layer.getState(createTimeContext(Date.now(), 0, false));
-    expect(isSolarShadingPayload(cold.data)).toBe(true);
-    if (isSolarShadingPayload(cold.data)) {
-      expect(cold.data.cloudOpacityRaster).toBeNull();
-    }
-
-    host.dispose();
   });
 
   it("illumination RenderPlan alpha increases under opaque clouds vs clear (Model A)", () => {
@@ -206,5 +124,7 @@ describe("DLC-4 Model A cloud participation boundary", () => {
 
     expect(sumAlpha(withClouds)).toBeGreaterThan(sumAlpha(without));
     expect(sumAlpha(off)).toBe(sumAlpha(without));
+    // Clouds v1 factory path forces participation off; leftover planner math
+    // must not run unless a raster is supplied — and production never supplies one.
   });
 });

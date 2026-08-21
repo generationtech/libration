@@ -182,21 +182,62 @@ export {
 
 export type {
   GlobalCloudsIrAcquireOptions,
-  GlobalCloudsIrJpegValidateResult,
   GlobalCloudsIrLiveAcquireOptions,
 } from "./globalCloudsIrAcquisition";
 
 export {
+  GLOBAL_CLOUDS_IR_ACQUIRE_TIMEOUT_MS,
   GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
   GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
   GLOBAL_CLOUDS_IR_SCENE_LAYER_ID,
   createGlobalCloudsIrFixtureAcquisitionAdapter,
   createGlobalCloudsIrLiveHttpAcquisitionAdapter,
   isGlobalCloudsIrSourceId,
+  materializeCloudsHighlightStoreEntry,
   produceGlobalCloudsIrFixtureAcquisition,
   produceGlobalCloudsIrLiveAcquisitionFromFetched,
-  validateGlobalCloudsIrJpegBytes,
 } from "./globalCloudsIrAcquisition";
+
+export {
+  CLOUDS_COVERAGE_NOTE,
+  CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS,
+  CLOUDS_OBSERVATION_STALE_MAX_AGE_MS,
+  cloudsConfigStatusHint,
+  cloudsConfigStatusHintCopy,
+  cloudsObservationFreshnessBandFromAgeMs,
+  cloudsShouldPaint,
+  originStampFromPreparedEquirect,
+  resolveCloudsProvenance,
+} from "./cloudProvenance";
+
+export type {
+  CloudsConfigStatusHint,
+  CloudsObservationFreshnessBand,
+  CloudsOrigin,
+  CloudsProvenance,
+} from "./cloudProvenance";
+
+export {
+  CLOUD_HIGHLIGHT_LUMA_HI,
+  CLOUD_HIGHLIGHT_LUMA_LO,
+  CLOUD_HIGHLIGHT_RGB,
+  applyCloudHighlightTransfer,
+  cloudHighlightAlpha01FromIrLuma,
+} from "./cloudHighlightTransfer";
+
+export {
+  buildCloudsGibsWmsGetMapUrl,
+  CLOUDS_GIBS_BAND13_LAYERS,
+  CLOUDS_GIBS_WMS_LAYERS_PARAM,
+  formatCloudsGibsWmsTime,
+  wmsUrlHasExplicitTime,
+} from "./cloudsGibsWms";
+
+export {
+  decodeCloudsPngRgba,
+  encodeRgbaPng,
+  validateCloudsPngBytes,
+} from "./cloudsPng";
 
 export type { DynamicPointFeaturesSourceCatalogEntry } from "./dynamicPointFeaturesSourceCatalog";
 

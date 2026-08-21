@@ -37,6 +37,7 @@ import {
   getVisualScenarioRuntime,
   getVisualScenarioExtraOverlayLayer,
   resetVisualScenarioRuntime,
+  attachVisualScenarioPreparedEquirect,
   attachVisualScenarioPreparedPointFeatures,
   attachVisualScenarioPreparedTracks,
 } from "./visualScenarioRuntime";
@@ -149,7 +150,7 @@ describe("resolveVisualScenarioSession", () => {
       expect(session.config.data.mode).toBe("demo");
       expect(session.config.data.demoTime.enabled).toBe(true);
       expect(session.config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC[id]);
-      expect(session.config.layers.globalCloudsIr).toBe(false);
+      expect(session.config.layers.globalCloudsIr).toBe(id === "clouds");
       expect(session.config.layers.earthquakes).toBe(id === "earthquake-presentation");
       expect(session.config.layers.orbitalTracks).toBe(id === "iss-presentation");
       expect(session.config.layers.planetaryObjects).toBe(id === "planetary-objects");
@@ -326,6 +327,31 @@ describe("resolveVisualScenarioSession", () => {
     expect(view?.origin).toBe("fixture");
     expect(view?.devAllowFixturePaint).toBe(true);
     expect(view?.features.length).toBeGreaterThan(8);
+  });
+
+  it("clouds apply installs a DEV prepared Clouds view labeled fixture without network", () => {
+    const session = applyVisualScenarioFromLocation("?scenario=clouds");
+    expect(session.kind).toBe("applied");
+    if (session.kind !== "applied") return;
+    expect(session.id).toBe("clouds");
+    expect(session.config.layers.globalCloudsIr).toBe(true);
+    expect(session.config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC.clouds);
+    const stub = {
+      productInstantMs: Date.parse(VISUAL_SCENARIO_UTC.clouds),
+      resolveSnapshot: async () => ({ ok: false as const }),
+      getLifecycleState: () => ({ sourceId: "global-clouds-ir-v1", state: "idle" as const }),
+      getPreparedEquirectRaster: () => null,
+      getPreparedCloudOpacity: () => null,
+      getPreparedPointFeatures: () => null,
+      getPreparedTracks: () => null,
+    };
+    const wrapped = attachVisualScenarioPreparedEquirect(stub as never);
+    const view = wrapped.getPreparedEquirectRaster("global-clouds-ir-v1");
+    expect(view).not.toBeNull();
+    expect(view?.versionId).toBe("clouds-presentation-dev");
+    expect(view?.origin).toBe("fixture");
+    expect(view?.devAllowFixturePaint).toBe(true);
+    expect(view?.coverageKind).toBe("partial");
   });
 
   it("seeds moon-libration with the production Moon glyph and libration on by default", () => {

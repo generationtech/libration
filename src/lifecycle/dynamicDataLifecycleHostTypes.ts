@@ -120,10 +120,9 @@ export interface DynamicDataLifecycleHost {
   ): DynamicDataLifecycleAttachment;
 
   /**
-   * DLC-1 / DLC-4 / DLU-5 / DLU-6: register live GIBS HTTP adapter (fixture
-   * fallback) + start periodic refresh for global clouds/IR.
-   * Used by Model B overlay and Model A cloud participation (same durable
-   * sourceId / live opacity field).
+   * Clouds v1: register live GIBS Band13 adapter (no production fixture
+   * fallback) + start periodic refresh. Overlay-only; illumination
+   * participation does not arm this consumer.
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureGlobalCloudsIrConsumer(options?: {
@@ -179,8 +178,9 @@ export type DynamicDataLifecycleAttachOptions = Readonly<{
 }>;
 
 /**
- * Config-derived arming flags for the three live consumers (plus cloud
- * participation, which shares the clouds/IR source).
+ * Config-derived arming flags for the three live consumers.
+ * `cloudParticipationOn` is retained for load compatibility and is ignored:
+ * Clouds v1 does not arm acquisition from illumination participation.
  */
 export type DynamicLifecycleConsumerFlags = Readonly<{
   cloudsIrOverlay: boolean;

@@ -291,31 +291,36 @@ New consumers reuse the existing lifecycle subsystem; its contract, and the sour
 
 Adding any of these is a product decision requiring explicit scope, not a consequence of the seam supporting it. Prefer free-for-personal-use sources; paid sources are acceptable when the benefit is clear.
 
-ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). ISS live provenance, TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden), and hide-on-live-TLE-failure are production as of [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Immediate-on-enable acquisition, 2-hour TLE refresh, 8 s timeout, and ordered CelesTrak → Where the ISS at failover are production as of [LIB-040](work/LIB-040-iss-acquisition-reliability-fast-first-paint.md) / [ADR 0014](decisions/0014-iss-live-tle-ordered-provider-failover.md). Layers → **Space objects** is the ISS presentation home as of [LIB-038](work/LIB-038-space-objects-iss-presentation.md) (orbit track, past/future segments, glyph). Multi-orbit past/future horizons derived from TLE mean motion, local SGP4 window expansion, orbit-distance fading, and ISS silhouette glyph-color are production as of [LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md). Planetary sub-object points, continuous planet ground tracks, and daily same-time planetary loci for Mercury–Neptune plus Pluto are production as of [LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) / [ADR 0016](decisions/0016-offline-planetary-ephemeris-authority.md). They share Space objects (Planets) with one Planets layer master. They are offline astronomy at product time, not current-only live data, and they are not solar analemmas. Remaining unapproved: local altitude/azimuth, conjunction/event detection, planet-visible hemispheres, other dwarf planets, moons. The Milky Way zenith ribbon (Galactic plane, approximate band, sparse ribs, Galactic center) is production as of [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) / [ADR 0017](decisions/0017-offline-iau-galactic-zenith-projection-authority.md). It shares Space objects after Planets, with one Milky Way layer master (factory off). It is zenith-projection geometry, not naked-eye visibility and not a star field. Remaining unapproved for that family: above-horizon visibility envelopes, Galactic-center altitude thresholds, observing-quality forecasts, photometric longitude-dependent band width, and renaming Space objects to something like “Space & sky.” It is the intended configuration home for future satellites and spacecraft; those objects are not implemented. Earthquake live provenance (no production fixture-as-live), snapshot-age stale policy (≤10 min live / 10–60 min stale / >60 min hidden), 15 s USGS timeout, and Layers → **Earthquakes** local filters (minimum magnitude factory 2.5+, maximum age factory 24 h, earthquakes-only, persistent labels 4.0+, show label on hover factory on) are production as of [LIB-059](work/LIB-059-earthquake-live-presentation-and-provenance.md) / [LIB-060](work/LIB-060-earthquake-hover-labels.md). The live feed remains USGS `all_day.geojson` at 5 min. Hover is presentation-only (same compact `M4.6 · place` label; no network; no selection). Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
+ISS **current-position** (SGP4 at the product instant, not the future track tip) is production as of [LIB-035](work/LIB-035-dynamic-live-time-integrity-and-iss-position.md). ISS live provenance, TLE freshness (≤18 h live / 18–48 h degraded / >48 h hidden), and hide-on-live-TLE-failure are production as of [LIB-036](work/LIB-036-iss-live-provenance-freshness-and-fallback.md). Immediate-on-enable acquisition, 2-hour TLE refresh, 8 s timeout, and ordered CelesTrak → Where the ISS at failover are production as of [LIB-040](work/LIB-040-iss-acquisition-reliability-fast-first-paint.md) / [ADR 0014](decisions/0014-iss-live-tle-ordered-provider-failover.md). Layers → **Space objects** is the ISS presentation home as of [LIB-038](work/LIB-038-space-objects-iss-presentation.md) (orbit track, past/future segments, glyph). Multi-orbit past/future horizons derived from TLE mean motion, local SGP4 window expansion, orbit-distance fading, and ISS silhouette glyph-color are production as of [LIB-041](work/LIB-041-iss-multi-orbit-track-horizons.md). Planetary sub-object points, continuous planet ground tracks, and daily same-time planetary loci for Mercury–Neptune plus Pluto are production as of [LIB-048](work/LIB-048-planetary-space-objects-ground-tracks-and-loci.md) / [ADR 0016](decisions/0016-offline-planetary-ephemeris-authority.md). They share Space objects (Planets) with one Planets layer master. They are offline astronomy at product time, not current-only live data, and they are not solar analemmas. Remaining unapproved: local altitude/azimuth, conjunction/event detection, planet-visible hemispheres, other dwarf planets, moons. The Milky Way zenith ribbon (Galactic plane, approximate band, sparse ribs, Galactic center) is production as of [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) / [ADR 0017](decisions/0017-offline-iau-galactic-zenith-projection-authority.md). It shares Space objects after Planets, with one Milky Way layer master (factory off). It is zenith-projection geometry, not naked-eye visibility and not a star field. Remaining unapproved for that family: above-horizon visibility envelopes, Galactic-center altitude thresholds, observing-quality forecasts, photometric longitude-dependent band width, and renaming Space objects to something like “Space & sky.” It is the intended configuration home for future satellites and spacecraft; those objects are not implemented. Earthquake live provenance (no production fixture-as-live), snapshot-age stale policy (≤10 min live / 10–60 min stale / >60 min hidden), 15 s USGS timeout, and Layers → **Earthquakes** local filters (minimum magnitude factory 2.5+, maximum age factory 24 h, earthquakes-only, persistent labels 4.0+, show label on hover factory on) are production as of [LIB-059](work/LIB-059-earthquake-live-presentation-and-provenance.md) / [LIB-060](work/LIB-060-earthquake-hover-labels.md). The live feed remains USGS `all_day.geojson` at 5 min. Hover is presentation-only (same compact `M4.6 · place` label; no network; no selection). **Clouds v1** is production as of [LIB-063](work/LIB-063-weather-1-global-clouds-v1.md) / [ADR 0022](decisions/0022-observational-data-three-clocks.md): NASA GIBS GOES-East + GOES-West + Himawari Band13 Clean Infrared stacked WMS PNG with explicit `TIME`; IR-derived white/gray overlay; observation-age freshness ≤3 h recent / 3–6 h stale / >6 h suppress; no production fixture-as-live; physical illumination participation off; Layers → **Weather** holds Clouds opacity + status only. Current-only live layers are also suppressed when product time is not live-enough. The following **hardening** remains unapproved and must not be treated as started:
 
-- production fixture-on-live-failure policy for clouds/IR (earthquakes and ISS already hide when live acquisition fails with no usable live snapshot)
-- stale/error UX for clouds/IR (earthquakes have Layers loading/live/stale/unavailable; ISS has loading/unavailable/degraded)
-- persistent snapshot cache / snapshot-store eviction
-- retry/backoff/timeouts for clouds/IR (earthquakes have a 15 s USGS attempt timeout; ISS has 8 s plus ordered failover)
-- GIBS historical `TIME`
+- global persistent snapshot cache / snapshot-store eviction (Clouds v1 already trims to ~4 in-memory versions for that source)
+- GIBS historical `TIME` querying (Clouds v1 sends explicit current mosaic TIME only)
 - earthquake clustering, depth presentation, magnitude color bands, age fading, click selection / detail, tsunami/alert symbology, historical FDSN, or Event Playback
 - API-key / proxy / desktop `fetchFn`
 - historical USGS / TLE-history providers
 
-- weather radar.
-- precipitation forecast.
-- temperature forecast.
-- wind fields.
-- pressure systems.
-- hurricane tracks.
-- aurora forecast.
-- volcano activity.
-- aircraft ADS-B feed.
-- marine AIS feed.
-- satellite live positions.
-- spacecraft beyond the ISS.
-- lightning feed.
-- wildfire smoke.
+Weather beyond Clouds v1 remains unapproved:
+
+- **WEATHER-2** — Africa / Europe / polar coverage (EUMETSAT or equivalent world IR composite). Do not treat holes as clear sky.
+- scientific Cloud-top temperature layer (retired MODIS CTT rainbow is not the default Clouds path)
+- GeoColor / visible-light / terminator-blended cloud modes
+- physical cloud optical-depth / transmittance participation in illumination (requires a real mask/OD product, not IR luma)
+- weather radar
+- precipitation forecast
+- temperature forecast
+- wind fields
+- pressure systems
+- hurricane tracks / tropical cyclones
+- lightning
+- severe weather watches/warnings
+- Weather Event Playback or lower-left weather alerts (do not reuse the astronomy event sequencer)
+- aurora forecast
+- volcano activity
+- aircraft ADS-B feed
+- marine AIS feed
+- satellite live positions
+- spacecraft beyond the ISS
+- wildfire smoke
 - air quality.
 
 ## Composition and visual systems

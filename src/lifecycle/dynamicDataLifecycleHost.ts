@@ -15,13 +15,14 @@
  * App shell seam host (P10-6 + DLC-1…DLC-4 + DLU-3…DLU-7 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
  * equirect / cloud-opacity / point-features / tracks materializers.
- * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback;
- * Model A cloud participation (DLU-6) consumes the same live opacity field.
+ * Clouds v1 uses live NASA GIBS Band13 WMS with explicit TIME and PNG alpha.
+ * Production does not fall back to fixture. IR→cloud-highlight materialization
+ * runs outside rAF. Physical cloud illumination participation is non-operative.
  * Earthquakes use live USGS HTTP (DLU-3) with no production fixture fallback.
  * ISS orbital tracks use ordered live TLE acquisition (CelesTrak primary,
  * Where the ISS at secondary). Production does not fall back to fixture;
  * all-provider failure with no usable live TLE hides ISS.
-
+ *
  * DLU-7 closed the live acquisition track for these four consumers.
  * TimeContext attachments are read-only.
  * @see docs/specs/scene/dynamic-data-lifecycle-plan.md
@@ -48,7 +49,10 @@ import {
   ISS_ORBITAL_TRACK_SOURCE_ID,
 } from "./dynamicTracksSourceCatalog";
 import { ISS_TLE_FAILURE_RETRY_MS } from "./issOrbitalTrackAcquisition";
-import { createGlobalCloudsIrLiveHttpAcquisitionAdapter } from "./globalCloudsIrAcquisition";
+import {
+  createGlobalCloudsIrLiveHttpAcquisitionAdapter,
+  materializeCloudsHighlightStoreEntry,
+} from "./globalCloudsIrAcquisition";
 import { createEarthquakesLiveHttpAcquisitionAdapter } from "./earthquakesAcquisition";
 import { createIssOrbitalTrackLiveHttpAcquisitionAdapter } from "./issOrbitalTrackAcquisition";
 import type {
@@ -62,6 +66,8 @@ import type { DynamicSourceId } from "./dynamicSnapshotTypes";
 import type { TimeContext } from "../layers/types";
 import { isProductTimeLiveEnough } from "../core/liveProductTimePolicy";
 import { isWallClockCurrentSource } from "./dynamicSourceTimePolicy";
+
+const CLOUDS_SNAPSHOT_RETENTION = 4;
 
 /**
  * Create a process-local lifecycle host for the app shell.
@@ -127,6 +133,19 @@ export function createDynamicDataLifecycleHost(
       if (!acquisition.isPeriodicActive(ISS_ORBITAL_TRACK_SOURCE_ID)) return;
       void acquisition.refreshNow(ISS_ORBITAL_TRACK_SOURCE_ID);
     }, ISS_TLE_FAILURE_RETRY_MS) as ReturnType<typeof setTimeout>;
+  }
+
+  async function trimCloudsSnapshotRetention(): Promise<void> {
+    const metas = await store.list(GLOBAL_CLOUDS_IR_SOURCE_ID);
+    if (metas.length <= CLOUDS_SNAPSHOT_RETENTION) return;
+    const drop = metas
+      .slice()
+      .sort((a, b) => b.validTimeMs - a.validTimeMs)
+      .slice(CLOUDS_SNAPSHOT_RETENTION);
+    for (const meta of drop) {
+      await store.evict(GLOBAL_CLOUDS_IR_SOURCE_ID, meta.versionId);
+      materializer.dropIndexedVersion(GLOBAL_CLOUDS_IR_SOURCE_ID, meta.versionId);
+    }
   }
 
   /**
@@ -216,8 +235,10 @@ export function createDynamicDataLifecycleHost(
     if (!cloudsIrArmed) {
       acquisition.registerAdapter(
         createGlobalCloudsIrLiveHttpAcquisitionAdapter({
-          useFixtureFallback: true,
-          // Shared host clock → durable versionId / validTimeMs for Model A + B.
+          useFixtureFallback: false,
+          requireGibsDimensions: deps.cloudsIrLiveFetchFn === undefined,
+          timeoutMs: 15_000,
+          // Shared host clock → durable versionId / validTimeMs (observation TIME).
           ...(deps.nowMs !== undefined ? { nowMs: deps.nowMs } : {}),
           ...(deps.cloudsIrLiveFetchFn !== undefined
             ? { fetchFn: deps.cloudsIrLiveFetchFn }
@@ -228,8 +249,10 @@ export function createDynamicDataLifecycleHost(
       wireMaterializeOnReady(
         GLOBAL_CLOUDS_IR_SOURCE_ID,
         (entry) => {
-          materializer.noteStoreEntry(entry);
-          cloudOpacityMaterializer.noteStoreEntry(entry);
+          const highlighted = materializeCloudsHighlightStoreEntry(entry);
+          if (highlighted === null) return;
+          materializer.noteStoreEntry(highlighted);
+          void trimCloudsSnapshotRetention();
         },
         (u) => {
           unsubCloudsIr = u;
@@ -429,7 +452,7 @@ export function armDynamicLifecycleConsumers(
   flags: DynamicLifecycleConsumerFlags,
 ): void {
   const liveEnough = flags.productTimeLiveEnough !== false;
-  if ((flags.cloudsIrOverlay || flags.cloudParticipationOn) && liveEnough) {
+  if (flags.cloudsIrOverlay && liveEnough) {
     host.ensureGlobalCloudsIrConsumer({ runImmediately: true });
   } else {
     host.stopGlobalCloudsIrConsumer();

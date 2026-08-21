@@ -31,6 +31,9 @@ import {
   buildDefaultSceneConfigFromLayerFlags,
   deriveLayerEnableFlagsFromScene,
   applyLayerEnableFlagsToScene,
+  applyCloudsLayerOpacityToScene,
+  cloudsLayerOpacityFromScene,
+  DEFAULT_CLOUDS_LAYER_OPACITY,
   applyLunarGroundTrackColorToScene,
   applyLunarLocusStrokeToScene,
   applySolarAnalemmaStrokeToScene,
@@ -251,6 +254,17 @@ describe("SceneConfig (Phase 1)", () => {
       DEFAULT_LAYERS,
     );
     expect(missing.illumination.cloudParticipation.mode).toBe("off");
+  });
+
+  it("persists Clouds overlay opacity independently of enablement", () => {
+    const green = defaultLibrationConfigV2().scene!;
+    expect(cloudsLayerOpacityFromScene(green)).toBe(DEFAULT_CLOUDS_LAYER_OPACITY);
+    const bumped = applyCloudsLayerOpacityToScene(green, 0.7);
+    expect(cloudsLayerOpacityFromScene(bumped)).toBe(0.7);
+    expect(bumped.layers.find((l) => l.id === "earthquakes")?.opacity).toBe(
+      green.layers.find((l) => l.id === "earthquakes")?.opacity,
+    );
+    expect(cloudsLayerOpacityFromScene(applyCloudsLayerOpacityToScene(green, 9))).toBe(1);
   });
 
   it("normalizes overlay readability presentation and clamps out-of-range values", () => {

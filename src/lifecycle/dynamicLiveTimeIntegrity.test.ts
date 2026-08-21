@@ -34,6 +34,10 @@ import {
   type LiveHttpFetchFn,
 } from "./index";
 import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
+import {
+  encodeCloudsTestPng,
+  mockCloudsLiveFetch,
+} from "./cloudsAcquisition.testSupport";
 
 const WALL_MS = 1_724_000_000_000;
 const HISTORICAL_MS = Date.UTC(2017, 7, 21, 18, 25, 30);
@@ -52,7 +56,7 @@ const offlineFetch: LiveHttpFetchFn = vi.fn(async () => {
 
 function hostDeps() {
   return {
-    cloudsIrLiveFetchFn: offlineFetch,
+    cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
     earthquakesLiveFetchFn: usgsLiveOkFetch(WALL_MS),
     orbitalTracksLiveFetchFn: offlineFetch,
     nowMs: () => WALL_MS,
@@ -75,7 +79,7 @@ describe("LIB-035 current-only live-time integrity", () => {
         wallClockUtcMs: WALL_MS,
       });
       expect(att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-      expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
+      expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
       expect(att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).not.toBeNull();
     });
     expect(
@@ -105,7 +109,7 @@ describe("LIB-035 current-only live-time integrity", () => {
     });
 
     expect(live.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-    expect(live.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
+    expect(live.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
     expect(historical.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
     expect(historical.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
     expect(historical.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).toBeNull();

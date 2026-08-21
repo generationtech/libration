@@ -23,6 +23,7 @@ export type LayersTopicId =
   | "astronomyPaths"
   | "spaceObjects"
   | "earthquakes"
+  | "weather"
   | "advanced";
 
 export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
@@ -34,6 +35,7 @@ export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
   "astronomyPaths",
   "spaceObjects",
   "earthquakes",
+  "weather",
   "advanced",
 ];
 
@@ -57,6 +59,8 @@ export function labelForLayersTopic(id: LayersTopicId): string {
       return "Space objects";
     case "earthquakes":
       return "Earthquakes";
+    case "weather":
+      return "Weather";
     case "advanced":
       return "Advanced";
     default: {
@@ -73,7 +77,7 @@ export function descriptionForLayersTopic(id: LayersTopicId): string {
     case "map":
       return "Base-map family, preview, source and license, and per-family display tuning.";
     case "illumination":
-      return "Moonlight, night lights, and cloud participation in the planetary illumination raster.";
+      return "Moonlight and night lights in the planetary illumination raster.";
     case "eclipse":
       return "Solar and lunar eclipse geography, alignment, reference-city information, and appearance.";
     case "moonAndLibration":
@@ -84,6 +88,8 @@ export function descriptionForLayersTopic(id: LayersTopicId): string {
       return "Presentation for tracked space objects and celestial structure. ISS, planets, and Milky Way. Layer visibility stays under Layer masters.";
     case "earthquakes":
       return "Live USGS earthquakes from the past day. Filters are applied locally.";
+    case "weather":
+      return "Near-current satellite cloud depiction. Layer visibility stays under Layer masters.";
     case "advanced":
       return "Overlay-readability veil and lift, including per-layer pilots. Does not change layer on/off.";
     default: {

@@ -16,7 +16,6 @@ import type { LibrationConfigV2 } from "../../config/v2/librationConfig";
 import type { LayerEnableFlags } from "../../config/appConfig";
 import {
   DEFAULT_BASE_MAP_PRESENTATION,
-  DEFAULT_CLOUD_PARTICIPATION_PRESENTATION,
   DEFAULT_EMISSIVE_NIGHT_LIGHTS_PRESENTATION,
   DEFAULT_SCENE_OVERLAY_READABILITY_PRESENTATION,
   EMISSIVE_NIGHT_LIGHTS_DRIVER_EXPONENT_MAX,
@@ -44,17 +43,12 @@ import {
   setBaseMapPresentationForMapId,
   solarAnalemmaStrokeFromScene,
   sublunarMarkerAppearanceFromScene,
-  type CloudParticipationPresentationMode,
   type EmissiveNightLightsPresentationMode,
   type MoonlightPresentationMode,
   type SceneConfig,
   type SceneOverlayReadabilityPerLayerPilotKey,
   type SceneOverlayReadabilityPresentationConfig,
 } from "../../config/v2/sceneConfig";
-import {
-  CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MAX,
-  CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MIN,
-} from "../../core/cloudParticipationPresentationDefaults";
 import {
   ASTRONOMY_PATH_THICKNESS_IDS,
   type AstronomyPathThicknessId,
@@ -79,6 +73,7 @@ import { IssPresentationSection } from "./IssPresentationSection";
 import { PlanetaryObjectsSection } from "./PlanetaryObjectsSection";
 import { MilkyWaySection } from "./MilkyWaySection";
 import { EarthquakesSection } from "./EarthquakesSection";
+import { WeatherSection } from "./WeatherSection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
@@ -95,6 +90,11 @@ import {
   type EarthquakeConfigStatusHint,
   type EarthquakeProvenance,
 } from "../../lifecycle/earthquakeProvenance";
+import {
+  cloudsConfigStatusHintCopy,
+  type CloudsConfigStatusHint,
+  type CloudsProvenance,
+} from "../../lifecycle/cloudProvenance";
 
 const LIVE_LAYER_KEYS = new Set<keyof LayerEnableFlags>([
   "globalCloudsIr",
@@ -155,40 +155,13 @@ const EMISSIVE_NIGHT_LIGHTS_OPTIONS: {
   },
 ];
 
-const CLOUD_PARTICIPATION_OPTIONS: {
-  value: CloudParticipationPresentationMode;
-  label: string;
-  title: string;
-}[] = [
-  {
-    value: "off",
-    label: "Off",
-    title: "No Model A cloud modulation in the planetary illumination raster.",
-  },
-  {
-    value: "natural",
-    label: "Natural",
-    title: "Subtle solar-transmittance reduction from lifecycle cloud/IR opacity.",
-  },
-  {
-    value: "enhanced",
-    label: "Enhanced",
-    title: "Clearer cloud attenuation while staying bounded in one illumination raster.",
-  },
-  {
-    value: "illustrative",
-    label: "Illustrative",
-    title: "Stronger teaching emphasis for cloud shade on the day/night field.",
-  },
-];
-
 function labelForLayer(key: keyof LayerEnableFlags): string {
   const map: Record<keyof LayerEnableFlags, string> = {
     baseMap: "Base map",
     solarShading: "Solar shading",
     grid: "Grid",
     staticEquirectOverlay: "Static equirect overlay",
-    globalCloudsIr: "Global clouds / IR",
+    globalCloudsIr: "Clouds",
     earthquakes: "Earthquakes",
     orbitalTracks: "ISS orbital track",
     planetaryObjects: "Planets",
@@ -223,6 +196,9 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
   }
   if (key === "lunarEclipse") {
     return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
+  }
+  if (key === "globalCloudsIr") {
+    return "Recent IR-derived cloud highlight from NASA GIBS GOES-East, GOES-West, and Himawari. Partial coverage; Africa, Europe, and polar holes stay transparent. Presentation lives under Weather.";
   }
   return undefined;
 }
@@ -534,6 +510,8 @@ export type LayersTabProps = {
    */
   earthquakeConfigStatusHint?: EarthquakeConfigStatusHint | null;
   earthquakeProvenance?: EarthquakeProvenance | null;
+  cloudsConfigStatusHint?: CloudsConfigStatusHint | null;
+  cloudsProvenance?: CloudsProvenance | null;
 };
 
 export function LayersTab({
@@ -544,6 +522,8 @@ export function LayersTab({
   issConfigStatusHint,
   earthquakeConfigStatusHint,
   earthquakeProvenance,
+  cloudsConfigStatusHint,
+  cloudsProvenance,
 }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
@@ -683,12 +663,9 @@ export function LayersTab({
         {layersTopic === "illumination" ? (
           <div data-testid="layers-topic-illumination">
             <p className="config-section__hint">{descriptionForLayersTopic("illumination")}</p>
-            {productTimeLiveEnough === false &&
-            scene.illumination.cloudParticipation.mode !== "off" ? (
-              <p className="config-section__hint" data-testid="live-only-cloud-participation-hint">
-                {LIVE_ONLY_HIDDEN_HINT}
-              </p>
-            ) : null}
+            <p className="config-section__hint">
+              Clouds are informational and do not participate in physical illumination.
+            </p>
         <ConfigControlRow label="Moonlight appearance">
           <select
             className="config-input"
@@ -1001,124 +978,6 @@ export function LayersTab({
           >
             Reset night-light tuning
           </button>
-        </ConfigControlRow>
-        <ConfigControlRow label="Cloud participation (illumination)">
-          <select
-            className="config-input"
-            value={scene.illumination.cloudParticipation.mode}
-            disabled={!mutable}
-            aria-label="Cloud participation in illumination"
-            title="Model A: modulate the solar shading illumination raster from lifecycle-prepared cloud/IR opacity (same planetary raster; not a separate overlay)."
-            onChange={
-              mutable && updateConfig
-                ? (e) => {
-                    const mode = e.currentTarget.value as CloudParticipationPresentationMode;
-                    updateConfig((draft) => {
-                      const baseScene =
-                        draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                      draft.scene = {
-                        ...baseScene,
-                        illumination: {
-                          ...baseScene.illumination,
-                          cloudParticipation: {
-                            ...baseScene.illumination.cloudParticipation,
-                            mode,
-                          },
-                        },
-                      };
-                      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                    });
-                  }
-                : undefined
-            }
-          >
-            {CLOUD_PARTICIPATION_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value} title={o.title}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </ConfigControlRow>
-        <ConfigControlRow label="Cloud participation intensity">
-          <div className="config-tab-stack" style={{ gap: "0.35rem" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-                width: "100%",
-              }}
-            >
-              <input
-                type="range"
-                className="config-input"
-                min={CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MIN}
-                max={CLOUD_PARTICIPATION_PRESENTATION_INTENSITY_MAX}
-                step={0.05}
-                disabled={!mutable || scene.illumination.cloudParticipation.mode === "off"}
-                aria-label="Cloud participation intensity"
-                value={scene.illumination.cloudParticipation.presentation.intensity}
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        const intensity = Number(e.currentTarget.value);
-                        updateConfig((draft) => {
-                          const baseScene =
-                            draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                          draft.scene = {
-                            ...baseScene,
-                            illumination: {
-                              ...baseScene.illumination,
-                              cloudParticipation: {
-                                ...baseScene.illumination.cloudParticipation,
-                                presentation: {
-                                  ...baseScene.illumination.cloudParticipation.presentation,
-                                  intensity,
-                                },
-                              },
-                            },
-                          };
-                          draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                        });
-                      }
-                    : undefined
-                }
-              />
-              <span className="config-section__hint" style={{ margin: 0 }}>
-                {scene.illumination.cloudParticipation.presentation.intensity.toFixed(2)}
-              </span>
-            </div>
-            <button
-              type="button"
-              className="config-input"
-              disabled={!mutable}
-              title="Reset cloud participation intensity to default (does not change mode or source id)."
-              onClick={
-                mutable && updateConfig
-                  ? () => {
-                      updateConfig((draft) => {
-                        const baseScene =
-                          draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
-                        draft.scene = {
-                          ...baseScene,
-                          illumination: {
-                            ...baseScene.illumination,
-                            cloudParticipation: {
-                              ...baseScene.illumination.cloudParticipation,
-                              presentation: { ...DEFAULT_CLOUD_PARTICIPATION_PRESENTATION },
-                            },
-                          },
-                        };
-                        draft.layers = deriveLayerEnableFlagsFromScene(draft.scene!);
-                      });
-                    }
-                  : undefined
-              }
-            >
-              Reset cloud participation intensity
-            </button>
-          </div>
         </ConfigControlRow>
           </div>
         ) : null}
@@ -1467,6 +1326,18 @@ export function LayersTab({
                 )}
               </p>
             ) : null}
+            {cloudsConfigStatusHint === "unavailable" ||
+            cloudsConfigStatusHint === "loading" ||
+            cloudsConfigStatusHint === "recent" ||
+            cloudsConfigStatusHint === "stale" ||
+            cloudsConfigStatusHint === "fixture" ? (
+              <p className="config-section__hint" data-testid="clouds-status-hint">
+                {cloudsConfigStatusHintCopy(
+                  cloudsConfigStatusHint,
+                  cloudsProvenance ?? null,
+                )}
+              </p>
+            ) : null}
         {LAYER_KEYS.map((key) => {
           const liveSuppressed =
             productTimeLiveEnough === false && LIVE_LAYER_KEYS.has(key);
@@ -1662,6 +1533,18 @@ export function LayersTab({
               updateConfig={updateConfig}
               earthquakeConfigStatusHint={earthquakeConfigStatusHint}
               earthquakeProvenance={earthquakeProvenance}
+              productTimeLiveEnough={productTimeLiveEnough}
+            />
+          </div>
+        ) : null}
+        {layersTopic === "weather" ? (
+          <div data-testid="layers-topic-weather">
+            <p className="config-section__hint">{descriptionForLayersTopic("weather")}</p>
+            <WeatherSection
+              config={config}
+              updateConfig={updateConfig}
+              cloudsConfigStatusHint={cloudsConfigStatusHint}
+              cloudsProvenance={cloudsProvenance}
               productTimeLiveEnough={productTimeLiveEnough}
             />
           </div>

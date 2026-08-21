@@ -45,7 +45,7 @@ export interface LayerEnableFlags {
   grid: boolean;
   /** Phase 3: scene stack row for {@link SceneLayerInstance} `staticEquirectOverlay` (static raster URL in scene). */
   staticEquirectOverlay: boolean;
-  /** DLC-1: Model B global equirect clouds / IR (`globalCloudsIr` / `dynamicEquirectRaster`). */
+  /** Clouds v1: Model B global equirect IR-derived overlay (`globalCloudsIr` / `dynamicEquirectRaster`). */
   globalCloudsIr: boolean;
   /** DLC-2: Model B earthquake point features (`earthquakes` / `dynamicPointFeatures`). */
   earthquakes: boolean;

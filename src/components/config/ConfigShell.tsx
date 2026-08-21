@@ -22,6 +22,10 @@ import type {
   EarthquakeConfigStatusHint,
   EarthquakeProvenance,
 } from "../../lifecycle/earthquakeProvenance";
+import type {
+  CloudsConfigStatusHint,
+  CloudsProvenance,
+} from "../../lifecycle/cloudProvenance";
 import { CONFIG_TAB_DEFS, type ConfigTabId } from "./configTabs";
 import type { UserPresetsUiProps } from "./userPresetsPanelTypes";
 import { ConfigTabPanel } from "./ConfigTabPanel";
@@ -56,6 +60,8 @@ export type ConfigShellProps = {
   issConfigStatusHint?: IssConfigStatusHint | null;
   earthquakeConfigStatusHint?: EarthquakeConfigStatusHint | null;
   earthquakeProvenance?: EarthquakeProvenance | null;
+  cloudsConfigStatusHint?: CloudsConfigStatusHint | null;
+  cloudsProvenance?: CloudsProvenance | null;
   /** User-named full v2 snapshots (Phase 5); optional when panel is read-only. */
   userPresetsUi?: UserPresetsUiProps;
   /** Demo play / pause / reset; runtime-only, does not mutate persisted config. */
@@ -73,6 +79,8 @@ function renderActiveTabContent(
   issConfigStatusHint: ConfigShellProps["issConfigStatusHint"],
   earthquakeConfigStatusHint: ConfigShellProps["earthquakeConfigStatusHint"],
   earthquakeProvenance: ConfigShellProps["earthquakeProvenance"],
+  cloudsConfigStatusHint: ConfigShellProps["cloudsConfigStatusHint"],
+  cloudsProvenance: ConfigShellProps["cloudsProvenance"],
   userPresetsUi: ConfigShellProps["userPresetsUi"],
   demoTransport: ConfigShellProps["demoTransport"],
   eventPlaybackSession: ConfigShellProps["eventPlaybackSession"],
@@ -88,6 +96,8 @@ function renderActiveTabContent(
           issConfigStatusHint={issConfigStatusHint}
           earthquakeConfigStatusHint={earthquakeConfigStatusHint}
           earthquakeProvenance={earthquakeProvenance}
+          cloudsConfigStatusHint={cloudsConfigStatusHint}
+          cloudsProvenance={cloudsProvenance}
         />
       );
     case "pins":
@@ -125,6 +135,8 @@ export function ConfigShell({
   issConfigStatusHint,
   earthquakeConfigStatusHint,
   earthquakeProvenance,
+  cloudsConfigStatusHint,
+  cloudsProvenance,
   userPresetsUi,
   demoTransport,
   eventPlaybackSession,
@@ -193,6 +205,8 @@ export function ConfigShell({
             issConfigStatusHint,
             earthquakeConfigStatusHint,
             earthquakeProvenance,
+            cloudsConfigStatusHint,
+            cloudsProvenance,
             userPresetsUi,
             demoTransport,
             eventPlaybackSession,

@@ -37,17 +37,25 @@ export type PreparedEquirectRasterView = Readonly<{
   /** URL suitable for imageBlit / HTMLImageElement (blob: or data:). */
   src: string;
   validTimeMs: number;
+  acquiredAtMs: number;
   validUntilMs?: number;
   attribution?: string;
   licenseNote?: string;
   freshness: DynamicSnapshotFreshness;
   contentType?: string;
+  origin?: "live" | "fixture";
+  coverageKind?: "global" | "partial";
+  coverageNote?: string;
+  /** DEV visual-scenario hatch; production views omit this. */
+  devAllowFixturePaint?: boolean;
 }>;
 
 type MaterializedVersion = {
   meta: DynamicSnapshotTemporalMeta;
   src: string;
   contentType?: string;
+  coverageKind?: "global" | "partial";
+  coverageNote?: string;
   /** True when src was created via URL.createObjectURL and must be revoked. */
   revokeOnDrop: boolean;
 };
@@ -71,6 +79,12 @@ export interface DynamicEquirectMaterializer {
 
   /** Drop one source (or all versions) and revoke object URLs. */
   dropSource(sourceId: DynamicSourceId): void;
+
+  /** Drop one indexed version and revoke its object URL if needed. */
+  dropIndexedVersion(
+    sourceId: DynamicSourceId,
+    versionId: DynamicSnapshotVersionId,
+  ): void;
 
   /** Revoke all object URLs and clear the index. */
   revokeAll(): void;
@@ -147,7 +161,7 @@ export function createDynamicEquirectMaterializer(
       }
     });
 
-  function dropVersion(row: MaterializedVersion): void {
+  function revokeMaterializedVersion(row: MaterializedVersion): void {
     if (row.revokeOnDrop) {
       revokeObjectURL(row.src);
     }
@@ -167,7 +181,7 @@ export function createDynamicEquirectMaterializer(
     }
     const contentType =
       record.body.contentType?.trim() ||
-      "image/jpeg";
+      "image/png";
     const { src, revokeOnDrop } = mintSrc(
       payloadBytes,
       contentType,
@@ -181,12 +195,18 @@ export function createDynamicEquirectMaterializer(
     }
     const prev = versions.get(meta.versionId);
     if (prev !== undefined) {
-      dropVersion(prev);
+      revokeMaterializedVersion(prev);
     }
     versions.set(meta.versionId, {
       meta: { ...meta },
       src,
       contentType,
+      ...(record.body.kind === "equirectRaster" && record.body.coverageKind !== undefined
+        ? { coverageKind: record.body.coverageKind }
+        : {}),
+      ...(record.body.kind === "equirectRaster" && record.body.coverageNote !== undefined
+        ? { coverageNote: record.body.coverageNote }
+        : {}),
       revokeOnDrop,
     });
   }
@@ -219,6 +239,7 @@ export function createDynamicEquirectMaterializer(
       versionId: row.meta.versionId,
       src: row.src,
       validTimeMs: row.meta.validTimeMs,
+      acquiredAtMs: row.meta.acquiredAtMs,
       ...(row.meta.validUntilMs !== undefined
         ? { validUntilMs: row.meta.validUntilMs }
         : {}),
@@ -230,6 +251,9 @@ export function createDynamicEquirectMaterializer(
         : {}),
       freshness,
       ...(row.contentType !== undefined ? { contentType: row.contentType } : {}),
+      ...(row.meta.origin !== undefined ? { origin: row.meta.origin } : {}),
+      ...(row.coverageKind !== undefined ? { coverageKind: row.coverageKind } : {}),
+      ...(row.coverageNote !== undefined ? { coverageNote: row.coverageNote } : {}),
     };
   }
 
@@ -237,9 +261,24 @@ export function createDynamicEquirectMaterializer(
     const versions = bySource.get(sourceId);
     if (versions === undefined) return;
     for (const row of versions.values()) {
-      dropVersion(row);
+      revokeMaterializedVersion(row);
     }
     bySource.delete(sourceId);
+  }
+
+  function dropIndexedVersion(
+    sourceId: DynamicSourceId,
+    versionId: DynamicSnapshotVersionId,
+  ): void {
+    const versions = bySource.get(sourceId);
+    if (versions === undefined) return;
+    const row = versions.get(versionId);
+    if (row === undefined) return;
+    revokeMaterializedVersion(row);
+    versions.delete(versionId);
+    if (versions.size === 0) {
+      bySource.delete(sourceId);
+    }
   }
 
   function revokeAll(): void {
@@ -252,6 +291,7 @@ export function createDynamicEquirectMaterializer(
     noteStoreEntry,
     selectForProductInstant,
     dropSource,
+    dropIndexedVersion,
     revokeAll,
   };
 }

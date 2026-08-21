@@ -364,3 +364,9 @@ Layers → Earthquakes → Labels gains **Show label on hover** (factory ON). Ho
 
 Verified: `npx tsc --noEmit` clean; `npm test` 260 files / 2432 passed / 0 failed; `npm run build` succeeded with no `earthquake-presentation` / `visualScenarios` in `dist/`. Cursor Browser `?scenario=earthquake-presentation` (labels-off hover, below-threshold hover, hover-off) and ordinary live USGS factory map. LIB-037 and LIB-058 stay proposed.
 
+## 2026-08-21 — LIB-063 complete
+
+Weather-1 Clouds v1 replaces the broken MODIS CTT JPEG overlay. NASA GIBS GOES-West + GOES-East + Himawari Band13 PNG stack with explicit TIME; IR-derived white/gray highlight; observation-age freshness ≤3 h / 3–6 h / >6 h; no production fixture-as-live; illumination participation off. Layers → Weather. ADR 0022 (product ≠ observation ≠ acquisition time).
+
+Verified: `npx tsc --noEmit` clean; `npm test` 261 files / 2443 passed / 0 failed; `npm run build` succeeded with no `scenario=clouds` / `visualScenarios` in `dist/`. Cursor Browser ordinary live GIBS (mosaic 2026-08-21T20:30:00Z, status observed 2h ago · partial coverage) + historical Demo suppression + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
+

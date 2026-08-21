@@ -12,115 +12,113 @@
  */
 
 /**
- * DLC-1 / DLU-5 acquisition for global clouds / IR equirect raster.
- * Fixture producer remains for offline / test fallback. Live HTTP fetches a
- * NASA GIBS WMS equirect JPEG under durable sourceId `global-clouds-ir-v1`.
- * Never invoked from rAF / layer constructors / RenderPlan builders.
+ * Clouds v1 acquisition: NASA GIBS Band13 East/West/Himawari PNG stack.
+ * validTimeMs is provider observation TIME. acquiredAtMs is fetch time.
+ * Fixture producer remains for tests / DEV. Production does not fixture-as-live.
  */
 
-import * as jpeg from "jpeg-js";
-import { buildDynamicSnapshotRecord } from "./dynamicSnapshotContracts";
 import { createFixtureAcquisitionAdapter } from "./dynamicAcquisition";
-import { createLiveHttpAcquisitionAdapter } from "./liveHttpAcquisition";
+import { buildDynamicSnapshotRecord } from "./dynamicSnapshotContracts";
+import {
+  CLOUDS_COVERAGE_NOTE,
+} from "./cloudProvenance";
+import { applyCloudHighlightTransfer } from "./cloudHighlightTransfer";
+import {
+  CLOUDS_GIBS_BAND13_LAYERS,
+  CLOUDS_GIBS_SLOT_MS,
+  CLOUDS_GIBS_TIME_SEARCH_STEPS,
+  GIBS_WMS_GET_CAPABILITIES_URL,
+  buildCloudsGibsWmsGetMapUrl,
+  chooseCommonGibsStackTimeMs,
+  floorToCloudsGibsSlotMs,
+  formatCloudsGibsWmsTime,
+  listCloudsObservationSearchTimesMs,
+  parseGibsWmsLayerTimeDefault,
+  wmsUrlHasExplicitTime,
+} from "./cloudsGibsWms";
+import {
+  decodeCloudsPngRgba,
+  encodeRgbaPng,
+  validateCloudsPngBytes,
+} from "./cloudsPng";
 import {
   GLOBAL_CLOUDS_IR_SOURCE_ID,
   getDynamicEquirectSourceCatalogEntry,
 } from "./dynamicEquirectSourceCatalog";
-import type { DynamicSnapshotAcquisitionAdapter } from "./dynamicAcquisitionTypes";
-import type { DynamicAcquisitionResult } from "./dynamicAcquisitionTypes";
+import { fetchLiveHttpBytes } from "./liveHttpAcquisition";
+import type {
+  DynamicAcquisitionResult,
+  DynamicSnapshotAcquisitionAdapter,
+} from "./dynamicAcquisitionTypes";
 import type { DynamicSourceId } from "./dynamicSnapshotTypes";
 import type {
   LiveHttpFetchFn,
   LiveHttpFetchOk,
 } from "./liveHttpAcquisitionTypes";
 
-/**
- * NASA GIBS WMS GetMap for MODIS Terra cloud-top temperature (day), full-world
- * equirectangular JPEG. Free / open NASA Earthdata imagery; durable SceneConfig
- * id stays {@link GLOBAL_CLOUDS_IR_SOURCE_ID} — never persist this URL.
- */
-export const GLOBAL_CLOUDS_IR_LIVE_FEED_URL =
-  "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MODIS_Terra_Cloud_Top_Temp_Day&STYLES=&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=2048&HEIGHT=1024&FORMAT=image/jpeg";
+export const GLOBAL_CLOUDS_IR_ACQUIRE_TIMEOUT_MS = 15_000;
 
-/** Content-Types accepted from the GIBS WMS JPEG response (parameter-stripped). */
-export const GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES = [
-  "image/jpeg",
+export const GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES = ["image/png"] as const;
+
+export const GLOBAL_CLOUDS_IR_CAPABILITIES_ACCEPT_CONTENT_TYPES = [
+  "application/vnd.ogc.wms_xml",
+  "text/xml",
+  "application/xml",
+  "text/plain",
 ] as const;
 
-/** Soft IR-like cool gray ramp (not a cosmetic weather cartoon). */
-function encodeGlobalCloudsIrFixtureJpeg(): Uint8Array {
-  const width = 8;
-  const height = 4;
-  const data = new Uint8Array(width * height * 4);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4;
-      // Gentle longitudinal gradient — stands in for IR brightness field.
-      const v = Math.round(40 + (x / (width - 1)) * 140 + (y % 2) * 8);
-      data[i] = v;
-      data[i + 1] = v;
-      data[i + 2] = Math.min(255, v + 12);
-      data[i + 3] = 255;
-    }
-  }
-  const encoded = jpeg.encode({ data, width, height }, 90);
-  return new Uint8Array(encoded.data);
-}
+/** @deprecated Use {@link buildCloudsGibsWmsGetMapUrl} with an explicit TIME. */
+export const GLOBAL_CLOUDS_IR_LIVE_FEED_URL = buildCloudsGibsWmsGetMapUrl(
+  Date.UTC(2026, 0, 1, 0, 0, 0),
+);
+
+export const GLOBAL_CLOUDS_IR_SCENE_LAYER_ID = "globalCloudsIr";
 
 export type GlobalCloudsIrAcquireOptions = Readonly<{
-  /** Override wall/acquire clock (tests). */
   nowMs?: () => number;
-  /** Stable version token prefix; default uses acquired epoch. */
-  versionIdFor?: (acquiredAtMs: number) => string;
+  versionIdFor?: (observationTimeMs: number, acquiredAtMs: number) => string;
+  observationTimeMs?: number;
 }>;
 
 export type GlobalCloudsIrLiveAcquireOptions = GlobalCloudsIrAcquireOptions &
   Readonly<{
-    /** Override production GIBS WMS URL (tests). */
-    url?: string;
-    /** Injectable fetch (tests / desktop bridge). */
     fetchFn?: LiveHttpFetchFn;
-    /**
-     * When live HTTP fails (non-abort), fall back to the offline fixture under
-     * the same durable sourceId. Default true.
-     */
+    /** Default false — production must not paint fixture clouds as live. */
     useFixtureFallback?: boolean;
+    timeoutMs?: number;
+    /** Production live GetMap must be 2048×1024. Tests may omit this. */
+    requireGibsDimensions?: boolean;
   }>;
 
-export type GlobalCloudsIrJpegValidateOk = Readonly<{
-  ok: true;
-  byteLength: number;
-}>;
-
-export type GlobalCloudsIrJpegValidateFail = Readonly<{
-  ok: false;
-  error: string;
-}>;
-
-export type GlobalCloudsIrJpegValidateResult =
-  | GlobalCloudsIrJpegValidateOk
-  | GlobalCloudsIrJpegValidateFail;
-
-/**
- * Validate that bytes look like a JPEG (SOI marker). Does not decode pixels —
- * materializers decode outside rAF when needed.
- */
-export function validateGlobalCloudsIrJpegBytes(
-  bytes: Uint8Array,
-): GlobalCloudsIrJpegValidateResult {
-  if (!(bytes instanceof Uint8Array) || bytes.byteLength < 3) {
-    return { ok: false, error: "empty or truncated jpeg body" };
+function encodeGlobalCloudsIrFixturePng(): Uint8Array {
+  const width = 32;
+  const height = 16;
+  const rgba = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const u = x / (width - 1);
+      const v = y / (height - 1);
+      const africaEurope = u > 0.42 && u < 0.62 && v > 0.22 && v < 0.72;
+      const pole = v < 0.08 || v > 0.92;
+      if (africaEurope || pole) {
+        continue;
+      }
+      const cold = Math.sin(u * Math.PI * 3) > 0.35 && Math.sin(v * Math.PI * 4) > 0.2;
+      const luma = cold ? 210 : 70;
+      rgba[i] = luma;
+      rgba[i + 1] = luma;
+      rgba[i + 2] = luma;
+      rgba[i + 3] = 255;
+    }
   }
-  // JPEG SOI
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
-    return { ok: false, error: "not a jpeg (missing SOI)" };
+  const encoded = encodeRgbaPng(width, height, rgba);
+  if (encoded === null) {
+    throw new Error("failed to encode Clouds fixture PNG");
   }
-  return { ok: true, byteLength: bytes.byteLength };
+  return encoded;
 }
 
-/**
- * Produce one store-ready equirect JPEG entry for {@link GLOBAL_CLOUDS_IR_SOURCE_ID}.
- */
 export function produceGlobalCloudsIrFixtureAcquisition(
   options: GlobalCloudsIrAcquireOptions = {},
   signal?: AbortSignal,
@@ -136,46 +134,47 @@ export function produceGlobalCloudsIrFixtureAcquisition(
   if (!Number.isFinite(acquiredAtMs)) {
     return { ok: false, error: "invalid acquiredAtMs" };
   }
+  const observationTimeMs =
+    options.observationTimeMs !== undefined && Number.isFinite(options.observationTimeMs)
+      ? floorToCloudsGibsSlotMs(options.observationTimeMs)
+      : floorToCloudsGibsSlotMs(acquiredAtMs);
   const versionId =
-    options.versionIdFor?.(acquiredAtMs) ?? `clouds-ir-${acquiredAtMs}`;
-  const payloadBytes = encodeGlobalCloudsIrFixtureJpeg();
+    options.versionIdFor?.(observationTimeMs, acquiredAtMs) ??
+    `clouds-ir-fixture-${observationTimeMs}`;
+  const payloadBytes = encodeGlobalCloudsIrFixturePng();
   const record = buildDynamicSnapshotRecord(
     {
       sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
       kind: "equirectRaster",
       versionId,
       acquiredAtMs,
-      validTimeMs: acquiredAtMs,
+      validTimeMs: observationTimeMs,
+      origin: "fixture",
       attribution: catalog.attribution,
-      ...(catalog.licenseNote !== undefined
-        ? { licenseNote: catalog.licenseNote }
-        : {}),
+      ...(catalog.licenseNote !== undefined ? { licenseNote: catalog.licenseNote } : {}),
     },
     {
       kind: "equirectRaster",
-      contentType: "image/jpeg",
+      contentType: "image/png",
       lonMinDeg: -180,
       lonMaxDeg: 180,
       latMinDeg: -90,
       latMaxDeg: 90,
       byteLength: payloadBytes.byteLength,
+      coverageKind: "partial",
+      coverageNote: CLOUDS_COVERAGE_NOTE,
     },
   );
   if (record === null) {
     return { ok: false, error: "invalid snapshot record" };
   }
-  return {
-    ok: true,
-    entry: { record, payloadBytes },
-  };
+  return { ok: true, entry: { record, payloadBytes } };
 }
 
-/**
- * Map live GIBS JPEG HTTP bytes into a store-ready equirect acquisition result.
- */
 export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
   fetched: LiveHttpFetchOk,
-  options: GlobalCloudsIrAcquireOptions = {},
+  options: GlobalCloudsIrAcquireOptions &
+    Readonly<{ requireGibsDimensions?: boolean }> = {},
   signal?: AbortSignal,
 ): DynamicAcquisitionResult {
   if (signal?.aborted) {
@@ -185,8 +184,18 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
   if (catalog === null) {
     return { ok: false, error: "missing catalog entry" };
   }
+  if (options.observationTimeMs === undefined || !Number.isFinite(options.observationTimeMs)) {
+    return { ok: false, error: "observation TIME required" };
+  }
+  const observationTimeMs = floorToCloudsGibsSlotMs(options.observationTimeMs);
+  const timeLabel = formatCloudsGibsWmsTime(observationTimeMs);
+  if (timeLabel === null) {
+    return { ok: false, error: "invalid observation TIME" };
+  }
 
-  const validated = validateGlobalCloudsIrJpegBytes(fetched.bytes);
+  const validated = validateCloudsPngBytes(fetched.bytes, {
+    requireGibsDimensions: options.requireGibsDimensions === true,
+  });
   if (!validated.ok) {
     return { ok: false, error: validated.error };
   }
@@ -196,7 +205,8 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
     return { ok: false, error: "invalid acquiredAtMs" };
   }
   const versionId =
-    options.versionIdFor?.(acquiredAtMs) ?? `clouds-ir-live-${acquiredAtMs}`;
+    options.versionIdFor?.(observationTimeMs, acquiredAtMs) ??
+    `clouds-ir-live-${observationTimeMs}`;
 
   const record = buildDynamicSnapshotRecord(
     {
@@ -204,35 +214,55 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
       kind: "equirectRaster",
       versionId,
       acquiredAtMs,
-      validTimeMs: acquiredAtMs,
+      validTimeMs: observationTimeMs,
+      origin: "live",
       attribution: catalog.attribution,
-      ...(catalog.licenseNote !== undefined
-        ? { licenseNote: catalog.licenseNote }
-        : {}),
+      ...(catalog.licenseNote !== undefined ? { licenseNote: catalog.licenseNote } : {}),
     },
     {
       kind: "equirectRaster",
-      contentType: "image/jpeg",
+      contentType: "image/png",
       lonMinDeg: -180,
       lonMaxDeg: 180,
       latMinDeg: -90,
       latMaxDeg: 90,
       byteLength: validated.byteLength,
+      coverageKind: "partial",
+      coverageNote: CLOUDS_COVERAGE_NOTE,
     },
   );
   if (record === null) {
     return { ok: false, error: "invalid snapshot record" };
   }
-  return {
-    ok: true,
-    entry: { record, payloadBytes: fetched.bytes },
-  };
+  return { ok: true, entry: { record, payloadBytes: fetched.bytes } };
 }
 
-/**
- * Fixture acquisition adapter for the DLC-1 global clouds/IR consumer /
- * offline fallback. Register with the acquisition controller outside the paint path.
- */
+export async function discoverCloudsObservationSearchTimesMs(options: {
+  nowMs: () => number;
+  fetchFn?: LiveHttpFetchFn;
+  timeoutMs: number;
+  signal?: AbortSignal;
+}): Promise<number[]> {
+  const fallbackStart = floorToCloudsGibsSlotMs(options.nowMs()) - CLOUDS_GIBS_SLOT_MS;
+  const caps = await fetchLiveHttpBytes({
+    url: GIBS_WMS_GET_CAPABILITIES_URL,
+    acceptContentTypes: GLOBAL_CLOUDS_IR_CAPABILITIES_ACCEPT_CONTENT_TYPES,
+    timeoutMs: options.timeoutMs,
+    signal: options.signal,
+    ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+  });
+  if (!caps.ok) {
+    return listCloudsObservationSearchTimesMs(fallbackStart);
+  }
+  const xml = new TextDecoder("utf-8", { fatal: false }).decode(caps.bytes);
+  const latest = CLOUDS_GIBS_BAND13_LAYERS.map((name) =>
+    parseGibsWmsLayerTimeDefault(xml, name),
+  );
+  const common = chooseCommonGibsStackTimeMs(latest);
+  const start = common ?? fallbackStart;
+  return listCloudsObservationSearchTimesMs(start, CLOUDS_GIBS_TIME_SEARCH_STEPS);
+}
+
 export function createGlobalCloudsIrFixtureAcquisitionAdapter(
   options: GlobalCloudsIrAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
@@ -242,56 +272,116 @@ export function createGlobalCloudsIrFixtureAcquisitionAdapter(
   );
 }
 
-/**
- * DLU-5 live HTTP acquisition adapter for {@link GLOBAL_CLOUDS_IR_SOURCE_ID}.
- * Uses the shared DLU-2 live HTTP seam; optional fixture fallback when offline.
- */
 export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
   options: GlobalCloudsIrLiveAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
-  const catalog = getDynamicEquirectSourceCatalogEntry(GLOBAL_CLOUDS_IR_SOURCE_ID);
-  const useFixtureFallback = options.useFixtureFallback !== false;
+  const useFixtureFallback = options.useFixtureFallback === true;
+  const requireGibsDimensions = options.requireGibsDimensions !== false;
+  const timeoutMs =
+    options.timeoutMs !== undefined &&
+    Number.isFinite(options.timeoutMs) &&
+    options.timeoutMs > 0
+      ? options.timeoutMs
+      : GLOBAL_CLOUDS_IR_ACQUIRE_TIMEOUT_MS;
+  const nowMs = options.nowMs ?? Date.now;
   const acquireOptions: GlobalCloudsIrAcquireOptions = {
-    ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
-    ...(options.versionIdFor !== undefined
-      ? { versionIdFor: options.versionIdFor }
-      : {}),
+    nowMs,
+    ...(options.versionIdFor !== undefined ? { versionIdFor: options.versionIdFor } : {}),
   };
 
-  return createLiveHttpAcquisitionAdapter({
+  return {
     sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
-    url: options.url ?? GLOBAL_CLOUDS_IR_LIVE_FEED_URL,
-    acceptContentTypes: GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
-    ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
-    attribution: {
-      ...(catalog?.attribution !== undefined
-        ? { attribution: catalog.attribution }
-        : {}),
-      ...(catalog?.licenseNote !== undefined
-        ? { licenseNote: catalog.licenseNote }
-        : {}),
-    },
-    toEntry: (fetched, signal) =>
-      produceGlobalCloudsIrLiveAcquisitionFromFetched(
-        fetched,
-        acquireOptions,
+    async acquire(signal?: AbortSignal): Promise<DynamicAcquisitionResult> {
+      if (signal?.aborted) {
+        return { ok: false, error: "aborted" };
+      }
+      const times = await discoverCloudsObservationSearchTimesMs({
+        nowMs,
+        timeoutMs,
         signal,
-      ),
-    ...(useFixtureFallback
-      ? {
-          fixtureFallback: (signal?: AbortSignal) =>
-            produceGlobalCloudsIrFixtureAcquisition(acquireOptions, signal),
+        ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+      });
+      if (signal?.aborted) {
+        return { ok: false, error: "aborted" };
+      }
+      if (times.length === 0) {
+        if (useFixtureFallback) {
+          return produceGlobalCloudsIrFixtureAcquisition(acquireOptions, signal);
         }
-      : {}),
-  });
+        return { ok: false, error: "no observation TIME candidates" };
+      }
+
+      let lastError = "no usable GIBS clouds mosaic";
+      for (const observationTimeMs of times) {
+        if (signal?.aborted) {
+          return { ok: false, error: "aborted" };
+        }
+        const url = buildCloudsGibsWmsGetMapUrl(observationTimeMs);
+        if (!wmsUrlHasExplicitTime(url)) {
+          return { ok: false, error: "Clouds GetMap omitted TIME" };
+        }
+        const fetched = await fetchLiveHttpBytes({
+          url,
+          acceptContentTypes: GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
+          timeoutMs,
+          signal,
+          ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+        });
+        if (!fetched.ok) {
+          if (fetched.aborted || signal?.aborted) {
+            return { ok: false, error: "aborted" };
+          }
+          lastError = fetched.error;
+          continue;
+        }
+        const mapped = produceGlobalCloudsIrLiveAcquisitionFromFetched(
+          fetched,
+          {
+            ...acquireOptions,
+            observationTimeMs,
+            requireGibsDimensions,
+          },
+          signal,
+        );
+        if (mapped.ok) {
+          return mapped;
+        }
+        lastError = mapped.error;
+      }
+
+      if (useFixtureFallback) {
+        return produceGlobalCloudsIrFixtureAcquisition(acquireOptions, signal);
+      }
+      return { ok: false, error: lastError };
+    },
+  };
 }
 
-/** Scene stack row id for the DLC-1 Model B layer (SceneConfig). */
-export const GLOBAL_CLOUDS_IR_SCENE_LAYER_ID = "globalCloudsIr";
+export function materializeCloudsHighlightStoreEntry(entry: {
+  record: import("./dynamicSnapshotTypes").DynamicSnapshotRecord;
+  payloadBytes?: Uint8Array;
+}): { record: import("./dynamicSnapshotTypes").DynamicSnapshotRecord; payloadBytes: Uint8Array } | null {
+  if (entry.record.body.kind !== "equirectRaster") return null;
+  const bytes = entry.payloadBytes;
+  if (bytes === undefined || bytes.byteLength === 0) return null;
+  const decoded = decodeCloudsPngRgba(bytes);
+  if (decoded === null) return null;
+  const highlight = applyCloudHighlightTransfer(decoded.rgba);
+  const encoded = encodeRgbaPng(decoded.width, decoded.height, highlight);
+  if (encoded === null) return null;
+  return {
+    record: {
+      meta: { ...entry.record.meta },
+      body: {
+        ...entry.record.body,
+        contentType: "image/png",
+        byteLength: encoded.byteLength,
+      },
+    },
+    payloadBytes: encoded,
+  };
+}
 
-/** Type guard helper for durable source wiring. */
-export function isGlobalCloudsIrSourceId(
-  sourceId: DynamicSourceId,
-): boolean {
+export function isGlobalCloudsIrSourceId(sourceId: DynamicSourceId): boolean {
   return sourceId === GLOBAL_CLOUDS_IR_SOURCE_ID;
 }

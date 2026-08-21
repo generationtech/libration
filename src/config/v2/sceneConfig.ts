@@ -811,16 +811,18 @@ const STATIC_EQUIRECT: SceneLayerInstance = {
 };
 
 /**
- * DLC-1: Model B global equirect clouds / IR — lifecycle sourceId, default off.
+ * Clouds v1: Model B global equirect IR-derived overlay — lifecycle sourceId, default off.
  * Acquisition is outside rAF; layer reads sync-prepared views only.
  */
+export const DEFAULT_CLOUDS_LAYER_OPACITY = 0.42;
+
 const GLOBAL_CLOUDS_IR: SceneLayerInstance = {
   id: "globalCloudsIr",
   family: "environment",
   type: "environmentRaster",
   enabled: false,
   order: 2.5,
-  opacity: 0.45,
+  opacity: DEFAULT_CLOUDS_LAYER_OPACITY,
   source: {
     kind: "dynamicEquirectRaster",
     sourceId: "global-clouds-ir-v1",
@@ -1093,7 +1095,7 @@ export function buildDefaultSceneConfigFromLayerFlags(layers: LayerEnableFlags):
     return {
       ...def,
       enabled: en,
-      opacity: 1,
+      opacity: def.id === "globalCloudsIr" ? def.opacity : 1,
     };
   });
   return {
@@ -1297,6 +1299,30 @@ export function applyEarthquakePresentationToScene(
         }),
       };
     }),
+  };
+}
+
+export function cloudsLayerOpacityFromScene(scene: SceneConfig): number {
+  const row = scene.layers.find((l) => l.id === "globalCloudsIr");
+  const opacity = row?.opacity;
+  return typeof opacity === "number" && Number.isFinite(opacity)
+    ? Math.min(1, Math.max(0, opacity))
+    : DEFAULT_CLOUDS_LAYER_OPACITY;
+}
+
+export function applyCloudsLayerOpacityToScene(
+  scene: SceneConfig,
+  opacity: number,
+): SceneConfig {
+  const next =
+    typeof opacity === "number" && Number.isFinite(opacity)
+      ? Math.min(1, Math.max(0, opacity))
+      : DEFAULT_CLOUDS_LAYER_OPACITY;
+  return {
+    ...scene,
+    layers: scene.layers.map((row) =>
+      row.id === "globalCloudsIr" ? { ...row, opacity: next } : row,
+    ),
   };
 }
 
@@ -1960,7 +1986,7 @@ function defaultForLayerId(
     ...d,
     order,
     enabled: en,
-    opacity: 1,
+    opacity: d.id === "globalCloudsIr" ? d.opacity : 1,
   };
 }
 
@@ -2091,7 +2117,9 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     family,
     type,
     enabled: en,
-    ...(opacity !== undefined ? { opacity } : { opacity: 1 }),
+    ...(opacity !== undefined
+      ? { opacity }
+      : { opacity: idNorm === "globalCloudsIr" ? DEFAULT_CLOUDS_LAYER_OPACITY : 1 }),
     order,
     source,
   };
@@ -2143,7 +2171,10 @@ export function normalizeSceneConfig(
   const mergedKnownRows: SceneLayerInstance[] = SCENE_STACK_LAYER_IDS.map((id) => {
     const got = byId.get(id);
     if (got) {
-      return { ...got, opacity: got.opacity ?? 1 };
+      return {
+        ...got,
+        opacity: got.opacity ?? (id === "globalCloudsIr" ? DEFAULT_CLOUDS_LAYER_OPACITY : 1),
+      };
     }
     return defaultForLayerId(id, DEFAULT_STACK.find((s) => s.id === id)!.order, layerFallbacks);
   });

@@ -13,8 +13,7 @@
 
 /**
  * DLU-7 — live acquisition track closure.
- * Smoke the four shipped consumers under durable sourceIds. Clouds/IR keep
- * fixture fallback; earthquakes and ISS hide when live acquisition fails.
+ * Clouds, earthquakes, and ISS hide when live acquisition fails.
  * Prove host arm + resolve stay scrub-safe (no fetch on paint path).
  */
 
@@ -31,7 +30,7 @@ import {
 
 const PRODUCT_MS = 1_700_000_700_000;
 
-/** Offline: clouds fall back to fixtures; earthquakes and ISS do not. */
+/** Offline: none of the three live consumers paint fixture as live. */
 const offlineFetch: LiveHttpFetchFn = async () => {
   throw new Error("offline-dlu7-closure");
 };
@@ -52,7 +51,7 @@ describe("DLU-7 live acquisition closure", () => {
     expect(ISS_ORBITAL_TRACK_SOURCE_ID).toBe("iss-orbital-track-v1");
   });
 
-  it("host arms all three live adapters; clouds fixture-fallback, earthquakes and ISS do not", async () => {
+  it("host arms all three live adapters; none fixture-fallback when live fetch fails", async () => {
     const fetchFn = vi.fn(offlineFetch);
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: fetchFn,
@@ -83,11 +82,12 @@ describe("DLU-7 live acquisition closure", () => {
     });
 
     await vi.waitFor(() => {
-      const att = host.attachForProductInstant(PRODUCT_MS);
-      expect(att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-      expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
+      expect(host.lifecycle.getState(GLOBAL_CLOUDS_IR_SOURCE_ID).state).toBe("error");
       expect(host.lifecycle.getState(USGS_EARTHQUAKES_SOURCE_ID).state).toBe("error");
     });
+    const attFail = host.attachForProductInstant(PRODUCT_MS);
+    expect(attFail.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
+    expect(attFail.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
     expect(
       host
         .attachForProductInstant(PRODUCT_MS)
@@ -114,9 +114,8 @@ describe("DLU-7 live acquisition closure", () => {
       PRODUCT_MS,
     );
 
-    expect(clouds.status).toBe("ok");
-    expect(clouds.snapshot?.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
-    expect(clouds.snapshot?.meta.kind).toBe("equirectRaster");
+    expect(clouds.status).toBe("error");
+    expect(clouds.snapshot).toBeNull();
 
     expect(quakes.status).toBe("error");
     expect(quakes.snapshot).toBeNull();
@@ -143,15 +142,12 @@ describe("DLU-7 live acquisition closure", () => {
       ISS_ORBITAL_TRACK_SOURCE_ID,
     );
 
-    expect(resolvedClouds.status).toBe("ok");
+    expect(resolvedClouds.status).toBe("error");
     expect(resolvedQuakes.status).toBe("error");
     expect(resolvedTracks.status).toBe("error");
     expect(fetchFn.mock.calls.length).toBe(fetchCountAfterAcquire);
 
-    // Model A cloud participation reads the same prepared opacity field (no extra sourceId).
-    const opacity = fromCtx!.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID);
-    expect(opacity).not.toBeNull();
-    expect(opacity?.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
+    expect(fromCtx!.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
 
     host.dispose();
   });

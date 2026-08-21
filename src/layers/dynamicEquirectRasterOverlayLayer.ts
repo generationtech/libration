@@ -12,15 +12,21 @@
  */
 
 /**
- * DLC-1 Model B: global equirect clouds / IR overlay layer.
- * Reads sync-prepared lifecycle views only — never fetches in getState.
+ * Model B Clouds overlay. Reads sync-prepared lifecycle views only — never fetches in getState.
+ * Paint follows live provenance: fixture never paints unless a DEV hatch is set.
  */
 
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import {
   getOverlayReadabilityFrameOrCompute,
 } from "../core/overlayReadabilityFrame";
+import {
+  cloudsShouldPaint,
+  originStampFromPreparedEquirect,
+  resolveCloudsProvenance,
+} from "../lifecycle/cloudProvenance";
 import { getDynamicDataLifecycleAttachment } from "../lifecycle/dynamicDataLifecycleHost";
+import { GLOBAL_CLOUDS_IR_SOURCE_ID } from "../lifecycle/dynamicEquirectSourceCatalog";
 import type { DynamicSourceId } from "../lifecycle/dynamicSnapshotTypes";
 import type { Layer, LayerState, TimeContext, UpdatePolicy } from "./types";
 import {
@@ -78,6 +84,36 @@ export function createDynamicEquirectRasterOverlayLayer(
         };
       }
 
+      const life = attachment?.getLifecycleState(sourceId).state ?? "idle";
+      const provenance = resolveCloudsProvenance({
+        originStamp: originStampFromPreparedEquirect(prepared),
+        acquiredAtMs: prepared.acquiredAtMs,
+        validTimeMs: prepared.validTimeMs,
+        productUtcMs: time.now,
+        lifecycleState: life,
+        versionId: prepared.versionId,
+      });
+      const allowFixturePaint =
+        sourceId === GLOBAL_CLOUDS_IR_SOURCE_ID &&
+        prepared.devAllowFixturePaint === true;
+      if (
+        sourceId === GLOBAL_CLOUDS_IR_SOURCE_ID &&
+        !cloudsShouldPaint(provenance, { allowFixturePaint })
+      ) {
+        return {
+          visible: false,
+          opacity,
+          data: null,
+          metadata: {
+            dynamicSourceId: sourceId,
+            reason: "clouds-not-paintable",
+            origin: provenance.origin,
+            validTimeMs: prepared.validTimeMs,
+            acquiredAtMs: prepared.acquiredAtMs,
+          },
+        };
+      }
+
       const frame = getOverlayReadabilityFrameOrCompute(time);
       const data: EquirectangularRasterPayload = {
         kind: EQUIRECTANGULAR_RASTER_KIND,
@@ -95,7 +131,12 @@ export function createDynamicEquirectRasterOverlayLayer(
           dynamicSourceId: prepared.sourceId,
           versionId: prepared.versionId,
           validTimeMs: prepared.validTimeMs,
+          acquiredAtMs: prepared.acquiredAtMs,
           freshness: prepared.freshness,
+          origin: provenance.origin,
+          ...(prepared.coverageKind !== undefined
+            ? { coverageKind: prepared.coverageKind }
+            : {}),
           ...(prepared.attribution !== undefined
             ? { attribution: prepared.attribution }
             : {}),

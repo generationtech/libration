@@ -4,7 +4,7 @@
 
 A **planning-only** specification. It defines where weather and cloud data may sit architecturally, and what must be true before any weather product is implemented. It is not a record of what exists.
 
-Cloud data already participates in the scene in two of the roles described below; what is currently implemented is documented in [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md) and the lifecycle contract is in [`dynamic-data-lifecycle.md`](dynamic-data-lifecycle.md). This document remains useful for the weather products that do **not** yet exist — radar, precipitation, wind, pressure — because the architectural questions it answers apply to each of them.
+**LIB-063 production note.** Clouds v1 is **Model B** (informational overlay): NASA GIBS Band13 IR → local white/gray highlight → `imageBlit`. Physical **Model A** participation is forced off because Band13 display luma is not cloud optical depth. Current implementation truth is [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This document remains useful for weather products that do **not** yet exist — radar, precipitation, wind, pressure, EUMETSAT coverage — because the architectural questions it answers apply to each of them.
 
 This document does not authorize skipping the lifecycle contract, and it does not schedule anything.
 

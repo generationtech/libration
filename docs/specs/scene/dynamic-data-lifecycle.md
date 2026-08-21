@@ -74,18 +74,18 @@ Paid or authenticated sources are permitted when the benefit is clear; they ente
 
 | Situation | Behaviour |
 |-----------|-----------|
-| Live acquisition fails (non-abort) and the adapter has a fixture fallback | The adapter returns the recorded real-format fixture **under the same durable `sourceId`**, so scene identity is unchanged. Production earthquakes and ISS do **not** enable this path. |
-| Live earthquake/ISS acquisition fails with no usable live snapshot | Overlay unavailable; no fixture substitution; Layers status is unavailable. |
+| Live acquisition fails (non-abort) and the adapter has a fixture fallback | The adapter returns the recorded real-format fixture **under the same durable `sourceId`**, so scene identity is unchanged. Production Clouds, earthquakes, and ISS do **not** enable this path. |
+| Live Clouds/earthquake/ISS acquisition fails with no usable live snapshot | Overlay unavailable; no fixture substitution; Layers status is unavailable. Last-good **live** Clouds may still paint while observation age is ≤ 6 h. |
 | Acquisition is aborted | Fixture fallback is **not** invoked. An abort is not a failure. |
-| Refresh fails while a prior version is cached | The controller's `stale-when-cached` failure policy prefers the prior ready version over surfacing a hard error. Earthquake presentation may still paint that live snapshot while snapshot age is ≤ 60 min (status stale). |
+| Refresh fails while a prior version is cached | The controller's `stale-when-cached` failure policy prefers the prior ready version over surfacing a hard error. Clouds presentation may still paint that live mosaic while observation age (`productUtcMs − validTimeMs`) is ≤ 6 h. Earthquake presentation may still paint that live snapshot while snapshot age is ≤ 60 min (status stale). |
 | Nothing has ever been acquired | Resolution reports missing; consumers must render nothing rather than improvising. |
 | Any resolve or paint | Never fetches. |
 
-Fixture bytes are application-local test and demo content and are described as such in the catalogs. They are a fallback, not a product feature. Production must not present earthquake or ISS fixtures as live.
+Fixture bytes are application-local test and demo content and are described as such in the catalogs. They are a fallback, not a product feature. Production must not present Clouds, earthquake, or ISS fixtures as live. DEV `?scenario=clouds` may paint a labeled fixture.
 
 ## Materialization
 
-Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Decoding — including JPEG decode for cloud opacity — happens during materialization, outside the frame.
+Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Clouds v1 decodes PNG and applies the IR→cloud-highlight transfer during acquisition/materialization, outside the frame. The unused Model A cloud-opacity materializer is not armed in production.
 
 Layers read prepared views. If no prepared view exists for the current product instant, the layer contributes nothing.
 
@@ -101,23 +101,22 @@ Layers read prepared views. If no prepared view exists for the current product i
 
 ## Current consumers
 
-Four consumers are wired today. Clouds/IR use a live network adapter with fixture offline fallback. Earthquakes use live USGS `all_day.geojson` with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live snapshot as stale while snapshot age is ≤ 60 min. Local magnitude/age/label/type filters are presentation over that snapshot. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
+Four consumers are wired today. Clouds use live NASA GIBS Band13 PNG with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live mosaic as stale while observation age is ≤ 6 h. Earthquakes use live USGS `all_day.geojson` with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live snapshot as stale while snapshot age is ≤ 60 min. Local magnitude/age/label/type filters are presentation over that snapshot. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
 
 | Scene / config surface | Durable `sourceId` | Kind | Live feed | Default refresh |
 |------------------------|--------------------|------|-----------|-----------------|
-| Layer `globalCloudsIr` | `global-clouds-ir-v1` | `equirectRaster` | NASA GIBS WMS, MODIS Terra Cloud Top Temperature (Day), equirect JPEG | 15 min |
+| Layer `globalCloudsIr` (user-facing **Clouds**) | `global-clouds-ir-v1` | `equirectRaster` | NASA GIBS WMS Band13 GOES-West + GOES-East + Himawari PNG stack, explicit `TIME` | 10 min |
 | Layer `earthquakes` | `usgs-earthquakes-v1` | `pointFeatures` | USGS `all_day.geojson` | 5 min |
-| Layer `orbitalTracks` | `iss-orbital-track-v1` | `tracks` | CelesTrak GP TLE for CATNR 25544, propagated to a ground track via SGP4 | 1 min |
-| `scene.illumination.cloudParticipation` | `global-clouds-ir-v1` (opacity field) | `equirectRaster` via cloud-opacity materializer | Same clouds feed as above | 15 min |
+| Layer `orbitalTracks` | `iss-orbital-track-v1` | `tracks` | CelesTrak GP TLE for CATNR 25544, propagated to a ground track via SGP4 | 2 h |
 
-The last row is deliberate: cloud participation in planetary illumination and the cloud overlay layer consume the **same** durable source. Enabling illumination participation arms acquisition even when the overlay layer is off.
+Clouds v1 does **not** arm acquisition from `scene.illumination.cloudParticipation`. Physical participation is forced off. Observational snapshots distinguish product time (`TimeContext.now`), observation time (`validTimeMs`), and acquisition time (`acquiredAtMs`); see [ADR 0022](../../decisions/0022-observational-data-three-clocks.md).
 
 ## Adding a consumer
 
 A new consumer needs, at minimum:
 
 1. A catalog entry with a durable `sourceId`, attribution, licence note, and refresh cadence.
-2. An acquisition adapter, preferably live-with-fixture-fallback from the start.
+2. An acquisition adapter. Production Clouds/earthquakes/ISS must not fixture-as-live; recorded fixtures remain for tests and DEV scenarios.
 3. A materializer, or reuse of an existing one if the shape matches.
 4. A `SceneConfig` row persisting enablement and the durable id — not the feed URL.
 5. A layer that reads prepared views only.

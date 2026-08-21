@@ -735,6 +735,7 @@ describe("LayersTab topic navigation", () => {
       "astronomyPaths",
       "spaceObjects",
       "earthquakes",
+      "weather",
       "advanced",
     ]);
     const illuminationBefore = screen.getByTestId("illumination-state").textContent;
@@ -778,6 +779,22 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByLabelText("Show label on hover")).not.toBeChecked();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
     expect(screen.queryByLabelText("Orbit track")).toBeNull();
+  });
+
+  it("Weather topic exists after Earthquakes and owns Cloud opacity plus status", () => {
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const select = screen.getByTestId("layers-topic-select") as HTMLSelectElement;
+    expect([...select.options].map((option) => option.value)).toContain("weather");
+    const illuminationBefore = screen.getByTestId("illumination-state").textContent;
+    selectLayersTopic("weather");
+    expect(screen.getByTestId("layers-topic-weather")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cloud opacity")).toBeInTheDocument();
+    expect(screen.getByTestId("clouds-topic-status").textContent).toMatch(
+      /Enable Clouds under Layer masters/,
+    );
+    expect(screen.queryByText(/Radar/)).toBeNull();
+    expect(screen.queryByLabelText("Cloud participation in illumination")).toBeNull();
+    expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
   });
 
   it("Earthquakes topic shows live-only copy in historical Demo", () => {
@@ -944,7 +961,7 @@ describe("LayersTab live overlay masters", () => {
     const user = userEvent.setup();
     render(<LayersTabCommitHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
 
-    const clouds = screen.getByLabelText("Global clouds / IR") as HTMLInputElement;
+    const clouds = screen.getByLabelText("Clouds") as HTMLInputElement;
     const quakes = screen.getByLabelText("Earthquakes") as HTMLInputElement;
     const iss = screen.getByLabelText("ISS orbital track") as HTMLInputElement;
     expect(clouds.checked).toBe(false);

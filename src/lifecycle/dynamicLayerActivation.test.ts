@@ -39,6 +39,10 @@ import {
   type LiveHttpFetchFn,
 } from "./index";
 import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
+import {
+  encodeCloudsTestPng,
+  mockCloudsLiveFetch,
+} from "./cloudsAcquisition.testSupport";
 
 const PRODUCT_MS = 1_700_000_800_000;
 
@@ -55,7 +59,7 @@ const offlineFetch: LiveHttpFetchFn = vi.fn(async () => {
 
 function hostDeps() {
   return {
-    cloudsIrLiveFetchFn: offlineFetch,
+    cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
     earthquakesLiveFetchFn: usgsLiveOkFetch(PRODUCT_MS),
     orbitalTracksLiveFetchFn: offlineFetch,
     nowMs: () => PRODUCT_MS,
@@ -131,7 +135,7 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
     host.dispose();
   });
 
-  it("revive + arm all three: clouds materialize via fixture; earthquakes via live mock; ISS stays unavailable without a live TLE", async () => {
+  it("revive + arm all three: clouds materialize via live PNG; earthquakes via live mock; ISS stays unavailable without a live TLE", async () => {
     let host = createDynamicDataLifecycleHost(hostDeps());
     host.dispose();
     host = reviveDisposedDynamicLifecycleHost(host, hostDeps());
@@ -176,7 +180,7 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
     host.dispose();
   });
 
-  it("enabling one flag arms only that consumer; cloud participation arms clouds", () => {
+  it("enabling one flag arms only that consumer; cloud participation does not arm Clouds", () => {
     const host = createDynamicDataLifecycleHost(hostDeps());
     armDynamicLifecycleConsumers(host, { ...ALL_OFF, earthquakes: true });
     expect(host.acquisition.isPeriodicActive(USGS_EARTHQUAKES_SOURCE_ID)).toBe(
@@ -195,7 +199,7 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
       cloudParticipationOn: true,
     });
     expect(host.acquisition.isPeriodicActive(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBe(
-      true,
+      false,
     );
     expect(host.acquisition.isPeriodicActive(ISS_ORBITAL_TRACK_SOURCE_ID)).toBe(
       false,
