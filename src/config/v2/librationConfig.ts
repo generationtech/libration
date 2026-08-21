@@ -841,10 +841,7 @@ export function assertIsNormalizedLibrationConfig(
     typeof dat.eventPlayback.postWaitId !== "string" ||
     typeof dat.eventPlayback.solarEnabled !== "boolean" ||
     typeof dat.eventPlayback.lunarEnabled !== "boolean" ||
-    typeof dat.eventPlayback.milkyWayEnabled !== "boolean" ||
-    typeof dat.eventPlayback.includeViewing !== "boolean" ||
-    typeof dat.eventPlayback.includeStrong !== "boolean" ||
-    typeof dat.eventPlayback.includePrime !== "boolean"
+    typeof dat.eventPlayback.milkyWayEnabled !== "boolean"
   ) {
     throw new Error("assertIsNormalizedLibrationConfig: invalid data");
   }

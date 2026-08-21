@@ -88,13 +88,13 @@ This is explanatory astronomy. A default ambient map should not be forced to sho
 
 ### Milky Way observing quality
 
-**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the zenith ribbon. [LIB-050](work/LIB-050-milky-way-visibility-geometry.md) shipped Galactic-center **altitude contours**. [LIB-051](work/LIB-051-milky-way-viewing-window-events.md) / [ADR 0018](decisions/0018-milky-way-viewing-window-is-a-reference-city-event.md) shipped a **reference-city Milky Way Viewing Window** event family (GC altitude ∩ solar darkness ∩ existing physical moonlight). [LIB-052](work/LIB-052-unified-demo-event-playback-and-milky-way-event-presentation.md) moved sequencing under Data. [LIB-053](work/LIB-053-multi-family-event-playback-and-mw-freeze-repair.md) merges solar, lunar, and MW windows into one chronological Event playback stream and adds a contour-value label toggle. That is still not an aggregated observing-quality forecast and not a whole-Earth “where can it be seen well” map.
+**Candidate.** [LIB-049](work/LIB-049-milky-way-terrestrial-visibility-geometry.md) shipped the zenith ribbon. [LIB-050](work/LIB-050-milky-way-visibility-geometry.md) shipped Galactic-center **altitude contours**. [LIB-051](work/LIB-051-milky-way-viewing-window-events.md) / [ADR 0018](decisions/0018-milky-way-viewing-window-is-a-reference-city-event.md) introduced a **reference-city Milky Way Viewing Window**. [LIB-057](work/LIB-057-milky-way-viewing-event-simplification-and-geography.md) / [ADR 0021](decisions/0021-one-primary-milky-way-viewing-event.md) collapsed Viewing / Strong / Prime into one primary window and added a **static peak-UTC line-only viewing footprint**. [LIB-052](work/LIB-052-unified-demo-event-playback-and-milky-way-event-presentation.md) / [LIB-053](work/LIB-053-multi-family-event-playback-and-mw-freeze-repair.md) keep sequencing under Data as one chronological Event playback stream. That is still not an aggregated observing-quality forecast: the footprint is event geography at peak UTC, not weather, transparency, or light pollution.
 
 Keep four concepts distinct:
 
 1. **Galactic ribbon** — where the band is overhead.
 2. **Galactic-center altitude contours** — how high the bright central Milky Way is in the sky from each location (production as of LIB-050).
-3. **Milky Way Viewing Window** — when the Galactic center is favorably elevated from the *reference city* under dark-sky geometry (production as of LIB-051).
+3. **Milky Way viewing window** — when the Galactic center is favorably elevated from the *reference city* under astronomical darkness and low modeled moonlight, with a static peak-UTC footprint (production as of LIB-057).
 4. **Observing favorability** — a later aggregate. Not implemented.
 
 A later feature could still combine:
@@ -106,7 +106,7 @@ A later feature could still combine:
 - optionally clouds
 - potentially light pollution if an authority is introduced later
 
-That would answer: “Where on Earth can the Milky Way be seen well right now?” Do not treat LIB-049 night-side emphasis, LIB-050 contour alpha, or LIB-051 city windows as that forecast.
+That would answer: “Where on Earth can the Milky Way be seen well right now?” Do not treat LIB-049 night-side emphasis, LIB-050 contour alpha, LIB-051/057 city windows, or the LIB-057 peak-UTC footprint as that forecast.
 
 Related but distinct, also unapproved:
 
@@ -283,7 +283,7 @@ Families already in the bundled catalog are listed in [`docs/IMPLEMENTATION.md`]
 - reference-city meridian line.
 - read-point alignment marker.
 - UTC meridian reference.
-- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped the zenith ribbon; LIB-050 shipped Galactic-center altitude contours; LIB-051 shipped reference-city Viewing Window events. An aggregated observing-quality forecast remains unapproved.
+- **Milky Way observing quality** — see [Milky Way observing quality](#milky-way-observing-quality). LIB-049 shipped the zenith ribbon; LIB-050 shipped Galactic-center altitude contours; LIB-057 shipped one primary reference-city viewing window plus a static peak-UTC line-only footprint. An aggregated observing-quality forecast remains unapproved.
 
 ### Dynamic and live layers
 

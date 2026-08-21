@@ -62,6 +62,7 @@ import { normalizeLunarEclipsePresentation } from "../core/eclipse/lunarEclipseA
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../core/lunarLocus";
 import { normalizeSublunarMarkerAppearance } from "../core/sublunarMarkerAppearance";
 import { resolveReferenceCityObserverLocation } from "../core/referenceCityObserver";
+import { resolveReferenceFrameCivilTimeZone } from "../core/displayTimeReference";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 
 type OverlayPart = { zIndex: number; opacity: number };
@@ -297,6 +298,7 @@ function createDerivedOverlayByProduct(
         presentation: milkyWayPresentationFromScene(config.scene),
         observer,
         cityName: city?.name,
+        timeZone: resolveReferenceFrameCivilTimeZone(config.displayTime),
         cityLabelHints:
           config.layers.cityPins && config.pinPresentation.showLabels
             ? [

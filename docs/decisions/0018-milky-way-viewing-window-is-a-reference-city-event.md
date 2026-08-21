@@ -1,6 +1,6 @@
 # 0018 — Milky Way Viewing Window is a reference-city event
 
-- **Status:** Accepted
+- **Status:** Superseded in part by [0021](0021-one-primary-milky-way-viewing-event.md) for user-facing Viewing / Strong / Prime partitions and policy `milky-way-viewing-v1`. Reference-city ownership remains.
 - **Date:** 2026-08-19 (record written with [LIB-051](../work/LIB-051-milky-way-viewing-window-events.md))
 
 ## Context

@@ -29,16 +29,15 @@ import {
   localMoonlightContribution01,
   milkyWayVisibilityMoonStateAt,
   solarAltitudeDegAt,
+  type MilkyWayVisibilityMoonState,
 } from "./milkyWayVisibilityGeometry";
 import {
-  classifyMilkyWayViewingLevel,
+  MAX_SUN_ALTITUDE_DEG,
   MILKY_WAY_VIEWING_POLICY_VERSION,
+  MIN_GC_ALTITUDE_DEG,
   milkyWayAltitudeQuality01,
-  milkyWayViewingLevelRank,
+  milkyWayViewingQualifies,
   nightlyMaximumGcAltitudeDeg,
-  VIEWING_MAX_SUN_ALTITUDE_DEG,
-  VIEWING_MIN_GC_ALTITUDE_DEG,
-  type MilkyWayViewingLevel,
 } from "./milkyWayViewingPolicy";
 import {
   isPlanetaryEphemerisSupportedUtc,
@@ -46,7 +45,7 @@ import {
   PLANETARY_EPHEMERIS_RANGE_START_MS,
   planetaryGastDeg,
 } from "./planetaryEphemeris";
-import { subpointFromApparentEquator, wrapSigned180 } from "./planetarySubpoint";
+import { subpointFromApparentEquator, wrapSigned180, type PlanetarySubpointDeg } from "./planetarySubpoint";
 import { subsolarPoint } from "./subsolarPoint";
 
 export type MilkyWayViewingObserver = {
@@ -62,6 +61,14 @@ export type MilkyWayViewingFeasibility =
   | "unsupportedRange"
   | "emptyRange";
 
+export type MilkyWayViewingInstantField = {
+  readonly utcMs: number;
+  readonly gcSub: PlanetarySubpointDeg;
+  readonly gcDeclinationDeg: number;
+  readonly subsolar: PlanetarySubpointDeg;
+  readonly moon: MilkyWayVisibilityMoonState;
+};
+
 export type MilkyWayViewingConditions = {
   readonly utcMs: number;
   readonly gcAltitudeDeg: number;
@@ -69,14 +76,15 @@ export type MilkyWayViewingConditions = {
   readonly localMoonlight01: number;
   readonly nightlyMaximumAltitudeDeg: number;
   readonly altitudeQuality01: number;
-  readonly level: MilkyWayViewingLevel | null;
+  readonly qualifies: boolean;
+  readonly moonAboveHorizon: boolean;
+  readonly lunarIlluminatedFraction: number;
 };
 
 export type MilkyWayViewingWindow = {
   readonly id: string;
   readonly policyVersion: typeof MILKY_WAY_VIEWING_POLICY_VERSION;
   readonly cityId: string;
-  readonly level: MilkyWayViewingLevel;
   readonly startUtcMs: number;
   readonly endUtcMs: number;
   readonly peakUtcMs: number;
@@ -85,6 +93,8 @@ export type MilkyWayViewingWindow = {
   readonly peakAltitudeQuality01: number;
   readonly minimumSunAltitudeDeg: number;
   readonly representativeMoonlight01: number;
+  readonly peakMoonAboveHorizon: boolean;
+  readonly peakIlluminatedFraction: number;
 };
 
 export type MilkyWayViewingSearchResult = {
@@ -127,6 +137,7 @@ type EqdSample = { readonly raDeg: number; readonly decDeg: number };
 
 const eqdCache = new Map<number, EqdSample | null>();
 const resultCache = new Map<string, MilkyWayViewingSearchResult>();
+const fieldCache = new Map<number, MilkyWayViewingInstantField | null>();
 
 function wrap360(deg: number): number {
   return ((deg % 360) + 360) % 360;
@@ -183,16 +194,18 @@ export function galacticCenterSubpointAt(
   });
 }
 
-export function milkyWayViewingConditionsAt(
-  utcMs: number,
-  observer: MilkyWayViewingObserver,
-): MilkyWayViewingConditions | null {
+export function milkyWayViewingInstantFieldAt(utcMs: number): MilkyWayViewingInstantField | null {
   if (!isPlanetaryEphemerisSupportedUtc(utcMs)) {
     return null;
+  }
+  const hit = fieldCache.get(utcMs);
+  if (hit !== undefined) {
+    return hit;
   }
   const eqd = galacticCenterEqd(utcMs);
   const gastDeg = planetaryGastDeg(utcMs);
   if (!eqd || gastDeg === null) {
+    fieldCache.set(utcMs, null);
     return null;
   }
   const gcSub = subpointFromApparentEquator({
@@ -200,53 +213,83 @@ export function milkyWayViewingConditionsAt(
     decDeg: eqd.decDeg,
     gastDeg,
   });
-  const observerPoint = { latDeg: observer.latitudeDeg, lonDeg: observer.longitudeDeg };
-  const gcAltitudeDeg = altitudeDegFromSubpoint(observerPoint, gcSub);
-  const subsolar = subsolarPoint(utcMs);
-  const solarAltitudeDeg = solarAltitudeDegAt(
-    observer.latitudeDeg,
-    observer.longitudeDeg,
-    subsolar,
-  );
   const eclipse = activeLunarEclipseAt(utcMs);
   const moon = milkyWayVisibilityMoonStateAt(
     utcMs,
     eclipse ? lunarEclipseGeometryAt(eclipse, utcMs) : null,
   );
-  const dot = geographicDirectionDotProduct(
-    observer.latitudeDeg,
-    observer.longitudeDeg,
-    moon.sublunar.latDeg,
-    moon.sublunar.lonDeg,
+  const field: MilkyWayViewingInstantField = {
+    utcMs,
+    gcSub,
+    gcDeclinationDeg: eqd.decDeg,
+    subsolar: subsolarPoint(utcMs),
+    moon,
+  };
+  fieldCache.set(utcMs, field);
+  if (fieldCache.size > 256) {
+    const oldest = fieldCache.keys().next().value;
+    if (oldest !== undefined) {
+      fieldCache.delete(oldest);
+    }
+  }
+  return field;
+}
+
+export function evaluateMilkyWayViewingAt(
+  field: MilkyWayViewingInstantField,
+  latitudeDeg: number,
+  longitudeDeg: number,
+): MilkyWayViewingConditions {
+  const observerPoint = { latDeg: latitudeDeg, lonDeg: longitudeDeg };
+  const gcAltitudeDeg = altitudeDegFromSubpoint(observerPoint, field.gcSub);
+  const solarAltitudeDeg = solarAltitudeDegAt(latitudeDeg, longitudeDeg, field.subsolar);
+  const moonDot = geographicDirectionDotProduct(
+    latitudeDeg,
+    longitudeDeg,
+    field.moon.sublunar.latDeg,
+    field.moon.sublunar.lonDeg,
   );
   const localMoonlight01 = localMoonlightContribution01(
-    dot,
-    moon.lunarIlluminatedFraction,
-    moon.moonlightTransmission01,
+    moonDot,
+    field.moon.lunarIlluminatedFraction,
+    field.moon.moonlightTransmission01,
   );
   const nightlyMaximumAltitudeDeg = nightlyMaximumGcAltitudeDeg(
-    observer.latitudeDeg,
-    eqd.decDeg,
+    latitudeDeg,
+    field.gcDeclinationDeg,
   );
   const altitudeQuality01 = milkyWayAltitudeQuality01(
     gcAltitudeDeg,
     nightlyMaximumAltitudeDeg,
   );
-  const level = classifyMilkyWayViewingLevel({
+  const qualifies = milkyWayViewingQualifies({
     gcAltitudeDeg,
     solarAltitudeDeg,
     localMoonlight01,
     nightlyMaximumAltitudeDeg,
   });
   return {
-    utcMs,
+    utcMs: field.utcMs,
     gcAltitudeDeg,
     solarAltitudeDeg,
     localMoonlight01,
     nightlyMaximumAltitudeDeg,
     altitudeQuality01,
-    level,
+    qualifies,
+    moonAboveHorizon: moonDot > 0,
+    lunarIlluminatedFraction: field.moon.lunarIlluminatedFraction,
   };
+}
+
+export function milkyWayViewingConditionsAt(
+  utcMs: number,
+  observer: MilkyWayViewingObserver,
+): MilkyWayViewingConditions | null {
+  const field = milkyWayViewingInstantFieldAt(utcMs);
+  if (!field) {
+    return null;
+  }
+  return evaluateMilkyWayViewingAt(field, observer.latitudeDeg, observer.longitudeDeg);
 }
 
 function estimateCulminationUtcMs(
@@ -280,42 +323,28 @@ function nightMightOverlapGc(
 ): boolean {
   for (const t of [culmMs - 6 * HOUR_MS, culmMs, culmMs + 6 * HOUR_MS]) {
     const sun = sunAltitudeAt(t, observer);
-    if (sun !== null && sun <= VIEWING_MAX_SUN_ALTITUDE_DEG) {
+    if (sun !== null && sun <= MAX_SUN_ALTITUDE_DEG) {
       return true;
     }
   }
   return false;
 }
 
-function milkyWayViewingWindowId(
-  cityId: string,
-  startUtcMs: number,
-  level: MilkyWayViewingLevel,
-): string {
-  return `milky-way:${cityId}:${startUtcMs}:${level}`;
+function milkyWayViewingWindowId(cityId: string, startUtcMs: number): string {
+  return `milky-way:${cityId}:${startUtcMs}`;
 }
 
-function matchesLevel(
-  utcMs: number,
-  observer: MilkyWayViewingObserver,
-  wantLevel: MilkyWayViewingLevel,
-): boolean {
-  const c = milkyWayViewingConditionsAt(utcMs, observer);
-  return c?.level === wantLevel;
+function matchesQualifies(utcMs: number, observer: MilkyWayViewingObserver): boolean {
+  return milkyWayViewingConditionsAt(utcMs, observer)?.qualifies === true;
 }
 
-/** First instant in (lo, hi] at which `wantLevel` holds. lo is known false. */
-function refineStart(
-  lo: number,
-  hi: number,
-  observer: MilkyWayViewingObserver,
-  wantLevel: MilkyWayViewingLevel,
-): number {
+/** First instant in (lo, hi] at which the window holds. lo is known false. */
+function refineStart(lo: number, hi: number, observer: MilkyWayViewingObserver): number {
   let a = lo;
   let b = hi;
   for (let i = 0; i < 24 && b - a > BOUNDARY_TOLERANCE_MS; i += 1) {
     const mid = Math.floor((a + b) / 2);
-    if (matchesLevel(mid, observer, wantLevel)) {
+    if (matchesQualifies(mid, observer)) {
       b = mid;
     } else {
       a = mid;
@@ -324,18 +353,13 @@ function refineStart(
   return b;
 }
 
-/** First instant in (lo, hi] at which `wantLevel` fails (exclusive end). lo is known true. */
-function refineEnd(
-  lo: number,
-  hi: number,
-  observer: MilkyWayViewingObserver,
-  wantLevel: MilkyWayViewingLevel,
-): number {
+/** First instant in (lo, hi] at which the window fails (exclusive end). lo is known true. */
+function refineEnd(lo: number, hi: number, observer: MilkyWayViewingObserver): number {
   let a = lo;
   let b = hi;
   for (let i = 0; i < 24 && b - a > BOUNDARY_TOLERANCE_MS; i += 1) {
     const mid = Math.floor((a + b) / 2);
-    if (matchesLevel(mid, observer, wantLevel)) {
+    if (matchesQualifies(mid, observer)) {
       a = mid;
     } else {
       b = mid;
@@ -393,12 +417,17 @@ function peakInside(
   return { peakUtcMs: bestT, peakAltitudeDeg: bestH };
 }
 
-function minSunAndMoonAtPeak(
+function factsAtPeak(
   startUtcMs: number,
   endUtcMs: number,
   peakUtcMs: number,
   observer: MilkyWayViewingObserver,
-): { minimumSunAltitudeDeg: number; representativeMoonlight01: number } {
+): {
+  minimumSunAltitudeDeg: number;
+  representativeMoonlight01: number;
+  peakMoonAboveHorizon: boolean;
+  peakIlluminatedFraction: number;
+} {
   let minSun = 90;
   const step = Math.max(60_000, Math.floor((endUtcMs - startUtcMs) / 16));
   for (let t = startUtcMs; t <= endUtcMs; t += step) {
@@ -415,6 +444,8 @@ function minSunAndMoonAtPeak(
   return {
     minimumSunAltitudeDeg: minSun,
     representativeMoonlight01: peak?.localMoonlight01 ?? 0,
+    peakMoonAboveHorizon: peak?.moonAboveHorizon ?? false,
+    peakIlluminatedFraction: peak?.lunarIlluminatedFraction ?? 1,
   };
 }
 
@@ -464,11 +495,11 @@ function enumerateUncached(
   if (hMax < 0) {
     return { windows: [], feasibility: "gcNeverRises", nightlyMaximumAltitudeDeg: hMax };
   }
-  if (hMax < VIEWING_MIN_GC_ALTITUDE_DEG) {
+  if (hMax < MIN_GC_ALTITUDE_DEG) {
     return { windows: [], feasibility: "gcInsufficient", nightlyMaximumAltitudeDeg: hMax };
   }
 
-  type Sample = { t: number; level: MilkyWayViewingLevel | null };
+  type Sample = { t: number; qualifies: boolean };
   const samples: Sample[] = [];
   const day0 = Math.floor(clipped.startUtcMs / DAY_MS) * DAY_MS - DAY_MS;
   const dayN = Math.ceil(clipped.endUtcMs / DAY_MS) * DAY_MS + DAY_MS;
@@ -482,7 +513,7 @@ function enumerateUncached(
       continue;
     }
     const dayHMax = nightlyMaximumGcAltitudeDeg(observer.latitudeDeg, eqd.decDeg);
-    if (dayHMax < VIEWING_MIN_GC_ALTITUDE_DEG) {
+    if (dayHMax < MIN_GC_ALTITUDE_DEG) {
       continue;
     }
     const culm = estimateCulminationUtcMs(noon, observer.longitudeDeg, eqd.raDeg);
@@ -499,11 +530,11 @@ function enumerateUncached(
     }
     for (let t = from; t <= to; t += COARSE_STEP_MS) {
       const c = milkyWayViewingConditionsAt(t, observer);
-      samples.push({ t, level: c?.level ?? null });
+      samples.push({ t, qualifies: c?.qualifies === true });
     }
     if (samples.length === 0 || samples[samples.length - 1]!.t < to) {
       const c = milkyWayViewingConditionsAt(to, observer);
-      samples.push({ t: to, level: c?.level ?? null });
+      samples.push({ t: to, qualifies: c?.qualifies === true });
     }
   }
   samples.sort((a, b) => a.t - b.t);
@@ -511,7 +542,7 @@ function enumerateUncached(
   for (const s of samples) {
     const prev = deduped[deduped.length - 1];
     if (prev && prev.t === s.t) {
-      prev.level = s.level;
+      prev.qualifies = s.qualifies;
     } else {
       deduped.push({ ...s });
     }
@@ -521,15 +552,14 @@ function enumerateUncached(
   let i = 0;
   while (i < deduped.length) {
     const startSample = deduped[i]!;
-    if (startSample.level === null) {
+    if (!startSample.qualifies) {
       i += 1;
       continue;
     }
-    const level = startSample.level;
     let j = i + 1;
     while (
       j < deduped.length &&
-      deduped[j]!.level === level &&
+      deduped[j]!.qualifies &&
       deduped[j]!.t - deduped[j - 1]!.t <= COARSE_STEP_MS * 2
     ) {
       j += 1;
@@ -540,14 +570,14 @@ function enumerateUncached(
     const startUtc =
       prev === null || startSample.t - prev.t > COARSE_STEP_MS * 2
         ? startSample.t
-        : refineStart(prev.t, startSample.t, observer, level);
+        : refineStart(prev.t, startSample.t, observer);
     const endUtc =
       next === null || next.t - last.t > COARSE_STEP_MS * 2
         ? Math.min(clipped.endUtcMs, last.t + COARSE_STEP_MS)
-        : refineEnd(last.t, next.t, observer, level);
+        : refineEnd(last.t, next.t, observer);
     if (endUtc - startUtc >= MIN_INTERVAL_MS) {
       const peak = peakInside(startUtc, Math.max(startUtc, endUtc - 1), observer);
-      const facts = minSunAndMoonAtPeak(
+      const facts = factsAtPeak(
         startUtc,
         Math.max(startUtc, endUtc - 1),
         peak.peakUtcMs,
@@ -555,10 +585,9 @@ function enumerateUncached(
       );
       const quality = milkyWayAltitudeQuality01(peak.peakAltitudeDeg, hMax);
       windows.push({
-        id: milkyWayViewingWindowId(observer.cityId, startUtc, level),
+        id: milkyWayViewingWindowId(observer.cityId, startUtc),
         policyVersion: MILKY_WAY_VIEWING_POLICY_VERSION,
         cityId: observer.cityId,
-        level,
         startUtcMs: startUtc,
         endUtcMs: endUtc,
         peakUtcMs: peak.peakUtcMs,
@@ -567,16 +596,14 @@ function enumerateUncached(
         peakAltitudeQuality01: quality,
         minimumSunAltitudeDeg: facts.minimumSunAltitudeDeg,
         representativeMoonlight01: facts.representativeMoonlight01,
+        peakMoonAboveHorizon: facts.peakMoonAboveHorizon,
+        peakIlluminatedFraction: facts.peakIlluminatedFraction,
       });
     }
     i = j;
   }
 
-  windows.sort(
-    (a, b) =>
-      a.startUtcMs - b.startUtcMs ||
-      milkyWayViewingLevelRank(b.level) - milkyWayViewingLevelRank(a.level),
-  );
+  windows.sort((a, b) => a.startUtcMs - b.startUtcMs);
   for (let k = 1; k < windows.length; k += 1) {
     const prevW = windows[k - 1]!;
     const cur = windows[k]!;
@@ -585,7 +612,7 @@ function enumerateUncached(
       windows[k] = {
         ...cur,
         startUtcMs: prevW.endUtcMs,
-        id: milkyWayViewingWindowId(observer.cityId, prevW.endUtcMs, cur.level),
+        id: milkyWayViewingWindowId(observer.cityId, prevW.endUtcMs),
       };
     }
   }
@@ -600,9 +627,8 @@ export function listMilkyWayViewingWindows(args: {
   observer: MilkyWayViewingObserver;
   startUtcMs: number;
   endUtcMs: number;
-  levels?: readonly MilkyWayViewingLevel[];
 }): MilkyWayViewingSearchResult {
-  const { observer, startUtcMs, endUtcMs, levels } = args;
+  const { observer, startUtcMs, endUtcMs } = args;
   if (!(endUtcMs > startUtcMs) || !Number.isFinite(startUtcMs) || !Number.isFinite(endUtcMs)) {
     return { windows: [], feasibility: "emptyRange", nightlyMaximumAltitudeDeg: null };
   }
@@ -618,14 +644,7 @@ export function listMilkyWayViewingWindows(args: {
       }
     }
   }
-  if (!levels || levels.length === 0) {
-    return result;
-  }
-  const allow = new Set(levels);
-  return {
-    ...result,
-    windows: result.windows.filter((w) => allow.has(w.level)),
-  };
+  return result;
 }
 
 function nextSearchChunkMs(expansion: number): number {
@@ -639,7 +658,6 @@ export function searchMilkyWayWindowsForward(args: {
   observer: MilkyWayViewingObserver;
   startUtcMs: number;
   endUtcMs: number;
-  levels?: readonly MilkyWayViewingLevel[];
 }): MilkyWayViewingWindow[] {
   if (!(args.endUtcMs > args.startUtcMs)) {
     return [];
@@ -654,7 +672,6 @@ export function searchMilkyWayWindowsForward(args: {
       observer: args.observer,
       startUtcMs: cursor,
       endUtcMs: chunkEnd,
-      levels: args.levels,
     });
     out.push(...listed.windows);
     cursor = chunkEnd;
@@ -666,13 +683,11 @@ export function searchMilkyWayWindowsForward(args: {
 export function findNextMilkyWayViewingWindow(args: {
   observer: MilkyWayViewingObserver;
   afterUtcMs: number;
-  level?: MilkyWayViewingLevel;
   horizonMs?: number;
   endUtcMs?: number;
 }): MilkyWayViewingWindow | null {
   const horizonMs = args.horizonMs ?? 365 * DAY_MS;
   const searchEnd = args.endUtcMs ?? args.afterUtcMs + horizonMs;
-  const levels = args.level ? [args.level] : undefined;
   let cursor = args.afterUtcMs;
   let expansion = 0;
   while (cursor < searchEnd) {
@@ -682,7 +697,6 @@ export function findNextMilkyWayViewingWindow(args: {
       observer: args.observer,
       startUtcMs: cursor,
       endUtcMs: chunkEnd,
-      levels,
     });
     for (const w of listed.windows) {
       if (w.startUtcMs > args.afterUtcMs) {
@@ -702,9 +716,7 @@ export function findPreviousMilkyWayViewingWindow(args: {
   observer: MilkyWayViewingObserver;
   beforeUtcMs: number;
   startUtcMs: number;
-  level?: MilkyWayViewingLevel;
 }): MilkyWayViewingWindow | null {
-  const levels = args.level ? [args.level] : undefined;
   let cursor = args.beforeUtcMs;
   let expansion = 0;
   while (cursor > args.startUtcMs) {
@@ -714,7 +726,6 @@ export function findPreviousMilkyWayViewingWindow(args: {
       observer: args.observer,
       startUtcMs: chunkStart,
       endUtcMs: cursor,
-      levels,
     });
     for (let i = listed.windows.length - 1; i >= 0; i -= 1) {
       const w = listed.windows[i]!;
@@ -743,5 +754,6 @@ export function windowContainingUtc(
 export function resetMilkyWayViewingWindowCacheForTests(): void {
   eqdCache.clear();
   resultCache.clear();
+  fieldCache.clear();
   resetMilkyWayEnumerateStatsForTests();
 }

@@ -14,7 +14,8 @@
 import { SCENE_LAYER_Z_INDEX_WHEN_UNSCOPED } from "../config/sceneLayerOrder";
 import { isPlanetaryEphemerisSupportedUtc } from "../core/planetaryEphemeris";
 import { sampleMilkyWayGeometry } from "../core/milkyWayGeometry";
-import { resolveMilkyWayEventMapLabel } from "../core/milkyWayEventLabel";
+import { resolveMilkyWayEventMapLabel, resolvePresentedMilkyWayWindow } from "../core/milkyWayEventLabel";
+import { milkyWayViewingFootprint } from "../core/milkyWayViewingFootprint";
 import {
   DEFAULT_MILKY_WAY_PRESENTATION,
   milkyWayEnabledContourAltitudesDeg,
@@ -42,6 +43,7 @@ export function createMilkyWayLayer(
     presentation?: MilkyWayPresentation;
     observer?: MilkyWayViewingObserver | null;
     cityName?: string;
+    timeZone?: string;
     cityLabelHints?: readonly MilkyWayAvoidCityLabel[];
   } = {},
 ): Layer {
@@ -52,6 +54,7 @@ export function createMilkyWayLayer(
   );
   const observer = options.observer ?? null;
   const cityName = options.cityName ?? "";
+  const timeZone = options.timeZone ?? "UTC";
   const cityLabelHints = options.cityLabelHints ?? [];
   return {
     id: MILKY_WAY_LAYER_ID,
@@ -78,10 +81,23 @@ export function createMilkyWayLayer(
               observer,
               cityName,
               productUtcMs: time.now,
+              timeZone,
             })
           : null;
+      const presentedWindow =
+        supported && presentation.viewingEventsEnabled && presentation.showViewingFootprint
+          ? resolvePresentedMilkyWayWindow({
+              presentation,
+              observer,
+              productUtcMs: time.now,
+            })
+          : null;
+      const viewingFootprintRings =
+        presentedWindow !== null
+          ? milkyWayViewingFootprint(presentedWindow.window).rings
+          : null;
       const geometry =
-        supported && (needsRibbon || needsVisibility || eventLabel !== null)
+        supported && (needsRibbon || needsVisibility || eventLabel !== null || (viewingFootprintRings?.length ?? 0) > 0)
           ? sampleMilkyWayGeometry(time.now, presentation.bandWidth, {
               tagNight: presentation.emphasizeNightSide,
             })
@@ -101,6 +117,7 @@ export function createMilkyWayLayer(
         geometry,
         visibility,
         eventLabel,
+        viewingFootprintRings,
         ...(cityLabelHints.length > 0 ? { labelAvoidCityLabels: cityLabelHints } : {}),
         readability: {
           nightVeil01: frame.globalReadabilityVeil01,

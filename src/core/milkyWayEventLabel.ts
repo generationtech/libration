@@ -12,18 +12,16 @@
  */
 
 /**
- * Milky Way Viewing Window map-label presentation. Consumes ADR 0018 windows;
+ * Milky Way Viewing Window map-label presentation. Consumes ADR 0021 windows;
  * does not redefine thresholds. One label: active selected window, else the
- * next highest-quality selected window within the advance horizon.
+ * next window within the advance horizon.
  */
 
-import { formatEclipseRelativeTime } from "./eclipse/eclipseEventCopy";
 import {
-  milkyWayEnabledViewingLevels,
   milkyWayEventLabelHorizonMs,
   type MilkyWayPresentation,
 } from "./milkyWayPresentation";
-import { milkyWayViewingLevelRank, type MilkyWayViewingLevel } from "./milkyWayViewingPolicy";
+import { formatMilkyWayViewingRelativePhrase } from "./milkyWayViewingStatus";
 import {
   galacticCenterSubpointAt,
   listMilkyWayViewingWindows,
@@ -42,8 +40,9 @@ export type MilkyWayEventMapLabel = {
   readonly latDeg: number;
   readonly lonDeg: number;
   readonly lifecycle: MilkyWayEventLabelLifecycle;
-  readonly level: MilkyWayViewingLevel;
   readonly cityName: string;
+  readonly windowId: string;
+  readonly peakUtcMs: number;
 };
 
 type CacheEntry = {
@@ -57,33 +56,23 @@ export function resetMilkyWayEventLabelCacheForTests(): void {
   labelCache = null;
 }
 
-export function milkyWayEventLabelLevelBit(level: MilkyWayViewingLevel): string {
-  switch (level) {
-    case "prime":
-      return "MW Prime";
-    case "strong":
-      return "MW Strong";
-    case "viewing":
-      return "MW Viewing";
-    default: {
-      const _exhaustive: never = level;
-      return _exhaustive;
-    }
-  }
-}
-
 export function formatMilkyWayEventLabelText(args: {
   readonly cityName: string;
-  readonly level: MilkyWayViewingLevel;
   readonly lifecycle: MilkyWayEventLabelLifecycle;
   readonly relative: string | null;
 }): string {
-  const bit = milkyWayEventLabelLevelBit(args.level);
+  const city = args.cityName.trim();
   if (args.lifecycle === "active") {
-    return `${args.cityName} · ${bit}`;
+    const compact = `${city} · MW viewing`;
+    const full = `${city} · Milky Way viewing`;
+    return full.length > 36 ? compact : full;
   }
   const rel = args.relative && args.relative !== "now" ? args.relative : null;
-  return rel ? `${args.cityName} · ${bit} · ${rel}` : `${args.cityName} · ${bit}`;
+  const full = rel ? `${city} · Milky Way · ${rel}` : `${city} · Milky Way`;
+  if (full.length > 40) {
+    return rel ? `${city} · MW viewing · ${rel}` : `${city} · MW viewing`;
+  }
+  return full;
 }
 
 function pickUpcoming(
@@ -97,13 +86,7 @@ function pickUpcoming(
     if (!(w.startUtcMs > nowUtcMs && w.startUtcMs <= until)) {
       continue;
     }
-    if (!best) {
-      best = w;
-      continue;
-    }
-    const rank = milkyWayViewingLevelRank(w.level);
-    const bestRank = milkyWayViewingLevelRank(best.level);
-    if (rank > bestRank || (rank === bestRank && w.startUtcMs < best.startUtcMs)) {
+    if (!best || w.startUtcMs < best.startUtcMs) {
       best = w;
     }
   }
@@ -113,7 +96,6 @@ function pickUpcoming(
 function windowsForLabel(args: {
   readonly observer: MilkyWayViewingObserver;
   readonly nowUtcMs: number;
-  readonly levels: readonly MilkyWayViewingLevel[];
   readonly horizonMs: number;
 }): readonly MilkyWayViewingWindow[] {
   const bucket = Math.floor(args.nowUtcMs / LABEL_BUCKET_MS);
@@ -122,7 +104,6 @@ function windowsForLabel(args: {
     args.observer.latitudeDeg.toFixed(4),
     args.observer.longitudeDeg.toFixed(4),
     String(bucket),
-    args.levels.join(","),
     String(args.horizonMs),
   ].join("|");
   if (labelCache && labelCache.key === key) {
@@ -132,34 +113,27 @@ function windowsForLabel(args: {
     observer: args.observer,
     startUtcMs: args.nowUtcMs - LOOKUP_PAD_MS,
     endUtcMs: args.nowUtcMs + Math.max(args.horizonMs, LOOKUP_PAD_MS) + LOOKUP_PAD_MS,
-    levels: args.levels,
   });
   labelCache = { key, windows: listed.windows };
   return listed.windows;
 }
 
-export function resolveMilkyWayEventMapLabel(args: {
+export function resolvePresentedMilkyWayWindow(args: {
   readonly presentation: MilkyWayPresentation;
   readonly observer: MilkyWayViewingObserver | null;
-  readonly cityName: string;
   readonly productUtcMs: number;
-}): MilkyWayEventMapLabel | null {
+}): { window: MilkyWayViewingWindow; lifecycle: MilkyWayEventLabelLifecycle } | null {
   const pres = args.presentation;
-  if (!pres.viewingEventsEnabled || !pres.showViewingEventLabels) {
+  if (!pres.viewingEventsEnabled) {
     return null;
   }
-  if (!args.observer || !args.cityName.trim()) {
-    return null;
-  }
-  const levels = milkyWayEnabledViewingLevels(pres);
-  if (levels.length === 0) {
+  if (!args.observer) {
     return null;
   }
   const horizonMs = milkyWayEventLabelHorizonMs(pres.eventLabelAdvanceHorizonId);
   const windows = windowsForLabel({
     observer: args.observer,
     nowUtcMs: args.productUtcMs,
-    levels,
     horizonMs,
   });
   const active = windowContainingUtc(windows, args.productUtcMs);
@@ -167,9 +141,36 @@ export function resolveMilkyWayEventMapLabel(args: {
   if (!chosen) {
     return null;
   }
-  const lifecycle: MilkyWayEventLabelLifecycle = active ? "active" : "upcoming";
+  return { window: chosen, lifecycle: active ? "active" : "upcoming" };
+}
+
+export function resolveMilkyWayEventMapLabel(args: {
+  readonly presentation: MilkyWayPresentation;
+  readonly observer: MilkyWayViewingObserver | null;
+  readonly cityName: string;
+  readonly productUtcMs: number;
+  readonly timeZone?: string;
+}): MilkyWayEventMapLabel | null {
+  const pres = args.presentation;
+  if (!pres.showViewingEventLabels) {
+    return null;
+  }
+  if (!args.cityName.trim()) {
+    return null;
+  }
+  const presented = resolvePresentedMilkyWayWindow(args);
+  if (!presented) {
+    return null;
+  }
+  const { window: chosen, lifecycle } = presented;
   const relative =
-    lifecycle === "upcoming" ? formatEclipseRelativeTime(args.productUtcMs, chosen.startUtcMs) : null;
+    lifecycle === "upcoming"
+      ? formatMilkyWayViewingRelativePhrase(
+          args.productUtcMs,
+          chosen.startUtcMs,
+          args.timeZone ?? "UTC",
+        )
+      : null;
   const sub = galacticCenterSubpointAt(args.productUtcMs);
   if (!sub) {
     return null;
@@ -177,14 +178,14 @@ export function resolveMilkyWayEventMapLabel(args: {
   return {
     text: formatMilkyWayEventLabelText({
       cityName: args.cityName,
-      level: chosen.level,
       lifecycle,
       relative,
     }),
     latDeg: sub.latDeg,
     lonDeg: sub.lonDeg,
     lifecycle,
-    level: chosen.level,
     cityName: args.cityName,
+    windowId: chosen.id,
+    peakUtcMs: chosen.peakUtcMs,
   };
 }

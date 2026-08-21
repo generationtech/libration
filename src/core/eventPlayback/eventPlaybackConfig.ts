@@ -38,9 +38,6 @@ export const DEFAULT_EVENT_PLAYBACK_LOOP = DEFAULT_ECLIPSE_TOUR_LOOP;
 export const DEFAULT_EVENT_PLAYBACK_SOLAR_ENABLED = true;
 export const DEFAULT_EVENT_PLAYBACK_LUNAR_ENABLED = true;
 export const DEFAULT_EVENT_PLAYBACK_MILKY_WAY_ENABLED = true;
-export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING = false;
-export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG = true;
-export const DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME = true;
 
 export type EventPlaybackConfig = {
   readonly startDateYmd: string;
@@ -51,9 +48,6 @@ export type EventPlaybackConfig = {
   readonly solarEnabled: boolean;
   readonly lunarEnabled: boolean;
   readonly milkyWayEnabled: boolean;
-  readonly includeViewing: boolean;
-  readonly includeStrong: boolean;
-  readonly includePrime: boolean;
 };
 
 export type EventPlaybackConfigPatch = Partial<EventPlaybackConfig>;
@@ -102,6 +96,8 @@ export type NormalizeEventPlaybackOptions = {
  * Normalize durable event-playback preferences.
  * `legacyEclipseTour` migrates pre-LIB-052 `scene.eclipseTour` when playback prefs are absent.
  * LIB-052 `{ family, eclipse, milkyWay }` migrates to a shared range plus enabled-type set.
+ * Pre-LIB-057 Viewing/Strong/Prime include flags are omitted from current config.
+ * If the MW source was enabled, it stays enabled regardless of old level filters.
  */
 export function normalizeEventPlayback(
   raw: unknown,
@@ -122,9 +118,6 @@ export function normalizeEventPlayback(
       solarEnabled: eclipse.includeSolar,
       lunarEnabled: eclipse.includeLunar,
       milkyWayEnabled: false,
-      includeViewing: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING,
-      includeStrong: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG,
-      includePrime: DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME,
     };
   }
 
@@ -136,7 +129,6 @@ export function normalizeEventPlayback(
       getMilkyWayPlaybackCalendarBounds(),
       nowMs,
     );
-    const mwRaw = isPlainObject(o.milkyWay) ? o.milkyWay : {};
     const family = o.family === "milkyWay" ? "milkyWay" : "eclipses";
     const shared = family === "milkyWay" ? mwShaped : eclipse;
     return {
@@ -148,9 +140,6 @@ export function normalizeEventPlayback(
       solarEnabled: family === "eclipses" ? eclipse.includeSolar : false,
       lunarEnabled: family === "eclipses" ? eclipse.includeLunar : false,
       milkyWayEnabled: family === "milkyWay",
-      includeViewing: flag(mwRaw.includeViewing, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING),
-      includeStrong: flag(mwRaw.includeStrong, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG),
-      includePrime: flag(mwRaw.includePrime, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME),
     };
   }
 
@@ -176,9 +165,6 @@ export function normalizeEventPlayback(
     solarEnabled: flag(o.solarEnabled, DEFAULT_EVENT_PLAYBACK_SOLAR_ENABLED),
     lunarEnabled: flag(o.lunarEnabled, DEFAULT_EVENT_PLAYBACK_LUNAR_ENABLED),
     milkyWayEnabled: flag(o.milkyWayEnabled, DEFAULT_EVENT_PLAYBACK_MILKY_WAY_ENABLED),
-    includeViewing: flag(o.includeViewing, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_VIEWING),
-    includeStrong: flag(o.includeStrong, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_STRONG),
-    includePrime: flag(o.includePrime, DEFAULT_MILKY_WAY_PLAYBACK_INCLUDE_PRIME),
   };
 }
 
@@ -198,27 +184,8 @@ export function applyEventPlayback(
   return normalizeEventPlayback({ ...current, ...patch }, { nowMs });
 }
 
-export function milkyWayPlaybackLevels(
-  pb: Pick<EventPlaybackConfig, "includeViewing" | "includeStrong" | "includePrime">,
-): Array<"viewing" | "strong" | "prime"> {
-  const out: Array<"viewing" | "strong" | "prime"> = [];
-  if (pb.includeViewing) {
-    out.push("viewing");
-  }
-  if (pb.includeStrong) {
-    out.push("strong");
-  }
-  if (pb.includePrime) {
-    out.push("prime");
-  }
-  return out;
-}
-
 export function eventPlaybackHasEnabledType(pb: EventPlaybackConfig): boolean {
-  if (pb.solarEnabled || pb.lunarEnabled) {
-    return true;
-  }
-  return pb.milkyWayEnabled && milkyWayPlaybackLevels(pb).length > 0;
+  return pb.solarEnabled || pb.lunarEnabled || pb.milkyWayEnabled;
 }
 
 export function eventPlaybackStartBlockedReason(
@@ -227,11 +194,6 @@ export function eventPlaybackStartBlockedReason(
 ): string | null {
   if (!pb.solarEnabled && !pb.lunarEnabled && !pb.milkyWayEnabled) {
     return "Select at least one event type";
-  }
-  if (pb.milkyWayEnabled && milkyWayPlaybackLevels(pb).length === 0) {
-    if (!pb.solarEnabled && !pb.lunarEnabled) {
-      return "No selected MW levels.";
-    }
   }
   if (pb.milkyWayEnabled && !hasReferenceCity && !pb.solarEnabled && !pb.lunarEnabled) {
     return "Select a reference city to sequence Milky Way windows.";

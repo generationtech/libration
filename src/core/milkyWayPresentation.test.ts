@@ -41,11 +41,12 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.emphasizeAstronomicalNight).toBe(true);
     expect(n.deemphasizeMoonlight).toBe(true);
     expect(n.viewingEventsEnabled).toBe(false);
-    expect(n.showViewingWindows).toBe(true);
-    expect(n.showStrongWindows).toBe(true);
-    expect(n.showPrimeWindows).toBe(true);
     expect(n.showViewingEventLabels).toBe(true);
+    expect(n.showViewingFootprint).toBe(true);
+    expect(n.viewingFootprintColor).toBe("#c97ba8");
+    expect(n.viewingFootprintThickness).toBe("normal");
     expect(n.eventLabelAdvanceHorizonId).toBe("2d");
+    expect("showPrimeWindows" in n).toBe(false);
   });
 
   it("preserves explicit persisted values and rejects unknown tokens", () => {
@@ -59,6 +60,22 @@ describe("normalizeMilkyWayPresentation", () => {
     expect(n.bandWidth).toBe("wide");
     expect(n.planeColor).toBe("#ff00ff");
     expect(n.galacticAnticenterEnabled).toBe(true);
+    const migrated = normalizeMilkyWayPresentation({
+      viewingEventsEnabled: true,
+      showViewingWindows: false,
+      showStrongWindows: false,
+      showPrimeWindows: false,
+    });
+    expect(migrated.viewingEventsEnabled).toBe(true);
+    expect(migrated.showViewingEventLabels).toBe(false);
+    expect("showPrimeWindows" in migrated).toBe(false);
+    expect("showViewingWindows" in migrated).toBe(false);
+    const labelsOn = normalizeMilkyWayPresentation({
+      viewingEventsEnabled: true,
+      showViewingWindows: true,
+      showStrongWindows: false,
+    });
+    expect(labelsOn.showViewingEventLabels).toBe(true);
     const bad = normalizeMilkyWayPresentation({ bandWidth: "huge" });
     expect(bad.bandWidth).toBe("normal");
   });

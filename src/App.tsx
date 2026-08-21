@@ -94,6 +94,7 @@ import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import {
   eclipseInfoPresentationFromScene,
   lunarEclipsePresentationFromScene,
+  milkyWayPresentationFromScene,
   solarEclipsePresentationFromScene,
   referenceCityEclipsePresentationFromScene,
 } from "./config/v2/sceneConfig";
@@ -109,10 +110,9 @@ import {
   type IssConfigStatusHint,
 } from "./lifecycle";
 import { milkyWayViewingConditionsAt } from "./core/milkyWayViewingWindows";
-import { milkyWayViewingLevelLabel } from "./core/milkyWayViewingStatus";
+import { collectProductEventNotices } from "./core/collectProductEventNotices";
 import { resolveReferenceCityObserverLocation } from "./core/referenceCityObserver";
 import { resolveReferenceCityEclipseCircumstances } from "./core/eclipse/referenceCityEclipseCircumstances";
-import { formatEclipseHudStatus } from "./core/referenceCityEclipseStatus";
 import { resolveReferenceFrameCivilTimeZone } from "./core/displayTimeReference";
 import { displayTimeModeFromTopBandTimeMode } from "./core/displayTimeMode";
 import { REFERENCE_CITIES } from "./data/referenceCities";
@@ -155,8 +155,8 @@ function extraStatusLines(
     productUtcMs < event.milkyWay.endUtcMs
   ) {
     const instant = milkyWayViewingConditionsAt(productUtcMs, observer);
-    if (instant?.level) {
-      lines.push(`Active ${milkyWayViewingLevelLabel(instant.level)}`);
+    if (instant?.qualifies) {
+      lines.push("Active viewing window");
     }
   }
   return lines;
@@ -844,14 +844,30 @@ export default function App() {
         circumstances,
         cityName,
       });
-      const eclipseStatusText = e4pres.chromeStatusEnabled
-        ? formatEclipseHudStatus(
-            eventInfo.presentation,
-            resolveReferenceFrameCivilTimeZone(derivedAppConfigRef.current.displayTime),
-            displayTimeModeFromTopBandTimeMode(derivedAppConfigRef.current.displayTime.topBandMode),
-            { unsupported: eventInfo.unsupported },
-          )
-        : null;
+      const noticeStack = collectProductEventNotices({
+        eclipseInput: {
+          frame: eclipseFrame,
+          solarEnabled: derivedAppConfigRef.current.layers.solarEclipse,
+          lunarEnabled: derivedAppConfigRef.current.layers.lunarEclipse,
+          solar: solarPres,
+          lunar: lunarPres,
+          circumstances,
+          cityName,
+        },
+        chromeStatusEnabled: e4pres.chromeStatusEnabled,
+        eclipseUnsupported: eventInfo.unsupported,
+        timeZone: resolveReferenceFrameCivilTimeZone(derivedAppConfigRef.current.displayTime),
+        displayTimeMode: displayTimeModeFromTopBandTimeMode(
+          derivedAppConfigRef.current.displayTime.topBandMode,
+        ),
+        milkyWayPresentation: milkyWayPresentationFromScene(scene),
+        milkyWayObserver: observer,
+        productUtcMs: time.now,
+      });
+      const eventNoticeTexts = [
+        ...noticeStack.visible.map((n) => n.text),
+        ...(noticeStack.overflowText ? [noticeStack.overflowText] : []),
+      ];
       const chromeState = buildDisplayChromeState({
         time,
         viewport,
@@ -859,7 +875,7 @@ export default function App() {
         displayTime: derivedAppConfigRef.current.displayTime,
         geography: derivedAppConfigRef.current.geography,
         displayChromeLayout: derivedAppConfigRef.current.displayChromeLayout,
-        eclipseStatusText,
+        eventNoticeTexts,
       });
       const input = buildSceneRenderInput({
         frame: frameCtx,

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-056](work/LIB-056-solar-twilight-night-veil-presentation.md) — Solar twilight / night-veil presentation refinement
+[LIB-057](work/LIB-057-milky-way-viewing-event-simplification-and-geography.md) — Milky Way viewing event simplification, viewing footprint, and HUD event notices
 
 ## Blockers
 
@@ -25,4 +25,4 @@ Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track
 
 ## Next action
 
-Wait for an approved work item.
+Await human scope.

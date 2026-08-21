@@ -468,7 +468,7 @@ The ribbon is a **zenith projection**: it shows where Galactic-plane and approxi
 
 Galactic-center **altitude contours** are a second line presentation: a point on the 60° contour sees the Galactic center 60° above the geometric horizon at this instant. They are nested small circles around the GC marker. Higher altitude → smaller circle. No fill. Astronomical-night emphasis strengthens segments where the Sun is low; moonlight de-emphasis quiets moonlit segments using the existing moonlight model. This is still not a single visibility score.
 
-**Viewing windows** are a reference-city event family. Map labels are Layers presentation; sequencing is Data → Event playback. The scenario enables events so status and labels are visible; factory default remains off.
+**Viewing windows** are one reference-city event family (no Viewing / Strong / Prime product classes). Map labels and the static peak-UTC **viewing footprint** are Layers presentation; sequencing is Data → Event playback. The scenario enables events so labels, footprint, and HUD notices are visible; factory default remains off.
 
 - Galactic plane alone (band and ribs off): one thin great-circle-like curve, not a filled region, not a world-spanning false line.
 - Plane + band edges: two flanking curves around the plane; Normal width clearly broader than Narrow and narrower than Wide.
@@ -480,10 +480,17 @@ Galactic-center **altitude contours** are a second line presentation: a point on
 - Demo jumps ~six hours apart: the ribbon **and** the contours rotate westward with the GC marker. 1600 / 2000 / current / ~2500 remain geometrically coherent.
 - Combined Planets + Milky Way: planets remain readable; Milky Way stays under planetary glyphs.
 - Combined eclipse scenario with Milky Way on: eclipse geography remains the event overlay; neither ribbon nor contours become a shading layer.
-- Knoxville (default city), `?scenario=milky-way` at 2026-08-19T06:00Z: upcoming map label near the GC marker, local copy such as `Knoxville · MW Prime · tomorrow`; Layers has **no** Go to next Prime. Data → Event playback sequences MW windows as one of the enabled event types (no family submode). HUD eclipse line is unchanged.
-- `?scenario=milky-way&mwEvent=active` (2026-08-20T02:27:16Z, interior of the Prime interval): active Prime label (`Knoxville · MW Prime`) at the same GC-subpoint family — no geographical jump, no countdown.
-- `?scenario=milky-way&observerCity=sao_paulo`: southern latitude; Prime windows have much higher peak GC altitude; label city copy changes. Contours still nest around the GC marker. Event times change. An active MW sequence stops if the city changes while running.
-- Twilight / full-Moon checks: if product time has high GC but Sun too high, no Strong/Prime; if a bright Moon is up, Strong/Prime drop while contours still show elevation.
+- **A.** Knoxville, `?scenario=milky-way` at 2026-08-19T06:00Z: upcoming map label near the GC marker (`Knoxville · Milky Way · tonight` or `in 1d`); rose/lavender **viewing footprint** closed line(s), thicker than 30/45/60/75° contours, no fill. Layers has no Viewing/Strong/Prime checkboxes and no Go to next Prime.
+- **B/C.** `?scenario=milky-way&mwEvent=active` (2026-08-20T02:27:16Z): active label `Knoxville · Milky Way viewing` at the same GC-subpoint family — no geographical jump. Footprint geometry is the same peak-UTC snapshot as upcoming. HUD: `Milky Way viewing`.
+- **D.** After the window (step Demo past the end): map label gone, footprint gone, MW HUD notice gone unless another window is in horizon.
+- **E.** Show viewing footprint OFF: boundary gone; label may remain. ON restores the same line.
+- **F.** Viewing footprint color `#ff00ff`: stroke recolors immediately; no geometry rebuild hitch. Restore `#c97ba8`.
+- **G.** Knoxville event: Knoxville lies inside the footprint.
+- **H.** `?scenario=milky-way&observerCity=sao_paulo`: southern latitude; higher peak GC; city copy and event times change; footprint is that city’s peak-UTC geography.
+- **I.** Near-new-Moon nights in the August 2026 cluster: windows exist; footprint is broader where GC geometry and astronomical night still qualify — not the entire night side.
+- **J.** Bright-Moon non-event: high GC with the Moon up and bright does not open a window; contours can still show elevation.
+- **K.** Data → Event playback: one **Include Milky Way viewing windows** checkbox; Start / Next / Previous / Loop / Pause / Reset / Stop cycle solar, MW, and lunar chronologically without freeze.
+- **L.** Lower-left HUD: date/time stay dominant; stacked event notices (eclipse + MW) do not overlap; two visible lines plus `+N more event(s)` when overflow applies. Narrow Config/map width: notices stay one line each.
 
 Factory defaults keep Milky Way off. Enabling the master does **not** turn altitude contours or viewing events on. Data Event playback may still tour MW windows while Layers presentation is off.
 

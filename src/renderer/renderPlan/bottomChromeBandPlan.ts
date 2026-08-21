@@ -105,8 +105,8 @@ export function buildBottomChromeBandRenderPlan(options: {
   ];
 
   const lines = options.ib.bottomHudReadoutLines;
-  const clockLines = lines.filter((row) => row.role !== "eclipse");
-  const eclipseLine = lines.find((row) => row.role === "eclipse") ?? null;
+  const clockLines = lines.filter((row) => row.role === "date" || row.role === "time");
+  const noticeLines = lines.filter((row) => row.role === "eclipse" || row.role === "eventNotice");
   const nClock = clockLines.length;
   const topFrac = 0.12;
   const botFrac = 0.9;
@@ -140,22 +140,25 @@ export function buildBottomChromeBandRenderPlan(options: {
     );
   }
 
-  if (eclipseLine) {
+  if (noticeLines.length > 0) {
     const clockGapPx =
       clockCenters.length >= 2
         ? clockCenters[clockCenters.length - 1]! - clockCenters[clockCenters.length - 2]!
         : Math.max(minRowGapPx, stackPx * 0.42);
-    const eclipseGapPx = Math.max(clockGapPx, stackPx * 0.48);
+    const noticeGapPx = Math.max(clockGapPx, stackPx * 0.48);
     const lastClockCy =
       clockCenters[clockCenters.length - 1] ?? by + bh * 0.5 - sideLift;
-    const cy = lastClockCy + eclipseGapPx;
-    const text = eclipseLine.text.length > 0 ? eclipseLine.text : "\u00a0";
-    emitGlyphToRenderPlan(
-      createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),
-      { cx: padX, cy, size: stackPx * 0.86 },
-      gctx,
-      items,
-    );
+    for (let i = 0; i < noticeLines.length; i += 1) {
+      const notice = noticeLines[i]!;
+      const cy = lastClockCy + noticeGapPx * (i + 1);
+      const text = notice.text.length > 0 ? notice.text : "\u00a0";
+      emitGlyphToRenderPlan(
+        createBottomChromeTextGlyph(text, datePolicy, { textAlign: "left", shadow }),
+        { cx: padX, cy, size: stackPx * 0.86 },
+        gctx,
+        items,
+      );
+    }
   }
 
   return { items };

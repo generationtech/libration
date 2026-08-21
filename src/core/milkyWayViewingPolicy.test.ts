@@ -13,123 +13,101 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  classifyMilkyWayViewingLevel,
-  milkyWayAltitudeQuality01,
+  MAX_MOONLIGHT_01,
+  MAX_SUN_ALTITUDE_DEG,
   MILKY_WAY_VIEWING_POLICY_VERSION,
+  MIN_ALTITUDE_QUALITY,
+  MIN_GC_ALTITUDE_DEG,
+  milkyWayAltitudeQuality01,
+  milkyWayViewingQualifies,
   nightlyMaximumGcAltitudeDeg,
-  PRIME_MAX_MOONLIGHT_01,
-  PRIME_MIN_ALTITUDE_QUALITY,
-  STRONG_MAX_MOONLIGHT_01,
-  STRONG_MIN_GC_ALTITUDE_DEG,
-  VIEWING_MIN_GC_ALTITUDE_DEG,
 } from "./milkyWayViewingPolicy";
 
-describe("milky-way-viewing-v1 classification", () => {
+describe("milky-way-viewing-v2 classification", () => {
   it("exposes a stable policy version", () => {
-    expect(MILKY_WAY_VIEWING_POLICY_VERSION).toBe("milky-way-viewing-v1");
+    expect(MILKY_WAY_VIEWING_POLICY_VERSION).toBe("milky-way-viewing-v2");
   });
 
   it("rejects daylight even with high GC altitude", () => {
     expect(
-      classifyMilkyWayViewingLevel({
+      milkyWayViewingQualifies({
         gcAltitudeDeg: 80,
         solarAltitudeDeg: 10,
         localMoonlight01: 0,
         nightlyMaximumAltitudeDeg: 84,
       }),
-    ).toBeNull();
+    ).toBe(false);
   });
 
-  it("opens Viewing at nautical twilight without a moonlight gate", () => {
+  it("rejects nautical twilight even with low moonlight", () => {
     expect(
-      classifyMilkyWayViewingLevel({
-        gcAltitudeDeg: 22,
-        solarAltitudeDeg: -13,
-        localMoonlight01: 0.9,
+      milkyWayViewingQualifies({
+        gcAltitudeDeg: 24,
+        solarAltitudeDeg: -15,
+        localMoonlight01: 0,
         nightlyMaximumAltitudeDeg: 25,
       }),
-    ).toBe("viewing");
+    ).toBe(false);
   });
 
-  it("requires astronomical darkness for Strong and Prime", () => {
+  it("requires astronomical darkness, near-max GC, and low moonlight", () => {
     const knoxNearMax = {
       gcAltitudeDeg: 24,
-      solarAltitudeDeg: -15,
+      solarAltitudeDeg: -18,
       localMoonlight01: 0,
       nightlyMaximumAltitudeDeg: 25,
     };
-    expect(classifyMilkyWayViewingLevel(knoxNearMax)).toBe("viewing");
+    expect(milkyWayViewingQualifies(knoxNearMax)).toBe(true);
     expect(
-      classifyMilkyWayViewingLevel({ ...knoxNearMax, solarAltitudeDeg: -18 }),
-    ).toBe("prime");
+      milkyWayViewingQualifies({ ...knoxNearMax, solarAltitudeDeg: -17.9 }),
+    ).toBe(false);
+    expect(
+      milkyWayViewingQualifies({ ...knoxNearMax, gcAltitudeDeg: 16 }),
+    ).toBe(false);
+    expect(
+      milkyWayViewingQualifies({ ...knoxNearMax, localMoonlight01: MAX_MOONLIGHT_01 + 0.01 }),
+    ).toBe(false);
   });
 
-  it("uses relative Prime so Knoxville-like culmination can qualify", () => {
+  it("uses relative quality so Knoxville-like culmination can qualify", () => {
     const hMax = 25;
-    expect(hMax).toBeLessThan(STRONG_MIN_GC_ALTITUDE_DEG + 10);
     expect(
-      classifyMilkyWayViewingLevel({
+      milkyWayViewingQualifies({
         gcAltitudeDeg: 0.9 * hMax,
         solarAltitudeDeg: -20,
         localMoonlight01: 0,
         nightlyMaximumAltitudeDeg: hMax,
       }),
-    ).toBe("prime");
+    ).toBe(true);
   });
 
-  it("keeps Strong below Prime and above Viewing for Knoxville-like geometry", () => {
-    const hMax = 25;
+  it("does not fabricate a window when GC never reaches the useful floor", () => {
     expect(
-      classifyMilkyWayViewingLevel({
-        gcAltitudeDeg: 21,
-        solarAltitudeDeg: -20,
-        localMoonlight01: 0,
-        nightlyMaximumAltitudeDeg: hMax,
-      }),
-    ).toBe("strong");
-    expect(
-      classifyMilkyWayViewingLevel({
-        gcAltitudeDeg: 16,
-        solarAltitudeDeg: -20,
-        localMoonlight01: 0,
-        nightlyMaximumAltitudeDeg: hMax,
-      }),
-    ).toBe("viewing");
-  });
-
-  it("does not fabricate Prime when GC never reaches the useful floor", () => {
-    expect(
-      classifyMilkyWayViewingLevel({
+      milkyWayViewingQualifies({
         gcAltitudeDeg: 8,
         solarAltitudeDeg: -20,
         localMoonlight01: 0,
         nightlyMaximumAltitudeDeg: 9,
       }),
-    ).toBeNull();
+    ).toBe(false);
   });
 
-  it("rejects Strong/Prime under bright modeled moonlight but keeps Viewing", () => {
+  it("rejects bright modeled moonlight even at high GC", () => {
     const base = {
       gcAltitudeDeg: 80,
       solarAltitudeDeg: -20,
       nightlyMaximumAltitudeDeg: 84,
     };
-    expect(classifyMilkyWayViewingLevel({ ...base, localMoonlight01: 0 })).toBe("prime");
-    expect(
-      classifyMilkyWayViewingLevel({ ...base, localMoonlight01: STRONG_MAX_MOONLIGHT_01 + 0.05 }),
-    ).toBe("viewing");
-    expect(
-      classifyMilkyWayViewingLevel({
-        ...base,
-        localMoonlight01: PRIME_MAX_MOONLIGHT_01 + 0.05,
-      }),
-    ).toBe("strong");
+    expect(milkyWayViewingQualifies({ ...base, localMoonlight01: 0 })).toBe(true);
+    expect(milkyWayViewingQualifies({ ...base, localMoonlight01: 0.4 })).toBe(false);
+    expect(milkyWayViewingQualifies({ ...base, localMoonlight01: MAX_MOONLIGHT_01 })).toBe(true);
   });
 
   it("computes altitude quality as current / local max, not a hidden score", () => {
     expect(milkyWayAltitudeQuality01(22.5, 25)).toBeCloseTo(0.9, 5);
-    expect(PRIME_MIN_ALTITUDE_QUALITY).toBe(0.9);
-    expect(VIEWING_MIN_GC_ALTITUDE_DEG).toBe(15);
+    expect(MIN_ALTITUDE_QUALITY).toBe(0.9);
+    expect(MIN_GC_ALTITUDE_DEG).toBe(15);
+    expect(MAX_SUN_ALTITUDE_DEG).toBe(-18);
   });
 
   it("matches the culmination identity h_max = 90 − |lat − Dec|", () => {

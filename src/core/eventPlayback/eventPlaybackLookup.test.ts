@@ -69,7 +69,7 @@ const APR_4_MW = listed({
   eventStartUtcMs: Date.UTC(2026, 3, 4, 4, 0, 0),
   eventEndUtcMs: Date.UTC(2026, 3, 4, 8, 0, 0),
   peakUtcMs: Date.UTC(2026, 3, 4, 6, 0, 0),
-  title: "Milky Way · Prime",
+  title: "Milky Way viewing",
   dateLabel: "Apr 4 2026",
 });
 const APR_14_LUNAR = listed({
@@ -87,7 +87,7 @@ const APR_30_MW = listed({
   eventStartUtcMs: Date.UTC(2026, 3, 30, 4, 0, 0),
   eventEndUtcMs: Date.UTC(2026, 3, 30, 8, 0, 0),
   peakUtcMs: Date.UTC(2026, 3, 30, 6, 0, 0),
-  title: "Milky Way · Strong",
+  title: "Milky Way viewing",
   dateLabel: "Apr 30 2026",
 });
 
@@ -100,7 +100,6 @@ function baseQuery(overrides: Partial<EventPlaybackLookupQuery> = {}): EventPlay
     solarEnabled: true,
     lunarEnabled: true,
     milkyWayEnabled: true,
-    milkyWayLevels: ["strong", "prime"],
     solarPresentation: normalizeSolarEclipsePresentation(undefined),
     lunarPresentation: normalizeLunarEclipsePresentation(undefined),
     observer: KNOXVILLE,
@@ -244,7 +243,7 @@ describe("live catalog lookup", () => {
       eventStartUtcMs: MAR_29_SOLAR.eventStartUtcMs + 3_600_000,
       eventEndUtcMs: MAR_29_SOLAR.eventEndUtcMs + 8_600_000,
       peakUtcMs: MAR_29_SOLAR.peakUtcMs + 3_600_000,
-      title: "Milky Way · Prime",
+      title: "Milky Way viewing",
       dateLabel: "Mar 29 2026",
       leadInUtcMs: MAR_29_SOLAR.leadInUtcMs + 1_000,
       transitionEndUtcMs: MAR_29_SOLAR.transitionEndUtcMs + 8_600_000,
@@ -266,7 +265,6 @@ describe("incremental MW grouped search", () => {
       observer: KNOXVILLE,
       rangeStartUtcMs: after,
       rangeEndUtcMs: Date.UTC(2499, 11, 31),
-      levels: ["strong", "prime"],
       afterUtcMs: after,
       includeIntersecting: true,
     });

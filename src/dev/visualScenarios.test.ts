@@ -757,7 +757,7 @@ describe("milky-way scenario DEV observerCity", () => {
     }
   });
 
-  it("mwEvent=active seeds the Knoxville Prime station without a new scenario id", () => {
+  it("mwEvent=active seeds the Knoxville viewing-window station without a new scenario id", () => {
     const session = resolveVisualScenarioSession({
       isDev: true,
       search: "?scenario=milky-way&mwEvent=active",

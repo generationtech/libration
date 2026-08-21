@@ -44,68 +44,60 @@ const ARCTIC: MilkyWayViewingObserver = {
 const labelsOn = mergeMilkyWayPresentation(DEFAULT_MILKY_WAY_PRESENTATION, {
   viewingEventsEnabled: true,
   showViewingEventLabels: true,
-  showViewingWindows: true,
-  showStrongWindows: true,
-  showPrimeWindows: true,
   eventLabelAdvanceHorizonId: "2d",
 });
 
 describe("formatMilkyWayEventLabelText", () => {
-  it("uses compact city · level copy and countdown only when upcoming", () => {
+  it("uses compact city · Milky Way copy and countdown only when upcoming", () => {
     expect(
       formatMilkyWayEventLabelText({
         cityName: "Knoxville",
-        level: "prime",
         lifecycle: "upcoming",
-        relative: "in 2d",
+        relative: "tonight",
       }),
-    ).toBe("Knoxville · MW Prime · in 2d");
+    ).toBe("Knoxville · Milky Way · tonight");
     expect(
       formatMilkyWayEventLabelText({
         cityName: "Knoxville",
-        level: "prime",
         lifecycle: "active",
-        relative: "in 2d",
+        relative: "tonight",
       }),
-    ).toBe("Knoxville · MW Prime");
+    ).toBe("Knoxville · Milky Way viewing");
   });
 });
 
 describe("resolveMilkyWayEventMapLabel", () => {
-  it("returns upcoming Prime for Knoxville before a known window and active inside it", () => {
+  it("returns upcoming then active for Knoxville around a known window", () => {
     resetMilkyWayViewingWindowCacheForTests();
     resetMilkyWayEventLabelCacheForTests();
     const origin = Date.UTC(2026, 7, 19, 6, 0, 0, 0);
-    const nextPrime = findNextMilkyWayViewingWindow({
+    const next = findNextMilkyWayViewingWindow({
       observer: KNOXVILLE,
       afterUtcMs: origin,
-      level: "prime",
       horizonMs: 2 * 86_400_000,
     });
-    expect(nextPrime).not.toBeNull();
+    expect(next).not.toBeNull();
     const upcoming = resolveMilkyWayEventMapLabel({
       presentation: labelsOn,
       observer: KNOXVILLE,
       cityName: "Knoxville",
       productUtcMs: origin,
+      timeZone: "America/New_York",
     });
     expect(upcoming?.lifecycle).toBe("upcoming");
-    expect(upcoming?.level).toBe("prime");
-    expect(upcoming?.text.startsWith("Knoxville · MW Prime")).toBe(true);
-    expect(upcoming?.text === "Knoxville · MW Prime" || /in |tomorrow/.test(upcoming?.text ?? "")).toBe(
-      true,
-    );
-    const mid = Math.floor((nextPrime!.startUtcMs + nextPrime!.endUtcMs) / 2);
+    expect(upcoming?.text.startsWith("Knoxville ·")).toBe(true);
+    expect(upcoming?.text).toMatch(/Milky Way|MW viewing/);
+    const mid = Math.floor((next!.startUtcMs + next!.endUtcMs) / 2);
     resetMilkyWayEventLabelCacheForTests();
     const active = resolveMilkyWayEventMapLabel({
       presentation: labelsOn,
       observer: KNOXVILLE,
       cityName: "Knoxville",
       productUtcMs: mid,
+      timeZone: "America/New_York",
     });
     expect(active?.lifecycle).toBe("active");
-    expect(active?.level).toBe("prime");
-    expect(active?.text).toBe("Knoxville · MW Prime");
+    expect(active?.text).toBe("Knoxville · Milky Way viewing");
     expect(active?.latDeg).toBeTypeOf("number");
     expect(upcoming?.lonDeg).toBeTypeOf("number");
   });

@@ -22,12 +22,11 @@ import {
   milkyWayVisibilityMoonStateAt,
 } from "./milkyWayVisibilityGeometry";
 import {
-  classifyMilkyWayViewingLevel,
+  MAX_MOONLIGHT_01,
+  MAX_SUN_ALTITUDE_DEG,
   MILKY_WAY_VIEWING_POLICY_VERSION,
-  PRIME_MAX_MOONLIGHT_01,
-  STRONG_MAX_MOONLIGHT_01,
-  VIEWING_MAX_SUN_ALTITUDE_DEG,
-  VIEWING_MIN_GC_ALTITUDE_DEG,
+  MIN_GC_ALTITUDE_DEG,
+  milkyWayViewingQualifies,
 } from "./milkyWayViewingPolicy";
 import {
   findNextMilkyWayViewingWindow,
@@ -100,21 +99,21 @@ describe("listMilkyWayViewingWindows", () => {
       expect(w.endUtcMs).toBeGreaterThan(w.startUtcMs);
       expect(w.peakUtcMs).toBeGreaterThanOrEqual(w.startUtcMs);
       expect(w.peakUtcMs).toBeLessThan(w.endUtcMs);
-      expect(w.peakAltitudeDeg).toBeGreaterThanOrEqual(VIEWING_MIN_GC_ALTITUDE_DEG);
-      expect(w.id).toBe(`milky-way:${w.cityId}:${w.startUtcMs}:${w.level}`);
+      expect(w.peakAltitudeDeg).toBeGreaterThanOrEqual(MIN_GC_ALTITUDE_DEG);
+      expect(w.id).toBe(`milky-way:${w.cityId}:${w.startUtcMs}`);
       const mid = milkyWayViewingConditionsAt(Math.floor((w.startUtcMs + w.endUtcMs) / 2), KNOXVILLE);
-      expect(mid?.solarAltitudeDeg).toBeLessThanOrEqual(VIEWING_MAX_SUN_ALTITUDE_DEG);
-      expect(mid?.gcAltitudeDeg).toBeGreaterThanOrEqual(VIEWING_MIN_GC_ALTITUDE_DEG - 0.5);
+      expect(mid?.solarAltitudeDeg).toBeLessThanOrEqual(MAX_SUN_ALTITUDE_DEG);
+      expect(mid?.gcAltitudeDeg).toBeGreaterThanOrEqual(MIN_GC_ALTITUDE_DEG - 0.5);
+      expect(mid?.qualifies).toBe(true);
     }
-    expect(result.windows.some((w) => w.level === "prime")).toBe(true);
-    expect(result.windows.some((w) => w.level === "viewing")).toBe(true);
+    expect(result.windows.length).toBeGreaterThan(0);
   });
 
   it("does not open a window in daylight at Knoxville", () => {
     const noon = Date.UTC(2026, 7, 19, 17, 0, 0, 0);
     const c = milkyWayViewingConditionsAt(noon, KNOXVILLE)!;
     expect(c.solarAltitudeDeg).toBeGreaterThan(-6);
-    expect(c.level).toBeNull();
+    expect(c.qualifies).toBe(false);
     const listed = listMilkyWayViewingWindows({
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
@@ -128,28 +127,39 @@ describe("listMilkyWayViewingWindows", () => {
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
       endUtcMs: AUG_2026_END,
-      levels: ["prime"],
     });
     const w = listed.windows[0]!;
     const peak = milkyWayViewingConditionsAt(w.peakUtcMs, KNOXVILLE)!;
     const earlier = milkyWayViewingConditionsAt(w.startUtcMs, KNOXVILLE)!;
     expect(peak.gcAltitudeDeg).toBeGreaterThanOrEqual(earlier.gcAltitudeDeg - 0.15);
-    expect(peak.level).toBe("prime");
+    expect(peak.qualifies).toBe(true);
   });
 
-  it("produces Atacama Prime windows with much higher peak altitude than Knoxville", () => {
+  it("naturally favors near-new-Moon and moon-down peaks without a phase shortcut", () => {
+    const listed = listMilkyWayViewingWindows({
+      observer: KNOXVILLE,
+      startUtcMs: AUG_2026_START,
+      endUtcMs: AUG_2026_END,
+    });
+    expect(listed.windows.some((w) => w.peakIlluminatedFraction <= 0.08 || !w.peakMoonAboveHorizon)).toBe(
+      true,
+    );
+    for (const w of listed.windows) {
+      expect(w.representativeMoonlight01).toBeLessThanOrEqual(MAX_MOONLIGHT_01 + 1e-6);
+    }
+  });
+
+  it("produces Atacama viewing windows with much higher peak altitude than Knoxville", () => {
     resetMilkyWayViewingWindowCacheForTests();
     const atacama = listMilkyWayViewingWindows({
       observer: ATACAMA,
       startUtcMs: AUG_2026_START,
       endUtcMs: AUG_2026_END,
-      levels: ["prime"],
     });
     const knox = listMilkyWayViewingWindows({
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
       endUtcMs: AUG_2026_END,
-      levels: ["prime"],
     });
     expect(atacama.feasibility).toBe("ok");
     expect(atacama.windows.length).toBeGreaterThan(5);
@@ -165,7 +175,6 @@ describe("listMilkyWayViewingWindows", () => {
       observer: SAO_PAULO,
       startUtcMs: AUG_2026_START,
       endUtcMs: Date.UTC(2026, 7, 15, 0, 0, 0, 0),
-      levels: ["prime"],
     });
     expect(listed.feasibility).toBe("ok");
     expect(listed.windows.length).toBeGreaterThan(0);
@@ -212,7 +221,6 @@ describe("listMilkyWayViewingWindows", () => {
           longitudeDeg: -68,
         },
         ...range,
-        levels: ["prime", "strong", "viewing"],
       });
       expect(listed.feasibility).toBe("ok");
       expect(listed.windows.length).toBeGreaterThan(0);
@@ -227,13 +235,11 @@ describe("listMilkyWayViewingWindows", () => {
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
       endUtcMs: Date.UTC(2026, 7, 10, 0, 0, 0, 0),
-      levels: ["prime"],
     });
     const tokyo = listMilkyWayViewingWindows({
       observer: TOKYO,
       startUtcMs: AUG_2026_START,
       endUtcMs: Date.UTC(2026, 7, 10, 0, 0, 0, 0),
-      levels: ["prime"],
     });
     expect(knox.windows.length).toBeGreaterThan(0);
     expect(tokyo.windows.length).toBeGreaterThan(0);
@@ -247,25 +253,24 @@ describe("listMilkyWayViewingWindows", () => {
       startUtcMs: AUG_2026_START,
       endUtcMs: AUG_2026_END,
     });
-    const w = listed.windows.find((x) => x.level === "prime")!;
+    const w = listed.windows[0]!;
     const before = w.startUtcMs - 60_000;
     const inside = w.peakUtcMs;
     const after = w.endUtcMs + 60_000;
     expect(windowContainingUtc(listed.windows, before)?.id).not.toBe(w.id);
     expect(windowContainingUtc(listed.windows, inside)?.id).toBe(w.id);
     expect(
-      listed.windows.find((x) => x.startUtcMs > after && x.level === "prime"),
+      listed.windows.find((x) => x.startUtcMs > after),
     ).toBeTruthy();
     const next = findNextMilkyWayViewingWindow({
       observer: KNOXVILLE,
       afterUtcMs: before,
-      level: "prime",
       horizonMs: 40 * DAY_MS,
     });
     expect(next?.startUtcMs).toBeGreaterThan(before);
   });
 
-  it("can emit more than one window on a night when moonlight splits Strong/Prime", () => {
+  it("can emit more than one window on a night when moonlight splits intervals", () => {
     const listed = listMilkyWayViewingWindows({
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
@@ -277,19 +282,18 @@ describe("listMilkyWayViewingWindows", () => {
       nights.set(key, (nights.get(key) ?? 0) + 1);
     }
     expect(Math.max(...nights.values())).toBeGreaterThanOrEqual(1);
-    expect(listed.windows.some((w) => w.level === "viewing")).toBe(true);
   });
 });
 
 describe("moonlight and twilight edges", () => {
-  it("favors moon-down over a high full Moon for Strong/Prime", () => {
+  it("favors moon-down over a high full Moon", () => {
     const start = Date.UTC(2026, 7, 1);
     const end = Date.UTC(2026, 8, 1);
     let bestDark = { t: start, moon: 1, level: null as ReturnType<typeof milkyWayViewingConditionsAt> };
     let worstMoon = { t: start, moon: 0, level: null as ReturnType<typeof milkyWayViewingConditionsAt> };
     for (let t = start; t < end; t += 2 * 3600_000) {
       const c = milkyWayViewingConditionsAt(t, KNOXVILLE);
-      if (!c || c.gcAltitudeDeg < 20 || c.solarAltitudeDeg > -18) {
+      if (!c || c.solarAltitudeDeg > -18 || c.altitudeQuality01 < 0.9 || c.gcAltitudeDeg < 15) {
         continue;
       }
       if (c.localMoonlight01 < bestDark.moon) {
@@ -299,18 +303,17 @@ describe("moonlight and twilight edges", () => {
         worstMoon = { t, moon: c.localMoonlight01, level: c };
       }
     }
-    expect(bestDark.level?.level === "prime" || bestDark.level?.level === "strong").toBe(true);
-    expect(bestDark.moon).toBeLessThanOrEqual(PRIME_MAX_MOONLIGHT_01);
-    expect(worstMoon.moon).toBeGreaterThan(STRONG_MAX_MOONLIGHT_01);
-    expect(worstMoon.level?.level === "viewing" || worstMoon.level?.level === null).toBe(true);
+    expect(bestDark.level?.qualifies).toBe(true);
+    expect(bestDark.moon).toBeLessThanOrEqual(MAX_MOONLIGHT_01);
+    expect(worstMoon.moon).toBeGreaterThan(MAX_MOONLIGHT_01);
+    expect(worstMoon.level?.qualifies).toBe(false);
   });
 
-  it("does not start Strong/Prime until astronomical darkness", () => {
+  it("does not start a viewing window until astronomical darkness", () => {
     const listed = listMilkyWayViewingWindows({
       observer: KNOXVILLE,
       startUtcMs: AUG_2026_START,
       endUtcMs: AUG_2026_END,
-      levels: ["prime"],
     });
     const w = listed.windows[0]!;
     const atStart = milkyWayViewingConditionsAt(w.startUtcMs, KNOXVILLE)!;
@@ -348,21 +351,21 @@ describe("moonlight and twilight edges", () => {
     expect(eclipsed).toBeLessThan(uneclipsed);
     const hMax = 25;
     expect(
-      classifyMilkyWayViewingLevel({
+      milkyWayViewingQualifies({
         gcAltitudeDeg: 24,
         solarAltitudeDeg: -20,
         localMoonlight01: uneclipsed,
         nightlyMaximumAltitudeDeg: hMax,
       }),
-    ).not.toBe("prime");
+    ).toBe(false);
     expect(
-      classifyMilkyWayViewingLevel({
+      milkyWayViewingQualifies({
         gcAltitudeDeg: 24,
         solarAltitudeDeg: -20,
         localMoonlight01: eclipsed,
         nightlyMaximumAltitudeDeg: hMax,
       }),
-    ).toBe("prime");
+    ).toBe(true);
   });
 
   it("does not read clouds or light pollution", () => {
@@ -408,7 +411,6 @@ describe("search performance", () => {
     const next = findNextMilkyWayViewingWindow({
       observer: KNOXVILLE,
       afterUtcMs: origin,
-      level: "prime",
       horizonMs: 60 * DAY_MS,
     });
     expect(next).not.toBeNull();

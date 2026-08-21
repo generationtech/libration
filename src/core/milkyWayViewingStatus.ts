@@ -17,18 +17,19 @@
  */
 
 import type { DisplayTimeMode } from "./chromeTimeDomain";
-import { formatWallClockInTimeZone } from "./timeFormat";
+import { formatEclipseRelativeTime } from "./eclipse/eclipseEventCopy";
 import {
-  PRIME_MAX_MOONLIGHT_01,
-  STRONG_MAX_MOONLIGHT_01,
-  STRONG_MAX_SUN_ALTITUDE_DEG,
-  type MilkyWayViewingLevel,
+  MAX_MOONLIGHT_01,
+  MAX_SUN_ALTITUDE_DEG,
+  NEAR_NEW_MOON_ILLUMINATED_FRACTION,
 } from "./milkyWayViewingPolicy";
 import type {
   MilkyWayViewingFeasibility,
   MilkyWayViewingWindow,
 } from "./milkyWayViewingWindows";
 import { windowContainingUtc } from "./milkyWayViewingWindows";
+import { formatWallClockInTimeZone } from "./timeFormat";
+import { getCalendarYmdInZone } from "./wallTimeInZone";
 
 export type MilkyWayViewingEventState = "upcoming" | "active" | "completed";
 
@@ -45,21 +46,6 @@ function monthDayFormatter(timeZone: string): Intl.DateTimeFormat {
     MONTH_DAY_FMT.set(timeZone, fmt);
   }
   return fmt;
-}
-
-export function milkyWayViewingLevelLabel(level: MilkyWayViewingLevel): string {
-  switch (level) {
-    case "viewing":
-      return "Viewing";
-    case "strong":
-      return "Strong";
-    case "prime":
-      return "Prime";
-    default: {
-      const _exhaustive: never = level;
-      return _exhaustive;
-    }
-  }
 }
 
 export function milkyWayViewingEventState(
@@ -104,19 +90,46 @@ export function formatMilkyWayViewingWindowLocalRange(
   return `${startDay}, ${startClock} – ${endDay}, ${endClock}`;
 }
 
-function darknessPhrase(sunAltitudeDeg: number): string {
-  if (sunAltitudeDeg <= STRONG_MAX_SUN_ALTITUDE_DEG) {
-    return "Astronomical night";
-  }
-  return "Nautical twilight or darker";
+function ymdKey(ymd: { y: number; m: number; d: number }): string {
+  return `${ymd.y}-${ymd.m}-${ymd.d}`;
 }
 
-function moonlightPhrase(moonlight01: number): string {
-  if (moonlight01 <= PRIME_MAX_MOONLIGHT_01) {
-    return "low moonlight";
+/**
+ * Compact relative phrase for HUD/map copy. Same local civil date → "tonight".
+ */
+export function formatMilkyWayViewingRelativePhrase(
+  nowUtcMs: number,
+  startUtcMs: number,
+  timeZone: string,
+): string {
+  if (!(startUtcMs > nowUtcMs)) {
+    return "now";
   }
-  if (moonlight01 <= STRONG_MAX_MOONLIGHT_01) {
-    return "moderate moonlight";
+  const nowYmd = ymdKey(getCalendarYmdInZone(nowUtcMs, timeZone));
+  const startYmd = ymdKey(getCalendarYmdInZone(startUtcMs, timeZone));
+  if (nowYmd === startYmd) {
+    return "tonight";
+  }
+  const relative = formatEclipseRelativeTime(nowUtcMs, startUtcMs);
+  return relative && relative !== "now" ? relative : "tonight";
+}
+
+function darknessPhrase(sunAltitudeDeg: number): string {
+  if (sunAltitudeDeg <= MAX_SUN_ALTITUDE_DEG) {
+    return "Astronomical night";
+  }
+  return "Not astronomical night";
+}
+
+function moonlightPhrase(window: MilkyWayViewingWindow): string {
+  if (!window.peakMoonAboveHorizon) {
+    return "Moon below horizon";
+  }
+  if (window.peakIlluminatedFraction <= NEAR_NEW_MOON_ILLUMINATED_FRACTION) {
+    return "near new Moon";
+  }
+  if (window.representativeMoonlight01 <= MAX_MOONLIGHT_01) {
+    return "very low moonlight";
   }
   return "moonlit";
 }
@@ -143,12 +156,14 @@ export function milkyWayViewingFeasibilityCopy(
 }
 
 export const MILKY_WAY_VIEWING_WINDOW_HONEST_COPY =
-  "A Milky Way Viewing Window marks times when the Galactic center is favorably elevated from the reference city under sufficiently dark solar conditions and acceptable modeled moonlight. Actual visibility also depends on weather, transparency, light pollution, and obstructions.";
+  "A Milky Way viewing window marks times when the Galactic center is favorably elevated from the reference city under astronomical darkness and low modeled moonlight. Actual visibility also depends on weather, transparency, light pollution, and obstructions.";
+
+export const MILKY_WAY_VIEWING_FOOTPRINT_HONEST_COPY =
+  "Outline locations where Galactic-center elevation, astronomical darkness, and modeled moonlight are favorable at this viewing window’s peak.";
 
 export type MilkyWayViewingStatusModel = {
   readonly active: MilkyWayViewingWindow | null;
   readonly next: MilkyWayViewingWindow | null;
-  readonly nextPrime: MilkyWayViewingWindow | null;
   readonly state: MilkyWayViewingEventState | null;
 };
 
@@ -158,26 +173,29 @@ export function resolveMilkyWayViewingStatus(
 ): MilkyWayViewingStatusModel {
   const active = windowContainingUtc(windows, nowUtcMs);
   let next: MilkyWayViewingWindow | null = null;
-  let nextPrime: MilkyWayViewingWindow | null = null;
   for (const w of windows) {
     if (w.startUtcMs > nowUtcMs) {
-      if (!next) {
-        next = w;
-      }
-      if (!nextPrime && w.level === "prime") {
-        nextPrime = w;
-      }
-    }
-    if (next && nextPrime) {
+      next = w;
       break;
     }
   }
   return {
     active,
     next,
-    nextPrime,
     state: active ? "active" : next ? "upcoming" : null,
   };
+}
+
+export function formatMilkyWayViewingNoticeText(
+  window: MilkyWayViewingWindow,
+  nowUtcMs: number,
+  timeZone: string,
+): string {
+  if (nowUtcMs >= window.startUtcMs && nowUtcMs < window.endUtcMs) {
+    return "Milky Way viewing";
+  }
+  const relative = formatMilkyWayViewingRelativePhrase(nowUtcMs, window.startUtcMs, timeZone);
+  return `Milky Way viewing · ${relative}`;
 }
 
 export function formatMilkyWayViewingActiveLines(
@@ -187,15 +205,11 @@ export function formatMilkyWayViewingActiveLines(
   displayTimeMode: DisplayTimeMode,
   gcAltitudeDeg: number | null,
 ): string[] {
-  const lines = [
-    `Milky Way · ${milkyWayViewingLevelLabel(window.level)}`,
-  ];
+  const lines = ["Milky Way viewing"];
   const alt = gcAltitudeDeg ?? window.peakAltitudeDeg;
-  lines.push(`Galactic center ${alt.toFixed(1)}°`);
-  lines.push(`${Math.round(window.peakAltitudeQuality01 * 100)}% of nightly maximum`);
-  lines.push(
-    `${darknessPhrase(window.minimumSunAltitudeDeg)} · ${moonlightPhrase(window.representativeMoonlight01)}`,
-  );
+  lines.push(`GC ${alt.toFixed(1)}°`);
+  lines.push(`${Math.round(window.peakAltitudeQuality01 * 100)}% nightly max`);
+  lines.push(`${darknessPhrase(window.minimumSunAltitudeDeg)} · ${moonlightPhrase(window)}`);
   lines.push(`Ends ${formatClock(window.endUtcMs, timeZone, displayTimeMode)}`);
   void nowUtcMs;
   return lines;
@@ -207,17 +221,9 @@ export function formatMilkyWayViewingNextWindowLines(
   displayTimeMode: DisplayTimeMode,
 ): string[] {
   return [
-    `Next ${milkyWayViewingLevelLabel(window.level)} window`,
+    "Next Milky Way viewing window",
     formatMilkyWayViewingWindowLocalRange(window, timeZone, displayTimeMode),
     `Peak GC altitude ${window.peakAltitudeDeg.toFixed(1)}°`,
-    `${darknessPhrase(window.minimumSunAltitudeDeg)} · ${moonlightPhrase(window.representativeMoonlight01)}`,
+    `${darknessPhrase(window.minimumSunAltitudeDeg)} · ${moonlightPhrase(window)}`,
   ];
-}
-
-export function formatMilkyWayViewingNextPrimeLines(
-  window: MilkyWayViewingWindow,
-  timeZone: string,
-  displayTimeMode: DisplayTimeMode,
-): string[] {
-  return formatMilkyWayViewingNextWindowLines(window, timeZone, displayTimeMode);
 }

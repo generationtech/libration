@@ -230,7 +230,8 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
     return { items: [] };
   }
   const eventLabel = options.payload.eventLabel;
-  if (!options.payload.geometry && !eventLabel) {
+  const footprintRings = options.payload.viewingFootprintRings;
+  if (!options.payload.geometry && !eventLabel && !(footprintRings && footprintRings.length > 0)) {
     return { items: [] };
   }
   const op = Math.max(0, Math.min(1, options.layerOpacity));
@@ -366,6 +367,30 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
             h,
           ),
         );
+      }
+    }
+  }
+
+  const footprintRingsToDraw = options.payload.viewingFootprintRings;
+  if (pres.viewingEventsEnabled && pres.showViewingFootprint && footprintRingsToDraw) {
+    const fpWidth = Math.max(
+      1.6,
+      astronomyPathStrokeWidthPx(veil, pres.viewingFootprintThickness) * 1.15,
+    );
+    const fpAlpha = (_p0: MilkyWayTaggedPoint, _p1: MilkyWayTaggedPoint) => a(0.82);
+    for (const ring of footprintRingsToDraw) {
+      if (ring.length < 2) {
+        continue;
+      }
+      const pts: MilkyWayTaggedPoint[] = ring.map((p) => ({
+        latDeg: p.latDeg,
+        lonDeg: p.lonDeg,
+        night: true,
+        lDeg: 0,
+      }));
+      pushSeamAwarePolyline(items, pts, w, h, pres.viewingFootprintColor, fpWidth, fpAlpha);
+      if (pts.length >= 2) {
+        avoidPaths.push(screenPolyline(pts, w, h));
       }
     }
   }

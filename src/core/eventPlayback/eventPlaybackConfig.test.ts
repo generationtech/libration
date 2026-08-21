@@ -23,19 +23,18 @@ import {
 const NOW = Date.UTC(2026, 7, 19, 15, 0, 0, 0);
 
 describe("normalizeEventPlayback", () => {
-  it("factory-enables solar, lunar, and Milky Way with Strong+Prime", () => {
+  it("factory-enables solar, lunar, and Milky Way", () => {
     const n = defaultEventPlaybackConfig(NOW);
     expect(n.solarEnabled).toBe(true);
     expect(n.lunarEnabled).toBe(true);
     expect(n.milkyWayEnabled).toBe(true);
-    expect(n.includeViewing).toBe(false);
-    expect(n.includeStrong).toBe(true);
-    expect(n.includePrime).toBe(true);
     expect(n.loop).toBe(true);
     expect(n.leadInId).toBe("1d");
     expect(n.postWaitId).toBe("1h");
     expect(n.startDateYmd).toBe("2026-08-19");
     expect(n.endDateYmd).toBe(getEventPlaybackCalendarBounds().maxYmd);
+    expect("includeViewing" in n).toBe(false);
+    expect("includePrime" in n).toBe(false);
   });
 
   it("migrates legacy scene.eclipseTour to solar/lunar-only shared prefs", () => {
@@ -106,7 +105,6 @@ describe("normalizeEventPlayback", () => {
     expect(n.solarEnabled).toBe(true);
     expect(n.lunarEnabled).toBe(false);
     expect(n.milkyWayEnabled).toBe(false);
-    expect(n.includeViewing).toBe(true);
     expect(n.startDateYmd).toBe("2026-01-01");
   });
 
@@ -138,6 +136,7 @@ describe("normalizeEventPlayback", () => {
     expect(n.endDateYmd).toBe("2026-12-31");
     expect(n.leadInId).toBe("2d");
     expect(n.postWaitId).toBe("6h");
+    expect("includePrime" in n).toBe(false);
   });
 
   it("clamps invalid shared dates to the union authority range", () => {
@@ -168,19 +167,17 @@ describe("normalizeEventPlayback", () => {
     expect(n.solarEnabled).toBe(false);
     expect(n.lunarEnabled).toBe(false);
     expect(n.milkyWayEnabled).toBe(true);
-    expect(n.includeViewing).toBe(true);
-    expect(n.includeStrong).toBe(false);
-    expect(n.includePrime).toBe(false);
+    expect("includeViewing" in n).toBe(false);
   });
 
-  it("blocks Start when no event types or MW levels are selected", () => {
+  it("blocks Start when no event types are selected", () => {
     const none = normalizeEventPlayback(
       { solarEnabled: false, lunarEnabled: false, milkyWayEnabled: false },
       { nowMs: NOW },
     );
     expect(eventPlaybackHasEnabledType(none)).toBe(false);
     expect(eventPlaybackStartBlockedReason(none, true)).toBe("Select at least one event type");
-    const mwEmpty = normalizeEventPlayback(
+    const mwOnly = normalizeEventPlayback(
       {
         solarEnabled: false,
         lunarEnabled: false,
@@ -191,6 +188,8 @@ describe("normalizeEventPlayback", () => {
       },
       { nowMs: NOW },
     );
-    expect(eventPlaybackStartBlockedReason(mwEmpty, true)).toBe("No selected MW levels.");
+    expect(eventPlaybackHasEnabledType(mwOnly)).toBe(true);
+    expect(eventPlaybackStartBlockedReason(mwOnly, true)).toBeNull();
+    expect("includePrime" in mwOnly).toBe(false);
   });
 });

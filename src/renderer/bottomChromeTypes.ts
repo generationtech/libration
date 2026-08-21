@@ -24,7 +24,8 @@ export interface BottomBarDayCell {
 export type BottomHudReadoutLine =
   | { role: "date"; text: string }
   | { role: "time"; text: string }
-  | { role: "eclipse"; text: string };
+  | { role: "eclipse"; text: string }
+  | { role: "eventNotice"; text: string };
 
 /**
  * Bottom instrument overlay: lower-left reference-city date + time — not map layers.

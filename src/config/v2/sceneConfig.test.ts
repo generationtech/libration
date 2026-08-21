@@ -1886,7 +1886,7 @@ describe("eclipse product polish presentation", () => {
     expect(milkyWayPresentationFromScene(factory.scene!).emphasizeAstronomicalNight).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).deemphasizeMoonlight).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).viewingEventsEnabled).toBe(false);
-    expect(milkyWayPresentationFromScene(factory.scene!).showPrimeWindows).toBe(true);
+    expect(milkyWayPresentationFromScene(factory.scene!).showViewingFootprint).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).showViewingEventLabels).toBe(true);
     expect(milkyWayPresentationFromScene(factory.scene!).eventLabelAdvanceHorizonId).toBe("2d");
 

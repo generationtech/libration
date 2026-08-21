@@ -180,16 +180,27 @@ describe("buildBottomHudReadoutLines hour-label mode (America/New_York)", () => 
       topBandMode: "local12",
       eclipseStatusText: "Eclipse not visible from Knoxville",
     });
-    expect(withStatus.some((l) => l.role === "eclipse")).toBe(true);
-    expect(withStatus.find((l) => l.role === "eclipse")?.text).toBe(
+    expect(withStatus.some((l) => l.role === "eventNotice")).toBe(true);
+    expect(withStatus.find((l) => l.role === "eventNotice")?.text).toBe(
       "Eclipse not visible from Knoxville",
     );
+    const stacked = buildBottomHudReadoutLines({
+      nowMs: t,
+      referenceTimeZone: "America/New_York",
+      topBandMode: "local12",
+      eventNoticeTexts: ["Solar eclipse · in 1d", "Milky Way viewing · tonight", "+1 more event"],
+    });
+    expect(stacked.filter((l) => l.role === "eventNotice").map((l) => l.text)).toEqual([
+      "Solar eclipse · in 1d",
+      "Milky Way viewing · tonight",
+      "+1 more event",
+    ]);
     const without = buildBottomHudReadoutLines({
       nowMs: t,
       referenceTimeZone: "America/New_York",
       topBandMode: "local12",
     });
-    expect(without.some((l) => l.role === "eclipse")).toBe(false);
+    expect(without.some((l) => l.role === "eventNotice")).toBe(false);
   });
 });
 

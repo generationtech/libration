@@ -228,18 +228,56 @@ describe("buildMilkyWayRenderPlan", () => {
           galacticCenterLabelEnabled: false,
         },
         eventLabel: {
-          text: "Knoxville · MW Prime · in 2d",
+          text: "Knoxville · Milky Way · in 2d",
           latDeg: -29,
           lonDeg: 170,
           lifecycle: "upcoming",
-          level: "prime",
           cityName: "Knoxville",
+          windowId: "milky-way:city.knoxville:1",
+          peakUtcMs: Date.UTC(2026, 7, 20, 2, 27, 16),
         },
       }),
     });
     const texts = plan.items.filter((item) => item.kind === "text");
-    expect(texts.some((item) => item.kind === "text" && item.text === "Knoxville · MW Prime · in 2d")).toBe(
+    expect(texts.some((item) => item.kind === "text" && item.text === "Knoxville · Milky Way · in 2d")).toBe(
       true,
+    );
+  });
+
+  it("draws viewing-footprint rings as strokes without fill", () => {
+    const plan = buildMilkyWayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      layerOpacity: 1,
+      payload: payload({
+        geometry: null,
+        presentation: {
+          ...DEFAULT_MILKY_WAY_PRESENTATION,
+          planeEnabled: false,
+          bandEnabled: false,
+          ribsEnabled: false,
+          galacticCenterEnabled: false,
+          galacticCenterLabelEnabled: false,
+          viewingEventsEnabled: true,
+          showViewingFootprint: true,
+          viewingFootprintColor: "#c97ba8",
+        },
+        viewingFootprintRings: [
+          [
+            { latDeg: 10, lonDeg: -90 },
+            { latDeg: 20, lonDeg: -80 },
+            { latDeg: 10, lonDeg: -70 },
+            { latDeg: 10, lonDeg: -90 },
+          ],
+        ],
+      }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    expect(plan.items.every((item) => item.kind === "line")).toBe(true);
+    expect(lines.every((item) => item.kind === "line" && item.stroke.includes("201"))).toBe(true);
+    expect(plan.items.some((item) => item.kind === "rasterPatch" || item.kind === "radialGradientFill")).toBe(
+      false,
     );
   });
 });

@@ -27,6 +27,8 @@ import {
   presentedActiveLunar,
   presentedActiveSolar,
   presentedPrimaryEclipse,
+  presentedPrimaryLunar,
+  presentedPrimarySolar,
 } from "./eclipsePresentedEvents";
 import type { LunarEclipsePresentation } from "./lunarEclipseAppearance";
 import type { SolarEclipsePresentation } from "./solarEclipseAppearance";
@@ -54,6 +56,7 @@ export type EclipsePresentationState = {
   readonly currentShadow: string | null;
   readonly relativeTime: string | null;
   readonly productUtcMs: number;
+  readonly startUtcMs: number;
   readonly local: EclipsePresentationLocal | null;
   readonly mapLabelText: string;
 };
@@ -67,6 +70,35 @@ export type BuildEclipsePresentationStateInput = {
   readonly circumstances: ReferenceCityEclipseCircumstances | null;
   readonly cityName: string;
 };
+
+function solarPresentationOrHidden(
+  enabled: boolean,
+  solar: SolarEclipsePresentation,
+): SolarEclipsePresentation {
+  return enabled
+    ? solar
+    : {
+        ...solar,
+        showTypeTotal: false,
+        showTypeAnnular: false,
+        showTypePartial: false,
+        showTypeHybrid: false,
+      };
+}
+
+function lunarPresentationOrHidden(
+  enabled: boolean,
+  lunar: LunarEclipsePresentation,
+): LunarEclipsePresentation {
+  return enabled
+    ? lunar
+    : {
+        ...lunar,
+        showTypeTotal: false,
+        showTypePartial: false,
+        showTypePenumbral: false,
+      };
+}
 
 function solarKindLabel(kind: string): string | null {
   if (kind === "total") return "Total";
@@ -153,6 +185,80 @@ function localFromCircumstances(
   };
 }
 
+export function buildSolarEclipsePresentationState(
+  input: BuildEclipsePresentationStateInput,
+): EclipsePresentationState | null {
+  if (!input.frame || !input.solarEnabled || !input.frame.support.supported) {
+    return null;
+  }
+  const solar = solarPresentationOrHidden(true, input.solar);
+  const event = presentedPrimarySolar(input.frame, solar);
+  if (!event) {
+    return null;
+  }
+  const productUtcMs = input.frame.productUtcMs;
+  const active = presentedActiveSolar(input.frame, solar);
+  const lifecycle = active && active.id === event.id ? "active" : "upcoming";
+  const relative =
+    lifecycle === "upcoming" ? formatEclipseRelativeTime(productUtcMs, event.globalStartMs) : null;
+  const map = solarEclipseMapLabel({
+    event,
+    lifecycle,
+    productUtcMs,
+    latDeg: 0,
+    lonDeg: 0,
+  });
+  return {
+    kind: "solar",
+    lifecycle,
+    eventId: event.id,
+    globalTitle: solarEclipseTypeTitle(event.subtype),
+    currentShadow: lifecycle === "active" && active ? solarCurrentShadow(input.frame) : null,
+    relativeTime: relative && relative !== "now" ? relative : null,
+    productUtcMs,
+    startUtcMs: event.globalStartMs,
+    local: localFromCircumstances(input.circumstances, input.cityName, event.id, "solar"),
+    mapLabelText: map.text,
+  };
+}
+
+export function buildLunarEclipsePresentationState(
+  input: BuildEclipsePresentationStateInput,
+): EclipsePresentationState | null {
+  if (!input.frame || !input.lunarEnabled || !input.frame.support.supported) {
+    return null;
+  }
+  const lunar = lunarPresentationOrHidden(true, input.lunar);
+  const event = presentedPrimaryLunar(input.frame, lunar);
+  if (!event) {
+    return null;
+  }
+  const productUtcMs = input.frame.productUtcMs;
+  const activeLunar = presentedActiveLunar(input.frame, lunar);
+  const lifecycle = activeLunar && activeLunar.id === event.id ? "active" : "upcoming";
+  const relative =
+    lifecycle === "upcoming" ? formatEclipseRelativeTime(productUtcMs, event.globalStartMs) : null;
+  const map = lunarEclipseMapLabel({
+    event,
+    lifecycle,
+    productUtcMs,
+    latDeg: 0,
+    lonDeg: 0,
+  });
+  return {
+    kind: "lunar",
+    lifecycle,
+    eventId: event.id,
+    globalTitle: lunarEclipseTypeTitle(event.subtype),
+    currentShadow: lifecycle === "active" && activeLunar ? lunarCurrentPhase(input.frame) : null,
+    relativeTime: relative && relative !== "now" ? relative : null,
+    productUtcMs,
+    startUtcMs: event.globalStartMs,
+    local: localFromCircumstances(input.circumstances, input.cityName, event.id, "lunar"),
+    mapLabelText: map.text,
+  };
+}
+
 export function buildEclipsePresentationState(
   input: BuildEclipsePresentationStateInput,
 ): EclipsePresentationState | null {
@@ -162,23 +268,8 @@ export function buildEclipsePresentationState(
   if (!input.frame.support.supported) {
     return null;
   }
-  const solar = input.solarEnabled
-    ? input.solar
-    : {
-        ...input.solar,
-        showTypeTotal: false,
-        showTypeAnnular: false,
-        showTypePartial: false,
-        showTypeHybrid: false,
-      };
-  const lunar = input.lunarEnabled
-    ? input.lunar
-    : {
-        ...input.lunar,
-        showTypeTotal: false,
-        showTypePartial: false,
-        showTypePenumbral: false,
-      };
+  const solar = solarPresentationOrHidden(input.solarEnabled, input.solar);
+  const lunar = lunarPresentationOrHidden(input.lunarEnabled, input.lunar);
   const primary = presentedPrimaryEclipse(input.frame, solar, lunar);
   if (!primary) {
     return null;
@@ -207,6 +298,7 @@ export function buildEclipsePresentationState(
       currentShadow: lifecycle === "active" && active ? solarCurrentShadow(input.frame) : null,
       relativeTime: relative && relative !== "now" ? relative : null,
       productUtcMs,
+      startUtcMs: event.globalStartMs,
       local: localFromCircumstances(input.circumstances, input.cityName, event.id, "solar"),
       mapLabelText: map.text,
     };
@@ -233,6 +325,7 @@ export function buildEclipsePresentationState(
     currentShadow: lifecycle === "active" && activeLunar ? lunarCurrentPhase(input.frame) : null,
     relativeTime: relative && relative !== "now" ? relative : null,
     productUtcMs,
+    startUtcMs: event.globalStartMs,
     local: localFromCircumstances(input.circumstances, input.cityName, event.id, "lunar"),
     mapLabelText: map.text,
   };

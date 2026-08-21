@@ -1,6 +1,6 @@
 # 0020 — Event playback merges enabled domain sources
 
-- **Status:** Accepted
+- **Status:** Accepted. MW Viewing / Strong / Prime playback level filters superseded by [0021](0021-one-primary-milky-way-viewing-event.md).
 - **Date:** 2026-08-19 (record written with [LIB-053](../work/LIB-053-multi-family-event-playback-and-mw-freeze-repair.md))
 
 ## Context

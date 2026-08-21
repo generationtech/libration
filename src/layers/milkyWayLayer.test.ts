@@ -124,4 +124,30 @@ describe("createMilkyWayLayer", () => {
     expect(st.data.eventLabel!.cityName).toBe("Knoxville");
     expect(st.data.geometry).not.toBeNull();
   });
+
+  it("emits viewing-footprint rings when events and the footprint toggle are on", () => {
+    resetMilkyWayGeometryCacheForTests();
+    const knoxvilleCity = REFERENCE_CITIES.find((c) => c.id === "city.knoxville")!;
+    const layer = createMilkyWayLayer({
+      presentation: mergeMilkyWayPresentation(DEFAULT_MILKY_WAY_PRESENTATION, {
+        viewingEventsEnabled: true,
+        showViewingEventLabels: true,
+        showViewingFootprint: true,
+      }),
+      observer: {
+        cityId: knoxvilleCity.id,
+        latitudeDeg: knoxvilleCity.latitude,
+        longitudeDeg: knoxvilleCity.longitude,
+      },
+      cityName: knoxvilleCity.name,
+      timeZone: "America/New_York",
+    });
+    const st = layer.getState(createTimeContext(UTC, 0, true));
+    if (!isMilkyWayPayload(st.data)) {
+      throw new Error("expected payload");
+    }
+    expect(st.data.viewingFootprintRings).toBeTruthy();
+    expect(st.data.viewingFootprintRings!.length).toBeGreaterThan(0);
+    expect(st.data.viewingFootprintRings![0]!.length).toBeGreaterThan(8);
+  }, 20_000);
 });

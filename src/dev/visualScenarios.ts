@@ -588,10 +588,8 @@ function applyMilkyWayScene(draft: LibrationConfigV2): void {
       contour0Enabled: false,
       emphasizeAstronomicalNight: true,
       viewingEventsEnabled: true,
-      showViewingWindows: true,
-      showStrongWindows: true,
-      showPrimeWindows: true,
       showViewingEventLabels: true,
+      showViewingFootprint: true,
       eventLabelAdvanceHorizonId: "2d",
     });
     draft.scene = applyLayerEnableFlagsToScene(draft.scene, draft.layers);

@@ -281,78 +281,10 @@ export function EventPlaybackPanel(props: {
       </div>
 
       {pb.milkyWayEnabled ? (
-        <>
-          <p className="config-section__hint">
-            Reference city: {city ?? "none"} (playback uses this observer; it does not change Layers
-            presentation).
-          </p>
-          <p className="config-section__hint">Milky Way levels</p>
-          <div className="config-checkbox-grid">
-            <ConfigControlRow label="Viewing">
-              <input
-                type="checkbox"
-                className="config-input config-input--checkbox"
-                checked={pb.includeViewing}
-                disabled={!mutable}
-                aria-label="Include Viewing windows in playback"
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        session?.onDeactivate();
-                        patchPlayback(updateConfig, (draft) => {
-                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
-                            includeViewing: e.currentTarget.checked,
-                          });
-                        });
-                      }
-                    : undefined
-                }
-              />
-            </ConfigControlRow>
-            <ConfigControlRow label="Strong">
-              <input
-                type="checkbox"
-                className="config-input config-input--checkbox"
-                checked={pb.includeStrong}
-                disabled={!mutable}
-                aria-label="Include Strong windows in playback"
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        session?.onDeactivate();
-                        patchPlayback(updateConfig, (draft) => {
-                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
-                            includeStrong: e.currentTarget.checked,
-                          });
-                        });
-                      }
-                    : undefined
-                }
-              />
-            </ConfigControlRow>
-            <ConfigControlRow label="Prime">
-              <input
-                type="checkbox"
-                className="config-input config-input--checkbox"
-                checked={pb.includePrime}
-                disabled={!mutable}
-                aria-label="Include Prime windows in playback"
-                onChange={
-                  mutable && updateConfig
-                    ? (e) => {
-                        session?.onDeactivate();
-                        patchPlayback(updateConfig, (draft) => {
-                          draft.data.eventPlayback = applyEventPlayback(draft.data.eventPlayback, {
-                            includePrime: e.currentTarget.checked,
-                          });
-                        });
-                      }
-                    : undefined
-                }
-              />
-            </ConfigControlRow>
-          </div>
-        </>
+        <p className="config-section__hint">
+          Reference city: {city ?? "none"} (playback uses this observer; it does not change Layers
+          presentation).
+        </p>
       ) : null}
 
       <ConfigControlRow label="Start before event">

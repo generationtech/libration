@@ -346,3 +346,9 @@ Factory solar night veil is now a C1 twilight-anchored monotone cubic (veil 0 / 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 252 files / 2361 passed / 0 failed; `npm run build` succeeded with no `twilight-presentation` / `nightVeilCurve` / `visualScenarios` in `dist/`. Cursor Browser case A/B/C, terminator, night, Moon phases, lunar/solar eclipse, 21600× Demo. LIB-037 stays proposed.
 
+## 2026-08-20 — LIB-057 complete
+
+One primary Milky Way viewing window (`milky-way-viewing-v2`: GC ≥ 15° ∩ ≥ 90% nightly max ∩ Sun ≤ −18° ∩ moonlight ≤ 0.08) replaces Viewing / Strong / Prime. Static peak-UTC line-only viewing footprint. Data keeps merged incremental playback as one MW source. Lower-left HUD arbitrates solar/lunar/MW notices (max 2 + overflow). ADR 0021.
+
+Verified: `npx tsc --noEmit` clean; focused 18 files / 269 passed; `npm test` 255 files / 2383 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `mwEvent` / `?scenario=` in `dist/`. Cursor Browser `milky-way` upcoming/active/São Paulo/Layers/Data/Aug 21 after-window. LIB-037 stays proposed.
+

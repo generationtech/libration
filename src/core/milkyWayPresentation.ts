@@ -17,11 +17,11 @@
  */
 
 import {
+  DEFAULT_ASTRONOMY_PATH_THICKNESS,
   normalizeAstronomyPathColorCss,
   normalizeAstronomyPathThicknessId,
   type AstronomyPathThicknessId,
 } from "./astronomyOverlayStrokeAppearance";
-import type { MilkyWayViewingLevel } from "./milkyWayViewingPolicy";
 
 export const MILKY_WAY_BAND_WIDTH_IDS = ["narrow", "normal", "wide"] as const;
 export type MilkyWayBandWidthId = (typeof MILKY_WAY_BAND_WIDTH_IDS)[number];
@@ -42,6 +42,11 @@ export const DEFAULT_MILKY_WAY_BAND_THICKNESS: AstronomyPathThicknessId = "thin"
 /** Distinct from plane/band, still in the same cool-lavender family. Not white. */
 export const DEFAULT_MILKY_WAY_VISIBILITY_COLOR = "#b8a0d4";
 export const DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS: AstronomyPathThicknessId = "thin";
+
+/** Stronger rose/lavender than GC altitude contours; event geography, not another contour. */
+export const DEFAULT_MILKY_WAY_VIEWING_FOOTPRINT_COLOR = "#c97ba8";
+export const DEFAULT_MILKY_WAY_VIEWING_FOOTPRINT_THICKNESS: AstronomyPathThicknessId =
+  DEFAULT_ASTRONOMY_PATH_THICKNESS;
 
 export const MILKY_WAY_EVENT_LABEL_HORIZON_IDS = ["live", "6h", "1d", "2d", "7d"] as const;
 export type MilkyWayEventLabelHorizonId = (typeof MILKY_WAY_EVENT_LABEL_HORIZON_IDS)[number];
@@ -122,10 +127,10 @@ export type MilkyWayPresentation = {
   visibilityColor: string;
   visibilityThickness: AstronomyPathThicknessId;
   viewingEventsEnabled: boolean;
-  showViewingWindows: boolean;
-  showStrongWindows: boolean;
-  showPrimeWindows: boolean;
   showViewingEventLabels: boolean;
+  showViewingFootprint: boolean;
+  viewingFootprintColor: string;
+  viewingFootprintThickness: AstronomyPathThicknessId;
   eventLabelAdvanceHorizonId: MilkyWayEventLabelHorizonId;
 };
 
@@ -156,10 +161,10 @@ export const DEFAULT_MILKY_WAY_PRESENTATION: MilkyWayPresentation = {
   visibilityColor: DEFAULT_MILKY_WAY_VISIBILITY_COLOR,
   visibilityThickness: DEFAULT_MILKY_WAY_VISIBILITY_THICKNESS,
   viewingEventsEnabled: false,
-  showViewingWindows: true,
-  showStrongWindows: true,
-  showPrimeWindows: true,
   showViewingEventLabels: true,
+  showViewingFootprint: true,
+  viewingFootprintColor: DEFAULT_MILKY_WAY_VIEWING_FOOTPRINT_COLOR,
+  viewingFootprintThickness: DEFAULT_MILKY_WAY_VIEWING_FOOTPRINT_THICKNESS,
   eventLabelAdvanceHorizonId: DEFAULT_MILKY_WAY_EVENT_LABEL_HORIZON,
 };
 
@@ -223,14 +228,32 @@ export function normalizeMilkyWayPresentation(raw: unknown): MilkyWayPresentatio
       o.visibilityThickness ?? d.visibilityThickness,
     ),
     viewingEventsEnabled: asBoolean(o.viewingEventsEnabled, d.viewingEventsEnabled),
-    showViewingWindows: asBoolean(o.showViewingWindows, d.showViewingWindows),
-    showStrongWindows: asBoolean(o.showStrongWindows, d.showStrongWindows),
-    showPrimeWindows: asBoolean(o.showPrimeWindows, d.showPrimeWindows),
-    showViewingEventLabels: asBoolean(o.showViewingEventLabels, d.showViewingEventLabels),
+    showViewingEventLabels: asBoolean(
+      o.showViewingEventLabels,
+      legacyAnyViewingClassEnabled(o) === false ? false : d.showViewingEventLabels,
+    ),
+    showViewingFootprint: asBoolean(o.showViewingFootprint, d.showViewingFootprint),
+    viewingFootprintColor: normalizeAstronomyPathColorCss(
+      o.viewingFootprintColor,
+      d.viewingFootprintColor,
+    ),
+    viewingFootprintThickness: normalizeAstronomyPathThicknessId(
+      o.viewingFootprintThickness ?? d.viewingFootprintThickness,
+    ),
     eventLabelAdvanceHorizonId: isEventLabelHorizonId(o.eventLabelAdvanceHorizonId)
       ? o.eventLabelAdvanceHorizonId
       : d.eventLabelAdvanceHorizonId,
   };
+}
+
+/** Pre-LIB-057 class toggles. Any true class kept labels on; all false hid them. */
+function legacyAnyViewingClassEnabled(o: Record<string, unknown>): boolean | null {
+  const flags = [o.showViewingWindows, o.showStrongWindows, o.showPrimeWindows];
+  const present = flags.filter((v): v is boolean => typeof v === "boolean");
+  if (present.length === 0) {
+    return null;
+  }
+  return present.some(Boolean);
 }
 
 export function milkyWayEnabledContourAltitudesDeg(
@@ -251,22 +274,6 @@ export function milkyWayEnabledContourAltitudesDeg(
   }
   if (pres.contour75Enabled) {
     out.push(75);
-  }
-  return out;
-}
-
-export function milkyWayEnabledViewingLevels(
-  pres: MilkyWayPresentation,
-): MilkyWayViewingLevel[] {
-  const out: MilkyWayViewingLevel[] = [];
-  if (pres.showViewingWindows) {
-    out.push("viewing");
-  }
-  if (pres.showStrongWindows) {
-    out.push("strong");
-  }
-  if (pres.showPrimeWindows) {
-    out.push("prime");
   }
   return out;
 }

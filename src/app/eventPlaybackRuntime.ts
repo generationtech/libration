@@ -31,7 +31,6 @@ import {
 } from "../core/eclipse/eclipseTourCatalog";
 import { eclipseTourRangeUtcMs } from "../core/eclipse/eclipseTourRange";
 import { eclipseTourStructuralKey } from "../core/eclipse/eclipseTourSequence";
-import { milkyWayPlaybackLevels } from "../core/eventPlayback/eventPlaybackConfig";
 import {
   createMergedEventPlaybackNavigator,
   findNextPlaybackEvent,
@@ -99,9 +98,6 @@ export function eventPlaybackStructuralFingerprint(v2: LibrationConfigV2): strin
     pb.solarEnabled ? "S" : "",
     pb.lunarEnabled ? "L" : "",
     pb.milkyWayEnabled ? "M" : "",
-    pb.includeViewing ? "V" : "",
-    pb.includeStrong ? "St" : "",
-    pb.includePrime ? "P" : "",
     pb.leadInId,
     pb.postWaitId,
     typeFilterKey(v2),
@@ -138,7 +134,6 @@ export function eventPlaybackLookupQuery(v2: LibrationConfigV2): EventPlaybackLo
     solarEnabled: pb.solarEnabled,
     lunarEnabled: pb.lunarEnabled,
     milkyWayEnabled: pb.milkyWayEnabled,
-    milkyWayLevels: milkyWayPlaybackLevels(pb),
     solarPresentation: solarEclipsePresentationFromScene(scene),
     lunarPresentation: lunarEclipsePresentationFromScene(scene),
     observer,

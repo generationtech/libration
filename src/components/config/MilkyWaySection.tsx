@@ -30,7 +30,6 @@ import { MILKY_WAY_UNAVAILABLE_COPY } from "../../core/milkyWayGalactic";
 import {
   MILKY_WAY_BAND_WIDTH_IDS,
   milkyWayBandWidthLabel,
-  milkyWayEnabledViewingLevels,
   milkyWayEventLabelHorizonLabel,
   MILKY_WAY_EVENT_LABEL_HORIZON_IDS,
   type MilkyWayBandWidthId,
@@ -40,6 +39,7 @@ import {
 import {
   formatMilkyWayViewingActiveLines,
   milkyWayViewingFeasibilityCopy,
+  MILKY_WAY_VIEWING_FOOTPRINT_HONEST_COPY,
   MILKY_WAY_VIEWING_WINDOW_HONEST_COPY,
   resolveMilkyWayViewingStatus,
 } from "../../core/milkyWayViewingStatus";
@@ -111,7 +111,6 @@ export function MilkyWaySection(props: {
   );
   const dayBucket =
     productInstantMs !== undefined ? Math.floor(productInstantMs / 86_400_000) : null;
-  const enabledLevels = milkyWayEnabledViewingLevels(pres);
   const viewingSearch = useMemo(() => {
     if (!pres.viewingEventsEnabled || !observer || productInstantMs === undefined || dayBucket === null) {
       return null;
@@ -122,7 +121,6 @@ export function MilkyWaySection(props: {
       observer,
       startUtcMs,
       endUtcMs,
-      levels: enabledLevels,
     });
   }, [
     pres.viewingEventsEnabled,
@@ -130,7 +128,6 @@ export function MilkyWaySection(props: {
     observer?.latitudeDeg,
     observer?.longitudeDeg,
     dayBucket,
-    enabledLevels.join(","),
     productInstantMs === undefined,
   ]);
   const viewingStatus =
@@ -652,7 +649,7 @@ export function MilkyWaySection(props: {
         </select>
       </ConfigControlRow>
 
-      <p className="config-section__hint">Viewing windows</p>
+      <p className="config-section__hint">Viewing events</p>
       <p className="config-section__hint">{MILKY_WAY_VIEWING_WINDOW_HONEST_COPY}</p>
       <ConfigControlRow label="Enable Milky Way viewing events">
         <input
@@ -663,68 +660,11 @@ export function MilkyWaySection(props: {
           disabled={!mutable}
           tabIndex={mutable ? 0 : -1}
           aria-label="Enable Milky Way viewing events"
-          title="Compute reference-city Milky Way Viewing Windows. Does not enable the ribbon or contours."
+          title="Compute reference-city Milky Way viewing windows. Does not enable the ribbon or contours."
           onChange={
             mutable
               ? (e) => {
                   apply({ viewingEventsEnabled: e.currentTarget.checked });
-                }
-              : undefined
-          }
-        />
-      </ConfigControlRow>
-      <ConfigControlRow label="Show Viewing windows">
-        <input
-          type="checkbox"
-          className="config-input config-input--checkbox"
-          checked={pres.showViewingWindows}
-          readOnly={!mutable}
-          disabled={!mutable || !pres.viewingEventsEnabled}
-          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
-          aria-label="Show Viewing windows"
-          title="Include Viewing-level intervals on the map event label. Does not change Data playback filters."
-          onChange={
-            mutable
-              ? (e) => {
-                  apply({ showViewingWindows: e.currentTarget.checked });
-                }
-              : undefined
-          }
-        />
-      </ConfigControlRow>
-      <ConfigControlRow label="Show Strong windows">
-        <input
-          type="checkbox"
-          className="config-input config-input--checkbox"
-          checked={pres.showStrongWindows}
-          readOnly={!mutable}
-          disabled={!mutable || !pres.viewingEventsEnabled}
-          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
-          aria-label="Show Strong windows"
-          title="Include Strong-level intervals on the map event label. Does not change Data playback filters."
-          onChange={
-            mutable
-              ? (e) => {
-                  apply({ showStrongWindows: e.currentTarget.checked });
-                }
-              : undefined
-          }
-        />
-      </ConfigControlRow>
-      <ConfigControlRow label="Show Prime windows">
-        <input
-          type="checkbox"
-          className="config-input config-input--checkbox"
-          checked={pres.showPrimeWindows}
-          readOnly={!mutable}
-          disabled={!mutable || !pres.viewingEventsEnabled}
-          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
-          aria-label="Show Prime windows"
-          title="Include Prime-level intervals on the map event label. Does not change Data playback filters."
-          onChange={
-            mutable
-              ? (e) => {
-                  apply({ showPrimeWindows: e.currentTarget.checked });
                 }
               : undefined
           }
@@ -749,12 +689,75 @@ export function MilkyWaySection(props: {
           }
         />
       </ConfigControlRow>
+      <ConfigControlRow label="Show viewing footprint">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showViewingFootprint}
+          readOnly={!mutable}
+          disabled={!mutable || !pres.viewingEventsEnabled}
+          tabIndex={mutable && pres.viewingEventsEnabled ? 0 : -1}
+          aria-label="Show viewing footprint"
+          title={MILKY_WAY_VIEWING_FOOTPRINT_HONEST_COPY}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showViewingFootprint: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Viewing footprint color">
+        <input
+          type="color"
+          className="config-input"
+          disabled={!mutable || !pres.viewingEventsEnabled || !pres.showViewingFootprint}
+          aria-label="Viewing footprint color"
+          value={pres.viewingFootprintColor}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ viewingFootprintColor: e.currentTarget.value });
+                }
+              : undefined
+          }
+        />
+      </ConfigControlRow>
+      <ConfigControlRow label="Viewing footprint thickness">
+        <select
+          className="config-input"
+          disabled={!mutable || !pres.viewingEventsEnabled || !pres.showViewingFootprint}
+          aria-label="Viewing footprint thickness"
+          value={pres.viewingFootprintThickness}
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({
+                    viewingFootprintThickness: e.currentTarget
+                      .value as (typeof ASTRONOMY_PATH_THICKNESS_IDS)[number],
+                  });
+                }
+              : undefined
+          }
+        >
+          {ASTRONOMY_PATH_THICKNESS_IDS.map((id) => (
+            <option key={id} value={id}>
+              {thicknessLabel(id)}
+            </option>
+          ))}
+        </select>
+      </ConfigControlRow>
       <ConfigControlRow label="Event label advance notice">
         <select
           className="config-input"
-          disabled={!mutable || !pres.viewingEventsEnabled || !pres.showViewingEventLabels}
+          disabled={
+            !mutable ||
+            !pres.viewingEventsEnabled ||
+            !(pres.showViewingEventLabels || pres.showViewingFootprint)
+          }
           aria-label="Event label advance notice"
-          title="How far ahead of a selected window the upcoming map label appears."
+          title="How far ahead of a selected window the upcoming map label and footprint appear."
           value={pres.eventLabelAdvanceHorizonId}
           onChange={
             mutable

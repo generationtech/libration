@@ -47,6 +47,8 @@ export function buildBottomHudReadoutLines(options: {
   >;
   /** Compact eclipse status; omitted when no relevant eclipse or chrome is disabled. */
   eclipseStatusText?: string | null;
+  /** Ranked HUD event notices (eclipse + Milky Way). Takes precedence over eclipseStatusText. */
+  eventNoticeTexts?: readonly string[];
 }): BottomHudReadoutLine[] {
   const lay = options.bottomTimeStack ?? {};
   const showDate = lay.bottomTimeStackShowDate !== false;
@@ -68,9 +70,17 @@ export function buildBottomHudReadoutLines(options: {
     });
     lines.push({ role: "time", text: timeText });
   }
-  const eclipse = options.eclipseStatusText?.trim() ?? "";
-  if (eclipse.length > 0) {
-    lines.push({ role: "eclipse", text: eclipse });
+  const notices = (options.eventNoticeTexts ?? [])
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  if (notices.length === 0) {
+    const eclipse = options.eclipseStatusText?.trim() ?? "";
+    if (eclipse.length > 0) {
+      notices.push(eclipse);
+    }
+  }
+  for (const text of notices) {
+    lines.push({ role: "eventNotice", text });
   }
   return lines;
 }

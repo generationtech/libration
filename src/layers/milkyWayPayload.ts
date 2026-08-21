@@ -17,6 +17,7 @@ import type { MilkyWayGeometry } from "../core/milkyWayGeometry";
 import type { MilkyWayPresentation } from "../core/milkyWayPresentation";
 import type { MilkyWayVisibilityGeometry } from "../core/milkyWayVisibilityGeometry";
 import type { MilkyWayEventMapLabel } from "../core/milkyWayEventLabel";
+import type { GeographicRingPoint } from "../core/scalarFieldContours";
 
 export const MILKY_WAY_KIND = "milkyWay" as const;
 
@@ -33,6 +34,7 @@ export type MilkyWayPayload = {
   readonly geometry: MilkyWayGeometry | null;
   readonly visibility: MilkyWayVisibilityGeometry | null;
   readonly eventLabel: MilkyWayEventMapLabel | null;
+  readonly viewingFootprintRings?: readonly (readonly GeographicRingPoint[])[] | null;
   readonly labelAvoidCityLabels?: readonly MilkyWayAvoidCityLabel[];
   readonly readability?: OverlayReadabilityHints;
 };

@@ -201,13 +201,9 @@ describe("DataTab demo time UX", () => {
     expect((screen.getByLabelText("Include Milky Way viewing windows in playback") as HTMLInputElement).checked).toBe(
       true,
     );
-    expect(screen.getByLabelText("Include Prime windows in playback")).toBeTruthy();
-    expect((screen.getByLabelText("Include Viewing windows in playback") as HTMLInputElement).checked).toBe(
-      false,
-    );
-    expect((screen.getByLabelText("Include Strong windows in playback") as HTMLInputElement).checked).toBe(
-      true,
-    );
+    expect(screen.queryByLabelText("Include Prime windows in playback")).toBeNull();
+    expect(screen.queryByLabelText("Include Viewing windows in playback")).toBeNull();
+    expect(screen.queryByLabelText("Include Strong windows in playback")).toBeNull();
     expect(screen.queryByText("Go to next Prime window")).toBeNull();
   });
 });

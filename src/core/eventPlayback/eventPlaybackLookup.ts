@@ -37,7 +37,6 @@ import {
   scheduleMilkyWayTourEvent,
   type MilkyWayPlaybackScheduledEvent,
 } from "./milkyWayTourEvents";
-import type { MilkyWayViewingLevel } from "../milkyWayViewingPolicy";
 import type { MilkyWayViewingObserver } from "../milkyWayViewingWindows";
 
 export const EVENT_PLAYBACK_SOURCE_IDS = ["solarEclipse", "lunarEclipse", "milkyWayViewing"] as const;
@@ -59,7 +58,7 @@ export type EventPlaybackListedEvent = EventPlaybackTimedEvent & {
   readonly dateLabel: string;
   readonly milkyWay?: Pick<
     MilkyWayPlaybackScheduledEvent,
-    "cityId" | "bestLevel" | "peakAltitudeDeg" | "startUtcMs" | "endUtcMs"
+    "cityId" | "peakAltitudeDeg" | "startUtcMs" | "endUtcMs"
   > & { readonly cityName: string };
 };
 
@@ -71,7 +70,6 @@ export type EventPlaybackLookupQuery = {
   readonly solarEnabled: boolean;
   readonly lunarEnabled: boolean;
   readonly milkyWayEnabled: boolean;
-  readonly milkyWayLevels: readonly MilkyWayViewingLevel[];
   readonly solarPresentation: SolarEclipsePresentation;
   readonly lunarPresentation: LunarEclipsePresentation;
   readonly observer: MilkyWayViewingObserver | null;
@@ -173,7 +171,6 @@ function milkyWayToListed(
     milkyWay: {
       cityId: event.cityId,
       cityName,
-      bestLevel: event.bestLevel,
       peakAltitudeDeg: event.peakAltitudeDeg,
       startUtcMs: event.startUtcMs,
       endUtcMs: event.endUtcMs,
@@ -283,14 +280,13 @@ function findNextMilkyWay(
   includeIntersecting: boolean,
   excludeEventId: string | undefined,
 ): EventPlaybackListedEvent | null {
-  if (!query.milkyWayEnabled || !query.observer || query.milkyWayLevels.length === 0) {
+  if (!query.milkyWayEnabled || !query.observer) {
     return null;
   }
   const found = findNextMilkyWayTourEvent({
     observer: query.observer,
     rangeStartUtcMs: query.rangeStartUtcMs,
     rangeEndUtcMs: query.rangeEndUtcMs,
-    levels: query.milkyWayLevels,
     afterUtcMs,
     includeIntersecting,
     excludeEventId,
@@ -392,14 +388,13 @@ function previousMilkyWay(
   beforeUtcMs: number,
   excludeEventId: string | undefined,
 ): EventPlaybackListedEvent | null {
-  if (!query.milkyWayEnabled || !query.observer || query.milkyWayLevels.length === 0) {
+  if (!query.milkyWayEnabled || !query.observer) {
     return null;
   }
   const found = findPreviousMilkyWayTourEvent({
     observer: query.observer,
     rangeStartUtcMs: query.rangeStartUtcMs,
     rangeEndUtcMs: query.rangeEndUtcMs,
-    levels: query.milkyWayLevels,
     beforeUtcMs,
     excludeEventId,
   });

@@ -555,6 +555,7 @@ export function buildBottomInformationBarState(options: {
     "bottomTimeStackShowDate" | "bottomTimeStackShowTime" | "bottomTimeShowSeconds"
   >;
   eclipseStatusText?: string | null;
+  eventNoticeTexts?: readonly string[];
 }): BottomInformationBarState {
   const tz = resolveChromeTimeZone(options.chromeTimeZone);
   const mode = options.topBandMode ?? DEFAULT_DISPLAY_TIME_CONFIG.topBandMode;
@@ -565,6 +566,7 @@ export function buildBottomInformationBarState(options: {
       topBandMode: mode,
       bottomTimeStack: options.bottomTimeStack,
       eclipseStatusText: options.eclipseStatusText,
+      eventNoticeTexts: options.eventNoticeTexts,
     }),
     bottomChromeLayout: computeBottomChromeLayout(options.bottomBandWidthPx),
   };
@@ -1407,6 +1409,8 @@ export function buildDisplayChromeState(options: {
   displayChromeLayout?: Partial<DisplayChromeLayoutConfig>;
   /** Compact reference-city eclipse status; omitted when empty. */
   eclipseStatusText?: string | null;
+  /** Ranked HUD event notices. Takes precedence over eclipseStatusText. */
+  eventNoticeTexts?: readonly string[];
 }): DisplayChromeState {
   const { time, viewport, frame } = options;
   const resolved = resolveTopBandTimeFromConfig(options.displayTime ?? DEFAULT_DISPLAY_TIME_CONFIG);
@@ -1487,6 +1491,7 @@ export function buildDisplayChromeState(options: {
       topBandMode: resolved.topBandMode,
       bottomTimeStack: layout,
       eclipseStatusText: options.eclipseStatusText,
+      eventNoticeTexts: options.eventNoticeTexts,
     }),
     displayChromeLayout: layout,
     effectiveTopBandHourMarkers,
