@@ -352,3 +352,9 @@ One primary Milky Way viewing window (`milky-way-viewing-v2`: GC ≥ 15° ∩ �
 
 Verified: `npx tsc --noEmit` clean; focused 18 files / 269 passed; `npm test` 255 files / 2383 passed / 0 failed; `npm run build` succeeded with no `visualScenarios` / `mwEvent` / `?scenario=` in `dist/`. Cursor Browser `milky-way` upcoming/active/São Paulo/Layers/Data/Aug 21 after-window. LIB-037 stays proposed.
 
+## 2026-08-21 — LIB-059 complete
+
+USGS `all_day.geojson` stays the live earthquake authority. Production no longer paints fixture quakes as live. Layers → Earthquakes owns local magnitude/age/type/label filters (factory 2.5+ / 24 h / earthquakes-only / labels 4.0+) and loading/live/stale/unavailable/DEV-fixture status. Snapshot age ≤10 min live, 10–60 min stale, >60 min hidden. 15 s USGS timeout. ADR 0005 consequence updated; no new ADR.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 258 files / 2416 passed / 0 failed; `npm run build` succeeded with no `earthquake-presentation` in `dist/`. Cursor Browser ordinary live USGS + historical Demo + `?scenario=earthquake-presentation`. LIB-037 and LIB-058 stay proposed.
+

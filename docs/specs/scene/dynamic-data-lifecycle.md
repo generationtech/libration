@@ -74,13 +74,14 @@ Paid or authenticated sources are permitted when the benefit is clear; they ente
 
 | Situation | Behaviour |
 |-----------|-----------|
-| Live acquisition fails (non-abort) and the adapter has a fixture fallback | The adapter returns the recorded real-format fixture **under the same durable `sourceId`**, so scene identity is unchanged. |
+| Live acquisition fails (non-abort) and the adapter has a fixture fallback | The adapter returns the recorded real-format fixture **under the same durable `sourceId`**, so scene identity is unchanged. Production earthquakes and ISS do **not** enable this path. |
+| Live earthquake/ISS acquisition fails with no usable live snapshot | Overlay unavailable; no fixture substitution; Layers status is unavailable. |
 | Acquisition is aborted | Fixture fallback is **not** invoked. An abort is not a failure. |
-| Refresh fails while a prior version is cached | The controller's `stale-when-cached` failure policy prefers the prior ready version over surfacing a hard error. |
+| Refresh fails while a prior version is cached | The controller's `stale-when-cached` failure policy prefers the prior ready version over surfacing a hard error. Earthquake presentation may still paint that live snapshot while snapshot age is ≤ 60 min (status stale). |
 | Nothing has ever been acquired | Resolution reports missing; consumers must render nothing rather than improvising. |
 | Any resolve or paint | Never fetches. |
 
-Fixture bytes are application-local test and demo content and are described as such in the catalogs. They are a fallback, not a product feature.
+Fixture bytes are application-local test and demo content and are described as such in the catalogs. They are a fallback, not a product feature. Production must not present earthquake or ISS fixtures as live.
 
 ## Materialization
 
@@ -100,7 +101,7 @@ Layers read prepared views. If no prepared view exists for the current product i
 
 ## Current consumers
 
-Four consumers are wired today. Clouds/IR and earthquakes use a live network adapter with fixture offline fallback. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
+Four consumers are wired today. Clouds/IR use a live network adapter with fixture offline fallback. Earthquakes use live USGS `all_day.geojson` with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live snapshot as stale while snapshot age is ≤ 60 min. Local magnitude/age/label/type filters are presentation over that snapshot. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
 
 | Scene / config surface | Durable `sourceId` | Kind | Live feed | Default refresh |
 |------------------------|--------------------|------|-----------|-----------------|

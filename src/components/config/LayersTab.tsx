@@ -78,6 +78,7 @@ import { EclipseSystemSection } from "./EclipseSystemSection";
 import { IssPresentationSection } from "./IssPresentationSection";
 import { PlanetaryObjectsSection } from "./PlanetaryObjectsSection";
 import { MilkyWaySection } from "./MilkyWaySection";
+import { EarthquakesSection } from "./EarthquakesSection";
 import { ConfigStickyTopicNav } from "./ConfigStickyTopicNav";
 import { LayersTopicSelector } from "./LayersTopicSelector";
 import {
@@ -89,6 +90,11 @@ import {
   issConfigStatusHintCopy,
   type IssConfigStatusHint,
 } from "../../lifecycle/issTrackProvenance";
+import {
+  earthquakeConfigStatusHintCopy,
+  type EarthquakeConfigStatusHint,
+  type EarthquakeProvenance,
+} from "../../lifecycle/earthquakeProvenance";
 
 const LIVE_LAYER_KEYS = new Set<keyof LayerEnableFlags>([
   "globalCloudsIr",
@@ -522,6 +528,12 @@ export type LayersTabProps = {
    * is live-enough. Historical suppression uses {@link productTimeLiveEnough}.
    */
   issConfigStatusHint?: IssConfigStatusHint | null;
+  /**
+   * Earthquake status when the layer is enabled and product time is live-enough.
+   * Historical suppression uses {@link productTimeLiveEnough}.
+   */
+  earthquakeConfigStatusHint?: EarthquakeConfigStatusHint | null;
+  earthquakeProvenance?: EarthquakeProvenance | null;
 };
 
 export function LayersTab({
@@ -530,6 +542,8 @@ export function LayersTab({
   productInstantMs,
   productTimeLiveEnough,
   issConfigStatusHint,
+  earthquakeConfigStatusHint,
+  earthquakeProvenance,
 }: LayersTabProps) {
   const [layersTopic, setLayersTopic] = useState<LayersTopicId>(DEFAULT_LAYERS_TOPIC);
   const mutable = Boolean(updateConfig);
@@ -1441,6 +1455,18 @@ export function LayersTab({
                 {issConfigStatusHintCopy(issConfigStatusHint)}
               </p>
             ) : null}
+            {earthquakeConfigStatusHint === "unavailable" ||
+            earthquakeConfigStatusHint === "loading" ||
+            earthquakeConfigStatusHint === "live" ||
+            earthquakeConfigStatusHint === "stale" ||
+            earthquakeConfigStatusHint === "fixture" ? (
+              <p className="config-section__hint" data-testid="earthquake-status-hint">
+                {earthquakeConfigStatusHintCopy(
+                  earthquakeConfigStatusHint,
+                  earthquakeProvenance ?? null,
+                )}
+              </p>
+            ) : null}
         {LAYER_KEYS.map((key) => {
           const liveSuppressed =
             productTimeLiveEnough === false && LIVE_LAYER_KEYS.has(key);
@@ -1625,6 +1651,18 @@ export function LayersTab({
               config={config}
               updateConfig={updateConfig}
               productInstantMs={productInstantMs}
+            />
+          </div>
+        ) : null}
+        {layersTopic === "earthquakes" ? (
+          <div data-testid="layers-topic-earthquakes">
+            <p className="config-section__hint">{descriptionForLayersTopic("earthquakes")}</p>
+            <EarthquakesSection
+              config={config}
+              updateConfig={updateConfig}
+              earthquakeConfigStatusHint={earthquakeConfigStatusHint}
+              earthquakeProvenance={earthquakeProvenance}
+              productTimeLiveEnough={productTimeLiveEnough}
             />
           </div>
         ) : null}

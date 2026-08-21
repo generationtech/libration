@@ -23,6 +23,7 @@ import {
 } from "../config/productTextFont";
 import type { SceneLayerInstance } from "../config/v2/sceneConfig";
 import {
+  earthquakePresentationFromScene,
   eclipseAlignmentPresentationFromScene,
   eclipseInfoPresentationFromScene,
   issOrbitalPresentationFromScene,
@@ -106,6 +107,10 @@ export function createLayerForSceneOverlayInstance(
       zIndex,
       opacity,
       name: inst.id === "earthquakes" ? "Earthquakes" : undefined,
+      presentation:
+        inst.id === "earthquakes"
+          ? earthquakePresentationFromScene(config.scene)
+          : undefined,
     });
   }
   if (s.kind === "dynamicTracks") {

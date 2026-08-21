@@ -32,6 +32,7 @@ import {
 import { createTimeContext } from "../core/time";
 import { isSolarShadingPayload } from "../layers/solarShadingPayload";
 import {
+  applyEarthquakePresentationToScene,
   applyEclipseInfoPresentationToScene,
   applyIssOrbitalPresentationToScene,
   applyPlanetaryObjectsPresentationToScene,
@@ -43,6 +44,7 @@ import {
 } from "../config/v2/sceneConfig";
 import { applyEventPlayback } from "../core/eventPlayback/eventPlaybackConfig";
 import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
+import { DEFAULT_EARTHQUAKE_PRESENTATION } from "../core/earthquakePresentation";
 import {
   commitWorkingV2Update,
   deriveAppConfigFromV2,
@@ -100,6 +102,11 @@ function registryIds(registry: { current: { getLayers: () => { id: string }[] } 
 function issOrbitalParams(scene: { layers: readonly { id: string; source: { kind: string; parameters?: Record<string, unknown> } }[] }) {
   const row = scene.layers.find((l) => l.id === "orbitalTracks");
   return row?.source.kind === "dynamicTracks" ? row.source.parameters : undefined;
+}
+
+function earthquakeParams(scene: { layers: readonly { id: string; source: { kind: string; parameters?: Record<string, unknown> } }[] }) {
+  const row = scene.layers.find((l) => l.id === "earthquakes");
+  return row?.source.kind === "dynamicPointFeatures" ? row.source.parameters : undefined;
 }
 
 const SCENE_EQUALITY_LAYER_FLAGS = {
@@ -906,6 +913,48 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
     expect(issOrbitalParams(a)?.pastColor).toBe(DEFAULT_ISS_ORBITAL_PRESENTATION.pastColor);
     expect(issOrbitalParams(b)?.pastColor).toBe("#ff0000");
+  });
+
+  it("sceneRuntimeAffectingEqual is false when only earthquake presentation parameters change", () => {
+    const a = buildDefaultSceneConfigFromLayerFlags({
+      ...SCENE_EQUALITY_LAYER_FLAGS,
+      earthquakes: true,
+    });
+    const b = applyEarthquakePresentationToScene(a, { minMagnitude: "5" });
+    expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
+    expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
+    expect(earthquakeParams(a)?.minMagnitude).toBe(DEFAULT_EARTHQUAKE_PRESENTATION.minMagnitude);
+    expect(earthquakeParams(b)?.minMagnitude).toBe("5");
+  });
+
+  it("earthquake presentation-only commit rebuilds the layer registry without toggling earthquakes", () => {
+    const seed = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
+    const base = normalizeLibrationConfig({
+      ...seed,
+      layers: { ...seed.layers, earthquakes: true },
+    });
+    const { workingV2Ref, derivedAppConfigRef, registryRef } = setupRefs(base);
+    const registryBefore = registryRef.current;
+    const prevDerivedScene = deriveAppConfigFromV2(workingV2Ref.current!).scene;
+
+    commitWorkingV2Update(workingV2Ref, derivedAppConfigRef, registryRef, (draft) => {
+      const baseScene = draft.scene ?? buildDefaultSceneConfigFromLayerFlags(draft.layers);
+      draft.scene = applyEarthquakePresentationToScene(baseScene, {
+        minMagnitude: "4",
+        showLabels: false,
+        maxAge: "6h",
+      });
+      draft.layers = deriveLayerEnableFlagsFromScene(draft.scene);
+    });
+
+    expect(derivedAppConfigRef.current.layers.earthquakes).toBe(true);
+    expect(sceneRuntimeAffectingEqual(prevDerivedScene, derivedAppConfigRef.current.scene)).toBe(
+      false,
+    );
+    expect(registryRef.current).not.toBe(registryBefore);
+    expect(earthquakeParams(derivedAppConfigRef.current.scene)?.minMagnitude).toBe("4");
+    expect(earthquakeParams(derivedAppConfigRef.current.scene)?.showLabels).toBe(false);
+    expect(earthquakeParams(derivedAppConfigRef.current.scene)?.maxAge).toBe("6h");
   });
 
   it("ISS presentation-only commit rebuilds the layer registry without toggling orbitalTracks", () => {

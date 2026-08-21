@@ -135,8 +135,8 @@ export interface DynamicDataLifecycleHost {
   stopGlobalCloudsIrConsumer(): void;
 
   /**
-   * DLC-2 / DLU-3: register live USGS HTTP adapter (fixture fallback) + start
-   * periodic refresh for earthquakes.
+   * DLC-2 / DLU-3: register live USGS HTTP adapter (no production fixture
+   * fallback) + start periodic refresh for earthquakes.
    * Idempotent. Safe to call from config/effect paths — never from rAF paint.
    */
   ensureEarthquakesConsumer(options?: {

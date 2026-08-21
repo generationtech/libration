@@ -21,6 +21,7 @@ import {
   getDynamicPointFeaturesSourceCatalogEntry,
   produceEarthquakesFixtureAcquisition,
 } from "./index";
+import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
 
 describe("DLC-2 earthquakes point-features consumer boundary", () => {
   it("catalog exposes durable sourceId with attribution (not a CDN URL)", () => {
@@ -60,12 +61,11 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
     const acquireSpy = vi.fn();
     const timers: Array<{ id: number; handler: () => void }> = [];
     let nextTimerId = 1;
-    // Avoid real network in DLC-2 boundary tests: fail live fetch → fixture fallback.
-    const earthquakesLiveFetchFn = vi.fn(async () => {
-      throw new Error("offline-test");
-    });
+    const productMs = 1_700_000_000_000;
+    const earthquakesLiveFetchFn = vi.fn(usgsLiveOkFetch(productMs));
     const host = createDynamicDataLifecycleHost({
       earthquakesLiveFetchFn,
+      nowMs: () => productMs,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -94,7 +94,7 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
     });
 
     await vi.waitFor(() => {
-      const att = host.attachForProductInstant(1_700_000_000_000);
+      const att = host.attachForProductInstant(productMs);
       expect(att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).not.toBeNull();
     });
 
@@ -102,7 +102,7 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
     expect(acquiresAfterArm).toBeGreaterThanOrEqual(1);
     expect(earthquakesLiveFetchFn).toHaveBeenCalled();
 
-    const productA = 1_700_000_000_000;
+    const productA = productMs;
     const productB = productA + 3_600_000;
     const attA = host.attachForProductInstant(productA);
     const attB = host.attachForProductInstant(productB);
@@ -121,10 +121,10 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
   });
 
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
+    const productMs = 1_700_000_000_000;
     const host = createDynamicDataLifecycleHost({
-      earthquakesLiveFetchFn: async () => {
-        throw new Error("offline-test");
-      },
+      earthquakesLiveFetchFn: usgsLiveOkFetch(productMs),
+      nowMs: () => productMs,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
@@ -135,7 +135,7 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(Date.now())
+          .attachForProductInstant(productMs)
           .getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
       ).not.toBeNull();
     });
@@ -146,9 +146,9 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
       opacity: 0.95,
     });
 
-    const attachment = host.attachForProductInstant(Date.now());
+    const attachment = host.attachForProductInstant(productMs);
     const resolveSpy = vi.spyOn(attachment, "resolveSnapshot");
-    const time = createTimeContext(Date.now(), 0, false, {
+    const time = createTimeContext(productMs, 0, false, {
       dynamicDataLifecycle: attachment,
     });
     const state = layer.getState(time);
@@ -160,7 +160,7 @@ describe("DLC-2 earthquakes point-features consumer boundary", () => {
     }
     expect(resolveSpy).not.toHaveBeenCalled();
 
-    const cold = layer.getState(createTimeContext(Date.now(), 0, false));
+    const cold = layer.getState(createTimeContext(productMs, 0, false));
     expect(cold.visible).toBe(false);
 
     host.dispose();

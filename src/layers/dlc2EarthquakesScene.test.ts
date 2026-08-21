@@ -51,6 +51,13 @@ describe("DLC-2 SceneConfig + composition + registry + RenderPlan", () => {
     expect(row!.source).toEqual({
       kind: "dynamicPointFeatures",
       sourceId: USGS_EARTHQUAKES_SOURCE_ID,
+      parameters: {
+        minMagnitude: "2.5",
+        maxAge: "24h",
+        showLabels: true,
+        labelMinMagnitude: "4",
+        earthquakesOnly: true,
+      },
     });
     expect(deriveLayerEnableFlagsFromScene(scene).earthquakes).toBe(true);
   });
@@ -63,6 +70,13 @@ describe("DLC-2 SceneConfig + composition + registry + RenderPlan", () => {
     expect(row!.source).toEqual({
       kind: "dynamicPointFeatures",
       sourceId: USGS_EARTHQUAKES_SOURCE_ID,
+      parameters: {
+        minMagnitude: "2.5",
+        maxAge: "24h",
+        showLabels: true,
+        labelMinMagnitude: "4",
+        earthquakesOnly: true,
+      },
     });
   });
 

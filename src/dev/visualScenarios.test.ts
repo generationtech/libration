@@ -37,6 +37,7 @@ import {
   getVisualScenarioRuntime,
   getVisualScenarioExtraOverlayLayer,
   resetVisualScenarioRuntime,
+  attachVisualScenarioPreparedPointFeatures,
   attachVisualScenarioPreparedTracks,
 } from "./visualScenarioRuntime";
 import {
@@ -149,7 +150,7 @@ describe("resolveVisualScenarioSession", () => {
       expect(session.config.data.demoTime.enabled).toBe(true);
       expect(session.config.data.demoTime.startIsoUtc).toBe(VISUAL_SCENARIO_UTC[id]);
       expect(session.config.layers.globalCloudsIr).toBe(false);
-      expect(session.config.layers.earthquakes).toBe(false);
+      expect(session.config.layers.earthquakes).toBe(id === "earthquake-presentation");
       expect(session.config.layers.orbitalTracks).toBe(id === "iss-presentation");
       expect(session.config.layers.planetaryObjects).toBe(id === "planetary-objects");
       expect(session.config.layers.milkyWay).toBe(id === "milky-way");
@@ -298,6 +299,33 @@ describe("resolveVisualScenarioSession", () => {
     expect(view).not.toBeNull();
     expect(view?.versionId).toBe("iss-presentation-dev");
     expect(view?.tracks[0]?.samples.length).toBeGreaterThan(20);
+  });
+
+  it("earthquake-presentation apply installs a DEV prepared earthquake view without network", () => {
+    const session = applyVisualScenarioFromLocation("?scenario=earthquake-presentation");
+    expect(session.kind).toBe("applied");
+    if (session.kind !== "applied") return;
+    expect(session.id).toBe("earthquake-presentation");
+    expect(session.config.layers.earthquakes).toBe(true);
+    expect(session.config.data.demoTime.startIsoUtc).toBe(
+      VISUAL_SCENARIO_UTC["earthquake-presentation"],
+    );
+    const stub = {
+      productInstantMs: Date.parse(VISUAL_SCENARIO_UTC["earthquake-presentation"]),
+      resolveSnapshot: async () => ({ ok: false as const }),
+      getLifecycleState: () => ({ sourceId: "usgs-earthquakes-v1", state: "idle" as const }),
+      getPreparedEquirectRaster: () => null,
+      getPreparedCloudOpacity: () => null,
+      getPreparedPointFeatures: () => null,
+      getPreparedTracks: () => null,
+    };
+    const wrapped = attachVisualScenarioPreparedPointFeatures(stub as never);
+    const view = wrapped.getPreparedPointFeatures("usgs-earthquakes-v1");
+    expect(view).not.toBeNull();
+    expect(view?.versionId).toBe("earthquake-presentation-dev");
+    expect(view?.origin).toBe("fixture");
+    expect(view?.devAllowFixturePaint).toBe(true);
+    expect(view?.features.length).toBeGreaterThan(8);
   });
 
   it("seeds moon-libration with the production Moon glyph and libration on by default", () => {

@@ -98,6 +98,7 @@ Unknown ids fail visibly (HTML banner plus `console.error`) and **do not** subst
 | `lunar-locus` | `2026-01-16T22:00:00.000Z` (default `locusEpoch=recent`) | Production Lunar locus overlay on, Moon marker on, ground track off, analemma off. Optional DEV `locusEpoch=standstill\|minor\|baseline` | Compact lunar locus vs solar analemma and vs the 48 h ground-track weave; standstill amplitude; dateline wrap; accelerated demo through a full Moon traversal with no migrating seam/cusp on the exposed line (cycle seam under the Moon glyph) |
 | `moon-libration` | `2021-12-10T00:00:00.000Z` (default `librationEpoch=diagonal`) | Production Moon glyph with optical-libration **ring** on, **observer-oriented** following the chrome reference city. Optional DEV `librationEpoch=zero\|lonEast\|lonWest\|latNorth\|latSouth\|diagonal\|new\|quarter\|full`, `observerCity=knoxville\|london\|sydney\|tokyo\|sao_paulo\|none`, `librationOrientation=map\|observer`, `librationStyle=ring\|crosshair` | Phase vs libration independence; two-pass contrast over new/quarter/full; map vs observer orientation; reference-city switch; ring/crosshair; fallback when `observerCity=none`; Moon sizes; accelerated demo motion; pause freeze |
 | `iss-presentation` | `2026-08-06T01:17:00.000Z` | ISS overlay on from a recorded TLE (in-process SGP4, no network); Layer masters ISS enabled; Space objects factory presentation; clouds/earthquakes off. DEV-only; not a production live fallback | Immediate Space objects ISS presentation: orbit track, past/future, **horizons (minutes and orbits)**, colors, thickness, glyph type/size/color, silhouette color, label |
+| `earthquake-presentation` | `2026-08-21T16:00:00.000Z` | Earthquakes overlay on from recorded USGS-shaped points (fixture origin, never labeled live); Layer masters Earthquakes enabled; factory local filters; clouds/ISS off. DEV-only; not a production live fallback | Layers → Earthquakes: minimum magnitude, maximum age, earthquakes-only, labels, label threshold; compact `M4.6 · place` labels; status is DEV fixture, not live |
 | `planetary-objects` | `2026-08-19T15:30:00.000Z` | Planets master on; Mercury through Neptune plus Pluto enabled; factory shared presentation (current subpoints/labels on, tracks/loci off); clouds/earthquakes/ISS off. Offline ephemeris | All current planet glyphs/labels; Space objects Planets controls; representative ground tracks and loci; per-body locus toggles; Demo jumps |
 | `milky-way` | `2026-08-19T06:00:00.000Z` | Milky Way master on; factory enabled ribbon (plane, Normal band, ribs, Galactic center + label, night-side emphasis; anticenter off) **plus Galactic-center altitude contours** (30/45/60/75° on, horizon off, astronomical-night emphasis and moonlight de-emphasis on) **plus viewing events on**. Clouds/earthquakes/ISS/Planets off. Optional DEV `observerCity=knoxville\|sao_paulo\|tokyo\|none`. Offline IAU geometry | Zenith ribbon vs shading; nested GC altitude contours; southern-hemisphere advantage; night/day contour alpha; dateline wrap; Demo jumps six hours apart; **reference-city Viewing Window status** |
 | `solar-eclipse-total` | `2024-04-08T18:17:15.000Z` | Production solar eclipse overlay at NASA 2024 Apr 08 greatest eclipse (total); live-only horizon; alignment beam on by default. Optional DEV `observerCity=knoxville\|tokyo\|sao_paulo\|none` | Path across Mexico / US / Canada; umbral band vs broader partial region; **alignment ribbon from Sun/Moon glyphs to live umbra**; **global path and beam must not change when observerCity changes**; Knoxville local partial vs Tokyo not-visible locally |
@@ -406,7 +407,7 @@ When the lunar locus is in view, accelerated demo playback through at least one 
 
 DEV `?scenario=` fixtures force Global clouds / IR, Earthquakes, ISS orbital track, and cloud participation **off**. That isolation is intentional and applies only when a scenario is applied.
 
-To verify those three overlays, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, fixture fallback, or blocked provider. Disable must remove the presentation; re-enable must show it again.
+To verify those three overlays, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, stale live, unavailable, or (clouds/IR only) fixture fallback. Earthquakes and ISS must never look live when the data is a fixture. Disable must remove the presentation; re-enable must show it again.
 
 Do not treat a DEV scenario session as evidence that live layers work.
 
@@ -422,6 +423,18 @@ Ordinary non-scenario current time, **new process** (`http://localhost:1420/` wi
 6. Historical Demo (for example 2017-08-21) with ISS still checked: no loading hint implying it should appear; live-only suppression copy; no ISS on the map. Return to current: acquisition/reuse starts without re-checking the box.
 
 Repeat from a fresh `npm run dev` at least once so React StrictMode remount is included.
+
+### Earthquake live provenance and filters
+
+Ordinary non-scenario current time (`http://localhost:1420/` with no `?scenario=`):
+
+1. Open Config → Layers → Layer masters. Check Earthquakes. Expect “Earthquake data loading…” then either live (optionally with snapshot age) or unavailable. Four canned worldwide quakes must not appear as live.
+2. Open Layers → Earthquakes. Factory: Minimum magnitude 2.5+, Maximum age 24 hours, Earthquakes only on, Show labels on, Label minimum magnitude 4.0+. The map should read as a global earthquake map, not a wall of micro-event titles.
+3. Change Minimum magnitude and Label minimum magnitude: markers/labels update on the next frame with no USGS refetch.
+4. Set Maximum age to 1 hour: only recent markers remain; no refetch.
+5. Historical Demo (for example 2017-08-21) with Earthquakes still checked: live-only suppression copy; no markers; no fixture. Return to current: acquisition/reuse without re-checking the box.
+
+Use `http://localhost:1420/?scenario=earthquake-presentation` when USGS is unavailable. Confirm the DEV banner and UTC `2026-08-21T16:00:00.000Z`. Status must say DEV fixture, not live. Factory filters should leave a readable marker set; All + labels same as marker restores dense labels without crashing.
 
 ### ISS presentation controls (`iss-presentation`)
 

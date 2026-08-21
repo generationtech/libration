@@ -223,6 +223,7 @@ export type {
 
 export {
   EARTHQUAKES_SCENE_LAYER_ID,
+  USGS_EARTHQUAKES_ACQUIRE_TIMEOUT_MS,
   USGS_EARTHQUAKES_LIVE_ACCEPT_CONTENT_TYPES,
   USGS_EARTHQUAKES_LIVE_FEED_URL,
   createEarthquakesFixtureAcquisitionAdapter,
@@ -232,6 +233,26 @@ export {
   produceEarthquakesFixtureAcquisition,
   produceEarthquakesLiveAcquisitionFromFetched,
 } from "./earthquakesAcquisition";
+
+export type {
+  EarthquakeConfigStatusHint,
+  EarthquakeOrigin,
+  EarthquakeOriginStamp,
+  EarthquakeProvenance,
+  EarthquakeSnapshotFreshnessBand,
+} from "./earthquakeProvenance";
+
+export {
+  EARTHQUAKE_ORIGIN_PROPERTY,
+  EARTHQUAKE_SNAPSHOT_FRESH_MAX_AGE_MS,
+  EARTHQUAKE_SNAPSHOT_STALE_MAX_AGE_MS,
+  earthquakeConfigStatusHint,
+  earthquakeConfigStatusHintCopy,
+  earthquakeShouldPaint,
+  earthquakeSnapshotFreshnessBandFromAgeMs,
+  originStampFromPreparedPointFeatures,
+  resolveEarthquakeProvenance,
+} from "./earthquakeProvenance";
 
 export type { DynamicSourceTimePolicy } from "./dynamicSourceTimePolicy";
 

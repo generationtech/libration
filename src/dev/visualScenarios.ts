@@ -27,6 +27,7 @@ import {
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setVisualScenarioExtraOverlayBuilder,
+  setVisualScenarioPreparedPointFeatures,
   setVisualScenarioPreparedTracks,
   setVisualScenarioRuntime,
   type VisualScenarioRuntime,
@@ -35,6 +36,10 @@ import {
   ISS_PRESENTATION_SCENARIO_UTC,
   buildIssPresentationPreparedTracksView,
 } from "./issPresentationScenario";
+import {
+  EARTHQUAKE_PRESENTATION_SCENARIO_UTC,
+  buildEarthquakePresentationPreparedPointFeaturesView,
+} from "./earthquakePresentationScenario";
 import "./visualScenarioBanner.css";
 
 export const VISUAL_SCENARIO_IDS = [
@@ -47,6 +52,7 @@ export const VISUAL_SCENARIO_IDS = [
   "lunar-locus",
   "moon-libration",
   "iss-presentation",
+  "earthquake-presentation",
   "planetary-objects",
   "milky-way",
   "solar-eclipse-total",
@@ -77,6 +83,7 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
   "moon-libration": "2021-12-10T00:00:00.000Z",
   "iss-presentation": ISS_PRESENTATION_SCENARIO_UTC,
+  "earthquake-presentation": EARTHQUAKE_PRESENTATION_SCENARIO_UTC,
   "planetary-objects": "2026-08-19T15:30:00.000Z",
   "milky-way": "2026-08-19T06:00:00.000Z",
   "solar-eclipse-total": "2024-04-08T18:17:15.000Z",
@@ -368,6 +375,17 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
       "DEV-only ISS overlay from a recorded TLE at a frozen UTC so Space objects presentation controls can be exercised without CelesTrak. Not a production live fallback.",
     buildConfig: () => withDemoAt(VISUAL_SCENARIO_UTC["iss-presentation"], applyIssPresentationScene),
   },
+  "earthquake-presentation": {
+    id: "earthquake-presentation",
+    startIsoUtc: VISUAL_SCENARIO_UTC["earthquake-presentation"],
+    purpose:
+      "DEV-only earthquake overlay from recorded USGS-shaped points at a frozen UTC so Layers → Earthquakes filters can be exercised without USGS. Fixture origin; never labeled live.",
+    buildConfig: () =>
+      withDemoAt(
+        VISUAL_SCENARIO_UTC["earthquake-presentation"],
+        applyEarthquakePresentationScene,
+      ),
+  },
   "planetary-objects": {
     id: "planetary-objects",
     startIsoUtc: VISUAL_SCENARIO_UTC["planetary-objects"],
@@ -535,6 +553,14 @@ function applyIssPresentationScene(draft: LibrationConfigV2): void {
   draft.layers.solarShading = true;
   draft.layers.grid = true;
   draft.layers.orbitalTracks = true;
+  draft.layers.cityPins = false;
+  draft.layers.solarAnalemma = false;
+}
+
+function applyEarthquakePresentationScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.layers.earthquakes = true;
   draft.layers.cityPins = false;
   draft.layers.solarAnalemma = false;
 }
@@ -1021,6 +1047,11 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   setVisualScenarioPreparedTracks(
     session.kind === "applied" && session.id === "iss-presentation"
       ? buildIssPresentationPreparedTracksView()
+      : null,
+  );
+  setVisualScenarioPreparedPointFeatures(
+    session.kind === "applied" && session.id === "earthquake-presentation"
+      ? buildEarthquakePresentationPreparedPointFeaturesView()
       : null,
   );
   const curveId = parseNightVeilTransferId(parseSearchParams(search).get("nightVeilCurve"));

@@ -36,6 +36,9 @@ import type {
   LiveHttpFetchOk,
 } from "./liveHttpAcquisitionTypes";
 
+/** Per-attempt USGS HTTP timeout. Timeout is not a user abort. */
+export const USGS_EARTHQUAKES_ACQUIRE_TIMEOUT_MS = 15_000;
+
 /**
  * USGS Earthquake Hazards Program real-time GeoJSON summary (past day, all magnitudes).
  * Free public-domain U.S. Government feed; durable SceneConfig id stays
@@ -167,9 +170,12 @@ export type EarthquakesLiveAcquireOptions = EarthquakesAcquireOptions &
     fetchFn?: LiveHttpFetchFn;
     /**
      * When live HTTP fails (non-abort), fall back to the offline fixture under
-     * the same durable sourceId. Default true.
+     * the same durable sourceId. Default false — production must not paint
+     * fixture earthquakes as live.
      */
     useFixtureFallback?: boolean;
+    /** Per-attempt HTTP timeout; default {@link USGS_EARTHQUAKES_ACQUIRE_TIMEOUT_MS}. */
+    timeoutMs?: number;
   }>;
 
 export type UsgsEarthquakesGeoJsonParseOk = Readonly<{
@@ -335,6 +341,7 @@ export function produceEarthquakesFixtureAcquisition(
       versionId,
       acquiredAtMs,
       validTimeMs: acquiredAtMs,
+      origin: "fixture",
       attribution: catalog.attribution,
       ...(catalog.licenseNote !== undefined
         ? { licenseNote: catalog.licenseNote }
@@ -392,6 +399,7 @@ export function produceEarthquakesLiveAcquisitionFromFetched(
       versionId,
       acquiredAtMs,
       validTimeMs,
+      origin: "live",
       attribution: catalog.attribution,
       ...(catalog.licenseNote !== undefined
         ? { licenseNote: catalog.licenseNote }
@@ -432,7 +440,13 @@ export function createEarthquakesLiveHttpAcquisitionAdapter(
   options: EarthquakesLiveAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
   const catalog = getDynamicPointFeaturesSourceCatalogEntry(USGS_EARTHQUAKES_SOURCE_ID);
-  const useFixtureFallback = options.useFixtureFallback !== false;
+  const useFixtureFallback = options.useFixtureFallback === true;
+  const timeoutMs =
+    options.timeoutMs !== undefined &&
+    Number.isFinite(options.timeoutMs) &&
+    options.timeoutMs > 0
+      ? options.timeoutMs
+      : USGS_EARTHQUAKES_ACQUIRE_TIMEOUT_MS;
   const acquireOptions: EarthquakesAcquireOptions = {
     ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
     ...(options.versionIdFor !== undefined
@@ -444,6 +458,7 @@ export function createEarthquakesLiveHttpAcquisitionAdapter(
     sourceId: USGS_EARTHQUAKES_SOURCE_ID,
     url: options.url ?? USGS_EARTHQUAKES_LIVE_FEED_URL,
     acceptContentTypes: USGS_EARTHQUAKES_LIVE_ACCEPT_CONTENT_TYPES,
+    timeoutMs,
     ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
     attribution: {
       ...(catalog?.attribution !== undefined

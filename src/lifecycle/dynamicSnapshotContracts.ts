@@ -121,6 +121,7 @@ export function parseDynamicSnapshotTemporalMeta(
     validUntilMs?: number;
     attribution?: string;
     licenseNote?: string;
+    origin?: "live" | "fixture";
   } = {
     sourceId,
     kind: input.kind,
@@ -143,6 +144,10 @@ export function parseDynamicSnapshotTemporalMeta(
   if (typeof input.licenseNote === "string") {
     const licenseNote = input.licenseNote.trim();
     if (licenseNote.length > 0) meta.licenseNote = licenseNote;
+  }
+
+  if (input.origin === "live" || input.origin === "fixture") {
+    meta.origin = input.origin;
   }
 
   return meta;

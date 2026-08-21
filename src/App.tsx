@@ -73,6 +73,7 @@ import {
 import type { EventPlaybackListedEvent } from "./app/eventPlaybackRuntime";
 import type { EventPlaybackSessionUi } from "./components/config/EventPlaybackPanel";
 import {
+  attachVisualScenarioPreparedPointFeatures,
   attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
   getVisualScenarioRuntime,
@@ -104,9 +105,15 @@ import {
   armDynamicLifecycleConsumers,
   createDynamicDataLifecycleHost,
   ISS_ORBITAL_TRACK_SOURCE_ID,
+  USGS_EARTHQUAKES_SOURCE_ID,
+  earthquakeConfigStatusHint,
   issConfigStatusHint,
   issProvenanceFromPreparedTrack,
+  originStampFromPreparedPointFeatures,
+  resolveEarthquakeProvenance,
   reviveDisposedDynamicLifecycleHost,
+  type EarthquakeConfigStatusHint,
+  type EarthquakeProvenance,
   type IssConfigStatusHint,
 } from "./lifecycle";
 import { milkyWayViewingConditionsAt } from "./core/milkyWayViewingWindows";
@@ -215,6 +222,14 @@ export default function App() {
   const issConfigStatusHintRef = useRef<IssConfigStatusHint | null>(null);
   const [issTrackStatusHint, setIssTrackStatusHint] =
     useState<IssConfigStatusHint | null>(null);
+  const earthquakeConfigStatusHintRef = useRef<EarthquakeConfigStatusHint | null>(
+    null,
+  );
+  const earthquakeProvenanceRef = useRef<EarthquakeProvenance | null>(null);
+  const [earthquakeTrackStatusHint, setEarthquakeTrackStatusHint] =
+    useState<EarthquakeConfigStatusHint | null>(null);
+  const [earthquakeProvenanceView, setEarthquakeProvenanceView] =
+    useState<EarthquakeProvenance | null>(null);
   const [eclipsePanelInstantMs, setEclipsePanelInstantMs] = useState(() =>
     scenarioRuntime.kind === "applied"
       ? Date.parse(scenarioRuntime.startIsoUtc)
@@ -782,10 +797,12 @@ export default function App() {
       const time = createTimeContext(clockNowMs, deltaMs, simulated, {
         overlayReadabilityFrame,
         eclipseFrame,
-        dynamicDataLifecycle: attachVisualScenarioPreparedTracks(
-          dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
-            wallClockUtcMs: realNowMs,
-          }),
+        dynamicDataLifecycle: attachVisualScenarioPreparedPointFeatures(
+          attachVisualScenarioPreparedTracks(
+            dynamicLifecycleHostRef.current.attachForProductInstant(clockNowMs, {
+              wallClockUtcMs: realNowMs,
+            }),
+          ),
         ),
       });
       const issAttachment = time.dynamicDataLifecycle;
@@ -810,6 +827,43 @@ export default function App() {
       if (nextIssHint !== issConfigStatusHintRef.current) {
         issConfigStatusHintRef.current = nextIssHint;
         setIssTrackStatusHint(nextIssHint);
+      }
+      const eqView =
+        issAttachment?.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID) ??
+        null;
+      const eqLife =
+        issAttachment?.getLifecycleState(USGS_EARTHQUAKES_SOURCE_ID).state ??
+        "idle";
+      const nextEqProvenance =
+        eqView === null
+          ? null
+          : resolveEarthquakeProvenance({
+              originStamp: originStampFromPreparedPointFeatures(eqView),
+              acquiredAtMs: eqView.acquiredAtMs,
+              productUtcMs: clockNowMs,
+              lifecycleState: eqLife,
+              versionId: eqView.versionId,
+            });
+      const nextEqHint = earthquakeConfigStatusHint({
+        enabled: derivedAppConfigRef.current.layers.earthquakes,
+        productTimeLiveEnough: liveEnough,
+        lifecycleState: eqLife,
+        provenance: nextEqProvenance,
+      });
+      if (nextEqHint !== earthquakeConfigStatusHintRef.current) {
+        earthquakeConfigStatusHintRef.current = nextEqHint;
+        setEarthquakeTrackStatusHint(nextEqHint);
+      }
+      const prevEqProv = earthquakeProvenanceRef.current;
+      const provenanceChanged =
+        (prevEqProv === null) !== (nextEqProvenance === null) ||
+        prevEqProv?.origin !== nextEqProvenance?.origin ||
+        prevEqProv?.snapshotAgeMs !== nextEqProvenance?.snapshotAgeMs ||
+        prevEqProv?.freshnessBand !== nextEqProvenance?.freshnessBand ||
+        prevEqProv?.versionId !== nextEqProvenance?.versionId;
+      if (provenanceChanged) {
+        earthquakeProvenanceRef.current = nextEqProvenance;
+        setEarthquakeProvenanceView(nextEqProvenance);
       }
       const viewport = createViewportFromCanvas(canvas);
       const registry = registryRef.current;
@@ -1008,6 +1062,8 @@ export default function App() {
             productInstantMs={configPanelProductInstantMs}
             productTimeLiveEnough={liveProductTimeEligible}
             issConfigStatusHint={issTrackStatusHint}
+            earthquakeConfigStatusHint={earthquakeTrackStatusHint}
+            earthquakeProvenance={earthquakeProvenanceView}
             userPresetsUi={ALLOW_PHASE3_MUTATIONS ? userPresetsUi : undefined}
             demoTransport={{
               paused: demoTransportPaused,

@@ -175,14 +175,15 @@ describe("DataTab demo time UX", () => {
     expect(lastConfig!.data.demoTime.speedMultiplier).toBe(DEMO_TIME_SPEED_MAX);
   });
 
-  it("describes optional live feeds as Layers-owned, default-off, with fixture fallback", () => {
+  it("describes optional live feeds as Layers-owned, default-off, with honest fixture policy", () => {
     const initial = normalizeLibrationConfig(appConfigToV2(getActiveAppConfig()));
     render(<DataTabTestHarness initial={initial} />);
     expect(
       screen.getByText(/Live cloud, earthquake, and ISS feeds are optional Layers overlays/i),
     ).toBeTruthy();
     expect(screen.getByText(/off by default/i)).toBeTruthy();
-    expect(screen.getByText(/bundled fixtures/i)).toBeTruthy();
+    expect(screen.getByText(/Clouds use a bundled fixture/i)).toBeTruthy();
+    expect(screen.getByText(/never present fixture data as live/i)).toBeTruthy();
     expect(screen.queryByText(/No live network feeds/i)).toBeNull();
   });
 

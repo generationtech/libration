@@ -68,6 +68,11 @@ export type DynamicSnapshotTemporalMeta = Readonly<{
   /** Rights / credit text (catalog or sidecar; consumers fill real catalogs). */
   attribution?: string;
   licenseNote?: string;
+  /**
+   * Optional acquisition origin stamp. Live HTTP vs recorded fixture.
+   * Presentation must not label fixture as live.
+   */
+  origin?: "live" | "fixture";
 }>;
 
 /** Equirect raster body metadata (bytes are store-owned; see DynamicSnapshotStore). */

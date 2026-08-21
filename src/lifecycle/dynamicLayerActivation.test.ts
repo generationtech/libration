@@ -13,7 +13,7 @@
 
 /**
  * LIB-034 — live layer activation after host dispose (DEV StrictMode canvas cleanup).
- * Network is mocked; fixture fallback proves arm → store → materialize → layer.
+ * Network is mocked; live USGS bytes prove arm → store → materialize → layer.
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -38,6 +38,7 @@ import {
   type DynamicLifecycleConsumerFlags,
   type LiveHttpFetchFn,
 } from "./index";
+import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
 
 const PRODUCT_MS = 1_700_000_800_000;
 
@@ -55,8 +56,9 @@ const offlineFetch: LiveHttpFetchFn = vi.fn(async () => {
 function hostDeps() {
   return {
     cloudsIrLiveFetchFn: offlineFetch,
-    earthquakesLiveFetchFn: offlineFetch,
+    earthquakesLiveFetchFn: usgsLiveOkFetch(PRODUCT_MS),
     orbitalTracksLiveFetchFn: offlineFetch,
+    nowMs: () => PRODUCT_MS,
     setIntervalFn: () => 1,
     clearIntervalFn: () => undefined,
   };
@@ -98,11 +100,11 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
       ).not.toBeNull();
     });
 
-    expect(offlineFetch).toHaveBeenCalled();
     const att = host.attachForProductInstant(PRODUCT_MS);
     const view = att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID);
     expect(view).not.toBeNull();
     expect(view!.features.length).toBeGreaterThan(0);
+    expect(view!.origin).toBe("live");
 
     const layer = createDynamicPointFeaturesOverlayLayer({
       sceneLayerId: "earthquakes",
@@ -129,7 +131,7 @@ describe("LIB-034 dynamic layer activation after host dispose", () => {
     host.dispose();
   });
 
-  it("revive + arm all three: clouds/quakes materialize via fixture; ISS stays unavailable without a live TLE", async () => {
+  it("revive + arm all three: clouds materialize via fixture; earthquakes via live mock; ISS stays unavailable without a live TLE", async () => {
     let host = createDynamicDataLifecycleHost(hostDeps());
     host.dispose();
     host = reviveDisposedDynamicLifecycleHost(host, hostDeps());

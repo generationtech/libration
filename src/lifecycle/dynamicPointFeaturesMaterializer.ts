@@ -37,10 +37,17 @@ export type PreparedPointFeaturesView = Readonly<{
   versionId: DynamicSnapshotVersionId;
   features: readonly DynamicPointFeature[];
   validTimeMs: number;
+  acquiredAtMs: number;
   validUntilMs?: number;
   attribution?: string;
   licenseNote?: string;
   freshness: DynamicSnapshotFreshness;
+  origin?: "live" | "fixture";
+  /**
+   * DEV visual-scenario hatch only. Production materializer never sets this.
+   * Allows recorded fixture features to paint with fixture status, never live.
+   */
+  devAllowFixturePaint?: boolean;
 }>;
 
 type MaterializedVersion = {
@@ -147,6 +154,7 @@ export function createDynamicPointFeaturesMaterializer(
       versionId: row.meta.versionId,
       features: row.features,
       validTimeMs: row.meta.validTimeMs,
+      acquiredAtMs: row.meta.acquiredAtMs,
       ...(row.meta.validUntilMs !== undefined
         ? { validUntilMs: row.meta.validUntilMs }
         : {}),
@@ -157,6 +165,7 @@ export function createDynamicPointFeaturesMaterializer(
         ? { licenseNote: row.meta.licenseNote }
         : {}),
       freshness,
+      ...(row.meta.origin !== undefined ? { origin: row.meta.origin } : {}),
     };
   }
 

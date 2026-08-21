@@ -38,6 +38,11 @@ import {
   type IssOrbitalPresentation,
 } from "../../core/issOrbitalPresentation";
 import {
+  DEFAULT_EARTHQUAKE_PRESENTATION,
+  normalizeEarthquakePresentation,
+  type EarthquakePresentation,
+} from "../../core/earthquakePresentation";
+import {
   DEFAULT_PLANETARY_OBJECTS_PRESENTATION,
   mergePlanetaryObjectsPresentation,
   normalizePlanetaryObjectsPresentation,
@@ -262,6 +267,8 @@ export type LayerSourceConfig =
       /** DLC-2: Model B dynamic point features — durable lifecycle source id (not a CDN URL). */
       kind: "dynamicPointFeatures";
       sourceId: string;
+      /** Earthquake presentation (LIB-059). Other point-feature sources may omit this. */
+      parameters?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     }
   | {
@@ -896,6 +903,7 @@ const EARTHQUAKES: SceneLayerInstance = {
   source: {
     kind: "dynamicPointFeatures",
     sourceId: "usgs-earthquakes-v1",
+    parameters: { ...DEFAULT_EARTHQUAKE_PRESENTATION },
   },
 };
 
@@ -1257,6 +1265,35 @@ export function applyLunarGroundTrackColorToScene(
             ...(row.source.parameters ?? {}),
             [which]: nextColor,
           },
+        }),
+      };
+    }),
+  };
+}
+
+export function earthquakePresentationFromScene(scene: SceneConfig): EarthquakePresentation {
+  const row = scene.layers.find((l) => l.id === "earthquakes");
+  const params = row?.source.kind === "dynamicPointFeatures" ? row.source.parameters : undefined;
+  return normalizeEarthquakePresentation(params);
+}
+
+export function applyEarthquakePresentationToScene(
+  scene: SceneConfig,
+  patch: Partial<EarthquakePresentation>,
+): SceneConfig {
+  const current = earthquakePresentationFromScene(scene);
+  const next = normalizeEarthquakePresentation({ ...current, ...patch });
+  return {
+    ...scene,
+    layers: scene.layers.map((row) => {
+      if (row.id !== "earthquakes" || row.source.kind !== "dynamicPointFeatures") {
+        return row;
+      }
+      return {
+        ...row,
+        source: withNormalizedEarthquakePresentationParameters({
+          ...row.source,
+          parameters: { ...(row.source.parameters ?? {}), ...next },
         }),
       };
     }),
@@ -1739,6 +1776,22 @@ function withNormalizedSublunarGroundTrackParameters(source: LayerSourceConfig):
   };
 }
 
+function withNormalizedEarthquakePresentationParameters(
+  source: LayerSourceConfig,
+): LayerSourceConfig {
+  if (source.kind !== "dynamicPointFeatures" || source.sourceId !== "usgs-earthquakes-v1") {
+    return source;
+  }
+  const presentation = normalizeEarthquakePresentation(source.parameters);
+  return {
+    ...source,
+    parameters: {
+      ...(source.parameters ?? {}),
+      ...presentation,
+    },
+  };
+}
+
 function withNormalizedIssOrbitalPresentationParameters(
   source: LayerSourceConfig,
 ): LayerSourceConfig {
@@ -1996,6 +2049,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = {
       kind: "dynamicPointFeatures",
       sourceId: sid !== "" ? sid : fallback,
+      ...(isPlainObject(sRaw.parameters) ? { parameters: { ...sRaw.parameters } } : {}),
     };
   } else if (
     isPlainObject(sRaw) &&
@@ -2019,6 +2073,7 @@ function parseLayerInstance(raw: unknown, fallbacks: LayerEnableFlags): SceneLay
     source = defaultSourceForLayerId(idNorm);
   }
   source = withNormalizedSublunarGroundTrackParameters(source);
+  source = withNormalizedEarthquakePresentationParameters(source);
   source = withNormalizedIssOrbitalPresentationParameters(source);
   source = withNormalizedPlanetaryObjectsParameters(source);
   source = withNormalizedMilkyWayParameters(source);

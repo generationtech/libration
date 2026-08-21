@@ -734,6 +734,7 @@ describe("LayersTab topic navigation", () => {
       "moonAndLibration",
       "astronomyPaths",
       "spaceObjects",
+      "earthquakes",
       "advanced",
     ]);
     const illuminationBefore = screen.getByTestId("illumination-state").textContent;
@@ -749,6 +750,56 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByLabelText("ISS glyph")).toBeInTheDocument();
     expect(screen.queryByLabelText("Solar eclipses")).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
+  });
+
+  it("Earthquakes topic exists after Space objects and owns local filters", async () => {
+    const user = userEvent.setup();
+    render(<LayersTabHarness initial={normalizeLibrationConfig(defaultLibrationConfigV2())} />);
+    const select = screen.getByTestId("layers-topic-select") as HTMLSelectElement;
+    expect([...select.options].map((option) => option.value)).toContain("earthquakes");
+    const illuminationBefore = screen.getByTestId("illumination-state").textContent;
+    selectLayersTopic("earthquakes");
+    expect(screen.getByTestId("layers-topic-earthquakes")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Live USGS earthquakes from the past day\. Filters are applied locally\./),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Minimum magnitude")).toHaveValue("2.5");
+    expect(screen.getByLabelText("Maximum age")).toHaveValue("24h");
+    expect(screen.getByLabelText("Earthquakes only")).toBeChecked();
+    expect(screen.getByLabelText("Show earthquake labels")).toBeChecked();
+    expect(screen.getByLabelText("Label minimum magnitude")).toHaveValue("4");
+    expect(screen.getByTestId("earthquake-topic-status").textContent).toMatch(
+      /Enable Earthquakes under Layer masters/,
+    );
+    await user.selectOptions(screen.getByLabelText("Minimum magnitude"), "4");
+    expect(screen.getByLabelText("Minimum magnitude")).toHaveValue("4");
+    expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
+    expect(screen.queryByLabelText("Orbit track")).toBeNull();
+  });
+
+  it("Earthquakes topic shows live-only copy in historical Demo", () => {
+    const initial = normalizeLibrationConfig({
+      ...defaultLibrationConfigV2(),
+      layers: { ...defaultLibrationConfigV2().layers, earthquakes: true },
+    });
+    render(<LayersTab config={initial} productTimeLiveEnough={false} />);
+    selectLayersTopic("earthquakes");
+    expect(screen.getByTestId("earthquake-topic-status").textContent).toBe(
+      "Live-only data is hidden while viewing another product time.",
+    );
+  });
+
+  it("Earthquakes topic shows live status without calling it a fixture", () => {
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        earthquakeConfigStatusHint="live"
+      />,
+    );
+    selectLayersTopic("earthquakes");
+    expect(screen.getByTestId("earthquake-topic-status").textContent).toBe(
+      "Earthquake data live",
+    );
   });
 
   it("ISS presentation controls persist and disable track children when orbit track is off", async () => {

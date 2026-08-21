@@ -25,13 +25,13 @@ Dynamic data is handled by a lifecycle subsystem that is entirely separate from 
 
 - The frame stays a pure function of resolved state. A slow or failing feed cannot stall or tear a frame.
 - Scrubbing and demo playback move data coherently with everything else, because snapshot selection uses the same instant as the illumination field and the tape.
-- Offline operation is first-class. Every live adapter has a recorded real-format fixture fallback under the same durable id, so the scene's identity does not change when the network does.
-- Failure policy is uniform (`stale-when-cached`: prefer the last good version over surfacing an error) rather than reinvented per source.
+- Offline operation is first-class. Recorded real-format fixtures remain available for tests, DEV scenarios, and adapters that explicitly opt in (today: clouds/IR). Production earthquakes and ISS must not silently present fixture data as live; a failed live fetch with no usable live snapshot leaves those overlays unavailable.
+- Failure policy is uniform (`stale-when-cached`: prefer the last good version over surfacing an error) rather than reinvented per source. Last-good **live** snapshots may still paint under a source-specific freshness policy; that is not fixture substitution.
 
 **Costs.**
 
 - Adding a consumer is more work than a fetch: a catalog entry, an acquisition adapter, a materializer, a `SceneConfig` row, a layer, and tests at each boundary.
 - Snapshots are held in a versioned store, which costs memory, and eviction policy is a real concern as sources grow.
-- Fixture fallback means an offline session can silently display recorded data. This is deliberate and is documented in the catalogs, but it does mean "something is drawn" is not proof that a live feed worked.
+- Fixture fallback means an offline session can silently display recorded data **when an adapter opts in**. That cost is why production earthquakes and ISS hide instead. Clouds/IR still use fixture fallback; "something is drawn" is not proof that a live GIBS fetch worked.
 
 **Non-obvious upside.** Because resolution is time-bound rather than latest-wins, the architecture already supports historical playback of dynamic data if snapshots are retained — that capability was not built for it, it falls out of the contract.

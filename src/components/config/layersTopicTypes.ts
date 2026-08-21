@@ -22,6 +22,7 @@ export type LayersTopicId =
   | "moonAndLibration"
   | "astronomyPaths"
   | "spaceObjects"
+  | "earthquakes"
   | "advanced";
 
 export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
@@ -32,6 +33,7 @@ export const LAYERS_TOPIC_IDS: readonly LayersTopicId[] = [
   "moonAndLibration",
   "astronomyPaths",
   "spaceObjects",
+  "earthquakes",
   "advanced",
 ];
 
@@ -53,6 +55,8 @@ export function labelForLayersTopic(id: LayersTopicId): string {
       return "Astronomy paths";
     case "spaceObjects":
       return "Space objects";
+    case "earthquakes":
+      return "Earthquakes";
     case "advanced":
       return "Advanced";
     default: {
@@ -78,6 +82,8 @@ export function descriptionForLayersTopic(id: LayersTopicId): string {
       return "Lunar ground track extents and colors, Lunar locus stroke, and Solar analemma stroke.";
     case "spaceObjects":
       return "Presentation for tracked space objects and celestial structure. ISS, planets, and Milky Way. Layer visibility stays under Layer masters.";
+    case "earthquakes":
+      return "Live USGS earthquakes from the past day. Filters are applied locally.";
     case "advanced":
       return "Overlay-readability veil and lift, including per-layer pilots. Does not change layer on/off.";
     default: {

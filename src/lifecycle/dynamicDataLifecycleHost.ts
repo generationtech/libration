@@ -17,7 +17,7 @@
  * equirect / cloud-opacity / point-features / tracks materializers.
  * Global clouds/IR use live NASA GIBS WMS (DLU-5) with fixture offline fallback;
  * Model A cloud participation (DLU-6) consumes the same live opacity field.
- * Earthquakes use live USGS HTTP (DLU-3) with fixture offline fallback.
+ * Earthquakes use live USGS HTTP (DLU-3) with no production fixture fallback.
  * ISS orbital tracks use ordered live TLE acquisition (CelesTrak primary,
  * Where the ISS at secondary). Production does not fall back to fixture;
  * all-provider failure with no usable live TLE hides ISS.
@@ -267,7 +267,8 @@ export function createDynamicDataLifecycleHost(
     if (!earthquakesArmed) {
       acquisition.registerAdapter(
         createEarthquakesLiveHttpAcquisitionAdapter({
-          useFixtureFallback: true,
+          useFixtureFallback: false,
+          ...(deps.nowMs !== undefined ? { nowMs: deps.nowMs } : {}),
           ...(deps.earthquakesLiveFetchFn !== undefined
             ? { fetchFn: deps.earthquakesLiveFetchFn }
             : {}),

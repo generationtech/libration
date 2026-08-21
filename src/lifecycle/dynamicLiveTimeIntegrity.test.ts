@@ -33,6 +33,7 @@ import {
   type DynamicLifecycleConsumerFlags,
   type LiveHttpFetchFn,
 } from "./index";
+import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
 
 const WALL_MS = 1_724_000_000_000;
 const HISTORICAL_MS = Date.UTC(2017, 7, 21, 18, 25, 30);
@@ -52,8 +53,9 @@ const offlineFetch: LiveHttpFetchFn = vi.fn(async () => {
 function hostDeps() {
   return {
     cloudsIrLiveFetchFn: offlineFetch,
-    earthquakesLiveFetchFn: offlineFetch,
+    earthquakesLiveFetchFn: usgsLiveOkFetch(WALL_MS),
     orbitalTracksLiveFetchFn: offlineFetch,
+    nowMs: () => WALL_MS,
     setIntervalFn: () => 1,
     clearIntervalFn: () => undefined,
   };

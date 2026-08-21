@@ -13,8 +13,8 @@
 
 /**
  * DLU-7 — live acquisition track closure.
- * Smoke the four shipped consumers under durable sourceIds. Clouds/IR and
- * earthquakes keep fixture fallback; ISS hides when no live TLE can be acquired.
+ * Smoke the four shipped consumers under durable sourceIds. Clouds/IR keep
+ * fixture fallback; earthquakes and ISS hide when live acquisition fails.
  * Prove host arm + resolve stay scrub-safe (no fetch on paint path).
  */
 
@@ -31,7 +31,7 @@ import {
 
 const PRODUCT_MS = 1_700_000_700_000;
 
-/** Offline: clouds/quakes fall back to fixtures; ISS does not. */
+/** Offline: clouds fall back to fixtures; earthquakes and ISS do not. */
 const offlineFetch: LiveHttpFetchFn = async () => {
   throw new Error("offline-dlu7-closure");
 };
@@ -52,7 +52,7 @@ describe("DLU-7 live acquisition closure", () => {
     expect(ISS_ORBITAL_TRACK_SOURCE_ID).toBe("iss-orbital-track-v1");
   });
 
-  it("host arms all three live adapters; clouds/quakes fixture-fallback, ISS does not", async () => {
+  it("host arms all three live adapters; clouds fixture-fallback, earthquakes and ISS do not", async () => {
     const fetchFn = vi.fn(offlineFetch);
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: fetchFn,
@@ -86,8 +86,13 @@ describe("DLU-7 live acquisition closure", () => {
       const att = host.attachForProductInstant(PRODUCT_MS);
       expect(att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
       expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).not.toBeNull();
-      expect(att.getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID)).not.toBeNull();
+      expect(host.lifecycle.getState(USGS_EARTHQUAKES_SOURCE_ID).state).toBe("error");
     });
+    expect(
+      host
+        .attachForProductInstant(PRODUCT_MS)
+        .getPreparedPointFeatures(USGS_EARTHQUAKES_SOURCE_ID),
+    ).toBeNull();
     expect(
       host
         .attachForProductInstant(PRODUCT_MS)
@@ -113,9 +118,8 @@ describe("DLU-7 live acquisition closure", () => {
     expect(clouds.snapshot?.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(clouds.snapshot?.meta.kind).toBe("equirectRaster");
 
-    expect(quakes.status).toBe("ok");
-    expect(quakes.snapshot?.meta.sourceId).toBe(USGS_EARTHQUAKES_SOURCE_ID);
-    expect(quakes.snapshot?.meta.kind).toBe("pointFeatures");
+    expect(quakes.status).toBe("error");
+    expect(quakes.snapshot).toBeNull();
 
     expect(tracks.status).toBe("error");
 
@@ -140,7 +144,7 @@ describe("DLU-7 live acquisition closure", () => {
     );
 
     expect(resolvedClouds.status).toBe("ok");
-    expect(resolvedQuakes.status).toBe("ok");
+    expect(resolvedQuakes.status).toBe("error");
     expect(resolvedTracks.status).toBe("error");
     expect(fetchFn.mock.calls.length).toBe(fetchCountAfterAcquire);
 

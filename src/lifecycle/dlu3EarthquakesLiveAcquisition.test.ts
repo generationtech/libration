@@ -204,6 +204,7 @@ describe("DLU-3 live USGS earthquakes acquisition", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.entry.record.meta.sourceId).toBe(USGS_EARTHQUAKES_SOURCE_ID);
+    expect(result.entry.record.meta.origin).toBe("live");
     expect(result.entry.record.meta.versionId).toBe("earthquakes-live-test-1");
     expect(result.entry.record.body.kind).toBe("pointFeatures");
     if (result.entry.record.body.kind === "pointFeatures") {
@@ -240,6 +241,23 @@ describe("DLU-3 live USGS earthquakes acquisition", () => {
     if (result.entry.record.body.kind === "pointFeatures") {
       expect(result.entry.record.body.features.length).toBeGreaterThanOrEqual(3);
     }
+    expect(result.entry.record.meta.origin).toBe("fixture");
+  });
+
+  it("live adapter does not store fixture when USGS fails (default)", async () => {
+    const fetchFn: LiveHttpFetchFn = vi.fn(async () =>
+      mockJsonResponse({
+        body: new Uint8Array(),
+        ok: false,
+        status: 503,
+      }),
+    );
+    const adapter = createEarthquakesLiveHttpAcquisitionAdapter({
+      fetchFn,
+      nowMs: () => 1_700_000_400_000,
+    });
+    const result = await adapter.acquire();
+    expect(result.ok).toBe(false);
   });
 
   it("produceEarthquakesLiveAcquisitionFromFetched stamps catalog attribution", () => {
@@ -258,6 +276,7 @@ describe("DLU-3 live USGS earthquakes acquisition", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.entry.record.meta.validTimeMs).toBe(1_700_000_500_000);
+    expect(result.entry.record.meta.origin).toBe("live");
     expect(result.entry.record.meta.attribution).toContain("USGS");
   });
 

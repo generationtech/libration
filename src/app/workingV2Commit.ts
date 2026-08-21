@@ -164,7 +164,13 @@ function sceneLayerSourceEqual(a: SceneLayerInstance["source"], b: SceneLayerIns
     return a.sourceId === b.sourceId && shallowRecordEqual(a.metadata, b.metadata);
   }
   if (a.kind === "dynamicPointFeatures" && b.kind === "dynamicPointFeatures") {
-    return a.sourceId === b.sourceId && shallowRecordEqual(a.metadata, b.metadata);
+    // Earthquake presentation lives on source.parameters and is captured at
+    // overlay construction; omitting it leaves a stale layer (LIB-039 class).
+    return (
+      a.sourceId === b.sourceId &&
+      shallowRecordEqual(a.parameters, b.parameters) &&
+      shallowRecordEqual(a.metadata, b.metadata)
+    );
   }
   if (a.kind === "dynamicTracks" && b.kind === "dynamicTracks") {
     // ISS presentation lives on source.parameters and is captured at overlay

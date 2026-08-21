@@ -52,7 +52,7 @@ const USGS_EARTHQUAKES_ENTRY: DynamicPointFeaturesSourceCatalogEntry = {
   label: "Earthquakes",
   kind: "pointFeatures",
   attribution:
-    "USGS Earthquake Hazards Program real-time GeoJSON (all_day.geojson) via in-app live acquisition under durable id usgs-earthquakes-v1. Offline / test sessions may fall back to a recorded USGS-shaped FeatureCollection fixture.",
+    "USGS Earthquake Hazards Program real-time GeoJSON (all_day.geojson) via in-app live acquisition under durable id usgs-earthquakes-v1. Production does not fall back to fixture data. Tests and DEV scenarios may use a recorded USGS-shaped FeatureCollection.",
   licenseNote:
     "USGS earthquake products are U.S. Government work / public domain. Live feed URL is not persisted in SceneConfig — only the durable sourceId is.",
   defaultRefreshIntervalMs: USGS_EARTHQUAKES_DEFAULT_REFRESH_INTERVAL_MS,
