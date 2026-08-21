@@ -94,6 +94,7 @@ import { isProductTimeLiveEnough } from "./core/liveProductTimePolicy";
 import { resolveEclipseFrame } from "./core/eclipse/eclipseEventService";
 import {
   eclipseInfoPresentationFromScene,
+  earthquakePresentationFromScene,
   lunarEclipsePresentationFromScene,
   milkyWayPresentationFromScene,
   solarEclipsePresentationFromScene,
@@ -125,6 +126,14 @@ import { displayTimeModeFromTopBandTimeMode } from "./core/displayTimeMode";
 import { REFERENCE_CITIES } from "./data/referenceCities";
 import { CanvasRenderBackend } from "./renderer/canvasRenderBackend";
 import { buildRenderableLayerStates } from "./renderer/layerInputAdapter";
+import {
+  canvasClientPointToSceneCss,
+  sceneLayerViewportRectPx,
+} from "./renderer/sceneViewportLayout";
+import type { SceneLayerViewportPx } from "./renderer/types";
+import { runtimeIdForDynamicPointFeaturesSceneLayer } from "./layers/dynamicPointFeaturesOverlayLayer";
+import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayload";
+import { applyEarthquakePointerHoverToPayload } from "./layers/earthquakeHoverAnnotation";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
 import "./App.css";
 
@@ -254,6 +263,14 @@ export default function App() {
     deriveAppConfigFromV2(workingV2Ref.current),
   );
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const earthquakePointerSceneCssRef = useRef<{ x: number; y: number } | null>(
+    null,
+  );
+  const scenePointerLayoutRef = useRef<{
+    canvasCssWidth: number;
+    canvasCssHeight: number;
+    scene: SceneLayerViewportPx;
+  } | null>(null);
   const registryRef = useRef<LayerRegistry>(
     createLayerRegistryFromConfig(derivedAppConfigRef.current),
   );
@@ -931,10 +948,38 @@ export default function App() {
         displayChromeLayout: derivedAppConfigRef.current.displayChromeLayout,
         eventNoticeTexts,
       });
+      const sceneRect = sceneLayerViewportRectPx(
+        viewport,
+        chromeState.topBand.height,
+      );
+      scenePointerLayoutRef.current = {
+        canvasCssWidth: viewport.width,
+        canvasCssHeight: viewport.height,
+        scene: sceneRect,
+      };
+      const eqLayerId = runtimeIdForDynamicPointFeaturesSceneLayer("earthquakes");
+      const showLabelOnHover =
+        derivedAppConfigRef.current.layers.earthquakes &&
+        earthquakePresentationFromScene(scene).showLabelOnHover;
+      const layersForRender = layers.map((layer) => {
+        if (
+          layer.id !== eqLayerId ||
+          !isDynamicPointFeaturesPayload(layer.data)
+        ) {
+          return layer;
+        }
+        const next = applyEarthquakePointerHoverToPayload(layer.data, {
+          pointerSceneCss: earthquakePointerSceneCssRef.current,
+          viewportWidthPx: sceneRect.width,
+          viewportHeightPx: sceneRect.height,
+          showLabelOnHover,
+        });
+        return next === layer.data ? layer : { ...layer, data: next };
+      });
       const input = buildSceneRenderInput({
         frame: frameCtx,
         viewport,
-        layers,
+        layers: layersForRender,
         scene: { backgroundColor: "#1a1a1a" },
         topChromeReservedHeightPx: chromeState.topBand.height,
       });
@@ -981,6 +1026,32 @@ export default function App() {
         : null;
     resizeObserver?.observe(canvas);
 
+    const syncPointerFromEvent = (event: PointerEvent): void => {
+      const layout = scenePointerLayoutRef.current;
+      if (layout === null) {
+        earthquakePointerSceneCssRef.current = null;
+        return;
+      }
+      earthquakePointerSceneCssRef.current = canvasClientPointToSceneCss({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        canvasRect: canvas.getBoundingClientRect(),
+        canvasCssWidth: layout.canvasCssWidth,
+        canvasCssHeight: layout.canvasCssHeight,
+        sceneLayerViewportPx: layout.scene,
+      });
+    };
+    const onPointerMove = (event: PointerEvent): void => {
+      if (cancelled) return;
+      syncPointerFromEvent(event);
+    };
+    const onPointerLeave = (): void => {
+      earthquakePointerSceneCssRef.current = null;
+    };
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerleave", onPointerLeave);
+    canvas.addEventListener("pointercancel", onPointerLeave);
+
     void (async () => {
       const viewport = createViewportFromCanvas(canvas);
       await backend.initialize(viewport);
@@ -994,6 +1065,11 @@ export default function App() {
 
     return () => {
       cancelled = true;
+      earthquakePointerSceneCssRef.current = null;
+      scenePointerLayoutRef.current = null;
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerleave", onPointerLeave);
+      canvas.removeEventListener("pointercancel", onPointerLeave);
       resizeObserver?.disconnect();
       stopLoop?.();
       window.removeEventListener("resize", onResize);

@@ -22,10 +22,19 @@ export interface DynamicPointFeatureMarker {
   id: string;
   lonDeg: number;
   latDeg: number;
-  /** Optional short label (e.g. magnitude title). */
+  /** Optional persistent map label. */
   label?: string;
+  /**
+   * Compact `M4.6 · place` text for hover (LIB-060). Present on visible
+   * earthquake markers even when {@link label} is omitted.
+   */
+  compactLabel?: string;
+  /** Transient hover label; never persisted. Mutually exclusive with {@link label}. */
+  hoverLabel?: string;
   /** Optional magnitude for radius scaling (earthquakes). */
   magnitude?: number;
+  /** Provider event time (ms); used for hover overlap tie-break. */
+  eventTimeMs?: number;
   /**
    * Optional derived solar night veil (0–1) at this point, aligned with planetary illumination.
    */
@@ -69,9 +78,19 @@ export function isDynamicPointFeaturesPayload(
       return false;
     }
     if (row.label !== undefined && typeof row.label !== "string") return false;
+    if (row.compactLabel !== undefined && typeof row.compactLabel !== "string") {
+      return false;
+    }
+    if (row.hoverLabel !== undefined && typeof row.hoverLabel !== "string") {
+      return false;
+    }
     if (row.magnitude !== undefined) {
       const m = row.magnitude;
       if (typeof m !== "number" || !Number.isFinite(m)) return false;
+    }
+    if (row.eventTimeMs !== undefined) {
+      const t = row.eventTimeMs;
+      if (typeof t !== "number" || !Number.isFinite(t)) return false;
     }
     if (row.readabilityNightVeil01 !== undefined) {
       const v = row.readabilityNightVeil01;

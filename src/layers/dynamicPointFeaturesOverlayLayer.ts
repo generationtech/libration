@@ -157,20 +157,29 @@ export function createDynamicPointFeaturesOverlayLayer(
             continue;
           }
         }
-        const label = isEarthquakesLayer
-          ? earthquakeLabelEligible({ magnitude, presentation })
-            ? formatEarthquakeMarkerLabel(
-                magnitude,
-                placeFromEarthquakeProperties(f.properties),
-              )
-            : undefined
+        const compactLabel = isEarthquakesLayer
+          ? formatEarthquakeMarkerLabel(
+              magnitude,
+              placeFromEarthquakeProperties(f.properties),
+            )
           : labelFromLegacyProperties(f.properties, magnitude);
+        const persistentLabel = isEarthquakesLayer
+          ? earthquakeLabelEligible({ magnitude, presentation })
+            ? compactLabel
+            : undefined
+          : compactLabel;
         features.push({
           id: f.id,
           lonDeg: f.lonDeg,
           latDeg: f.latDeg,
-          ...(label !== undefined ? { label } : {}),
+          ...(persistentLabel !== undefined ? { label: persistentLabel } : {}),
+          ...(isEarthquakesLayer && compactLabel !== undefined
+            ? { compactLabel }
+            : {}),
           ...(magnitude !== undefined ? { magnitude } : {}),
+          ...(isEarthquakesLayer && eventTimeMs !== undefined
+            ? { eventTimeMs }
+            : {}),
           readabilityNightVeil01: frame.readabilityVeil01At(
             f.latDeg,
             f.lonDeg,

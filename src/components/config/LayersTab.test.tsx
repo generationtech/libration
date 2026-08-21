@@ -768,11 +768,14 @@ describe("LayersTab topic navigation", () => {
     expect(screen.getByLabelText("Earthquakes only")).toBeChecked();
     expect(screen.getByLabelText("Show earthquake labels")).toBeChecked();
     expect(screen.getByLabelText("Label minimum magnitude")).toHaveValue("4");
+    expect(screen.getByLabelText("Show label on hover")).toBeChecked();
     expect(screen.getByTestId("earthquake-topic-status").textContent).toMatch(
       /Enable Earthquakes under Layer masters/,
     );
     await user.selectOptions(screen.getByLabelText("Minimum magnitude"), "4");
     expect(screen.getByLabelText("Minimum magnitude")).toHaveValue("4");
+    await user.click(screen.getByLabelText("Show label on hover"));
+    expect(screen.getByLabelText("Show label on hover")).not.toBeChecked();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
     expect(screen.queryByLabelText("Orbit track")).toBeNull();
   });

@@ -20,6 +20,7 @@ import {
   INTERNATIONAL_DATE_LINE_LONGITUDE_DEG,
   longitudeDegFromMapX,
   mapXFromLongitudeDeg,
+  mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
 
 /** Mirror of CanvasRenderBackend city pin x (scene longitude → x). */
@@ -102,6 +103,12 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
       const x = mapXFromLongitudeDeg(lon, widthPx);
       expect(longitudeDegFromMapX(x, widthPx)).toBeCloseTo(lon, 10);
     }
+  });
+
+  it("maps latitude +90 → y=0 and −90 → y=height", () => {
+    expect(mapYFromLatitudeDeg(90, 800)).toBe(0);
+    expect(mapYFromLatitudeDeg(-90, 800)).toBe(800);
+    expect(mapYFromLatitudeDeg(0, 800)).toBe(400);
   });
 
   it("top-band tape anchor x matches scene pin x for the resolved reference meridian", () => {

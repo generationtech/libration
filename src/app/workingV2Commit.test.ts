@@ -924,6 +924,7 @@ describe("commitWorkingV2Update", () => {
     expect(sceneRuntimeAffectingEqual(a, a)).toBe(true);
     expect(sceneRuntimeAffectingEqual(a, b)).toBe(false);
     expect(earthquakeParams(a)?.minMagnitude).toBe(DEFAULT_EARTHQUAKE_PRESENTATION.minMagnitude);
+    expect(earthquakeParams(a)?.showLabelOnHover).toBe(true);
     expect(earthquakeParams(b)?.minMagnitude).toBe("5");
   });
 

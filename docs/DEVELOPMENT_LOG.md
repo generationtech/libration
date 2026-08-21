@@ -358,3 +358,9 @@ USGS `all_day.geojson` stays the live earthquake authority. Production no longer
 
 Verified: `npx tsc --noEmit` clean; `npm test` 258 files / 2416 passed / 0 failed; `npm run build` succeeded with no `earthquake-presentation` in `dist/`. Cursor Browser ordinary live USGS + historical Demo + `?scenario=earthquake-presentation`. LIB-037 and LIB-058 stay proposed.
 
+## 2026-08-21 — LIB-060 complete
+
+Layers → Earthquakes → Labels gains **Show label on hover** (factory ON). Hovering a visible marker shows the same compact `M4.6 · place` label even when persistent labels are off or the event is below the persistent label threshold; an already-persistent label is not duplicated. Earthquake-specific CSS-scene hit-test (`max(paintedRadius + 2 px, 7 px)`); no generic selection architecture, no network, no click/detail, no durable hover state.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 260 files / 2432 passed / 0 failed; `npm run build` succeeded with no `earthquake-presentation` / `visualScenarios` in `dist/`. Cursor Browser `?scenario=earthquake-presentation` (labels-off hover, below-threshold hover, hover-off) and ordinary live USGS factory map. LIB-037 and LIB-058 stay proposed.
+

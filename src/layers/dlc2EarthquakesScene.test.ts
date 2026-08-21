@@ -57,6 +57,7 @@ describe("DLC-2 SceneConfig + composition + registry + RenderPlan", () => {
         showLabels: true,
         labelMinMagnitude: "4",
         earthquakesOnly: true,
+        showLabelOnHover: true,
       },
     });
     expect(deriveLayerEnableFlagsFromScene(scene).earthquakes).toBe(true);
@@ -76,6 +77,7 @@ describe("DLC-2 SceneConfig + composition + registry + RenderPlan", () => {
         showLabels: true,
         labelMinMagnitude: "4",
         earthquakesOnly: true,
+        showLabelOnHover: true,
       },
     });
   });

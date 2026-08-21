@@ -57,6 +57,12 @@ export const DEFAULT_EARTHQUAKE_LABEL_MIN_MAGNITUDE: EarthquakeLabelMinMagnitude
 
 export const DEFAULT_EARTHQUAKE_EARTHQUAKES_ONLY = true;
 
+/**
+ * Factory ON: hover reveals compact labels without adding default map clutter.
+ * Persistent labels remain independent (LIB-060).
+ */
+export const DEFAULT_EARTHQUAKE_SHOW_LABEL_ON_HOVER = true;
+
 export const EARTHQUAKE_MAX_AGE_MS: Record<EarthquakeMaxAgeId, number> = {
   "1h": 1 * 60 * 60 * 1000,
   "3h": 3 * 60 * 60 * 1000,
@@ -101,6 +107,8 @@ export type EarthquakePresentation = {
   showLabels: boolean;
   labelMinMagnitude: EarthquakeLabelMinMagnitudeId;
   earthquakesOnly: boolean;
+  /** Transient compact label on pointer hover. Not a persistent map label. */
+  showLabelOnHover: boolean;
 };
 
 export const DEFAULT_EARTHQUAKE_PRESENTATION: EarthquakePresentation = {
@@ -109,6 +117,7 @@ export const DEFAULT_EARTHQUAKE_PRESENTATION: EarthquakePresentation = {
   showLabels: DEFAULT_EARTHQUAKE_SHOW_LABELS,
   labelMinMagnitude: DEFAULT_EARTHQUAKE_LABEL_MIN_MAGNITUDE,
   earthquakesOnly: DEFAULT_EARTHQUAKE_EARTHQUAKES_ONLY,
+  showLabelOnHover: DEFAULT_EARTHQUAKE_SHOW_LABEL_ON_HOVER,
 };
 
 function isOneOf<T extends string>(raw: unknown, ids: readonly T[]): raw is T {
@@ -194,6 +203,10 @@ export function normalizeEarthquakePresentation(
       typeof src.earthquakesOnly === "boolean"
         ? src.earthquakesOnly
         : DEFAULT_EARTHQUAKE_EARTHQUAKES_ONLY,
+    showLabelOnHover:
+      typeof src.showLabelOnHover === "boolean"
+        ? src.showLabelOnHover
+        : DEFAULT_EARTHQUAKE_SHOW_LABEL_ON_HOVER,
   };
 }
 

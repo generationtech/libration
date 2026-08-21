@@ -150,7 +150,7 @@ export function EarthquakesSection(props: {
         />
       </ConfigControlRow>
       <h3 className="config-section__title config-section__title--sub">Labels</h3>
-      <ConfigControlRow label="Show labels">
+      <ConfigControlRow label="Show earthquake labels">
         <input
           type="checkbox"
           className="config-input config-input--checkbox"
@@ -193,6 +193,25 @@ export function EarthquakesSection(props: {
             </option>
           ))}
         </select>
+      </ConfigControlRow>
+      <ConfigControlRow label="Show label on hover">
+        <input
+          type="checkbox"
+          className="config-input config-input--checkbox"
+          checked={pres.showLabelOnHover}
+          readOnly={!mutable}
+          disabled={!mutable}
+          tabIndex={mutable ? 0 : -1}
+          aria-label="Show label on hover"
+          title="Show the compact magnitude · place label while the pointer is over a visible earthquake marker. Does not add persistent labels."
+          onChange={
+            mutable
+              ? (e) => {
+                  apply({ showLabelOnHover: e.currentTarget.checked });
+                }
+              : undefined
+          }
+        />
       </ConfigControlRow>
       <h3 className="config-section__title config-section__title--sub">Status</h3>
       {statusText !== null ? (

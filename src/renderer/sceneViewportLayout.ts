@@ -59,3 +59,45 @@ export function sceneLayerViewport(
     devicePixelRatio: dpr,
   };
 }
+
+/**
+ * Map a pointer's client coordinates into scene-strip CSS pixels.
+ * Uses the canvas layout box and CSS viewport size — not backing-store pixels or DPR.
+ * Returns null when the point is outside the scene strip (including the top chrome band).
+ */
+export function canvasClientPointToSceneCss(args: {
+  clientX: number;
+  clientY: number;
+  canvasRect: { left: number; top: number; width: number; height: number };
+  canvasCssWidth: number;
+  canvasCssHeight: number;
+  sceneLayerViewportPx: SceneLayerViewportPx;
+}): { x: number; y: number } | null {
+  const { canvasRect, canvasCssWidth, canvasCssHeight, sceneLayerViewportPx } =
+    args;
+  if (
+    !(canvasRect.width > 0) ||
+    !(canvasRect.height > 0) ||
+    !(canvasCssWidth > 0) ||
+    !(canvasCssHeight > 0) ||
+    !(sceneLayerViewportPx.width > 0) ||
+    !(sceneLayerViewportPx.height > 0)
+  ) {
+    return null;
+  }
+  const canvasX =
+    ((args.clientX - canvasRect.left) / canvasRect.width) * canvasCssWidth;
+  const canvasY =
+    ((args.clientY - canvasRect.top) / canvasRect.height) * canvasCssHeight;
+  const x = canvasX - sceneLayerViewportPx.x;
+  const y = canvasY - sceneLayerViewportPx.y;
+  if (
+    x < 0 ||
+    y < 0 ||
+    x > sceneLayerViewportPx.width ||
+    y > sceneLayerViewportPx.height
+  ) {
+    return null;
+  }
+  return { x, y };
+}

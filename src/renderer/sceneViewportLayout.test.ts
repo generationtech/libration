@@ -16,6 +16,7 @@ import { cloneHourMarkersConfig } from "../config/appConfig";
 import { createTimeContext } from "../core/time";
 import { buildDisplayChromeState } from "./displayChrome";
 import {
+  canvasClientPointToSceneCss,
   clampedTopChromeReservedHeightPx,
   sceneLayerViewport,
   sceneLayerViewportRectPx,
@@ -102,5 +103,44 @@ describe("scene viewport vs display chrome top band", () => {
     expect(reservedHidden).toBeGreaterThan(0);
     expect(sceneFull.height).toBeGreaterThan(0);
     expect(sceneHidden.height).toBeGreaterThan(0);
+  });
+});
+
+describe("canvasClientPointToSceneCss", () => {
+  it("maps client coordinates in CSS pixels and ignores backing-store / DPR", () => {
+    const scene = { x: 0, y: 80, width: 800, height: 520 };
+    const canvasRect = { left: 10, top: 20, width: 800, height: 600 };
+    const point = canvasClientPointToSceneCss({
+      clientX: 10 + 100,
+      clientY: 20 + 80 + 50,
+      canvasRect,
+      canvasCssWidth: 800,
+      canvasCssHeight: 600,
+      sceneLayerViewportPx: scene,
+    });
+    expect(point).toEqual({ x: 100, y: 50 });
+
+    const sameCssAtOtherDpr = canvasClientPointToSceneCss({
+      clientX: 10 + 100,
+      clientY: 20 + 80 + 50,
+      canvasRect,
+      canvasCssWidth: 800,
+      canvasCssHeight: 600,
+      sceneLayerViewportPx: scene,
+    });
+    expect(sameCssAtOtherDpr).toEqual(point);
+  });
+
+  it("returns null over the reserved top chrome band", () => {
+    expect(
+      canvasClientPointToSceneCss({
+        clientX: 50,
+        clientY: 25,
+        canvasRect: { left: 0, top: 0, width: 800, height: 600 },
+        canvasCssWidth: 800,
+        canvasCssHeight: 600,
+        sceneLayerViewportPx: { x: 0, y: 80, width: 800, height: 520 },
+      }),
+    ).toBeNull();
   });
 });

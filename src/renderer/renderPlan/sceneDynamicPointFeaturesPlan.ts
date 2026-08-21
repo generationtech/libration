@@ -17,15 +17,15 @@
  */
 
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import { mapXFromLongitudeDeg, mapYFromLatitudeDeg } from "../../core/equirectangularProjection";
+import {
+  earthquakeMarkerRadiusPx,
+  placeEarthquakeHoverLabel,
+} from "../../core/earthquakeMarkerHover";
 import type { DynamicPointFeaturesPayload } from "../../layers/dynamicPointFeaturesPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
 import { circlePath2D } from "./circlePath2D";
-
-function mapLatToY(latDeg: number, viewportHeightPx: number): number {
-  return ((90 - latDeg) / 180) * viewportHeightPx;
-}
 
 export interface DynamicPointFeaturesRenderPlanOptions {
   viewportWidthPx: number;
@@ -53,15 +53,8 @@ export function buildDynamicPointFeaturesRenderPlan(
 
   for (const feature of options.payload.features) {
     const x = mapXFromLongitudeDeg(feature.lonDeg, w);
-    const y = mapLatToY(feature.latDeg, h);
-    const mag =
-      feature.magnitude !== undefined && Number.isFinite(feature.magnitude)
-        ? Math.max(0, feature.magnitude)
-        : 3;
-    const r = Math.min(
-      10,
-      Math.max(2.5, (2.2 + mag * 0.85) * Math.max(0.7, w / 1400)),
-    );
+    const y = mapYFromLatitudeDeg(feature.latDeg, h);
+    const r = earthquakeMarkerRadiusPx(feature.magnitude, w);
 
     const v = effectiveOverlayReadabilityLiftVeil01(
       feature.readabilityNightVeil01,
@@ -89,12 +82,16 @@ export function buildDynamicPointFeaturesRenderPlan(
       strokeWidthPx: sw(1),
     });
 
-    if (feature.label !== undefined && feature.label.trim() !== "") {
+    const persistentLabel =
+      feature.label !== undefined && feature.label.trim() !== ""
+        ? feature.label
+        : undefined;
+    if (persistentLabel !== undefined) {
       const text: RenderTextItem = {
         kind: "text",
         x: x + r + 4,
         y: y - labelSize * 0.35,
-        text: feature.label,
+        text: persistentLabel,
         fill: `rgba(255, 236, 220, ${a(0.92)})`,
         font: {
           assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
@@ -108,6 +105,47 @@ export function buildDynamicPointFeaturesRenderPlan(
         stroke: {
           color: `rgba(20, 12, 8, ${a(0.7)})`,
           widthPx: sw(Math.max(2, labelSize * 0.28)),
+          lineJoin: "round",
+          miterLimit: 2,
+        },
+        opacity: layerOp,
+      };
+      items.push(text);
+      continue;
+    }
+
+    const hoverText =
+      feature.hoverLabel !== undefined && feature.hoverLabel.trim() !== ""
+        ? feature.hoverLabel
+        : undefined;
+    if (hoverText !== undefined) {
+      const placed = placeEarthquakeHoverLabel({
+        originX: x,
+        originY: y,
+        radiusPx: r,
+        text: hoverText,
+        sizePx: labelSize,
+        viewportWidthPx: w,
+        viewportHeightPx: h,
+      });
+      const text: RenderTextItem = {
+        kind: "text",
+        x: placed.x,
+        y: placed.y,
+        text: hoverText,
+        fill: `rgba(255, 236, 220, ${a(0.98)})`,
+        font: {
+          assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
+          displayName: "Renderer default",
+          sizePx: labelSize,
+          weight: 600,
+          style: "normal",
+        },
+        textAlign: placed.textAlign,
+        textBaseline: placed.textBaseline,
+        stroke: {
+          color: `rgba(20, 12, 8, ${a(0.78)})`,
+          widthPx: sw(Math.max(2, labelSize * 0.3)),
           lineJoin: "round",
           miterLimit: 2,
         },

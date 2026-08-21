@@ -47,6 +47,7 @@ describe("LIB-059 earthquake presentation config", () => {
       showLabels: true,
       labelMinMagnitude: "4",
       earthquakesOnly: true,
+      showLabelOnHover: true,
     });
   });
 
@@ -57,6 +58,7 @@ describe("LIB-059 earthquake presentation config", () => {
       showLabels: false,
       labelMinMagnitude: "follow",
       earthquakesOnly: false,
+      showLabelOnHover: false,
     });
     expect(explicit).toEqual({
       minMagnitude: "5",
@@ -64,6 +66,7 @@ describe("LIB-059 earthquake presentation config", () => {
       showLabels: false,
       labelMinMagnitude: "follow",
       earthquakesOnly: false,
+      showLabelOnHover: false,
     });
   });
 });
@@ -149,6 +152,31 @@ describe("LIB-059 labels vs markers", () => {
     const pres = presentation({ showLabels: false, labelMinMagnitude: "follow" });
     expect(earthquakeLabelEligible({ magnitude: 6, presentation: pres })).toBe(
       false,
+    );
+  });
+
+  it("does not let Show label on hover change persistent-label eligibility", () => {
+    const on = presentation({
+      showLabels: true,
+      labelMinMagnitude: "4",
+      showLabelOnHover: true,
+    });
+    const off = presentation({
+      showLabels: true,
+      labelMinMagnitude: "4",
+      showLabelOnHover: false,
+    });
+    expect(earthquakeLabelEligible({ magnitude: 3.1, presentation: on })).toBe(
+      false,
+    );
+    expect(earthquakeLabelEligible({ magnitude: 3.1, presentation: off })).toBe(
+      false,
+    );
+    expect(earthquakeLabelEligible({ magnitude: 5.2, presentation: on })).toBe(
+      true,
+    );
+    expect(earthquakeLabelEligible({ magnitude: 5.2, presentation: off })).toBe(
+      true,
     );
   });
 });

@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-059](work/LIB-059-earthquake-live-presentation-and-provenance.md) — Earthquake live presentation and provenance
+[LIB-060](work/LIB-060-earthquake-hover-labels.md) — Earthquake hover labels
 
 ## Blockers
 
@@ -27,4 +27,4 @@ Proposed [LIB-058](work/LIB-058-earthquake-live-layer-capability-survey.md) eart
 
 ## Next action
 
-No approved work. Propose or approve the next item before implementation.
+Stop. No approved work.

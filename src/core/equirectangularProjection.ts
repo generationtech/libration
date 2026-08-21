@@ -19,8 +19,8 @@
  * - scene drawing (canvas viewport width in `CanvasRenderBackend`),
  * - top-band longitude anchor and tape geometry (`buildDisplayChromeState` / `buildUtcTopScaleLayout`).
  *
- * Vertical latitude mapping lives in the renderer (`(90 - lat) / 180 * height`) and is not exported here;
- * this module pins the shared **longitude ↔ x** contract only.
+ * Vertical latitude mapping is the matching linear contract (`(90 - lat) / 180 * height`):
+ * y = 0 → +90°, y = heightPx → −90°. Hit-test and RenderPlan must use the same pair.
  */
 
 /**
@@ -33,6 +33,21 @@ export function mapXFromLongitudeDeg(lonDeg: number, widthPx: number): number {
     return 0;
   }
   return ((lonDeg + 180) / 360) * w;
+}
+
+/**
+ * Inverse of {@link mapXFromLongitudeDeg}: x on the strip → east longitude (degrees).
+ */
+/**
+ * Maps geodetic latitude (degrees) to y on a full-height equirectangular strip:
+ * y = 0 → +90°, y = heightPx → −90°.
+ */
+export function mapYFromLatitudeDeg(latDeg: number, heightPx: number): number {
+  const h = Math.max(0, heightPx);
+  if (h === 0) {
+    return 0;
+  }
+  return ((90 - latDeg) / 180) * h;
 }
 
 /**
