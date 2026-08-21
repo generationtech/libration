@@ -20,6 +20,10 @@ import {
 } from "../config/v2/librationConfig";
 import { setWorkingV2PersistenceSuppressed } from "../config/v2/workingV2Persistence";
 import { LUNAR_LOCUS_EPOCH_UTC, type LunarLocusEpochId } from "../core/lunarLocus";
+import {
+  parseNightVeilTransferId,
+  setDevNightVeilTransferOverride,
+} from "../core/nightVeilFromSolarAltitude";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setVisualScenarioExtraOverlayBuilder,
@@ -37,6 +41,7 @@ export const VISUAL_SCENARIO_IDS = [
   "baseline",
   "terminator",
   "night",
+  "twilight-presentation",
   "readability",
   "lunar-track",
   "lunar-locus",
@@ -66,6 +71,7 @@ export const VISUAL_SCENARIO_UTC = {
   baseline: "2030-06-15T12:00:00.000Z",
   terminator: "2026-03-20T12:00:00.000Z",
   night: "2026-12-21T06:00:00.000Z",
+  "twilight-presentation": "2026-09-09T03:53:00.000Z",
   readability: "2026-06-21T12:00:00.000Z",
   "lunar-track": "2026-01-16T22:00:00.000Z",
   "lunar-locus": LUNAR_LOCUS_EPOCH_UTC.recent,
@@ -88,6 +94,18 @@ export const VISUAL_SCENARIO_UTC = {
   "lunar-eclipse-forecast-total": "2022-05-13T04:00:00.000Z",
   "lunar-eclipse-2029": "2029-06-26T03:22:05.000Z",
 } as const satisfies Record<VisualScenarioId, string>;
+
+/**
+ * LIB-056 diagnostic product times (Knoxville HUD). Default `c` is the near-new-Moon
+ * solar-only reference. Production does not import this map.
+ */
+export const TWILIGHT_PRESENTATION_CASE_UTC = {
+  a: "2026-08-21T00:57:00.000Z",
+  b: "2026-08-24T04:34:00.000Z",
+  c: "2026-09-09T03:53:00.000Z",
+} as const;
+
+export type TwilightPresentationCaseId = keyof typeof TWILIGHT_PRESENTATION_CASE_UTC;
 
 /** DEV-only paused instants for Moon libration visual checks. Production does not import this map. */
 export const MOON_LIBRATION_EPOCH_UTC = {
@@ -282,6 +300,14 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
         draft.layers.solarShading = true;
       }),
   },
+  "twilight-presentation": {
+    id: "twilight-presentation",
+    startIsoUtc: VISUAL_SCENARIO_UTC["twilight-presentation"],
+    purpose:
+      "LIB-056 solar night-veil presentation: full-world solar shading at a documented Knoxville product time. Optional DEV twilightCase=a|b|c and nightVeilCurve=smootherstep|linearSmooth|twilightAnchored|smoothstep.",
+    buildConfig: () =>
+      withDemoAt(VISUAL_SCENARIO_UTC["twilight-presentation"], applyTwilightPresentationScene),
+  },
   readability: {
     id: "readability",
     startIsoUtc: VISUAL_SCENARIO_UTC.readability,
@@ -473,6 +499,18 @@ export const VISUAL_SCENARIOS: Record<VisualScenarioId, VisualScenarioDefinition
   },
 };
 
+function applyTwilightPresentationScene(draft: LibrationConfigV2): void {
+  draft.layers.solarShading = true;
+  draft.layers.grid = true;
+  draft.chrome = {
+    ...draft.chrome,
+    displayTime: {
+      ...draft.chrome.displayTime,
+      topBandAnchor: { mode: "fixedCity", cityId: "city.knoxville" },
+    },
+  };
+}
+
 function applyLunarLocusScene(draft: LibrationConfigV2): void {
   draft.layers.solarShading = true;
   draft.layers.grid = true;
@@ -663,6 +701,13 @@ export function parseMoonLibrationEpochId(raw: string | null): MoonLibrationEpoc
   return "diagonal";
 }
 
+export function parseTwilightPresentationCaseId(raw: string | null): TwilightPresentationCaseId {
+  if (raw && raw in TWILIGHT_PRESENTATION_CASE_UTC) {
+    return raw as TwilightPresentationCaseId;
+  }
+  return "c";
+}
+
 export function parseLunarEclipsePhaseId(raw: string | null): LunarEclipsePhaseId | null {
   if (raw && raw in LUNAR_ECLIPSE_2022_PHASE_UTC) {
     return raw as LunarEclipsePhaseId;
@@ -736,6 +781,17 @@ export function resolveVisualScenarioSession(
   }
   if (!isVisualScenarioId(requested)) {
     return { kind: "unknown", requestedId: requested };
+  }
+  if (requested === "twilight-presentation") {
+    const params = parseSearchParams(input.search);
+    const twilightCase = parseTwilightPresentationCaseId(params.get("twilightCase"));
+    const startIsoUtc = TWILIGHT_PRESENTATION_CASE_UTC[twilightCase];
+    return {
+      kind: "applied",
+      id: "twilight-presentation",
+      startIsoUtc,
+      config: withDemoAt(startIsoUtc, applyTwilightPresentationScene),
+    };
   }
   if (requested === "milky-way") {
     const params = parseSearchParams(input.search);
@@ -969,6 +1025,8 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
       ? buildIssPresentationPreparedTracksView()
       : null,
   );
+  const curveId = parseNightVeilTransferId(parseSearchParams(search).get("nightVeilCurve"));
+  setDevNightVeilTransferOverride(curveId);
   if (session.kind === "unknown") {
     console.error(
       `[libration] Unknown visual scenario "${session.requestedId}". Ordinary startup; the requested scenario was not applied.`,

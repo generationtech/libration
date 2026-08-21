@@ -21,8 +21,12 @@ import {
 } from "../core/eclipse/solarEclipseObscurationField";
 import { subsolarPoint } from "../core/subsolarPoint";
 import { solarAltitudeDegFromSurfaceSunDotProduct } from "../core/solarTwilight";
+import { longitudeDegFromMapX } from "../core/equirectangularProjection";
 import { sampleIlluminationRgba8 } from "./illuminationShading";
-import { buildSolarShadingIlluminationRenderPlan } from "./renderPlan/sceneSolarShadingIlluminationPlan";
+import {
+  buildSolarShadingIlluminationRenderPlan,
+  SOLAR_SHADING_PLAN_DOWNSAMPLE,
+} from "./renderPlan/sceneSolarShadingIlluminationPlan";
 import { getMoonlightPolicy } from "../core/moonlightPolicy";
 
 const TOTAL_2017 = "nasa-5mcse-solar-9546";
@@ -273,11 +277,20 @@ describe("solar eclipse horizon illumination composition", () => {
     }
     const o = ordinary.items[0].rgba;
     const t = eclipsed.items[0].rgba;
+    const sw = Math.ceil(64 / SOLAR_SHADING_PLAN_DOWNSAMPLE);
+    const sh = Math.ceil(32 / SOLAR_SHADING_PLAN_DOWNSAMPLE);
     let nightSamples = 0;
-    for (let i = 0; i < o.length; i += 4) {
-      if (o[i + 3]! >= 157) {
+    for (let j = 0; j < sh; j++) {
+      const latDeg = 90 - ((j + 0.5) / sh) * 180;
+      for (let i = 0; i < sw; i++) {
+        const lonDeg = longitudeDegFromMapX(i + 0.5, sw);
+        const alt = solarAltitudeDegFromSurfaceSunDotProduct(solarDot(latDeg, lonDeg, 0, 0));
+        if (alt > -18) {
+          continue;
+        }
         nightSamples += 1;
-        expect(t[i + 3]).toBe(o[i + 3]);
+        const p = (j * sw + i) * 4 + 3;
+        expect(t[p]).toBe(o[p]);
       }
     }
     expect(nightSamples).toBeGreaterThan(10);

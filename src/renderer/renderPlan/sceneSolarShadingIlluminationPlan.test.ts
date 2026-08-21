@@ -317,11 +317,15 @@ describe("buildSolarShadingIlluminationRenderPlan", () => {
     expect(nightEligibilityAtSublunar).toBeGreaterThan(0.9);
     expect(nightEligibilityAtKnoxville).toBe(1);
 
-    expect(alphaDeltaAtSublunar).toBeGreaterThanOrEqual(22);
+    // Sublunar is just below −12° (nautical/astro). The factory twilight-anchored
+    // veil is lower there than the old smootherstep, so the existing
+    // nightVeil-gated moonlight overlay (smoothstep 0.45→0.95) contributes less.
+    // Deep-night Knoxville lift stays in the historical band. Lunar policy is unchanged.
+    expect(alphaDeltaAtSublunar).toBeGreaterThanOrEqual(8);
     expect(alphaDeltaAtSublunar).toBeLessThanOrEqual(45);
     expect(alphaDeltaAtKnoxville).toBeGreaterThanOrEqual(20);
     expect(alphaDeltaAtKnoxville).toBeLessThanOrEqual(42);
-    expect(luminanceDeltaAtSublunar).toBeGreaterThan(10);
+    expect(luminanceDeltaAtSublunar).toBeGreaterThan(6);
     expect(luminanceDeltaAtSublunar).toBeLessThan(36);
     expect(luminanceDeltaAtKnoxville).toBeGreaterThan(8);
     expect(luminanceDeltaAtKnoxville).toBeLessThan(34);

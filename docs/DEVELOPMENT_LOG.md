@@ -340,3 +340,9 @@ Lunar eclipse visibility footprint stroke color is a presentation control (facto
 
 Verified: `npx tsc --noEmit` clean; focused 6 files / 186 passed; `npm test` 251 files / 2325 passed / 0 failed. Cursor Browser `lunar-eclipse-2029` upcoming factory then `#ff00ff`, footprint off, total, partial, 2022 penumbral phase, after. LIB-037 stays proposed.
 
+## 2026-08-20 — LIB-056 complete
+
+Factory solar night veil is now a C1 twilight-anchored monotone cubic (veil 0 / 0.10 / 0.32 / 0.70 / 1 at +4° / 0° / −6° / −12° / −18°) instead of smootherstep(+4° → −18°), which had concentrated slope at −7° and read as a narrow dark stripe. Astronomy, moonlight policy, eclipses, footprint, and the single illumination `rasterPatch` are unchanged. No new ADR. No user-facing curve configuration.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 252 files / 2361 passed / 0 failed; `npm run build` succeeded with no `twilight-presentation` / `nightVeilCurve` / `visualScenarios` in `dist/`. Cursor Browser case A/B/C, terminator, night, Moon phases, lunar/solar eclipse, 21600× Demo. LIB-037 stays proposed.
+

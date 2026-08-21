@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-055](work/LIB-055-configurable-lunar-eclipse-footprint-line-color.md) — Configurable lunar eclipse footprint line color
+[LIB-056](work/LIB-056-solar-twilight-night-veil-presentation.md) — Solar twilight / night-veil presentation refinement
 
 ## Blockers
 

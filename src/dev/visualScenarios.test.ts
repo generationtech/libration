@@ -27,6 +27,7 @@ import {
   VISUAL_SCENARIO_UTC,
   VISUAL_SCENARIOS,
   MOON_LIBRATION_EPOCH_UTC,
+  TWILIGHT_PRESENTATION_CASE_UTC,
   applyVisualScenarioFromLocation,
   parseVisualScenarioQuery,
   resolveVisualScenarioSession,
@@ -38,6 +39,10 @@ import {
   resetVisualScenarioRuntime,
   attachVisualScenarioPreparedTracks,
 } from "./visualScenarioRuntime";
+import {
+  getActiveNightVeilTransferId,
+  setDevNightVeilTransferOverride,
+} from "../core/nightVeilFromSolarAltitude";
 
 function makeMemoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -62,6 +67,7 @@ function makeMemoryStorage(): Storage {
 afterEach(() => {
   resetVisualScenarioRuntime();
   setWorkingV2PersistenceSuppressed(false);
+  setDevNightVeilTransferOverride(null);
   vi.restoreAllMocks();
 });
 
@@ -164,6 +170,36 @@ describe("resolveVisualScenarioSession", () => {
   it("keeps solar shading on for terminator and night", () => {
     expect(VISUAL_SCENARIOS.terminator.buildConfig().layers.solarShading).toBe(true);
     expect(VISUAL_SCENARIOS.night.buildConfig().layers.solarShading).toBe(true);
+  });
+
+  it("seeds twilight-presentation at the near-new-Moon Knoxville case by default", () => {
+    const config = VISUAL_SCENARIOS["twilight-presentation"].buildConfig();
+    expect(config.layers.solarShading).toBe(true);
+    expect(config.data.demoTime.startIsoUtc).toBe(TWILIGHT_PRESENTATION_CASE_UTC.c);
+    expect(config.chrome.displayTime.topBandAnchor).toEqual({
+      mode: "fixedCity",
+      cityId: "city.knoxville",
+    });
+  });
+
+  it("selects documented twilightCase instants without adding extra scenario ids", () => {
+    const a = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=twilight-presentation&twilightCase=a",
+    });
+    const b = resolveVisualScenarioSession({
+      isDev: true,
+      search: "?scenario=twilight-presentation&twilightCase=b",
+    });
+    expect(a.kind).toBe("applied");
+    expect(b.kind).toBe("applied");
+    if (a.kind === "applied") {
+      expect(a.startIsoUtc).toBe("2026-08-21T00:57:00.000Z");
+      expect(a.config.data.demoTime.startIsoUtc).toBe("2026-08-21T00:57:00.000Z");
+    }
+    if (b.kind === "applied") {
+      expect(b.startIsoUtc).toBe("2026-08-24T04:34:00.000Z");
+    }
   });
 
   it("selects the Köppen climate substrate and analemma for readability", () => {
@@ -611,6 +647,15 @@ describe("applyVisualScenarioFromLocation", () => {
         layers: [],
       }),
     ).toBeNull();
+  });
+
+  it("honors DEV nightVeilCurve without persisting it as configuration", () => {
+    applyVisualScenarioFromLocation(
+      "?scenario=twilight-presentation&nightVeilCurve=linearSmooth",
+    );
+    expect(getActiveNightVeilTransferId()).toBe("linearSmooth");
+    applyVisualScenarioFromLocation("?scenario=terminator");
+    expect(getActiveNightVeilTransferId()).toBe("twilightAnchored");
   });
 });
 
