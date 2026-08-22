@@ -286,6 +286,7 @@ export {
   CLOUDS_GOES_EAST_SUB_SATELLITE,
   CLOUDS_GOES_WEST_SUB_SATELLITE,
   CLOUDS_HIMAWARI_SUB_SATELLITE,
+  CLOUDS_IODC_SUB_SATELLITE,
   CLOUDS_METEOSAT_SUB_SATELLITE,
   CLOUDS_PROVIDER_COMPOSITE,
   CLOUDS_PROVIDER_EUMET,
@@ -294,6 +295,11 @@ export {
   CLOUDS_PROVIDER_GIBS_GOES_EAST,
   CLOUDS_PROVIDER_GIBS_GOES_WEST,
   CLOUDS_PROVIDER_GIBS_HIMAWARI,
+  CLOUDS_RING_COMPONENT_GEOMETRY_VERSION,
+  CLOUDS_RING_COMPONENT_IDS,
+  CLOUDS_RING_COMPONENT_NONE,
+  CLOUDS_RING_COMPONENT_SPECS,
+  CLOUDS_RING_QUALITY_MODEL_VERSION,
   CLOUDS_SECTOR_EUMET_RING,
   CLOUDS_SECTOR_GOES_EAST,
   CLOUDS_SECTOR_GOES_WEST,
@@ -303,7 +309,13 @@ export {
   cloudsProviderStaleMaxAgeMs,
 } from "./cloudsSectors";
 
-export type { CloudsProviderKind, CloudsSectorId, CloudsGeoSubSatellite } from "./cloudsSectors";
+export type {
+  CloudsProviderKind,
+  CloudsRingComponentId,
+  CloudsRingComponentSpec,
+  CloudsSectorId,
+  CloudsGeoSubSatellite,
+} from "./cloudsSectors";
 
 export {
   CLOUDS_COMPOSITE_AUTHORITY_VERSION,
@@ -327,7 +339,11 @@ export {
   geostationaryQualityU8,
   geostationaryViewingZenithDeg,
   getCloudsQualityPlane,
+  getCloudsRingComponentPlane,
+  sampleCloudsRingQuality,
 } from "./cloudQuality";
+
+export type { CloudsRingQualitySample } from "./cloudQuality";
 
 export {
   decodeCloudsPngRgba,

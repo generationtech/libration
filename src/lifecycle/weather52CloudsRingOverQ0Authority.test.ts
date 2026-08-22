@@ -751,7 +751,7 @@ describe("WEATHER-5.2 presentation / architecture regressions", () => {
   it("keeps cloud RGB, confidence transfer, and authority cache id", () => {
     expect(CLOUD_HIGHLIGHT_RGB).toEqual({ r: 248, g: 250, b: 252 });
     expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx5-cloud-v2");
-    expect(CLOUDS_COMPOSITE_AUTHORITY_VERSION).toBe("wx52-ring-over-q0");
+    expect(CLOUDS_COMPOSITE_AUTHORITY_VERSION).toBe("wx53-ring-geo-q1");
   });
 
   it("does not blend overlapping observations", () => {

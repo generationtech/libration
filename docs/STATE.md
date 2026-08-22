@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-073](work/LIB-073-weather-5-2-ring-outranks-q0-regional-authority.md) — WEATHER-5.2: Ring outranks q=0 regional authority
+[LIB-075](work/LIB-075-weather-5-3-1-ring-component-geometry-quality.md) — WEATHER-5.3.1: Ring component-geometry quality
 
 ## Blockers
 
@@ -37,6 +37,8 @@ Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-inve
 
 Proposed [LIB-072](work/LIB-072-weather-5-2-residual-cloud-boundary-provenance-investigation.md) WEATHER-5.2 residual cloud-boundary provenance survey stays proposed (investigation only; not activated). LIB-073 implemented its ring-over-q0 recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
 
+Proposed [LIB-074](work/LIB-074-weather-5-3-ring-artifact-provenance-and-cross-source-texture-investigation.md) WEATHER-5.3 ring-artifact provenance and cross-source texture survey stays proposed (investigation only; not activated). LIB-075 implemented its ring component-geometry quality recommendation. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+
 ## Next action
 
-Awaiting scope. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
+Awaiting scope. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.

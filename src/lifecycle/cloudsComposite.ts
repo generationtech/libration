@@ -55,8 +55,8 @@ export type CloudsHighlightLayer = Readonly<{
   /**
    * Viewing-quality plane: 0 = extreme geometry, 255 = nadir-quality.
    * Missing means full usable quality (255). Quality 0 is still coverage.
-   * Quality 0 does not punch coverage holes, but is not preferred over a
-   * paintable ring observation.
+   * Quality 0 does not punch coverage holes. For the ring, missing quality
+   * is treated as good (q>0); production attaches the component-geometry plane.
    */
   qualityWeight?: Uint8Array;
   /** Observation time for freshness-vs-quality. Missing treats age as equal. */
@@ -203,7 +203,7 @@ export function buildCloudsCompositeMeta(
 }
 
 /** Composite-result cache identity. Transfer version is independent. */
-export const CLOUDS_COMPOSITE_AUTHORITY_VERSION = "wx52-ring-over-q0";
+export const CLOUDS_COMPOSITE_AUTHORITY_VERSION = "wx53-ring-geo-q1";
 
 type RegionalOverlapSlot = Readonly<{
   layer: CloudsHighlightLayer;
@@ -388,11 +388,14 @@ function ringHasCoverage(ring: RegionalOverlapSlot | null, i: number): boolean {
 /**
  * Final per-pixel authority:
  * 1. usable regional (coverage && q>0) — existing WEATHER-4.3 lex rule
- * 2. ring with valid provider coverage
+ * 2. good ring (provider coverage && ring q>0)
  * 3. q=0 regional — existing freshness / stable order
- * 4. no data
+ * 4. poor ring (provider coverage && ring q==0)
+ * 5. no data
  *
  * Coverage is unchanged. Quality 0 remains observational coverage.
+ * Ring q>0 means at least one documented ring component views the pixel
+ * at θ<75°. Classes are compared, not raw regional-vs-ring q magnitudes.
  */
 function pickCompositeAuthority(
   regionals: readonly RegionalOverlapSlot[],
@@ -401,8 +404,11 @@ function pickCompositeAuthority(
 ): RegionalOverlapSlot | null {
   const usable = pickUsableRegionalWinner(regionals, i);
   if (usable !== null) return usable;
+  if (ringHasCoverage(ring, i) && slotQualityAt(ring!, i) > 0) return ring;
+  const zeroQuality = pickZeroQualityRegionalWinner(regionals, i);
+  if (zeroQuality !== null) return zeroQuality;
   if (ringHasCoverage(ring, i)) return ring;
-  return pickZeroQualityRegionalWinner(regionals, i);
+  return null;
 }
 
 export type CloudsCompositeRgba = Readonly<{
@@ -416,9 +422,9 @@ export type CloudsCompositeRgba = Readonly<{
  * Coverage-then-quality replacement. Usable (q>0) regionals keep the
  * WEATHER-4.3 lexicographic winner and still suppress the ring, including
  * cloud signal 0. When every covering regional is q=0, a paintable ring with
- * provider coverage wins. Quality 0 does not punch coverage holes and still
- * paints if the ring is absent. Cloud signal is copied, not blended.
- * Same dimensions required.
+ * provider coverage and ring q>0 wins; otherwise q=0 regional wins; poor
+ * (q=0) ring still paints if no regional covers. Quality 0 does not punch
+ * coverage holes. Cloud signal is copied, not blended. Same dimensions required.
  */
 export function compositeCloudHighlightLayers(
   layers: readonly CloudsHighlightLayer[],
@@ -441,7 +447,7 @@ export function compositeCloudHighlightLayers(
 
 /**
  * Per-pixel selected source for DEV diagnostics. Same authority as
- * composition: usable regional, else ring, else q=0 regional.
+ * composition: usable regional, else good ring, else q=0 regional, else poor ring.
  */
 export function resolveCloudsCompositeWinnerSectorIds(
   layers: readonly CloudsHighlightLayer[],

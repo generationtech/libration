@@ -153,6 +153,79 @@ export const CLOUDS_HIMAWARI_SUB_SATELLITE: CloudsGeoSubSatellite = {
   latitudeDeg: 0,
 };
 
+/**
+ * EUMETView IODC prime for the geostationary ring mosaic
+ * (`mumi:worldcloudmap_ir108` / EO:EUM:DAT:0330) is Meteosat-9 at 45.5°E.
+ * Not a production regional Clouds sector. Ring quality reuses this SSP.
+ */
+export const CLOUDS_IODC_SUB_SATELLITE: CloudsGeoSubSatellite = {
+  satellite: "Meteosat-9",
+  longitudeDeg: 45.5,
+  latitudeDeg: 0,
+};
+
+/**
+ * Documented EUMET geostationary-ring component identities.
+ * Inferred geometry only: the WMS does not expose per-pixel source-id.
+ */
+export const CLOUDS_RING_COMPONENT_IDS = [
+  "msg-0",
+  "iodc-45.5",
+  "goes-east",
+  "goes-west",
+  "himawari",
+] as const;
+
+export type CloudsRingComponentId = (typeof CLOUDS_RING_COMPONENT_IDS)[number];
+
+export type CloudsRingComponentSpec = Readonly<{
+  id: CloudsRingComponentId;
+  label: string;
+  geoSubSatellite: CloudsGeoSubSatellite;
+}>;
+
+/**
+ * Ring mosaic components from EO:EUM:DAT:0330: Meteosat 0°, IODC 45.5°E,
+ * GOES-East, GOES-West, Himawari-9. Regional SSP constants are reused.
+ * Bump `CLOUDS_RING_COMPONENT_GEOMETRY_VERSION` if this constellation changes.
+ */
+export const CLOUDS_RING_COMPONENT_SPECS: readonly CloudsRingComponentSpec[] = [
+  {
+    id: "msg-0",
+    label: "Meteosat 0°",
+    geoSubSatellite: CLOUDS_METEOSAT_SUB_SATELLITE,
+  },
+  {
+    id: "iodc-45.5",
+    label: "IODC 45.5°E",
+    geoSubSatellite: CLOUDS_IODC_SUB_SATELLITE,
+  },
+  {
+    id: "goes-east",
+    label: "GOES-East",
+    geoSubSatellite: CLOUDS_GOES_EAST_SUB_SATELLITE,
+  },
+  {
+    id: "goes-west",
+    label: "GOES-West",
+    geoSubSatellite: CLOUDS_GOES_WEST_SUB_SATELLITE,
+  },
+  {
+    id: "himawari",
+    label: "Himawari",
+    geoSubSatellite: CLOUDS_HIMAWARI_SUB_SATELLITE,
+  },
+];
+
+/** Ring quality transfer / cache identity. Independent of observation time. */
+export const CLOUDS_RING_QUALITY_MODEL_VERSION = "wx53-ring-geo-q1";
+
+/** Bump when documented ring-component SSPs or membership change. */
+export const CLOUDS_RING_COMPONENT_GEOMETRY_VERSION = "geo-ring-ssp-v1";
+
+/** Index used in the inferred-component plane when every component has q=0. */
+export const CLOUDS_RING_COMPONENT_NONE = 255;
+
 export type CloudsSectorSpec = Readonly<{
   id: CloudsSectorId;
   label: string;
@@ -163,7 +236,10 @@ export type CloudsSectorSpec = Readonly<{
   minRefetchMs: number;
   /** Geographic backstop; painted under regionals. */
   isRing: boolean;
-  /** Viewing geometry for regional GEO quality. Omitted for the multi-satellite ring. */
+  /**
+   * Viewing geometry for regional GEO quality. Omitted for the multi-satellite
+   * ring; ring quality uses `CLOUDS_RING_COMPONENT_SPECS` instead.
+   */
   geoSubSatellite?: CloudsGeoSubSatellite;
   /** Fixed provider display → canonicalIR interpretation. */
   irInterpretation: CloudIrInterpretationKind;

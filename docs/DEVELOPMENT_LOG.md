@@ -406,4 +406,10 @@ WEATHER-5.2: ring outranks q=0 regional authority. Usable q>0 regionals keep the
 
 Verified: `npx tsc --noEmit` clean; focused Clouds tests 152 passed; `npm test` 268 files / 2564 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `cloudsTransfer` / `q0ring` in `dist/`. Cursor Browser ordinary live **Clouds · observations 31m–2h old** (ring listed at 2h), winner debug (India ~74°E ring, ~80°E Himawari; NATL East magenta), `?scenario=clouds` DEV fixture. LIB-072 stays proposed. Do not start later q>0 blending or WEATHER-6.
 
+## 2026-08-22 — LIB-075 complete
+
+WEATHER-5.3.1: independent ring quality from documented component GEO geometry (IODC 45.5°E included). Ring coverage ≠ ring quality ≠ ring signal. Authority: usable regional > good ring > q=0 regional > poor ring > none. LIB-073 q>0 regional primacy unchanged. ADR 0024 amended. No blending, no TIME sync, no black-point or confidence retune.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 123 passed; `npm test` 269 files / 2588 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `q0ring` / `ringQuality` / `ringComponent` in `dist/`. Ring ownership 452,353 → 129,882 on LIB-074 17:41Z rasters; SIO seam 1.31 (was ~8.03); Antarctic 1.03; NATL/Pacific usable mismatch 0. Cursor Browser ordinary live **Clouds · observations 33m–3h / 23m–3h old**, winner / ringQuality / ringComponent diagnostics, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-074 stays proposed. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, or WEATHER-6.
+
 

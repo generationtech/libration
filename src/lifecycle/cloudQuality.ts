@@ -22,8 +22,9 @@
  * extreme viewing geometry, not missing data. A q=0 observation that is
  * the only coverage at a pixel still paints.
  *
- * Quality planes are Earth-fixed for a given provider SSP and grid.
- * Cache them; do not recompute inside rAF.
+ * Quality planes are Earth-fixed for a given provider SSP and grid
+ * (ring: max over documented component SSPs). Cache them; do not recompute
+ * inside rAF. Ring quality is not keyed by observation time.
  */
 
 import {
@@ -31,7 +32,13 @@ import {
   longitudeDegFromMapX,
 } from "../core/equirectangularProjection";
 import {
+  CLOUDS_RING_COMPONENT_GEOMETRY_VERSION,
+  CLOUDS_RING_COMPONENT_NONE,
+  CLOUDS_RING_COMPONENT_SPECS,
+  CLOUDS_RING_QUALITY_MODEL_VERSION,
+  CLOUDS_SECTOR_EUMET_RING,
   CLOUDS_SECTOR_SPECS,
+  type CloudsRingComponentId,
   type CloudsSectorId,
 } from "./cloudsSectors";
 
@@ -50,6 +57,7 @@ const DEG = Math.PI / 180;
 const GEO_LIMB_CENTRAL_RAD = Math.acos(1 / CLOUDS_GEO_RADIUS_RATIO);
 
 const qualityPlaneCache = new Map<string, Uint8Array>();
+const ringComponentPlaneCache = new Map<string, Uint8Array>();
 
 function clampUnit(x: number): number {
   if (x > 1) return 1;
@@ -145,21 +153,90 @@ function qualityPlaneCacheKey(
   width: number,
   height: number,
 ): string {
+  if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
+    return `${sectorId}:${CLOUDS_RING_QUALITY_MODEL_VERSION}:${CLOUDS_RING_COMPONENT_GEOMETRY_VERSION}:${width}x${height}`;
+  }
   return `${sectorId}:${width}x${height}`;
 }
 
+export type CloudsRingQualitySample = Readonly<{
+  qualityU8: number;
+  /** Inferred max-quality component, or null when every component is q=0. */
+  componentId: CloudsRingComponentId | null;
+  componentIndex: number;
+}>;
+
 /**
- * Build a Uint8 quality plane (round(quality01 × 255)) for a regional GEO
- * sector. Returns null for the ring (no single SSP).
+ * Best documented ring-component geometry at a geographic point.
+ *
+ * Approximation: EUMET WMS has no per-pixel source-id, so this is inferred
+ * from known SSPs, not exact mosaic provenance. A component contributes only
+ * through the shared GEO quality function (q=0 at θ≥75° / beyond limb).
+ */
+export function sampleCloudsRingQuality(
+  latitudeDeg: number,
+  longitudeDeg: number,
+): CloudsRingQualitySample {
+  let bestQ = 0;
+  let bestIndex = CLOUDS_RING_COMPONENT_NONE;
+  for (let c = 0; c < CLOUDS_RING_COMPONENT_SPECS.length; c++) {
+    const sspLon = CLOUDS_RING_COMPONENT_SPECS[c]!.geoSubSatellite.longitudeDeg;
+    const q = geostationaryQualityU8(latitudeDeg, longitudeDeg, sspLon);
+    if (q > bestQ) {
+      bestQ = q;
+      bestIndex = c;
+    }
+  }
+  return {
+    qualityU8: bestQ,
+    componentId:
+      bestIndex === CLOUDS_RING_COMPONENT_NONE
+        ? null
+        : CLOUDS_RING_COMPONENT_SPECS[bestIndex]!.id,
+    componentIndex: bestIndex,
+  };
+}
+
+function buildCloudsRingQualityPlanes(
+  width: number,
+  height: number,
+): { quality: Uint8Array; component: Uint8Array } {
+  const pixelCount = width * height;
+  const quality = new Uint8Array(pixelCount);
+  const component = new Uint8Array(pixelCount);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const { latitudeDeg, longitudeDeg } = equirectPixelCenterLatLonDeg(
+        x,
+        y,
+        width,
+        height,
+      );
+      const sample = sampleCloudsRingQuality(latitudeDeg, longitudeDeg);
+      const i = y * width + x;
+      quality[i] = sample.qualityU8;
+      component[i] = sample.componentIndex;
+    }
+  }
+  return { quality, component };
+}
+
+/**
+ * Build a Uint8 quality plane (round(quality01 × 255)).
+ * Regional sectors use their single SSP. The ring uses max quality over
+ * documented component SSPs. Returns null for invalid dimensions.
  */
 export function buildCloudsQualityPlane(
   sectorId: CloudsSectorId,
   width: number,
   height: number,
 ): Uint8Array | null {
+  if (!(width > 0) || !(height > 0)) return null;
+  if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
+    return buildCloudsRingQualityPlanes(width, height).quality;
+  }
   const ssp = CLOUDS_SECTOR_SPECS[sectorId].geoSubSatellite;
   if (ssp === undefined) return null;
-  if (!(width > 0) || !(height > 0)) return null;
   const plane = new Uint8Array(width * height);
   const sspLon = ssp.longitudeDeg;
   for (let y = 0; y < height; y++) {
@@ -180,9 +257,19 @@ export function buildCloudsQualityPlane(
   return plane;
 }
 
+function rememberRingPlanes(
+  key: string,
+  quality: Uint8Array,
+  component: Uint8Array,
+): void {
+  qualityPlaneCache.set(key, quality);
+  ringComponentPlaneCache.set(key, component);
+}
+
 /**
- * Earth-fixed quality plane, cached by sector and grid. Safe to call from
- * acquisition / composition (outside rAF). The ring yields null.
+ * Earth-fixed quality plane, cached by sector, grid, and (for the ring)
+ * quality-model + component-geometry versions. Safe to call from acquisition
+ * / composition (outside rAF). Not keyed by product or observation time.
  */
 export function getCloudsQualityPlane(
   sectorId: CloudsSectorId,
@@ -192,8 +279,31 @@ export function getCloudsQualityPlane(
   const key = qualityPlaneCacheKey(sectorId, width, height);
   const cached = qualityPlaneCache.get(key);
   if (cached !== undefined) return cached;
+  if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
+    if (!(width > 0) || !(height > 0)) return null;
+    const built = buildCloudsRingQualityPlanes(width, height);
+    rememberRingPlanes(key, built.quality, built.component);
+    return built.quality;
+  }
   const built = buildCloudsQualityPlane(sectorId, width, height);
   if (built === null) return null;
   qualityPlaneCache.set(key, built);
   return built;
+}
+
+/**
+ * Inferred ring-component index plane (0..n-1, or 255 if every component is
+ * q=0). Diagnostic geometry only. Cached with the ring quality plane.
+ */
+export function getCloudsRingComponentPlane(
+  width: number,
+  height: number,
+): Uint8Array | null {
+  if (!(width > 0) || !(height > 0)) return null;
+  const key = qualityPlaneCacheKey(CLOUDS_SECTOR_EUMET_RING, width, height);
+  const cached = ringComponentPlaneCache.get(key);
+  if (cached !== undefined) return cached;
+  const built = buildCloudsRingQualityPlanes(width, height);
+  rememberRingPlanes(key, built.quality, built.component);
+  return built.component;
 }

@@ -15,10 +15,12 @@
  * DEV-only Clouds sector diagnostic. Production never imports this module.
  * Ordinary current-time mode only (not a `?scenario=`):
  *   ?cloudsSectorDebug=1|coverage — coverage footprints (paint-order, ignore quality)
- *   ?cloudsSectorDebug=winner — quality-aware selected source (ring distinct)
- *   ?cloudsSectorDebug=ring — pixels the ring actually owns after authority
- *   ?cloudsSectorDebug=q0ring — covering regional would be q=0 and ring is available
+ *   ?cloudsSectorDebug=winner — quality-aware selected source (good/poor ring distinct)
+ *   ?cloudsSectorDebug=ring — pixels the ring actually owns (good vs poor)
+ *   ?cloudsSectorDebug=q0ring — q=0 regional vs good/poor ring decision
  *   ?cloudsSectorDebug=quality — selected-source quality (nadir bright, limb dark)
+ *   ?cloudsSectorDebug=ringQuality — inferred ring component-geometry quality
+ *   ?cloudsSectorDebug=ringComponent — inferred max-quality ring component
  *   ?cloudsSectorDebug=signal — derived cloud-confidence winners
  *   ?cloudsSectorDebug=canonical — winner canonical display-IR (grayscale)
  *   ?cloudsSectorDebug=leak — pixels where the selected source is clear and
@@ -31,13 +33,17 @@ import {
   resolveCloudsCompositeWinnerSectorIds,
   resolveCloudsRegionalOnlyWinnerSectorIds,
 } from "../lifecycle/cloudsComposite";
+import { getCloudsRingComponentPlane } from "../lifecycle/cloudQuality";
 import {
+  CLOUDS_RING_COMPONENT_NONE,
+  CLOUDS_RING_COMPONENT_SPECS,
   CLOUDS_SECTOR_EUMET_RING,
   CLOUDS_SECTOR_GOES_EAST,
   CLOUDS_SECTOR_GOES_WEST,
   CLOUDS_SECTOR_HIMAWARI,
   CLOUDS_SECTOR_METEOSAT,
   isCloudsSectorId,
+  type CloudsRingComponentId,
   type CloudsSectorId,
 } from "../lifecycle/cloudsSectors";
 import type { DevCloudsSectorDebugTintFn } from "./visualScenarioRuntime";
@@ -48,6 +54,8 @@ export type CloudsSectorDebugMode =
   | "ring"
   | "q0ring"
   | "quality"
+  | "ringQuality"
+  | "ringComponent"
   | "signal"
   | "canonical"
   | "leak";
@@ -62,8 +70,20 @@ export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
   [CLOUDS_SECTOR_HIMAWARI]: [90, 200, 110],
 };
 
+/** Inferred ring-component geometry. Not EUMET per-pixel provenance. */
+export const CLOUDS_RING_COMPONENT_DEBUG_TINT: Readonly<
+  Record<CloudsRingComponentId, readonly [number, number, number]>
+> = {
+  "msg-0": [230, 200, 70],
+  "iodc-45.5": [255, 110, 40],
+  "goes-east": [220, 90, 160],
+  "goes-west": [80, 180, 220],
+  himawari: [90, 200, 110],
+};
+
 const LEAK_RGB = [255, 64, 48] as const;
-const Q0_RING_RGB = [255, 140, 40] as const;
+const Q0_BEATS_POOR_RING_RGB = [255, 140, 40] as const;
+const POOR_RING_RGB = [90, 40, 140] as const;
 
 let debugMode: CloudsSectorDebugMode = "coverage";
 
@@ -77,6 +97,17 @@ export function parseCloudsSectorDebugMode(
   if (v === "ring") return "ring";
   if (v === "q0ring" || v === "q0-ring" || v === "limb") return "q0ring";
   if (v === "quality" || v === "q") return "quality";
+  if (v === "ringquality" || v === "ring-quality" || v === "ringq") {
+    return "ringQuality";
+  }
+  if (
+    v === "ringcomponent" ||
+    v === "ring-component" ||
+    v === "ringsource" ||
+    v === "ring-source"
+  ) {
+    return "ringComponent";
+  }
   if (v === "signal" || v === "cloud") return "signal";
   if (v === "canonical" || v === "canonicalir" || v === "ir") return "canonical";
   if (v === "leak") return "leak";
@@ -146,6 +177,38 @@ export function tintCloudsCompositeByWinningSector(
 ): Uint8Array {
   const out = base.slice();
   const pixelCount = Math.floor(out.length / 4);
+  const ringLayer = layers.find((l) => l.sectorId === CLOUDS_SECTOR_EUMET_RING);
+  const first = layers[0];
+  if (mode === "ringQuality") {
+    for (let i = 0; i < pixelCount; i++) {
+      const q = ringLayer !== undefined ? layerQualityAt(ringLayer, i) : 0;
+      const o = i * 4;
+      out[o] = q;
+      out[o + 1] = q;
+      out[o + 2] = q;
+      out[o + 3] = 220;
+    }
+    return out;
+  }
+  if (mode === "ringComponent") {
+    const width = first?.width ?? 0;
+    const height = first?.height ?? 0;
+    const plane =
+      width > 0 && height > 0 ? getCloudsRingComponentPlane(width, height) : null;
+    for (let i = 0; i < pixelCount; i++) {
+      const idx = plane?.[i] ?? CLOUDS_RING_COMPONENT_NONE;
+      if (idx === CLOUDS_RING_COMPONENT_NONE) continue;
+      const spec = CLOUDS_RING_COMPONENT_SPECS[idx];
+      if (spec === undefined) continue;
+      const [tr, tg, tb] = CLOUDS_RING_COMPONENT_DEBUG_TINT[spec.id];
+      const o = i * 4;
+      out[o] = tr;
+      out[o + 1] = tg;
+      out[o + 2] = tb;
+      out[o + 3] = 220;
+    }
+    return out;
+  }
   let winner: Int8Array;
   if (mode === "signal") {
     winner = signalPaintOrderWinners(layers, paintOrder, pixelCount);
@@ -159,7 +222,6 @@ export function tintCloudsCompositeByWinningSector(
     );
     winner = resolved?.winners ?? coveragePaintOrderWinners(layers, paintOrder, pixelCount);
   }
-  const ringLayer = layers.find((l) => l.sectorId === CLOUDS_SECTOR_EUMET_RING);
   const regionalOnly =
     mode === "q0ring"
       ? resolveCloudsRegionalOnlyWinnerSectorIds(layers, paintOrder, productUtcMs)
@@ -200,7 +262,9 @@ export function tintCloudsCompositeByWinningSector(
     }
     if (mode === "ring") {
       if (sectorId !== CLOUDS_SECTOR_EUMET_RING) continue;
-      const [tr, tg, tb] = CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING];
+      const q = ringLayer !== undefined ? layerQualityAt(ringLayer, i) : 255;
+      const [tr, tg, tb] =
+        q > 0 ? CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING] : POOR_RING_RGB;
       out[o] = tr;
       out[o + 1] = tg;
       out[o + 2] = tb;
@@ -220,12 +284,33 @@ export function tintCloudsCompositeByWinningSector(
         layerQualityAt(regionalLayer, i) === 0 &&
         !pixelHasUsableRegionalCoverage(layers, i);
       const ringAvailable = ringLayer !== undefined && layerHasCoverage(ringLayer, i);
-      if (regionalQ0 && ringAvailable) {
-        out[o] = Q0_RING_RGB[0];
-        out[o + 1] = Q0_RING_RGB[1];
-        out[o + 2] = Q0_RING_RGB[2];
+      if (!regionalQ0 || !ringAvailable) continue;
+      const ringQ = layerQualityAt(ringLayer!, i);
+      const rgb =
+        ringQ > 0
+          ? CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING]
+          : Q0_BEATS_POOR_RING_RGB;
+      out[o] = rgb[0];
+      out[o + 1] = rgb[1];
+      out[o + 2] = rgb[2];
+      out[o + 3] = 220;
+      continue;
+    }
+    if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
+      const q = ringLayer !== undefined ? layerQualityAt(ringLayer, i) : 255;
+      const [tr, tg, tb] =
+        q > 0 ? CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING] : POOR_RING_RGB;
+      if (mode === "quality") {
+        out[o] = Math.round((tr * q) / 255);
+        out[o + 1] = Math.round((tg * q) / 255);
+        out[o + 2] = Math.round((tb * q) / 255);
         out[o + 3] = 220;
+        continue;
       }
+      out[o] = tr;
+      out[o + 1] = tg;
+      out[o + 2] = tb;
+      out[o + 3] = 220;
       continue;
     }
     const [tr, tg, tb] = CLOUDS_SECTOR_DEBUG_TINT[sectorId];
