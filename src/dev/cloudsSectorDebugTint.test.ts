@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  CLOUDS_SECTOR_DEBUG_TINT,
   parseCloudsSectorDebugMode,
   tintCloudsCompositeByWinningSector,
 } from "./cloudsSectorDebugTint";
@@ -42,10 +43,11 @@ function layer(
 }
 
 describe("DEV Clouds coverage diagnostic", () => {
-  it("parses coverage, signal, and leak modes", () => {
+  it("parses coverage, winner, quality, signal, and leak modes", () => {
     expect(parseCloudsSectorDebugMode("1")).toBe("coverage");
     expect(parseCloudsSectorDebugMode("coverage")).toBe("coverage");
-    expect(parseCloudsSectorDebugMode("winner")).toBe("coverage");
+    expect(parseCloudsSectorDebugMode("winner")).toBe("winner");
+    expect(parseCloudsSectorDebugMode("quality")).toBe("quality");
     expect(parseCloudsSectorDebugMode("signal")).toBe("signal");
     expect(parseCloudsSectorDebugMode("leak")).toBe("leak");
     expect(parseCloudsSectorDebugMode("0")).toBeNull();
@@ -70,6 +72,38 @@ describe("DEV Clouds coverage diagnostic", () => {
     );
     expect(coverage[0]).not.toBe(coverage[4]);
     expect(signal[0]).toBe(signal[4]);
+  });
+
+  it("winner mode uses quality-aware lex, not paint-order coverage", () => {
+    const east: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_GOES_EAST, [255], [40]),
+      qualityWeight: new Uint8Array([255]),
+      observationTimeMs: 0,
+    };
+    const msg: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_METEOSAT, [255], [200]),
+      qualityWeight: new Uint8Array([0]),
+      observationTimeMs: 15 * 60 * 1000,
+    };
+    const base = new Uint8Array(4);
+    const order = [CLOUDS_SECTOR_GOES_EAST, CLOUDS_SECTOR_METEOSAT] as const;
+    const productUtcMs = 20 * 60 * 1000;
+    const coverage = tintCloudsCompositeByWinningSector(
+      base,
+      [east, msg],
+      order,
+      "coverage",
+      productUtcMs,
+    );
+    const winner = tintCloudsCompositeByWinningSector(
+      base,
+      [east, msg],
+      order,
+      "winner",
+      productUtcMs,
+    );
+    expect(coverage[0]).toBe(CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_METEOSAT][0]);
+    expect(winner[0]).toBe(CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_GOES_EAST][0]);
   });
 
   it("leak mode marks suppressed earlier cloud under later clear coverage", () => {

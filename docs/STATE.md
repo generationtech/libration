@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-21
+Updated: 2026-08-22
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-067](work/LIB-067-weather-4-1-cloud-coverage-mask-authority-replacement.md) — Weather-4.1: Clouds coverage-mask authority replacement
+[LIB-069](work/LIB-069-weather-4-3-quality-plane-overlap-authority.md) — Weather-4.3: Per-source quality plane + quality-aware overlap authority
 
 ## Blockers
 
@@ -31,6 +31,8 @@ Proposed [LIB-062](work/LIB-062-weather-architecture-and-global-clouds-v1-invest
 
 Proposed [LIB-066](work/LIB-066-weather-4-cloud-mosaic-seam-investigation.md) Cloud mosaic seam / footprint artifact survey stays proposed (investigation only; not activated). LIB-067 implemented its coverage-authority recommendation.
 
+Proposed [LIB-068](work/LIB-068-weather-4-2-cloud-source-quality-seam-investigation.md) Cloud source-quality / radiometric seam survey stays proposed (investigation only; not activated). LIB-069 implemented its quality-authority recommendation. Remaining radiometric/presentation mismatch is later work (WEATHER-5); do not start it from this state.
+
 ## Next action
 
-Stop. No approved work. Draft a proposed item only if asked.
+AWAITING SCOPE. Do not begin WEATHER-5.

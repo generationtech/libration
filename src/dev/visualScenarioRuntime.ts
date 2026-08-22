@@ -46,8 +46,11 @@ export type DevCloudsSectorDebugTintFn = (
     readonly height: number;
     readonly rgba: Uint8Array;
     readonly coverageMask?: Uint8Array;
+    readonly qualityWeight?: Uint8Array;
+    readonly observationTimeMs?: number;
   }[],
   paintOrder: readonly string[],
+  productUtcMs?: number,
 ) => Uint8Array;
 
 const VISUAL_SCENARIO_EXTRA_OVERLAY_ID = "dev.visualScenario.extraOverlay";

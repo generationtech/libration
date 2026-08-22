@@ -14,13 +14,16 @@
 /**
  * DEV-only Clouds sector diagnostic. Production never imports this module.
  * Ordinary current-time mode only (not a `?scenario=`):
- *   ?cloudsSectorDebug=1|coverage|winner — coverage-authority footprints
- *   ?cloudsSectorDebug=signal — derived cloud-signal winners (old diagnostic)
- *   ?cloudsSectorDebug=leak — pixels where later coverage is clear and
- *     suppressed an earlier source's cloud
+ *   ?cloudsSectorDebug=1|coverage — coverage footprints (paint-order, ignore quality)
+ *   ?cloudsSectorDebug=winner — quality-aware lexicographic selected source
+ *   ?cloudsSectorDebug=quality — selected-source quality (nadir bright, limb dark)
+ *   ?cloudsSectorDebug=signal — derived cloud-signal winners
+ *   ?cloudsSectorDebug=leak — pixels where the selected source is clear and
+ *     suppressed another source's cloud
  */
 
 import type { CloudsHighlightLayer } from "../lifecycle/cloudsComposite";
+import { resolveCloudsCompositeWinnerSectorIds } from "../lifecycle/cloudsComposite";
 import {
   CLOUDS_SECTOR_EUMET_RING,
   CLOUDS_SECTOR_GOES_EAST,
@@ -32,7 +35,7 @@ import {
 } from "../lifecycle/cloudsSectors";
 import type { DevCloudsSectorDebugTintFn } from "./visualScenarioRuntime";
 
-export type CloudsSectorDebugMode = "coverage" | "signal" | "leak";
+export type CloudsSectorDebugMode = "coverage" | "winner" | "quality" | "signal" | "leak";
 
 export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
   Record<CloudsSectorId, readonly [number, number, number]>
@@ -53,7 +56,9 @@ export function parseCloudsSectorDebugMode(
 ): CloudsSectorDebugMode | null {
   if (value === null) return null;
   const v = value.trim().toLowerCase();
-  if (v === "1" || v === "coverage" || v === "winner") return "coverage";
+  if (v === "1" || v === "coverage") return "coverage";
+  if (v === "winner") return "winner";
+  if (v === "quality" || v === "q") return "quality";
   if (v === "signal" || v === "cloud") return "signal";
   if (v === "leak") return "leak";
   return null;
@@ -73,31 +78,86 @@ function layerHasCoverage(layer: CloudsHighlightLayer, i: number): boolean {
   return layer.rgba[i * 4 + 3]! > 0;
 }
 
+function layerQualityAt(layer: CloudsHighlightLayer, i: number): number {
+  const q = layer.qualityWeight;
+  if (q !== undefined && i < q.length) return q[i]!;
+  return 255;
+}
+
+function coveragePaintOrderWinners(
+  layers: readonly CloudsHighlightLayer[],
+  paintOrder: readonly CloudsSectorId[],
+  pixelCount: number,
+): Int8Array {
+  const winner = new Int8Array(pixelCount);
+  winner.fill(-1);
+  for (let li = 0; li < paintOrder.length; li++) {
+    const layer = layers.find((l) => l.sectorId === paintOrder[li]);
+    if (layer === undefined) continue;
+    for (let i = 0; i < pixelCount; i++) {
+      if (layerHasCoverage(layer, i)) winner[i] = li;
+    }
+  }
+  return winner;
+}
+
+function signalPaintOrderWinners(
+  layers: readonly CloudsHighlightLayer[],
+  paintOrder: readonly CloudsSectorId[],
+  pixelCount: number,
+): Int8Array {
+  const winner = new Int8Array(pixelCount);
+  winner.fill(-1);
+  for (let li = 0; li < paintOrder.length; li++) {
+    const layer = layers.find((l) => l.sectorId === paintOrder[li]);
+    if (layer === undefined) continue;
+    for (let i = 0; i < pixelCount; i++) {
+      if (layer.rgba[i * 4 + 3]! > 0) winner[i] = li;
+    }
+  }
+  return winner;
+}
+
 export function tintCloudsCompositeByWinningSector(
   base: Uint8Array,
   layers: readonly CloudsHighlightLayer[],
   paintOrder: readonly CloudsSectorId[],
   mode: CloudsSectorDebugMode = "coverage",
+  productUtcMs = 0,
 ): Uint8Array {
   const out = base.slice();
   const pixelCount = Math.floor(out.length / 4);
-  const winner = new Int8Array(pixelCount);
-  winner.fill(-1);
+  let winner: Int8Array;
+  if (mode === "signal") {
+    winner = signalPaintOrderWinners(layers, paintOrder, pixelCount);
+  } else if (mode === "coverage") {
+    winner = coveragePaintOrderWinners(layers, paintOrder, pixelCount);
+  } else {
+    const resolved = resolveCloudsCompositeWinnerSectorIds(
+      layers,
+      paintOrder,
+      productUtcMs,
+    );
+    winner = resolved?.winners ?? coveragePaintOrderWinners(layers, paintOrder, pixelCount);
+  }
   const suppressed = mode === "leak" ? new Uint8Array(pixelCount) : null;
-  for (let li = 0; li < paintOrder.length; li++) {
-    const layer = layers.find((l) => l.sectorId === paintOrder[li]);
-    if (layer === undefined) continue;
+  if (suppressed !== null) {
     for (let i = 0; i < pixelCount; i++) {
-      const signal = layer.rgba[i * 4 + 3]!;
-      const owns = mode === "signal" ? signal > 0 : layerHasCoverage(layer, i);
-      if (!owns) continue;
-      if (suppressed !== null && winner[i]! >= 0 && signal === 0) {
-        const prev = layers.find((l) => l.sectorId === paintOrder[winner[i]!]);
-        if (prev !== undefined && prev.rgba[i * 4 + 3]! > 0) {
+      const wi = winner[i]!;
+      if (wi < 0) continue;
+      const sectorId = paintOrder[wi]!;
+      const selected = layers.find((l) => l.sectorId === sectorId);
+      if (selected === undefined) continue;
+      if (selected.rgba[i * 4 + 3]! !== 0) continue;
+      if (!layerHasCoverage(selected, i)) continue;
+      for (const layer of layers) {
+        if (layer.sectorId === sectorId) continue;
+        if (!layerHasCoverage(layer, i)) continue;
+        if (layer.rgba[i * 4 + 3]! > 0) {
           suppressed[i] = 1;
+          break;
         }
       }
-      winner[i] = li;
     }
   }
   for (let i = 0; i < pixelCount; i++) {
@@ -115,9 +175,19 @@ export function tintCloudsCompositeByWinningSector(
       continue;
     }
     const [tr, tg, tb] = CLOUDS_SECTOR_DEBUG_TINT[sectorId];
+    if (mode === "quality") {
+      const layer = layers.find((l) => l.sectorId === sectorId);
+      const q = layer !== undefined ? layerQualityAt(layer, i) : 255;
+      out[o] = Math.round((tr * q) / 255);
+      out[o + 1] = Math.round((tg * q) / 255);
+      out[o + 2] = Math.round((tb * q) / 255);
+      out[o + 3] = 220;
+      continue;
+    }
     out[o] = tr;
     out[o + 1] = tg;
     out[o + 2] = tb;
+    out[o + 3] = 220;
   }
   return out;
 }
@@ -129,6 +199,8 @@ function toTypedLayers(
     readonly height: number;
     readonly rgba: Uint8Array;
     readonly coverageMask?: Uint8Array;
+    readonly qualityWeight?: Uint8Array;
+    readonly observationTimeMs?: number;
   }[],
 ): CloudsHighlightLayer[] {
   const typedLayers: CloudsHighlightLayer[] = [];
@@ -144,6 +216,8 @@ function toTypedLayers(
         Uint8Array.from({ length: layer.width * layer.height }, (_, i) =>
           layer.rgba[i * 4 + 3]! > 0 ? 255 : 0,
         ),
+      qualityWeight: layer.qualityWeight,
+      observationTimeMs: layer.observationTimeMs,
     });
   }
   return typedLayers;
@@ -153,11 +227,13 @@ export const applyDevCloudsSectorDebugTint: DevCloudsSectorDebugTintFn = (
   base,
   layers,
   paintOrder,
+  productUtcMs = 0,
 ) => {
   return tintCloudsCompositeByWinningSector(
     base,
     toTypedLayers(layers),
     paintOrder.filter(isCloudsSectorId),
     debugMode,
+    productUtcMs,
   );
 };

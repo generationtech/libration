@@ -52,6 +52,13 @@ export type CloudsHighlightLayer = Readonly<{
    * rgba alpha 0.
    */
   coverageMask: Uint8Array;
+  /**
+   * Viewing-quality plane: 0 = extreme geometry, 255 = nadir-quality.
+   * Missing means full usable quality (255). Quality 0 is still coverage.
+   */
+  qualityWeight?: Uint8Array;
+  /** Observation time for freshness-vs-quality. Missing treats age as equal. */
+  observationTimeMs?: number;
 }>;
 
 function regionalStableIndex(sectorId: CloudsRegionalSectorId): number {
@@ -183,24 +190,97 @@ export function buildCloudsCompositeMeta(
   };
 }
 
+type RegionalOverlapSlot = Readonly<{
+  layer: CloudsHighlightLayer;
+  coverage: Uint8Array;
+  quality: Uint8Array | null;
+  rgba: Uint8Array;
+  ageMs: number;
+  cadenceMs: number;
+  stableIndex: number;
+}>;
+
+function layerAgeMs(layer: CloudsHighlightLayer, productUtcMs: number): number {
+  const t = layer.observationTimeMs;
+  if (t === undefined || !Number.isFinite(t) || !Number.isFinite(productUtcMs)) {
+    return 0;
+  }
+  return productUtcMs - t;
+}
+
+function slotQualityAt(slot: RegionalOverlapSlot, i: number): number {
+  if (slot.quality === null) return 255;
+  return slot.quality[i] ?? 0;
+}
+
+function fresherOrStableBeats(a: RegionalOverlapSlot, b: RegionalOverlapSlot): boolean {
+  const hyst = Math.max(a.cadenceMs, b.cadenceMs);
+  if (Math.abs(a.ageMs - b.ageMs) >= hyst) {
+    return a.ageMs < b.ageMs;
+  }
+  return a.stableIndex > b.stableIndex;
+}
+
 /**
- * Coverage-authority replacement: later selected sources own every pixel
- * where they have valid provider coverage, including cloud signal 0
- * (authoritative clear). No-data (coverage 0) leaves the destination.
- * Cloud signal is copied, not alpha-blended with earlier sources.
- * Same dimensions required.
+ * Lexicographic overlap authority for two regional observations that both
+ * have valid coverage at a pixel.
+ *
+ * 1. If one has quality == 0 and the other quality > 0, the usable source wins.
+ * 2. If both have quality == 0, existing freshness / stable-order.
+ * 3. If both are usable and |age difference| ≥ max(cadence), fresher wins.
+ * 4. Otherwise higher viewing quality wins.
+ * 5. Genuine ties use stable West → East → Meteosat → Himawari (later wins).
  */
-export function compositeCloudHighlightLayers(
+function cloudsRegionalOverlapChallengerBeats(
+  challenger: RegionalOverlapSlot,
+  incumbent: RegionalOverlapSlot,
+  pixelIndex: number,
+): boolean {
+  const qA = slotQualityAt(challenger, pixelIndex);
+  const qB = slotQualityAt(incumbent, pixelIndex);
+  const usableA = qA > 0;
+  const usableB = qB > 0;
+  if (usableA !== usableB) return usableA;
+  if (!usableA && !usableB) {
+    return fresherOrStableBeats(challenger, incumbent);
+  }
+  const hyst = Math.max(challenger.cadenceMs, incumbent.cadenceMs);
+  if (Math.abs(challenger.ageMs - incumbent.ageMs) >= hyst) {
+    return challenger.ageMs < incumbent.ageMs;
+  }
+  if (qA !== qB) return qA > qB;
+  return challenger.stableIndex > incumbent.stableIndex;
+}
+
+export function cloudsOverlapCadenceThresholdMs(
+  sectorA: CloudsRegionalSectorId,
+  sectorB: CloudsRegionalSectorId,
+): number {
+  return Math.max(
+    CLOUDS_SECTOR_SPECS[sectorA].cadenceMs,
+    CLOUDS_SECTOR_SPECS[sectorB].cadenceMs,
+  );
+}
+
+function prepareOverlapSlots(
   layers: readonly CloudsHighlightLayer[],
   paintOrder: readonly CloudsSectorId[],
-): { width: number; height: number; rgba: Uint8Array } | null {
+  productUtcMs: number,
+): {
+  width: number;
+  height: number;
+  pixelCount: number;
+  ring: RegionalOverlapSlot | null;
+  regionals: RegionalOverlapSlot[];
+} | null {
   if (layers.length === 0 || paintOrder.length === 0) return null;
   const byId = new Map(layers.map((l) => [l.sectorId, l]));
   const first = byId.get(paintOrder[0]!);
   if (first === undefined) return null;
   const { width, height } = first;
   const pixelCount = width * height;
-  const out = new Uint8Array(pixelCount * 4);
+  let ring: RegionalOverlapSlot | null = null;
+  const regionals: RegionalOverlapSlot[] = [];
   for (const sectorId of paintOrder) {
     const layer = byId.get(sectorId);
     if (layer === undefined) continue;
@@ -208,14 +288,107 @@ export function compositeCloudHighlightLayers(
     const src = layer.rgba;
     const coverage = layer.coverageMask;
     if (src.length < pixelCount * 4 || coverage.length < pixelCount) return null;
-    for (let i = 0; i < pixelCount; i++) {
-      if (coverage[i]! === 0) continue;
-      const o = i * 4;
-      out[o] = src[o]!;
-      out[o + 1] = src[o + 1]!;
-      out[o + 2] = src[o + 2]!;
-      out[o + 3] = src[o + 3]!;
+    if (
+      layer.qualityWeight !== undefined &&
+      layer.qualityWeight.length < pixelCount
+    ) {
+      return null;
+    }
+    const slot: RegionalOverlapSlot = {
+      layer,
+      coverage,
+      quality: layer.qualityWeight ?? null,
+      rgba: src,
+      ageMs: layerAgeMs(layer, productUtcMs),
+      cadenceMs: CLOUDS_SECTOR_SPECS[sectorId].cadenceMs,
+      stableIndex: isRegionalSectorId(sectorId) ? regionalStableIndex(sectorId) : -1,
+    };
+    if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
+      ring = slot;
+      continue;
+    }
+    if (isRegionalSectorId(sectorId)) {
+      regionals.push(slot);
+    }
+  }
+  return { width, height, pixelCount, ring, regionals };
+}
+
+function copyLayerPixel(out: Uint8Array, src: Uint8Array, i: number): void {
+  const o = i * 4;
+  out[o] = src[o]!;
+  out[o + 1] = src[o + 1]!;
+  out[o + 2] = src[o + 2]!;
+  out[o + 3] = src[o + 3]!;
+}
+
+function pickRegionalWinner(
+  regionals: readonly RegionalOverlapSlot[],
+  i: number,
+): RegionalOverlapSlot | null {
+  let best: RegionalOverlapSlot | null = null;
+  for (const slot of regionals) {
+    if (slot.coverage[i]! === 0) continue;
+    if (best === null || cloudsRegionalOverlapChallengerBeats(slot, best, i)) {
+      best = slot;
+    }
+  }
+  return best;
+}
+
+/**
+ * Coverage-then-quality replacement: the ring is a coverage backstop.
+ * Among regionals with valid coverage, a lexicographic quality-aware winner
+ * owns the pixel, including cloud signal 0 (authoritative clear). Quality 0
+ * does not punch coverage holes. Cloud signal is copied, not blended.
+ * Same dimensions required.
+ */
+export function compositeCloudHighlightLayers(
+  layers: readonly CloudsHighlightLayer[],
+  paintOrder: readonly CloudsSectorId[],
+  productUtcMs = 0,
+): { width: number; height: number; rgba: Uint8Array } | null {
+  const prepared = prepareOverlapSlots(layers, paintOrder, productUtcMs);
+  if (prepared === null) return null;
+  const { width, height, pixelCount, ring, regionals } = prepared;
+  const out = new Uint8Array(pixelCount * 4);
+  for (let i = 0; i < pixelCount; i++) {
+    const winner = pickRegionalWinner(regionals, i);
+    if (winner !== null) {
+      copyLayerPixel(out, winner.rgba, i);
+      continue;
+    }
+    if (ring !== null && ring.coverage[i]! !== 0) {
+      copyLayerPixel(out, ring.rgba, i);
     }
   }
   return { width, height, rgba: out };
+}
+
+/**
+ * Per-pixel selected source for DEV diagnostics. Ring only where no
+ * regional has coverage. Same lexicographic rule as composition.
+ */
+export function resolveCloudsCompositeWinnerSectorIds(
+  layers: readonly CloudsHighlightLayer[],
+  paintOrder: readonly CloudsSectorId[],
+  productUtcMs = 0,
+): { width: number; height: number; winners: Int8Array } | null {
+  const prepared = prepareOverlapSlots(layers, paintOrder, productUtcMs);
+  if (prepared === null) return null;
+  const { width, height, pixelCount, ring, regionals } = prepared;
+  const indexById = new Map(paintOrder.map((id, idx) => [id, idx]));
+  const winners = new Int8Array(pixelCount);
+  winners.fill(-1);
+  for (let i = 0; i < pixelCount; i++) {
+    const winner = pickRegionalWinner(regionals, i);
+    if (winner !== null) {
+      winners[i] = indexById.get(winner.layer.sectorId) ?? -1;
+      continue;
+    }
+    if (ring !== null && ring.coverage[i]! !== 0) {
+      winners[i] = indexById.get(CLOUDS_SECTOR_EUMET_RING) ?? -1;
+    }
+  }
+  return { width, height, winners };
 }

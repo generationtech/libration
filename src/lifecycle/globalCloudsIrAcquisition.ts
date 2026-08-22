@@ -66,6 +66,7 @@ import {
   encodeRgbaPng,
   validateCloudsPngBytes,
 } from "./cloudsPng";
+import { getCloudsQualityPlane } from "./cloudQuality";
 import {
   buildCloudsCompositeMeta,
   cloudsCompositePaintOrder,
@@ -147,6 +148,7 @@ export type GlobalCloudsIrLiveAcquireOptions = GlobalCloudsIrAcquireOptions &
       base: Uint8Array,
       layers: readonly CloudsHighlightLayer[],
       paintOrder: readonly CloudsSectorId[],
+      productUtcMs: number,
     ) => Uint8Array;
   }>;
 
@@ -585,6 +587,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         decoded.rgba,
         mapIrLuma !== undefined ? { mapIrLuma } : {},
       );
+      void getCloudsQualityPlane(sectorId, decoded.width, decoded.height);
       const acquiredAtMs = nowMs();
       const next: CachedSectorVersion = {
         observationTimeMs,
@@ -643,15 +646,17 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         height: row.height,
         rgba: row.highlightRgba,
         coverageMask: row.coverageMask,
+        qualityWeight: getCloudsQualityPlane(sectorId, row.width, row.height) ?? undefined,
+        observationTimeMs: row.observationTimeMs,
       });
     }
-    const composed = compositeCloudHighlightLayers(layers, paintOrder);
+    const composed = compositeCloudHighlightLayers(layers, paintOrder, productUtcMs);
     if (composed === null) {
       return { ok: false, error: "clouds composite failed" };
     }
     const rgba =
       tintComposite !== undefined
-        ? tintComposite(composed.rgba, layers, paintOrder)
+        ? tintComposite(composed.rgba, layers, paintOrder, productUtcMs)
         : composed.rgba;
     const encoded = encodeRgbaPng(composed.width, composed.height, rgba);
     if (encoded === null) {
@@ -661,10 +666,10 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
     if (meta === null) {
       return { ok: false, error: "clouds composite metadata failed" };
     }
-    const compositeKey = painted
+    const compositeKey = `${tintComposite !== undefined ? "tint" : "plain"}|${painted
       .map((c) => `${c.sectorId}:${c.observationTimeMs}`)
       .sort()
-      .join("|");
+      .join("|")}`;
     if (compositeKey === lastCompositeKey && lastCompositeResult !== null && lastCompositeResult.ok) {
       return lastCompositeResult;
     }

@@ -270,6 +270,10 @@ export {
 } from "./cloudsEumetWms";
 
 export {
+  CLOUDS_GOES_EAST_SUB_SATELLITE,
+  CLOUDS_GOES_WEST_SUB_SATELLITE,
+  CLOUDS_HIMAWARI_SUB_SATELLITE,
+  CLOUDS_METEOSAT_SUB_SATELLITE,
   CLOUDS_PROVIDER_COMPOSITE,
   CLOUDS_PROVIDER_EUMET,
   CLOUDS_PROVIDER_EUMET_MSG_FES,
@@ -286,15 +290,28 @@ export {
   cloudsProviderStaleMaxAgeMs,
 } from "./cloudsSectors";
 
-export type { CloudsProviderKind, CloudsSectorId } from "./cloudsSectors";
+export type { CloudsProviderKind, CloudsSectorId, CloudsGeoSubSatellite } from "./cloudsSectors";
 
 export {
   buildCloudsCompositeMeta,
   cloudsCompositePaintOrder,
+  cloudsOverlapCadenceThresholdMs,
   compositeCloudHighlightLayers,
+  resolveCloudsCompositeWinnerSectorIds,
   selectCloudsPaintableComponents,
   selectCloudsStatusComponents,
 } from "./cloudsComposite";
+
+export {
+  CLOUDS_GEO_EARTH_RADIUS_KM,
+  CLOUDS_GEO_ORBIT_HEIGHT_KM,
+  CLOUDS_QUALITY_ZENITH_FULL_DEG,
+  CLOUDS_QUALITY_ZENITH_ZERO_DEG,
+  geostationaryQuality01,
+  geostationaryQualityU8,
+  geostationaryViewingZenithDeg,
+  getCloudsQualityPlane,
+} from "./cloudQuality";
 
 export {
   decodeCloudsPngRgba,

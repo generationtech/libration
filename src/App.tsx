@@ -147,6 +147,21 @@ import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
 
+/**
+ * DEV Clouds diagnostics are installed before `createRoot`. React StrictMode
+ * disposes the canvas-effect host on remount; revive must re-pass the tint or
+ * `?cloudsSectorDebug=` composites silently fall back to production appearance.
+ */
+function devCloudsSectorDebugHostDeps(): {
+  tintCloudsComposite?: NonNullable<
+    ReturnType<typeof getDevCloudsSectorDebugTint>
+  >;
+} {
+  if (!import.meta.env.DEV) return {};
+  const tint = getDevCloudsSectorDebugTint();
+  return tint !== null ? { tintCloudsComposite: tint } : {};
+}
+
 function isTextEntryElement(target: EventTarget | null): boolean {
   if (!target || !(target instanceof HTMLElement)) {
     return false;
@@ -307,13 +322,7 @@ export default function App() {
   const lastRenderClockMsRef = useRef<number | null>(null);
   /** Phase 10 shell seam: store/manager/resolver/acquisition for live overlays. */
   const dynamicLifecycleHostRef = useRef(
-    createDynamicDataLifecycleHost(
-      (() => {
-        if (!import.meta.env.DEV) return {};
-        const tint = getDevCloudsSectorDebugTint();
-        return tint !== null ? { tintCloudsComposite: tint } : {};
-      })(),
-    ),
+    createDynamicDataLifecycleHost(devCloudsSectorDebugHostDeps()),
   );
 
   const requestDemoPause = useCallback(() => {
@@ -371,6 +380,7 @@ export default function App() {
   const syncDynamicLifecycleConsumers = useCallback(() => {
     const host = reviveDisposedDynamicLifecycleHost(
       dynamicLifecycleHostRef.current,
+      devCloudsSectorDebugHostDeps(),
     );
     dynamicLifecycleHostRef.current = host;
     armDynamicLifecycleConsumers(host, {

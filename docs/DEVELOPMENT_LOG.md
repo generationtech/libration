@@ -388,4 +388,10 @@ Weather-4.1: Clouds coverage-mask authority replacement. Each sector keeps a `Ui
 
 Verified: `npx tsc --noEmit` clean; focused Clouds tests 105 passed; `npm test` 265 files / 2496 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live leftover East-through-clear-MSG Caribbean 89.1%→0%, Atlantic 71.9%→0%; compose 32.8 ms; coverage 2,097,152 bytes/sector. Cursor Browser ordinary live **Clouds · observations 24–54 min old** + Historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066 stay proposed.
 
+## 2026-08-22 — LIB-069 complete
+
+Weather-4.3: per-source observational quality plane + quality-aware overlap authority. Coverage, quality, and cloud signal stay independent (ADR 0024). Extreme-limb GEO no longer overwrites a modestly older substantially better view. Hard per-pixel lexicographic winner; no blending; no TIME sync; IR presentation unchanged.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds tests 72 passed; `npm test` 266 files / 2520 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live NATL 45°N / 71.14°W old Meteosat → GOES-East; 45°N switch −71.10° → −55.11°; seam ratio 8.27 → 3.23. Cursor Browser ordinary live **Clouds · observations 30m–60m old** + winner/quality diagnostics + Historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066, LIB-068 stay proposed. Do not begin WEATHER-5.
+
 

@@ -15,11 +15,13 @@
  * Clouds observational coverage is independent of derived cloud highlight.
  *
  * coverageMask: the provider has valid observational data at this pixel.
+ * qualityWeight: how geometrically desirable that observation is (separate module).
  * cloudSignal:  the IR-derived highlight alpha for that valid observation.
  *
  * A valid-clear observation is coverage > 0 with cloudSignal == 0. That is
- * not the same as no-data (coverage == 0). Provider alpha owns coverage;
- * the highlight transfer must not redefine it.
+ * not the same as no-data (coverage == 0). Quality == 0 is also not no-data.
+ * Provider alpha owns coverage; the highlight transfer must not redefine it;
+ * viewing geometry must not punch coverage holes.
  */
 
 import {

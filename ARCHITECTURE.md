@@ -115,9 +115,19 @@ See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time
 
 **Rationale.** Geostationary disks and future radar/lightning/wind/advisory products update on independent cadences. Forcing `min(latest sources)` as a common mosaic time, or waiting for the slowest sector, makes the instrument older than the observations it already has. Temporal interpolation would invent meteorology. That is the wrong trade for a current-weather instrument.
 
-**Consequence.** Clouds compose the freshest valid GOES-East, GOES-West, Meteosat, and Himawari observations independently, with the EUMET geostationary ring as coverage backstop. Observational **coverage** (the provider has valid data at a pixel) is distinct from derived **cloud signal** (IR highlight). A valid-clear observation still owns its footprint and suppresses older ring or regional cloud; transparent highlight is not no-data. Status reports the visible observation-age range. Unused source ages do not pollute that range. Seams between disks may show real temporal disagreement. There is no user sync-mode toggle. Weather domains must not wait on one another. Do not interpolate, motion-warp, or nowcast.
+**Consequence.** Clouds compose the freshest valid GOES-East, GOES-West, Meteosat, and Himawari observations independently, with the EUMET geostationary ring as coverage backstop. Observational **coverage** (the provider has valid data at a pixel) is distinct from derived **cloud signal** (IR highlight). A valid-clear observation still owns its footprint and suppresses older ring or regional cloud; transparent highlight is not no-data. Status reports the visible observation-age range. Unused source ages do not pollute that range. Seams between disks may show real temporal disagreement. There is no user sync-mode toggle. Weather domains must not wait on one another. Do not interpolate, motion-warp, or nowcast. Viewing-quality overlap is [§3.8](#38-observational-quality-is-distinct-from-coverage).
 
 See [ADR 0023](docs/decisions/0023-observational-composites-heterogeneous-observation-times.md).
+
+### 3.8 Observational quality is distinct from coverage
+
+**Boundary.** Observational composites distinguish coverage, viewing quality, and derived signal as independent planes. Quality never converts valid coverage into no-data. In dual coverage, freshness dominates among comparable useful quality; an extreme-limb observation may lose to a modestly older substantially better view. Overlap is a hard per-pixel winner.
+
+**Rationale.** Provider valid-data answers whether a source observed a pixel. Viewing geometry answers whether that observation should be preferred in overlap. Derived highlight answers only how clouds look. Conflating those three either punches holes in coverage or lets a worse disk edge overwrite a better view because it is one cadence newer.
+
+**Consequence.** Clouds keep a per-source `coverageMask`, `qualityWeight`, and `cloudSignal`. The ring remains a coverage backstop and cannot reappear under valid regional coverage, including quality=0 authoritative clear. Residual radiometric mismatch after a correct geometric handoff is a presentation problem, not an authority defect. Do not blend overlapping observations to hide that mismatch.
+
+See [ADR 0024](docs/decisions/0024-observational-quality-distinct-from-coverage.md).
 
 ---
 

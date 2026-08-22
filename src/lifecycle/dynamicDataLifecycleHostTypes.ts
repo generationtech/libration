@@ -227,8 +227,12 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
       readonly width: number;
       readonly height: number;
       readonly rgba: Uint8Array;
+      readonly coverageMask?: Uint8Array;
+      readonly qualityWeight?: Uint8Array;
+      readonly observationTimeMs?: number;
     }[],
     paintOrder: readonly string[],
+    productUtcMs?: number,
   ) => Uint8Array;
 }> &
   DynamicAcquisitionTimerHooks;

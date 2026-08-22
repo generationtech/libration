@@ -28,6 +28,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0021](0021-one-primary-milky-way-viewing-event.md) | One primary Milky Way viewing event, peak-UTC footprint, and HUD notice arbitration |
 | [0022](0022-observational-data-three-clocks.md) | Observational data distinguishes product time, observation time, and acquisition time |
 | [0023](0023-observational-composites-heterogeneous-observation-times.md) | Observational composites may combine heterogeneous observation times |
+| [0024](0024-observational-quality-distinct-from-coverage.md) | Observational quality is distinct from coverage and may lose to better geometry |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

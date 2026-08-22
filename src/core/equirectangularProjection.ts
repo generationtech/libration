@@ -36,9 +36,6 @@ export function mapXFromLongitudeDeg(lonDeg: number, widthPx: number): number {
 }
 
 /**
- * Inverse of {@link mapXFromLongitudeDeg}: x on the strip → east longitude (degrees).
- */
-/**
  * Maps geodetic latitude (degrees) to y on a full-height equirectangular strip:
  * y = 0 → +90°, y = heightPx → −90°.
  */
@@ -59,6 +56,18 @@ export function longitudeDegFromMapX(x: number, widthPx: number): number {
     return 0;
   }
   return -180 + (x / w) * 360;
+}
+
+/**
+ * Inverse of {@link mapYFromLatitudeDeg}: y on the strip → geodetic latitude (degrees).
+ * y = 0 → +90°, y = heightPx → −90°.
+ */
+export function latitudeDegFromMapY(y: number, heightPx: number): number {
+  const h = Math.max(0, heightPx);
+  if (h === 0) {
+    return 0;
+  }
+  return 90 - (y / h) * 180;
 }
 
 /**

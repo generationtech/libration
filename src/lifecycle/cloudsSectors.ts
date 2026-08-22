@@ -43,9 +43,9 @@ export const CLOUDS_REGIONAL_SECTOR_IDS = [
 export type CloudsRegionalSectorId = (typeof CLOUDS_REGIONAL_SECTOR_IDS)[number];
 
 /**
- * Stable bottom→top order among regionals when observation ages are within
- * hysteresis. East wins the Americas overlap; Himawari wins the Pacific
- * overlap with West; Meteosat owns Europe/Africa.
+ * Stable bottom→top order among regionals when ages are within hysteresis
+ * and viewing quality is tied (or both q=0). Pixel overlap otherwise uses
+ * quality-aware lexicographic authority in `cloudsComposite.ts`.
  */
 export const CLOUDS_REGIONAL_STABLE_PAINT_ORDER: readonly CloudsRegionalSectorId[] =
   CLOUDS_REGIONAL_SECTOR_IDS;
@@ -98,6 +98,58 @@ export const CLOUDS_GIBS_FRESH_MAX_AGE_MS = CLOUDS_GIBS_GEO_FRESH_MAX_AGE_MS;
 /** @deprecated WEATHER-2 stacked GIBS band. */
 export const CLOUDS_GIBS_STALE_MAX_AGE_MS = CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS;
 
+/**
+ * Operational sub-satellite point for a regional GEO product Libration consumes.
+ * East-positive longitude. All production Clouds regionals are equatorial GEO.
+ * Do not scatter these longitudes through composition.
+ */
+export type CloudsGeoSubSatellite = Readonly<{
+  /** Operational satellite identity for the consumed product. */
+  satellite: string;
+  longitudeDeg: number;
+  latitudeDeg: number;
+}>;
+
+/**
+ * GIBS `GOES-East_ABI_Band13_Clean_Infrared` is GOES-16 East.
+ * Operational SSP 75.2°W (LIB-068 live geometry).
+ */
+export const CLOUDS_GOES_EAST_SUB_SATELLITE: CloudsGeoSubSatellite = {
+  satellite: "GOES-16",
+  longitudeDeg: -75.2,
+  latitudeDeg: 0,
+};
+
+/**
+ * GIBS `GOES-West_ABI_Band13_Clean_Infrared` is GOES-18 West.
+ * Operational SSP 137.0°W.
+ */
+export const CLOUDS_GOES_WEST_SUB_SATELLITE: CloudsGeoSubSatellite = {
+  satellite: "GOES-18",
+  longitudeDeg: -137.0,
+  latitudeDeg: 0,
+};
+
+/**
+ * EUMETView `msg_fes:ir108` is Meteosat 0° Full Earth Scan (MSG).
+ * Operational SSP 0°.
+ */
+export const CLOUDS_METEOSAT_SUB_SATELLITE: CloudsGeoSubSatellite = {
+  satellite: "Meteosat-0",
+  longitudeDeg: 0,
+  latitudeDeg: 0,
+};
+
+/**
+ * GIBS `Himawari_AHI_Band13_Clean_Infrared` is Himawari-8/9 AHI.
+ * Operational SSP 140.7°E.
+ */
+export const CLOUDS_HIMAWARI_SUB_SATELLITE: CloudsGeoSubSatellite = {
+  satellite: "Himawari-9",
+  longitudeDeg: 140.7,
+  latitudeDeg: 0,
+};
+
 export type CloudsSectorSpec = Readonly<{
   id: CloudsSectorId;
   label: string;
@@ -108,6 +160,8 @@ export type CloudsSectorSpec = Readonly<{
   minRefetchMs: number;
   /** Geographic backstop; painted under regionals. */
   isRing: boolean;
+  /** Viewing geometry for regional GEO quality. Omitted for the multi-satellite ring. */
+  geoSubSatellite?: CloudsGeoSubSatellite;
 }>;
 
 export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSpec>> = {
@@ -130,6 +184,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     staleMaxAgeMs: CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS,
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
+    geoSubSatellite: CLOUDS_GOES_WEST_SUB_SATELLITE,
   },
   [CLOUDS_SECTOR_GOES_EAST]: {
     id: CLOUDS_SECTOR_GOES_EAST,
@@ -140,6 +195,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     staleMaxAgeMs: CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS,
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
+    geoSubSatellite: CLOUDS_GOES_EAST_SUB_SATELLITE,
   },
   [CLOUDS_SECTOR_METEOSAT]: {
     id: CLOUDS_SECTOR_METEOSAT,
@@ -150,6 +206,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     staleMaxAgeMs: CLOUDS_MSG_FES_STALE_MAX_AGE_MS,
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
+    geoSubSatellite: CLOUDS_METEOSAT_SUB_SATELLITE,
   },
   [CLOUDS_SECTOR_HIMAWARI]: {
     id: CLOUDS_SECTOR_HIMAWARI,
@@ -160,6 +217,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     staleMaxAgeMs: CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS,
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
+    geoSubSatellite: CLOUDS_HIMAWARI_SUB_SATELLITE,
   },
 };
 

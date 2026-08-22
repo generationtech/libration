@@ -39,6 +39,7 @@ This does **not** authorize nowcasting, GeoColor/visible-IR hybrid presentation,
 
 - Seams between disks can show real temporal disagreement. That is documented product behaviour, not a rendering bug.
 - Composite status and provenance are more than one age label. Unused/hidden source ages must not pollute the range. A source that owns geographic coverage while reporting clear sky still counts in the visible age range.
+- Overlap among valid observations may also consider viewing quality. Extreme geometry may lose to a modestly older substantially better view ([ADR 0024](0024-observational-quality-distinct-from-coverage.md)). That is not a reason to synchronize TIME.
 - Acquisition may poll several endpoints near their publication cadence; bandwidth and concurrency need explicit bounds.
 
-**Explicitly not decided.** Polar LEO cloud fill, GeoColor, optical-depth illumination, radar/lightning/wind/tropical implementation, historical TIME mosaics, overlap feathering, radiometric normalization, viewing-angle quality weighting, and Weather Event Playback remain later work.
+**Explicitly not decided.** Polar LEO cloud fill, GeoColor, optical-depth illumination, radar/lightning/wind/tropical implementation, historical TIME mosaics, overlap feathering, radiometric normalization, and Weather Event Playback remain later work.
