@@ -115,7 +115,7 @@ See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time
 
 **Rationale.** Geostationary disks and future radar/lightning/wind/advisory products update on independent cadences. Forcing `min(latest sources)` as a common mosaic time, or waiting for the slowest sector, makes the instrument older than the observations it already has. Temporal interpolation would invent meteorology. That is the wrong trade for a current-weather instrument.
 
-**Consequence.** Clouds compose the freshest valid GOES-East, GOES-West, Meteosat, and Himawari observations independently, with the EUMET geostationary ring as coverage backstop. Status reports the visible observation-age range. Unused source ages do not pollute that range. Seams between disks may show real temporal disagreement. There is no user sync-mode toggle. Weather domains must not wait on one another. Do not interpolate, motion-warp, or nowcast.
+**Consequence.** Clouds compose the freshest valid GOES-East, GOES-West, Meteosat, and Himawari observations independently, with the EUMET geostationary ring as coverage backstop. Observational **coverage** (the provider has valid data at a pixel) is distinct from derived **cloud signal** (IR highlight). A valid-clear observation still owns its footprint and suppresses older ring or regional cloud; transparent highlight is not no-data. Status reports the visible observation-age range. Unused source ages do not pollute that range. Seams between disks may show real temporal disagreement. There is no user sync-mode toggle. Weather domains must not wait on one another. Do not interpolate, motion-warp, or nowcast.
 
 See [ADR 0023](docs/decisions/0023-observational-composites-heterogeneous-observation-times.md).
 

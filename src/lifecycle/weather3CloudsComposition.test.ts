@@ -385,7 +385,7 @@ describe("WEATHER-3 freshness-over-synchronization", () => {
     expect(eastMuchFresher[eastMuchFresher.length - 1]).toBe(CLOUDS_SECTOR_GOES_EAST);
   });
 
-  it("composite src-over does not invent coverage from transparent pixels", () => {
+  it("composite does not invent coverage from no-data pixels", () => {
     const base = new Uint8Array(8);
     base[0] = 10;
     base[1] = 10;
@@ -403,12 +403,14 @@ describe("WEATHER-3 freshness-over-synchronization", () => {
           width: 2,
           height: 1,
           rgba: base,
+          coverageMask: new Uint8Array([255, 0]),
         },
         {
           sectorId: CLOUDS_SECTOR_GOES_EAST,
           width: 2,
           height: 1,
           rgba: over,
+          coverageMask: new Uint8Array([0, 255]),
         },
       ],
       [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_GOES_EAST],

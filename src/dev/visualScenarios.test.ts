@@ -93,6 +93,19 @@ describe("visual scenario query parsing", () => {
     expect(getDevCloudsSectorDebugTint()).not.toBeNull();
   });
 
+  it("ordinary cloudsSectorDebug=signal and leak are not visual scenarios", () => {
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=signal")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsSectorDebug=signal").kind).toBe(
+      "inactive",
+    );
+    expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=leak")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsSectorDebug=leak").kind).toBe(
+      "inactive",
+    );
+    expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+  });
+
   it("does not enable Clouds sector debug under an applied scenario", () => {
     applyVisualScenarioFromLocation("?scenario=baseline&cloudsSectorDebug=1");
     expect(getDevCloudsSectorDebugTint()).toBeNull();

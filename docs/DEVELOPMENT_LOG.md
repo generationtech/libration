@@ -382,4 +382,10 @@ Weather-3 Clouds v3: freshest valid GOES-East, GOES-West, Meteosat FES, and Hima
 
 Verified: `npx tsc --noEmit` clean; `npm test` 263 files / 2471 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Cursor Browser ordinary live **Clouds · observations 25–55 min old** (West/Meteosat 25 min, East/Himawari 55 min) + historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
 
+## 2026-08-21 — LIB-067 complete
+
+Weather-4.1: Clouds coverage-mask authority replacement. Each sector keeps a `Uint8` coverage plane (provider alpha > 0) separate from derived cloud-highlight RGBA. Later selected coverage replaces the destination including cloud signal 0, so valid-clear regional observations suppress older ring and earlier regional cloud. The EUMET ring remains a backstop only where regional coverage is absent. IR transfer, opacity 0.42, freshness, hysteresis, and heterogeneous observation times are unchanged. No feathering. No new ADR; ADR 0023 consequence text now states coverage ≠ derived display alpha.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds tests 105 passed; `npm test` 265 files / 2496 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live leftover East-through-clear-MSG Caribbean 89.1%→0%, Atlantic 71.9%→0%; compose 32.8 ms; coverage 2,097,152 bytes/sector. Cursor Browser ordinary live **Clouds · observations 24–54 min old** + Historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066 stay proposed.
+
 

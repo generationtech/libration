@@ -44,7 +44,14 @@ export type CloudsHighlightLayer = Readonly<{
   sectorId: CloudsSectorId;
   width: number;
   height: number;
+  /** Derived cloud-highlight RGBA. Alpha is cloud signal, not coverage. */
   rgba: Uint8Array;
+  /**
+   * Provider coverage plane: 0 = no data, >0 = valid observation.
+   * Length is width * height. Authoritative clear is coverage > 0 with
+   * rgba alpha 0.
+   */
+  coverageMask: Uint8Array;
 }>;
 
 function regionalStableIndex(sectorId: CloudsRegionalSectorId): number {
@@ -177,8 +184,11 @@ export function buildCloudsCompositeMeta(
 }
 
 /**
- * Src-over: later layers replace opaque pixels. Provider alpha 0 stays
- * transparent (no invented coverage). Same dimensions required.
+ * Coverage-authority replacement: later selected sources own every pixel
+ * where they have valid provider coverage, including cloud signal 0
+ * (authoritative clear). No-data (coverage 0) leaves the destination.
+ * Cloud signal is copied, not alpha-blended with earlier sources.
+ * Same dimensions required.
  */
 export function compositeCloudHighlightLayers(
   layers: readonly CloudsHighlightLayer[],
@@ -196,15 +206,15 @@ export function compositeCloudHighlightLayers(
     if (layer === undefined) continue;
     if (layer.width !== width || layer.height !== height) return null;
     const src = layer.rgba;
-    if (src.length < pixelCount * 4) return null;
+    const coverage = layer.coverageMask;
+    if (src.length < pixelCount * 4 || coverage.length < pixelCount) return null;
     for (let i = 0; i < pixelCount; i++) {
-      const a = src[i * 4 + 3]!;
-      if (a === 0) continue;
+      if (coverage[i]! === 0) continue;
       const o = i * 4;
       out[o] = src[o]!;
       out[o + 1] = src[o + 1]!;
       out[o + 2] = src[o + 2]!;
-      out[o + 3] = a;
+      out[o + 3] = src[o + 3]!;
     }
   }
   return { width, height, rgba: out };

@@ -45,6 +45,7 @@ export type DevCloudsSectorDebugTintFn = (
     readonly width: number;
     readonly height: number;
     readonly rgba: Uint8Array;
+    readonly coverageMask?: Uint8Array;
   }[],
   paintOrder: readonly string[],
 ) => Uint8Array;

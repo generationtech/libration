@@ -240,6 +240,14 @@ export {
 } from "./cloudHighlightTransfer";
 
 export {
+  CLOUDS_COVERAGE_PROVIDER_ALPHA_MIN,
+  extractCloudsCoverageMask,
+  isCloudsAuthoritativeClear,
+  materializeCloudsSourcePlanes,
+  providerAlphaHasCloudsCoverage,
+} from "./cloudCoverage";
+
+export {
   buildCloudsGibsSectorGetMapUrl,
   buildCloudsGibsWmsGetMapUrl,
   CLOUDS_GIBS_BAND13_LAYERS,

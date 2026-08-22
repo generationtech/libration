@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-065](work/LIB-065-weather-3-high-cadence-best-current-cloud-composition.md) — Weather-3: high-cadence best-current cloud composition
+[LIB-067](work/LIB-067-weather-4-1-cloud-coverage-mask-authority-replacement.md) — Weather-4.1: Clouds coverage-mask authority replacement
 
 ## Blockers
 
@@ -28,6 +28,8 @@ Proposed [LIB-058](work/LIB-058-earthquake-live-layer-capability-survey.md) eart
 Proposed [LIB-061](work/LIB-061-global-clouds-ir-end-to-end-investigation.md) Global clouds / IR survey stays proposed (investigation only; not activated).
 
 Proposed [LIB-062](work/LIB-062-weather-architecture-and-global-clouds-v1-investigation.md) Weather architecture + Clouds v1 survey stays proposed (investigation only; not activated). LIB-063 implemented its Clouds v1 recommendation and supersedes it on **product direction**. LIB-064 superseded its EUMETView CORS-blocked conclusion. LIB-065 supersedes the single-time global mosaic: freshness outranks temporal uniformity.
+
+Proposed [LIB-066](work/LIB-066-weather-4-cloud-mosaic-seam-investigation.md) Cloud mosaic seam / footprint artifact survey stays proposed (investigation only; not activated). LIB-067 implemented its coverage-authority recommendation.
 
 ## Next action
 

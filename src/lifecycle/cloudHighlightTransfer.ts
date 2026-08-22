@@ -15,6 +15,10 @@
  * Approximate IR-derived cloud highlight. Consumes a generic RGBA IR raster
  * (provider Band13 or a future world IR composite). Not a formal cloud mask.
  *
+ * Coverage (provider has data here) is extracted separately from provider
+ * alpha; this transfer only derives cloud-highlight appearance. Do not use
+ * output alpha as observational authority.
+ *
  * GIBS ABI/AHI Band13 Clean Infrared (live 2026-08-21 stack): colder / higher
  * cloud tops are brighter; warm land/ocean is darker. Provider alpha 0 is
  * missing coverage and stays transparent.

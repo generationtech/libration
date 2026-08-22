@@ -423,7 +423,8 @@ Ordinary non-scenario current time (`http://localhost:1420/` with no `?scenario=
 5. Day side and night side of the same composition: clouds remain visible without overpowering illumination. No day/visible mode switch.
 6. Historical Demo (for example 2017-08-21) with Clouds still checked: live-only suppression copy; no overlay; no fixture. Return to current: acquisition/reuse without re-checking the box.
 7. Illumination raster must not darken when Clouds is on (physical participation is off). Cloud participation controls must be absent from Illumination.
-8. DEV-only source-boundary diagnostic: ordinary current time `http://localhost:1420/?cloudsSectorDebug=1` (not a `?scenario=`). Expect tinted sector footprints, not production white/gray. Production dist must not include this diagnostic.
+8. DEV-only source-boundary diagnostic: ordinary current time `http://localhost:1420/?cloudsSectorDebug=1` (not a `?scenario=`). Expect tinted **coverage-authority** footprints, including valid-clear disk interiors, not merely highlight-alpha cloud. Optional DEV `?cloudsSectorDebug=signal` (old highlight-alpha winners) and `?cloudsSectorDebug=leak` (pixels where later clear coverage suppressed earlier cloud). Production dist must not include this diagnostic.
+9. Coverage vs ghost cloud: find a region where a selected regional is valid-clear and the ring or an earlier regional would have been cloudy. The map must be **clear** there (older cloud must not show through). A nearby region where the selected regional is cloudy must still show cloud. Residual radiometric disk-edge brightness on the **selected** source (for example Meteosat’s own western limb) may remain; that is not a coverage-authority failure.
 
 Use `http://localhost:1420/?scenario=clouds` when live WMS is unavailable. Confirm the DEV banner and UTC `2026-08-21T20:40:00.000Z`. Status must say **Clouds (DEV fixture)**, not live. Polar holes remain transparent.
 

@@ -20,7 +20,7 @@ For observational Weather (and other current-only composites that reuse the dyna
 - **Freshness outranks temporal uniformity.** The product presents the freshest authoritative observations reasonably available, independently by source, domain, and geography.
 - A single rendered product **may contain multiple observation times**. Adjacent sectors with different capture times are accepted. Storm-edge mismatch at a source seam is not automatically a defect.
 - Do **not** force a common observation timestamp. Do **not** delay a valid fresh component solely to synchronize with an older one. Do **not** interpolate, motion-warp, or extrapolate meteorology to fabricate a shared “now.”
-- Each contributing component retains provider/source id, observation time, acquisition time, freshness band, coverage, and provenance. Status reports the **visible observation-age range**, not one invented aggregate `validTimeMs` that hides the spread.
+- Each contributing component retains provider/source id, observation time, acquisition time, freshness band, coverage, and provenance. **Coverage is provider valid-data, not derived display alpha.** A valid-clear observation still contributes and owns its footprint. Status reports the **visible observation-age range**, not one invented aggregate `validTimeMs` that hides the spread.
 - Store-level `DynamicSnapshotRecord.validTimeMs` on a composed product may be the newest contributing observation for resolver compatibility. That field must not be treated as the only observation time of the composite.
 - Freshness bands, polling, and suppress thresholds are **source-local**. A 10-minute GEO sector does not inherit a 3-hour global-ring stale policy, and vice versa.
 - Weather domains must not wait on one another. Clouds, radar, lightning, wind, and tropical/severe products (when they exist) refresh independently.
@@ -38,7 +38,7 @@ This does **not** authorize nowcasting, GeoColor/visible-IR hybrid presentation,
 **Costs.**
 
 - Seams between disks can show real temporal disagreement. That is documented product behaviour, not a rendering bug.
-- Composite status and provenance are more than one age label. Unused/hidden source ages must not pollute the range.
+- Composite status and provenance are more than one age label. Unused/hidden source ages must not pollute the range. A source that owns geographic coverage while reporting clear sky still counts in the visible age range.
 - Acquisition may poll several endpoints near their publication cadence; bandwidth and concurrency need explicit bounds.
 
-**Explicitly not decided.** Polar LEO cloud fill, GeoColor, optical-depth illumination, radar/lightning/wind/tropical implementation, historical TIME mosaics, and Weather Event Playback remain later work.
+**Explicitly not decided.** Polar LEO cloud fill, GeoColor, optical-depth illumination, radar/lightning/wind/tropical implementation, historical TIME mosaics, overlap feathering, radiometric normalization, viewing-angle quality weighting, and Weather Event Playback remain later work.

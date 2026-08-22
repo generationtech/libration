@@ -33,6 +33,7 @@ import {
   liftEumetIrLuma,
   liftMsgFesIrLuma,
 } from "./cloudHighlightTransfer";
+import { materializeCloudsSourcePlanes } from "./cloudCoverage";
 import {
   CLOUDS_GIBS_GOES_EAST_LAYER,
   CLOUDS_GIBS_GOES_WEST_LAYER,
@@ -155,6 +156,7 @@ type CachedSectorVersion = Readonly<{
   width: number;
   height: number;
   highlightRgba: Uint8Array;
+  coverageMask: Uint8Array;
   transferVersion: string;
 }>;
 
@@ -579,7 +581,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         continue;
       }
       const mapIrLuma = lumaMapForProvider(spec.providerKind);
-      const highlight = applyCloudHighlightTransfer(
+      const planes = materializeCloudsSourcePlanes(
         decoded.rgba,
         mapIrLuma !== undefined ? { mapIrLuma } : {},
       );
@@ -589,7 +591,8 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         acquiredAtMs,
         width: decoded.width,
         height: decoded.height,
-        highlightRgba: highlight,
+        highlightRgba: planes.cloudRgba,
+        coverageMask: planes.coverageMask,
         transferVersion: CLOUD_HIGHLIGHT_TRANSFER_VERSION,
       };
       cache.set(sectorId, retainSector(cache.get(sectorId) ?? [], next));
@@ -639,6 +642,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         width: row.width,
         height: row.height,
         rgba: row.highlightRgba,
+        coverageMask: row.coverageMask,
       });
     }
     const composed = compositeCloudHighlightLayers(layers, paintOrder);
