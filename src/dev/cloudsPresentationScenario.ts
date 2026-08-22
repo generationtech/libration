@@ -17,8 +17,9 @@
  * be exercised without GIBS. Origin is fixture; never labeled live.
  */
 
-import { applyCloudHighlightTransfer } from "../lifecycle/cloudHighlightTransfer";
-import { CLOUDS_COVERAGE_NOTE } from "../lifecycle/cloudProvenance";
+import { applyCloudHighlightTransfer, liftEumetIrLuma } from "../lifecycle/cloudHighlightTransfer";
+import { CLOUDS_GLOBAL_COVERAGE_NOTE } from "../lifecycle/cloudProvenance";
+import { CLOUDS_PROVIDER_EUMET } from "../lifecycle/cloudsSourceSelection";
 import { decodeCloudsPngRgba, encodeRgbaPng } from "../lifecycle/cloudsPng";
 import type { PreparedEquirectRasterView } from "../lifecycle/dynamicEquirectMaterializer";
 import { GLOBAL_CLOUDS_IR_SOURCE_ID } from "../lifecycle/dynamicEquirectSourceCatalog";
@@ -55,7 +56,9 @@ export function buildCloudsPresentationPreparedEquirectView(): PreparedEquirectR
   if (decoded === null) {
     throw new Error("clouds scenario: fixture PNG decode failed");
   }
-  const highlight = applyCloudHighlightTransfer(decoded.rgba);
+  const highlight = applyCloudHighlightTransfer(decoded.rgba, {
+    mapIrLuma: liftEumetIrLuma,
+  });
   const encoded = encodeRgbaPng(decoded.width, decoded.height, highlight);
   const bytes = encoded ?? result.entry.payloadBytes;
   const meta = result.entry.record.meta;
@@ -68,8 +71,9 @@ export function buildCloudsPresentationPreparedEquirectView(): PreparedEquirectR
     freshness: "ready",
     contentType: "image/png",
     origin: "fixture",
-    coverageKind: "partial",
-    coverageNote: CLOUDS_COVERAGE_NOTE,
+    coverageKind: "global",
+    coverageNote: CLOUDS_GLOBAL_COVERAGE_NOTE,
+    cloudProviderKind: CLOUDS_PROVIDER_EUMET,
     devAllowFixturePaint: true,
     ...(meta.attribution !== undefined ? { attribution: meta.attribution } : {}),
     ...(meta.licenseNote !== undefined ? { licenseNote: meta.licenseNote } : {}),

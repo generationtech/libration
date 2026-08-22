@@ -912,6 +912,12 @@ export default function App() {
               productUtcMs: clockNowMs,
               lifecycleState: cloudsLife,
               versionId: cloudsView.versionId,
+              ...(cloudsView.coverageKind !== undefined
+                ? { coverageKind: cloudsView.coverageKind }
+                : {}),
+              ...(cloudsView.cloudProviderKind !== undefined
+                ? { providerKind: cloudsView.cloudProviderKind }
+                : {}),
             });
       const nextCloudsHint = cloudsConfigStatusHint({
         enabled: derivedAppConfigRef.current.layers.globalCloudsIr,
@@ -929,6 +935,8 @@ export default function App() {
         prevCloudsProv?.origin !== nextCloudsProvenance?.origin ||
         prevCloudsProv?.observationAgeMs !== nextCloudsProvenance?.observationAgeMs ||
         prevCloudsProv?.freshnessBand !== nextCloudsProvenance?.freshnessBand ||
+        prevCloudsProv?.coverageKind !== nextCloudsProvenance?.coverageKind ||
+        prevCloudsProv?.providerKind !== nextCloudsProvenance?.providerKind ||
         prevCloudsProv?.versionId !== nextCloudsProvenance?.versionId;
       if (cloudsProvenanceChanged) {
         cloudsProvenanceRef.current = nextCloudsProvenance;

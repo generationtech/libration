@@ -200,6 +200,10 @@ export {
 
 export {
   CLOUDS_COVERAGE_NOTE,
+  CLOUDS_GLOBAL_COVERAGE_NOTE,
+  CLOUDS_PARTIAL_COVERAGE_NOTE,
+  CLOUDS_EUMET_ATTRIBUTION,
+  CLOUDS_GIBS_ATTRIBUTION,
   CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS,
   CLOUDS_OBSERVATION_STALE_MAX_AGE_MS,
   cloudsConfigStatusHint,
@@ -212,6 +216,7 @@ export {
 
 export type {
   CloudsConfigStatusHint,
+  CloudsCoverageKind,
   CloudsObservationFreshnessBand,
   CloudsOrigin,
   CloudsProvenance,
@@ -221,8 +226,10 @@ export {
   CLOUD_HIGHLIGHT_LUMA_HI,
   CLOUD_HIGHLIGHT_LUMA_LO,
   CLOUD_HIGHLIGHT_RGB,
+  EUMET_IR_LUMA_LIFT,
   applyCloudHighlightTransfer,
   cloudHighlightAlpha01FromIrLuma,
+  liftEumetIrLuma,
 } from "./cloudHighlightTransfer";
 
 export {
@@ -234,8 +241,24 @@ export {
 } from "./cloudsGibsWms";
 
 export {
+  buildCloudsEumetWmsGetMapUrl,
+  CLOUDS_EUMET_LAYER_ID,
+  EUMET_WMS_ENDPOINT,
+  formatCloudsEumetWmsTime,
+} from "./cloudsEumetWms";
+
+export {
+  CLOUDS_PROVIDER_EUMET,
+  CLOUDS_PROVIDER_GIBS,
+  selectCloudsLiveAuthority,
+} from "./cloudsSourceSelection";
+
+export type { CloudsProviderKind } from "./cloudsSourceSelection";
+
+export {
   decodeCloudsPngRgba,
   encodeRgbaPng,
+  sampleEquirectRgbaAlpha,
   validateCloudsPngBytes,
 } from "./cloudsPng";
 

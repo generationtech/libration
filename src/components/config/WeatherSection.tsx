@@ -135,9 +135,13 @@ export function WeatherSection(props: {
       ) : (
         <p className="config-section__hint" data-testid="clouds-topic-status">
           Enable Clouds under Layer masters to acquire a recent satellite mosaic.
-          Africa, Europe, and polar regions are not covered by this mosaic.
+          Polar gaps stay transparent. Partial fallback coverage is labeled when used.
         </p>
       )}
+      <p className="config-section__hint">
+        Contains modified EUMETSAT Meteosat Geostationary Ring IR 10.8 µm data.
+        NASA GIBS Band 13 when using partial fallback.
+      </p>
     </>
   );
 }

@@ -15,9 +15,9 @@
  * App shell seam host (P10-6 + DLC-1…DLC-4 + DLU-3…DLU-7 consumer wiring).
  * Wires store + lifecycle manager + product-time resolver + acquisition +
  * equirect / cloud-opacity / point-features / tracks materializers.
- * Clouds v1 uses live NASA GIBS Band13 WMS with explicit TIME and PNG alpha.
- * Production does not fall back to fixture. IR→cloud-highlight materialization
- * runs outside rAF. Physical cloud illumination participation is non-operative.
+ * Clouds v2 uses live EUMETView worldcloudmap IR with explicit TIME and PNG
+ * alpha; NASA GIBS Band13 is an in-adapter partial fallback. Production does
+ * not fall back to fixture. IR→cloud-highlight materialization runs outside rAF.
  * Earthquakes use live USGS HTTP (DLU-3) with no production fixture fallback.
  * ISS orbital tracks use ordered live TLE acquisition (CelesTrak primary,
  * Where the ISS at secondary). Production does not fall back to fixture;
@@ -236,7 +236,7 @@ export function createDynamicDataLifecycleHost(
       acquisition.registerAdapter(
         createGlobalCloudsIrLiveHttpAcquisitionAdapter({
           useFixtureFallback: false,
-          requireGibsDimensions: deps.cloudsIrLiveFetchFn === undefined,
+          requireMosaicDimensions: deps.cloudsIrLiveFetchFn === undefined,
           timeoutMs: 15_000,
           // Shared host clock → durable versionId / validTimeMs (observation TIME).
           ...(deps.nowMs !== undefined ? { nowMs: deps.nowMs } : {}),

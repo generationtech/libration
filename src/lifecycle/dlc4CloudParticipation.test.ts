@@ -39,6 +39,7 @@ describe("DLC-4 Model A cloud participation is non-operative for Clouds v1", () 
     const { encodeCloudsTestPng, mockCloudsLiveFetch } = await import("./cloudsAcquisition.testSupport");
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
+      nowMs: () => 1_700_000_000_000,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });

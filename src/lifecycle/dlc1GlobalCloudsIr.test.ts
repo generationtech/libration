@@ -62,6 +62,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
     );
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn,
+      nowMs: () => 1_700_000_000_000,
       setIntervalFn: (handler) => {
         const id = nextTimerId++;
         timers.push({ id, handler });
@@ -122,6 +123,7 @@ describe("DLC-1 global clouds/IR consumer boundary", () => {
   it("Model B layer getState reads prepared view sync and never calls resolveSnapshot", async () => {
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
+      nowMs: () => CLOUDS_TEST_OBSERVATION_MS + 60_000,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });

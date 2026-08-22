@@ -370,3 +370,9 @@ Weather-1 Clouds v1 replaces the broken MODIS CTT JPEG overlay. NASA GIBS GOES-W
 
 Verified: `npx tsc --noEmit` clean; `npm test` 261 files / 2443 passed / 0 failed; `npm run build` succeeded with no `scenario=clouds` / `visualScenarios` in `dist/`. Cursor Browser ordinary live GIBS (mosaic 2026-08-21T20:30:00Z, status observed 2h ago · partial coverage) + historical Demo suppression + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
 
+## 2026-08-21 — LIB-064 complete
+
+Weather-2 Clouds v2: EUMETView `mumi:worldcloudmap_ir108` is the primary global geostationary-ring IR mosaic (browser `fetch`; CORS `*` on GET). GIBS 3-sat Band13 remains an honest partial fallback. Shared white/gray IR highlight; EUMET +12 luma lift. Source-specific freshness (EUMET ≤4/8 h, GIBS ≤3/6 h) and 45 min poll. No provider selector, no Tauri HTTP seam, no new ADR. Polar holes stay transparent. Physical illumination participation remains off.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 262 files / 2459 passed / 0 failed; `npm run build` succeeded with no `scenario=clouds` / `visualScenarios` in `dist/`. Cursor Browser ordinary live **Clouds · global mosaic · observed 3h ago · polar gaps** (Africa/Europe filled) + historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
+

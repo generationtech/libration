@@ -18,6 +18,11 @@
  * GIBS ABI/AHI Band13 Clean Infrared (live 2026-08-21 stack): colder / higher
  * cloud tops are brighter; warm land/ocean is darker. Provider alpha 0 is
  * missing coverage and stays transparent.
+ *
+ * EUMETView `mumi:worldcloudmap_ir108` (live 2026-08-21T21:00Z): same polarity,
+ * darker display stretch (opaque p50 luma 98 vs GIBS 130). A small luma lift
+ * runs before the shared 100→195 smoothstep so density stays similar without a
+ * second highlight style. Sahara/warm ocean stay below the floor.
  */
 
 /** Rec. 601 luma below this is treated as non-cloud (warm / surface-like). */
@@ -31,6 +36,22 @@ export const CLOUD_HIGHLIGHT_RGB = {
   g: 250,
   b: 252,
 } as const;
+
+/**
+ * EUMET IR display is ~30 luma darker at the median than GIBS Band13.
+ * +12 keeps Sahara (~68) below 100 while lifting Europe (~95) into the
+ * shared transfer. Not a second colour style.
+ */
+export const EUMET_IR_LUMA_LIFT = 12;
+
+export type CloudHighlightTransferOptions = Readonly<{
+  mapIrLuma?: (luma: number) => number;
+}>;
+
+export function liftEumetIrLuma(luma: number): number {
+  if (!Number.isFinite(luma)) return 0;
+  return Math.max(0, Math.min(255, luma + EUMET_IR_LUMA_LIFT));
+}
 
 export function rec601Luma8(r: number, g: number, b: number): number {
   return Math.round(0.299 * r + 0.587 * g + 0.114 * b);
@@ -55,8 +76,12 @@ export function cloudHighlightAlpha01FromIrLuma(luma: number): number {
  * In-place IR RGBA → white/gray cloud-highlight RGBA.
  * Provider alpha 0 remains 0. Output RGB never carries a science palette.
  */
-export function applyCloudHighlightTransferInPlace(rgba: Uint8Array): void {
+export function applyCloudHighlightTransferInPlace(
+  rgba: Uint8Array,
+  options: CloudHighlightTransferOptions = {},
+): void {
   const { r: hr, g: hg, b: hb } = CLOUD_HIGHLIGHT_RGB;
+  const mapIrLuma = options.mapIrLuma;
   for (let i = 0; i + 3 < rgba.length; i += 4) {
     const srcA = rgba[i + 3]!;
     if (srcA === 0) {
@@ -65,7 +90,8 @@ export function applyCloudHighlightTransferInPlace(rgba: Uint8Array): void {
       rgba[i + 2] = 0;
       continue;
     }
-    const luma = rec601Luma8(rgba[i]!, rgba[i + 1]!, rgba[i + 2]!);
+    const raw = rec601Luma8(rgba[i]!, rgba[i + 1]!, rgba[i + 2]!);
+    const luma = mapIrLuma !== undefined ? mapIrLuma(raw) : raw;
     const cloud01 = cloudHighlightAlpha01FromIrLuma(luma);
     rgba[i] = hr;
     rgba[i + 1] = hg;
@@ -74,8 +100,11 @@ export function applyCloudHighlightTransferInPlace(rgba: Uint8Array): void {
   }
 }
 
-export function applyCloudHighlightTransfer(rgba: Uint8Array): Uint8Array {
+export function applyCloudHighlightTransfer(
+  rgba: Uint8Array,
+  options: CloudHighlightTransferOptions = {},
+): Uint8Array {
   const out = rgba.slice();
-  applyCloudHighlightTransferInPlace(out);
+  applyCloudHighlightTransferInPlace(out, options);
   return out;
 }

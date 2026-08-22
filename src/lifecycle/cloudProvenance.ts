@@ -12,21 +12,49 @@
  */
 
 /**
- * Clouds v1 origin, observation-age freshness, and paint eligibility.
+ * Clouds origin, observation-age freshness, and paint eligibility.
  * Observation age is productUtcMs − validTimeMs (mosaic TIME), never fetch time.
+ * Freshness bands are source-specific (EUMET 4h/8h, GIBS 3h/6h).
  */
 
 import type { DynamicSourceLifecycleState } from "./dynamicLifecycleTypes";
+import {
+  CLOUDS_PROVIDER_EUMET,
+  CLOUDS_PROVIDER_GIBS,
+  cloudsProviderFreshMaxAgeMs,
+  cloudsProviderStaleMaxAgeMs,
+  type CloudsProviderKind,
+} from "./cloudsSourceSelection";
 
-export const CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS = 3 * 60 * 60 * 1000;
-export const CLOUDS_OBSERVATION_STALE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+export const CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS = 4 * 60 * 60 * 1000;
+export const CLOUDS_OBSERVATION_STALE_MAX_AGE_MS = 8 * 60 * 60 * 1000;
 
 export const CLOUDS_COVERAGE_NOTE =
+  "Polar regions are not covered by the geostationary ring and stay transparent — not clear sky.";
+
+export const CLOUDS_GLOBAL_COVERAGE_NOTE = CLOUDS_COVERAGE_NOTE;
+
+export const CLOUDS_PARTIAL_COVERAGE_NOTE =
   "Africa, Europe, and polar regions are not covered by this mosaic and stay transparent — not clear sky.";
+
+export const CLOUDS_EUMET_ATTRIBUTION =
+  "Contains modified EUMETSAT Meteosat Geostationary Ring IR 10.8 µm (mumi:worldcloudmap_ir108) data 2026, via EUMETView WMS.";
+
+export const CLOUDS_GIBS_ATTRIBUTION =
+  "NASA GIBS GOES-East, GOES-West, and Himawari Band 13 Clean Infrared equirect PNG via in-app live WMS (explicit TIME).";
+
+export const CLOUDS_CATALOG_ATTRIBUTION = `${CLOUDS_EUMET_ATTRIBUTION} Fallback: ${CLOUDS_GIBS_ATTRIBUTION} Durable id global-clouds-ir-v1. DEV/tests may use a recorded PNG fixture; production never presents fixture as live.`;
+
+export const CLOUDS_EUMET_LICENSE_NOTE =
+  "EUMETView is a visualisation Web Map Service (not original numerical Recommended Data). Attribution required under the EUMETSAT Data Policy. Live feed URL is not persisted in SceneConfig — only the durable sourceId is.";
+
+export const CLOUDS_GIBS_LICENSE_NOTE =
+  "NASA GIBS / Earthdata imagery is free and open for public use with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content.";
 
 export type CloudsOriginStamp = "live" | "fixture";
 export type CloudsOrigin = "live" | "cached-live" | "fixture";
 export type CloudsObservationFreshnessBand = "fresh" | "stale" | "excessively-stale";
+export type CloudsCoverageKind = "global" | "partial";
 
 export type CloudsProvenance = Readonly<{
   origin: CloudsOrigin;
@@ -34,7 +62,8 @@ export type CloudsProvenance = Readonly<{
   validTimeMs: number;
   observationAgeMs: number | null;
   freshnessBand: CloudsObservationFreshnessBand | null;
-  coverageKind: "partial";
+  coverageKind: CloudsCoverageKind;
+  providerKind: CloudsProviderKind | null;
   versionId: string;
 }>;
 
@@ -49,12 +78,18 @@ export function isCloudsOriginStamp(value: unknown): value is CloudsOriginStamp 
   return value === "live" || value === "fixture";
 }
 
+export function isCloudsProviderKind(value: unknown): value is CloudsProviderKind {
+  return value === CLOUDS_PROVIDER_EUMET || value === CLOUDS_PROVIDER_GIBS;
+}
+
 export function cloudsObservationFreshnessBandFromAgeMs(
   ageMs: number,
+  providerKind: CloudsProviderKind | null = CLOUDS_PROVIDER_EUMET,
 ): CloudsObservationFreshnessBand {
   const age = Math.max(0, ageMs);
-  if (age <= CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS) return "fresh";
-  if (age <= CLOUDS_OBSERVATION_STALE_MAX_AGE_MS) return "stale";
+  const provider = providerKind ?? CLOUDS_PROVIDER_EUMET;
+  if (age <= cloudsProviderFreshMaxAgeMs(provider)) return "fresh";
+  if (age <= cloudsProviderStaleMaxAgeMs(provider)) return "stale";
   return "excessively-stale";
 }
 
@@ -77,18 +112,21 @@ export function resolveCloudsProvenance(options: {
   productUtcMs: number;
   lifecycleState: DynamicSourceLifecycleState;
   versionId: string;
+  coverageKind?: CloudsCoverageKind;
+  providerKind?: CloudsProviderKind | null;
 }): CloudsProvenance {
   const originBase: CloudsOriginStamp = options.originStamp ?? "live";
   const origin: CloudsOrigin =
     originBase === "live" && options.lifecycleState === "stale"
       ? "cached-live"
       : originBase;
+  const providerKind = options.providerKind ?? null;
   const observationAgeMs = Number.isFinite(options.productUtcMs)
     ? options.productUtcMs - options.validTimeMs
     : null;
   const freshnessBand =
     observationAgeMs !== null
-      ? cloudsObservationFreshnessBandFromAgeMs(observationAgeMs)
+      ? cloudsObservationFreshnessBandFromAgeMs(observationAgeMs, providerKind)
       : null;
   return {
     origin,
@@ -96,7 +134,8 @@ export function resolveCloudsProvenance(options: {
     validTimeMs: options.validTimeMs,
     observationAgeMs,
     freshnessBand,
-    coverageKind: "partial",
+    coverageKind: options.coverageKind ?? "global",
+    providerKind,
     versionId: options.versionId,
   };
 }
@@ -154,6 +193,14 @@ function formatMosaicUtcLabel(validTimeMs: number): string | null {
   return `${m[2]} UTC`;
 }
 
+function coverageStatusSuffix(provenance: CloudsProvenance | null): string {
+  if (provenance === null) return "";
+  if (provenance.coverageKind === "partial") {
+    return " · partial fallback coverage";
+  }
+  return " · polar gaps";
+}
+
 export function cloudsConfigStatusHintCopy(
   hint: CloudsConfigStatusHint,
   provenance: CloudsProvenance | null = null,
@@ -163,20 +210,25 @@ export function cloudsConfigStatusHintCopy(
   if (hint === "fixture") return "Clouds (DEV fixture)";
   const mosaic = provenance !== null ? formatMosaicUtcLabel(provenance.validTimeMs) : null;
   const ageLabel = formatObservationAgeLabel(provenance?.observationAgeMs);
+  const coverage = coverageStatusSuffix(provenance);
+  const globalLead =
+    provenance?.coverageKind === "partial" ? "Clouds" : "Clouds · global mosaic";
   if (hint === "stale") {
     if (ageLabel !== null) {
-      return `Clouds stale · ${ageLabel} old · partial coverage`;
+      return `Clouds stale · ${ageLabel} old${coverage}`;
     }
     return mosaic !== null
-      ? `Clouds stale · mosaic ${mosaic} · partial coverage`
-      : "Clouds stale · partial coverage";
+      ? `Clouds stale · mosaic ${mosaic}${coverage}`
+      : `Clouds stale${coverage}`;
   }
   if (ageLabel !== null) {
-    return `Clouds · observed ${ageLabel} ago · partial coverage`;
+    return `${globalLead} · observed ${ageLabel} ago${coverage}`;
   }
   return mosaic !== null
-    ? `Clouds · mosaic ${mosaic} · partial coverage`
-    : "Clouds · partial coverage";
+    ? `${globalLead} · mosaic ${mosaic}${coverage}`
+    : provenance?.coverageKind === "partial"
+      ? "Clouds · partial fallback coverage"
+      : "Clouds · global mosaic · polar gaps";
 }
 
 export function originStampFromPreparedEquirect(view: {

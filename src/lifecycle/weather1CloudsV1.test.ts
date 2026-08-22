@@ -29,6 +29,7 @@ import {
 } from "./cloudsGibsWms";
 import { validateCloudsPngBytes } from "./cloudsPng";
 import {
+  CLOUDS_EUMET_TEST_OBSERVATION_MS,
   CLOUDS_TEST_OBSERVATION_MS,
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
@@ -97,7 +98,12 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
     const getMap = urls.find((u) => u.includes("GetMap"));
     expect(getMap).toBeDefined();
     expect(wmsUrlHasExplicitTime(getMap!)).toBe(true);
-    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
+    expect(getMap).toContain("view.eumetsat.int");
+    expect(getMap).toContain("worldcloudmap_ir108");
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_EUMET_TEST_OBSERVATION_MS);
+    expect(result.entry.record.body.kind === "equirectRaster" && result.entry.record.body.coverageKind).toBe(
+      "global",
+    );
     expect(result.entry.payloadBytes![0]).toBe(0x89);
     expect(result.entry.payloadBytes![1]).toBe(0x50);
   });
@@ -213,7 +219,7 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("encodes a PNG with a transparent Africa/Europe-like hole", () => {
+  it("encodes a fixture PNG with polar holes and Africa/Europe filled", () => {
     const result = produceGlobalCloudsIrFixtureAcquisition({
       nowMs: () => CLOUDS_TEST_OBSERVATION_MS,
       observationTimeMs: CLOUDS_TEST_OBSERVATION_MS,
@@ -221,7 +227,13 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.entry.payloadBytes![0]).toBe(0x89);
-    const validated = validateCloudsPngBytes(result.entry.payloadBytes!);
+    const validated = validateCloudsPngBytes(result.entry.payloadBytes!, {
+      minCoverageRatio: 0.7,
+      requireAfricaEuropeCoverage: true,
+    });
     expect(validated.ok).toBe(true);
+    expect(result.entry.record.body.kind === "equirectRaster" && result.entry.record.body.coverageKind).toBe(
+      "global",
+    );
   });
 });

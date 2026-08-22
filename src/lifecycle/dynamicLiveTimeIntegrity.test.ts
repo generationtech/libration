@@ -35,12 +35,18 @@ import {
 } from "./index";
 import { usgsLiveOkFetch } from "./earthquakesLiveTestSupport";
 import {
+  encodeCloudsCapabilitiesXml,
   encodeCloudsTestPng,
+  encodeEumetCapabilitiesXml,
   mockCloudsLiveFetch,
 } from "./cloudsAcquisition.testSupport";
+import { formatCloudsEumetWmsTime } from "./cloudsEumetWms";
+import { formatCloudsGibsWmsTime } from "./cloudsGibsWms";
 
 const WALL_MS = 1_724_000_000_000;
 const HISTORICAL_MS = Date.UTC(2017, 7, 21, 18, 25, 30);
+const WALL_EUMET_TIME = formatCloudsEumetWmsTime(WALL_MS - 2 * 3_600_000)!;
+const WALL_GIBS_TIME = formatCloudsGibsWmsTime(WALL_MS - 2 * 3_600_000)!;
 
 const ALL_ON: DynamicLifecycleConsumerFlags = {
   cloudsIrOverlay: true,
@@ -56,7 +62,11 @@ const offlineFetch: LiveHttpFetchFn = vi.fn(async () => {
 
 function hostDeps() {
   return {
-    cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
+    cloudsIrLiveFetchFn: mockCloudsLiveFetch({
+      png: encodeCloudsTestPng(),
+      eumetCapabilitiesXml: encodeEumetCapabilitiesXml(WALL_EUMET_TIME),
+      capabilitiesXml: encodeCloudsCapabilitiesXml(WALL_GIBS_TIME),
+    }),
     earthquakesLiveFetchFn: usgsLiveOkFetch(WALL_MS),
     orbitalTracksLiveFetchFn: offlineFetch,
     nowMs: () => WALL_MS,

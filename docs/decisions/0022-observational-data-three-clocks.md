@@ -16,7 +16,7 @@ This is not a Clouds-specific WMS detail. Any observational Weather (and other c
 For observational dynamic data:
 
 - **Product time** is `TimeContext.now`. It is the scene instant. Display modes and Demo substitute this clock; they do not add another.
-- **Observation time** is the instant the data represents. For Clouds v1 that is the explicit GIBS mosaic `TIME`. It is stored as `snapshot.validTimeMs`.
+- **Observation time** is the instant the data represents. For Clouds that is the explicit WMS mosaic `TIME` (EUMETView PT3H or GIBS 10-minute slot). It is stored as `snapshot.validTimeMs`.
 - **Acquisition time** is when Libration fetched the bytes. It is stored as `snapshot.acquiredAtMs`.
 
 Freshness, stale-last-good, and suppress bands for Clouds v1 use **observation age** (`productUtcMs − validTimeMs`), not fetch age. Status copy may say mosaic time or “observed Nh ago”; it must not claim “live · now” when the mosaic is hours old.
@@ -31,7 +31,7 @@ This does **not** introduce a second display clock. Wall clock remains only the 
 
 - Status can be honest about mosaic lag without mutating product time.
 - Latest-usable TIME search can walk back provider slots without pretending the fetch clock is the observation.
-- Future EUMETSAT or radar consumers can reuse the same three fields without a Weather snapshot store.
+- Future radar consumers can reuse the same three fields without a Weather snapshot store.
 
 **Costs.**
 

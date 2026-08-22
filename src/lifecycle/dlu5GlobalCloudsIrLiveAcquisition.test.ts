@@ -30,6 +30,7 @@ import {
   type LiveHttpFetchFn,
 } from "./index";
 import {
+  CLOUDS_EUMET_TEST_OBSERVATION_MS,
   CLOUDS_TEST_OBSERVATION_MS,
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
@@ -42,10 +43,10 @@ describe("DLU-5 live Clouds v1 acquisition", () => {
     expect(entry!.sourceId).toBe("global-clouds-ir-v1");
     expect(entry!.sourceId.includes("://")).toBe(false);
     expect(GLOBAL_CLOUDS_IR_LIVE_FEED_URL.startsWith("https://")).toBe(true);
-    expect(GLOBAL_CLOUDS_IR_LIVE_FEED_URL).toContain("gibs.earthdata.nasa.gov");
+    expect(GLOBAL_CLOUDS_IR_LIVE_FEED_URL).toContain("view.eumetsat.int");
     expect(wmsUrlHasExplicitTime(GLOBAL_CLOUDS_IR_LIVE_FEED_URL)).toBe(true);
-    expect(entry!.attribution.toLowerCase()).toContain("gibs");
-    expect(entry!.coverageKind).toBe("partial");
+    expect(entry!.attribution.toLowerCase()).toContain("eumetsat");
+    expect(entry!.coverageKind).toBe("global");
   });
 
   it("live adapter maps HTTP PNG bytes to store entry with observation TIME", async () => {
@@ -64,7 +65,7 @@ describe("DLU-5 live Clouds v1 acquisition", () => {
     if (!result.ok) return;
     expect(result.entry.record.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(result.entry.record.meta.versionId).toBe("clouds-ir-live-test-1");
-    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_EUMET_TEST_OBSERVATION_MS);
     expect(result.entry.record.meta.acquiredAtMs).toBe(CLOUDS_TEST_OBSERVATION_MS + 120_000);
     expect(result.entry.record.meta.origin).toBe("live");
     if (result.entry.record.body.kind === "equirectRaster") {
@@ -134,7 +135,7 @@ describe("DLU-5 live Clouds v1 acquisition", () => {
     const view = att.getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(view).not.toBeNull();
     expect(view!.origin).toBe("live");
-    expect(view!.coverageKind).toBe("partial");
+    expect(view!.coverageKind).toBe("global");
     expect(att.getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID)).toBeNull();
 
     const resolved = await att.resolveSnapshot(GLOBAL_CLOUDS_IR_SOURCE_ID);

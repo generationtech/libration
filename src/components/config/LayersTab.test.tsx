@@ -794,6 +794,9 @@ describe("LayersTab topic navigation", () => {
     );
     expect(screen.queryByText(/Radar/)).toBeNull();
     expect(screen.queryByLabelText("Cloud participation in illumination")).toBeNull();
+    expect(screen.queryByLabelText(/NASA/i)).toBeNull();
+    expect(screen.queryByLabelText(/EUMETSAT/i)).toBeNull();
+    expect(screen.queryByLabelText(/provider/i)).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
   });
 

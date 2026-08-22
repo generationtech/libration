@@ -85,7 +85,7 @@ Fixture bytes are application-local test and demo content and are described as s
 
 ## Materialization
 
-Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Clouds v1 decodes PNG and applies the IR→cloud-highlight transfer during acquisition/materialization, outside the frame. The unused Model A cloud-opacity materializer is not armed in production.
+Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Clouds decodes PNG and applies the IR→cloud-highlight transfer during acquisition/materialization, outside the frame. The unused Model A cloud-opacity materializer is not armed in production.
 
 Layers read prepared views. If no prepared view exists for the current product instant, the layer contributes nothing.
 
@@ -101,15 +101,15 @@ Layers read prepared views. If no prepared view exists for the current product i
 
 ## Current consumers
 
-Four consumers are wired today. Clouds use live NASA GIBS Band13 PNG with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live mosaic as stale while observation age is ≤ 6 h. Earthquakes use live USGS `all_day.geojson` with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live snapshot as stale while snapshot age is ≤ 60 min. Local magnitude/age/label/type filters are presentation over that snapshot. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
+Four consumers are wired today. Clouds use live EUMETView worldcloudmap IR (GIBS Band13 partial fallback) with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live mosaic as stale while observation age is within the active provider’s stale band (EUMET ≤ 8 h, GIBS ≤ 6 h). Earthquakes use live USGS `all_day.geojson` with no production fixture fallback: first-ever failure is unavailable; a later failure may keep a prior live snapshot as stale while snapshot age is ≤ 60 min. Local magnitude/age/label/type filters are presentation over that snapshot. ISS uses live CelesTrak TLE with no production fixture fallback: CelesTrak failure with no usable live TLE hides the overlay.
 
 | Scene / config surface | Durable `sourceId` | Kind | Live feed | Default refresh |
 |------------------------|--------------------|------|-----------|-----------------|
-| Layer `globalCloudsIr` (user-facing **Clouds**) | `global-clouds-ir-v1` | `equirectRaster` | NASA GIBS WMS Band13 GOES-West + GOES-East + Himawari PNG stack, explicit `TIME` | 10 min |
+| Layer `globalCloudsIr` (user-facing **Clouds**) | `global-clouds-ir-v1` | `equirectRaster` | EUMETView `mumi:worldcloudmap_ir108` primary; NASA GIBS Band13 stack fallback; explicit `TIME` | 45 min |
 | Layer `earthquakes` | `usgs-earthquakes-v1` | `pointFeatures` | USGS `all_day.geojson` | 5 min |
 | Layer `orbitalTracks` | `iss-orbital-track-v1` | `tracks` | CelesTrak GP TLE for CATNR 25544, propagated to a ground track via SGP4 | 2 h |
 
-Clouds v1 does **not** arm acquisition from `scene.illumination.cloudParticipation`. Physical participation is forced off. Observational snapshots distinguish product time (`TimeContext.now`), observation time (`validTimeMs`), and acquisition time (`acquiredAtMs`); see [ADR 0022](../../decisions/0022-observational-data-three-clocks.md).
+Clouds v2 does **not** arm acquisition from `scene.illumination.cloudParticipation`. Physical participation is forced off. Provider selection is product authority (no user-facing NASA vs EUMETSAT control). Observational snapshots distinguish product time (`TimeContext.now`), observation time (`validTimeMs`), and acquisition time (`acquiredAtMs`); see [ADR 0022](../../decisions/0022-observational-data-three-clocks.md).
 
 ## Adding a consumer
 

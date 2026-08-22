@@ -20,8 +20,18 @@ import {
   CLOUDS_GIBS_HEIGHT_PX,
   CLOUDS_GIBS_WIDTH_PX,
 } from "./cloudsGibsWms";
+import {
+  CLOUDS_EUMET_HEIGHT_PX,
+  CLOUDS_EUMET_WIDTH_PX,
+} from "./cloudsEumetWms";
 
 export const CLOUDS_PNG_MIN_USABLE_COVERAGE_RATIO = 0.05;
+/** EUMET geostationary ring is ~87% opaque with polar holes; reject near-empty. */
+export const CLOUDS_EUMET_MIN_USABLE_COVERAGE_RATIO = 0.7;
+export const CLOUDS_EUMET_AFRICA_SAMPLE_LON_DEG = 20;
+export const CLOUDS_EUMET_AFRICA_SAMPLE_LAT_DEG = 0;
+export const CLOUDS_EUMET_EUROPE_SAMPLE_LON_DEG = 10;
+export const CLOUDS_EUMET_EUROPE_SAMPLE_LAT_DEG = 50;
 
 export type CloudsPngRgba = Readonly<{
   width: number;
@@ -129,9 +139,25 @@ export function encodeRgbaPng(
   }
 }
 
+export function sampleEquirectRgbaAlpha(
+  rgba: Uint8Array,
+  width: number,
+  height: number,
+  lonDeg: number,
+  latDeg: number,
+): number | null {
+  if (width <= 0 || height <= 0 || rgba.length < width * height * 4) return null;
+  const x = Math.round(((lonDeg + 180) / 360) * (width - 1));
+  const y = Math.round(((90 - latDeg) / 180) * (height - 1));
+  if (x < 0 || y < 0 || x >= width || y >= height) return null;
+  return rgba[(y * width + x) * 4 + 3] ?? null;
+}
+
 export type ValidateCloudsPngOptions = Readonly<{
   requireGibsDimensions?: boolean;
+  requireEumetDimensions?: boolean;
   minCoverageRatio?: number;
+  requireAfricaEuropeCoverage?: boolean;
 }>;
 
 /**
@@ -164,12 +190,44 @@ export function validateCloudsPngBytes(
       error: `unexpected png dimensions ${decoded.width}x${decoded.height}`,
     };
   }
+  if (
+    options.requireEumetDimensions === true &&
+    (decoded.width !== CLOUDS_EUMET_WIDTH_PX ||
+      decoded.height !== CLOUDS_EUMET_HEIGHT_PX)
+  ) {
+    return {
+      ok: false,
+      error: `unexpected png dimensions ${decoded.width}x${decoded.height}`,
+    };
+  }
   const minRatio = options.minCoverageRatio ?? CLOUDS_PNG_MIN_USABLE_COVERAGE_RATIO;
   if (decoded.opaqueRatio < minRatio) {
     return {
       ok: false,
       error: "implausibly empty mosaic coverage",
     };
+  }
+  if (options.requireAfricaEuropeCoverage === true) {
+    const africa = sampleEquirectRgbaAlpha(
+      decoded.rgba,
+      decoded.width,
+      decoded.height,
+      CLOUDS_EUMET_AFRICA_SAMPLE_LON_DEG,
+      CLOUDS_EUMET_AFRICA_SAMPLE_LAT_DEG,
+    );
+    const europe = sampleEquirectRgbaAlpha(
+      decoded.rgba,
+      decoded.width,
+      decoded.height,
+      CLOUDS_EUMET_EUROPE_SAMPLE_LON_DEG,
+      CLOUDS_EUMET_EUROPE_SAMPLE_LAT_DEG,
+    );
+    if ((africa ?? 0) === 0 || (europe ?? 0) === 0) {
+      return {
+        ok: false,
+        error: "Africa/Europe sample is transparent; not a global ring",
+      };
+    }
   }
   return {
     ok: true,

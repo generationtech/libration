@@ -351,7 +351,7 @@ describe("resolveVisualScenarioSession", () => {
     expect(view?.versionId).toBe("clouds-presentation-dev");
     expect(view?.origin).toBe("fixture");
     expect(view?.devAllowFixturePaint).toBe(true);
-    expect(view?.coverageKind).toBe("partial");
+    expect(view?.coverageKind).toBe("global");
   });
 
   it("seeds moon-libration with the production Moon glyph and libration on by default", () => {

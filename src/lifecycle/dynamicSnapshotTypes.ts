@@ -89,6 +89,11 @@ export type EquirectRasterSnapshotBody = Readonly<{
   /** Pixel-level coverage remains provider alpha. This is a coarse product note. */
   coverageKind?: "global" | "partial";
   coverageNote?: string;
+  /**
+   * Internal Clouds provider under durable `global-clouds-ir-v1`.
+   * Not a second user-facing layer id. Not persisted in SceneConfig.
+   */
+  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
 }>;
 
 export type DynamicPointFeature = Readonly<{

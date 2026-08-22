@@ -12,17 +12,26 @@
  */
 
 /**
- * Clouds v1 acquisition: NASA GIBS Band13 East/West/Himawari PNG stack.
- * validTimeMs is provider observation TIME. acquiredAtMs is fetch time.
- * Fixture producer remains for tests / DEV. Production does not fixture-as-live.
+ * Clouds v2 acquisition: EUMETView geostationary-ring IR primary, NASA GIBS
+ * Band13 stack as honest partial fallback. Durable sourceId stays
+ * `global-clouds-ir-v1`. validTimeMs is provider observation TIME.
+ * acquiredAtMs is fetch time. Production does not fixture-as-live.
  */
 
 import { createFixtureAcquisitionAdapter } from "./dynamicAcquisition";
 import { buildDynamicSnapshotRecord } from "./dynamicSnapshotContracts";
 import {
-  CLOUDS_COVERAGE_NOTE,
+  CLOUDS_EUMET_ATTRIBUTION,
+  CLOUDS_EUMET_LICENSE_NOTE,
+  CLOUDS_GIBS_ATTRIBUTION,
+  CLOUDS_GIBS_LICENSE_NOTE,
+  CLOUDS_GLOBAL_COVERAGE_NOTE,
+  CLOUDS_PARTIAL_COVERAGE_NOTE,
 } from "./cloudProvenance";
-import { applyCloudHighlightTransfer } from "./cloudHighlightTransfer";
+import {
+  applyCloudHighlightTransfer,
+  liftEumetIrLuma,
+} from "./cloudHighlightTransfer";
 import {
   CLOUDS_GIBS_BAND13_LAYERS,
   CLOUDS_GIBS_SLOT_MS,
@@ -37,10 +46,27 @@ import {
   wmsUrlHasExplicitTime,
 } from "./cloudsGibsWms";
 import {
+  CLOUDS_EUMET_SLOT_MS,
+  EUMET_WMS_GET_CAPABILITIES_URL,
+  buildCloudsEumetWmsGetMapUrl,
+  floorToCloudsEumetSlotMs,
+  formatCloudsEumetWmsTime,
+  listCloudsEumetObservationSearchTimesMs,
+  parseEumetWmsLayerTimeDefault,
+} from "./cloudsEumetWms";
+import {
+  CLOUDS_EUMET_MIN_USABLE_COVERAGE_RATIO,
   decodeCloudsPngRgba,
   encodeRgbaPng,
   validateCloudsPngBytes,
 } from "./cloudsPng";
+import {
+  CLOUDS_PROVIDER_EUMET,
+  CLOUDS_PROVIDER_GIBS,
+  CLOUDS_EUMET_STALE_MAX_AGE_MS,
+  CLOUDS_GIBS_STALE_MAX_AGE_MS,
+  type CloudsProviderKind,
+} from "./cloudsSourceSelection";
 import {
   GLOBAL_CLOUDS_IR_SOURCE_ID,
   getDynamicEquirectSourceCatalogEntry,
@@ -50,7 +76,10 @@ import type {
   DynamicAcquisitionResult,
   DynamicSnapshotAcquisitionAdapter,
 } from "./dynamicAcquisitionTypes";
-import type { DynamicSourceId } from "./dynamicSnapshotTypes";
+import type {
+  DynamicSnapshotRecord,
+  DynamicSourceId,
+} from "./dynamicSnapshotTypes";
 import type {
   LiveHttpFetchFn,
   LiveHttpFetchOk,
@@ -67,8 +96,8 @@ export const GLOBAL_CLOUDS_IR_CAPABILITIES_ACCEPT_CONTENT_TYPES = [
   "text/plain",
 ] as const;
 
-/** @deprecated Use {@link buildCloudsGibsWmsGetMapUrl} with an explicit TIME. */
-export const GLOBAL_CLOUDS_IR_LIVE_FEED_URL = buildCloudsGibsWmsGetMapUrl(
+/** @deprecated Prefer {@link buildCloudsEumetWmsGetMapUrl}. Kept for tests. */
+export const GLOBAL_CLOUDS_IR_LIVE_FEED_URL = buildCloudsEumetWmsGetMapUrl(
   Date.UTC(2026, 0, 1, 0, 0, 0),
 );
 
@@ -87,6 +116,8 @@ export type GlobalCloudsIrLiveAcquireOptions = GlobalCloudsIrAcquireOptions &
     useFixtureFallback?: boolean;
     timeoutMs?: number;
     /** Production live GetMap must be 2048×1024. Tests may omit this. */
+    requireMosaicDimensions?: boolean;
+    /** @deprecated Use {@link requireMosaicDimensions}. */
     requireGibsDimensions?: boolean;
   }>;
 
@@ -99,9 +130,8 @@ function encodeGlobalCloudsIrFixturePng(): Uint8Array {
       const i = (y * width + x) * 4;
       const u = x / (width - 1);
       const v = y / (height - 1);
-      const africaEurope = u > 0.42 && u < 0.62 && v > 0.22 && v < 0.72;
       const pole = v < 0.08 || v > 0.92;
-      if (africaEurope || pole) {
+      if (pole) {
         continue;
       }
       const cold = Math.sin(u * Math.PI * 3) > 0.35 && Math.sin(v * Math.PI * 4) > 0.2;
@@ -117,6 +147,22 @@ function encodeGlobalCloudsIrFixturePng(): Uint8Array {
     throw new Error("failed to encode Clouds fixture PNG");
   }
   return encoded;
+}
+
+function providerAttribution(provider: CloudsProviderKind): {
+  attribution: string;
+  licenseNote: string;
+} {
+  if (provider === CLOUDS_PROVIDER_EUMET) {
+    return {
+      attribution: CLOUDS_EUMET_ATTRIBUTION,
+      licenseNote: CLOUDS_EUMET_LICENSE_NOTE,
+    };
+  }
+  return {
+    attribution: CLOUDS_GIBS_ATTRIBUTION,
+    licenseNote: CLOUDS_GIBS_LICENSE_NOTE,
+  };
 }
 
 export function produceGlobalCloudsIrFixtureAcquisition(
@@ -161,8 +207,9 @@ export function produceGlobalCloudsIrFixtureAcquisition(
       latMinDeg: -90,
       latMaxDeg: 90,
       byteLength: payloadBytes.byteLength,
-      coverageKind: "partial",
-      coverageNote: CLOUDS_COVERAGE_NOTE,
+      coverageKind: "global",
+      coverageNote: CLOUDS_GLOBAL_COVERAGE_NOTE,
+      cloudProviderKind: CLOUDS_PROVIDER_EUMET,
     },
   );
   if (record === null) {
@@ -174,27 +221,46 @@ export function produceGlobalCloudsIrFixtureAcquisition(
 export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
   fetched: LiveHttpFetchOk,
   options: GlobalCloudsIrAcquireOptions &
-    Readonly<{ requireGibsDimensions?: boolean }> = {},
+    Readonly<{
+      requireGibsDimensions?: boolean;
+      requireMosaicDimensions?: boolean;
+      providerKind?: CloudsProviderKind;
+    }> = {},
   signal?: AbortSignal,
 ): DynamicAcquisitionResult {
   if (signal?.aborted) {
     return { ok: false, error: "aborted" };
   }
-  const catalog = getDynamicEquirectSourceCatalogEntry(GLOBAL_CLOUDS_IR_SOURCE_ID);
-  if (catalog === null) {
-    return { ok: false, error: "missing catalog entry" };
-  }
   if (options.observationTimeMs === undefined || !Number.isFinite(options.observationTimeMs)) {
     return { ok: false, error: "observation TIME required" };
   }
-  const observationTimeMs = floorToCloudsGibsSlotMs(options.observationTimeMs);
-  const timeLabel = formatCloudsGibsWmsTime(observationTimeMs);
+  const providerKind = options.providerKind ?? CLOUDS_PROVIDER_GIBS;
+  const observationTimeMs =
+    providerKind === CLOUDS_PROVIDER_EUMET
+      ? floorToCloudsEumetSlotMs(options.observationTimeMs)
+      : floorToCloudsGibsSlotMs(options.observationTimeMs);
+  const timeLabel =
+    providerKind === CLOUDS_PROVIDER_EUMET
+      ? formatCloudsEumetWmsTime(observationTimeMs)
+      : formatCloudsGibsWmsTime(observationTimeMs);
   if (timeLabel === null) {
     return { ok: false, error: "invalid observation TIME" };
   }
 
+  const requireDimensions =
+    options.requireMosaicDimensions === true || options.requireGibsDimensions === true;
   const validated = validateCloudsPngBytes(fetched.bytes, {
-    requireGibsDimensions: options.requireGibsDimensions === true,
+    ...(requireDimensions
+      ? providerKind === CLOUDS_PROVIDER_EUMET
+        ? { requireEumetDimensions: true }
+        : { requireGibsDimensions: true }
+      : {}),
+    ...(providerKind === CLOUDS_PROVIDER_EUMET
+      ? {
+          minCoverageRatio: CLOUDS_EUMET_MIN_USABLE_COVERAGE_RATIO,
+          requireAfricaEuropeCoverage: true,
+        }
+      : {}),
   });
   if (!validated.ok) {
     return { ok: false, error: validated.error };
@@ -204,9 +270,11 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
   if (!Number.isFinite(acquiredAtMs)) {
     return { ok: false, error: "invalid acquiredAtMs" };
   }
+  const credits = providerAttribution(providerKind);
   const versionId =
     options.versionIdFor?.(observationTimeMs, acquiredAtMs) ??
-    `clouds-ir-live-${observationTimeMs}`;
+    `clouds-ir-live-${providerKind}-${observationTimeMs}`;
+  const coverageKind = providerKind === CLOUDS_PROVIDER_EUMET ? "global" : "partial";
 
   const record = buildDynamicSnapshotRecord(
     {
@@ -216,8 +284,8 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
       acquiredAtMs,
       validTimeMs: observationTimeMs,
       origin: "live",
-      attribution: catalog.attribution,
-      ...(catalog.licenseNote !== undefined ? { licenseNote: catalog.licenseNote } : {}),
+      attribution: credits.attribution,
+      licenseNote: credits.licenseNote,
     },
     {
       kind: "equirectRaster",
@@ -227,14 +295,45 @@ export function produceGlobalCloudsIrLiveAcquisitionFromFetched(
       latMinDeg: -90,
       latMaxDeg: 90,
       byteLength: validated.byteLength,
-      coverageKind: "partial",
-      coverageNote: CLOUDS_COVERAGE_NOTE,
+      coverageKind,
+      coverageNote:
+        coverageKind === "global"
+          ? CLOUDS_GLOBAL_COVERAGE_NOTE
+          : CLOUDS_PARTIAL_COVERAGE_NOTE,
+      cloudProviderKind: providerKind,
     },
   );
   if (record === null) {
     return { ok: false, error: "invalid snapshot record" };
   }
   return { ok: true, entry: { record, payloadBytes: fetched.bytes } };
+}
+
+export async function discoverEumetObservationSearchTimesMs(options: {
+  nowMs: () => number;
+  fetchFn?: LiveHttpFetchFn;
+  timeoutMs: number;
+  signal?: AbortSignal;
+}): Promise<number[]> {
+  const wall = options.nowMs();
+  const fallbackStart = floorToCloudsEumetSlotMs(wall);
+  const caps = await fetchLiveHttpBytes({
+    url: EUMET_WMS_GET_CAPABILITIES_URL,
+    acceptContentTypes: GLOBAL_CLOUDS_IR_CAPABILITIES_ACCEPT_CONTENT_TYPES,
+    timeoutMs: options.timeoutMs,
+    signal: options.signal,
+    ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+  });
+  if (!caps.ok) {
+    return listCloudsEumetObservationSearchTimesMs(fallbackStart);
+  }
+  const xml = new TextDecoder("utf-8", { fatal: false }).decode(caps.bytes);
+  const latest = parseEumetWmsLayerTimeDefault(xml);
+  const start =
+    latest !== null && latest <= wall + CLOUDS_EUMET_SLOT_MS
+      ? latest
+      : fallbackStart;
+  return listCloudsEumetObservationSearchTimesMs(start);
 }
 
 export async function discoverCloudsObservationSearchTimesMs(options: {
@@ -272,11 +371,70 @@ export function createGlobalCloudsIrFixtureAcquisitionAdapter(
   );
 }
 
+async function acquireProviderMosaic(input: {
+  times: readonly number[];
+  buildUrl: (observationTimeMs: number) => string;
+  providerKind: CloudsProviderKind;
+  staleMaxAgeMs: number;
+  nowMs: () => number;
+  timeoutMs: number;
+  signal?: AbortSignal;
+  fetchFn?: LiveHttpFetchFn;
+  requireMosaicDimensions: boolean;
+  acquireOptions: GlobalCloudsIrAcquireOptions;
+}): Promise<DynamicAcquisitionResult> {
+  let lastError = `no usable ${input.providerKind} clouds mosaic`;
+  for (const observationTimeMs of input.times) {
+    if (input.signal?.aborted) {
+      return { ok: false, error: "aborted" };
+    }
+    const ageMs = input.nowMs() - observationTimeMs;
+    if (ageMs > input.staleMaxAgeMs) {
+      lastError = `${input.providerKind} observation expired`;
+      continue;
+    }
+    const url = input.buildUrl(observationTimeMs);
+    if (!wmsUrlHasExplicitTime(url)) {
+      return { ok: false, error: "Clouds GetMap omitted TIME" };
+    }
+    const fetched = await fetchLiveHttpBytes({
+      url,
+      acceptContentTypes: GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
+      timeoutMs: input.timeoutMs,
+      signal: input.signal,
+      ...(input.fetchFn !== undefined ? { fetchFn: input.fetchFn } : {}),
+    });
+    if (!fetched.ok) {
+      if (fetched.aborted || input.signal?.aborted) {
+        return { ok: false, error: "aborted" };
+      }
+      lastError = fetched.error;
+      continue;
+    }
+    const mapped = produceGlobalCloudsIrLiveAcquisitionFromFetched(
+      fetched,
+      {
+        ...input.acquireOptions,
+        observationTimeMs,
+        providerKind: input.providerKind,
+        requireMosaicDimensions: input.requireMosaicDimensions,
+      },
+      input.signal,
+    );
+    if (mapped.ok) {
+      return mapped;
+    }
+    lastError = mapped.error;
+  }
+  return { ok: false, error: lastError };
+}
+
 export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
   options: GlobalCloudsIrLiveAcquireOptions = {},
 ): DynamicSnapshotAcquisitionAdapter {
   const useFixtureFallback = options.useFixtureFallback === true;
-  const requireGibsDimensions = options.requireGibsDimensions !== false;
+  const requireMosaicDimensions =
+    options.requireMosaicDimensions !== false && options.requireGibsDimensions !== false;
   const timeoutMs =
     options.timeoutMs !== undefined &&
     Number.isFinite(options.timeoutMs) &&
@@ -295,78 +453,80 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
       if (signal?.aborted) {
         return { ok: false, error: "aborted" };
       }
-      const times = await discoverCloudsObservationSearchTimesMs({
+      const fetchOpts = {
         nowMs,
         timeoutMs,
         signal,
         ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
-      });
+      };
+
+      const eumetTimes = await discoverEumetObservationSearchTimesMs(fetchOpts);
       if (signal?.aborted) {
         return { ok: false, error: "aborted" };
       }
-      if (times.length === 0) {
-        if (useFixtureFallback) {
-          return produceGlobalCloudsIrFixtureAcquisition(acquireOptions, signal);
-        }
-        return { ok: false, error: "no observation TIME candidates" };
+      const eumet = await acquireProviderMosaic({
+        times: eumetTimes,
+        buildUrl: buildCloudsEumetWmsGetMapUrl,
+        providerKind: CLOUDS_PROVIDER_EUMET,
+        staleMaxAgeMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
+        nowMs,
+        timeoutMs,
+        signal,
+        requireMosaicDimensions,
+        acquireOptions,
+        ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+      });
+      if (eumet.ok) {
+        return eumet;
+      }
+      if (eumet.error === "aborted") {
+        return eumet;
       }
 
-      let lastError = "no usable GIBS clouds mosaic";
-      for (const observationTimeMs of times) {
-        if (signal?.aborted) {
-          return { ok: false, error: "aborted" };
-        }
-        const url = buildCloudsGibsWmsGetMapUrl(observationTimeMs);
-        if (!wmsUrlHasExplicitTime(url)) {
-          return { ok: false, error: "Clouds GetMap omitted TIME" };
-        }
-        const fetched = await fetchLiveHttpBytes({
-          url,
-          acceptContentTypes: GLOBAL_CLOUDS_IR_LIVE_ACCEPT_CONTENT_TYPES,
-          timeoutMs,
-          signal,
-          ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
-        });
-        if (!fetched.ok) {
-          if (fetched.aborted || signal?.aborted) {
-            return { ok: false, error: "aborted" };
-          }
-          lastError = fetched.error;
-          continue;
-        }
-        const mapped = produceGlobalCloudsIrLiveAcquisitionFromFetched(
-          fetched,
-          {
-            ...acquireOptions,
-            observationTimeMs,
-            requireGibsDimensions,
-          },
-          signal,
-        );
-        if (mapped.ok) {
-          return mapped;
-        }
-        lastError = mapped.error;
+      const gibsTimes = await discoverCloudsObservationSearchTimesMs(fetchOpts);
+      if (signal?.aborted) {
+        return { ok: false, error: "aborted" };
       }
-
+      const gibs = await acquireProviderMosaic({
+        times: gibsTimes,
+        buildUrl: buildCloudsGibsWmsGetMapUrl,
+        providerKind: CLOUDS_PROVIDER_GIBS,
+        staleMaxAgeMs: CLOUDS_GIBS_STALE_MAX_AGE_MS,
+        nowMs,
+        timeoutMs,
+        signal,
+        requireMosaicDimensions,
+        acquireOptions,
+        ...(options.fetchFn !== undefined ? { fetchFn: options.fetchFn } : {}),
+      });
+      if (gibs.ok) {
+        return gibs;
+      }
       if (useFixtureFallback) {
         return produceGlobalCloudsIrFixtureAcquisition(acquireOptions, signal);
       }
-      return { ok: false, error: lastError };
+      return {
+        ok: false,
+        error: gibs.error !== "aborted" ? gibs.error : eumet.error,
+      };
     },
   };
 }
 
 export function materializeCloudsHighlightStoreEntry(entry: {
-  record: import("./dynamicSnapshotTypes").DynamicSnapshotRecord;
+  record: DynamicSnapshotRecord;
   payloadBytes?: Uint8Array;
-}): { record: import("./dynamicSnapshotTypes").DynamicSnapshotRecord; payloadBytes: Uint8Array } | null {
+}): { record: DynamicSnapshotRecord; payloadBytes: Uint8Array } | null {
   if (entry.record.body.kind !== "equirectRaster") return null;
   const bytes = entry.payloadBytes;
   if (bytes === undefined || bytes.byteLength === 0) return null;
   const decoded = decodeCloudsPngRgba(bytes);
   if (decoded === null) return null;
-  const highlight = applyCloudHighlightTransfer(decoded.rgba);
+  const provider = entry.record.body.cloudProviderKind;
+  const highlight = applyCloudHighlightTransfer(
+    decoded.rgba,
+    provider === CLOUDS_PROVIDER_EUMET ? { mapIrLuma: liftEumetIrLuma } : {},
+  );
   const encoded = encodeRgbaPng(decoded.width, decoded.height, highlight);
   if (encoded === null) return null;
   return {

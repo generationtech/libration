@@ -198,7 +198,7 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
     return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
   }
   if (key === "globalCloudsIr") {
-    return "Recent IR-derived cloud highlight from NASA GIBS GOES-East, GOES-West, and Himawari. Partial coverage; Africa, Europe, and polar holes stay transparent. Presentation lives under Weather.";
+    return "Recent IR-derived cloud highlight. Prefers the EUMETSAT geostationary-ring mosaic; NASA GIBS Band13 is an honest partial fallback. Polar holes stay transparent. Presentation lives under Weather.";
   }
   return undefined;
 }

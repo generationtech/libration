@@ -46,6 +46,7 @@ export type PreparedEquirectRasterView = Readonly<{
   origin?: "live" | "fixture";
   coverageKind?: "global" | "partial";
   coverageNote?: string;
+  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
   /** DEV visual-scenario hatch; production views omit this. */
   devAllowFixturePaint?: boolean;
 }>;
@@ -56,6 +57,7 @@ type MaterializedVersion = {
   contentType?: string;
   coverageKind?: "global" | "partial";
   coverageNote?: string;
+  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
   /** True when src was created via URL.createObjectURL and must be revoked. */
   revokeOnDrop: boolean;
 };
@@ -207,6 +209,10 @@ export function createDynamicEquirectMaterializer(
       ...(record.body.kind === "equirectRaster" && record.body.coverageNote !== undefined
         ? { coverageNote: record.body.coverageNote }
         : {}),
+      ...(record.body.kind === "equirectRaster" &&
+      record.body.cloudProviderKind !== undefined
+        ? { cloudProviderKind: record.body.cloudProviderKind }
+        : {}),
       revokeOnDrop,
     });
   }
@@ -254,6 +260,9 @@ export function createDynamicEquirectMaterializer(
       ...(row.meta.origin !== undefined ? { origin: row.meta.origin } : {}),
       ...(row.coverageKind !== undefined ? { coverageKind: row.coverageKind } : {}),
       ...(row.coverageNote !== undefined ? { coverageNote: row.coverageNote } : {}),
+      ...(row.cloudProviderKind !== undefined
+        ? { cloudProviderKind: row.cloudProviderKind }
+        : {}),
     };
   }
 

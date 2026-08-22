@@ -19,6 +19,11 @@
 
 import type { DynamicSourceId } from "./dynamicSnapshotTypes";
 import { isValidDynamicSourceId } from "./dynamicSnapshotContracts";
+import {
+  CLOUDS_CATALOG_ATTRIBUTION,
+  CLOUDS_EUMET_LICENSE_NOTE,
+} from "./cloudProvenance";
+import { CLOUDS_EUMET_FRESH_MAX_AGE_MS, CLOUDS_EUMET_STALE_MAX_AGE_MS } from "./cloudsSourceSelection";
 
 export type DynamicEquirectSourceCatalogEntry = Readonly<{
   sourceId: DynamicSourceId;
@@ -54,28 +59,26 @@ export type DynamicEquirectSourceCatalogEntry = Readonly<{
 export const GLOBAL_CLOUDS_IR_SOURCE_ID: DynamicSourceId = "global-clouds-ir-v1";
 
 /**
- * Default refresh for Clouds v1 (~10 min GIBS Band13 slots). Acquisition still
- * runs outside rAF. Live NASA GIBS WMS under the same durable sourceId.
+ * Default refresh for Clouds v2 (EUMET PT3H mosaic). Acquisition still runs
+ * outside rAF. GIBS Band13 remains an in-adapter fallback, not a second layer.
  */
-export const GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+export const GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS = 45 * 60 * 1000;
 
 const GLOBAL_CLOUDS_IR_ENTRY: DynamicEquirectSourceCatalogEntry = {
   sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
   label: "Clouds",
   kind: "equirectRaster",
-  attribution:
-    "NASA GIBS GOES-East, GOES-West, and Himawari Band 13 Clean Infrared equirect PNG via in-app live WMS (explicit TIME) under durable id global-clouds-ir-v1. DEV/tests may use a recorded PNG fixture; production never presents fixture as live.",
-  licenseNote:
-    "NASA GIBS / Earthdata imagery is free and open for public use with attribution. Live feed URL is not persisted in SceneConfig — only the durable sourceId is. Fixture bytes are app-local test/demo content.",
+  attribution: CLOUDS_CATALOG_ATTRIBUTION,
+  licenseNote: `${CLOUDS_EUMET_LICENSE_NOTE} NASA GIBS Band13 is an honest partial fallback with NASA Earthdata attribution.`,
   defaultRefreshIntervalMs: GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
-    "Full-world equirectangular −180…+180° longitude, −90…+90° latitude. Coverage is partial: geostationary disks only; Africa/Europe and polar holes stay transparent.",
+    "Full-world equirectangular −180…+180° longitude, −90…+90° latitude. Primary EUMETSAT geostationary-ring IR covers Africa/Europe; polar holes stay transparent. GIBS 3-sat fallback is partial (Africa/Europe uncovered).",
   timePolicy: "wallClockCurrent",
-  nominalCadenceMs: 10 * 60 * 1000,
-  freshUntilMs: 3 * 60 * 60 * 1000,
-  staleUntilMs: 6 * 60 * 60 * 1000,
-  suppressAfterMs: 6 * 60 * 60 * 1000,
-  coverageKind: "partial",
+  nominalCadenceMs: 3 * 60 * 60 * 1000,
+  freshUntilMs: CLOUDS_EUMET_FRESH_MAX_AGE_MS,
+  staleUntilMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
+  suppressAfterMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
+  coverageKind: "global",
 };
 
 const BY_ID = new Map<DynamicSourceId, DynamicEquirectSourceCatalogEntry>([

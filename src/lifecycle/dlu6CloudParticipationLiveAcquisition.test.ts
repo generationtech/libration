@@ -26,6 +26,7 @@ import {
   createDynamicDataLifecycleHost,
 } from "./index";
 import {
+  CLOUDS_EUMET_TEST_OBSERVATION_MS,
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
 } from "./cloudsAcquisition.testSupport";
@@ -62,19 +63,21 @@ describe("DLU-6 Clouds illumination participation is non-operative", () => {
   it("live Clouds PNG does not populate the cloud-opacity materializer", async () => {
     const host = createDynamicDataLifecycleHost({
       cloudsIrLiveFetchFn: mockCloudsLiveFetch({ png: encodeCloudsTestPng() }),
+      nowMs: () => CLOUDS_EUMET_TEST_OBSERVATION_MS + 3_600_000,
       setIntervalFn: () => 1,
       clearIntervalFn: () => undefined,
     });
     host.ensureGlobalCloudsIrConsumer({ intervalMs: 60_000, runImmediately: true });
+    const productMs = CLOUDS_EUMET_TEST_OBSERVATION_MS + 3_600_000;
     await vi.waitFor(() => {
       expect(
         host
-          .attachForProductInstant(Date.now())
+          .attachForProductInstant(productMs)
           .getPreparedEquirectRaster(GLOBAL_CLOUDS_IR_SOURCE_ID),
       ).not.toBeNull();
     });
     expect(
-      host.attachForProductInstant(Date.now()).getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID),
+      host.attachForProductInstant(productMs).getPreparedCloudOpacity(GLOBAL_CLOUDS_IR_SOURCE_ID),
     ).toBeNull();
     host.dispose();
   });

@@ -91,9 +91,9 @@ See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enou
 
 ### 3.5 Observational data distinguishes product, observation, and acquisition time
 
-**Boundary.** Product time remains the single scene instant. Observational snapshots additionally record the instant the data represents (`validTimeMs`) and the instant Libration fetched the bytes (`acquiredAtMs`). Those three values are allowed to differ. Freshness for Clouds v1 uses observation age, not fetch age.
+**Boundary.** Product time remains the single scene instant. Observational snapshots additionally record the instant the data represents (`validTimeMs`) and the instant Libration fetched the bytes (`acquiredAtMs`). Those three values are allowed to differ. Freshness for Clouds uses observation age, not fetch age.
 
-**Rationale.** A near-current satellite mosaic is not “now” merely because the app just downloaded it. GIBS Band13 slots are 10 minutes, but ingest can lag by hours. Stamping observation from wall clock, or omitting provider `TIME`, made status dishonest and invited empty-future mosaics.
+**Rationale.** A near-current satellite mosaic is not “now” merely because the app just downloaded it. EUMETView worldcloudmap slots are 3 hours and GIBS Band13 slots are 10 minutes, but ingest can lag by hours. Stamping observation from wall clock, or omitting provider `TIME`, made status dishonest and invited empty-future mosaics.
 
 **Consequence.** Clouds GetMap always sends explicit `TIME`. Status may say mosaic HH:MM UTC or observed Nh ago; it must not claim live-now for a lagging mosaic. Do not add a second display clock or a parallel Weather store to hold these fields.
 
