@@ -394,4 +394,10 @@ Weather-4.3: per-source observational quality plane + quality-aware overlap auth
 
 Verified: `npx tsc --noEmit` clean; focused Clouds tests 72 passed; `npm test` 266 files / 2520 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live NATL 45°N / 71.14°W old Meteosat → GOES-East; 45°N switch −71.10° → −55.11°; seam ratio 8.27 → 3.23. Cursor Browser ordinary live **Clouds · observations 30m–60m old** + winner/quality diagnostics + Historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066, LIB-068 stay proposed. Do not begin WEATHER-5.
 
+## 2026-08-22 — LIB-071 complete
+
+WEATHER-5.1: provider display interpretation → canonical display IR → one conservative shared cloud-confidence transfer. GIBS Band13 false-color is no longer Rec.601 luma. Authority planes unchanged (ADR 0024). ADR 0025. Cache `wx5-cloud-v2`. Opacity 0.42. No blending, visible, netCDF, or cloud mask.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 267 files / 2538 passed / 0 failed; `npm run build` succeeded with no `cloudsTransfer` / `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live East/MSG winners identical; 45°N switch −55.13°; interior |Δα| 62.5 → 20.5; clear-ocean gray `(103,103,103)` α 1 → 0. Cursor Browser ordinary live **Clouds · observations 23–43 min old**, winner debug, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-070 stays proposed. Do not start WEATHER-5.2.
+
 

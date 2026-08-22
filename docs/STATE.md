@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-069](work/LIB-069-weather-4-3-quality-plane-overlap-authority.md) — Weather-4.3: Per-source quality plane + quality-aware overlap authority
+[LIB-071](work/LIB-071-weather-5-1-canonical-ir-cloud-confidence.md) — WEATHER-5.1: Canonical IR interpretation + conservative cloud-confidence transfer
 
 ## Blockers
 
@@ -31,8 +31,10 @@ Proposed [LIB-062](work/LIB-062-weather-architecture-and-global-clouds-v1-invest
 
 Proposed [LIB-066](work/LIB-066-weather-4-cloud-mosaic-seam-investigation.md) Cloud mosaic seam / footprint artifact survey stays proposed (investigation only; not activated). LIB-067 implemented its coverage-authority recommendation.
 
-Proposed [LIB-068](work/LIB-068-weather-4-2-cloud-source-quality-seam-investigation.md) Cloud source-quality / radiometric seam survey stays proposed (investigation only; not activated). LIB-069 implemented its quality-authority recommendation. Remaining radiometric/presentation mismatch is later work (WEATHER-5); do not start it from this state.
+Proposed [LIB-068](work/LIB-068-weather-4-2-cloud-source-quality-seam-investigation.md) Cloud source-quality / radiometric seam survey stays proposed (investigation only; not activated). LIB-069 implemented its quality-authority recommendation.
+
+Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-investigation.md) WEATHER-5 cloud radiometry / presentation survey stays proposed (investigation only; not activated). LIB-071 implemented its WEATHER-5.1 recommendation. Do not start WEATHER-5.2 automatically.
 
 ## Next action
 
-AWAITING SCOPE. Do not begin WEATHER-5.
+Awaiting scope. Do not start WEATHER-5.2, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.

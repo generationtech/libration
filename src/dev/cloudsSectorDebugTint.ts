@@ -17,7 +17,8 @@
  *   ?cloudsSectorDebug=1|coverage — coverage footprints (paint-order, ignore quality)
  *   ?cloudsSectorDebug=winner — quality-aware lexicographic selected source
  *   ?cloudsSectorDebug=quality — selected-source quality (nadir bright, limb dark)
- *   ?cloudsSectorDebug=signal — derived cloud-signal winners
+ *   ?cloudsSectorDebug=signal — derived cloud-confidence winners
+ *   ?cloudsSectorDebug=canonical — winner canonical display-IR (grayscale)
  *   ?cloudsSectorDebug=leak — pixels where the selected source is clear and
  *     suppressed another source's cloud
  */
@@ -35,7 +36,13 @@ import {
 } from "../lifecycle/cloudsSectors";
 import type { DevCloudsSectorDebugTintFn } from "./visualScenarioRuntime";
 
-export type CloudsSectorDebugMode = "coverage" | "winner" | "quality" | "signal" | "leak";
+export type CloudsSectorDebugMode =
+  | "coverage"
+  | "winner"
+  | "quality"
+  | "signal"
+  | "canonical"
+  | "leak";
 
 export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
   Record<CloudsSectorId, readonly [number, number, number]>
@@ -60,6 +67,7 @@ export function parseCloudsSectorDebugMode(
   if (v === "winner") return "winner";
   if (v === "quality" || v === "q") return "quality";
   if (v === "signal" || v === "cloud") return "signal";
+  if (v === "canonical" || v === "canonicalir" || v === "ir") return "canonical";
   if (v === "leak") return "leak";
   return null;
 }

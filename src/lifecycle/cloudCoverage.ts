@@ -16,7 +16,7 @@
  *
  * coverageMask: the provider has valid observational data at this pixel.
  * qualityWeight: how geometrically desirable that observation is (separate module).
- * cloudSignal:  the IR-derived highlight alpha for that valid observation.
+ * cloudSignal:  the canonical-IR cloud-confidence alpha for that valid observation.
  *
  * A valid-clear observation is coverage > 0 with cloudSignal == 0. That is
  * not the same as no-data (coverage == 0). Quality == 0 is also not no-data.
@@ -28,6 +28,7 @@ import {
   applyCloudHighlightTransfer,
   type CloudHighlightTransferOptions,
 } from "./cloudHighlightTransfer";
+import type { CloudIrInterpretationKind } from "./cloudIrInterpretation";
 
 /**
  * Provider alpha at or above this value is valid coverage.
@@ -72,15 +73,19 @@ export type CloudsSourcePlanes = Readonly<{
 }>;
 
 /**
- * Split a provider RGBA IR raster into coverage and derived cloud signal.
- * Coverage is taken from provider alpha; cloud signal uses the existing
- * IR highlight transfer (unchanged appearance curve).
+ * Split a provider RGBA raster into coverage and derived cloud signal.
+ * Coverage is taken from provider alpha before any transfer. Cloud signal
+ * uses the provider interpretation plus the shared confidence transfer.
  */
 export function materializeCloudsSourcePlanes(
   providerRgba: Uint8Array,
-  options: CloudHighlightTransferOptions = {},
+  interpretation: CloudIrInterpretationKind,
+  options: Omit<CloudHighlightTransferOptions, "interpretation"> = {},
 ): CloudsSourcePlanes {
   const coverageMask = extractCloudsCoverageMask(providerRgba);
-  const cloudRgba = applyCloudHighlightTransfer(providerRgba, options);
+  const cloudRgba = applyCloudHighlightTransfer(providerRgba, {
+    interpretation,
+    ...options,
+  });
   return { coverageMask, cloudRgba };
 }

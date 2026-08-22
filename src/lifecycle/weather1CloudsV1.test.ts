@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import { applyCloudHighlightTransfer, cloudHighlightAlpha01FromIrLuma, CLOUD_HIGHLIGHT_RGB } from "./cloudHighlightTransfer";
+import { applyCloudHighlightTransfer, cloudConfidence01FromCanonicalIR, CLOUD_HIGHLIGHT_RGB } from "./cloudHighlightTransfer";
 import {
   CLOUDS_OBSERVATION_FRESH_MAX_AGE_MS,
   CLOUDS_OBSERVATION_STALE_MAX_AGE_MS,
@@ -121,7 +121,9 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
       210, 210, 210, 255,
       0, 0, 0, 0,
     ]);
-    const out = applyCloudHighlightTransfer(rgba);
+    const out = applyCloudHighlightTransfer(rgba, {
+      interpretation: "meteosatIr108Gray",
+    });
     expect(out[3]).toBe(0);
     expect(out[7]).toBeLessThan(40);
     expect(out[11]).toBeGreaterThan(out[7]!);
@@ -130,14 +132,14 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
     expect(out[8]).toBe(CLOUD_HIGHLIGHT_RGB.r);
   });
 
-  it("maps colder/brighter IR luma to higher cloud alpha (monotonic)", () => {
-    expect(cloudHighlightAlpha01FromIrLuma(50)).toBe(0);
-    expect(cloudHighlightAlpha01FromIrLuma(100)).toBe(0);
-    expect(cloudHighlightAlpha01FromIrLuma(148)).toBeGreaterThan(0.4);
-    expect(cloudHighlightAlpha01FromIrLuma(148)).toBeLessThan(
-      cloudHighlightAlpha01FromIrLuma(195),
+  it("maps colder canonical IR to higher cloud confidence (monotonic)", () => {
+    expect(cloudConfidence01FromCanonicalIR(50 / 255)).toBe(0);
+    expect(cloudConfidence01FromCanonicalIR(0.3)).toBe(0);
+    expect(cloudConfidence01FromCanonicalIR(0.52)).toBeGreaterThan(0.4);
+    expect(cloudConfidence01FromCanonicalIR(0.52)).toBeLessThan(
+      cloudConfidence01FromCanonicalIR(0.82),
     );
-    expect(cloudHighlightAlpha01FromIrLuma(195)).toBe(1);
+    expect(cloudConfidence01FromCanonicalIR(1)).toBe(1);
   });
 
   it("freshness uses observation age, not fetch time", () => {

@@ -15,7 +15,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   applyCloudHighlightTransfer,
   CLOUD_HIGHLIGHT_RGB,
-  cloudHighlightAlpha01FromIrLuma,
+  cloudConfidence01FromCanonicalIR,
 } from "./cloudHighlightTransfer";
 import {
   CLOUDS_COVERAGE_PROVIDER_ALPHA_MIN,
@@ -151,7 +151,7 @@ describe("WEATHER-4.1 coverage vs cloud signal", () => {
     ]);
     const mask = extractCloudsCoverageMask(provider);
     expect(Array.from(mask)).toEqual([0, 255, 255, 255]);
-    const planes = materializeCloudsSourcePlanes(provider);
+    const planes = materializeCloudsSourcePlanes(provider, "meteosatIr108Gray");
     expect(planes.coverageMask[0]).toBe(0);
     expect(planes.cloudRgba[3]).toBe(0);
     expect(planes.cloudRgba[0]).toBe(0);
@@ -166,7 +166,7 @@ describe("WEATHER-4.1 coverage vs cloud signal", () => {
 
   it("warm opaque pixel is coverage true and cloud signal 0", () => {
     const warm = rgbaPixel(40, 40, 40, 255);
-    const planes = materializeCloudsSourcePlanes(warm);
+    const planes = materializeCloudsSourcePlanes(warm, "gibsBand13ColorMap");
     expect(planes.coverageMask[0]).toBe(255);
     expect(planes.cloudRgba[3]).toBe(0);
     expect(isCloudsAuthoritativeClear(255, 0)).toBe(true);
@@ -175,21 +175,27 @@ describe("WEATHER-4.1 coverage vs cloud signal", () => {
 
   it("GIBS partial-alpha limb pixel is coverage if provider alpha > 0", () => {
     const edge = rgbaPixel(180, 180, 180, 64);
-    const planes = materializeCloudsSourcePlanes(edge);
+    const planes = materializeCloudsSourcePlanes(edge, "gibsBand13ColorMap");
     expect(planes.coverageMask[0]).toBe(255);
     expect(planes.cloudRgba[3]).toBeGreaterThan(0);
     expect(planes.cloudRgba[3]).toBeLessThan(255);
   });
 
-  it("IR transfer is unchanged (Rec.601 smoothstep, RGB, provider-A multiply)", () => {
+  it("IR transfer keeps restrained RGB and multiplies provider alpha", () => {
     const cold = rgbaPixel(210, 210, 210, 255);
-    const out = applyCloudHighlightTransfer(cold);
+    const out = applyCloudHighlightTransfer(cold, {
+      interpretation: "meteosatIr108Gray",
+    });
     expect(out[0]).toBe(CLOUD_HIGHLIGHT_RGB.r);
     expect(out[1]).toBe(CLOUD_HIGHLIGHT_RGB.g);
     expect(out[2]).toBe(CLOUD_HIGHLIGHT_RGB.b);
-    expect(out[3]).toBe(Math.round(cloudHighlightAlpha01FromIrLuma(210) * 255));
+    expect(out[3]).toBe(
+      Math.round(cloudConfidence01FromCanonicalIR(210 / 255) * 255),
+    );
     const missing = rgbaPixel(255, 255, 255, 0);
-    const cleared = applyCloudHighlightTransfer(missing);
+    const cleared = applyCloudHighlightTransfer(missing, {
+      interpretation: "gibsBand13ColorMap",
+    });
     expect(cleared[0]).toBe(0);
     expect(cleared[1]).toBe(0);
     expect(cleared[2]).toBe(0);

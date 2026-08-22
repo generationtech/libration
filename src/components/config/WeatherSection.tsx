@@ -91,7 +91,7 @@ export function WeatherSection(props: {
               step={0.05}
               disabled={!mutable}
               aria-label="Cloud opacity"
-              title="User opacity multiplies the IR-derived cloud-highlight alpha. Does not persist observation time."
+              title="User opacity multiplies the satellite-derived cloud depiction. Does not persist observation time."
               value={opacity}
               onChange={
                 mutable

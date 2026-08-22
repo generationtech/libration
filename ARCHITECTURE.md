@@ -125,9 +125,19 @@ See [ADR 0023](docs/decisions/0023-observational-composites-heterogeneous-observ
 
 **Rationale.** Provider valid-data answers whether a source observed a pixel. Viewing geometry answers whether that observation should be preferred in overlap. Derived highlight answers only how clouds look. Conflating those three either punches holes in coverage or lets a worse disk edge overwrite a better view because it is one cadence newer.
 
-**Consequence.** Clouds keep a per-source `coverageMask`, `qualityWeight`, and `cloudSignal`. The ring remains a coverage backstop and cannot reappear under valid regional coverage, including quality=0 authoritative clear. Residual radiometric mismatch after a correct geometric handoff is a presentation problem, not an authority defect. Do not blend overlapping observations to hide that mismatch.
+**Consequence.** Clouds keep a per-source `coverageMask`, `qualityWeight`, and `cloudSignal`. The ring remains a coverage backstop and cannot reappear under valid regional coverage, including quality=0 authoritative clear. Residual source-handoff contrast after a correct geometric winner is a presentation problem, not an authority defect. Do not blend overlapping observations to hide that mismatch. Provider display interpretation is [§3.9](#39-heterogeneous-display-rasters-are-normalized-before-shared-presentation).
 
 See [ADR 0024](docs/decisions/0024-observational-quality-distinct-from-coverage.md).
+
+### 3.9 Heterogeneous display rasters are normalized before shared presentation
+
+**Boundary.** Observational provider rasters that are display visualizations, not a common physical field, are converted through a fixed per-provider interpretation into a canonical scalar before shared appearance semantics run. Source authority does not depend on that scalar.
+
+**Rationale.** Geostationary IR products Libration consumes are not one grayscale. GIBS Band13 WMS is a false-color visualization; Meteosat and the EUMET ring are different inverted stretches. Rec.601 luma of those encodings is not comparable, so a shared luma transfer paints some providers’ clear sky as cloud. Lifts and blending do not create a common physical axis.
+
+**Consequence.** Clouds interpret GIBS Band13 through the published colormap into canonical display IR, and interpret Meteosat/ring grayscale through documented stretches. One conservative cloud-confidence curve then produces the white/gray overlay. Valid-clear remains coverage with confidence 0. Canvas still receives one composed RGBA. Do not treat the canonical scalar as brightness temperature or optical depth. Do not expose per-provider calibration in the UI.
+
+See [ADR 0025](docs/decisions/0025-heterogeneous-display-normalized-before-shared-presentation.md).
 
 ---
 

@@ -29,11 +29,10 @@ import {
 } from "./cloudProvenance";
 import {
   applyCloudHighlightTransfer,
-  CLOUD_HIGHLIGHT_TRANSFER_VERSION,
-  liftEumetIrLuma,
-  liftMsgFesIrLuma,
+  activeCloudsTransferVersion,
 } from "./cloudHighlightTransfer";
 import { materializeCloudsSourcePlanes } from "./cloudCoverage";
+import type { CloudIrInterpretationKind } from "./cloudIrInterpretation";
 import {
   CLOUDS_GIBS_GOES_EAST_LAYER,
   CLOUDS_GIBS_GOES_WEST_LAYER,
@@ -188,10 +187,12 @@ function encodeGlobalCloudsIrFixturePng(): Uint8Array {
   return encoded;
 }
 
-function lumaMapForProvider(provider: CloudsProviderKind): ((luma: number) => number) | undefined {
-  if (provider === CLOUDS_PROVIDER_EUMET) return liftEumetIrLuma;
-  if (provider === CLOUDS_PROVIDER_EUMET_MSG_FES) return liftMsgFesIrLuma;
-  return undefined;
+function interpretationForProvider(
+  provider: CloudsProviderKind,
+): CloudIrInterpretationKind {
+  if (provider === CLOUDS_PROVIDER_EUMET) return "eumetRingIr108Gray";
+  if (provider === CLOUDS_PROVIDER_EUMET_MSG_FES) return "meteosatIr108Gray";
+  return "gibsBand13ColorMap";
 }
 
 export function produceGlobalCloudsIrFixtureAcquisition(
@@ -512,9 +513,11 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
     const spec = CLOUDS_SECTOR_SPECS[sectorId];
     const wall = nowMs();
     const existing = latestCached(cache.get(sectorId));
+    const transferVersion = activeCloudsTransferVersion();
     if (
       sectorId === CLOUDS_SECTOR_EUMET_RING &&
       existing !== null &&
+      existing.transferVersion === transferVersion &&
       lastRingFetchAtMs !== null &&
       wall - lastRingFetchAtMs < CLOUDS_EUMET_RING_MIN_REFETCH_MS &&
       wall - existing.observationTimeMs <= spec.staleMaxAgeMs
@@ -523,6 +526,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
     }
     if (
       existing !== null &&
+      existing.transferVersion === transferVersion &&
       times[0] !== undefined &&
       times[0] === existing.observationTimeMs
     ) {
@@ -537,7 +541,11 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         lastError = `${sectorId} observation expired`;
         continue;
       }
-      if (existing !== null && observationTimeMs === existing.observationTimeMs) {
+      if (
+        existing !== null &&
+        existing.transferVersion === transferVersion &&
+        observationTimeMs === existing.observationTimeMs
+      ) {
         return;
       }
       const probeUrl = buildSectorGetMapUrl(sectorId, observationTimeMs, true);
@@ -582,10 +590,9 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         lastError = `${sectorId} decode failed`;
         continue;
       }
-      const mapIrLuma = lumaMapForProvider(spec.providerKind);
       const planes = materializeCloudsSourcePlanes(
         decoded.rgba,
-        mapIrLuma !== undefined ? { mapIrLuma } : {},
+        spec.irInterpretation,
       );
       void getCloudsQualityPlane(sectorId, decoded.width, decoded.height);
       const acquiredAtMs = nowMs();
@@ -596,7 +603,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
         height: decoded.height,
         highlightRgba: planes.cloudRgba,
         coverageMask: planes.coverageMask,
-        transferVersion: CLOUD_HIGHLIGHT_TRANSFER_VERSION,
+        transferVersion,
       };
       cache.set(sectorId, retainSector(cache.get(sectorId) ?? [], next));
       if (sectorId === CLOUDS_SECTOR_EUMET_RING) {
@@ -666,7 +673,7 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
     if (meta === null) {
       return { ok: false, error: "clouds composite metadata failed" };
     }
-    const compositeKey = `${tintComposite !== undefined ? "tint" : "plain"}|${painted
+    const compositeKey = `${activeCloudsTransferVersion()}|${tintComposite !== undefined ? "tint" : "plain"}|${painted
       .map((c) => `${c.sectorId}:${c.observationTimeMs}`)
       .sort()
       .join("|")}`;
@@ -759,16 +766,9 @@ export function materializeCloudsHighlightStoreEntry(entry: {
   const decoded = decodeCloudsPngRgba(bytes);
   if (decoded === null) return null;
   const provider = entry.record.body.cloudProviderKind;
-  const highlight = applyCloudHighlightTransfer(
-    decoded.rgba,
-    provider === CLOUDS_PROVIDER_EUMET ||
-      provider === CLOUDS_PROVIDER_EUMET_MSG_FES
-      ? {
-          mapIrLuma:
-            provider === CLOUDS_PROVIDER_EUMET ? liftEumetIrLuma : liftMsgFesIrLuma,
-        }
-      : {},
-  );
+  const highlight = applyCloudHighlightTransfer(decoded.rgba, {
+    interpretation: interpretationForProvider(provider ?? CLOUDS_PROVIDER_GIBS),
+  });
   const encoded = encodeRgbaPng(decoded.width, decoded.height, highlight);
   if (encoded === null) return null;
   return {

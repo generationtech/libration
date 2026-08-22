@@ -227,17 +227,30 @@ export type {
 } from "./cloudProvenance";
 
 export {
-  CLOUD_HIGHLIGHT_LUMA_HI,
-  CLOUD_HIGHLIGHT_LUMA_LO,
+  CLOUD_CONFIDENCE_KNOTS,
   CLOUD_HIGHLIGHT_RGB,
   CLOUD_HIGHLIGHT_TRANSFER_VERSION,
-  EUMET_IR_LUMA_LIFT,
-  MSG_FES_IR_LUMA_LIFT,
+  LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION,
+  LEGACY_WX3_EUMET_IR_LUMA_LIFT,
+  LEGACY_WX3_LUMA_HI,
+  LEGACY_WX3_LUMA_LO,
+  LEGACY_WX3_MSG_FES_IR_LUMA_LIFT,
+  activeCloudsTransferVersion,
   applyCloudHighlightTransfer,
-  cloudHighlightAlpha01FromIrLuma,
-  liftEumetIrLuma,
-  liftMsgFesIrLuma,
+  applyLegacyWx3CloudHighlightTransfer,
+  applyLegacyWx3CloudHighlightTransferInPlace,
+  cloudConfidence01FromCanonicalIR,
+  legacyWx3CloudHighlightAlpha01FromIrLuma,
+  rec601Luma8,
 } from "./cloudHighlightTransfer";
+
+export {
+  CLOUD_IR_INTERPRETATION_KINDS,
+  EUMET_RING_CANONICAL_IR_BLACK,
+  canonicalIR01FromProviderRgb,
+  isCloudIrInterpretationKind,
+} from "./cloudIrInterpretation";
+export type { CloudIrInterpretationKind } from "./cloudIrInterpretation";
 
 export {
   CLOUDS_COVERAGE_PROVIDER_ALPHA_MIN,

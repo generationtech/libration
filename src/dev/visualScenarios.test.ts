@@ -106,6 +106,18 @@ describe("visual scenario query parsing", () => {
     expect(getDevCloudsSectorDebugTint()).not.toBeNull();
   });
 
+  it("ordinary cloudsTransfer and cloudsSectorDebug=canonical are not visual scenarios", () => {
+    expect(parseVisualScenarioQuery("?cloudsTransfer=legacy")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsTransfer=legacy").kind).toBe(
+      "inactive",
+    );
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=canonical")).toBeNull();
+    expect(
+      applyVisualScenarioFromLocation("?cloudsSectorDebug=canonical").kind,
+    ).toBe("inactive");
+    expect(getDevCloudsSectorDebugTint()).toBeNull();
+  });
+
   it("ordinary cloudsSectorDebug=winner and quality are not visual scenarios", () => {
     expect(parseVisualScenarioQuery("?cloudsSectorDebug=winner")).toBeNull();
     expect(applyVisualScenarioFromLocation("?cloudsSectorDebug=winner").kind).toBe(

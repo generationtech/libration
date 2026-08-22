@@ -85,7 +85,7 @@ Fixture bytes are application-local test and demo content and are described as s
 
 ## Materialization
 
-Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Clouds decodes PNG and applies the IR→cloud-highlight transfer during acquisition/materialization, outside the frame. The unused Model A cloud-opacity materializer is not armed in production.
+Acquired bytes are not consumed directly by layers. A **materializer** converts a snapshot into a prepared, synchronously readable view (`dynamicEquirectMaterializer.ts`, `dynamicPointFeaturesMaterializer.ts`, `dynamicTracksMaterializer.ts`, `dynamicCloudOpacityMaterializer.ts`). Clouds decodes PNG and applies provider display interpretation plus the shared cloud-confidence transfer during acquisition/materialization, outside the frame. The unused Model A cloud-opacity materializer is not armed in production.
 
 Layers read prepared views. If no prepared view exists for the current product instant, the layer contributes nothing.
 

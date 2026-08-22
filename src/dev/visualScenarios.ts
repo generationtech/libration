@@ -24,6 +24,10 @@ import {
   parseNightVeilTransferId,
   setDevNightVeilTransferOverride,
 } from "../core/nightVeilFromSolarAltitude";
+import {
+  parseCloudsDisplayTransferId,
+  setDevCloudsDisplayTransferOverride,
+} from "../lifecycle/cloudsDisplayTransfer";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setDevCloudsSectorDebugTint,
@@ -1089,15 +1093,22 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   );
   const curveId = parseNightVeilTransferId(parseSearchParams(search).get("nightVeilCurve"));
   setDevNightVeilTransferOverride(curveId);
+  const params = parseSearchParams(search);
   const sectorDebugMode =
-    session.kind !== "applied"
-      ? parseCloudsSectorDebugMode(parseSearchParams(search).get("cloudsSectorDebug"))
-      : null;
-  if (sectorDebugMode !== null) {
-    setDevCloudsSectorDebugMode(sectorDebugMode);
-    setDevCloudsSectorDebugTint(applyDevCloudsSectorDebugTint);
-  } else {
+    session.kind !== "applied" ? parseCloudsSectorDebugMode(params.get("cloudsSectorDebug")) : null;
+  const transferId =
+    session.kind !== "applied" ? parseCloudsDisplayTransferId(params.get("cloudsTransfer")) : null;
+  if (sectorDebugMode === "canonical") {
+    setDevCloudsDisplayTransferOverride("canonicalIR");
     setDevCloudsSectorDebugTint(null);
+  } else {
+    setDevCloudsDisplayTransferOverride(transferId);
+    if (sectorDebugMode !== null) {
+      setDevCloudsSectorDebugMode(sectorDebugMode);
+      setDevCloudsSectorDebugTint(applyDevCloudsSectorDebugTint);
+    } else {
+      setDevCloudsSectorDebugTint(null);
+    }
   }
   if (session.kind === "unknown") {
     console.error(

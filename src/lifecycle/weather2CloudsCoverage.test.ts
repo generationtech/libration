@@ -12,10 +12,7 @@
  */
 
 import { describe, expect, it, vi } from "vitest";
-import {
-  applyCloudHighlightTransfer,
-  liftEumetIrLuma,
-} from "./cloudHighlightTransfer";
+import { applyCloudHighlightTransfer } from "./cloudHighlightTransfer";
 import {
   cloudsConfigStatusHintCopy,
   resolveCloudsProvenance,
@@ -229,7 +226,9 @@ describe("WEATHER-2 EUMET request, selection, coverage", () => {
 
   it("EUMET luma lift does not paint provider-alpha-0 as cloud", () => {
     const rgba = new Uint8Array([200, 200, 200, 0, 70, 70, 70, 255]);
-    const out = applyCloudHighlightTransfer(rgba, { mapIrLuma: liftEumetIrLuma });
+    const out = applyCloudHighlightTransfer(rgba, {
+      interpretation: "eumetRingIr108Gray",
+    });
     expect(out[3]).toBe(0);
     expect(out[7]).toBe(0);
   });

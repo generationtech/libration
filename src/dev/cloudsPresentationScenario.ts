@@ -17,7 +17,7 @@
  * be exercised without GIBS. Origin is fixture; never labeled live.
  */
 
-import { applyCloudHighlightTransfer, liftEumetIrLuma } from "../lifecycle/cloudHighlightTransfer";
+import { applyCloudHighlightTransfer } from "../lifecycle/cloudHighlightTransfer";
 import { CLOUDS_GLOBAL_COVERAGE_NOTE } from "../lifecycle/cloudProvenance";
 import { CLOUDS_PROVIDER_EUMET } from "../lifecycle/cloudsSourceSelection";
 import { decodeCloudsPngRgba, encodeRgbaPng } from "../lifecycle/cloudsPng";
@@ -57,7 +57,7 @@ export function buildCloudsPresentationPreparedEquirectView(): PreparedEquirectR
     throw new Error("clouds scenario: fixture PNG decode failed");
   }
   const highlight = applyCloudHighlightTransfer(decoded.rgba, {
-    mapIrLuma: liftEumetIrLuma,
+    interpretation: "eumetRingIr108Gray",
   });
   const encoded = encodeRgbaPng(decoded.width, decoded.height, highlight);
   const bytes = encoded ?? result.entry.payloadBytes;

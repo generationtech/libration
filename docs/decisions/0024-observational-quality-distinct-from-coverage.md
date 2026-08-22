@@ -35,7 +35,7 @@ The exact 55°/75° geostationary transfer curve is an implementation choice, no
 
 **Costs.**
 
-- Residual radiometric/presentation mismatch between providers can still be visible near the quality handoff. That is expected until a later presentation/normalization item.
+- Residual source-handoff contrast can remain after a correct geometric winner. [ADR 0025](0025-heterogeneous-display-normalized-before-shared-presentation.md) requires provider display rasters to be normalized into a canonical domain before shared cloud-confidence presentation; it does not authorize blending to hide leftover mismatch.
 - Overlap policy is more than freshness. Status and diagnostics must be able to show coverage, quality, winner, and signal separately in DEV.
 
-**Explicitly not decided.** Exact zenith cutoffs, overlap feathering, quality-weighted blending, radiometric normalization, IR wash redesign, numeric brightness-temperature products, and visible/IR hybrid presentation remain later work.
+**Explicitly not decided.** Exact zenith cutoffs, overlap feathering, quality-weighted blending, numeric brightness-temperature products, and visible/IR hybrid presentation remain later work.

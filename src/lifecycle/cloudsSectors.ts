@@ -13,8 +13,11 @@
 
 /**
  * Clouds v3 geographic sectors. Each sector owns observation time, freshness,
- * and cadence. Do not force a common mosaic TIME across sectors.
+ * cadence, and the fixed IR display interpretation for its provider raster.
+ * Do not force a common mosaic TIME across sectors.
  */
+
+import type { CloudIrInterpretationKind } from "./cloudIrInterpretation";
 
 export const CLOUDS_SECTOR_EUMET_RING = "eumet-ring" as const;
 export const CLOUDS_SECTOR_GOES_WEST = "goes-west" as const;
@@ -162,6 +165,8 @@ export type CloudsSectorSpec = Readonly<{
   isRing: boolean;
   /** Viewing geometry for regional GEO quality. Omitted for the multi-satellite ring. */
   geoSubSatellite?: CloudsGeoSubSatellite;
+  /** Fixed provider display → canonicalIR interpretation. */
+  irInterpretation: CloudIrInterpretationKind;
 }>;
 
 export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSpec>> = {
@@ -174,6 +179,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     staleMaxAgeMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
     minRefetchMs: CLOUDS_EUMET_RING_MIN_REFETCH_MS,
     isRing: true,
+    irInterpretation: "eumetRingIr108Gray",
   },
   [CLOUDS_SECTOR_GOES_WEST]: {
     id: CLOUDS_SECTOR_GOES_WEST,
@@ -185,6 +191,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
     geoSubSatellite: CLOUDS_GOES_WEST_SUB_SATELLITE,
+    irInterpretation: "gibsBand13ColorMap",
   },
   [CLOUDS_SECTOR_GOES_EAST]: {
     id: CLOUDS_SECTOR_GOES_EAST,
@@ -196,6 +203,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
     geoSubSatellite: CLOUDS_GOES_EAST_SUB_SATELLITE,
+    irInterpretation: "gibsBand13ColorMap",
   },
   [CLOUDS_SECTOR_METEOSAT]: {
     id: CLOUDS_SECTOR_METEOSAT,
@@ -207,6 +215,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
     geoSubSatellite: CLOUDS_METEOSAT_SUB_SATELLITE,
+    irInterpretation: "meteosatIr108Gray",
   },
   [CLOUDS_SECTOR_HIMAWARI]: {
     id: CLOUDS_SECTOR_HIMAWARI,
@@ -218,6 +227,7 @@ export const CLOUDS_SECTOR_SPECS: Readonly<Record<CloudsSectorId, CloudsSectorSp
     minRefetchMs: 8 * 60 * 1000,
     isRing: false,
     geoSubSatellite: CLOUDS_HIMAWARI_SUB_SATELLITE,
+    irInterpretation: "gibsBand13ColorMap",
   },
 };
 
@@ -264,4 +274,10 @@ export function cloudsSectorFreshMaxAgeMs(sectorId: CloudsSectorId): number {
 
 export function cloudsSectorStaleMaxAgeMs(sectorId: CloudsSectorId): number {
   return CLOUDS_SECTOR_SPECS[sectorId].staleMaxAgeMs;
+}
+
+export function cloudsSectorIrInterpretation(
+  sectorId: CloudsSectorId,
+): CloudIrInterpretationKind {
+  return CLOUDS_SECTOR_SPECS[sectorId].irInterpretation;
 }

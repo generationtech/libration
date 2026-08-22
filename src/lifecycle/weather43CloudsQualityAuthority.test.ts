@@ -13,11 +13,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  CLOUD_HIGHLIGHT_LUMA_HI,
-  CLOUD_HIGHLIGHT_LUMA_LO,
   CLOUD_HIGHLIGHT_RGB,
-  EUMET_IR_LUMA_LIFT,
-  MSG_FES_IR_LUMA_LIFT,
+  CLOUD_HIGHLIGHT_TRANSFER_VERSION,
 } from "./cloudHighlightTransfer";
 import {
   extractCloudsCoverageMask,
@@ -140,7 +137,7 @@ describe("WEATHER-4.3 coverage vs quality", () => {
     expect(q0).toBe(0);
     expect(isCloudsAuthoritativeClear(255, 0)).toBe(true);
     expect(isCloudsAuthoritativeClear(0, 0)).toBe(false);
-    const planes = materializeCloudsSourcePlanes(provider);
+    const planes = materializeCloudsSourcePlanes(provider, "meteosatIr108Gray");
     expect(planes.coverageMask[0]).toBe(255);
     expect(planes.coverageMask[1]).toBe(0);
   });
@@ -657,11 +654,8 @@ describe("WEATHER-4.3 other overlaps", () => {
 });
 
 describe("WEATHER-4.3 presentation regressions", () => {
-  it("does not change IR transfer constants", () => {
-    expect(CLOUD_HIGHLIGHT_LUMA_LO).toBe(100);
-    expect(CLOUD_HIGHLIGHT_LUMA_HI).toBe(195);
-    expect(EUMET_IR_LUMA_LIFT).toBe(12);
-    expect(MSG_FES_IR_LUMA_LIFT).toBe(20);
+  it("keeps restrained cloud RGB; WEATHER-5.1 owns the transfer version", () => {
     expect(CLOUD_HIGHLIGHT_RGB).toEqual({ r: 248, g: 250, b: 252 });
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx5-cloud-v2");
   });
 });
