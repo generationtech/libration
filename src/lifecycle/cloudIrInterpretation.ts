@@ -17,6 +17,9 @@
  * Provider differences belong here. Shared cloud-confidence transfer runs
  * after this, once. Do not bury calibration in Canvas or in Rec.601 luma.
  *
+ * GIBS Band13: chromatic → 64³ colormap LUT; near-gray → warm-gray luma
+ * branch. Meteosat IR108 and the EUMET ring remain grayscale stretches.
+ *
  * canonicalIR01: 0 = warm / surface-like / low cloud evidence;
  *                1 = cold / high-cloud-like / strong cloud evidence.
  * This is not brightness temperature unless a later product inverts a

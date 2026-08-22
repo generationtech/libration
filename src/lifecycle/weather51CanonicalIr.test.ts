@@ -51,8 +51,10 @@ import {
   canonicalIR01FromGibsRgb,
   ensureGibsBand13ColorMapLut,
   GIBS_BAND13_COLORMAP_AUTHORITY,
+  gibsBand13Chroma,
   gibsBand13ColormapDistance2,
   projectRgbOntoGibsBand13Colormap,
+  setDevGibsGrayInterpretationOverride,
 } from "./gibsBand13ColorMap";
 import { GIBS_BAND13_COLORMAP_RGB_TC } from "./gibsBand13ColorMapData";
 
@@ -102,6 +104,7 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
 
   beforeEach(() => {
     setDevCloudsDisplayTransferOverride(null);
+    setDevGibsGrayInterpretationOverride(null);
   });
 
   it("documents GIBS colormap authority and does not claim Kelvin inversion", () => {
@@ -112,7 +115,7 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
       GIBS_BAND13_COLORMAP_RGB_TC.length,
     );
     expect(GIBS_BAND13_COLORMAP_AUTHORITY.units).toBe("°C");
-    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx5-cloud-v2");
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx54-gibs-gray-v3");
     expect(LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx3-ir-v1");
     expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).not.toBe(
       LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION,
@@ -146,18 +149,11 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
   it("maps known GIBS cold/high-cloud colors high, including chromatic pixels", () => {
     const magenta = GIBS_BAND13_COLORMAP_RGB_TC[1]!;
     const redCold = GIBS_BAND13_COLORMAP_RGB_TC[32]!;
-    const whiteCold = GIBS_BAND13_COLORMAP_RGB_TC[0]!;
     expect(magenta).toEqual([127, 0, 127, -9060]);
     const magIR = canonicalIR01FromGibsRgb(magenta[0], magenta[1], magenta[2]);
     const redIR = canonicalIR01FromGibsRgb(redCold[0], redCold[1], redCold[2]);
-    const whiteIR = canonicalIR01FromGibsRgb(
-      whiteCold[0],
-      whiteCold[1],
-      whiteCold[2],
-    );
     expect(magIR).toBeGreaterThan(0.95);
     expect(redIR).toBeGreaterThan(0.75);
-    expect(whiteIR).toBeGreaterThan(0.99);
     expect(confidenceOf(rgbaOf(127, 0, 127), "gibsBand13ColorMap")).toBeGreaterThan(
       0.9,
     );
@@ -219,10 +215,11 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
     );
   });
 
-  it("preserves colormap legend order even when Rec.601 luma is non-monotonic", () => {
+  it("preserves chromatic colormap legend order even when Rec.601 luma is non-monotonic", () => {
     let prev = -1;
     for (let i = GIBS_BAND13_COLORMAP_RGB_TC.length - 1; i >= 0; i--) {
       const e = GIBS_BAND13_COLORMAP_RGB_TC[i]!;
+      if (gibsBand13Chroma(e[0], e[1], e[2]) <= 8) continue;
       const conf = cloudConfidence01FromCanonicalIR(
         canonicalIR01FromGibsRgb(e[0], e[1], e[2]),
       );

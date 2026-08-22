@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-075](work/LIB-075-weather-5-3-1-ring-component-geometry-quality.md) — WEATHER-5.3.1: Ring component-geometry quality
+[LIB-077](work/LIB-077-weather-5-4-1-chroma-aware-gibs-near-gray-inversion.md) — WEATHER-5.4.1: Chroma-aware GIBS Band13 near-gray inversion
 
 ## Blockers
 
@@ -37,8 +37,10 @@ Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-inve
 
 Proposed [LIB-072](work/LIB-072-weather-5-2-residual-cloud-boundary-provenance-investigation.md) WEATHER-5.2 residual cloud-boundary provenance survey stays proposed (investigation only; not activated). LIB-073 implemented its ring-over-q0 recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
 
-Proposed [LIB-074](work/LIB-074-weather-5-3-ring-artifact-provenance-and-cross-source-texture-investigation.md) WEATHER-5.3 ring-artifact provenance and cross-source texture survey stays proposed (investigation only; not activated). LIB-075 implemented its ring component-geometry quality recommendation. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+Proposed [LIB-074](work/LIB-074-weather-5-3-ring-artifact-provenance-and-cross-source-texture-investigation.md) WEATHER-5.3 ring-artifact provenance and cross-source texture survey stays proposed (investigation only; not activated). LIB-075 implemented its ring component-geometry quality recommendation. Do not start ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+
+Proposed [LIB-076](work/LIB-076-weather-5-4-cross-source-cloud-radiometric-equivalence-investigation.md) WEATHER-5.4 cross-source cloud radiometric equivalence survey stays proposed (investigation only; not activated). LIB-077 implemented its chroma-aware GIBS near-gray recommendation. Do not start ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
 
 ## Next action
 
-Awaiting scope. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
+Awaiting scope. Do not start WEATHER-5.5 ring calibration, q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.

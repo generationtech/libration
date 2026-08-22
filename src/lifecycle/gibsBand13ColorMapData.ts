@@ -24,6 +24,19 @@
  * visualization legend coordinate, not inverted Kelvin from a PNG.
  */
 
+/**
+ * Branch indices into `GIBS_BAND13_COLORMAP_RGB_TC`.
+ *
+ * The published Band13 visualization reuses the RGB gray diagonal twice:
+ * a short cold-gray ramp after magenta (−79.6…−70.6 °C) and a long
+ * warm-gray ramp after cyan (−18.85…+57 °C). Those RGB values are not a
+ * unique thermal coordinate. Near-gray WMS pixels invert along the warm
+ * branch only; see `gibsBand13ColorMap.ts`.
+ */
+export const GIBS_BAND13_COLD_GRAY_START_INDEX = 12;
+export const GIBS_BAND13_COLD_GRAY_END_INDEX = 21;
+export const GIBS_BAND13_WARM_GRAY_START_INDEX = 85;
+
 export const GIBS_BAND13_COLORMAP_AUTHORITY = {
   url: "https://gibs.earthdata.nasa.gov/colormaps/v1.3/Clean_Longwave_Infrared_Window_Band.xml",
   retrieved: "2026-08-22",
@@ -32,6 +45,10 @@ export const GIBS_BAND13_COLORMAP_AUTHORITY = {
   legendMinLabel: "-92.0",
   legendMaxLabel: "> 57.0",
   entryCount: 238,
+  coldGrayStartIndex: GIBS_BAND13_COLD_GRAY_START_INDEX,
+  coldGrayEndIndex: GIBS_BAND13_COLD_GRAY_END_INDEX,
+  warmGrayStartIndex: GIBS_BAND13_WARM_GRAY_START_INDEX,
+  paletteVersion: "gibs-v1.3-2026-08-22",
 } as const;
 
 /** Ordered warm-ward through the published colormap (index 0 = coldest legend). */

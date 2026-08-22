@@ -412,4 +412,10 @@ WEATHER-5.3.1: independent ring quality from documented component GEO geometry (
 
 Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 123 passed; `npm test` 269 files / 2588 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `q0ring` / `ringQuality` / `ringComponent` in `dist/`. Ring ownership 452,353 → 129,882 on LIB-074 17:41Z rasters; SIO seam 1.31 (was ~8.03); Antarctic 1.03; NATL/Pacific usable mismatch 0. Cursor Browser ordinary live **Clouds · observations 33m–3h / 23m–3h old**, winner / ringQuality / ringComponent diagnostics, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-074 stays proposed. Do not start Himawari texture repair, ring black-point retune, later q>0 blending, or WEATHER-6.
 
+## 2026-08-22 — LIB-077 complete
+
+WEATHER-5.4.1: chroma-aware GIBS Band13 near-gray inversion. Chromatic pixels keep the 64³ LUT; near-gray pixels invert along the warm-gray legend so WMS-resampled gray 102 cannot snap to false cold IR ~0.89. Same mapping for East/West/Himawari. Authority, ring, BP56, confidence, opacity unchanged. Cache `wx54-gibs-gray-v3`. ADR 0025 consequence amended.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 155 passed; `npm test` 270 files / 2603 passed / 0 failed; `npm run build` succeeded with no `cloudsGibsGray` / `cloudsSectorDebug` / `visualScenarios` / `cloudsTransfer` in `dist/`. 101/102/103 monotone; GOES clear conf 0; synthetic India/Pacific grain <25% of legacy LUT. Cursor Browser ordinary live **Clouds · observations 32m–3h / 21m–3h old**, winner debug, legacy vs hybrid, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-076 stays proposed. Do not start WEATHER-5.5, q>0 blending, or WEATHER-6.
+
 

@@ -23,8 +23,13 @@
  *   ?cloudsSectorDebug=ringComponent — inferred max-quality ring component
  *   ?cloudsSectorDebug=signal — derived cloud-confidence winners
  *   ?cloudsSectorDebug=canonical — winner canonical display-IR (grayscale)
+ *   ?cloudsSectorDebug=gibsGray — GIBS near-gray warm-branch vs chromatic LUT
  *   ?cloudsSectorDebug=leak — pixels where the selected source is clear and
  *     suppressed another source's cloud
+ *
+ * Ordinary current-time comparison (not a scenario):
+ *   ?cloudsGibsGray=legacy|hybrid — WEATHER-5.1 RGB-nearest LUT vs chroma-aware
+ *     warm-gray inversion on the same observations. Winner map unchanged.
  */
 
 import type { CloudsHighlightLayer } from "../lifecycle/cloudsComposite";
@@ -58,6 +63,7 @@ export type CloudsSectorDebugMode =
   | "ringComponent"
   | "signal"
   | "canonical"
+  | "gibsGray"
   | "leak";
 
 export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
@@ -110,6 +116,7 @@ export function parseCloudsSectorDebugMode(
   }
   if (v === "signal" || v === "cloud") return "signal";
   if (v === "canonical" || v === "canonicalir" || v === "ir") return "canonical";
+  if (v === "gibsgray" || v === "gibs-gray" || v === "graypath") return "gibsGray";
   if (v === "leak") return "leak";
   return null;
 }

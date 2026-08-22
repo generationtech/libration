@@ -135,7 +135,7 @@ See [ADR 0024](docs/decisions/0024-observational-quality-distinct-from-coverage.
 
 **Rationale.** Geostationary IR products Libration consumes are not one grayscale. GIBS Band13 WMS is a false-color visualization; Meteosat and the EUMET ring are different inverted stretches. Rec.601 luma of those encodings is not comparable, so a shared luma transfer paints some providers’ clear sky as cloud. Lifts and blending do not create a common physical axis.
 
-**Consequence.** Clouds interpret GIBS Band13 through the published colormap into canonical display IR, and interpret Meteosat/ring grayscale through documented stretches. One conservative cloud-confidence curve then produces the white/gray overlay. Valid-clear remains coverage with confidence 0. Canvas still receives one composed RGBA. Do not treat the canonical scalar as brightness temperature or optical depth. Do not expose per-provider calibration in the UI.
+**Consequence.** Clouds interpret GIBS Band13 through the published colormap into canonical display IR, and interpret Meteosat/ring grayscale through documented stretches. Chromatic GIBS pixels use a 64³ LUT of nearest-segment projections; near-gray GIBS pixels invert along the warm-gray legend by luma because that visualization reuses grayscale on two thermal branches and RGB-nearest lookup would turn WMS-resampled gray into false cold cloud. One conservative cloud-confidence curve then produces the white/gray overlay. Valid-clear remains coverage with confidence 0. Canvas still receives one composed RGBA. Do not treat the canonical scalar as brightness temperature or optical depth. Do not expose per-provider calibration in the UI.
 
 See [ADR 0025](docs/decisions/0025-heterogeneous-display-normalized-before-shared-presentation.md).
 

@@ -28,6 +28,10 @@ import {
   parseCloudsDisplayTransferId,
   setDevCloudsDisplayTransferOverride,
 } from "../lifecycle/cloudsDisplayTransfer";
+import {
+  parseGibsGrayInterpretationId,
+  setDevGibsGrayInterpretationOverride,
+} from "../lifecycle/gibsBand13ColorMap";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setDevCloudsSectorDebugTint,
@@ -1098,8 +1102,16 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
     session.kind !== "applied" ? parseCloudsSectorDebugMode(params.get("cloudsSectorDebug")) : null;
   const transferId =
     session.kind !== "applied" ? parseCloudsDisplayTransferId(params.get("cloudsTransfer")) : null;
+  const gibsGrayId =
+    session.kind !== "applied"
+      ? parseGibsGrayInterpretationId(params.get("cloudsGibsGray"))
+      : null;
+  setDevGibsGrayInterpretationOverride(gibsGrayId);
   if (sectorDebugMode === "canonical") {
     setDevCloudsDisplayTransferOverride("canonicalIR");
+    setDevCloudsSectorDebugTint(null);
+  } else if (sectorDebugMode === "gibsGray") {
+    setDevCloudsDisplayTransferOverride("gibsGrayPath");
     setDevCloudsSectorDebugTint(null);
   } else {
     setDevCloudsDisplayTransferOverride(transferId);

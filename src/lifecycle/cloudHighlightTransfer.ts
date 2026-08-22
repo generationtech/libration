@@ -18,7 +18,10 @@
  *   provider RGB → provider-specific canonicalIR01 → shared cloud-confidence
  *   transfer → RGB (248,250,252) with alpha = confidence × provider alpha.
  *
- * Coverage (provider has data) is extracted separately from provider alpha.
+ * GIBS Band13 (GOES-East/West/Himawari): chromatic pixels use the 64³ LUT;
+ * near-gray pixels invert along the warm-gray legend. Meteosat and the EUMET
+ * ring stay grayscale stretches. Coverage (provider has data) is extracted
+ * separately from provider alpha.
  * Cloud-confidence 0 is valid-clear, not no-data. Do not use output alpha as
  * observational authority. Not a formal cloud mask, optical depth, or
  * brightness-temperature product.
@@ -30,6 +33,10 @@ import {
   type CloudIrInterpretationKind,
 } from "./cloudIrInterpretation";
 import { getActiveCloudsDisplayTransferId } from "./cloudsDisplayTransfer";
+import {
+  getActiveGibsGrayInterpretation,
+  isGibsBand13NearGray,
+} from "./gibsBand13ColorMap";
 
 /** Factory highlight colour: restrained cool-white. */
 export const CLOUD_HIGHLIGHT_RGB = {
@@ -38,7 +45,8 @@ export const CLOUD_HIGHLIGHT_RGB = {
   b: 252,
 } as const;
 
-export const CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx5-cloud-v2";
+export const CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx54-gibs-gray-v3";
+export const LEGACY_GIBS_GRAY_TRANSFER_VERSION = "wx54-gibs-gray-legacy";
 
 export const LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx3-ir-v1";
 export const LEGACY_WX3_LUMA_LO = 100;
@@ -74,7 +82,11 @@ export const CLOUD_CONFIDENCE_KNOTS: readonly {
   { ir01: 1.0, confidence: 1.0 },
 ];
 
-export type CloudHighlightOutputMode = "confidence" | "canonicalIR";
+export type CloudHighlightOutputMode = "confidence" | "canonicalIR" | "gibsGrayPath";
+
+/** DEV classification tints. Production compose never uses this output. */
+const GIBS_GRAY_PATH_NEAR_RGB = [160, 200, 220] as const;
+const GIBS_GRAY_PATH_CHROMATIC_RGB = [220, 70, 140] as const;
 
 export type CloudHighlightTransferOptions = Readonly<{
   interpretation: CloudIrInterpretationKind;
@@ -112,6 +124,12 @@ export function activeCloudsTransferVersion(
   if (id === "legacy") return LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION;
   if (id === "canonicalIR" || output === "canonicalIR") {
     return `${CLOUD_HIGHLIGHT_TRANSFER_VERSION}-canonicalIR`;
+  }
+  if (id === "gibsGrayPath" || output === "gibsGrayPath") {
+    return `${CLOUD_HIGHLIGHT_TRANSFER_VERSION}-gibsGrayPath`;
+  }
+  if (getActiveGibsGrayInterpretation() === "legacyLut") {
+    return LEGACY_GIBS_GRAY_TRANSFER_VERSION;
   }
   return CLOUD_HIGHLIGHT_TRANSFER_VERSION;
 }
@@ -160,12 +178,17 @@ export function applyLegacyWx3CloudHighlightTransferInPlace(
 
 function resolveOutputMode(options: CloudHighlightTransferOptions): CloudHighlightOutputMode {
   if (options.output === "canonicalIR") return "canonicalIR";
-  if (getActiveCloudsDisplayTransferId() === "canonicalIR") return "canonicalIR";
+  if (options.output === "gibsGrayPath") return "gibsGrayPath";
+  const id = getActiveCloudsDisplayTransferId();
+  if (id === "canonicalIR") return "canonicalIR";
+  if (id === "gibsGrayPath") return "gibsGrayPath";
   return "confidence";
 }
 
 function resolveUseLegacy(options: CloudHighlightTransferOptions): boolean {
-  if (options.output === "canonicalIR") return false;
+  if (options.output === "canonicalIR" || options.output === "gibsGrayPath") {
+    return false;
+  }
   return getActiveCloudsDisplayTransferId() === "legacy";
 }
 
@@ -192,7 +215,30 @@ export function applyCloudHighlightTransferInPlace(
       rgba[i + 2] = 0;
       continue;
     }
-    const ir01 = canonicalIR01FromProviderRgb(kind, rgba[i]!, rgba[i + 1]!, rgba[i + 2]!);
+    const srcR = rgba[i]!;
+    const srcG = rgba[i + 1]!;
+    const srcB = rgba[i + 2]!;
+    if (output === "gibsGrayPath") {
+      if (kind === "gibsBand13ColorMap") {
+        if (isGibsBand13NearGray(srcR, srcG, srcB)) {
+          rgba[i] = GIBS_GRAY_PATH_NEAR_RGB[0];
+          rgba[i + 1] = GIBS_GRAY_PATH_NEAR_RGB[1];
+          rgba[i + 2] = GIBS_GRAY_PATH_NEAR_RGB[2];
+        } else {
+          rgba[i] = GIBS_GRAY_PATH_CHROMATIC_RGB[0];
+          rgba[i + 1] = GIBS_GRAY_PATH_CHROMATIC_RGB[1];
+          rgba[i + 2] = GIBS_GRAY_PATH_CHROMATIC_RGB[2];
+        }
+      } else {
+        const g = rec601Luma8(srcR, srcG, srcB);
+        rgba[i] = g;
+        rgba[i + 1] = g;
+        rgba[i + 2] = g;
+      }
+      rgba[i + 3] = srcA;
+      continue;
+    }
+    const ir01 = canonicalIR01FromProviderRgb(kind, srcR, srcG, srcB);
     if (output === "canonicalIR") {
       const g = Math.round(ir01 * 255);
       rgba[i] = g;

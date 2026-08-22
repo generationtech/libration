@@ -43,7 +43,7 @@ function layer(
 }
 
 describe("DEV Clouds coverage diagnostic", () => {
-  it("parses coverage, winner, quality, ringQuality, ringComponent, signal, leak, ring, and q0ring modes", () => {
+  it("parses coverage, winner, quality, ringQuality, ringComponent, signal, leak, ring, q0ring, and gibsGray modes", () => {
     expect(parseCloudsSectorDebugMode("1")).toBe("coverage");
     expect(parseCloudsSectorDebugMode("coverage")).toBe("coverage");
     expect(parseCloudsSectorDebugMode("winner")).toBe("winner");
@@ -57,6 +57,9 @@ describe("DEV Clouds coverage diagnostic", () => {
     expect(parseCloudsSectorDebugMode("ringComponent")).toBe("ringComponent");
     expect(parseCloudsSectorDebugMode("ring-source")).toBe("ringComponent");
     expect(parseCloudsSectorDebugMode("signal")).toBe("signal");
+    expect(parseCloudsSectorDebugMode("canonical")).toBe("canonical");
+    expect(parseCloudsSectorDebugMode("gibsGray")).toBe("gibsGray");
+    expect(parseCloudsSectorDebugMode("gibs-gray")).toBe("gibsGray");
     expect(parseCloudsSectorDebugMode("leak")).toBe("leak");
     expect(parseCloudsSectorDebugMode("0")).toBeNull();
   });

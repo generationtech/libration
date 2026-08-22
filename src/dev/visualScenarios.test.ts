@@ -46,6 +46,14 @@ import {
   getActiveNightVeilTransferId,
   setDevNightVeilTransferOverride,
 } from "../core/nightVeilFromSolarAltitude";
+import {
+  getActiveCloudsDisplayTransferId,
+  setDevCloudsDisplayTransferOverride,
+} from "../lifecycle/cloudsDisplayTransfer";
+import {
+  getActiveGibsGrayInterpretation,
+  setDevGibsGrayInterpretationOverride,
+} from "../lifecycle/gibsBand13ColorMap";
 
 function makeMemoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -71,6 +79,8 @@ afterEach(() => {
   resetVisualScenarioRuntime();
   setWorkingV2PersistenceSuppressed(false);
   setDevNightVeilTransferOverride(null);
+  setDevGibsGrayInterpretationOverride(null);
+  setDevCloudsDisplayTransferOverride(null);
   vi.restoreAllMocks();
 });
 
@@ -104,6 +114,25 @@ describe("visual scenario query parsing", () => {
       "inactive",
     );
     expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+  });
+
+  it("ordinary cloudsGibsGray and cloudsSectorDebug=gibsGray are not visual scenarios", () => {
+    expect(parseVisualScenarioQuery("?cloudsGibsGray=legacy")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsGibsGray=legacy").kind).toBe(
+      "inactive",
+    );
+    expect(getActiveGibsGrayInterpretation()).toBe("legacyLut");
+    expect(parseVisualScenarioQuery("?cloudsGibsGray=hybrid")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsGibsGray=hybrid").kind).toBe(
+      "inactive",
+    );
+    expect(getActiveGibsGrayInterpretation()).toBe("hybrid");
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=gibsGray")).toBeNull();
+    expect(
+      applyVisualScenarioFromLocation("?cloudsSectorDebug=gibsGray").kind,
+    ).toBe("inactive");
+    expect(getDevCloudsSectorDebugTint()).toBeNull();
+    expect(getActiveCloudsDisplayTransferId()).toBe("gibsGrayPath");
   });
 
   it("ordinary cloudsTransfer and cloudsSectorDebug=canonical are not visual scenarios", () => {

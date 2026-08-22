@@ -18,7 +18,12 @@
  * flag the DEV hatch sets.
  */
 
-export const CLOUDS_DISPLAY_TRANSFER_IDS = ["wx5", "legacy", "canonicalIR"] as const;
+export const CLOUDS_DISPLAY_TRANSFER_IDS = [
+  "wx5",
+  "legacy",
+  "canonicalIR",
+  "gibsGrayPath",
+] as const;
 
 export type CloudsDisplayTransferId = (typeof CLOUDS_DISPLAY_TRANSFER_IDS)[number];
 
@@ -41,8 +46,9 @@ export function parseCloudsDisplayTransferId(
 ): CloudsDisplayTransferId | null {
   if (raw == null || raw === "") return null;
   const v = raw.trim();
-  if (v === "wx5" || v === "wx5-cloud-v2") return "wx5";
+  if (v === "wx5" || v === "wx5-cloud-v2" || v === "wx54-gibs-gray-v3") return "wx5";
   if (v === "legacy" || v === "wx3" || v === "wx3-ir-v1") return "legacy";
   if (v === "canonicalIR" || v === "canonical" || v === "ir") return "canonicalIR";
+  if (v === "gibsGrayPath" || v === "gibsgray" || v === "graypath") return "gibsGrayPath";
   return null;
 }
