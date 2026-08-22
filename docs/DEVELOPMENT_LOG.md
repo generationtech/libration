@@ -430,4 +430,10 @@ Current-observation IR Clouds is a settled foundation: provider observations →
 
 Verified: `npx tsc --noEmit` clean; `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-Dk5E2hC_.js`); production retains `wx55-ring-identity-v1`; DEV Clouds diagnostics absent from `dist/`. No source change. No new corrective WEATHER item. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066, LIB-068, LIB-070, LIB-072, LIB-074, LIB-076, LIB-078 stay proposed.
 
+## 2026-08-22 — Libration 2.0.0 release candidate prepared
+
+Release preparation only. Application/package version metadata reconciled from `0.1.0` to `2.0.0` (`package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`). Public release notes: [`docs/releases/2.0.0.md`](releases/2.0.0.md). No product behaviour change. Tag `v2.0.0`, push, and GitHub Release were not created.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded (`libration@2.0.0`; `dist/assets/index-Dk5E2hC_.js`); production retains `wx55-ring-identity-v1`; DEV strings `cloudsRingCalibration` / `cloudsSectorDebug` / `visualScenarios` / `cloudsGibsGray` / `cloudsTransfer` / `wx55-ring-bp56` absent from `dist/`. Tag `v2.0.0` not created.
+
 

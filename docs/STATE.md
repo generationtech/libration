@@ -21,6 +21,8 @@ None
 
 ## Awaiting human decision
 
+2.0.0 release candidate is prepared (`docs/releases/2.0.0.md`; application version metadata 2.0.0). Tag `v2.0.0`, push, and GitHub Release await explicit human approval.
+
 Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track-correction.md) stays proposed.
 
 Proposed [LIB-058](work/LIB-058-earthquake-live-layer-capability-survey.md) earthquake live-layer survey stays proposed (investigation only; not activated).
