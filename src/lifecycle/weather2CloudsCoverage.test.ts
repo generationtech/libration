@@ -17,7 +17,6 @@ import {
   liftEumetIrLuma,
 } from "./cloudHighlightTransfer";
 import {
-  CLOUDS_EUMET_ATTRIBUTION,
   cloudsConfigStatusHintCopy,
   resolveCloudsProvenance,
 } from "./cloudProvenance";
@@ -27,14 +26,6 @@ import {
   formatCloudsEumetWmsTime,
 } from "./cloudsEumetWms";
 import { sampleEquirectRgbaAlpha, validateCloudsPngBytes } from "./cloudsPng";
-import {
-  CLOUDS_EUMET_FRESH_MAX_AGE_MS,
-  CLOUDS_EUMET_STALE_MAX_AGE_MS,
-  CLOUDS_GIBS_STALE_MAX_AGE_MS,
-  CLOUDS_PROVIDER_EUMET,
-  CLOUDS_PROVIDER_GIBS,
-  selectCloudsLiveAuthority,
-} from "./cloudsSourceSelection";
 import { wmsUrlHasExplicitTime } from "./cloudsGibsWms";
 import {
   CLOUDS_EUMET_TEST_OBSERVATION_MS,
@@ -43,6 +34,11 @@ import {
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
 } from "./cloudsAcquisition.testSupport";
+import {
+  CLOUDS_PROVIDER_COMPOSITE,
+  CLOUDS_PROVIDER_EUMET,
+  CLOUDS_PROVIDER_GIBS,
+} from "./cloudsSectors";
 import {
   createGlobalCloudsIrLiveHttpAcquisitionAdapter,
   produceGlobalCloudsIrFixtureAcquisition,
@@ -88,94 +84,19 @@ describe("WEATHER-2 EUMET request, selection, coverage", () => {
     const result = await adapter.acquire();
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_EUMET_TEST_OBSERVATION_MS);
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
     expect(result.entry.record.meta.acquiredAtMs).toBe(acquired);
     expect(result.entry.record.meta.validTimeMs).not.toBe(acquired);
-    expect(result.entry.record.meta.attribution).toBe(CLOUDS_EUMET_ATTRIBUTION);
+    expect(result.entry.record.meta.attribution).toContain("EUMETSAT");
     if (result.entry.record.body.kind === "equirectRaster") {
       expect(result.entry.record.body.coverageKind).toBe("global");
-      expect(result.entry.record.body.cloudProviderKind).toBe(CLOUDS_PROVIDER_EUMET);
+      expect(result.entry.record.body.cloudProviderKind).toBe(CLOUDS_PROVIDER_COMPOSITE);
     }
     const urls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("gibs.earthdata.nasa.gov") && u.includes("GetMap"))).toBe(
-      false,
+      true,
     );
-  });
-
-  it("source selection prefers usable EUMET global over fresher GIBS partial", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: { ok: true, observationAgeMs: 2.75 * 3_600_000, coverageOk: true },
-        gibs: { ok: true, observationAgeMs: 40 * 60_000, coverageOk: true },
-      }),
-    ).toBe(CLOUDS_PROVIDER_EUMET);
-  });
-
-  it("source selection keeps stale-but-allowed EUMET over fresh GIBS", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: {
-          ok: true,
-          observationAgeMs: CLOUDS_EUMET_FRESH_MAX_AGE_MS + 30 * 60_000,
-          coverageOk: true,
-        },
-        gibs: { ok: true, observationAgeMs: 40 * 60_000, coverageOk: true },
-      }),
-    ).toBe(CLOUDS_PROVIDER_EUMET);
-  });
-
-  it("source selection uses GIBS when EUMET is expired", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: {
-          ok: true,
-          observationAgeMs: CLOUDS_EUMET_STALE_MAX_AGE_MS + 1,
-          coverageOk: true,
-        },
-        gibs: { ok: true, observationAgeMs: 90 * 60_000, coverageOk: true },
-      }),
-    ).toBe(CLOUDS_PROVIDER_GIBS);
-  });
-
-  it("source selection uses GIBS when EUMET is unavailable", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: { ok: false },
-        gibs: { ok: true, observationAgeMs: 90 * 60_000, coverageOk: true },
-      }),
-    ).toBe(CLOUDS_PROVIDER_GIBS);
-  });
-
-  it("source selection is none when both are unusable", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: { ok: false },
-        gibs: { ok: false },
-      }),
-    ).toBe("none");
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: {
-          ok: true,
-          observationAgeMs: CLOUDS_EUMET_STALE_MAX_AGE_MS + 1,
-          coverageOk: true,
-        },
-        gibs: {
-          ok: true,
-          observationAgeMs: CLOUDS_GIBS_STALE_MAX_AGE_MS + 1,
-          coverageOk: true,
-        },
-      }),
-    ).toBe("none");
-  });
-
-  it("EUMET recovery is preferred again once usable", () => {
-    expect(
-      selectCloudsLiveAuthority({
-        eumet: { ok: true, observationAgeMs: 3 * 3_600_000, coverageOk: true },
-        gibs: { ok: true, observationAgeMs: 40 * 60_000, coverageOk: true },
-      }),
-    ).toBe(CLOUDS_PROVIDER_EUMET);
+    expect(urls.some((u) => u.includes("worldcloudmap") && u.includes("GetMap"))).toBe(true);
   });
 
   it("falls back to GIBS when EUMET is unavailable and does not fetch fixture", async () => {
@@ -193,7 +114,7 @@ describe("WEATHER-2 EUMET request, selection, coverage", () => {
     expect(result.entry.record.meta.origin).toBe("live");
     if (result.entry.record.body.kind === "equirectRaster") {
       expect(result.entry.record.body.coverageKind).toBe("partial");
-      expect(result.entry.record.body.cloudProviderKind).toBe(CLOUDS_PROVIDER_GIBS);
+      expect(result.entry.record.body.cloudProviderKind).toBe(CLOUDS_PROVIDER_COMPOSITE);
     }
     expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
     const urls = (fetchFn as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
@@ -291,8 +212,7 @@ describe("WEATHER-2 EUMET request, selection, coverage", () => {
       coverageKind: "global",
       providerKind: CLOUDS_PROVIDER_EUMET,
     });
-    expect(cloudsConfigStatusHintCopy("recent", global)).toMatch(/global mosaic/);
-    expect(cloudsConfigStatusHintCopy("recent", global)).toMatch(/polar gaps/);
+    expect(cloudsConfigStatusHintCopy("recent", global)).toMatch(/observations/);
     expect(cloudsConfigStatusHintCopy("recent", global)).not.toMatch(/Africa/);
     const partial = resolveCloudsProvenance({
       originStamp: "live",
@@ -304,7 +224,7 @@ describe("WEATHER-2 EUMET request, selection, coverage", () => {
       coverageKind: "partial",
       providerKind: CLOUDS_PROVIDER_GIBS,
     });
-    expect(cloudsConfigStatusHintCopy("recent", partial)).toMatch(/partial fallback/);
+    expect(cloudsConfigStatusHintCopy("recent", partial)).toMatch(/partial coverage/);
   });
 
   it("EUMET luma lift does not paint provider-alpha-0 as cloud", () => {

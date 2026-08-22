@@ -376,3 +376,10 @@ Weather-2 Clouds v2: EUMETView `mumi:worldcloudmap_ir108` is the primary global 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 262 files / 2459 passed / 0 failed; `npm run build` succeeded with no `scenario=clouds` / `visualScenarios` in `dist/`. Cursor Browser ordinary live **Clouds · global mosaic · observed 3h ago · polar gaps** (Africa/Europe filled) + historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
 
+## 2026-08-21 — LIB-065 complete
+
+Weather-3 Clouds v3: freshest valid GOES-East, GOES-West, Meteosat FES, and Himawari IR independently, with the EUMET geostationary ring as coverage backstop. Freshness outranks temporal uniformity (ADR 0023). Status reports the visible observation-age range. Source-local freshness and 8 min poll. White/gray IR presentation unchanged. Physical illumination participation remains off.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 263 files / 2471 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Cursor Browser ordinary live **Clouds · observations 25–55 min old** (West/Meteosat 25 min, East/Himawari 55 min) + historical Demo 2017-08-21 suppression + restore + `?scenario=clouds` DEV fixture. LIB-037, LIB-058, LIB-061, LIB-062 stay proposed.
+
+

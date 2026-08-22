@@ -217,5 +217,18 @@ export type DynamicDataLifecycleHostDeps = Readonly<{
    * Production omits this and uses global `fetch`.
    */
   orbitalTracksLiveFetchFn?: LiveHttpFetchFn;
+  /**
+   * DEV-only Clouds sector-footprint tint. Production omits this.
+   */
+  tintCloudsComposite?: (
+    base: Uint8Array,
+    layers: readonly {
+      readonly sectorId: string;
+      readonly width: number;
+      readonly height: number;
+      readonly rgba: Uint8Array;
+    }[],
+    paintOrder: readonly string[],
+  ) => Uint8Array;
 }> &
   DynamicAcquisitionTimerHooks;

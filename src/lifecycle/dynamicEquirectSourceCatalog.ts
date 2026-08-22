@@ -23,7 +23,7 @@ import {
   CLOUDS_CATALOG_ATTRIBUTION,
   CLOUDS_EUMET_LICENSE_NOTE,
 } from "./cloudProvenance";
-import { CLOUDS_EUMET_FRESH_MAX_AGE_MS, CLOUDS_EUMET_STALE_MAX_AGE_MS } from "./cloudsSourceSelection";
+import { CLOUDS_COMPOSITE_REFRESH_INTERVAL_MS, CLOUDS_GIBS_GEO_FRESH_MAX_AGE_MS, CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS } from "./cloudsSectors";
 
 export type DynamicEquirectSourceCatalogEntry = Readonly<{
   sourceId: DynamicSourceId;
@@ -59,25 +59,27 @@ export type DynamicEquirectSourceCatalogEntry = Readonly<{
 export const GLOBAL_CLOUDS_IR_SOURCE_ID: DynamicSourceId = "global-clouds-ir-v1";
 
 /**
- * Default refresh for Clouds v2 (EUMET PT3H mosaic). Acquisition still runs
- * outside rAF. GIBS Band13 remains an in-adapter fallback, not a second layer.
+ * Default refresh for Clouds v3 (per-sector GEO ~10–15 min). The adapter
+ * skips EUMET ring GetMap when a valid ring was fetched within 30 min.
+ * Acquisition still runs outside rAF.
  */
-export const GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS = 45 * 60 * 1000;
+export const GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS =
+  CLOUDS_COMPOSITE_REFRESH_INTERVAL_MS;
 
 const GLOBAL_CLOUDS_IR_ENTRY: DynamicEquirectSourceCatalogEntry = {
   sourceId: GLOBAL_CLOUDS_IR_SOURCE_ID,
   label: "Clouds",
   kind: "equirectRaster",
   attribution: CLOUDS_CATALOG_ATTRIBUTION,
-  licenseNote: `${CLOUDS_EUMET_LICENSE_NOTE} NASA GIBS Band13 is an honest partial fallback with NASA Earthdata attribution.`,
+  licenseNote: `${CLOUDS_EUMET_LICENSE_NOTE} NASA GIBS Band13 sectors are independent observations with NASA Earthdata attribution.`,
   defaultRefreshIntervalMs: GLOBAL_CLOUDS_IR_DEFAULT_REFRESH_INTERVAL_MS,
   spatialNote:
-    "Full-world equirectangular −180…+180° longitude, −90…+90° latitude. Primary EUMETSAT geostationary-ring IR covers Africa/Europe; polar holes stay transparent. GIBS 3-sat fallback is partial (Africa/Europe uncovered).",
+    "Full-world equirectangular −180…+180° longitude, −90…+90° latitude. Best-current composition: EUMETSAT geostationary-ring IR as backstop; GOES-West, GOES-East, Meteosat FES, and Himawari overwrite their footprints with independent observation times. Polar holes stay transparent.",
   timePolicy: "wallClockCurrent",
-  nominalCadenceMs: 3 * 60 * 60 * 1000,
-  freshUntilMs: CLOUDS_EUMET_FRESH_MAX_AGE_MS,
-  staleUntilMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
-  suppressAfterMs: CLOUDS_EUMET_STALE_MAX_AGE_MS,
+  nominalCadenceMs: 10 * 60 * 1000,
+  freshUntilMs: CLOUDS_GIBS_GEO_FRESH_MAX_AGE_MS,
+  staleUntilMs: CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS,
+  suppressAfterMs: CLOUDS_GIBS_GEO_STALE_MAX_AGE_MS,
   coverageKind: "global",
 };
 

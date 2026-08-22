@@ -29,7 +29,6 @@ import {
 } from "./cloudsGibsWms";
 import { validateCloudsPngBytes } from "./cloudsPng";
 import {
-  CLOUDS_EUMET_TEST_OBSERVATION_MS,
   CLOUDS_TEST_OBSERVATION_MS,
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
@@ -100,7 +99,7 @@ describe("WEATHER-1 Clouds v1 time, PNG, transfer, provenance", () => {
     expect(wmsUrlHasExplicitTime(getMap!)).toBe(true);
     expect(getMap).toContain("view.eumetsat.int");
     expect(getMap).toContain("worldcloudmap_ir108");
-    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_EUMET_TEST_OBSERVATION_MS);
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
     expect(result.entry.record.body.kind === "equirectRaster" && result.entry.record.body.coverageKind).toBe(
       "global",
     );

@@ -39,3 +39,5 @@ This does **not** introduce a second display clock. Wall clock remains only the 
 - Chrome copy has to speak mosaic / observed / recent rather than an unqualified “live”.
 
 **Explicitly not decided.** Historical GIBS `TIME` querying, a second clock, a Weather-specific store, and physical cloud optical-depth participation remain later work.
+
+A composed observational product may contain **multiple** observation times. That extension is [ADR 0023](0023-observational-composites-heterogeneous-observation-times.md). This record still owns the three clocks for each component snapshot.

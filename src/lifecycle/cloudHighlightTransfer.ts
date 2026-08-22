@@ -37,6 +37,8 @@ export const CLOUD_HIGHLIGHT_RGB = {
   b: 252,
 } as const;
 
+export const CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx3-ir-v1";
+
 /**
  * EUMET IR display is ~30 luma darker at the median than GIBS Band13.
  * +12 keeps Sahara (~68) below 100 while lifting Europe (~95) into the
@@ -51,6 +53,17 @@ export type CloudHighlightTransferOptions = Readonly<{
 export function liftEumetIrLuma(luma: number): number {
   if (!Number.isFinite(luma)) return 0;
   return Math.max(0, Math.min(255, luma + EUMET_IR_LUMA_LIFT));
+}
+
+/**
+ * MSG FES IR108 display is darker than GIBS Band13 (opaque mean ~94 vs ~127
+ * on 2026-08-22T00:30Z). +20 keeps Sahara (~12) below the highlight floor.
+ */
+export const MSG_FES_IR_LUMA_LIFT = 20;
+
+export function liftMsgFesIrLuma(luma: number): number {
+  if (!Number.isFinite(luma)) return 0;
+  return Math.max(0, Math.min(255, luma + MSG_FES_IR_LUMA_LIFT));
 }
 
 export function rec601Luma8(r: number, g: number, b: number): number {

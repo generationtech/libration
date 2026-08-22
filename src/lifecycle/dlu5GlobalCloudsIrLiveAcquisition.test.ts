@@ -30,7 +30,6 @@ import {
   type LiveHttpFetchFn,
 } from "./index";
 import {
-  CLOUDS_EUMET_TEST_OBSERVATION_MS,
   CLOUDS_TEST_OBSERVATION_MS,
   encodeCloudsTestPng,
   mockCloudsLiveFetch,
@@ -65,7 +64,7 @@ describe("DLU-5 live Clouds v1 acquisition", () => {
     if (!result.ok) return;
     expect(result.entry.record.meta.sourceId).toBe(GLOBAL_CLOUDS_IR_SOURCE_ID);
     expect(result.entry.record.meta.versionId).toBe("clouds-ir-live-test-1");
-    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_EUMET_TEST_OBSERVATION_MS);
+    expect(result.entry.record.meta.validTimeMs).toBe(CLOUDS_TEST_OBSERVATION_MS);
     expect(result.entry.record.meta.acquiredAtMs).toBe(CLOUDS_TEST_OBSERVATION_MS + 120_000);
     expect(result.entry.record.meta.origin).toBe("live");
     if (result.entry.record.body.kind === "equirectRaster") {

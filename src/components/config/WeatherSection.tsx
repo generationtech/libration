@@ -22,6 +22,7 @@ import {
 } from "../../config/v2/sceneConfig";
 import {
   cloudsConfigStatusHintCopy,
+  cloudsComponentObservationLines,
   type CloudsConfigStatusHint,
   type CloudsProvenance,
 } from "../../lifecycle/cloudProvenance";
@@ -65,6 +66,8 @@ export function WeatherSection(props: {
     cloudsConfigStatusHint !== undefined && cloudsConfigStatusHint !== null
       ? cloudsConfigStatusHintCopy(cloudsConfigStatusHint, cloudsProvenance ?? null)
       : null;
+  const componentLines =
+    cloudsProvenance != null ? cloudsComponentObservationLines(cloudsProvenance) : [];
 
   return (
     <>
@@ -134,13 +137,24 @@ export function WeatherSection(props: {
         </p>
       ) : (
         <p className="config-section__hint" data-testid="clouds-topic-status">
-          Enable Clouds under Layer masters to acquire a recent satellite mosaic.
-          Polar gaps stay transparent. Partial fallback coverage is labeled when used.
+          Enable Clouds under Layer masters to acquire a best-current satellite
+          mosaic. Polar gaps stay transparent. Observation times may differ by
+          sector.
         </p>
       )}
+      {componentLines.length > 1 ? (
+        <details data-testid="clouds-observation-components">
+          <summary className="config-section__hint">Observation times</summary>
+          {componentLines.map((line) => (
+            <p key={line} className="config-section__hint" style={{ margin: "0.15rem 0 0" }}>
+              {line}
+            </p>
+          ))}
+        </details>
+      ) : null}
       <p className="config-section__hint">
-        Contains modified EUMETSAT Meteosat Geostationary Ring IR 10.8 µm data.
-        NASA GIBS Band 13 when using partial fallback.
+        Contains modified EUMETSAT Meteosat FES IR 10.8 µm and Geostationary Ring
+        IR 10.8 µm data. NASA GIBS GOES-East, GOES-West, and Himawari Band 13.
       </p>
     </>
   );

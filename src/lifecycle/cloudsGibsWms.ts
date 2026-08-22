@@ -12,9 +12,10 @@
  */
 
 /**
- * NASA GIBS WMS helpers for Clouds v1 (Band13 geostationary stack).
+ * NASA GIBS WMS helpers for Clouds geostationary Band13 sectors.
  * TIME is always explicit — never omit it and never treat the provider default
- * as GetMap authority.
+ * as GetMap authority. WEATHER-3 fetches each layer independently so GOES-East
+ * is not held back to Himawari's older slot.
  */
 
 export const GIBS_WMS_ENDPOINT =
@@ -22,15 +23,18 @@ export const GIBS_WMS_ENDPOINT =
 
 export const GIBS_WMS_GET_CAPABILITIES_URL = `${GIBS_WMS_ENDPOINT}?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities`;
 
+export const CLOUDS_GIBS_GOES_WEST_LAYER = "GOES-West_ABI_Band13_Clean_Infrared";
+export const CLOUDS_GIBS_GOES_EAST_LAYER = "GOES-East_ABI_Band13_Clean_Infrared";
+export const CLOUDS_GIBS_HIMAWARI_LAYER = "Himawari_AHI_Band13_Clean_Infrared";
+
 /**
- * WMS 1.1.1 draws first-listed first (bottom). Bottom → top:
- * GOES-West, GOES-East, Himawari so East wins the Americas overlap and
- * Himawari wins the Pacific overlap with West (Australia / Asia stay Himawari).
+ * WMS 1.1.1 draws first-listed first (bottom). Kept for tests of the former
+ * stacked GetMap. Production Clouds v3 requests each layer separately.
  */
 export const CLOUDS_GIBS_BAND13_LAYERS = [
-  "GOES-West_ABI_Band13_Clean_Infrared",
-  "GOES-East_ABI_Band13_Clean_Infrared",
-  "Himawari_AHI_Band13_Clean_Infrared",
+  CLOUDS_GIBS_GOES_WEST_LAYER,
+  CLOUDS_GIBS_GOES_EAST_LAYER,
+  CLOUDS_GIBS_HIMAWARI_LAYER,
 ] as const;
 
 export const CLOUDS_GIBS_WMS_LAYERS_PARAM = CLOUDS_GIBS_BAND13_LAYERS.join(",");
@@ -73,10 +77,17 @@ export function wmsUrlHasExplicitTime(url: string): boolean {
 }
 
 /**
- * Full-world GIBS WMS 1.1.1 GetMap. `observationTimeMs` is required so TIME
- * cannot be omitted.
+ * Full-world GIBS WMS 1.1.1 GetMap for one Band13 sector. `observationTimeMs`
+ * is required so TIME cannot be omitted.
  */
-export function buildCloudsGibsWmsGetMapUrl(observationTimeMs: number): string {
+export function buildCloudsGibsSectorGetMapUrl(
+  layer: string,
+  observationTimeMs: number,
+  size: { width: number; height: number } = {
+    width: CLOUDS_GIBS_WIDTH_PX,
+    height: CLOUDS_GIBS_HEIGHT_PX,
+  },
+): string {
   const time = formatCloudsGibsWmsTime(observationTimeMs);
   if (time === null) {
     throw new Error("Clouds GIBS GetMap requires a finite observation TIME");
@@ -85,17 +96,25 @@ export function buildCloudsGibsWmsGetMapUrl(observationTimeMs: number): string {
     SERVICE: "WMS",
     VERSION: "1.1.1",
     REQUEST: "GetMap",
-    LAYERS: CLOUDS_GIBS_WMS_LAYERS_PARAM,
+    LAYERS: layer,
     STYLES: "",
     SRS: "EPSG:4326",
     BBOX: "-180,-90,180,90",
-    WIDTH: String(CLOUDS_GIBS_WIDTH_PX),
-    HEIGHT: String(CLOUDS_GIBS_HEIGHT_PX),
+    WIDTH: String(size.width),
+    HEIGHT: String(size.height),
     FORMAT: "image/png",
     TRANSPARENT: "TRUE",
     TIME: time,
   });
   return `${GIBS_WMS_ENDPOINT}?${params.toString()}`;
+}
+
+/**
+ * @deprecated Stacked three-layer GetMap used by Clouds v1. Production v3
+ * uses {@link buildCloudsGibsSectorGetMapUrl} per sector.
+ */
+export function buildCloudsGibsWmsGetMapUrl(observationTimeMs: number): string {
+  return buildCloudsGibsSectorGetMapUrl(CLOUDS_GIBS_WMS_LAYERS_PARAM, observationTimeMs);
 }
 
 export function parseGibsWmsLayerTimeDefault(

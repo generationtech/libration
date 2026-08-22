@@ -95,7 +95,7 @@ See [ADR 0013](docs/decisions/0013-current-only-internet-data-requires-live-enou
 
 **Rationale.** A near-current satellite mosaic is not “now” merely because the app just downloaded it. EUMETView worldcloudmap slots are 3 hours and GIBS Band13 slots are 10 minutes, but ingest can lag by hours. Stamping observation from wall clock, or omitting provider `TIME`, made status dishonest and invited empty-future mosaics.
 
-**Consequence.** Clouds GetMap always sends explicit `TIME`. Status may say mosaic HH:MM UTC or observed Nh ago; it must not claim live-now for a lagging mosaic. Do not add a second display clock or a parallel Weather store to hold these fields.
+**Consequence.** Clouds GetMap always sends explicit `TIME`. Status may say mosaic HH:MM UTC or observed Nh ago; it must not claim live-now for a lagging mosaic. Do not add a second display clock or a parallel Weather store to hold these fields. A composed observational product may carry several observation times; that is [§3.7](#37-observational-composites-may-combine-heterogeneous-observation-times).
 
 See [ADR 0022](docs/decisions/0022-observational-data-three-clocks.md).
 
@@ -108,6 +108,16 @@ See [ADR 0022](docs/decisions/0022-observational-data-three-clocks.md).
 **Consequence.** Layers must not seek `TimeContext.now`. Data must not grow domain rendering controls. Enabled event types merge into one chronological Demo-time stream; adding another source means a Data playback adapter plus, if needed, Layers presentation — not a second clock, not a family submode, and not a generic astronomical engine.
 
 See [ADR 0015](docs/decisions/0015-domain-tour-sequencer-drives-shared-demo-time.md) (shared Demo clock), [ADR 0019](docs/decisions/0019-domain-event-playback-belongs-to-data.md) (Data vs Layers ownership), and [ADR 0020](docs/decisions/0020-event-playback-merges-enabled-domain-sources.md) (merged event sources).
+
+### 3.7 Observational composites may combine heterogeneous observation times
+
+**Boundary.** Fresh authoritative observations are not delayed solely to share one timestamp with other sources, domains, or geographies. A single rendered Weather product may contain multiple observation times. Each component keeps its own observation time, acquisition time, freshness, coverage, and provenance. Product time remains the single scene instant.
+
+**Rationale.** Geostationary disks and future radar/lightning/wind/advisory products update on independent cadences. Forcing `min(latest sources)` as a common mosaic time, or waiting for the slowest sector, makes the instrument older than the observations it already has. Temporal interpolation would invent meteorology. That is the wrong trade for a current-weather instrument.
+
+**Consequence.** Clouds compose the freshest valid GOES-East, GOES-West, Meteosat, and Himawari observations independently, with the EUMET geostationary ring as coverage backstop. Status reports the visible observation-age range. Unused source ages do not pollute that range. Seams between disks may show real temporal disagreement. There is no user sync-mode toggle. Weather domains must not wait on one another. Do not interpolate, motion-warp, or nowcast.
+
+See [ADR 0023](docs/decisions/0023-observational-composites-heterogeneous-observation-times.md).
 
 ---
 

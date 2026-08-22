@@ -38,6 +38,17 @@ export const INACTIVE_VISUAL_SCENARIO_RUNTIME: VisualScenarioRuntime = {
   kind: "inactive",
 };
 
+export type DevCloudsSectorDebugTintFn = (
+  base: Uint8Array,
+  layers: readonly {
+    readonly sectorId: string;
+    readonly width: number;
+    readonly height: number;
+    readonly rgba: Uint8Array;
+  }[],
+  paintOrder: readonly string[],
+) => Uint8Array;
+
 const VISUAL_SCENARIO_EXTRA_OVERLAY_ID = "dev.visualScenario.extraOverlay";
 const SUBLUNAR_MARKER_LAYER_ID = "layer.points.sublunar";
 
@@ -52,6 +63,7 @@ let extraOverlayBuilder: VisualScenarioExtraOverlayBuilder | null = null;
 let preparedTracksOverride: PreparedTracksView | null = null;
 let preparedPointFeaturesOverride: PreparedPointFeaturesView | null = null;
 let preparedEquirectOverride: PreparedEquirectRasterView | null = null;
+let cloudsSectorDebugTint: DevCloudsSectorDebugTintFn | null = null;
 
 export function getVisualScenarioRuntime(): VisualScenarioRuntime {
   return runtime;
@@ -85,12 +97,23 @@ export function setVisualScenarioPreparedEquirect(
   preparedEquirectOverride = view;
 }
 
+export function setDevCloudsSectorDebugTint(
+  fn: DevCloudsSectorDebugTintFn | null,
+): void {
+  cloudsSectorDebugTint = fn;
+}
+
+export function getDevCloudsSectorDebugTint(): DevCloudsSectorDebugTintFn | null {
+  return cloudsSectorDebugTint;
+}
+
 export function resetVisualScenarioRuntime(): void {
   runtime = INACTIVE_VISUAL_SCENARIO_RUNTIME;
   extraOverlayBuilder = null;
   preparedTracksOverride = null;
   preparedPointFeaturesOverride = null;
   preparedEquirectOverride = null;
+  cloudsSectorDebugTint = null;
 }
 
 /**

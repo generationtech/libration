@@ -26,6 +26,7 @@ import {
 } from "../core/nightVeilFromSolarAltitude";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
+  setDevCloudsSectorDebugTint,
   setVisualScenarioExtraOverlayBuilder,
   setVisualScenarioPreparedEquirect,
   setVisualScenarioPreparedPointFeatures,
@@ -45,6 +46,7 @@ import {
   CLOUDS_PRESENTATION_SCENARIO_UTC,
   buildCloudsPresentationPreparedEquirectView,
 } from "./cloudsPresentationScenario";
+import { applyDevCloudsSectorDebugTint } from "./cloudsSectorDebugTint";
 import "./visualScenarioBanner.css";
 
 export const VISUAL_SCENARIO_IDS = [
@@ -1083,6 +1085,10 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
   );
   const curveId = parseNightVeilTransferId(parseSearchParams(search).get("nightVeilCurve"));
   setDevNightVeilTransferOverride(curveId);
+  const wantSectorDebug =
+    session.kind !== "applied" &&
+    parseSearchParams(search).get("cloudsSectorDebug") === "1";
+  setDevCloudsSectorDebugTint(wantSectorDebug ? applyDevCloudsSectorDebugTint : null);
   if (session.kind === "unknown") {
     console.error(
       `[libration] Unknown visual scenario "${session.requestedId}". Ordinary startup; the requested scenario was not applied.`,

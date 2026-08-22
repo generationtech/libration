@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-064](work/LIB-064-weather-2-global-cloud-coverage.md) — Weather-2: global cloud coverage completion
+[LIB-065](work/LIB-065-weather-3-high-cadence-best-current-cloud-composition.md) — Weather-3: high-cadence best-current cloud composition
 
 ## Blockers
 
@@ -27,8 +27,8 @@ Proposed [LIB-058](work/LIB-058-earthquake-live-layer-capability-survey.md) eart
 
 Proposed [LIB-061](work/LIB-061-global-clouds-ir-end-to-end-investigation.md) Global clouds / IR survey stays proposed (investigation only; not activated).
 
-Proposed [LIB-062](work/LIB-062-weather-architecture-and-global-clouds-v1-investigation.md) Weather architecture + Clouds v1 survey stays proposed (investigation only; not activated). LIB-063 implemented its Clouds v1 recommendation and supersedes it on **product direction**. LIB-064 superseded its EUMETView CORS-blocked conclusion: GET now exposes `Access-Control-Allow-Origin: *` and Clouds v2 uses EUMETView as primary via ordinary browser `fetch`.
+Proposed [LIB-062](work/LIB-062-weather-architecture-and-global-clouds-v1-investigation.md) Weather architecture + Clouds v1 survey stays proposed (investigation only; not activated). LIB-063 implemented its Clouds v1 recommendation and supersedes it on **product direction**. LIB-064 superseded its EUMETView CORS-blocked conclusion. LIB-065 supersedes the single-time global mosaic: freshness outranks temporal uniformity.
 
 ## Next action
 
-None. AWAITING SCOPE.
+Stop. No approved work. Draft a proposed item only if asked.

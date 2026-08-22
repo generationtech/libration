@@ -24,6 +24,8 @@
  */
 
 export type {
+  CloudsCompositeComponentMeta,
+  CloudsCompositeMeta,
   DynamicPointFeature,
   DynamicSnapshotBody,
   DynamicSnapshotFreshness,
@@ -208,8 +210,10 @@ export {
   CLOUDS_OBSERVATION_STALE_MAX_AGE_MS,
   cloudsConfigStatusHint,
   cloudsConfigStatusHintCopy,
+  cloudsComponentObservationLines,
   cloudsObservationFreshnessBandFromAgeMs,
   cloudsShouldPaint,
+  formatCloudsObservationAgeRange,
   originStampFromPreparedEquirect,
   resolveCloudsProvenance,
 } from "./cloudProvenance";
@@ -226,15 +230,22 @@ export {
   CLOUD_HIGHLIGHT_LUMA_HI,
   CLOUD_HIGHLIGHT_LUMA_LO,
   CLOUD_HIGHLIGHT_RGB,
+  CLOUD_HIGHLIGHT_TRANSFER_VERSION,
   EUMET_IR_LUMA_LIFT,
+  MSG_FES_IR_LUMA_LIFT,
   applyCloudHighlightTransfer,
   cloudHighlightAlpha01FromIrLuma,
   liftEumetIrLuma,
+  liftMsgFesIrLuma,
 } from "./cloudHighlightTransfer";
 
 export {
+  buildCloudsGibsSectorGetMapUrl,
   buildCloudsGibsWmsGetMapUrl,
   CLOUDS_GIBS_BAND13_LAYERS,
+  CLOUDS_GIBS_GOES_EAST_LAYER,
+  CLOUDS_GIBS_GOES_WEST_LAYER,
+  CLOUDS_GIBS_HIMAWARI_LAYER,
   CLOUDS_GIBS_WMS_LAYERS_PARAM,
   formatCloudsGibsWmsTime,
   wmsUrlHasExplicitTime,
@@ -242,18 +253,40 @@ export {
 
 export {
   buildCloudsEumetWmsGetMapUrl,
+  buildCloudsMsgFesWmsGetMapUrl,
   CLOUDS_EUMET_LAYER_ID,
+  CLOUDS_MSG_FES_LAYER_ID,
   EUMET_WMS_ENDPOINT,
   formatCloudsEumetWmsTime,
+  formatCloudsMsgFesWmsTime,
 } from "./cloudsEumetWms";
 
 export {
+  CLOUDS_PROVIDER_COMPOSITE,
   CLOUDS_PROVIDER_EUMET,
+  CLOUDS_PROVIDER_EUMET_MSG_FES,
   CLOUDS_PROVIDER_GIBS,
-  selectCloudsLiveAuthority,
-} from "./cloudsSourceSelection";
+  CLOUDS_PROVIDER_GIBS_GOES_EAST,
+  CLOUDS_PROVIDER_GIBS_GOES_WEST,
+  CLOUDS_PROVIDER_GIBS_HIMAWARI,
+  CLOUDS_SECTOR_EUMET_RING,
+  CLOUDS_SECTOR_GOES_EAST,
+  CLOUDS_SECTOR_GOES_WEST,
+  CLOUDS_SECTOR_HIMAWARI,
+  CLOUDS_SECTOR_METEOSAT,
+  cloudsProviderFreshMaxAgeMs,
+  cloudsProviderStaleMaxAgeMs,
+} from "./cloudsSectors";
 
-export type { CloudsProviderKind } from "./cloudsSourceSelection";
+export type { CloudsProviderKind, CloudsSectorId } from "./cloudsSectors";
+
+export {
+  buildCloudsCompositeMeta,
+  cloudsCompositePaintOrder,
+  compositeCloudHighlightLayers,
+  selectCloudsPaintableComponents,
+  selectCloudsStatusComponents,
+} from "./cloudsComposite";
 
 export {
   decodeCloudsPngRgba,

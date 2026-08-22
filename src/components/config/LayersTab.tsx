@@ -198,7 +198,7 @@ function titleForLayer(key: keyof LayerEnableFlags): string | undefined {
     return "Shows NASA-derived lunar eclipse geography: Earth-shadow treatment on the Moon glyph and the terrestrial region where the Moon is above the geometric horizon. Default on; nothing is drawn when no event is relevant.";
   }
   if (key === "globalCloudsIr") {
-    return "Recent IR-derived cloud highlight. Prefers the EUMETSAT geostationary-ring mosaic; NASA GIBS Band13 is an honest partial fallback. Polar holes stay transparent. Presentation lives under Weather.";
+    return "Recent IR-derived cloud highlight from the freshest valid geostationary observations (GOES, Meteosat, Himawari) with the EUMETSAT global ring as coverage backstop. Adjacent sectors may have different observation times. Polar holes stay transparent. Presentation lives under Weather.";
   }
   return undefined;
 }
@@ -1330,6 +1330,7 @@ export function LayersTab({
             cloudsConfigStatusHint === "loading" ||
             cloudsConfigStatusHint === "recent" ||
             cloudsConfigStatusHint === "stale" ||
+            cloudsConfigStatusHint === "mixed" ||
             cloudsConfigStatusHint === "fixture" ? (
               <p className="config-section__hint" data-testid="clouds-status-hint">
                 {cloudsConfigStatusHintCopy(

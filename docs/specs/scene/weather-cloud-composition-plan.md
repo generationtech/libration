@@ -4,7 +4,17 @@
 
 A **planning-only** specification. It defines where weather and cloud data may sit architecturally, and what must be true before any weather product is implemented. It is not a record of what exists.
 
-**LIB-063 / LIB-064 production note.** Clouds is **Model B** (informational overlay): EUMETView worldcloudmap IR (GIBS Band13 fallback) → local white/gray highlight → `imageBlit`. Physical **Model A** participation is forced off because IR display luma is not cloud optical depth. Current implementation truth is [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This document remains useful for weather products that do **not** yet exist — radar, precipitation, wind, pressure, polar LEO fill — because the architectural questions it answers apply to each of them.
+**LIB-065 / Clouds v3 production note.** Clouds remains **Model B** (informational overlay): per-sector GEO IR + EUMET ring backstop → local white/gray highlight → one composed `imageBlit`. Freshness outranks temporal uniformity ([ADR 0023](../../decisions/0023-observational-composites-heterogeneous-observation-times.md)). Physical **Model A** participation is forced off because IR display luma is not cloud optical depth. Current implementation truth is [`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md). This document remains useful for weather products that do **not** yet exist — radar, precipitation, wind, pressure, polar LEO fill — because the architectural questions it answers apply to each of them.
+
+## Weather freshness-over-synchronization (durable)
+
+Weather presents the freshest authoritative observations available, independently by source, domain, and geography.
+
+- Do not require all visible weather data to share one observation timestamp.
+- Do not delay fresh data merely to synchronize with older sectors or other Weather domains.
+- Do not interpolate invented meteorology to create one nominal global timestamp.
+- Radar, lightning, wind analysis, and tropical/severe products (when approved) refresh independently of Clouds and of one another.
+- Stale data is never disguised as current. Status reports the visible observation-age range.
 
 This document does not authorize skipping the lifecycle contract, and it does not schedule anything.
 

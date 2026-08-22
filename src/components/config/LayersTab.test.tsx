@@ -26,6 +26,7 @@ import {
 } from "../../config/v2/sceneConfig";
 import { LayersTab } from "./LayersTab";
 import { LAYERS_TOPIC_IDS, type LayersTopicId } from "./layersTopicTypes";
+import type { CloudsProvenance } from "../../lifecycle/cloudProvenance";
 
 function selectLayersTopic(topic: LayersTopicId): void {
   fireEvent.change(screen.getByTestId("layers-topic-select"), { target: { value: topic } });
@@ -798,6 +799,55 @@ describe("LayersTab topic navigation", () => {
     expect(screen.queryByLabelText(/EUMETSAT/i)).toBeNull();
     expect(screen.queryByLabelText(/provider/i)).toBeNull();
     expect(screen.getByTestId("illumination-state").textContent).toBe(illuminationBefore);
+  });
+
+  it("Weather topic lists visible sector observation ages for a composite", () => {
+    const provenance: CloudsProvenance = {
+      origin: "live",
+      acquiredAtMs: 1,
+      validTimeMs: 1,
+      observationAgeMs: 5 * 60_000,
+      freshnessBand: "fresh",
+      coverageKind: "global",
+      providerKind: "composite",
+      versionId: "t",
+      newestObservationTimeMs: 1,
+      oldestObservationTimeMs: 1 - 12 * 60_000,
+      statusSectorIds: ["goes-east", "goes-west"],
+      components: [
+        {
+          sectorId: "goes-east",
+          providerKind: "gibs-goes-east",
+          observationTimeMs: 1,
+          acquiredAtMs: 1,
+          observationAgeMs: 5 * 60_000,
+          freshnessBand: "fresh",
+        },
+        {
+          sectorId: "goes-west",
+          providerKind: "gibs-goes-west",
+          observationTimeMs: 1 - 12 * 60_000,
+          acquiredAtMs: 1,
+          observationAgeMs: 12 * 60_000,
+          freshnessBand: "fresh",
+        },
+      ],
+    };
+    render(
+      <LayersTab
+        config={normalizeLibrationConfig(defaultLibrationConfigV2())}
+        cloudsConfigStatusHint="recent"
+        cloudsProvenance={provenance}
+      />,
+    );
+    selectLayersTopic("weather");
+    expect(screen.getByTestId("clouds-topic-status").textContent).toMatch(/5–17 min/);
+    expect(screen.getByTestId("clouds-observation-components").textContent).toMatch(
+      /GOES-East/,
+    );
+    expect(screen.getByTestId("clouds-observation-components").textContent).toMatch(
+      /GOES-West/,
+    );
   });
 
   it("Earthquakes topic shows live-only copy in historical Demo", () => {

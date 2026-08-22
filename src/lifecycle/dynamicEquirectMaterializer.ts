@@ -25,10 +25,12 @@ import { lifecycleStateToFreshness } from "./dynamicLifecycleTypes";
 import type { DynamicDataLifecycleManager } from "./dynamicLifecycleTypes";
 import type { DynamicSnapshotStoreEntry } from "./dynamicSnapshotStoreTypes";
 import type {
+  CloudsCompositeMeta,
   DynamicSnapshotFreshness,
   DynamicSnapshotTemporalMeta,
   DynamicSnapshotVersionId,
   DynamicSourceId,
+  EquirectRasterSnapshotBody,
 } from "./dynamicSnapshotTypes";
 
 export type PreparedEquirectRasterView = Readonly<{
@@ -46,7 +48,9 @@ export type PreparedEquirectRasterView = Readonly<{
   origin?: "live" | "fixture";
   coverageKind?: "global" | "partial";
   coverageNote?: string;
-  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
+  cloudProviderKind?: EquirectRasterSnapshotBody["cloudProviderKind"];
+  cloudComposite?: CloudsCompositeMeta;
+  cloudHighlightApplied?: boolean;
   /** DEV visual-scenario hatch; production views omit this. */
   devAllowFixturePaint?: boolean;
 }>;
@@ -57,7 +61,9 @@ type MaterializedVersion = {
   contentType?: string;
   coverageKind?: "global" | "partial";
   coverageNote?: string;
-  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
+  cloudProviderKind?: EquirectRasterSnapshotBody["cloudProviderKind"];
+  cloudComposite?: CloudsCompositeMeta;
+  cloudHighlightApplied?: boolean;
   /** True when src was created via URL.createObjectURL and must be revoked. */
   revokeOnDrop: boolean;
 };
@@ -213,6 +219,10 @@ export function createDynamicEquirectMaterializer(
       record.body.cloudProviderKind !== undefined
         ? { cloudProviderKind: record.body.cloudProviderKind }
         : {}),
+      ...(record.body.kind === "equirectRaster" &&
+      record.body.cloudComposite !== undefined
+        ? { cloudComposite: record.body.cloudComposite }
+        : {}),
       revokeOnDrop,
     });
   }
@@ -263,6 +273,7 @@ export function createDynamicEquirectMaterializer(
       ...(row.cloudProviderKind !== undefined
         ? { cloudProviderKind: row.cloudProviderKind }
         : {}),
+      ...(row.cloudComposite !== undefined ? { cloudComposite: row.cloudComposite } : {}),
     };
   }
 

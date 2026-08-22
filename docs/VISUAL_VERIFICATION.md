@@ -408,7 +408,7 @@ When the lunar locus is in view, accelerated demo playback through at least one 
 
 DEV `?scenario=` fixtures force Clouds, Earthquakes, ISS orbital track, and cloud participation **off**, except the named presentation scenarios that turn their own overlay on (`clouds`, `earthquake-presentation`, `iss-presentation`). That isolation is intentional and applies only when a scenario is applied.
 
-To verify those three overlays live, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, stale live, or unavailable. Production must never look live when the data is a fixture. Clouds status must use mosaic / observed age, not “live · now”. Disable must remove the presentation; re-enable must show it again.
+To verify those three overlays live, use **ordinary non-scenario** current-time mode (`http://localhost:1420/` with no `?scenario=`). Enable one Layer masters checkbox at a time, wait for acquisition, then confirm a visible map change without toggling unrelated controls. Classify each source as live-provider success, stale live, or unavailable. Production must never look live when the data is a fixture. Clouds status must use an observation-age range (for example `Clouds · observations 5–17 min old`), not “live · now”. Disable must remove the presentation; re-enable must show it again.
 
 Do not treat a DEV scenario session as evidence that live layers work.
 
@@ -416,13 +416,14 @@ Do not treat a DEV scenario session as evidence that live layers work.
 
 Ordinary non-scenario current time (`http://localhost:1420/` with no `?scenario=`):
 
-1. Open Config → Layers → Layer masters. Check **Clouds**. Expect “Clouds loading…” then a recent mosaic (for example `Clouds · global mosaic · observed 3h ago · polar gaps`) or, on GIBS fallback, `partial fallback coverage`. Unavailable is allowed. A black world, rainbow CTT, unlabeled fixture, or a giant Africa/Europe hole on the global source is a failure.
-2. Open Layers → Weather. Factory Cloud opacity **0.42**. Status must not claim Africa/Europe missing when the global mosaic is showing. Attribution mentions EUMETSAT (and NASA GIBS as fallback).
+1. Open Config → Layers → Layer masters. Check **Clouds**. Expect “Clouds loading…” then a best-current composition (for example `Clouds · observations 8–70 min old` or `Clouds · mixed freshness · 8m–3h old` if the ring backstop is visible). Adjacent sectors may have different observation times; a storm-edge mismatch at a source seam is not automatically a defect. Unavailable is allowed. A black world, rainbow CTT, unlabeled fixture, or a forced common mosaic timestamp is a failure.
+2. Open Layers → Weather. Factory Cloud opacity **0.42**. Status is an observation-age **range** of visible components only. Optional “Observation times” lists GOES-East/West, Meteosat, Himawari (and the ring only when it fills a missing regional). Attribution mentions EUMETSAT and NASA GIBS. No source selector or sync-mode control.
 3. Confirm white/gray translucent cloud structures over Americas, Europe, Africa, Asia, Oceania, Atlantic, and Indian Ocean; polar holes stay transparent (base map visible, not black, not inferred clear sky).
 4. Opacity low (~0.15) / factory / high (~0.80): derived cloud alpha still multiplies; geography remains readable at factory.
-5. Day side and night side of the same mosaic: clouds remain visible without overpowering illumination. No day/visible mode switch.
+5. Day side and night side of the same composition: clouds remain visible without overpowering illumination. No day/visible mode switch.
 6. Historical Demo (for example 2017-08-21) with Clouds still checked: live-only suppression copy; no overlay; no fixture. Return to current: acquisition/reuse without re-checking the box.
 7. Illumination raster must not darken when Clouds is on (physical participation is off). Cloud participation controls must be absent from Illumination.
+8. DEV-only source-boundary diagnostic: ordinary current time `http://localhost:1420/?cloudsSectorDebug=1` (not a `?scenario=`). Expect tinted sector footprints, not production white/gray. Production dist must not include this diagnostic.
 
 Use `http://localhost:1420/?scenario=clouds` when live WMS is unavailable. Confirm the DEV banner and UTC `2026-08-21T20:40:00.000Z`. Status must say **Clouds (DEV fixture)**, not live. Polar holes remain transparent.
 

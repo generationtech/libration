@@ -93,7 +93,44 @@ export type EquirectRasterSnapshotBody = Readonly<{
    * Internal Clouds provider under durable `global-clouds-ir-v1`.
    * Not a second user-facing layer id. Not persisted in SceneConfig.
    */
-  cloudProviderKind?: "eumet-worldcloudmap" | "gibs-band13";
+  cloudProviderKind?:
+    | "eumet-worldcloudmap"
+    | "eumet-msg-fes"
+    | "gibs-band13"
+    | "gibs-goes-east"
+    | "gibs-goes-west"
+    | "gibs-himawari"
+    | "composite";
+  /**
+   * True when payload bytes are already IR→highlight RGBA.
+   * Materializers must not apply the transfer a second time.
+   */
+  cloudHighlightApplied?: boolean;
+  /**
+   * Best-current Clouds composition metadata. Component snapshots keep their
+   * own observation times; this does not collapse them into one fake TIME.
+   */
+  cloudComposite?: CloudsCompositeMeta;
+}>;
+
+/** One geographic sector contributing to a Clouds composite. */
+export type CloudsCompositeComponentMeta = Readonly<{
+  sectorId: string;
+  providerKind: string;
+  observationTimeMs: number;
+  acquiredAtMs: number;
+}>;
+
+/**
+ * Composed Clouds product. `newest`/`oldest` are over status-visible
+ * components, not unused cached sources.
+ */
+export type CloudsCompositeMeta = Readonly<{
+  newestObservationTimeMs: number;
+  oldestObservationTimeMs: number;
+  components: readonly CloudsCompositeComponentMeta[];
+  statusSectorIds: readonly string[];
+  ringFillsMissingRegional: boolean;
 }>;
 
 export type DynamicPointFeature = Readonly<{

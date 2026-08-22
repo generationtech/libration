@@ -78,6 +78,7 @@ import {
   attachVisualScenarioPreparedTracks,
   getVisualScenarioExtraOverlayLayer,
   getVisualScenarioRuntime,
+  getDevCloudsSectorDebugTint,
   INACTIVE_VISUAL_SCENARIO_RUNTIME,
 } from "./dev/visualScenarioRuntime";
 import { ConfigShell } from "./components/config/ConfigShell";
@@ -305,7 +306,15 @@ export default function App() {
   const prevDemoTimeActiveRef = useRef(scenarioRuntime.kind === "applied");
   const lastRenderClockMsRef = useRef<number | null>(null);
   /** Phase 10 shell seam: store/manager/resolver/acquisition for live overlays. */
-  const dynamicLifecycleHostRef = useRef(createDynamicDataLifecycleHost());
+  const dynamicLifecycleHostRef = useRef(
+    createDynamicDataLifecycleHost(
+      (() => {
+        if (!import.meta.env.DEV) return {};
+        const tint = getDevCloudsSectorDebugTint();
+        return tint !== null ? { tintCloudsComposite: tint } : {};
+      })(),
+    ),
+  );
 
   const requestDemoPause = useCallback(() => {
     demoTransportActionRef.current = "pause";
@@ -918,6 +927,9 @@ export default function App() {
               ...(cloudsView.cloudProviderKind !== undefined
                 ? { providerKind: cloudsView.cloudProviderKind }
                 : {}),
+              ...(cloudsView.cloudComposite !== undefined
+                ? { cloudComposite: cloudsView.cloudComposite }
+                : {}),
             });
       const nextCloudsHint = cloudsConfigStatusHint({
         enabled: derivedAppConfigRef.current.layers.globalCloudsIr,
@@ -937,7 +949,11 @@ export default function App() {
         prevCloudsProv?.freshnessBand !== nextCloudsProvenance?.freshnessBand ||
         prevCloudsProv?.coverageKind !== nextCloudsProvenance?.coverageKind ||
         prevCloudsProv?.providerKind !== nextCloudsProvenance?.providerKind ||
-        prevCloudsProv?.versionId !== nextCloudsProvenance?.versionId;
+        prevCloudsProv?.versionId !== nextCloudsProvenance?.versionId ||
+        prevCloudsProv?.newestObservationTimeMs !==
+          nextCloudsProvenance?.newestObservationTimeMs ||
+        prevCloudsProv?.oldestObservationTimeMs !==
+          nextCloudsProvenance?.oldestObservationTimeMs;
       if (cloudsProvenanceChanged) {
         cloudsProvenanceRef.current = nextCloudsProvenance;
         setCloudsProvenanceView(nextCloudsProvenance);

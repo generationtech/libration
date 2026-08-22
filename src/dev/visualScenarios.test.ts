@@ -36,6 +36,7 @@ import {
 import {
   getVisualScenarioRuntime,
   getVisualScenarioExtraOverlayLayer,
+  getDevCloudsSectorDebugTint,
   resetVisualScenarioRuntime,
   attachVisualScenarioPreparedEquirect,
   attachVisualScenarioPreparedPointFeatures,
@@ -83,6 +84,18 @@ describe("visual scenario query parsing", () => {
     expect(parseVisualScenarioQuery("?scenario=baseline")).toBe("baseline");
     expect(parseVisualScenarioQuery("scenario=night")).toBe("night");
     expect(parseVisualScenarioQuery("?scenario=")).toBe("");
+  });
+
+  it("ordinary cloudsSectorDebug is not a visual scenario", () => {
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=1")).toBeNull();
+    const session = applyVisualScenarioFromLocation("?cloudsSectorDebug=1");
+    expect(session.kind).toBe("inactive");
+    expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+  });
+
+  it("does not enable Clouds sector debug under an applied scenario", () => {
+    applyVisualScenarioFromLocation("?scenario=baseline&cloudsSectorDebug=1");
+    expect(getDevCloudsSectorDebugTint()).toBeNull();
   });
 });
 
