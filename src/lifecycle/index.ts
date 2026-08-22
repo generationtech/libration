@@ -306,11 +306,14 @@ export {
 export type { CloudsProviderKind, CloudsSectorId, CloudsGeoSubSatellite } from "./cloudsSectors";
 
 export {
+  CLOUDS_COMPOSITE_AUTHORITY_VERSION,
   buildCloudsCompositeMeta,
   cloudsCompositePaintOrder,
   cloudsOverlapCadenceThresholdMs,
   compositeCloudHighlightLayers,
+  pixelHasUsableRegionalCoverage,
   resolveCloudsCompositeWinnerSectorIds,
+  resolveCloudsRegionalOnlyWinnerSectorIds,
   selectCloudsPaintableComponents,
   selectCloudsStatusComponents,
 } from "./cloudsComposite";

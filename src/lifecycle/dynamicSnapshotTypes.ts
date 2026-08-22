@@ -123,7 +123,9 @@ export type CloudsCompositeComponentMeta = Readonly<{
 
 /**
  * Composed Clouds product. `newest`/`oldest` are over status-visible
- * components, not unused cached sources.
+ * components, not unused cached sources. `ringFillsMissingRegional` is true
+ * when the ring owns at least one composed geographic pixel (missing-regional
+ * fill or q=0 backstop). Fetched-but-hidden ring does not pollute the range.
  */
 export type CloudsCompositeMeta = Readonly<{
   newestObservationTimeMs: number;

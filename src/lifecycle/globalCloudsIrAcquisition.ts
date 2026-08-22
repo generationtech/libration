@@ -67,6 +67,7 @@ import {
 } from "./cloudsPng";
 import { getCloudsQualityPlane } from "./cloudQuality";
 import {
+  CLOUDS_COMPOSITE_AUTHORITY_VERSION,
   buildCloudsCompositeMeta,
   cloudsCompositePaintOrder,
   compositeCloudHighlightLayers,
@@ -669,11 +670,11 @@ export function createGlobalCloudsIrLiveHttpAcquisitionAdapter(
     if (encoded === null) {
       return { ok: false, error: "clouds composite encode failed" };
     }
-    const meta = buildCloudsCompositeMeta(painted);
+    const meta = buildCloudsCompositeMeta(painted, composed.ringOwnsPixels);
     if (meta === null) {
       return { ok: false, error: "clouds composite metadata failed" };
     }
-    const compositeKey = `${activeCloudsTransferVersion()}|${tintComposite !== undefined ? "tint" : "plain"}|${painted
+    const compositeKey = `${CLOUDS_COMPOSITE_AUTHORITY_VERSION}|${activeCloudsTransferVersion()}|${tintComposite !== undefined ? "tint" : "plain"}|${painted
       .map((c) => `${c.sectorId}:${c.observationTimeMs}`)
       .sort()
       .join("|")}`;

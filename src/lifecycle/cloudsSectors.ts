@@ -35,7 +35,7 @@ export const CLOUDS_SECTOR_IDS = [
 
 export type CloudsSectorId = (typeof CLOUDS_SECTOR_IDS)[number];
 
-/** Regional GEO sectors that overwrite the ring inside their footprints. */
+/** Regional GEO sectors. Usable (q>0) coverage outranks the ring; q=0 does not. */
 export const CLOUDS_REGIONAL_SECTOR_IDS = [
   CLOUDS_SECTOR_GOES_WEST,
   CLOUDS_SECTOR_GOES_EAST,

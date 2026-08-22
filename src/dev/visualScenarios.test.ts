@@ -131,6 +131,19 @@ describe("visual scenario query parsing", () => {
     expect(getDevCloudsSectorDebugTint()).not.toBeNull();
   });
 
+  it("ordinary cloudsSectorDebug=ring and q0ring are not visual scenarios", () => {
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=ring")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsSectorDebug=ring").kind).toBe(
+      "inactive",
+    );
+    expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+    expect(parseVisualScenarioQuery("?cloudsSectorDebug=q0ring")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsSectorDebug=q0ring").kind).toBe(
+      "inactive",
+    );
+    expect(getDevCloudsSectorDebugTint()).not.toBeNull();
+  });
+
   it("does not enable Clouds sector debug under an applied scenario", () => {
     applyVisualScenarioFromLocation("?scenario=baseline&cloudsSectorDebug=1");
     expect(getDevCloudsSectorDebugTint()).toBeNull();

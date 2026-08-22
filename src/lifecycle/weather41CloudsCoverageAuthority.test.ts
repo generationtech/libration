@@ -555,7 +555,7 @@ describe("WEATHER-4.1 WEATHER-3 doctrine preserved", () => {
     expect(order[order.length - 1]).toBe(CLOUDS_SECTOR_GOES_EAST);
   });
 
-  it("live adapter valid-clear regionals suppress cloudy ring", async () => {
+  it("live adapter valid-clear q>0 regionals still suppress cloudy ring", async () => {
     const clear = encodeCloudsTestPng({
       luma: 40,
       opaqueRatio: 1,
@@ -579,11 +579,17 @@ describe("WEATHER-4.1 WEATHER-3 doctrine preserved", () => {
     if (!result.ok) return;
     const decoded = decodeCloudsPngRgba(result.entry.payloadBytes!);
     expect(decoded).not.toBeNull();
-    let maxA = 0;
-    for (let i = 3; i < decoded!.rgba.length; i += 4) {
-      if (decoded!.rgba[i]! > maxA) maxA = decoded!.rgba[i]!;
-    }
-    expect(maxA).toBe(0);
+    const width = decoded!.width;
+    const height = decoded!.height;
+    const sample = (lonDeg: number, latDeg: number): number => {
+      const x = Math.min(width - 1, Math.max(0, lonToX(lonDeg, width)));
+      const y = Math.min(height - 1, Math.max(0, latToY(latDeg, height)));
+      return decoded!.rgba[(y * width + x) * 4 + 3]!;
+    };
+    expect(sample(0, 0)).toBe(0);
+    expect(sample(-75.2, 0)).toBe(0);
+    expect(sample(-137, 0)).toBe(0);
+    expect(sample(140.7, 0)).toBe(0);
   });
 
   it("clear coverage still counts as a status-visible contributing component", () => {

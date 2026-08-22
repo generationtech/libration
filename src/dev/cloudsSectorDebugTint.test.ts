@@ -43,10 +43,14 @@ function layer(
 }
 
 describe("DEV Clouds coverage diagnostic", () => {
-  it("parses coverage, winner, quality, signal, and leak modes", () => {
+  it("parses coverage, winner, quality, signal, leak, ring, and q0ring modes", () => {
     expect(parseCloudsSectorDebugMode("1")).toBe("coverage");
     expect(parseCloudsSectorDebugMode("coverage")).toBe("coverage");
     expect(parseCloudsSectorDebugMode("winner")).toBe("winner");
+    expect(parseCloudsSectorDebugMode("ring")).toBe("ring");
+    expect(parseCloudsSectorDebugMode("q0ring")).toBe("q0ring");
+    expect(parseCloudsSectorDebugMode("q0-ring")).toBe("q0ring");
+    expect(parseCloudsSectorDebugMode("limb")).toBe("q0ring");
     expect(parseCloudsSectorDebugMode("quality")).toBe("quality");
     expect(parseCloudsSectorDebugMode("signal")).toBe("signal");
     expect(parseCloudsSectorDebugMode("leak")).toBe("leak");
@@ -118,5 +122,52 @@ describe("DEV Clouds coverage diagnostic", () => {
     );
     expect(leak[0]).toBe(255);
     expect(leak[1]).toBe(64);
+  });
+
+  it("winner mode tints ring ownership distinctly from regionals", () => {
+    const ring: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_EUMET_RING, [255], [80]),
+    };
+    const msg: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_METEOSAT, [255], [200]),
+      qualityWeight: new Uint8Array([0]),
+    };
+    const base = new Uint8Array(4);
+    const winner = tintCloudsCompositeByWinningSector(
+      base,
+      [ring, msg],
+      [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_METEOSAT],
+      "winner",
+    );
+    expect(winner[0]).toBe(CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING][0]);
+    expect(winner[0]).not.toBe(CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_METEOSAT][0]);
+    const ringOnly = tintCloudsCompositeByWinningSector(
+      base,
+      [ring, msg],
+      [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_METEOSAT],
+      "ring",
+    );
+    expect(ringOnly[0]).toBe(CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING][0]);
+    expect(ringOnly[3]).toBe(220);
+  });
+
+  it("q0ring mode marks q=0 regional pixels where ring coverage exists", () => {
+    const ring: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_EUMET_RING, [255, 0], [80, 0]),
+    };
+    const msg: CloudsHighlightLayer = {
+      ...layer(CLOUDS_SECTOR_METEOSAT, [255, 255], [10, 10]),
+      qualityWeight: new Uint8Array([0, 0]),
+    };
+    const base = new Uint8Array(8);
+    const tint = tintCloudsCompositeByWinningSector(
+      base,
+      [ring, msg],
+      [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_METEOSAT],
+      "q0ring",
+    );
+    expect(tint[0]).toBe(255);
+    expect(tint[1]).toBe(140);
+    expect(tint[4]).toBe(0);
   });
 });

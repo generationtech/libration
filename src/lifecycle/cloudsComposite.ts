@@ -55,6 +55,8 @@ export type CloudsHighlightLayer = Readonly<{
   /**
    * Viewing-quality plane: 0 = extreme geometry, 255 = nadir-quality.
    * Missing means full usable quality (255). Quality 0 is still coverage.
+   * Quality 0 does not punch coverage holes, but is not preferred over a
+   * paintable ring observation.
    */
   qualityWeight?: Uint8Array;
   /** Observation time for freshness-vs-quality. Missing treats age as equal. */
@@ -128,11 +130,17 @@ export function cloudsCompositePaintOrder(
 
 /**
  * Status ages come from painted regionals. The ring is included only when it
- * is filling at least one missing regional footprint — not merely because it
- * peeks through disk gaps under fresh sector data.
+ * actually owns geographic pixels in the composed product — not merely because
+ * it was fetched, and not merely because it peeks through disk gaps under
+ * usable q>0 regional coverage.
+ *
+ * `ringOwnsPixels` is the composed-product truth. When omitted, a missing
+ * regional plus a painted ring is treated as contributing (legacy heuristic
+ * for callers that have not scanned the winner map).
  */
 export function selectCloudsStatusComponents(
   painted: readonly CloudsPaintedComponent[],
+  ringOwnsPixels?: boolean,
 ): {
   components: CloudsPaintedComponent[];
   ringFillsMissingRegional: boolean;
@@ -143,14 +151,17 @@ export function selectCloudsStatusComponents(
   );
   const ring = byId.get(CLOUDS_SECTOR_EUMET_RING);
   const missingRegional = regionals.length < CLOUDS_REGIONAL_SECTOR_IDS.length;
-  const ringFillsMissingRegional = missingRegional && ring !== undefined;
+  const ringContributes =
+    ring !== undefined &&
+    (ringOwnsPixels === true ||
+      (ringOwnsPixels === undefined && (regionals.length === 0 || missingRegional)));
   if (regionals.length === 0) {
     return {
-      components: ring !== undefined ? [ring] : [],
-      ringFillsMissingRegional: ring !== undefined,
+      components: ringContributes && ring !== undefined ? [ring] : [],
+      ringFillsMissingRegional: ringContributes,
     };
   }
-  if (ringFillsMissingRegional && ring !== undefined) {
+  if (ringContributes && ring !== undefined) {
     return { components: [...regionals, ring], ringFillsMissingRegional: true };
   }
   return { components: regionals, ringFillsMissingRegional: false };
@@ -172,8 +183,9 @@ export function cloudsCompositeObservationRange(components: readonly CloudsPaint
 
 export function buildCloudsCompositeMeta(
   painted: readonly CloudsPaintedComponent[],
+  ringOwnsPixels?: boolean,
 ): CloudsCompositeMeta | null {
-  const status = selectCloudsStatusComponents(painted);
+  const status = selectCloudsStatusComponents(painted, ringOwnsPixels);
   const range = cloudsCompositeObservationRange(status.components);
   if (range === null) return null;
   return {
@@ -189,6 +201,9 @@ export function buildCloudsCompositeMeta(
     ringFillsMissingRegional: status.ringFillsMissingRegional,
   };
 }
+
+/** Composite-result cache identity. Transfer version is independent. */
+export const CLOUDS_COMPOSITE_AUTHORITY_VERSION = "wx52-ring-over-q0";
 
 type RegionalOverlapSlot = Readonly<{
   layer: CloudsHighlightLayer;
@@ -322,7 +337,7 @@ function copyLayerPixel(out: Uint8Array, src: Uint8Array, i: number): void {
   out[o + 3] = src[o + 3]!;
 }
 
-function pickRegionalWinner(
+function pickCoveringRegionalWinner(
   regionals: readonly RegionalOverlapSlot[],
   i: number,
 ): RegionalOverlapSlot | null {
@@ -336,59 +351,152 @@ function pickRegionalWinner(
   return best;
 }
 
+function pickUsableRegionalWinner(
+  regionals: readonly RegionalOverlapSlot[],
+  i: number,
+): RegionalOverlapSlot | null {
+  let best: RegionalOverlapSlot | null = null;
+  for (const slot of regionals) {
+    if (slot.coverage[i]! === 0) continue;
+    if (slotQualityAt(slot, i) === 0) continue;
+    if (best === null || cloudsRegionalOverlapChallengerBeats(slot, best, i)) {
+      best = slot;
+    }
+  }
+  return best;
+}
+
+function pickZeroQualityRegionalWinner(
+  regionals: readonly RegionalOverlapSlot[],
+  i: number,
+): RegionalOverlapSlot | null {
+  let best: RegionalOverlapSlot | null = null;
+  for (const slot of regionals) {
+    if (slot.coverage[i]! === 0) continue;
+    if (slotQualityAt(slot, i) !== 0) continue;
+    if (best === null || fresherOrStableBeats(slot, best)) {
+      best = slot;
+    }
+  }
+  return best;
+}
+
+function ringHasCoverage(ring: RegionalOverlapSlot | null, i: number): boolean {
+  return ring !== null && ring.coverage[i]! !== 0;
+}
+
 /**
- * Coverage-then-quality replacement: the ring is a coverage backstop.
- * Among regionals with valid coverage, a lexicographic quality-aware winner
- * owns the pixel, including cloud signal 0 (authoritative clear). Quality 0
- * does not punch coverage holes. Cloud signal is copied, not blended.
+ * Final per-pixel authority:
+ * 1. usable regional (coverage && q>0) — existing WEATHER-4.3 lex rule
+ * 2. ring with valid provider coverage
+ * 3. q=0 regional — existing freshness / stable order
+ * 4. no data
+ *
+ * Coverage is unchanged. Quality 0 remains observational coverage.
+ */
+function pickCompositeAuthority(
+  regionals: readonly RegionalOverlapSlot[],
+  ring: RegionalOverlapSlot | null,
+  i: number,
+): RegionalOverlapSlot | null {
+  const usable = pickUsableRegionalWinner(regionals, i);
+  if (usable !== null) return usable;
+  if (ringHasCoverage(ring, i)) return ring;
+  return pickZeroQualityRegionalWinner(regionals, i);
+}
+
+export type CloudsCompositeRgba = Readonly<{
+  width: number;
+  height: number;
+  rgba: Uint8Array;
+  ringOwnsPixels: boolean;
+}>;
+
+/**
+ * Coverage-then-quality replacement. Usable (q>0) regionals keep the
+ * WEATHER-4.3 lexicographic winner and still suppress the ring, including
+ * cloud signal 0. When every covering regional is q=0, a paintable ring with
+ * provider coverage wins. Quality 0 does not punch coverage holes and still
+ * paints if the ring is absent. Cloud signal is copied, not blended.
  * Same dimensions required.
  */
 export function compositeCloudHighlightLayers(
   layers: readonly CloudsHighlightLayer[],
   paintOrder: readonly CloudsSectorId[],
   productUtcMs = 0,
-): { width: number; height: number; rgba: Uint8Array } | null {
+): CloudsCompositeRgba | null {
   const prepared = prepareOverlapSlots(layers, paintOrder, productUtcMs);
   if (prepared === null) return null;
   const { width, height, pixelCount, ring, regionals } = prepared;
   const out = new Uint8Array(pixelCount * 4);
+  let ringOwnsPixels = false;
   for (let i = 0; i < pixelCount; i++) {
-    const winner = pickRegionalWinner(regionals, i);
-    if (winner !== null) {
-      copyLayerPixel(out, winner.rgba, i);
-      continue;
-    }
-    if (ring !== null && ring.coverage[i]! !== 0) {
-      copyLayerPixel(out, ring.rgba, i);
-    }
+    const winner = pickCompositeAuthority(regionals, ring, i);
+    if (winner === null) continue;
+    copyLayerPixel(out, winner.rgba, i);
+    if (winner === ring) ringOwnsPixels = true;
   }
-  return { width, height, rgba: out };
+  return { width, height, rgba: out, ringOwnsPixels };
 }
 
 /**
- * Per-pixel selected source for DEV diagnostics. Ring only where no
- * regional has coverage. Same lexicographic rule as composition.
+ * Per-pixel selected source for DEV diagnostics. Same authority as
+ * composition: usable regional, else ring, else q=0 regional.
  */
 export function resolveCloudsCompositeWinnerSectorIds(
   layers: readonly CloudsHighlightLayer[],
   paintOrder: readonly CloudsSectorId[],
   productUtcMs = 0,
-): { width: number; height: number; winners: Int8Array } | null {
+): { width: number; height: number; winners: Int8Array; ringOwnsPixels: boolean } | null {
   const prepared = prepareOverlapSlots(layers, paintOrder, productUtcMs);
   if (prepared === null) return null;
   const { width, height, pixelCount, ring, regionals } = prepared;
   const indexById = new Map(paintOrder.map((id, idx) => [id, idx]));
   const winners = new Int8Array(pixelCount);
   winners.fill(-1);
+  let ringOwnsPixels = false;
   for (let i = 0; i < pixelCount; i++) {
-    const winner = pickRegionalWinner(regionals, i);
+    const winner = pickCompositeAuthority(regionals, ring, i);
+    if (winner === null) continue;
+    winners[i] = indexById.get(winner.layer.sectorId) ?? -1;
+    if (winner === ring) ringOwnsPixels = true;
+  }
+  return { width, height, winners, ringOwnsPixels };
+}
+
+/**
+ * WEATHER-4.3 regional-only winner (all covering regionals, ring ignored).
+ * Used to prove q>0 identity and to diagnose q=0 pixels the ring may replace.
+ */
+export function resolveCloudsRegionalOnlyWinnerSectorIds(
+  layers: readonly CloudsHighlightLayer[],
+  paintOrder: readonly CloudsSectorId[],
+  productUtcMs = 0,
+): { width: number; height: number; winners: Int8Array } | null {
+  const prepared = prepareOverlapSlots(layers, paintOrder, productUtcMs);
+  if (prepared === null) return null;
+  const { width, height, pixelCount, regionals } = prepared;
+  const indexById = new Map(paintOrder.map((id, idx) => [id, idx]));
+  const winners = new Int8Array(pixelCount);
+  winners.fill(-1);
+  for (let i = 0; i < pixelCount; i++) {
+    const winner = pickCoveringRegionalWinner(regionals, i);
     if (winner !== null) {
       winners[i] = indexById.get(winner.layer.sectorId) ?? -1;
-      continue;
-    }
-    if (ring !== null && ring.coverage[i]! !== 0) {
-      winners[i] = indexById.get(CLOUDS_SECTOR_EUMET_RING) ?? -1;
     }
   }
   return { width, height, winners };
+}
+
+export function pixelHasUsableRegionalCoverage(
+  layers: readonly CloudsHighlightLayer[],
+  i: number,
+): boolean {
+  for (const layer of layers) {
+    if (layer.sectorId === CLOUDS_SECTOR_EUMET_RING) continue;
+    if (layer.coverageMask[i]! === 0) continue;
+    const q = layer.qualityWeight?.[i] ?? 255;
+    if (q > 0) return true;
+  }
+  return false;
 }

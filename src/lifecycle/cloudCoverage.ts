@@ -21,7 +21,8 @@
  * A valid-clear observation is coverage > 0 with cloudSignal == 0. That is
  * not the same as no-data (coverage == 0). Quality == 0 is also not no-data.
  * Provider alpha owns coverage; the highlight transfer must not redefine it;
- * viewing geometry must not punch coverage holes.
+ * viewing geometry must not punch coverage holes. Preferred authority may
+ * still choose a covering global backstop over quality 0.
  */
 
 import {

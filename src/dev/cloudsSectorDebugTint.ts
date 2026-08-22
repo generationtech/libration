@@ -15,7 +15,9 @@
  * DEV-only Clouds sector diagnostic. Production never imports this module.
  * Ordinary current-time mode only (not a `?scenario=`):
  *   ?cloudsSectorDebug=1|coverage — coverage footprints (paint-order, ignore quality)
- *   ?cloudsSectorDebug=winner — quality-aware lexicographic selected source
+ *   ?cloudsSectorDebug=winner — quality-aware selected source (ring distinct)
+ *   ?cloudsSectorDebug=ring — pixels the ring actually owns after authority
+ *   ?cloudsSectorDebug=q0ring — covering regional would be q=0 and ring is available
  *   ?cloudsSectorDebug=quality — selected-source quality (nadir bright, limb dark)
  *   ?cloudsSectorDebug=signal — derived cloud-confidence winners
  *   ?cloudsSectorDebug=canonical — winner canonical display-IR (grayscale)
@@ -24,7 +26,11 @@
  */
 
 import type { CloudsHighlightLayer } from "../lifecycle/cloudsComposite";
-import { resolveCloudsCompositeWinnerSectorIds } from "../lifecycle/cloudsComposite";
+import {
+  pixelHasUsableRegionalCoverage,
+  resolveCloudsCompositeWinnerSectorIds,
+  resolveCloudsRegionalOnlyWinnerSectorIds,
+} from "../lifecycle/cloudsComposite";
 import {
   CLOUDS_SECTOR_EUMET_RING,
   CLOUDS_SECTOR_GOES_EAST,
@@ -39,6 +45,8 @@ import type { DevCloudsSectorDebugTintFn } from "./visualScenarioRuntime";
 export type CloudsSectorDebugMode =
   | "coverage"
   | "winner"
+  | "ring"
+  | "q0ring"
   | "quality"
   | "signal"
   | "canonical"
@@ -47,7 +55,7 @@ export type CloudsSectorDebugMode =
 export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
   Record<CloudsSectorId, readonly [number, number, number]>
 > = {
-  [CLOUDS_SECTOR_EUMET_RING]: [160, 160, 160],
+  [CLOUDS_SECTOR_EUMET_RING]: [180, 90, 255],
   [CLOUDS_SECTOR_GOES_WEST]: [80, 180, 220],
   [CLOUDS_SECTOR_GOES_EAST]: [220, 90, 160],
   [CLOUDS_SECTOR_METEOSAT]: [230, 200, 70],
@@ -55,6 +63,7 @@ export const CLOUDS_SECTOR_DEBUG_TINT: Readonly<
 };
 
 const LEAK_RGB = [255, 64, 48] as const;
+const Q0_RING_RGB = [255, 140, 40] as const;
 
 let debugMode: CloudsSectorDebugMode = "coverage";
 
@@ -65,6 +74,8 @@ export function parseCloudsSectorDebugMode(
   const v = value.trim().toLowerCase();
   if (v === "1" || v === "coverage") return "coverage";
   if (v === "winner") return "winner";
+  if (v === "ring") return "ring";
+  if (v === "q0ring" || v === "q0-ring" || v === "limb") return "q0ring";
   if (v === "quality" || v === "q") return "quality";
   if (v === "signal" || v === "cloud") return "signal";
   if (v === "canonical" || v === "canonicalir" || v === "ir") return "canonical";
@@ -148,6 +159,11 @@ export function tintCloudsCompositeByWinningSector(
     );
     winner = resolved?.winners ?? coveragePaintOrderWinners(layers, paintOrder, pixelCount);
   }
+  const ringLayer = layers.find((l) => l.sectorId === CLOUDS_SECTOR_EUMET_RING);
+  const regionalOnly =
+    mode === "q0ring"
+      ? resolveCloudsRegionalOnlyWinnerSectorIds(layers, paintOrder, productUtcMs)
+      : null;
   const suppressed = mode === "leak" ? new Uint8Array(pixelCount) : null;
   if (suppressed !== null) {
     for (let i = 0; i < pixelCount; i++) {
@@ -178,6 +194,36 @@ export function tintCloudsCompositeByWinningSector(
         out[o] = LEAK_RGB[0];
         out[o + 1] = LEAK_RGB[1];
         out[o + 2] = LEAK_RGB[2];
+        out[o + 3] = 220;
+      }
+      continue;
+    }
+    if (mode === "ring") {
+      if (sectorId !== CLOUDS_SECTOR_EUMET_RING) continue;
+      const [tr, tg, tb] = CLOUDS_SECTOR_DEBUG_TINT[CLOUDS_SECTOR_EUMET_RING];
+      out[o] = tr;
+      out[o + 1] = tg;
+      out[o + 2] = tb;
+      out[o + 3] = 220;
+      continue;
+    }
+    if (mode === "q0ring") {
+      const regionalWi = regionalOnly?.winners[i] ?? -1;
+      const regionalId = regionalWi >= 0 ? paintOrder[regionalWi] : undefined;
+      const regionalLayer =
+        regionalId !== undefined
+          ? layers.find((l) => l.sectorId === regionalId)
+          : undefined;
+      const regionalQ0 =
+        regionalLayer !== undefined &&
+        layerHasCoverage(regionalLayer, i) &&
+        layerQualityAt(regionalLayer, i) === 0 &&
+        !pixelHasUsableRegionalCoverage(layers, i);
+      const ringAvailable = ringLayer !== undefined && layerHasCoverage(ringLayer, i);
+      if (regionalQ0 && ringAvailable) {
+        out[o] = Q0_RING_RGB[0];
+        out[o + 1] = Q0_RING_RGB[1];
+        out[o + 2] = Q0_RING_RGB[2];
         out[o + 3] = 220;
       }
       continue;

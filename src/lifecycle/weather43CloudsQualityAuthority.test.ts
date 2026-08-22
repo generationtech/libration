@@ -150,9 +150,10 @@ describe("WEATHER-4.3 coverage vs quality", () => {
     }));
     const out = compositeCloudHighlightLayers([limb], [CLOUDS_SECTOR_METEOSAT]);
     expect(out!.rgba[3]).toBe(180);
+    expect(out!.ringOwnsPixels).toBe(false);
   });
 
-  it("valid-clear q=0 still suppresses ring", () => {
+  it("valid-clear q=0 remains coverage; WEATHER-5.2 lets a covering ring own the pixel", () => {
     const ring = fillLayer(CLOUDS_SECTOR_EUMET_RING, 1, 1, () => ({
       coverage: 255,
       alpha: 200,
@@ -162,11 +163,16 @@ describe("WEATHER-4.3 coverage vs quality", () => {
       alpha: 0,
       quality: 0,
     }));
+    expect(regional.coverageMask[0]).toBe(255);
+    expect(isCloudsAuthoritativeClear(regional.coverageMask[0]!, regional.rgba[3]!)).toBe(
+      true,
+    );
     const out = compositeCloudHighlightLayers(
       [ring, regional],
       [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_GOES_EAST],
     );
-    expect(out!.rgba[3]).toBe(0);
+    expect(out!.rgba[3]).toBe(200);
+    expect(out!.ringOwnsPixels).toBe(true);
   });
 
   it("no-data does not become valid because quality exists", () => {
@@ -452,22 +458,33 @@ describe("WEATHER-4.3 ring backstop", () => {
     expect(out.rgba[7]).toBe(150);
   });
 
-  it("ring does not appear beneath valid q=0 regional coverage; authoritative clear remains clear", () => {
+  it("ring does not appear beneath valid q>0 regional coverage; q=0 yields ring when available", () => {
     const ring = fillLayer(CLOUDS_SECTOR_EUMET_RING, 1, 1, () => ({
       coverage: 255,
       alpha: 200,
     }));
-    const regional = fillLayer(CLOUDS_SECTOR_METEOSAT, 1, 1, () => ({
+    const regionalQ0 = fillLayer(CLOUDS_SECTOR_METEOSAT, 1, 1, () => ({
       coverage: 255,
       alpha: 0,
       quality: 0,
     }));
-    const out = compositeCloudHighlightLayers(
-      [ring, regional],
+    const q0Out = compositeCloudHighlightLayers(
+      [ring, regionalQ0],
       [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_METEOSAT],
     )!;
-    expect(out.rgba[3]).toBe(0);
-    expect(isCloudsAuthoritativeClear(regional.coverageMask[0]!, regional.rgba[3]!)).toBe(
+    expect(q0Out.rgba[3]).toBe(200);
+    expect(regionalQ0.coverageMask[0]).toBe(255);
+    const regionalUsable = fillLayer(CLOUDS_SECTOR_METEOSAT, 1, 1, () => ({
+      coverage: 255,
+      alpha: 0,
+      quality: 40,
+    }));
+    const usableOut = compositeCloudHighlightLayers(
+      [ring, regionalUsable],
+      [CLOUDS_SECTOR_EUMET_RING, CLOUDS_SECTOR_METEOSAT],
+    )!;
+    expect(usableOut.rgba[3]).toBe(0);
+    expect(isCloudsAuthoritativeClear(regionalUsable.coverageMask[0]!, regionalUsable.rgba[3]!)).toBe(
       true,
     );
   });

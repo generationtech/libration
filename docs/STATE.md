@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-071](work/LIB-071-weather-5-1-canonical-ir-cloud-confidence.md) — WEATHER-5.1: Canonical IR interpretation + conservative cloud-confidence transfer
+[LIB-073](work/LIB-073-weather-5-2-ring-outranks-q0-regional-authority.md) — WEATHER-5.2: Ring outranks q=0 regional authority
 
 ## Blockers
 
@@ -33,8 +33,10 @@ Proposed [LIB-066](work/LIB-066-weather-4-cloud-mosaic-seam-investigation.md) Cl
 
 Proposed [LIB-068](work/LIB-068-weather-4-2-cloud-source-quality-seam-investigation.md) Cloud source-quality / radiometric seam survey stays proposed (investigation only; not activated). LIB-069 implemented its quality-authority recommendation.
 
-Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-investigation.md) WEATHER-5 cloud radiometry / presentation survey stays proposed (investigation only; not activated). LIB-071 implemented its WEATHER-5.1 recommendation. Do not start WEATHER-5.2 automatically.
+Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-investigation.md) WEATHER-5 cloud radiometry / presentation survey stays proposed (investigation only; not activated). LIB-071 implemented its WEATHER-5.1 recommendation.
+
+Proposed [LIB-072](work/LIB-072-weather-5-2-residual-cloud-boundary-provenance-investigation.md) WEATHER-5.2 residual cloud-boundary provenance survey stays proposed (investigation only; not activated). LIB-073 implemented its ring-over-q0 recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
 
 ## Next action
 
-Awaiting scope. Do not start WEATHER-5.2, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
+Awaiting scope. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.

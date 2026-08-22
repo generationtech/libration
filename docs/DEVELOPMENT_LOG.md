@@ -400,4 +400,10 @@ WEATHER-5.1: provider display interpretation → canonical display IR → one co
 
 Verified: `npx tsc --noEmit` clean; `npm test` 267 files / 2538 passed / 0 failed; `npm run build` succeeded with no `cloudsTransfer` / `cloudsSectorDebug` / `visualScenarios` / `scenario=clouds` in `dist/`. Live East/MSG winners identical; 45°N switch −55.13°; interior |Δα| 62.5 → 20.5; clear-ocean gray `(103,103,103)` α 1 → 0. Cursor Browser ordinary live **Clouds · observations 23–43 min old**, winner debug, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-070 stays proposed. Do not start WEATHER-5.2.
 
+## 2026-08-22 — LIB-073 complete
+
+WEATHER-5.2: ring outranks q=0 regional authority. Usable q>0 regionals keep the WEATHER-4.3 lexicographic rule. When every covering regional is q=0, a paintable EUMET ring with provider coverage wins; q=0 still paints if the ring is absent. Coverage, quality, signal, confidence, and opacity unchanged. ADR 0024 amended. No blending, no TIME sync.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds tests 152 passed; `npm test` 268 files / 2564 passed / 0 failed; `npm run build` succeeded with no `cloudsSectorDebug` / `visualScenarios` / `cloudsTransfer` / `q0ring` in `dist/`. Cursor Browser ordinary live **Clouds · observations 31m–2h old** (ring listed at 2h), winner debug (India ~74°E ring, ~80°E Himawari; NATL East magenta), `?scenario=clouds` DEV fixture. LIB-072 stays proposed. Do not start later q>0 blending or WEATHER-6.
+
 
