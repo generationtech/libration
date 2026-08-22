@@ -414,6 +414,8 @@ Do not treat a DEV scenario session as evidence that live layers work.
 
 ### Clouds live provenance and Weather topic
 
+The current-observation IR overlay is the production Clouds path. India/Mumbai hard source seams, GIBS near-gray stipple, and large GEO/ring authority arcs were the last identified corrective defects and are closed. Remaining visual differences at ordinary scale — provider texture, chromatic-vs-grayscale IR, warm/low-cloud ambiguity, and cold-surface/polar ambiguity — are inherent IR/provider limits, not a reason to reopen authority, canonicalization, or blending.
+
 Ordinary non-scenario current time (`http://localhost:1420/` with no `?scenario=`):
 
 1. Open Config → Layers → Layer masters. Check **Clouds**. Expect “Clouds loading…” then a best-current composition (for example `Clouds · observations 8–70 min old` or `Clouds · mixed freshness · 8m–3h old` if the ring backstop is visible). Adjacent sectors may have different observation times; a storm-edge mismatch at a source seam is not automatically a defect. Unavailable is allowed. A black world, rainbow CTT, unlabeled fixture, or a forced common mosaic timestamp is a failure.

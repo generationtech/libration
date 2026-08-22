@@ -424,4 +424,10 @@ WEATHER-5.5.1: EUMET ring canonical IR is identity grayscale (`luma / 255`), mat
 
 Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 169 passed (weather55 14/14); `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded with no `cloudsRingCalibration` / `wx55-ring-bp56` / `cloudsSectorDebug` / `visualScenarios` in `dist/`. Numeric luma→IR→conf knots match LIB-078; winner/coverage/quality/TIMES identity vs BP56; Sahara/Arabian/Atlantic clear stay conf 0; SIO luma 111 lifts; 25°N convective-core step remains. Cursor Browser ordinary live **Clouds · mixed freshness · 34m–4h / 23m–4h old**, winner debug, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. India sampled on the 1888×1079 canvas bitmap. LIB-078 stays proposed. Do not start q>0 blending or WEATHER-6.
 
+## 2026-08-22 — WEATHER-5 IR cloud foundation closed
+
+Current-observation IR Clouds is a settled foundation: provider observations → independent observation/acquisition times → coverage → geometric quality → source authority → provider-specific canonical IR → shared cloud confidence → one composed raster → one RenderPlan `imageBlit`. Later user visual verification at ordinary scale: India/Mumbai no longer exposes an objectionable hard source seam; GIBS stipple is materially resolved; large GEO/ring authority arcs and wedges are gone; Clouds read primarily as meteorological structure. Remaining differences are inherent IR/provider/data-product limits, not identified product defects.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-Dk5E2hC_.js`); production retains `wx55-ring-identity-v1`; DEV Clouds diagnostics absent from `dist/`. No source change. No new corrective WEATHER item. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066, LIB-068, LIB-070, LIB-072, LIB-074, LIB-076, LIB-078 stay proposed.
+
 

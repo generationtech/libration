@@ -125,3 +125,28 @@ Historical Demo 2017-08-21: **Live-only data is hidden while viewing another pro
 **Discovered, not done**
 
 Inherent IR limits remain: warm/low-cloud ambiguity, cold-surface / polar ice, GIBS false-color convective cores versus ring gray, residual provider texture. q>0 blending — not justified; dual q>0 MSG∩Himawari over India remains empty; leftover 25°N step is encoding, not a missing crossfade. WEATHER-6, numeric BT, cloud-mask, physical illumination. Polar special case not added. LIB-037, LIB-058, LIB-061, LIB-062, LIB-066, LIB-068, LIB-070, LIB-072, LIB-074, LIB-076, LIB-078 stay proposed.
+
+## WEATHER-5 phase closure (2026-08-22)
+
+Human-authorized verification and documentation only. No source change. No new corrective WEATHER item.
+
+**Final visual assessment (user-supplied, ordinary viewing scale)**
+
+- India/Mumbai no longer exposes an objectionable hard source seam.
+- Global satellite footprint geometry is no longer visually dominant; large GEO/ring authority arcs and wedges are gone.
+- The previous GIBS stipple defect is materially resolved.
+- Clouds now read primarily as meteorological structure.
+- Remaining differences include provider texture, chromatic-vs-grayscale IR behavior, warm/low-cloud ambiguity, and cold-surface/polar ambiguity. Those are inherent IR/provider/data-product limits, not identified product defects.
+
+**Outstanding WEATHER-5 “Not verified” classification** (none became new LIBs)
+
+- **A. worth doing now for phase closure:** none of the leftover lines. Closure ran repository-standard `npx tsc --noEmit`, `npm test`, and `npm run build` only.
+- **B. normal release/platform verification:** pixel-identical illumination ON vs OFF; Tauri binary; external licence counsel; DEV URL rematerialize (`?cloudsRingCalibration=bp56`, `?cloudsGibsGray`, `gibsGray` diagnostic); Cursor compositor Americas-weighted 1920 crop vs full-world canvas; two live poll cycles / winner-edge motion; in-app Network timing; canvas paint microseconds; Pacific/dateline as a primary screenshot.
+- **C. obsolete due to later verification:** India-centered 1920 crop as a remaining seam-defect check; live WMS re-fetch of the LIB-078 India crop for pixel-identical remesure; earlier-session exact seam-ratio remesure; early-session Weather status age-range; dedicated night-ocean p50 box; hybrid full-world recompose (LIB-077 shipped); qualitative low-quality ring substitution (LIB-075 shipped).
+- **D. future capability, not unfinished WEATHER-5:** numeric BT / netCDF; cloud-mask; GeoColor / visible / WEATHER-6; seasonal transfer stability; polar LEO fill; IODC as a fifth regional; native GEO CRS GetMap; GetFeatureInfo satellite-id; EUMET per-pixel provenance; EUMETSAT Data Store; Worldview/NESDIS pixel match; full colormap RGB→°C LUT.
+
+**Closure commands**
+
+- `npx tsc --noEmit` — clean
+- `npm test` — 271 files / 2618 passed / 0 failed
+- `npm run build` — succeeded (`dist/assets/index-Dk5E2hC_.js`); production retains `wx55-ring-identity-v1`; `cloudsRingCalibration` / `cloudsSectorDebug` / `visualScenarios` / `cloudsGibsGray` / `cloudsTransfer` absent from `dist/`

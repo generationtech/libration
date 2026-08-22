@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-079](work/LIB-079-weather-5-5-1-ring-canonical-identity-grayscale.md) — WEATHER-5.5.1: Ring Canonical Identity Grayscale
+[LIB-079](work/LIB-079-weather-5-5-1-ring-canonical-identity-grayscale.md) — WEATHER-5.5.1: Ring Canonical Identity Grayscale. WEATHER-5 IR cloud foundation closed.
 
 ## Blockers
 
@@ -35,14 +35,16 @@ Proposed [LIB-068](work/LIB-068-weather-4-2-cloud-source-quality-seam-investigat
 
 Proposed [LIB-070](work/LIB-070-weather-5-cloud-radiometry-and-presentation-investigation.md) WEATHER-5 cloud radiometry / presentation survey stays proposed (investigation only; not activated). LIB-071 implemented its WEATHER-5.1 recommendation.
 
-Proposed [LIB-072](work/LIB-072-weather-5-2-residual-cloud-boundary-provenance-investigation.md) WEATHER-5.2 residual cloud-boundary provenance survey stays proposed (investigation only; not activated). LIB-073 implemented its ring-over-q0 recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+Proposed [LIB-072](work/LIB-072-weather-5-2-residual-cloud-boundary-provenance-investigation.md) WEATHER-5.2 residual cloud-boundary provenance survey stays proposed (investigation only; not activated). LIB-073 implemented its ring-over-q0 recommendation.
 
-Proposed [LIB-074](work/LIB-074-weather-5-3-ring-artifact-provenance-and-cross-source-texture-investigation.md) WEATHER-5.3 ring-artifact provenance and cross-source texture survey stays proposed (investigation only; not activated). LIB-075 implemented its ring component-geometry quality recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+Proposed [LIB-074](work/LIB-074-weather-5-3-ring-artifact-provenance-and-cross-source-texture-investigation.md) WEATHER-5.3 ring-artifact provenance and cross-source texture survey stays proposed (investigation only; not activated). LIB-075 implemented its ring component-geometry quality recommendation.
 
-Proposed [LIB-076](work/LIB-076-weather-5-4-cross-source-cloud-radiometric-equivalence-investigation.md) WEATHER-5.4 cross-source cloud radiometric equivalence survey stays proposed (investigation only; not activated). LIB-077 implemented its chroma-aware GIBS near-gray recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+Proposed [LIB-076](work/LIB-076-weather-5-4-cross-source-cloud-radiometric-equivalence-investigation.md) WEATHER-5.4 cross-source cloud radiometric equivalence survey stays proposed (investigation only; not activated). LIB-077 implemented its chroma-aware GIBS near-gray recommendation.
 
-Proposed [LIB-078](work/LIB-078-weather-5-5-ring-gibs-mean-cloud-confidence-calibration-investigation.md) WEATHER-5.5 ring-GIBS mean cloud-confidence calibration survey stays proposed (investigation only; not activated). LIB-079 implemented its identity-grayscale recommendation. Do not start later q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination automatically.
+Proposed [LIB-078](work/LIB-078-weather-5-5-ring-gibs-mean-cloud-confidence-calibration-investigation.md) WEATHER-5.5 ring-GIBS mean cloud-confidence calibration survey stays proposed (investigation only; not activated). LIB-079 implemented its identity-grayscale recommendation.
+
+Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Awaiting scope. Do not start q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
+Awaiting scope. The current-observation IR cloud foundation is mature. Do not start another corrective WEATHER item, q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
