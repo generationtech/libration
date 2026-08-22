@@ -27,10 +27,11 @@ import {
   cloudConfidence01FromCanonicalIR,
 } from "./cloudHighlightTransfer";
 import {
-  EUMET_RING_CANONICAL_IR_BLACK,
+  LEGACY_EUMET_RING_CANONICAL_IR_BLACK,
   canonicalIR01FromEumetRingIr108Gray,
   canonicalIR01FromMeteosatIr108Gray,
   canonicalIR01FromProviderRgb,
+  setDevRingCalibrationOverride,
 } from "./cloudIrInterpretation";
 import {
   compositeCloudHighlightLayers,
@@ -177,11 +178,13 @@ describe("WEATHER-5.4.1 chroma-aware GIBS near-gray inversion", () => {
   beforeEach(() => {
     setDevCloudsDisplayTransferOverride(null);
     setDevGibsGrayInterpretationOverride(null);
+    setDevRingCalibrationOverride(null);
   });
 
   afterEach(() => {
     setDevGibsGrayInterpretationOverride(null);
     setDevCloudsDisplayTransferOverride(null);
+    setDevRingCalibrationOverride(null);
   });
 
   it("documents palette branches and the production transfer version", () => {
@@ -190,7 +193,7 @@ describe("WEATHER-5.4.1 chroma-aware GIBS near-gray inversion", () => {
     );
     expect(GIBS_BAND13_COLORMAP_AUTHORITY.paletteVersion).toBe("gibs-v1.3-2026-08-22");
     expect(GIBS_BAND13_NEAR_GRAY_CHROMA_MAX).toBe(8);
-    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx54-gibs-gray-v3");
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx55-ring-identity-v1");
     expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).not.toBe("wx5-cloud-v2");
     expect(LEGACY_GIBS_GRAY_TRANSFER_VERSION).toBe("wx54-gibs-gray-legacy");
     expect(getActiveGibsGrayInterpretation()).toBe("hybrid");
@@ -353,17 +356,17 @@ describe("WEATHER-5.4.1 chroma-aware GIBS near-gray inversion", () => {
     expect(convectionHybrid).toBeGreaterThan(0.55);
   });
 
-  it("does not change Meteosat, ring, BP56, or the shared confidence curve", () => {
-    expect(EUMET_RING_CANONICAL_IR_BLACK).toBe(56);
+  it("does not change Meteosat, GIBS chroma threshold, or the shared confidence curve", () => {
+    expect(LEGACY_EUMET_RING_CANONICAL_IR_BLACK).toBe(56);
     expect(canonicalIR01FromMeteosatIr108Gray(0)).toBe(0);
     expect(canonicalIR01FromMeteosatIr108Gray(255)).toBe(1);
-    expect(canonicalIR01FromEumetRingIr108Gray(56)).toBe(0);
+    expect(canonicalIR01FromEumetRingIr108Gray(56)).toBeCloseTo(56 / 255, 5);
     expect(canonicalIR01FromProviderRgb("meteosatIr108Gray", 40, 40, 40)).toBeCloseTo(
       40 / 255,
       5,
     );
     expect(canonicalIR01FromProviderRgb("eumetRingIr108Gray", 73, 73, 73)).toBeCloseTo(
-      (73 - 56) / (255 - 56),
+      73 / 255,
       5,
     );
     expect(CLOUD_CONFIDENCE_KNOTS.map((k) => [k.ir01, k.confidence])).toEqual([
@@ -437,7 +440,7 @@ describe("WEATHER-5.4.1 chroma-aware GIBS near-gray inversion", () => {
   });
 
   it("bumps the cache version and isolates DEV legacy GIBS gray", () => {
-    expect(activeCloudsTransferVersion()).toBe("wx54-gibs-gray-v3");
+    expect(activeCloudsTransferVersion()).toBe("wx55-ring-identity-v1");
     setDevGibsGrayInterpretationOverride("legacyLut");
     expect(activeCloudsTransferVersion()).toBe("wx54-gibs-gray-legacy");
     setDevGibsGrayInterpretationOverride(null);

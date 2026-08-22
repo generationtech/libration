@@ -30,6 +30,9 @@
  * Ordinary current-time comparison (not a scenario):
  *   ?cloudsGibsGray=legacy|hybrid — WEATHER-5.1 RGB-nearest LUT vs chroma-aware
  *     warm-gray inversion on the same observations. Winner map unchanged.
+ *   ?cloudsRingCalibration=identity|bp56 — WEATHER-5.5.1 identity grayscale vs
+ *     former BP56 ring mapping on the same observations. Winner map unchanged.
+ *     `production` aliases identity; `legacy` aliases bp56.
  */
 
 import type { CloudsHighlightLayer } from "../lifecycle/cloudsComposite";

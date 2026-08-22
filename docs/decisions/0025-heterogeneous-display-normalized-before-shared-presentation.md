@@ -32,10 +32,11 @@ Exact colormap knots, LUT size, near-gray chroma threshold, and confidence-curve
 - Clear ocean and warm land can sit below the shared confidence floor once they occupy the warm end of canonical IR.
 - A later change to the shared curve does not require re-deriving per-provider lifts.
 - GIBS Band13’s dual gray-branch RGB reuse is not inverted by RGB-nearest lookup. Near-gray WMS pixels follow the warm-gray legend; chromatic convective cores keep the 64³ LUT ([LIB-077](../work/LIB-077-weather-5-4-1-chroma-aware-gibs-near-gray-inversion.md)). A larger LUT, exact nearest-segment for every pixel, and RGB blur were rejected: they do not resolve the collision, destroy GOES clear-ocean, or hide real cells.
+- The EUMET ring uses the same identity grayscale as Meteosat ([LIB-079](../work/LIB-079-weather-5-5-1-ring-canonical-identity-grayscale.md)). The former BP56 offset is not production.
 
 **Costs.**
 
-- Residual source-handoff contrast can remain where observations genuinely differ or where IR cannot separate cold surface from cloud. That is evaluated after this normalization; it is not a reason to blend coverage. After LIB-077 a remaining ring↔GIBS mean step is a calibration question, not an authority defect.
+- Residual source-handoff contrast can remain where observations genuinely differ or where IR cannot separate cold surface from cloud. That is evaluated after this normalization; it is not a reason to blend coverage. [LIB-079](../work/LIB-079-weather-5-5-1-ring-canonical-identity-grayscale.md) removed the EUMET-ring BP56 offset; ring and Meteosat now share identity grayscale. Remaining ring↔GIBS steps at chromatic convective cores, polar ice, and provider texture are inherent display-IR limits, not a missing black-point.
 - Isolated legitimate cold-gray legend colors without chromatic neighbors are treated as warm-gray. A later contextual cold-gray gate is not this decision.
 - IR-only default Clouds cannot discriminate snow/ice from cloud at high latitude, and some warm low cloud / thin cirrus is intentionally weaker.
 

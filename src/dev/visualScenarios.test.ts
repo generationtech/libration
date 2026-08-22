@@ -54,6 +54,10 @@ import {
   getActiveGibsGrayInterpretation,
   setDevGibsGrayInterpretationOverride,
 } from "../lifecycle/gibsBand13ColorMap";
+import {
+  getActiveRingCalibration,
+  setDevRingCalibrationOverride,
+} from "../lifecycle/cloudIrInterpretation";
 
 function makeMemoryStorage(): Storage {
   const m = new Map<string, string>();
@@ -80,6 +84,7 @@ afterEach(() => {
   setWorkingV2PersistenceSuppressed(false);
   setDevNightVeilTransferOverride(null);
   setDevGibsGrayInterpretationOverride(null);
+  setDevRingCalibrationOverride(null);
   setDevCloudsDisplayTransferOverride(null);
   vi.restoreAllMocks();
 });
@@ -133,6 +138,23 @@ describe("visual scenario query parsing", () => {
     ).toBe("inactive");
     expect(getDevCloudsSectorDebugTint()).toBeNull();
     expect(getActiveCloudsDisplayTransferId()).toBe("gibsGrayPath");
+  });
+
+  it("ordinary cloudsRingCalibration is not a visual scenario", () => {
+    expect(parseVisualScenarioQuery("?cloudsRingCalibration=bp56")).toBeNull();
+    expect(applyVisualScenarioFromLocation("?cloudsRingCalibration=bp56").kind).toBe(
+      "inactive",
+    );
+    expect(getActiveRingCalibration()).toBe("bp56");
+    expect(parseVisualScenarioQuery("?cloudsRingCalibration=identity")).toBeNull();
+    expect(
+      applyVisualScenarioFromLocation("?cloudsRingCalibration=identity").kind,
+    ).toBe("inactive");
+    expect(getActiveRingCalibration()).toBe("identity");
+    expect(applyVisualScenarioFromLocation("?cloudsRingCalibration=production").kind).toBe(
+      "inactive",
+    );
+    expect(getActiveRingCalibration()).toBe("identity");
   });
 
   it("ordinary cloudsTransfer and cloudsSectorDebug=canonical are not visual scenarios", () => {

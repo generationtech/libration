@@ -18,7 +18,8 @@
  * after this, once. Do not bury calibration in Canvas or in Rec.601 luma.
  *
  * GIBS Band13: chromatic → 64³ colormap LUT; near-gray → warm-gray luma
- * branch. Meteosat IR108 and the EUMET ring remain grayscale stretches.
+ * branch. Meteosat IR108 and the EUMET ring use identity grayscale
+ * (cold bright / warm dark). Production does not apply a ring black-point.
  *
  * canonicalIR01: 0 = warm / surface-like / low cloud evidence;
  *                1 = cold / high-cloud-like / strong cloud evidence.
@@ -37,11 +38,34 @@ export const CLOUD_IR_INTERPRETATION_KINDS = [
 export type CloudIrInterpretationKind = (typeof CLOUD_IR_INTERPRETATION_KINDS)[number];
 
 /**
- * EUMET ring IR108 display is a third grayscale stretch (clear ocean ~73,
- * p50 ~98). Subtract this black-point so typical clear sits near Meteosat
- * clear-ocean canonicalIR rather than the GIBS wash floor.
+ * Former EUMET-ring black-point (LIB-071). Kept only for DEV comparison
+ * (`cloudsRingCalibration=bp56`). Production uses identity grayscale.
  */
-export const EUMET_RING_CANONICAL_IR_BLACK = 56;
+export const LEGACY_EUMET_RING_CANONICAL_IR_BLACK = 56;
+
+export type RingCalibrationId = "identity" | "bp56";
+
+export const PRODUCTION_RING_CALIBRATION_ID: RingCalibrationId = "identity";
+
+let devRingCalibrationOverride: RingCalibrationId | null = null;
+
+export function setDevRingCalibrationOverride(id: RingCalibrationId | null): void {
+  devRingCalibrationOverride = id;
+}
+
+export function getActiveRingCalibration(): RingCalibrationId {
+  return devRingCalibrationOverride ?? PRODUCTION_RING_CALIBRATION_ID;
+}
+
+export function parseRingCalibrationId(
+  raw: string | null | undefined,
+): RingCalibrationId | null {
+  if (raw == null || raw === "") return null;
+  const v = raw.trim().toLowerCase();
+  if (v === "identity" || v === "bp0" || v === "production") return "identity";
+  if (v === "bp56" || v === "legacy") return "bp56";
+  return null;
+}
 
 export function isCloudIrInterpretationKind(
   value: unknown,
@@ -73,12 +97,20 @@ export function canonicalIR01FromMeteosatIr108Gray(luma: number): number {
 }
 
 /**
- * EUMET `mumi:worldcloudmap_ir108` grayscale. Same polarity as FES, different
- * stretch. Black-point maps typical clear below the shared confidence floor.
+ * EUMET `mumi:worldcloudmap_ir108` grayscale. Same polarity and stretch as
+ * Meteosat FES: identity luma/255. The former BP56 offset suppressed ordinary
+ * cloud below the shared 0.30 confidence floor; the floor already keeps
+ * typical clear (luma ~63–73) at confidence 0.
  */
 export function canonicalIR01FromEumetRingIr108Gray(luma: number): number {
   if (!Number.isFinite(luma)) return 0;
-  return clamp01((luma - EUMET_RING_CANONICAL_IR_BLACK) / (255 - EUMET_RING_CANONICAL_IR_BLACK));
+  if (getActiveRingCalibration() === "bp56") {
+    return clamp01(
+      (luma - LEGACY_EUMET_RING_CANONICAL_IR_BLACK) /
+        (255 - LEGACY_EUMET_RING_CANONICAL_IR_BLACK),
+    );
+  }
+  return canonicalIR01FromMeteosatIr108Gray(luma);
 }
 
 export function canonicalIR01FromProviderRgb(

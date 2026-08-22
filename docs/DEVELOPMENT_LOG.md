@@ -418,4 +418,10 @@ WEATHER-5.4.1: chroma-aware GIBS Band13 near-gray inversion. Chromatic pixels ke
 
 Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 155 passed; `npm test` 270 files / 2603 passed / 0 failed; `npm run build` succeeded with no `cloudsGibsGray` / `cloudsSectorDebug` / `visualScenarios` / `cloudsTransfer` in `dist/`. 101/102/103 monotone; GOES clear conf 0; synthetic India/Pacific grain <25% of legacy LUT. Cursor Browser ordinary live **Clouds · observations 32m–3h / 21m–3h old**, winner debug, legacy vs hybrid, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. LIB-076 stays proposed. Do not start WEATHER-5.5, q>0 blending, or WEATHER-6.
 
+## 2026-08-22 — LIB-079 complete
+
+WEATHER-5.5.1: EUMET ring canonical IR is identity grayscale (`luma / 255`), matching Meteosat. BP56 removed from production; it had been holding ordinary ring cloud below the 0.30 confidence floor. Authority, GIBS hybrid, confidence knots, opacity unchanged. Cache `wx55-ring-identity-v1`. ADR 0025 consequence amended.
+
+Verified: `npx tsc --noEmit` clean; focused Clouds/debug tests 169 passed (weather55 14/14); `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded with no `cloudsRingCalibration` / `wx55-ring-bp56` / `cloudsSectorDebug` / `visualScenarios` in `dist/`. Numeric luma→IR→conf knots match LIB-078; winner/coverage/quality/TIMES identity vs BP56; Sahara/Arabian/Atlantic clear stay conf 0; SIO luma 111 lifts; 25°N convective-core step remains. Cursor Browser ordinary live **Clouds · mixed freshness · 34m–4h / 23m–4h old**, winner debug, Historical Demo 2017-08-21 suppression + restore, `?scenario=clouds` DEV fixture. India sampled on the 1888×1079 canvas bitmap. LIB-078 stays proposed. Do not start q>0 blending or WEATHER-6.
+
 

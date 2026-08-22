@@ -28,7 +28,9 @@ import {
   rec601Luma8,
 } from "./cloudHighlightTransfer";
 import {
-  EUMET_RING_CANONICAL_IR_BLACK,
+  LEGACY_EUMET_RING_CANONICAL_IR_BLACK,
+  canonicalIR01FromEumetRingIr108Gray,
+  setDevRingCalibrationOverride,
 } from "./cloudIrInterpretation";
 import {
   setDevCloudsDisplayTransferOverride,
@@ -105,6 +107,7 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
   beforeEach(() => {
     setDevCloudsDisplayTransferOverride(null);
     setDevGibsGrayInterpretationOverride(null);
+    setDevRingCalibrationOverride(null);
   });
 
   it("documents GIBS colormap authority and does not claim Kelvin inversion", () => {
@@ -115,7 +118,7 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
       GIBS_BAND13_COLORMAP_RGB_TC.length,
     );
     expect(GIBS_BAND13_COLORMAP_AUTHORITY.units).toBe("°C");
-    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx54-gibs-gray-v3");
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx55-ring-identity-v1");
     expect(LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx3-ir-v1");
     expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).not.toBe(
       LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION,
@@ -206,12 +209,12 @@ describe("WEATHER-5.1 canonical IR + cloud confidence", () => {
     );
   });
 
-  it("maps ring clear ocean low and cold tops high", () => {
-    expect(EUMET_RING_CANONICAL_IR_BLACK).toBe(56);
+  it("maps ring clear ocean low and cold tops high with identity grayscale", () => {
+    expect(LEGACY_EUMET_RING_CANONICAL_IR_BLACK).toBe(56);
+    expect(canonicalIR01FromEumetRingIr108Gray(73)).toBeCloseTo(73 / 255, 5);
     expect(confidenceOf(rgbaOf(73, 73, 73), "eumetRingIr108Gray")).toBe(0);
-    expect(confidenceOf(rgbaOf(98, 98, 98), "eumetRingIr108Gray")).toBe(0);
     expect(confidenceOf(rgbaOf(220, 220, 220), "eumetRingIr108Gray")).toBeGreaterThan(
-      0.7,
+      0.9,
     );
   });
 

@@ -32,6 +32,10 @@ import {
   parseGibsGrayInterpretationId,
   setDevGibsGrayInterpretationOverride,
 } from "../lifecycle/gibsBand13ColorMap";
+import {
+  parseRingCalibrationId,
+  setDevRingCalibrationOverride,
+} from "../lifecycle/cloudIrInterpretation";
 import { REFERENCE_CITIES } from "../data/referenceCities";
 import {
   setDevCloudsSectorDebugTint,
@@ -1107,6 +1111,11 @@ export function applyVisualScenarioFromLocation(search: string): VisualScenarioR
       ? parseGibsGrayInterpretationId(params.get("cloudsGibsGray"))
       : null;
   setDevGibsGrayInterpretationOverride(gibsGrayId);
+  const ringCalibrationId =
+    session.kind !== "applied"
+      ? parseRingCalibrationId(params.get("cloudsRingCalibration"))
+      : null;
+  setDevRingCalibrationOverride(ringCalibrationId);
   if (sectorDebugMode === "canonical") {
     setDevCloudsDisplayTransferOverride("canonicalIR");
     setDevCloudsSectorDebugTint(null);

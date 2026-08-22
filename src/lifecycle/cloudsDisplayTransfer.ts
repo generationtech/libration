@@ -46,7 +46,14 @@ export function parseCloudsDisplayTransferId(
 ): CloudsDisplayTransferId | null {
   if (raw == null || raw === "") return null;
   const v = raw.trim();
-  if (v === "wx5" || v === "wx5-cloud-v2" || v === "wx54-gibs-gray-v3") return "wx5";
+  if (
+    v === "wx5" ||
+    v === "wx5-cloud-v2" ||
+    v === "wx54-gibs-gray-v3" ||
+    v === "wx55-ring-identity-v1"
+  ) {
+    return "wx5";
+  }
   if (v === "legacy" || v === "wx3" || v === "wx3-ir-v1") return "legacy";
   if (v === "canonicalIR" || v === "canonical" || v === "ir") return "canonicalIR";
   if (v === "gibsGrayPath" || v === "gibsgray" || v === "graypath") return "gibsGrayPath";

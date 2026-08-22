@@ -231,6 +231,7 @@ export {
   CLOUD_HIGHLIGHT_RGB,
   CLOUD_HIGHLIGHT_TRANSFER_VERSION,
   LEGACY_GIBS_GRAY_TRANSFER_VERSION,
+  LEGACY_RING_CALIBRATION_TRANSFER_VERSION,
   LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION,
   LEGACY_WX3_EUMET_IR_LUMA_LIFT,
   LEGACY_WX3_LUMA_HI,
@@ -247,11 +248,20 @@ export {
 
 export {
   CLOUD_IR_INTERPRETATION_KINDS,
-  EUMET_RING_CANONICAL_IR_BLACK,
+  LEGACY_EUMET_RING_CANONICAL_IR_BLACK,
+  PRODUCTION_RING_CALIBRATION_ID,
+  canonicalIR01FromEumetRingIr108Gray,
+  canonicalIR01FromMeteosatIr108Gray,
   canonicalIR01FromProviderRgb,
+  getActiveRingCalibration,
   isCloudIrInterpretationKind,
+  parseRingCalibrationId,
+  setDevRingCalibrationOverride,
 } from "./cloudIrInterpretation";
-export type { CloudIrInterpretationKind } from "./cloudIrInterpretation";
+export type {
+  CloudIrInterpretationKind,
+  RingCalibrationId,
+} from "./cloudIrInterpretation";
 
 export {
   CLOUDS_COVERAGE_PROVIDER_ALPHA_MIN,

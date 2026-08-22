@@ -695,7 +695,7 @@ describe("WEATHER-5.3.1 ring quality cache and distribution", () => {
 describe("WEATHER-5.3.1 presentation / architecture regressions", () => {
   it("keeps cloud RGB, confidence transfer, and current-only policy", () => {
     expect(CLOUD_HIGHLIGHT_RGB).toEqual({ r: 248, g: 250, b: 252 });
-    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx54-gibs-gray-v3");
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx55-ring-identity-v1");
     expect(getDynamicEquirectSourceCatalogEntry(GLOBAL_CLOUDS_IR_SOURCE_ID)?.timePolicy).toBe(
       "wallClockCurrent",
     );

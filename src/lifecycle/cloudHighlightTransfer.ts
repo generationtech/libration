@@ -20,7 +20,7 @@
  *
  * GIBS Band13 (GOES-East/West/Himawari): chromatic pixels use the 64³ LUT;
  * near-gray pixels invert along the warm-gray legend. Meteosat and the EUMET
- * ring stay grayscale stretches. Coverage (provider has data) is extracted
+ * ring use identity grayscale. Coverage (provider has data) is extracted
  * separately from provider alpha.
  * Cloud-confidence 0 is valid-clear, not no-data. Do not use output alpha as
  * observational authority. Not a formal cloud mask, optical depth, or
@@ -29,6 +29,7 @@
 
 import {
   canonicalIR01FromProviderRgb,
+  getActiveRingCalibration,
   rec601Luma8,
   type CloudIrInterpretationKind,
 } from "./cloudIrInterpretation";
@@ -45,8 +46,9 @@ export const CLOUD_HIGHLIGHT_RGB = {
   b: 252,
 } as const;
 
-export const CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx54-gibs-gray-v3";
+export const CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx55-ring-identity-v1";
 export const LEGACY_GIBS_GRAY_TRANSFER_VERSION = "wx54-gibs-gray-legacy";
+export const LEGACY_RING_CALIBRATION_TRANSFER_VERSION = "wx55-ring-bp56";
 
 export const LEGACY_WX3_CLOUD_HIGHLIGHT_TRANSFER_VERSION = "wx3-ir-v1";
 export const LEGACY_WX3_LUMA_LO = 100;
@@ -130,6 +132,9 @@ export function activeCloudsTransferVersion(
   }
   if (getActiveGibsGrayInterpretation() === "legacyLut") {
     return LEGACY_GIBS_GRAY_TRANSFER_VERSION;
+  }
+  if (getActiveRingCalibration() === "bp56") {
+    return LEGACY_RING_CALIBRATION_TRANSFER_VERSION;
   }
   return CLOUD_HIGHLIGHT_TRANSFER_VERSION;
 }

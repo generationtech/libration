@@ -673,6 +673,6 @@ describe("WEATHER-4.3 other overlaps", () => {
 describe("WEATHER-4.3 presentation regressions", () => {
   it("keeps restrained cloud RGB; WEATHER-5.1 owns the transfer version", () => {
     expect(CLOUD_HIGHLIGHT_RGB).toEqual({ r: 248, g: 250, b: 252 });
-    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx54-gibs-gray-v3");
+    expect(CLOUD_HIGHLIGHT_TRANSFER_VERSION).toBe("wx55-ring-identity-v1");
   });
 });
