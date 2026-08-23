@@ -19,8 +19,10 @@
 
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
   type SceneCamera,
 } from "../../core/sceneCamera";
@@ -74,33 +76,41 @@ export function buildEquirectangularGridOverlayRenderPlan(
   const lineMajor = `rgba(235, 242, 255, ${majorA})`;
 
   const items: RenderLineItem[] = [];
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+  const yNorth = sceneYFromIdentityY(0, h, camera);
+  const ySouth = sceneYFromIdentityY(h, h, camera);
 
   for (const lon of meridianLongitudesDegForEquirectGrid(options.meridianStepDeg)) {
-    const x = sceneXFromLongitudeDeg(lon, w, camera);
+    const baseX = sceneXFromLongitudeDeg(lon, w, camera);
     const major = lon === 0;
-    items.push({
-      kind: "line",
-      x1: x,
-      y1: sceneYFromIdentityY(0, h, camera),
-      x2: x,
-      y2: sceneYFromIdentityY(h, h, camera),
-      stroke: major ? lineMajor : lineMinor,
-      strokeWidthPx: major ? majorW : minorW,
-    });
+    for (const k of copies) {
+      const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      items.push({
+        kind: "line",
+        x1: x,
+        y1: yNorth,
+        x2: x,
+        y2: ySouth,
+        stroke: major ? lineMajor : lineMinor,
+        strokeWidthPx: major ? majorW : minorW,
+      });
+    }
   }
 
   for (const lat of parallelLatitudesDegForEquirectGrid(options.parallelStepDeg)) {
     const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lat, h), h, camera);
     const major = lat === 0;
-    items.push({
-      kind: "line",
-      x1: sceneXFromIdentityX(0, w, camera),
-      y1: y,
-      x2: sceneXFromIdentityX(w, w, camera),
-      y2: y,
-      stroke: major ? lineMajor : lineMinor,
-      strokeWidthPx: major ? majorW : minorW,
-    });
+    for (const k of copies) {
+      items.push({
+        kind: "line",
+        x1: sceneXFromIdentityX(k * w, w, camera),
+        y1: y,
+        x2: sceneXFromIdentityX((k + 1) * w, w, camera),
+        y2: y,
+        stroke: major ? lineMajor : lineMinor,
+        strokeWidthPx: major ? majorW : minorW,
+      });
+    }
   }
 
   return { items };

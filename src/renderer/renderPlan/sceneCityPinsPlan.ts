@@ -17,7 +17,7 @@
  * path2d and text items only.
  */
 
-import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
+import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
@@ -68,16 +68,23 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   const lineGap = Math.max(1, nameSize * 0.12);
 
   const items: RenderPlan["items"] = [];
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const city of cities) {
-    const x = sceneXFromLongitudeDeg(city.lonDeg, w, camera);
     const y = sceneYFromLatitudeDeg(city.latDeg, h, camera);
     const r =
       scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
+    const baseX = sceneXFromLongitudeDeg(city.lonDeg, w, camera);
 
     const v = effectiveOverlayReadabilityLiftVeil01(city.readabilityNightVeil01, liftScale);
     const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
     const a = (alpha: number) => Math.min(1, alpha * (1 + 0.22 * v));
+
+    for (const k of copies) {
+      const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (x < -r * 8 || x > w + r * 8) {
+        continue;
+      }
 
     const inner: RenderPath2DItem = {
       kind: "path2d",
@@ -159,6 +166,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
         },
         opacity: layerOp,
       });
+    }
     }
   }
 

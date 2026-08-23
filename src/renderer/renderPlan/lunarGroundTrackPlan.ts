@@ -19,8 +19,10 @@
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
   sceneYFromLatitudeDeg,
   type SceneCamera,
@@ -73,6 +75,7 @@ function pushSeamAwarePolyline(
     return;
   }
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
     const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
@@ -82,17 +85,19 @@ function pushSeamAwarePolyline(
     if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
       continue;
     }
-    const line: RenderLineItem = {
-      kind: "line",
-      x1: sceneXFromIdentityX(x0, w, camera),
-      y1: sceneYFromIdentityY(y0, h, camera),
-      x2: sceneXFromIdentityX(x1, w, camera),
-      y2: sceneYFromIdentityY(y1, h, camera),
-      stroke,
-      strokeWidthPx,
-      lineCap: "round",
-    };
-    items.push(line);
+    for (const k of copies) {
+      const line: RenderLineItem = {
+        kind: "line",
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke,
+        strokeWidthPx,
+        lineCap: "round",
+      };
+      items.push(line);
+    }
   }
 }
 
@@ -138,20 +143,27 @@ export function buildLunarGroundTrackRenderPlan(
   const tickR = Math.min(3.2, Math.max(1.8, w * 0.0016));
   const tickFill = `rgba(200, 220, 245, ${a(0.72)})`;
   const tickStroke = `rgba(28, 40, 58, ${a(0.55)})`;
+  const tickCopies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (const tick of options.payload.ticks) {
-    const cx = sceneXFromLongitudeDeg(tick.lonDeg, w, camera);
     const cy = sceneYFromLatitudeDeg(tick.latDeg, h, camera);
-    if (!Number.isFinite(cx) || !Number.isFinite(cy)) {
-      continue;
+    const baseX = sceneXFromLongitudeDeg(tick.lonDeg, w, camera);
+    for (const k of tickCopies) {
+      const cx = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (!Number.isFinite(cx) || !Number.isFinite(cy)) {
+        continue;
+      }
+      if (cx < -tickR * 4 || cx > w + tickR * 4) {
+        continue;
+      }
+      items.push({
+        kind: "path2d",
+        pathKind: "path2d",
+        path: circlePath2D(cx, cy, tickR),
+        fill: tickFill,
+        stroke: tickStroke,
+        strokeWidthPx: sw(0.8),
+      });
     }
-    items.push({
-      kind: "path2d",
-      pathKind: "path2d",
-      path: circlePath2D(cx, cy, tickR),
-      fill: tickFill,
-      stroke: tickStroke,
-      strokeWidthPx: sw(0.8),
-    });
   }
 
   return { items };

@@ -15,7 +15,7 @@ import {
   type BaseMapPresentationConfig,
   baseMapPresentationToCssFilterString,
 } from "../../config/baseMapPresentation";
-import { IDENTITY_SCENE_CAMERA, sceneDestRectFromIdentityWorld, type SceneCamera } from "../../core/sceneCamera";
+import { IDENTITY_SCENE_CAMERA, sceneDestRectsFromIdentityWorldWrapped, type SceneCamera } from "../../core/sceneCamera";
 import { mergeCssFilterParts, overlayReadabilityCssFilterAppend } from "../../core/overlayReadabilityRasterFilter";
 import type { RenderPlan } from "./renderPlanTypes";
 
@@ -44,7 +44,7 @@ export function buildBaseRasterMapRenderPlan(options: {
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
-  const dest = sceneDestRectFromIdentityWorld(
+  const dests = sceneDestRectsFromIdentityWorldWrapped(
     w,
     h,
     options.camera ?? IDENTITY_SCENE_CAMERA,
@@ -58,17 +58,15 @@ export function buildBaseRasterMapRenderPlan(options: {
   const cssFilter = mergeCssFilterParts(presFilter, readFilter);
   const gamma = pres !== undefined && pres.gamma !== 1 ? pres.gamma : undefined;
   return {
-    items: [
-      {
-        kind: "imageBlit",
-        src: options.src,
-        x: dest.x,
-        y: dest.y,
-        width: dest.width,
-        height: dest.height,
-        ...(cssFilter !== undefined ? { cssFilter } : {}),
-        ...(gamma !== undefined ? { gamma } : {}),
-      },
-    ],
+    items: dests.map((dest) => ({
+      kind: "imageBlit" as const,
+      src: options.src,
+      x: dest.x,
+      y: dest.y,
+      width: dest.width,
+      height: dest.height,
+      ...(cssFilter !== undefined ? { cssFilter } : {}),
+      ...(gamma !== undefined ? { gamma } : {}),
+    })),
   };
 }

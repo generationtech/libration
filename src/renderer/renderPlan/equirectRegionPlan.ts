@@ -11,11 +11,12 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
 import {
   IDENTITY_SCENE_CAMERA,
-  sceneXFromIdentityX,
+  sceneCameraHorizontalWorldCopyOffsets,
+  sceneCameraVectorWrapSlopPx,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
@@ -62,8 +63,6 @@ function avoidHaloRadiusPx(viewportWidthPx: number, haloMultiplier: number): num
   return Math.max(moon, sun) * Math.max(1, haloMultiplier);
 }
 
-const WORLD_COPIES_DEG = [-360, 0, 360] as const;
-
 function emitPointMarkerCopies(
   items: RenderPlan["items"],
   marker: EquirectRegionPointMarker,
@@ -79,12 +78,14 @@ function emitPointMarkerCopies(
   const strokeW = Math.max(1.15, r * 0.2);
   const cy = sceneYFromLatitudeDeg(marker.latDeg, viewportHeightPx, camera);
   const slop = r + 4;
-  for (const offset of WORLD_COPIES_DEG) {
-    const cx = sceneXFromIdentityX(
-      mapXFromLongitudeDeg(marker.lonDeg + offset, viewportWidthPx),
-      viewportWidthPx,
-      camera,
-    );
+  const copies = sceneCameraHorizontalWorldCopyOffsets(
+    camera,
+    viewportWidthPx,
+    sceneCameraVectorWrapSlopPx(viewportWidthPx),
+  );
+  const baseX = sceneXFromLongitudeDeg(marker.lonDeg, viewportWidthPx, camera);
+  for (const k of copies) {
+    const cx = baseX + sceneXShiftForWorldCopy(viewportWidthPx, camera, k);
     if (cx + slop < 0 || cx - slop > viewportWidthPx) {
       continue;
     }
@@ -175,11 +176,17 @@ export function buildEquirectRegionOverlayRenderPlan(
   const labels = options.payload.labels ?? [];
   if (labels.length > 0) {
     const sizePx = Math.min(15, Math.max(11, w * 0.011));
-    const avoidDiscs = (options.payload.labelAvoidDiscs ?? []).map((disc) => ({
-      x: sceneXFromLongitudeDeg(disc.lonDeg, w, camera),
-      y: sceneYFromLatitudeDeg(disc.latDeg, h, camera),
-      radiusPx: avoidHaloRadiusPx(w, disc.haloMultiplier),
-    }));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+    const avoidDiscs = (options.payload.labelAvoidDiscs ?? []).flatMap((disc) => {
+      const y = sceneYFromLatitudeDeg(disc.latDeg, h, camera);
+      const baseX = sceneXFromLongitudeDeg(disc.lonDeg, w, camera);
+      const radiusPx = avoidHaloRadiusPx(w, disc.haloMultiplier);
+      return copies.map((k) => ({
+        x: baseX + sceneXShiftForWorldCopy(w, camera, k),
+        y,
+        radiusPx,
+      }));
+    });
     for (const marker of options.payload.pointMarkers ?? []) {
       const r = equirectPointMarkerBaseRadiusPx(w) * marker.radiusScale;
       avoidDiscs.push({
@@ -206,8 +213,22 @@ export function buildEquirectRegionOverlayRenderPlan(
       if (!label.text.trim()) {
         continue;
       }
-      const preferredX = sceneXFromLongitudeDeg(label.lonDeg, w, camera);
+      const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+      const baseX = sceneXFromLongitudeDeg(label.lonDeg, w, camera);
       const preferredY = sceneYFromLatitudeDeg(label.latDeg, h, camera);
+      let preferredX = baseX;
+      let best = Number.POSITIVE_INFINITY;
+      for (const k of copies) {
+        const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
+        if (x < -sizePx || x > w + sizePx) {
+          continue;
+        }
+        const dist = Math.abs(x - w * 0.5);
+        if (dist < best) {
+          best = dist;
+          preferredX = x;
+        }
+      }
       const lunar = label.placement === "lunar-glyph";
       const placed =
         avoidDiscs.length > 0 || avoidPolylines.length > 0 || avoidBoxes.length > 0 || lunar

@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan remains [LIB-081](../../work/LIB-081-scene-camera-pan.md) (proposed).
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference frames remain unscoped.
 
 ---
 
@@ -110,13 +110,13 @@ Raster layers (`imageBlit`, illumination `rasterPatch`, Clouds) currently dest-b
 
 Earth-fixed 2.0.0 already unwraps short-arc polylines and paints ±360° copies for loci, tracks, eclipse geography, and Milky Way (`equirectSeamPath.ts`, `equirectSeamRegion.ts`, lunar locus world copies). Illumination samples wrap longitude.
 
-That is **periodicity of a full-world strip**, not a continuous unwrapped moving-map longitude. Entity-fixed motion will need wrap-aware or unwrapped longitude so 179° → −179° is not a visual jump. Do not implement that until reference-frame work. Do not discard the existing seam helpers.
+LIB-081 adds viewport-intersecting **display copies** of that already-projected strip (`sceneCameraHorizontalWorldCopyOffsets`): rasters use dest-intersection (slop 0); seam-unwrapped vectors use 5% width slop; at most four copies. Canonical lon/lat is not mutated. That is still Earth-fixed strip periodicity, not a scene reference-frame transform. Entity-fixed motion will need wrap-aware or unwrapped longitude so 179° → −179° is not a visual jump. Do not implement that until reference-frame work. Do not discard the existing seam helpers.
 
 ### 4.6 Interactions today
 
 - Pointer move/leave/cancel on the canvas → earthquake hover via `canvasClientPointToSceneCss` (null in the top chrome band). Inverse camera is applied so hover matches painted discs while zoomed.
 - Hover is not click/select.
-- Wheel zoom on the scene strip (LIB-080). No pinch or drag pan.
+- Wheel zoom on the scene strip (LIB-080). Pointer drag pan on the scene strip (LIB-081; 4 CSS px threshold; `touch-action: none`; no pinch).
 - `C` toggles Config; `Escape` closes it.
 - Config panel, launcher, eclipse info panel, and DEV scenario banner are DOM overlays, not scene layers.
 - ResizeObserver + `window.resize` rebuild the viewport and re-render.
@@ -140,6 +140,8 @@ SceneCamera = {
 
 - Scale is dimensionless relative to the current full-world→scene-rect mapping.
 - Centre is in **normalized projected space**, not geographic degrees and not CSS pixels. Resize then reapplies the same camera to the new scene rect; identity remains “full world fills the strip.”
+- `centerU` is continuous / unwrapped. The horizontal world is periodic; values such as `1.05` are valid camera positions. `centerV` is clamped to the visible projected latitude extent (at scale 1 it is 0.5).
+- Identity is specifically `scale = 1`, `centerU = 0.5`, `centerV = 0.5`, not merely `scale === 1`. Horizontal pan at scale 1 is allowed.
 - No rotation. North stays up in projected space for this development phase.
 
 **Identity:** `scale = 1`, `centerU = 0.5`, `centerV = 0.5`. Bit-for-bit equivalent to 2.0.0 mapping.
@@ -272,12 +274,12 @@ Decisions that can be made now:
 Open questions that A1 (LIB-080) resolved:
 
 - Zoom is **pointer-stable** (world point under the pointer is preserved subject to clamp).
-- **Pinch/touch** is deferred with LIB-081 / later gesture design. A1 does **not** set `touch-action: none`.
+- **Pinch** remains out of scope. A2 sets `touch-action: none` on the scene canvas so Pointer Events can pan; single-finger touch pan uses the same path as mouse. Pinch zoom is not implemented.
 - Maximum scale is **8**.
 - Visible control is **Reset view** only (no +/- buttons).
 - Keyboard zoom is not required.
 
-A2 (pan) will add pointer/touch drag. Drag must not start from Config or the launcher. Distinguish drag pan from click; earthquake hover must survive pan (hover follows pointer; no selection).
+A2 (pan) adds pointer drag on the scene strip. Drag does not start from Config, the launcher, or reserved top chrome. A 4 CSS px threshold distinguishes drag from click; earthquake hover is suppressed during an active pan and resumes afterward, including on wrapped display copies.
 
 ---
 
@@ -288,7 +290,7 @@ Issue IDs continue `LIB-###`. Only listed work items exist as files; later slice
 | Phase | Slice | ID | Status |
 |-------|--------|----|--------|
 | A — Camera foundation | A1 Zoom | [LIB-080](../../work/LIB-080-scene-camera-zoom.md) | complete |
-| A | A2 Pan | [LIB-081](../../work/LIB-081-scene-camera-pan.md) | proposed |
+| A | A2 Pan | [LIB-081](../../work/LIB-081-scene-camera-pan.md) | complete |
 | A | A3 Camera consolidation | (incremental in A1/A2; no standalone LIB unless a gap remains) | — |
 | B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | unscoped | — |
 | C | Experimental Moon-fixed and Sun-fixed moving map | unscoped | — |
@@ -352,7 +354,19 @@ Canonical 1920×1080 when possible. At least:
 | Earthquakes hover while zoomed | `earthquake-presentation` |
 | Responsive layout / chrome unzoomed | `baseline` with Config open |
 
-Future pan combinations are A2. A1 should not drag-pan.
+### 12.3 Pan (A2 / LIB-081)
+
+Implemented. Direction that shipped:
+
+- Pointer drag pan; geography follows the pointer; 4 CSS px threshold.
+- `centerU` unwrapped; `centerV` latitude-clamped; identity is `1, 0.5, 0.5`.
+- Viewport-intersecting horizontal display copies; canonical lon/lat unchanged.
+- Pointer-stable zoom after pan, including unwrapped `centerU`.
+- Reset from any zoom+pan+wrap combination.
+- Wrapped earthquake hover hits the canonical feature.
+- `touch-action: none`; single-finger Pointer Events pan; no pinch.
+
+Visual extras on the A1 fixtures: 1× horizontal wrap both directions, vertical no-op at 1×, zoom+pan at ~2×/~4×, dateline eclipse, clouds/ISS/earthquake wrap, resize while panned.
 
 ---
 

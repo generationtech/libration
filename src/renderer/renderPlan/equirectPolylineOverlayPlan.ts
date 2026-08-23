@@ -14,6 +14,7 @@
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneYFromIdentityY,
   type SceneCamera,
@@ -71,6 +72,7 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
   const strokeW = astronomyPathStrokeWidthPx(veil, options.strokeThickness);
   const lons = unwrappedLongitudes(pts.map((p) => p.lonDeg));
   const items: RenderLineItem[] = [];
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   const pushLine = (i0: number, i1: number) => {
     const u0 = lons[i0]!;
@@ -80,12 +82,15 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     const { x0, x1 } = adjustPairToShortStripPath(raw0, raw1, w);
     const y0 = parallelYFromLatitudeDeg(pts[i0]!.latDeg, h);
     const y1 = parallelYFromLatitudeDeg(pts[i1]!.latDeg, h);
-    if (Number.isFinite(x0) && Number.isFinite(x1)) {
+    if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
+      return;
+    }
+    for (const k of copies) {
       items.push({
         kind: "line",
-        x1: sceneXFromIdentityX(x0, w, camera),
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
         y1: sceneYFromIdentityY(y0, h, camera),
-        x2: sceneXFromIdentityX(x1, w, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
         y2: sceneYFromIdentityY(y1, h, camera),
         stroke,
         strokeWidthPx: strokeW,

@@ -82,7 +82,7 @@ When a work item can change scene viewing (starting with [LIB-080](work/LIB-080-
 - Time animation while zoomed (Demo on a frozen scenario, then play).
 - Confirm wheel-over-Config does not zoom the map, and that the page does not scroll under scene-strip wheel.
 
-Case list: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) §12. Pan combinations wait for [LIB-081](work/LIB-081-scene-camera-pan.md).
+Case list: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) §12. Pan combinations are [LIB-081](work/LIB-081-scene-camera-pan.md) (complete): identity, 1× horizontal wrap, vertical clamp at 1×, zoom+pan, pointer-stable zoom after pan, Reset, dateline/eclipse/clouds/ISS/earthquake-hover wrap, resize while panned.
 
 ## Scenario catalog
 

@@ -23,7 +23,9 @@ import {
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
+  sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
   type SceneCamera,
 } from "../../core/sceneCamera";
@@ -158,11 +160,23 @@ export function buildDynamicTracksRenderPlan(
     const unwrapped = samples.length >= 2 ? unwrappedLongitudes(lons) : lons;
     const nearU = unwrapped[nearestIdx] ?? marker.lonDeg;
     const markerU = unwrapLonNear(marker.lonDeg, nearU);
-    let tipX = equirectXFromUnwrappedLon(markerU, w);
-    tipX = ((tipX % w) + w) % w;
-    tipX = sceneXFromIdentityX(tipX, w, camera);
+    let tipIdentityX = equirectXFromUnwrappedLon(markerU, w);
+    tipIdentityX = ((tipIdentityX % w) + w) % w;
     const tipY = sceneYFromIdentityY(mapLatToY(marker.latDeg, h), h, camera);
     const r = Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, w / 1400))) * sizeScale;
+    const tipCopies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+    const labelText =
+      presentation.labelEnabled &&
+      track.label !== undefined &&
+      track.label.trim() !== ""
+        ? track.label.trim()
+        : undefined;
+
+    for (const copy of tipCopies) {
+      const tipX = sceneXFromIdentityX(tipIdentityX, w, camera) + sceneXShiftForWorldCopy(w, camera, copy);
+      if (tipX < -r * 6 || tipX > w + r * 6) {
+        continue;
+      }
 
     if (presentation.glyphType === "silhouette") {
       const heading = options.payload.travelHeadingRad ?? 0;
@@ -205,12 +219,6 @@ export function buildDynamicTracksRenderPlan(
       });
     }
 
-    const labelText =
-      presentation.labelEnabled &&
-      track.label !== undefined &&
-      track.label.trim() !== ""
-        ? track.label.trim()
-        : undefined;
     if (labelText !== undefined) {
       const glyphHalf = presentation.glyphType === "silhouette" ? r * 1.05 : r;
       const text: RenderTextItem = {
@@ -237,6 +245,7 @@ export function buildDynamicTracksRenderPlan(
         opacity: layerOp,
       };
       items.push(text);
+    }
     }
   }
 
@@ -329,23 +338,26 @@ function pushSeamAwarePolyline(
     return;
   }
   const unwrapped = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 1; i < points.length; i += 1) {
     const y0 = mapLatToY(points[i - 1]!.latDeg, h);
     const y1 = mapLatToY(points[i]!.latDeg, h);
     const rawX0 = equirectXFromUnwrappedLon(unwrapped[i - 1]!, w);
     const rawX1 = equirectXFromUnwrappedLon(unwrapped[i]!, w);
     const { x0, x1 } = adjustPairToShortStripPath(rawX0, rawX1, w);
-    const line: RenderLineItem = {
-      kind: "line",
-      x1: sceneXFromIdentityX(x0, w, camera),
-      y1: sceneYFromIdentityY(y0, h, camera),
-      x2: sceneXFromIdentityX(x1, w, camera),
-      y2: sceneYFromIdentityY(y1, h, camera),
-      stroke,
-      strokeWidthPx,
-      lineCap: "round",
-    };
-    items.push(line);
+    for (const k of copies) {
+      const line: RenderLineItem = {
+        kind: "line",
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke,
+        strokeWidthPx,
+        lineCap: "round",
+      };
+      items.push(line);
+    }
   }
 }
 

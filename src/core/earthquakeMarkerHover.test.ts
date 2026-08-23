@@ -267,4 +267,24 @@ describe("LIB-080 earthquake hover through scene camera", () => {
       }),
     ).toBe("a");
   });
+
+  it("hits a wrapped display copy of a marker under a panned camera", () => {
+    const features = [
+      feature({ id: "dateline", lonDeg: 170, latDeg: 0, magnitude: 5 }),
+    ];
+    const camera = { scale: 1, centerU: 0.9, centerV: 0.5 } as const;
+    const hits = projectEarthquakeHoverHits(features, W, H, camera);
+    const onScreen = hits.filter((hit) => hit.x >= 0 && hit.x <= W);
+    expect(onScreen.length).toBeGreaterThanOrEqual(1);
+    expect(
+      resolveEarthquakeHoverId({
+        features,
+        pointerSceneCss: { x: onScreen[0]!.x, y: onScreen[0]!.y },
+        viewportWidthPx: W,
+        viewportHeightPx: H,
+        showLabelOnHover: true,
+        camera,
+      }),
+    ).toBe("dateline");
+  });
 });

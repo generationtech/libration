@@ -21,8 +21,10 @@
  * maps that strip into scene CSS. A later Earth-fixed/entity-fixed transform
  * belongs *before* projection and must not overwrite camera centre.
  *
- * Centre is normalized projected space (u,v ∈ [0,1]), not CSS pixels, so resize
- * reapplies the same camera to the new scene rect. Not persisted in LIB-080.
+ * Centre is normalized projected space, not CSS pixels, so resize reapplies
+ * the same camera to the new scene rect. `centerU` is continuous / unwrapped
+ * (horizontal world is periodic). `centerV` is clamped so the viewport stays
+ * inside the supported latitude extent. Not persisted.
  */
 
 import {
@@ -36,10 +38,30 @@ export const SCENE_CAMERA_MAX_SCALE = 8;
 /** Multiplicative wheel zoom: `scale *= exp(-deltaYPx * this)`. */
 export const SCENE_CAMERA_WHEEL_ZOOM_INTENSITY = 0.00175;
 
+/**
+ * Pointer movement (CSS px) before a scene-strip sequence becomes an active pan.
+ * Below this, the sequence remains a point/click so hover is not stolen by jitter.
+ */
+export const SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX = 4;
+
+/**
+ * Extra viewport slop, as a fraction of scene width, when choosing wrapped
+ * copies of seam-unwrapped vector geometry that can extend slightly outside
+ * the identity `[0,1]` strip (dateline remnants). Rasters use slop 0.
+ */
+export const SCENE_CAMERA_VECTOR_WRAP_SLOP_RATIO = 0.05;
+
+const IDENTITY_EPS = 1e-9;
+const MAX_WORLD_COPIES = 4;
+
 export type SceneCamera = {
   readonly scale: number;
-  /** Normalized projected-world centre (0.5 = identity strip centre). */
+  /**
+   * Horizontal centre in normalized projected space. Identity is 0.5.
+   * Not wrapped to `[0,1]`; values such as 1.05 are valid pan positions.
+   */
   readonly centerU: number;
+  /** Vertical centre in normalized projected space. Identity is 0.5. */
   readonly centerV: number;
 };
 
@@ -50,7 +72,11 @@ export const IDENTITY_SCENE_CAMERA: SceneCamera = {
 };
 
 export function isIdentitySceneCamera(camera: SceneCamera): boolean {
-  return camera.scale <= SCENE_CAMERA_MIN_SCALE + 1e-12;
+  return (
+    camera.scale <= SCENE_CAMERA_MIN_SCALE + IDENTITY_EPS &&
+    Math.abs(camera.centerU - 0.5) <= IDENTITY_EPS &&
+    Math.abs(camera.centerV - 0.5) <= IDENTITY_EPS
+  );
 }
 
 function finiteOr(value: number, fallback: number): number {
@@ -58,10 +84,9 @@ function finiteOr(value: number, fallback: number): number {
 }
 
 /**
- * Clamp scale to [1, 8] and keep the visible window inside the identity world
- * so zoom does not expose blank space outside the supported strip. Horizontal
- * wrap copies remain the existing ±360° overlay behaviour; they are not a
- * repeating tiled map. Crossing the dateline by translating centre is LIB-081.
+ * Clamp scale to [1, 8] and keep the visible vertical window inside the
+ * identity world. Horizontal centre is not clamped: the projected world is
+ * periodic in longitude.
  */
 export function clampSceneCamera(camera: SceneCamera): SceneCamera {
   const scale = Math.min(
@@ -73,7 +98,7 @@ export function clampSceneCamera(camera: SceneCamera): SceneCamera {
   const hi = 1 - half;
   return {
     scale,
-    centerU: Math.min(hi, Math.max(lo, finiteOr(camera.centerU, 0.5))),
+    centerU: finiteOr(camera.centerU, 0.5),
     centerV: Math.min(hi, Math.max(lo, finiteOr(camera.centerV, 0.5))),
   };
 }
@@ -171,6 +196,131 @@ export function sceneDestRectFromIdentityWorld(
   };
 }
 
+/**
+ * Horizontal period of one identity world in scene CSS pixels (`widthPx * scale`).
+ */
+export function sceneCameraWorldPeriodPx(widthPx: number, camera: SceneCamera): number {
+  return Math.max(0, widthPx) * camera.scale;
+}
+
+export function sceneXShiftForWorldCopy(
+  widthPx: number,
+  camera: SceneCamera,
+  copyIndex: number,
+): number {
+  return copyIndex * sceneCameraWorldPeriodPx(widthPx, camera);
+}
+
+export function sceneCameraVectorWrapSlopPx(widthPx: number): number {
+  return Math.max(0, widthPx) * SCENE_CAMERA_VECTOR_WRAP_SLOP_RATIO;
+}
+
+/**
+ * Integer world-copy indices `k` whose identity world, shifted by `k` world-widths,
+ * intersects the scene viewport (optionally expanded by `slopPx`).
+ *
+ * At scale ≥ 1 the visible window is at most one world wide, so this is at most
+ * two copies with slop 0. Vector slop restores the identity-camera `{-1,0,1}`
+ * dateline remnants used by seam-unwrapped geometry.
+ */
+export function sceneCameraHorizontalWorldCopyOffsets(
+  camera: SceneCamera,
+  widthPx: number,
+  slopPx = 0,
+): readonly number[] {
+  const w = Math.max(0, widthPx);
+  if (!(w > 0) || !(camera.scale > 0)) {
+    return [0];
+  }
+  const destX = sceneXFromIdentityX(0, w, camera);
+  const period = sceneCameraWorldPeriodPx(w, camera);
+  if (!(period > 0) || !Number.isFinite(destX)) {
+    return [0];
+  }
+  const slop = Number.isFinite(slopPx) ? Math.max(0, slopPx) : 0;
+  const viewLo = -slop;
+  const viewHi = w + slop;
+  const kMin = Math.floor((viewLo - destX) / period);
+  const kMax = Math.ceil((viewHi - destX) / period) - 1;
+  if (!Number.isFinite(kMin) || !Number.isFinite(kMax) || kMax < kMin) {
+    return [0];
+  }
+  let lo = kMin;
+  let hi = kMax;
+  if (hi - lo + 1 > MAX_WORLD_COPIES) {
+    const mid = Math.round((lo + hi) / 2);
+    lo = mid - 1;
+    hi = mid + 2;
+  }
+  const out: number[] = [];
+  for (let k = lo; k <= hi; k += 1) {
+    out.push(k === 0 ? 0 : k);
+  }
+  return out.length > 0 ? out : [0];
+}
+
+export function sceneDestRectsFromIdentityWorldWrapped(
+  widthPx: number,
+  heightPx: number,
+  camera: SceneCamera,
+): readonly { x: number; y: number; width: number; height: number }[] {
+  const base = sceneDestRectFromIdentityWorld(widthPx, heightPx, camera);
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, widthPx, 0);
+  if (copies.length === 1 && copies[0] === 0) {
+    return [base];
+  }
+  return copies.map((k) => ({
+    x: base.x + k * base.width,
+    y: base.y,
+    width: base.width,
+    height: base.height,
+  }));
+}
+
+export function sceneXsFromIdentityX(
+  identityX: number,
+  widthPx: number,
+  camera: SceneCamera,
+  slopPx = 0,
+): readonly number[] {
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, widthPx, slopPx);
+  const w = Math.max(0, widthPx);
+  return copies.map((k) => sceneXFromIdentityX(identityX + k * w, w, camera));
+}
+
+export function sceneXsFromLongitudeDeg(
+  lonDeg: number,
+  widthPx: number,
+  camera: SceneCamera,
+  slopPx = 0,
+): readonly number[] {
+  return sceneXsFromIdentityX(mapXFromLongitudeDeg(lonDeg, widthPx), widthPx, camera, slopPx);
+}
+
+/**
+ * Drag the map: geography follows the pointer. Positive `deltaSceneX` (pointer
+ * moved right) decreases `centerU`.
+ */
+export function panSceneCameraBySceneDelta(args: {
+  camera: SceneCamera;
+  deltaSceneX: number;
+  deltaSceneY: number;
+  widthPx: number;
+  heightPx: number;
+}): SceneCamera {
+  const w = Math.max(0, args.widthPx);
+  const h = Math.max(0, args.heightPx);
+  const scale = args.camera.scale;
+  if (!(w > 0) || !(h > 0) || !(scale > 0)) {
+    return clampSceneCamera(args.camera);
+  }
+  return clampSceneCamera({
+    scale,
+    centerU: args.camera.centerU - args.deltaSceneX / (scale * w),
+    centerV: args.camera.centerV - args.deltaSceneY / (scale * h),
+  });
+}
+
 export function sceneCameraFromWheelDelta(
   currentScale: number,
   deltaYPx: number,
@@ -194,6 +344,7 @@ export function wheelDeltaYToPixels(event: {
 /**
  * Pointer-stable zoom: keep the projected-world point under `sceneX/Y` fixed,
  * then clamp. Adjusting centre here is camera math, not pan navigation.
+ * `centerU` is left unwrapped so zoom after pan does not jump at the dateline.
  */
 export function zoomSceneCameraAboutScenePoint(args: {
   camera: SceneCamera;

@@ -91,6 +91,12 @@
   height: 100%;
   display: block;
   z-index: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.render-canvas.is-panning {
+  cursor: grabbing;
 }
 
 .logo {

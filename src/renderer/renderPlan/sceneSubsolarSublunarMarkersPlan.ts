@@ -16,7 +16,7 @@
  * {@link executeRenderPlanOnCanvas} applies radialGradientFill / path2d / line items only.
  */
 
-import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
+import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
@@ -66,9 +66,16 @@ export function buildSubsolarMarkerRenderPlan(options: {
   const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.22 * v));
 
-  const cx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
+  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
   const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
   const r = Math.min(9, Math.max(4.5, w * 0.0055));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+
+  for (const k of copies) {
+    const cx = baseCx + sceneXShiftForWorldCopy(w, camera, k);
+    if (cx < -r * 4 || cx > w + r * 4) {
+      continue;
+    }
 
   const glow: RenderRadialGradientFillItem = {
     kind: "radialGradientFill",
@@ -124,6 +131,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
     stroke: `rgba(255, 255, 255, ${a(0.42)})`,
     strokeWidthPx: sw(1),
   });
+  }
 
   return { items };
 }
@@ -167,12 +175,19 @@ export function buildSublunarMarkerRenderPlan(options: {
   const appearance = normalizeSublunarMarkerAppearance(
     options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   );
-  const cx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
+  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
   const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
   const r = sublunarMarkerRadiusPx(w, appearance.size);
   const f = Math.min(1, Math.max(0, options.illuminatedFraction));
   const waxing = options.waxing;
   const pad = r * 2.5;
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+
+  for (const k of copies) {
+    const cx = baseCx + sceneXShiftForWorldCopy(w, camera, k);
+    if (cx < -r * 4 || cx > w + r * 4) {
+      continue;
+    }
 
   items.push({
     kind: "radialGradientFill",
@@ -301,6 +316,7 @@ export function buildSublunarMarkerRenderPlan(options: {
     stroke: `rgba(255, 255, 255, ${a(0.38)})`,
     strokeWidthPx: sw(1),
   });
+  }
 
   return { items };
 }

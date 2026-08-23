@@ -21,8 +21,10 @@ import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/produc
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
   sceneYFromLatitudeDeg,
   type SceneCamera,
@@ -71,6 +73,7 @@ function pushSeamAwarePolyline(
     return;
   }
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
     const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
@@ -80,17 +83,19 @@ function pushSeamAwarePolyline(
     if (!Number.isFinite(x0) || !Number.isFinite(x1) || !Number.isFinite(y0) || !Number.isFinite(y1)) {
       continue;
     }
-    const line: RenderLineItem = {
-      kind: "line",
-      x1: sceneXFromIdentityX(x0, w, camera),
-      y1: sceneYFromIdentityY(y0, h, camera),
-      x2: sceneXFromIdentityX(x1, w, camera),
-      y2: sceneYFromIdentityY(y1, h, camera),
-      stroke,
-      strokeWidthPx,
-      lineCap: "round",
-    };
-    items.push(line);
+    for (const k of copies) {
+      const line: RenderLineItem = {
+        kind: "line",
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke,
+        strokeWidthPx,
+        lineCap: "round",
+      };
+      items.push(line);
+    }
   }
 }
 
@@ -168,45 +173,52 @@ export function buildPlanetaryObjectsRenderPlan(
     showLabel: boolean;
     r: number;
   }> = [];
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const body of options.payload.bodies) {
     if (!body.showCurrent || !body.current) {
       continue;
     }
-    const gx = sceneXFromLongitudeDeg(body.current.lonDeg, w, camera);
+    const baseX = sceneXFromLongitudeDeg(body.current.lonDeg, w, camera);
     const gy = sceneYFromLatitudeDeg(body.current.latDeg, h, camera);
-    if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
-      continue;
-    }
     const r = glyphRadius;
-    placedGlyphs.push({ x: gx, y: gy, radiusPx: r + 2 });
-    glyphCenters.push({
-      id: body.id,
-      x: gx,
-      y: gy,
-      color: body.color,
-      name: body.displayName,
-      showLabel: body.showLabel,
-      r,
-    });
-    if (pres.glyphType === "symbol") {
-      const pathDescriptor = planetarySymbolGlyphPathDescriptor(body.id, gx, gy, r);
-      items.push(
-        createDescriptorPathItem({
-          pathDescriptor,
-          stroke: strokeRgba(body.color, a(0.96)),
-          strokeWidthPx: Math.max(1.1, 1.35 * sizeScale),
-        }),
-      );
-    } else {
-      items.push({
-        kind: "path2d",
-        pathKind: "path2d",
-        path: circlePath2D(gx, gy, r),
-        fill: strokeRgba(body.color, a(0.96)),
-        stroke: `rgba(12, 20, 28, ${a(0.85)})`,
-        strokeWidthPx: Math.max(1, 1.2 * sizeScale),
+    for (const k of copies) {
+      const gx = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
+        continue;
+      }
+      if (gx < -r * 4 || gx > w + r * 4) {
+        continue;
+      }
+      placedGlyphs.push({ x: gx, y: gy, radiusPx: r + 2 });
+      glyphCenters.push({
+        id: body.id,
+        x: gx,
+        y: gy,
+        color: body.color,
+        name: body.displayName,
+        showLabel: body.showLabel,
+        r,
       });
+      if (pres.glyphType === "symbol") {
+        const pathDescriptor = planetarySymbolGlyphPathDescriptor(body.id, gx, gy, r);
+        items.push(
+          createDescriptorPathItem({
+            pathDescriptor,
+            stroke: strokeRgba(body.color, a(0.96)),
+            strokeWidthPx: Math.max(1.1, 1.35 * sizeScale),
+          }),
+        );
+      } else {
+        items.push({
+          kind: "path2d",
+          pathKind: "path2d",
+          path: circlePath2D(gx, gy, r),
+          fill: strokeRgba(body.color, a(0.96)),
+          stroke: `rgba(12, 20, 28, ${a(0.85)})`,
+          strokeWidthPx: Math.max(1, 1.2 * sizeScale),
+        });
+      }
     }
   }
 

@@ -27,7 +27,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 6. **Zoom is implemented as a view transform at `RenderPlan` construction**, not as `ctx.scale` in a backend, not as a map-library viewport, and not as a persisted `viewMode` value. Camera state is runtime until a later persistence decision.
 
-Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). First implementation slice: [LIB-080](../work/LIB-080-scene-camera-zoom.md).
+Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). Zoom: [LIB-080](../work/LIB-080-scene-camera-zoom.md). Pan: [LIB-081](../work/LIB-081-scene-camera-pan.md).
 
 ## Consequences
 
@@ -40,9 +40,9 @@ Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/
 
 **Costs.**
 
-- Every scene plan builder that maps lon/lat or blits a full-world raster must use the shared view mapping, or that layer will desynchronize.
-- Pointer hit-testing (earthquake hover today) must invert the same mapping.
+- Every scene plan builder that maps lon/lat or blits a full-world raster must use the shared view mapping, or that layer will desynchronize. Horizontal pan uses viewport-intersecting display copies of the identity strip (`centerU` unwrapped); those copies are rendering, not mutated entity state.
+- Pointer hit-testing (earthquake hover today) must invert the same mapping, including wrapped display instances.
 - Chrome will no longer line up with zoomed meridians. That is accepted rather than zooming the time instrument.
 - Full-world rasters will look soft when zoomed in until a later tile/high-resolution effort (not part of this decision).
 
-**Non-decisions.** Exact wheel-vs-pinch UX, maximum scale, camera persistence, URL view state, map rotation, and alternate projections remain open and are not authorized by this record.
+**Non-decisions.** Pinch zoom, camera persistence, URL view state, map rotation, and alternate projections remain open and are not authorized by this record. LIB-081 used Pointer Events plus `touch-action: none` for drag pan; that does not authorize a gesture library or pinch handling.

@@ -141,7 +141,9 @@ import {
 import type { SceneLayerViewportPx } from "./renderer/types";
 import {
   IDENTITY_SCENE_CAMERA,
+  SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX,
   isIdentitySceneCamera,
+  panSceneCameraBySceneDelta,
   sceneCameraFromWheelDelta,
   wheelDeltaYToPixels,
   zoomSceneCameraAboutScenePoint,
@@ -1124,31 +1126,173 @@ export default function App() {
         : null;
     resizeObserver?.observe(canvas);
 
-    const syncPointerFromEvent = (event: PointerEvent): void => {
+    const scenePointFromClient = (
+      event: PointerEvent,
+      options?: { allowOutsideScene?: boolean },
+    ): { x: number; y: number } | null => {
       const layout = scenePointerLayoutRef.current;
       if (layout === null) {
-        earthquakePointerSceneCssRef.current = null;
-        return;
+        return null;
       }
-      earthquakePointerSceneCssRef.current = canvasClientPointToSceneCss({
+      const args = {
         clientX: event.clientX,
         clientY: event.clientY,
         canvasRect: canvas.getBoundingClientRect(),
         canvasCssWidth: layout.canvasCssWidth,
         canvasCssHeight: layout.canvasCssHeight,
         sceneLayerViewportPx: layout.scene,
-      });
+      };
+      const clamped = canvasClientPointToSceneCss(args);
+      if (clamped !== null || options?.allowOutsideScene !== true) {
+        return clamped;
+      }
+      const { canvasRect, canvasCssWidth, canvasCssHeight, sceneLayerViewportPx } = args;
+      if (
+        !(canvasRect.width > 0) ||
+        !(canvasRect.height > 0) ||
+        !(canvasCssWidth > 0) ||
+        !(canvasCssHeight > 0) ||
+        !(sceneLayerViewportPx.width > 0) ||
+        !(sceneLayerViewportPx.height > 0)
+      ) {
+        return null;
+      }
+      const canvasX =
+        ((event.clientX - canvasRect.left) / canvasRect.width) * canvasCssWidth;
+      const canvasY =
+        ((event.clientY - canvasRect.top) / canvasRect.height) * canvasCssHeight;
+      return {
+        x: canvasX - sceneLayerViewportPx.x,
+        y: canvasY - sceneLayerViewportPx.y,
+      };
+    };
+
+    const setCanvasCursor = (scenePt: { x: number; y: number } | null, grabbing: boolean): void => {
+      if (grabbing) {
+        canvas.classList.add("is-panning");
+        canvas.style.cursor = "grabbing";
+        return;
+      }
+      canvas.classList.remove("is-panning");
+      canvas.style.cursor = scenePt !== null ? "grab" : "";
+    };
+
+    type PanDragSession = {
+      pointerId: number;
+      startSceneX: number;
+      startSceneY: number;
+      origin: SceneCamera;
+      active: boolean;
+    };
+    let panDrag: PanDragSession | null = null;
+
+    const endPanDrag = (event: PointerEvent): void => {
+      if (panDrag === null || event.pointerId !== panDrag.pointerId) {
+        return;
+      }
+      const wasActive = panDrag.active;
+      panDrag = null;
+      if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
+      }
+      setCanvasCursor(scenePointFromClient(event), false);
+      if (wasActive) {
+        setCameraIsIdentity(isIdentitySceneCamera(sceneCameraRef.current));
+        earthquakePointerSceneCssRef.current = scenePointFromClient(event);
+      }
+    };
+
+    const syncPointerFromEvent = (event: PointerEvent): void => {
+      if (panDrag?.active === true) {
+        earthquakePointerSceneCssRef.current = null;
+        return;
+      }
+      earthquakePointerSceneCssRef.current = scenePointFromClient(event);
+    };
+    const onPointerDown = (event: PointerEvent): void => {
+      if (cancelled || event.button !== 0) {
+        return;
+      }
+      const scenePt = scenePointFromClient(event);
+      if (scenePt === null) {
+        return;
+      }
+      panDrag = {
+        pointerId: event.pointerId,
+        startSceneX: scenePt.x,
+        startSceneY: scenePt.y,
+        origin: sceneCameraRef.current,
+        active: false,
+      };
+      // Untrusted/synthetic PointerEvents throw on setPointerCapture and can
+      // immediately fire lostpointercapture, aborting the drag session.
+      if (event.isTrusted) {
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch {
+          /* capture is optional; move/up still pan while the pointer is on canvas */
+        }
+      }
     };
     const onPointerMove = (event: PointerEvent): void => {
       if (cancelled) return;
+      if (panDrag !== null && event.pointerId === panDrag.pointerId) {
+        const layout = scenePointerLayoutRef.current;
+        const scenePt = scenePointFromClient(event, { allowOutsideScene: true });
+        if (layout !== null && scenePt !== null) {
+          const dx = scenePt.x - panDrag.startSceneX;
+          const dy = scenePt.y - panDrag.startSceneY;
+          if (
+            !panDrag.active &&
+            Math.hypot(dx, dy) >= SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX
+          ) {
+            panDrag.active = true;
+            earthquakePointerSceneCssRef.current = null;
+            setCameraIsIdentity(false);
+            setCanvasCursor(scenePt, true);
+          }
+          if (panDrag.active) {
+            sceneCameraRef.current = panSceneCameraBySceneDelta({
+              camera: panDrag.origin,
+              deltaSceneX: dx,
+              deltaSceneY: dy,
+              widthPx: layout.scene.width,
+              heightPx: layout.scene.height,
+            });
+            setCanvasCursor(scenePt, true);
+            return;
+          }
+        }
+      }
+      const hoverPt = scenePointFromClient(event);
+      setCanvasCursor(hoverPt, false);
       syncPointerFromEvent(event);
     };
+    const onPointerUp = (event: PointerEvent): void => {
+      endPanDrag(event);
+    };
     const onPointerLeave = (): void => {
+      if (panDrag?.active === true) {
+        return;
+      }
+      earthquakePointerSceneCssRef.current = null;
+      if (panDrag === null) {
+        setCanvasCursor(null, false);
+      }
+    };
+    const onPointerCancel = (event: PointerEvent): void => {
+      endPanDrag(event);
       earthquakePointerSceneCssRef.current = null;
     };
+    const onLostPointerCapture = (event: PointerEvent): void => {
+      endPanDrag(event);
+    };
+    canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointerleave", onPointerLeave);
-    canvas.addEventListener("pointercancel", onPointerLeave);
+    canvas.addEventListener("pointercancel", onPointerCancel);
+    canvas.addEventListener("lostpointercapture", onLostPointerCapture);
 
     const onWheel = (event: WheelEvent): void => {
       if (cancelled) return;
@@ -1200,9 +1344,12 @@ export default function App() {
       cancelled = true;
       earthquakePointerSceneCssRef.current = null;
       scenePointerLayoutRef.current = null;
+      canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointerleave", onPointerLeave);
-      canvas.removeEventListener("pointercancel", onPointerLeave);
+      canvas.removeEventListener("pointercancel", onPointerCancel);
+      canvas.removeEventListener("lostpointercapture", onLostPointerCapture);
       canvas.removeEventListener("wheel", onWheel);
       resizeObserver?.disconnect();
       stopLoop?.();

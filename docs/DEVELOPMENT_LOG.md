@@ -442,5 +442,12 @@ Scene camera zoom: runtime `SceneCamera` (`scale` 1…8, normalized `centerU`/`c
 
 Verified: `npx tsc --noEmit` clean; `npm test` 273 files / 2636 passed / 0 failed; `npm run build` succeeded earlier in the item. Cursor Browser at inner 1920×1080: `baseline` (identity, zoom, clamps, reset, Config, Demo while zoomed, resize 1280×720), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at Hawaii while zoomed. LIB-081 stays proposed.
 
+## 2026-08-22 — LIB-081 complete
+
+Scene camera pan: same runtime `SceneCamera` (`scale`, unwrapped `centerU`, latitude-clamped `centerV`). Pointer drag pan on the scene strip (4 CSS px threshold); continuous horizontal wrapping via viewport-intersecting display copies; vertical bounds; pointer-stable zoom after pan; Reset restores `1, 0.5, 0.5`. Camera is not persisted. Scene reference frames were not started.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 273 files / 2650 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-GLyrUHBn.js`). Cursor Browser at inner 1920×1080: `baseline` (identity, 1× wrap both ways, vertical 1× no-op, zoom+pan, pointer-stable zoom after pan, Reset, Config, resize 1280×720), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at identity and after wrap.
+
+
 
 

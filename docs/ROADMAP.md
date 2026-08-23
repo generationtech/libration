@@ -20,7 +20,7 @@ An idea on this page is direction, not permission to start — except items list
 
 ## Approved, not started
 
-None. Proposed [LIB-081](work/LIB-081-scene-camera-pan.md) (pan) remains the next camera milestone and is not approved. Do not start it.
+None.
 
 ---
 
@@ -35,7 +35,7 @@ These themes are the product’s intended future shape. They become work only wh
 | Phase | Slice | Work item |
 |-------|--------|-----------|
 | A1 | Zoom (first implementation) | [LIB-080](work/LIB-080-scene-camera-zoom.md) complete |
-| A2 | Pan on the same camera | [LIB-081](work/LIB-081-scene-camera-pan.md) proposed |
+| A2 | Pan on the same camera | [LIB-081](work/LIB-081-scene-camera-pan.md) complete |
 | A3 | Camera consolidation | Incremental in A1/A2; no standalone LIB unless a gap remains |
 | B | Scene reference-frame foundation (not camera-follow) | Unscoped |
 | C | Experimental Moon-fixed and Sun-fixed moving map | Unscoped |

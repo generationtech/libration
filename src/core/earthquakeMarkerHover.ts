@@ -19,7 +19,9 @@
 
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "./sceneCamera";
@@ -108,27 +110,40 @@ export function projectEarthquakeHoverHits(
     return [];
   }
   const hits: EarthquakeHoverHit[] = [];
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (const feature of features) {
     const radiusPx = earthquakeMarkerRadiusPx(feature.magnitude, w);
     const persistent =
       feature.label !== undefined && feature.label.trim() !== "";
-    hits.push({
-      id: feature.id,
-      x: sceneXFromLongitudeDeg(feature.lonDeg, w, camera),
-      y: sceneYFromLatitudeDeg(feature.latDeg, h, camera),
-      radiusPx,
-      hitRadiusPx: earthquakeMarkerHitRadiusPx(radiusPx),
-      hasPersistentLabel: persistent,
-      ...(feature.magnitude !== undefined ? { magnitude: feature.magnitude } : {}),
-      ...(feature.eventTimeMs !== undefined
-        ? { eventTimeMs: feature.eventTimeMs }
-        : {}),
-      ...(feature.compactLabel !== undefined
-        ? { compactLabel: feature.compactLabel }
-        : {}),
-    });
+    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera);
+    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
+    for (const k of copies) {
+      const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (x < -hitMargin(radiusPx) || x > w + hitMargin(radiusPx)) {
+        continue;
+      }
+      hits.push({
+        id: feature.id,
+        x,
+        y,
+        radiusPx,
+        hitRadiusPx: earthquakeMarkerHitRadiusPx(radiusPx),
+        hasPersistentLabel: persistent,
+        ...(feature.magnitude !== undefined ? { magnitude: feature.magnitude } : {}),
+        ...(feature.eventTimeMs !== undefined
+          ? { eventTimeMs: feature.eventTimeMs }
+          : {}),
+        ...(feature.compactLabel !== undefined
+          ? { compactLabel: feature.compactLabel }
+          : {}),
+      });
+    }
   }
   return hits;
+}
+
+function hitMargin(radiusPx: number): number {
+  return earthquakeMarkerHitRadiusPx(radiusPx) + 4;
 }
 
 /**

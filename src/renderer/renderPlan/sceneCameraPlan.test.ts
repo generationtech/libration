@@ -147,4 +147,69 @@ describe("LIB-080 camera plan mapping", () => {
     expect(patch.destWidth).toBeCloseTo(blit.width, 8);
     expect(patch.destHeight).toBeCloseTo(blit.height, 8);
   });
+
+  it("emits matching wrapped raster dest copies when the camera crosses the antimeridian", () => {
+    const camera = { scale: 1, centerU: 0.85, centerV: 0.5 } as const;
+    const base = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera,
+    });
+    const shade = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 0.5,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE),
+    });
+    expect(base.items.length).toBe(2);
+    expect(shade.items.length).toBe(2);
+    for (let i = 0; i < 2; i += 1) {
+      const blit = base.items[i];
+      const patch = shade.items[i];
+      expect(blit?.kind).toBe("imageBlit");
+      expect(patch?.kind).toBe("rasterPatch");
+      if (blit?.kind !== "imageBlit" || patch?.kind !== "rasterPatch") {
+        return;
+      }
+      expect(patch.x).toBeCloseTo(blit.x, 8);
+      expect(patch.y).toBeCloseTo(blit.y, 8);
+      expect(patch.destWidth).toBeCloseTo(blit.width, 8);
+      expect(patch.destHeight).toBeCloseTo(blit.height, 8);
+    }
+  });
+
+  it("keeps grid stroke widths in CSS pixels after a wrapped pan", () => {
+    const camera = { scale: 2, centerU: 1.1, centerV: 0.4 } as const;
+    const identity = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+    });
+    const panned = buildEquirectangularGridOverlayRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera,
+      meridianStepDeg: 30,
+      parallelStepDeg: 30,
+      layerOpacity: 1,
+    });
+    const sample = identity.items.find((item) => item.kind === "line");
+    const pannedSample = panned.items.find((item) => item.kind === "line");
+    expect(sample?.kind).toBe("line");
+    expect(pannedSample?.kind).toBe("line");
+    if (sample?.kind !== "line" || pannedSample?.kind !== "line") {
+      return;
+    }
+    expect(pannedSample.strokeWidthPx).toBe(sample.strokeWidthPx);
+    expect(panned.items.length).toBeGreaterThan(identity.items.length);
+  });
 });

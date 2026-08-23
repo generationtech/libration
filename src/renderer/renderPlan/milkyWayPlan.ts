@@ -22,8 +22,10 @@ import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
+  sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
   sceneYFromLatitudeDeg,
   type SceneCamera,
@@ -116,6 +118,7 @@ function pushSeamAwarePolyline(
     return;
   }
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
     const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
@@ -125,17 +128,19 @@ function pushSeamAwarePolyline(
     if (!Number.isFinite(x0) || !Number.isFinite(x1) || !Number.isFinite(y0) || !Number.isFinite(y1)) {
       continue;
     }
-    const line: RenderLineItem = {
-      kind: "line",
-      x1: sceneXFromIdentityX(x0, w, camera),
-      y1: sceneYFromIdentityY(y0, h, camera),
-      x2: sceneXFromIdentityX(x1, w, camera),
-      y2: sceneYFromIdentityY(y1, h, camera),
-      stroke: strokeRgba(colorCss, alphaFn(points[i]!, points[i + 1]!)),
-      strokeWidthPx,
-      lineCap: "round",
-    };
-    items.push(line);
+    for (const k of copies) {
+      const line: RenderLineItem = {
+        kind: "line",
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke: strokeRgba(colorCss, alphaFn(points[i]!, points[i + 1]!)),
+        strokeWidthPx,
+        lineCap: "round",
+      };
+      items.push(line);
+    }
   }
 }
 
@@ -172,6 +177,7 @@ function pushVisibilityContour(
     return;
   }
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const p0 = points[i]!;
     const p1 = points[i + 1]!;
@@ -193,35 +199,42 @@ function pushVisibilityContour(
     if (Math.abs(x1 - x0) > w * 0.48) {
       continue;
     }
-    const line: RenderLineItem = {
-      kind: "line",
-      x1: sceneXFromIdentityX(x0, w, camera),
-      y1: sceneYFromIdentityY(y0, h, camera),
-      x2: sceneXFromIdentityX(x1, w, camera),
-      y2: sceneYFromIdentityY(y1, h, camera),
-      stroke: strokeRgba(
-        colorCss,
-        alphaScale(visibilitySegmentAlpha(p0, p1, emphasizeNight, deemphasizeMoon, baseAlpha)),
-      ),
-      strokeWidthPx,
-      lineCap: "round",
-    };
-    items.push(line);
+    for (const k of copies) {
+      const line: RenderLineItem = {
+        kind: "line",
+        x1: sceneXFromIdentityX(x0 + k * w, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1 + k * w, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke: strokeRgba(
+          colorCss,
+          alphaScale(visibilitySegmentAlpha(p0, p1, emphasizeNight, deemphasizeMoon, baseAlpha)),
+        ),
+        strokeWidthPx,
+        lineCap: "round",
+      };
+      items.push(line);
+    }
   }
 }
 
-function screenPolyline(
+function screenPolylines(
   points: readonly MilkyWayTaggedPoint[],
   w: number,
   h: number,
   camera: SceneCamera,
-): LabelPathPolyline {
-  return {
-    points: points.map((p) => ({
-      x: sceneXFromLongitudeDeg(p.lonDeg, w, camera),
-      y: sceneYFromLatitudeDeg(p.latDeg, h, camera),
+): LabelPathPolyline[] {
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
+  const base = points.map((p) => ({
+    x: sceneXFromLongitudeDeg(p.lonDeg, w, camera),
+    y: sceneYFromLatitudeDeg(p.latDeg, h, camera),
+  }));
+  return copies.map((k) => ({
+    points: base.map((p) => ({
+      x: p.x + sceneXShiftForWorldCopy(w, camera, k),
+      y: p.y,
     })),
-  };
+  }));
 }
 
 export interface MilkyWayRenderPlanOptions {
@@ -323,17 +336,23 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
         if (!best) {
           continue;
         }
-        const lx = sceneXFromLongitudeDeg(best.lonDeg, w, camera);
         const ly = sceneYFromLatitudeDeg(best.latDeg, h, camera);
-        if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
-          continue;
-        }
+        const baseX = sceneXFromLongitudeDeg(best.lonDeg, w, camera);
+        const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
         const label = `${contour.altitudeDeg}°`;
-        const text: RenderTextItem = {
-          kind: "text",
-          x: lx + 4,
-          y: ly - 3,
-          text: label,
+        for (const k of copies) {
+          const lx = baseX + sceneXShiftForWorldCopy(w, camera, k);
+          if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
+            continue;
+          }
+          if (lx < -20 || lx > w + 20) {
+            continue;
+          }
+          const text: RenderTextItem = {
+            kind: "text",
+            x: lx + 4,
+            y: ly - 3,
+            text: label,
           fill: strokeRgba(pres.visibilityColor, a(0.78)),
           font: {
             assetId: PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID,
@@ -351,8 +370,9 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
             miterLimit: 2,
           },
           opacity: op,
-        };
-        items.push(text);
+          };
+          items.push(text);
+        }
       }
     }
   }
@@ -362,18 +382,18 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   const placedGlyphs: LabelAvoidDisc[] = [];
   const avoidPaths: LabelPathPolyline[] = [];
   if (geom && pres.planeEnabled && geom.plane.length >= 2) {
-    avoidPaths.push(screenPolyline(geom.plane, w, h, camera));
+    avoidPaths.push(...screenPolylines(geom.plane, w, h, camera));
   }
   if (geom && pres.bandEnabled && geom.northEdge.length >= 2) {
-    avoidPaths.push(screenPolyline(geom.northEdge, w, h, camera));
-    avoidPaths.push(screenPolyline(geom.southEdge, w, h, camera));
+    avoidPaths.push(...screenPolylines(geom.northEdge, w, h, camera));
+    avoidPaths.push(...screenPolylines(geom.southEdge, w, h, camera));
   }
   const visForAvoid = options.payload.visibility;
   if (pres.visibilityContoursEnabled && visForAvoid) {
     for (const contour of visForAvoid.contours) {
       if (contour.points.length >= 2) {
         avoidPaths.push(
-          screenPolyline(
+          ...screenPolylines(
             contour.points.map((p) => ({
               latDeg: p.latDeg,
               lonDeg: p.lonDeg,
@@ -408,7 +428,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
       }));
       pushSeamAwarePolyline(items, pts, w, h, camera, pres.viewingFootprintColor, fpWidth, fpAlpha);
       if (pts.length >= 2) {
-        avoidPaths.push(screenPolyline(pts, w, h, camera));
+        avoidPaths.push(...screenPolylines(pts, w, h, camera));
       }
     }
   }
@@ -418,26 +438,37 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
     kind: "center" | "anticenter",
     colorCss: string,
   ): { x: number; y: number; r: number } | null => {
-    const gx = sceneXFromLongitudeDeg(point.lonDeg, w, camera);
     const gy = sceneYFromLatitudeDeg(point.latDeg, h, camera);
-    if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
-      return null;
-    }
+    const baseX = sceneXFromLongitudeDeg(point.lonDeg, w, camera);
+    const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
     const scale = kind === "center" ? glyphScale : glyphScale * 0.72;
-    const pathDescriptor =
-      kind === "center"
-        ? galacticCenterGlyphPathDescriptor(gx, gy, scale)
-        : galacticAnticenterGlyphPathDescriptor(gx, gy, scale);
-    const nightBoost = emphasize ? (point.night ? 0.96 : 0.42) : 0.88;
-    items.push(
-      createDescriptorPathItem({
-        pathDescriptor,
-        stroke: strokeRgba(colorCss, a(nightBoost)),
-        strokeWidthPx: kind === "center" ? 1.35 : 1.05,
-      }),
-    );
-    placedGlyphs.push({ x: gx, y: gy, radiusPx: scale + 3 });
-    return { x: gx, y: gy, r: scale };
+    let first: { x: number; y: number; r: number } | null = null;
+    for (const k of copies) {
+      const gx = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
+        continue;
+      }
+      if (gx < -scale * 4 || gx > w + scale * 4) {
+        continue;
+      }
+      const pathDescriptor =
+        kind === "center"
+          ? galacticCenterGlyphPathDescriptor(gx, gy, scale)
+          : galacticAnticenterGlyphPathDescriptor(gx, gy, scale);
+      const nightBoost = emphasize ? (point.night ? 0.96 : 0.42) : 0.88;
+      items.push(
+        createDescriptorPathItem({
+          pathDescriptor,
+          stroke: strokeRgba(colorCss, a(nightBoost)),
+          strokeWidthPx: kind === "center" ? 1.35 : 1.05,
+        }),
+      );
+      placedGlyphs.push({ x: gx, y: gy, radiusPx: scale + 3 });
+      if (first === null) {
+        first = { x: gx, y: gy, r: scale };
+      }
+    }
+    return first;
   };
 
   let centerScreen: { x: number; y: number; r: number } | null = null;

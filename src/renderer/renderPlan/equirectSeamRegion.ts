@@ -19,6 +19,8 @@
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  sceneCameraHorizontalWorldCopyOffsets,
+  sceneCameraVectorWrapSlopPx,
   sceneXFromIdentityX,
   sceneYFromIdentityY,
   type SceneCamera,
@@ -32,7 +34,16 @@ import {
   unwrappedLongitudes,
 } from "./equirectSeamPath";
 
-const WORLD_COPIES_DEG = [-360, 0, 360] as const;
+function longitudeOffsetsForCameraWorldCopies(
+  camera: SceneCamera,
+  widthPx: number,
+): readonly number[] {
+  return sceneCameraHorizontalWorldCopyOffsets(
+    camera,
+    widthPx,
+    sceneCameraVectorWrapSlopPx(widthPx),
+  ).map((k) => k * 360);
+}
 
 export type EquirectRing = readonly { latDeg: number; lonDeg: number }[];
 
@@ -160,7 +171,7 @@ export function equirectRingToPathDescriptors(
     useLons = [...useLons, hi, lo, useLons[0]!];
   }
   const copies: EquirectProjectedCopy[] = [];
-  for (const offset of WORLD_COPIES_DEG) {
+  for (const offset of longitudeOffsetsForCameraWorldCopies(camera, w)) {
     const d = pathForCopy(useLats, useLons, offset, w, h, camera);
     if (d) {
       copies.push(d);
@@ -183,7 +194,7 @@ export function equirectPolylineToPathDescriptors(
   const lats = points.map((p) => p.latDeg);
   const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
   const copies: EquirectProjectedCopy[] = [];
-  for (const offset of WORLD_COPIES_DEG) {
+  for (const offset of longitudeOffsetsForCameraWorldCopies(camera, w)) {
     const b = createPathBuilder();
     let started = false;
     let minX = Infinity;

@@ -14,7 +14,7 @@
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
 import {
   IDENTITY_SCENE_CAMERA,
-  sceneDestRectFromIdentityWorld,
+  sceneDestRectsFromIdentityWorldWrapped,
   type SceneCamera,
 } from "../../core/sceneCamera";
 import type { CloudParticipationPresentationMode } from "../../core/cloudParticipationPolicy";
@@ -152,7 +152,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
 
   const sw = Math.max(1, Math.ceil(w / SOLAR_SHADING_PLAN_DOWNSAMPLE));
   const sh = Math.max(1, Math.ceil(h / SOLAR_SHADING_PLAN_DOWNSAMPLE));
-  const dest = sceneDestRectFromIdentityWorld(
+  const dests = sceneDestRectsFromIdentityWorldWrapped(
     w,
     h,
     options.camera ?? IDENTITY_SCENE_CAMERA,
@@ -229,17 +229,15 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   }
 
   return {
-    items: [
-      {
-        kind: "rasterPatch",
-        x: dest.x,
-        y: dest.y,
-        destWidth: dest.width,
-        destHeight: dest.height,
-        widthPx: sw,
-        heightPx: sh,
-        rgba,
-      },
-    ],
+    items: dests.map((dest) => ({
+      kind: "rasterPatch" as const,
+      x: dest.x,
+      y: dest.y,
+      destWidth: dest.width,
+      destHeight: dest.height,
+      widthPx: sw,
+      heightPx: sh,
+      rgba,
+    })),
   };
 }

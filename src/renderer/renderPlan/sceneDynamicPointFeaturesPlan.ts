@@ -17,7 +17,7 @@
  */
 
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
-import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
+import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
   earthquakeMarkerRadiusPx,
   placeEarthquakeHoverLabel,
@@ -52,11 +52,12 @@ export function buildDynamicPointFeaturesRenderPlan(
   const liftScale = options.payload.overlayReadabilityLiftScale01;
   const items: RenderPlan["items"] = [];
   const labelSize = Math.min(11, Math.max(8, w * 0.012));
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const feature of options.payload.features) {
-    const x = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
     const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera);
     const r = earthquakeMarkerRadiusPx(feature.magnitude, w);
+    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
 
     const v = effectiveOverlayReadabilityLiftVeil01(
       feature.readabilityNightVeil01,
@@ -65,6 +66,12 @@ export function buildDynamicPointFeaturesRenderPlan(
     const sw = (base: number) => Math.max(base, base * (1 + 0.55 * v));
     const a = (alpha: number) =>
       Math.min(1, alpha * layerOp * (1 + 0.18 * v));
+
+    for (const k of copies) {
+      const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
+      if (x < -r * 6 || x > w + r * 6) {
+        continue;
+      }
 
     const inner: RenderPath2DItem = {
       kind: "path2d",
@@ -154,6 +161,7 @@ export function buildDynamicPointFeaturesRenderPlan(
         opacity: layerOp,
       };
       items.push(text);
+    }
     }
   }
 

@@ -20,14 +20,19 @@ import {
   IDENTITY_SCENE_CAMERA,
   SCENE_CAMERA_MAX_SCALE,
   SCENE_CAMERA_MIN_SCALE,
+  SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX,
   clampSceneCamera,
   identityXFromSceneX,
   identityYFromSceneY,
   isIdentitySceneCamera,
+  panSceneCameraBySceneDelta,
   sceneCameraFromWheelDelta,
+  sceneCameraHorizontalWorldCopyOffsets,
   sceneDestRectFromIdentityWorld,
+  sceneDestRectsFromIdentityWorldWrapped,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
+  sceneXsFromLongitudeDeg,
   sceneYFromIdentityY,
   sceneYFromLatitudeDeg,
   zoomSceneCameraAboutScenePoint,
@@ -111,18 +116,156 @@ describe("scene camera clamp", () => {
     );
   });
 
-  it("forces identity centre at scale 1", () => {
+  it("forces vertical centre to identity at scale 1 and leaves horizontal pan free", () => {
     const cam = clampSceneCamera({ scale: 1, centerU: 0.1, centerV: 0.9 });
-    expect(cam).toEqual(IDENTITY_SCENE_CAMERA);
-    expect(isIdentitySceneCamera(cam)).toBe(true);
+    expect(cam.scale).toBe(1);
+    expect(cam.centerU).toBeCloseTo(0.1, 10);
+    expect(cam.centerV).toBeCloseTo(0.5, 10);
+    expect(isIdentitySceneCamera(cam)).toBe(false);
   });
 
-  it("keeps the visible window inside the identity world", () => {
-    const cam = clampSceneCamera({ scale: 4, centerU: 0, centerV: 1 });
-    expect(cam.centerU).toBeCloseTo(0.125, 10);
+  it("keeps the visible vertical window inside the identity world", () => {
+    const cam = clampSceneCamera({ scale: 4, centerU: 0.5, centerV: 1 });
     expect(cam.centerV).toBeCloseTo(0.875, 10);
-    expect(sceneXFromIdentityX(0, W, cam)).toBeCloseTo(0, 8);
     expect(sceneYFromIdentityY(H, H, cam)).toBeCloseTo(H, 8);
+  });
+
+  it("does not clamp horizontal centre into [0, 1]", () => {
+    const west = clampSceneCamera({ scale: 2, centerU: -0.25, centerV: 0.5 });
+    const east = clampSceneCamera({ scale: 2, centerU: 1.35, centerV: 0.5 });
+    expect(west.centerU).toBeCloseTo(-0.25, 10);
+    expect(east.centerU).toBeCloseTo(1.35, 10);
+  });
+});
+
+describe("scene camera pan", () => {
+  it("moves the camera centre opposite a known scene-space drag at several scales", () => {
+    const deltaX = 80;
+    const deltaY = -40;
+    for (const scale of [1, 2, 4, 8]) {
+      const cam = camera({ scale, centerU: 0.4, centerV: 0.55 });
+      const next = panSceneCameraBySceneDelta({
+        camera: cam,
+        deltaSceneX: deltaX,
+        deltaSceneY: deltaY,
+        widthPx: W,
+        heightPx: H,
+      });
+      expect(next.centerU).toBeCloseTo(cam.centerU - deltaX / (scale * W), 10);
+      const half = 0.5 / scale;
+      const expectedV = Math.min(1 - half, Math.max(half, cam.centerV - deltaY / (scale * H)));
+      expect(next.centerV).toBeCloseTo(expectedV, 10);
+    }
+  });
+
+  it("lets centerU pass both canonical boundaries continuously", () => {
+    let cam: SceneCamera = IDENTITY_SCENE_CAMERA;
+    cam = panSceneCameraBySceneDelta({
+      camera: cam,
+      deltaSceneX: -W * 0.6,
+      deltaSceneY: 0,
+      widthPx: W,
+      heightPx: H,
+    });
+    expect(cam.centerU).toBeGreaterThan(1);
+    cam = panSceneCameraBySceneDelta({
+      camera: cam,
+      deltaSceneX: W * 2.2,
+      deltaSceneY: 0,
+      widthPx: W,
+      heightPx: H,
+    });
+    expect(cam.centerU).toBeLessThan(0);
+  });
+
+  it("clamps vertical pan at 1×, intermediate zoom, and 8×", () => {
+    const at1 = clampSceneCamera({ scale: 1, centerU: 0.5, centerV: 0 });
+    expect(at1.centerV).toBeCloseTo(0.5, 10);
+    const at2 = clampSceneCamera({ scale: 2, centerU: 0.5, centerV: 0 });
+    expect(at2.centerV).toBeCloseTo(0.25, 10);
+    const at2n = clampSceneCamera({ scale: 2, centerU: 0.5, centerV: 1 });
+    expect(at2n.centerV).toBeCloseTo(0.75, 10);
+    const at8 = clampSceneCamera({ scale: 8, centerU: 0.5, centerV: 0 });
+    expect(at8.centerV).toBeCloseTo(0.0625, 10);
+    const at8n = clampSceneCamera({ scale: 8, centerU: 0.5, centerV: 1 });
+    expect(at8n.centerV).toBeCloseTo(0.9375, 10);
+  });
+
+  it("treats identity as scale 1 and centre 0.5, 0.5, not merely scale 1", () => {
+    expect(isIdentitySceneCamera(IDENTITY_SCENE_CAMERA)).toBe(true);
+    expect(isIdentitySceneCamera({ scale: 1, centerU: 0.6, centerV: 0.5 })).toBe(false);
+    expect(SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX).toBe(4);
+  });
+});
+
+describe("scene camera world wrapping", () => {
+  it("needs only the identity copy when the camera is identity", () => {
+    expect(sceneCameraHorizontalWorldCopyOffsets(IDENTITY_SCENE_CAMERA, W, 0)).toEqual([0]);
+  });
+
+  it("selects the copies that cover an antimeridian-straddling pan", () => {
+    const cam = { scale: 1, centerU: 0.85, centerV: 0.5 } as const;
+    const copies = sceneCameraHorizontalWorldCopyOffsets(cam, W, 0);
+    expect(copies).toEqual([0, 1]);
+    const rects = sceneDestRectsFromIdentityWorldWrapped(W, H, cam);
+    expect(rects).toHaveLength(2);
+    const coverage = rects.map((r) => [r.x, r.x + r.width] as const);
+    expect(coverage[0]![0]).toBeLessThan(0);
+    expect(coverage[0]![1]).toBeGreaterThan(0);
+    expect(coverage[1]![0]).toBeLessThan(W);
+    expect(coverage[1]![1]).toBeGreaterThan(W);
+  });
+
+  it("places a canonical geographic point on the visible wrapped instance", () => {
+    const cam = { scale: 1, centerU: 1.05, centerV: 0.5 } as const;
+    const lon = 0;
+    const xs = sceneXsFromLongitudeDeg(lon, W, cam);
+    expect(xs.some((x) => x >= 0 && x <= W)).toBe(true);
+    const onScreen = xs.filter((x) => x >= -1 && x <= W + 1);
+    expect(onScreen.length).toBeGreaterThanOrEqual(1);
+    const identityX = mapXFromLongitudeDeg(lon, W);
+    for (const x of xs) {
+      const recovered = identityXFromSceneX(x, W, cam);
+      const deltaWorld = (recovered - identityX) / W;
+      expect(Math.abs(deltaWorld - Math.round(deltaWorld))).toBeLessThan(1e-8);
+    }
+  });
+
+  it("keeps pointer-stable zoom after an unwrapped horizontal pan", () => {
+    const before = { scale: 2, centerU: 1.15, centerV: 0.4 } as const;
+    const sceneX = 220;
+    const sceneY = 90;
+    const worldX = identityXFromSceneX(sceneX, W, before);
+    const worldY = identityYFromSceneY(sceneY, H, before);
+    const after = zoomSceneCameraAboutScenePoint({
+      camera: before,
+      nextScale: 4,
+      sceneX,
+      sceneY,
+      widthPx: W,
+      heightPx: H,
+    });
+    expect(after.centerU).toBeGreaterThan(1);
+    expect(identityXFromSceneX(sceneX, W, after)).toBeCloseTo(worldX, 8);
+    expect(identityYFromSceneY(sceneY, H, after)).toBeCloseTo(worldY, 8);
+    expect(sceneXFromIdentityX(worldX, W, after)).toBeCloseTo(sceneX, 8);
+    expect(sceneYFromIdentityY(worldY, H, after)).toBeCloseTo(sceneY, 8);
+  });
+
+  it("round-trips forward/inverse mapping at a wrapped centre", () => {
+    const cam = { scale: 3, centerU: 1.2, centerV: 0.45 } as const;
+    const ix = 120.5;
+    const iy = 77.2;
+    const sx = sceneXFromIdentityX(ix, W, cam);
+    const sy = sceneYFromIdentityY(iy, H, cam);
+    expect(identityXFromSceneX(sx, W, cam)).toBeCloseTo(ix, 8);
+    expect(identityYFromSceneY(sy, H, cam)).toBeCloseTo(iy, 8);
+  });
+
+  it("reset identity is exactly 1, 0.5, 0.5 from a wrapped zoomed camera", () => {
+    const panned = clampSceneCamera({ scale: 5, centerU: -0.4, centerV: 0.2 });
+    expect(isIdentitySceneCamera(panned)).toBe(false);
+    expect(IDENTITY_SCENE_CAMERA).toEqual({ scale: 1, centerU: 0.5, centerV: 0.5 });
   });
 });
 

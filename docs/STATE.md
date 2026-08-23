@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-080](work/LIB-080-scene-camera-zoom.md) — Scene camera zoom. Runtime `SceneCamera` (scale 1…8, normalized centre) applied at RenderPlan construction; identity remains the 2.0.0 full-world view. Wheel zoom is pointer-stable on the scene strip; Reset view restores identity. Camera is not persisted. Pan and scene reference frames were not started.
+[LIB-081](work/LIB-081-scene-camera-pan.md) — Scene camera pan. Pointer drag translation on the LIB-080 `SceneCamera`, continuous horizontal wrapping, bounded vertical movement, pointer-stable zoom after pan, Reset to identity `1, 0.5, 0.5`. Camera is not persisted. Scene reference frames were not started.
 
 ## Blockers
 
@@ -22,8 +22,6 @@ None
 ## Awaiting human decision
 
 2.0.0 is the completed, stable baseline (`docs/releases/2.0.0.md`; application version metadata 2.0.0). Tag `v2.0.0`, push, and GitHub Release await explicit human approval.
-
-Proposed [LIB-081](work/LIB-081-scene-camera-pan.md) (pan) awaits human approval. Do not start it.
 
 Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track-correction.md) stays proposed.
 
@@ -51,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start [LIB-081](work/LIB-081-scene-camera-pan.md), pan, pinch, camera persistence, or scene/map reference frames until a human approves a work item. 2.0.0 remains the completed behavioral baseline.
+Do not start scene/map reference-frame work, pinch zoom, or camera persistence until a human approves and activates a new item. The next architectural phase, when scoped, is scene reference-frame foundation ([`docs/ROADMAP.md`](ROADMAP.md) phase B).
