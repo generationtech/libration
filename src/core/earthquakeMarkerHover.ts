@@ -18,9 +18,11 @@
  */
 
 import {
-  mapXFromLongitudeDeg,
-  mapYFromLatitudeDeg,
-} from "./equirectangularProjection";
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromLongitudeDeg,
+  sceneYFromLatitudeDeg,
+  type SceneCamera,
+} from "./sceneCamera";
 
 /** Padding added to the painted disc before the minimum hover radius applies. */
 export const EARTHQUAKE_HOVER_PADDING_PX = 2;
@@ -98,6 +100,7 @@ export function projectEarthquakeHoverHits(
   features: readonly EarthquakeHoverFeature[],
   viewportWidthPx: number,
   viewportHeightPx: number,
+  camera: SceneCamera = IDENTITY_SCENE_CAMERA,
 ): EarthquakeHoverHit[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -111,8 +114,8 @@ export function projectEarthquakeHoverHits(
       feature.label !== undefined && feature.label.trim() !== "";
     hits.push({
       id: feature.id,
-      x: mapXFromLongitudeDeg(feature.lonDeg, w),
-      y: mapYFromLatitudeDeg(feature.latDeg, h),
+      x: sceneXFromLongitudeDeg(feature.lonDeg, w, camera),
+      y: sceneYFromLatitudeDeg(feature.latDeg, h, camera),
       radiusPx,
       hitRadiusPx: earthquakeMarkerHitRadiusPx(radiusPx),
       hasPersistentLabel: persistent,
@@ -179,6 +182,7 @@ export function resolveEarthquakeHoverId(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
   showLabelOnHover: boolean;
+  camera?: SceneCamera;
 }): string | null {
   if (!options.showLabelOnHover || options.pointerSceneCss === null) {
     return null;
@@ -187,6 +191,7 @@ export function resolveEarthquakeHoverId(options: {
     options.features,
     options.viewportWidthPx,
     options.viewportHeightPx,
+    options.camera ?? IDENTITY_SCENE_CAMERA,
   );
   const picked = pickHoveredEarthquakeHit(
     hits,

@@ -12,6 +12,11 @@
  */
 
 import { longitudeDegFromMapX } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneDestRectFromIdentityWorld,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import type { CloudParticipationPresentationMode } from "../../core/cloudParticipationPolicy";
 import type { EmissiveNightLightsPresentationMode } from "../../core/emissiveNightLightsPolicy";
 import type { MoonlightPolicy } from "../../core/moonlightPolicy";
@@ -93,6 +98,7 @@ export const SOLAR_SHADING_PLAN_DOWNSAMPLE = 2;
 export function buildSolarShadingIlluminationRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   subsolarLatDeg: number;
   subsolarLonDeg: number;
   sublunarLatDeg: number;
@@ -146,6 +152,11 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
 
   const sw = Math.max(1, Math.ceil(w / SOLAR_SHADING_PLAN_DOWNSAMPLE));
   const sh = Math.max(1, Math.ceil(h / SOLAR_SHADING_PLAN_DOWNSAMPLE));
+  const dest = sceneDestRectFromIdentityWorld(
+    w,
+    h,
+    options.camera ?? IDENTITY_SCENE_CAMERA,
+  );
 
   const rgba = new Uint8ClampedArray(sw * sh * 4);
   const op = options.layerOpacity;
@@ -221,10 +232,10 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
     items: [
       {
         kind: "rasterPatch",
-        x: 0,
-        y: 0,
-        destWidth: w,
-        destHeight: h,
+        x: dest.x,
+        y: dest.y,
+        destWidth: dest.width,
+        destHeight: dest.height,
         widthPx: sw,
         heightPx: sh,
         rgba,

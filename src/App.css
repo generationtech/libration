@@ -49,6 +49,25 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
+.scene-camera-reset {
+  position: fixed;
+  right: 4.85rem;
+  bottom: 0.75rem;
+  z-index: 30;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.scene-camera-reset:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .config-overlay-host {
   position: fixed;
   inset: 0;

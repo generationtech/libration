@@ -169,4 +169,23 @@ describe("buildBaseRasterMapRenderPlan", () => {
     expect(mFull && mWeak).toBeTruthy();
     expect(Number(mWeak![1])).toBeLessThan(Number(mFull![1]));
   });
+
+  it("maps the dest rect through the scene camera while keeping src unchanged", () => {
+    const plan = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      camera: { scale: 2, centerU: 0.5, centerV: 0.5 },
+    });
+    const item = plan.items[0];
+    expect(item?.kind).toBe("imageBlit");
+    if (item?.kind !== "imageBlit") {
+      return;
+    }
+    expect(item.src).toBe(WORLD_EQUIRECTANGULAR_SRC);
+    expect(item.x).toBeCloseTo(-400, 8);
+    expect(item.y).toBeCloseTo(-200, 8);
+    expect(item.width).toBeCloseTo(1600, 8);
+    expect(item.height).toBeCloseTo(800, 8);
+  });
 });

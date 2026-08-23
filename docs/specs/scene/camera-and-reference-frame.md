@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing. Zoom is the first implementation slice: [LIB-080](../../work/LIB-080-scene-camera-zoom.md) (proposed).
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan remains [LIB-081](../../work/LIB-081-scene-camera-pan.md) (proposed).
 
 ---
 
@@ -100,7 +100,7 @@ Raster layers (`imageBlit`, illumination `rasterPatch`, Clouds) currently dest-b
 |-------|--------|------------|
 | `scene.viewMode` = `fullWorldFixed` | `SceneConfig` | Yes |
 | `scene.projectionId` = `equirectangular` | `SceneConfig` | Yes |
-| Scene camera | Does not exist | — |
+| Scene camera | Runtime `SceneCamera` on `SceneRenderInput` (`scale`, `centerU`, `centerV`) | No (LIB-080) |
 | Pointer scene CSS | `App.tsx` ref; earthquake hover only | No |
 | Demo playback | Runtime ref | Transport not persisted |
 
@@ -114,9 +114,9 @@ That is **periodicity of a full-world strip**, not a continuous unwrapped moving
 
 ### 4.6 Interactions today
 
-- Pointer move/leave/cancel on the canvas → earthquake hover via `canvasClientPointToSceneCss` (null in the top chrome band).
+- Pointer move/leave/cancel on the canvas → earthquake hover via `canvasClientPointToSceneCss` (null in the top chrome band). Inverse camera is applied so hover matches painted discs while zoomed.
 - Hover is not click/select.
-- No wheel, pinch, or drag handlers on the canvas.
+- Wheel zoom on the scene strip (LIB-080). No pinch or drag pan.
 - `C` toggles Config; `Escape` closes it.
 - Config panel, launcher, eclipse info panel, and DEV scenario banner are DOM overlays, not scene layers.
 - ResizeObserver + `window.resize` rebuild the viewport and re-render.
@@ -269,13 +269,13 @@ Decisions that can be made now:
 8. **Do not persist camera** in `LibrationConfigV2` in A1/A2. Identity is the default every session. Persistence is Phase E.
 9. **DEV scenarios** stay startup config fixtures. Do not add `?zoom=` unless a later verification item needs it; identity is the scenario default.
 
-Open questions that need implementation evidence (do not freeze now):
+Open questions that A1 (LIB-080) resolved:
 
-- Zoom toward **pointer** vs **viewport centre**. Pointer-stable zoom is better UX and uses `centerU/V` without being pan. Try it in A1; fall back to centre-zoom if it fights layout or tests.
-- **Pinch/touch** in A1 vs wheel-only first. If pinch is deferred, still consider `touch-action: none` on `.render-canvas` so browser page-zoom does not steal gestures. Confirm against hover and Config.
-- Numeric **maximum scale** (a starting band of about 4–8× is enough; tune if rasters or labels fail).
-- Whether a visible zoom control is required in A1 besides wheel (ambient-instrument posture argues for wheel + reset first).
-- Keyboard zoom. Not required for A1 unless wheel proves inaccessible in the verification environment.
+- Zoom is **pointer-stable** (world point under the pointer is preserved subject to clamp).
+- **Pinch/touch** is deferred with LIB-081 / later gesture design. A1 does **not** set `touch-action: none`.
+- Maximum scale is **8**.
+- Visible control is **Reset view** only (no +/- buttons).
+- Keyboard zoom is not required.
 
 A2 (pan) will add pointer/touch drag. Drag must not start from Config or the launcher. Distinguish drag pan from click; earthquake hover must survive pan (hover follows pointer; no selection).
 
@@ -287,7 +287,7 @@ Issue IDs continue `LIB-###`. Only listed work items exist as files; later slice
 
 | Phase | Slice | ID | Status |
 |-------|--------|----|--------|
-| A — Camera foundation | A1 Zoom | [LIB-080](../../work/LIB-080-scene-camera-zoom.md) | proposed |
+| A — Camera foundation | A1 Zoom | [LIB-080](../../work/LIB-080-scene-camera-zoom.md) | complete |
 | A | A2 Pan | [LIB-081](../../work/LIB-081-scene-camera-pan.md) | proposed |
 | A | A3 Camera consolidation | (incremental in A1/A2; no standalone LIB unless a gap remains) | — |
 | B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | unscoped | — |
@@ -303,7 +303,7 @@ Phase E includes, and does not commit to: entity-selection UX, reference-frame s
 
 ## 11. Zoom milestone (LIB-080) — acceptance direction
 
-Implement in a later approved intent. Direction:
+Implemented in LIB-080. Direction that shipped:
 
 - Smooth, predictable zoom of geographic/projected content.
 - Identity camera indistinguishable from 2.0.0 default appearance (same layout, chrome registration, animation, scenarios).

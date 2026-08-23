@@ -436,4 +436,11 @@ Release preparation only. Application/package version metadata reconciled from `
 
 Verified: `npx tsc --noEmit` clean; `npm test` 271 files / 2618 passed / 0 failed; `npm run build` succeeded (`libration@2.0.0`; `dist/assets/index-Dk5E2hC_.js`); production retains `wx55-ring-identity-v1`; DEV strings `cloudsRingCalibration` / `cloudsSectorDebug` / `visualScenarios` / `cloudsGibsGray` / `cloudsTransfer` / `wx55-ring-bp56` absent from `dist/`. Tag `v2.0.0` not created.
 
+## 2026-08-22 — LIB-080 complete
+
+Scene camera zoom: runtime `SceneCamera` (`scale` 1…8, normalized `centerU`/`centerV`) applied after equirectangular projection at RenderPlan construction. Identity is the 2.0.0 full-world view. Wheel zoom is pointer-stable on the scene strip; Reset view restores identity. Camera is not persisted. Pan, pinch, and scene reference frames were not started.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 273 files / 2636 passed / 0 failed; `npm run build` succeeded earlier in the item. Cursor Browser at inner 1920×1080: `baseline` (identity, zoom, clamps, reset, Config, Demo while zoomed, resize 1280×720), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at Hawaii while zoomed. LIB-081 stays proposed.
+
+
 

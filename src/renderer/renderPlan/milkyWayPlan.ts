@@ -20,7 +20,14 @@ import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBack
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont";
 import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneXFromLongitudeDeg,
+  sceneYFromIdentityY,
+  sceneYFromLatitudeDeg,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeAppearance";
 import {
   eclipseMapLabelBox,
@@ -100,6 +107,7 @@ function pushSeamAwarePolyline(
   points: readonly MilkyWayTaggedPoint[],
   w: number,
   h: number,
+  camera: SceneCamera,
   colorCss: string,
   strokeWidthPx: number,
   alphaFn: (a: MilkyWayTaggedPoint, b: MilkyWayTaggedPoint) => number,
@@ -119,10 +127,10 @@ function pushSeamAwarePolyline(
     }
     const line: RenderLineItem = {
       kind: "line",
-      x1: x0,
-      y1: y0,
-      x2: x1,
-      y2: y1,
+      x1: sceneXFromIdentityX(x0, w, camera),
+      y1: sceneYFromIdentityY(y0, h, camera),
+      x2: sceneXFromIdentityX(x1, w, camera),
+      y2: sceneYFromIdentityY(y1, h, camera),
       stroke: strokeRgba(colorCss, alphaFn(points[i]!, points[i + 1]!)),
       strokeWidthPx,
       lineCap: "round",
@@ -152,6 +160,7 @@ function pushVisibilityContour(
   points: readonly MilkyWayVisibilitySample[],
   w: number,
   h: number,
+  camera: SceneCamera,
   colorCss: string,
   strokeWidthPx: number,
   baseAlpha: number,
@@ -186,10 +195,10 @@ function pushVisibilityContour(
     }
     const line: RenderLineItem = {
       kind: "line",
-      x1: x0,
-      y1: y0,
-      x2: x1,
-      y2: y1,
+      x1: sceneXFromIdentityX(x0, w, camera),
+      y1: sceneYFromIdentityY(y0, h, camera),
+      x2: sceneXFromIdentityX(x1, w, camera),
+      y2: sceneYFromIdentityY(y1, h, camera),
       stroke: strokeRgba(
         colorCss,
         alphaScale(visibilitySegmentAlpha(p0, p1, emphasizeNight, deemphasizeMoon, baseAlpha)),
@@ -201,11 +210,16 @@ function pushVisibilityContour(
   }
 }
 
-function screenPolyline(points: readonly MilkyWayTaggedPoint[], w: number, h: number): LabelPathPolyline {
+function screenPolyline(
+  points: readonly MilkyWayTaggedPoint[],
+  w: number,
+  h: number,
+  camera: SceneCamera,
+): LabelPathPolyline {
   return {
     points: points.map((p) => ({
-      x: mapXFromLongitudeDeg(p.lonDeg, w),
-      y: mapLatToY(p.latDeg, h),
+      x: sceneXFromLongitudeDeg(p.lonDeg, w, camera),
+      y: sceneYFromLatitudeDeg(p.latDeg, h, camera),
     })),
   };
 }
@@ -213,6 +227,7 @@ function screenPolyline(points: readonly MilkyWayTaggedPoint[], w: number, h: nu
 export interface MilkyWayRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: MilkyWayPayload;
 }
@@ -226,6 +241,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   if (!options.payload.supported) {
     return { items: [] };
   }
@@ -256,16 +272,16 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   const bandWidth = Math.max(0.7, astronomyPathStrokeWidthPx(veil, pres.bandThickness) * 0.85);
 
   if (pres.bandEnabled) {
-    pushSeamAwarePolyline(items, geom.northEdge, w, h, pres.bandColor, bandWidth, alphaFor);
-    pushSeamAwarePolyline(items, geom.southEdge, w, h, pres.bandColor, bandWidth, alphaFor);
+    pushSeamAwarePolyline(items, geom.northEdge, w, h, camera, pres.bandColor, bandWidth, alphaFor);
+    pushSeamAwarePolyline(items, geom.southEdge, w, h, camera, pres.bandColor, bandWidth, alphaFor);
   }
   if (pres.ribsEnabled && pres.bandEnabled) {
     for (const rib of geom.ribs) {
-      pushSeamAwarePolyline(items, rib.points, w, h, pres.bandColor, bandWidth, alphaFor);
+      pushSeamAwarePolyline(items, rib.points, w, h, camera, pres.bandColor, bandWidth, alphaFor);
     }
   }
   if (pres.planeEnabled) {
-    pushSeamAwarePolyline(items, geom.plane, w, h, pres.planeColor, planeWidth, alphaFor);
+    pushSeamAwarePolyline(items, geom.plane, w, h, camera, pres.planeColor, planeWidth, alphaFor);
   }
 
   const vis = options.payload.visibility;
@@ -277,6 +293,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
         contour.points,
         w,
         h,
+        camera,
         pres.visibilityColor,
         Math.max(0.7, visWidth * CONTOUR_WIDTH_MULT[contour.altitudeDeg]),
         CONTOUR_BASE_ALPHA[contour.altitudeDeg],
@@ -306,8 +323,8 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
         if (!best) {
           continue;
         }
-        const lx = mapXFromLongitudeDeg(best.lonDeg, w);
-        const ly = mapLatToY(best.latDeg, h);
+        const lx = sceneXFromLongitudeDeg(best.lonDeg, w, camera);
+        const ly = sceneYFromLatitudeDeg(best.latDeg, h, camera);
         if (!Number.isFinite(lx) || !Number.isFinite(ly)) {
           continue;
         }
@@ -345,11 +362,11 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   const placedGlyphs: LabelAvoidDisc[] = [];
   const avoidPaths: LabelPathPolyline[] = [];
   if (geom && pres.planeEnabled && geom.plane.length >= 2) {
-    avoidPaths.push(screenPolyline(geom.plane, w, h));
+    avoidPaths.push(screenPolyline(geom.plane, w, h, camera));
   }
   if (geom && pres.bandEnabled && geom.northEdge.length >= 2) {
-    avoidPaths.push(screenPolyline(geom.northEdge, w, h));
-    avoidPaths.push(screenPolyline(geom.southEdge, w, h));
+    avoidPaths.push(screenPolyline(geom.northEdge, w, h, camera));
+    avoidPaths.push(screenPolyline(geom.southEdge, w, h, camera));
   }
   const visForAvoid = options.payload.visibility;
   if (pres.visibilityContoursEnabled && visForAvoid) {
@@ -365,6 +382,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
             })),
             w,
             h,
+            camera,
           ),
         );
       }
@@ -388,9 +406,9 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
         night: true,
         lDeg: 0,
       }));
-      pushSeamAwarePolyline(items, pts, w, h, pres.viewingFootprintColor, fpWidth, fpAlpha);
+      pushSeamAwarePolyline(items, pts, w, h, camera, pres.viewingFootprintColor, fpWidth, fpAlpha);
       if (pts.length >= 2) {
-        avoidPaths.push(screenPolyline(pts, w, h));
+        avoidPaths.push(screenPolyline(pts, w, h, camera));
       }
     }
   }
@@ -400,8 +418,8 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
     kind: "center" | "anticenter",
     colorCss: string,
   ): { x: number; y: number; r: number } | null => {
-    const gx = mapXFromLongitudeDeg(point.lonDeg, w);
-    const gy = mapLatToY(point.latDeg, h);
+    const gx = sceneXFromLongitudeDeg(point.lonDeg, w, camera);
+    const gy = sceneYFromLatitudeDeg(point.latDeg, h, camera);
     if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
       return null;
     }
@@ -434,8 +452,8 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
 
   const cityAvoidBoxes: LabelAvoidBox[] = (options.payload.labelAvoidCityLabels ?? []).map((city) =>
     cityPinNameLabelScreenBox({
-      pinX: mapXFromLongitudeDeg(city.lonDeg, w),
-      pinY: mapLatToY(city.latDeg, h),
+      pinX: sceneXFromLongitudeDeg(city.lonDeg, w, camera),
+      pinY: sceneYFromLatitudeDeg(city.latDeg, h, camera),
       name: city.name,
       viewportWidthPx: w,
     }),
@@ -492,8 +510,8 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   }
 
   if (eventLabel && eventLabel.text.trim()) {
-    const preferredX = mapXFromLongitudeDeg(eventLabel.lonDeg, w);
-    const preferredY = mapLatToY(eventLabel.latDeg, h);
+    const preferredX = sceneXFromLongitudeDeg(eventLabel.lonDeg, w, camera);
+    const preferredY = sceneYFromLatitudeDeg(eventLabel.latDeg, h, camera);
     if (Number.isFinite(preferredX) && Number.isFinite(preferredY)) {
       const avoidDiscs = [...placedGlyphs];
       if (avoidDiscs.length === 0) {

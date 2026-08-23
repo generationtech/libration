@@ -252,13 +252,17 @@ Marker scale is driven only by the converged intrinsic height. Row height is int
 
 ## 6. Scene and layer architecture
 
-### Scene view (2.0.0)
+### Scene view and camera
 
-`SceneConfig.viewMode` is persisted and currently only `fullWorldFixed`. `projectionId` is `equirectangular`. There is no scene camera. Plan builders map the full world linearly onto the scene strip (`mapXFromLongitudeDeg` / matching latitude helpers in `src/core/equirectangularProjection.ts`) and emit marker radii and stroke widths in CSS pixels. The canvas backend clips to `sceneLayerViewportPx`, then calls those builders with the strip width/height (`src/renderer/canvasRenderBackend.ts`). Resize remaps the full world to the new strip.
+`SceneConfig.viewMode` is persisted and currently only `fullWorldFixed`. `projectionId` is `equirectangular`. Plan builders still project lon/lat onto the identity full-world strip (`mapXFromLongitudeDeg` / matching latitude helpers in `src/core/equirectangularProjection.ts`) and emit marker radii and stroke widths in CSS pixels from the **scene viewport** size, not a zoom-expanded world width.
 
-Pointer hover (earthquakes) converts client coordinates into scene-strip CSS (`canvasClientPointToSceneCss`) and hits discs in that same identity mapping. There is no wheel zoom or drag pan. Chrome uses the same full-width longitude basis and is painted after the scene; it is not a scene layer.
+A runtime **scene camera** (`src/core/sceneCamera.ts`) then maps that identity strip into the scene CSS rect: uniform `scale` (clamped 1…8) about a normalized projected centre (`centerU`, `centerV`). Identity (`scale = 1`, centre 0.5, 0.5) is bit-for-bit the 2.0.0 full-world view. The camera is attached to `SceneRenderInput` each frame (`src/app/renderBridge.ts`) and applied in plan builders (`src/renderer/canvasRenderBackend.ts`); the Canvas backend still draws CSS primitives without `ctx.scale()`. Camera state is a shell runtime ref — not persisted, not `viewMode`, not URL state.
 
-Intended camera and map-reference-frame evolution (not current behaviour): [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md).
+Wheel zoom applies only when the pointer is in the scene strip (`canvasClientPointToSceneCss` is null over reserved top chrome). Zoom is pointer-stable: the projected-world point under the pointer stays under that screen position, then centre is clamped so the visible window stays inside the identity world. A **Reset view** control restores identity. There is no drag pan (LIB-081) and no pinch zoom.
+
+Pointer hover (earthquakes) converts client coordinates into scene-strip CSS, then hits discs in the same camera mapping used to paint them. Chrome uses the same full-width longitude basis and is painted after the scene; it is not camera-transformed. Structural meridians register with the map only at identity.
+
+Scene/map reference-frame transforms are still identity (Earth-fixed, north-up). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md), [ADR 0026](decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
 ### Layer contract
 
@@ -646,7 +650,7 @@ Presentation overrides (brightness, contrast, gamma, saturation) are per-family 
 
 Onboarding a new family uses `npm run maps:prep -- --update-catalog` against a curated source TIFF. Provenance, licensing, dateline-roll handling, and resampling procedure for every asset live in [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md); the curation policy lives in [`docs/maps/MAP_ASSET_STRATEGY.md`](maps/MAP_ASSET_STRATEGY.md). Do not duplicate provenance elsewhere.
 
-Base maps are **substrates**. Spatial truth is the projection (`src/core/equirectangularProjection.ts`), never the image. The 2.0.0 view is identity: full world fills the scene strip. Scene camera is not implemented; see [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) for the intended boundary.
+Base maps are **substrates**. Spatial truth is the projection (`src/core/equirectangularProjection.ts`), never the image. The 2.0.0 view is the identity camera: full world fills the scene strip. Runtime zoom (LIB-080) maps that strip through `SceneCamera` at plan construction; see [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md).
 
 ---
 
@@ -743,6 +747,6 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.
 - [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — Eclipse System architecture; E1–E6 are production. Remaining eclipse ideas stay unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md).
-- [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) — intended scene camera and map reference frame; zoom is not current behaviour.
+- [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) — scene camera and map reference frame; zoom is implemented (LIB-080), pan is not.
 - [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md) — asset provenance and licensing.
 - [`docs/history/`](history/) — how the system was built, for when the *why* is not in the code.

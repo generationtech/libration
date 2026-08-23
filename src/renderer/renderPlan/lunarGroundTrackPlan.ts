@@ -17,7 +17,14 @@
  */
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneXFromLongitudeDeg,
+  sceneYFromIdentityY,
+  sceneYFromLatitudeDeg,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import type { LunarGroundTrackSample } from "../../core/lunarGroundTrack";
 import {
   DEFAULT_LUNAR_GROUND_TRACK_FUTURE_COLOR,
@@ -48,6 +55,7 @@ function strokeRgba(css: string, alpha: number): string {
 export interface LunarGroundTrackRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: LunarGroundTrackPayload;
 }
@@ -59,6 +67,7 @@ function pushSeamAwarePolyline(
   h: number,
   stroke: string,
   strokeWidthPx: number,
+  camera: SceneCamera,
 ): void {
   if (points.length < 2) {
     return;
@@ -75,10 +84,10 @@ function pushSeamAwarePolyline(
     }
     const line: RenderLineItem = {
       kind: "line",
-      x1: x0,
-      y1: y0,
-      x2: x1,
-      y2: y1,
+      x1: sceneXFromIdentityX(x0, w, camera),
+      y1: sceneYFromIdentityY(y0, h, camera),
+      x2: sceneXFromIdentityX(x1, w, camera),
+      y2: sceneYFromIdentityY(y1, h, camera),
       stroke,
       strokeWidthPx,
       lineCap: "round",
@@ -99,6 +108,7 @@ export function buildLunarGroundTrackRenderPlan(
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   const op = Math.max(0, Math.min(1, options.layerOpacity));
   if (op <= 0) {
     return { items: [] };
@@ -122,15 +132,15 @@ export function buildLunarGroundTrackRenderPlan(
 
   const pastPts = [...options.payload.past, options.payload.current];
   const futurePts = [options.payload.current, ...options.payload.future];
-  pushSeamAwarePolyline(items, pastPts, w, h, pastStroke, sw(1.15));
-  pushSeamAwarePolyline(items, futurePts, w, h, futureStroke, sw(1.55));
+  pushSeamAwarePolyline(items, pastPts, w, h, pastStroke, sw(1.15), camera);
+  pushSeamAwarePolyline(items, futurePts, w, h, futureStroke, sw(1.55), camera);
 
   const tickR = Math.min(3.2, Math.max(1.8, w * 0.0016));
   const tickFill = `rgba(200, 220, 245, ${a(0.72)})`;
   const tickStroke = `rgba(28, 40, 58, ${a(0.55)})`;
   for (const tick of options.payload.ticks) {
-    const cx = mapXFromLongitudeDeg(tick.lonDeg, w);
-    const cy = parallelYFromLatitudeDeg(tick.latDeg, h);
+    const cx = sceneXFromLongitudeDeg(tick.lonDeg, w, camera);
+    const cy = sceneYFromLatitudeDeg(tick.latDeg, h, camera);
     if (!Number.isFinite(cx) || !Number.isFinite(cy)) {
       continue;
     }

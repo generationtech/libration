@@ -12,6 +12,13 @@
  */
 
 import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneXFromLongitudeDeg,
+  sceneYFromLatitudeDeg,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import { placeEclipseMapLabel } from "../../core/eclipse/eclipseMapLabelPlacement";
 import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
@@ -35,6 +42,7 @@ const LABEL_FONT_STACK = "system-ui, -apple-system, Segoe UI, sans-serif";
 export interface EquirectRegionOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: EquirectRegionOverlayPayload;
 }
@@ -62,16 +70,21 @@ function emitPointMarkerCopies(
   viewportWidthPx: number,
   viewportHeightPx: number,
   opacity: number,
+  camera: SceneCamera,
 ): void {
   const scale = Number.isFinite(marker.radiusScale) ? Math.max(0.2, marker.radiusScale) : 1;
   const r = equirectPointMarkerBaseRadiusPx(viewportWidthPx) * scale;
   const haloR = r * 1.55;
   const underW = Math.max(2.4, r * 0.42);
   const strokeW = Math.max(1.15, r * 0.2);
-  const cy = ((90 - marker.latDeg) / 180) * viewportHeightPx;
+  const cy = sceneYFromLatitudeDeg(marker.latDeg, viewportHeightPx, camera);
   const slop = r + 4;
   for (const offset of WORLD_COPIES_DEG) {
-    const cx = mapXFromLongitudeDeg(marker.lonDeg + offset, viewportWidthPx);
+    const cx = sceneXFromIdentityX(
+      mapXFromLongitudeDeg(marker.lonDeg + offset, viewportWidthPx),
+      viewportWidthPx,
+      camera,
+    );
     if (cx + slop < 0 || cx - slop > viewportWidthPx) {
       continue;
     }
@@ -109,6 +122,7 @@ export function buildEquirectRegionOverlayRenderPlan(
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   const veil = effectiveOverlayReadabilityLiftVeil01(
     options.payload.readability?.nightVeil01,
     options.payload.readability?.overlayReadabilityLiftScale01,
@@ -125,6 +139,7 @@ export function buildEquirectRegionOverlayRenderPlan(
         const color = scaleRgba(fill.fill, op);
         for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h, {
           polarCloseLatDeg: fill.polarCloseLatDeg,
+          camera,
         })) {
           items.push(createDescriptorPathItem({ pathDescriptor, fill: color }));
         }
@@ -138,7 +153,7 @@ export function buildEquirectRegionOverlayRenderPlan(
       emit: () => {
         const color = scaleRgba(stroke.stroke, Math.min(1, op + 0.08));
         const width = stroke.strokeWidthPx * (1 + 0.25 * veil);
-        for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h)) {
+        for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h, camera)) {
           items.push(
             createDescriptorPathItem({
               pathDescriptor,
@@ -155,34 +170,34 @@ export function buildEquirectRegionOverlayRenderPlan(
     op.emit();
   }
   for (const marker of options.payload.pointMarkers ?? []) {
-    emitPointMarkerCopies(items, marker, w, h, op);
+    emitPointMarkerCopies(items, marker, w, h, op, camera);
   }
   const labels = options.payload.labels ?? [];
   if (labels.length > 0) {
     const sizePx = Math.min(15, Math.max(11, w * 0.011));
     const avoidDiscs = (options.payload.labelAvoidDiscs ?? []).map((disc) => ({
-      x: mapXFromLongitudeDeg(disc.lonDeg, w),
-      y: ((90 - disc.latDeg) / 180) * h,
+      x: sceneXFromLongitudeDeg(disc.lonDeg, w, camera),
+      y: sceneYFromLatitudeDeg(disc.latDeg, h, camera),
       radiusPx: avoidHaloRadiusPx(w, disc.haloMultiplier),
     }));
     for (const marker of options.payload.pointMarkers ?? []) {
       const r = equirectPointMarkerBaseRadiusPx(w) * marker.radiusScale;
       avoidDiscs.push({
-        x: mapXFromLongitudeDeg(marker.lonDeg, w),
-        y: ((90 - marker.latDeg) / 180) * h,
+        x: sceneXFromLongitudeDeg(marker.lonDeg, w, camera),
+        y: sceneYFromLatitudeDeg(marker.latDeg, h, camera),
         radiusPx: r + 8,
       });
     }
     const avoidPolylines = (options.payload.labelPathHints ?? []).map((hint) => ({
       points: hint.points.map((p) => ({
-        x: mapXFromLongitudeDeg(p.lonDeg, w),
-        y: ((90 - p.latDeg) / 180) * h,
+        x: sceneXFromLongitudeDeg(p.lonDeg, w, camera),
+        y: sceneYFromLatitudeDeg(p.latDeg, h, camera),
       })),
     }));
     const avoidBoxes = (options.payload.labelAvoidCityLabels ?? []).map((city) =>
       cityPinNameLabelScreenBox({
-        pinX: mapXFromLongitudeDeg(city.lonDeg, w),
-        pinY: ((90 - city.latDeg) / 180) * h,
+        pinX: sceneXFromLongitudeDeg(city.lonDeg, w, camera),
+        pinY: sceneYFromLatitudeDeg(city.latDeg, h, camera),
         name: city.name,
         viewportWidthPx: w,
       }),
@@ -191,8 +206,8 @@ export function buildEquirectRegionOverlayRenderPlan(
       if (!label.text.trim()) {
         continue;
       }
-      const preferredX = mapXFromLongitudeDeg(label.lonDeg, w);
-      const preferredY = ((90 - label.latDeg) / 180) * h;
+      const preferredX = sceneXFromLongitudeDeg(label.lonDeg, w, camera);
+      const preferredY = sceneYFromLatitudeDeg(label.latDeg, h, camera);
       const lunar = label.placement === "lunar-glyph";
       const placed =
         avoidDiscs.length > 0 || avoidPolylines.length > 0 || avoidBoxes.length > 0 || lunar

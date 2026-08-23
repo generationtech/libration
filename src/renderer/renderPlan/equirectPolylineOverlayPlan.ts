@@ -13,6 +13,12 @@
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneYFromIdentityY,
+  type SceneCamera,
+} from "../../core/sceneCamera";
+import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
 } from "../../layers/overlayReadabilityHints";
@@ -32,6 +38,7 @@ import {
 export interface EquirectangularPolylineOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   readonly points: readonly { latDeg: number; lonDeg: number }[];
   closed: boolean;
   layerOpacity: number;
@@ -48,6 +55,7 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   const pts = options.points;
   if (pts.length < 2) {
     return { items: [] };
@@ -73,7 +81,15 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     const y0 = parallelYFromLatitudeDeg(pts[i0]!.latDeg, h);
     const y1 = parallelYFromLatitudeDeg(pts[i1]!.latDeg, h);
     if (Number.isFinite(x0) && Number.isFinite(x1)) {
-      items.push({ kind: "line", x1: x0, y1: y0, x2: x1, y2: y1, stroke, strokeWidthPx: strokeW });
+      items.push({
+        kind: "line",
+        x1: sceneXFromIdentityX(x0, w, camera),
+        y1: sceneYFromIdentityY(y0, h, camera),
+        x2: sceneXFromIdentityX(x1, w, camera),
+        y2: sceneYFromIdentityY(y1, h, camera),
+        stroke,
+        strokeWidthPx: strokeW,
+      });
     }
   };
 

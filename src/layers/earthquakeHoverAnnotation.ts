@@ -17,6 +17,7 @@
  */
 
 import { resolveEarthquakeHoverId } from "../core/earthquakeMarkerHover";
+import type { SceneCamera } from "../core/sceneCamera";
 import type {
   DynamicPointFeatureMarker,
   DynamicPointFeaturesPayload,
@@ -29,6 +30,7 @@ export function applyEarthquakePointerHoverToPayload(
     viewportWidthPx: number;
     viewportHeightPx: number;
     showLabelOnHover: boolean;
+    camera?: SceneCamera;
   },
 ): DynamicPointFeaturesPayload {
   const hoveredId = resolveEarthquakeHoverId({
@@ -37,6 +39,7 @@ export function applyEarthquakePointerHoverToPayload(
     viewportWidthPx: options.viewportWidthPx,
     viewportHeightPx: options.viewportHeightPx,
     showLabelOnHover: options.showLabelOnHover,
+    camera: options.camera,
   });
 
   let changed = false;

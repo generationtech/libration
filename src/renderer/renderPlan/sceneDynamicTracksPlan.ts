@@ -22,6 +22,12 @@ import {
 } from "../../color/contrastForegroundOnCssBackground.ts";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneYFromIdentityY,
+  type SceneCamera,
+} from "../../core/sceneCamera";
+import {
   issOrbitDistanceIndex,
   issOrbitFadeMultiplier,
 } from "../../core/issOrbitHorizon";
@@ -66,6 +72,7 @@ function strokeRgba(css: string, alpha: number): string {
 export interface DynamicTracksRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: DynamicTracksPayload;
 }
@@ -82,6 +89,7 @@ export function buildDynamicTracksRenderPlan(
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const layerOp = Math.max(0, Math.min(1, options.layerOpacity));
   const liftScale = options.payload.overlayReadabilityLiftScale01;
@@ -121,6 +129,7 @@ export function buildDynamicTracksRenderPlan(
         futurePts,
         w,
         h,
+        camera,
         presentation.futureColor,
         a,
         0.38,
@@ -133,6 +142,7 @@ export function buildDynamicTracksRenderPlan(
         pastPts,
         w,
         h,
+        camera,
         presentation.pastColor,
         a,
         0.72,
@@ -150,7 +160,8 @@ export function buildDynamicTracksRenderPlan(
     const markerU = unwrapLonNear(marker.lonDeg, nearU);
     let tipX = equirectXFromUnwrappedLon(markerU, w);
     tipX = ((tipX % w) + w) % w;
-    const tipY = mapLatToY(marker.latDeg, h);
+    tipX = sceneXFromIdentityX(tipX, w, camera);
+    const tipY = sceneYFromIdentityY(mapLatToY(marker.latDeg, h), h, camera);
     const r = Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, w / 1400))) * sizeScale;
 
     if (presentation.glyphType === "silhouette") {
@@ -245,6 +256,7 @@ function pushFadedOrbitPolylines(
   points: readonly DynamicTrackSampleMarker[],
   w: number,
   h: number,
+  camera: SceneCamera,
   colorCss: string,
   a: (alpha: number) => number,
   baseAlpha: number,
@@ -261,6 +273,7 @@ function pushFadedOrbitPolylines(
       run.points,
       w,
       h,
+      camera,
       strokeRgba(colorCss, a(baseAlpha * fade)),
       strokeWidthPx,
     );
@@ -308,6 +321,7 @@ function pushSeamAwarePolyline(
   points: readonly DynamicTrackSampleMarker[],
   w: number,
   h: number,
+  camera: SceneCamera,
   stroke: string,
   strokeWidthPx: number,
 ): void {
@@ -323,10 +337,10 @@ function pushSeamAwarePolyline(
     const { x0, x1 } = adjustPairToShortStripPath(rawX0, rawX1, w);
     const line: RenderLineItem = {
       kind: "line",
-      x1: x0,
-      y1: y0,
-      x2: x1,
-      y2: y1,
+      x1: sceneXFromIdentityX(x0, w, camera),
+      y1: sceneYFromIdentityY(y0, h, camera),
+      x2: sceneXFromIdentityX(x1, w, camera),
+      y2: sceneYFromIdentityY(y1, h, camera),
       stroke,
       strokeWidthPx,
       lineCap: "round",

@@ -1,7 +1,7 @@
 # 0026 — Scene camera is independent of projection, physical state, and scene reference frame
 
 - **Status:** Accepted
-- **Date:** 2026-08-22 (record written with the camera / map-reference-frame architecture; zoom is not yet implemented)
+- **Date:** 2026-08-22 (record written with the camera / map-reference-frame architecture; zoom implemented in LIB-080)
 
 ## Context
 
@@ -27,7 +27,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 6. **Zoom is implemented as a view transform at `RenderPlan` construction**, not as `ctx.scale` in a backend, not as a map-library viewport, and not as a persisted `viewMode` value. Camera state is runtime until a later persistence decision.
 
-Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). First implementation slice: [LIB-080](../work/LIB-080-scene-camera-zoom.md) (proposed).
+Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). First implementation slice: [LIB-080](../work/LIB-080-scene-camera-zoom.md).
 
 ## Consequences
 

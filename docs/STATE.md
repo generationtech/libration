@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-079](work/LIB-079-weather-5-5-1-ring-canonical-identity-grayscale.md) — WEATHER-5.5.1: Ring Canonical Identity Grayscale. WEATHER-5 IR cloud foundation closed.
+[LIB-080](work/LIB-080-scene-camera-zoom.md) — Scene camera zoom. Runtime `SceneCamera` (scale 1…8, normalized centre) applied at RenderPlan construction; identity remains the 2.0.0 full-world view. Wheel zoom is pointer-stable on the scene strip; Reset view restores identity. Camera is not persisted. Pan and scene reference frames were not started.
 
 ## Blockers
 
@@ -23,7 +23,7 @@ None
 
 2.0.0 is the completed, stable baseline (`docs/releases/2.0.0.md`; application version metadata 2.0.0). Tag `v2.0.0`, push, and GitHub Release await explicit human approval.
 
-Camera / map-reference-frame architecture is recorded ([`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md), [ADR 0026](decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md)). Proposed [LIB-080](work/LIB-080-scene-camera-zoom.md) (zoom, first implementation) and [LIB-081](work/LIB-081-scene-camera-pan.md) (pan) await human approval. Agents must not start them.
+Proposed [LIB-081](work/LIB-081-scene-camera-pan.md) (pan) awaits human approval. Do not start it.
 
 Proposed [LIB-037](work/LIB-037-iss-propagation-timestamp-audit-and-ground-track-correction.md) stays proposed.
 
@@ -51,4 +51,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Awaiting scope. Preferred next implementation, once a human approves it, is [LIB-080](work/LIB-080-scene-camera-zoom.md) (scene camera zoom). Do not start LIB-080, LIB-081, pan, entity-fixed modes, or another corrective WEATHER item, q>0 blending, WEATHER-6, numeric netCDF, cloud-mask, or physical illumination.
+Do not start [LIB-081](work/LIB-081-scene-camera-pan.md), pan, pinch, camera persistence, or scene/map reference frames until a human approves a work item. 2.0.0 remains the completed behavioral baseline.

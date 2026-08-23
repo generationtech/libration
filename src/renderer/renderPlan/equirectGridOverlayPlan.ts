@@ -17,7 +17,13 @@
  * {@link executeRenderPlanOnCanvas} applies line items only.
  */
 
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneXFromLongitudeDeg,
+  sceneYFromIdentityY,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
@@ -32,6 +38,7 @@ import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 export interface EquirectangularGridOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   meridianStepDeg: number;
   parallelStepDeg: number;
   /** Same factor baked into RGBA alphas as legacy grid draw (layer opacity). */
@@ -51,6 +58,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const op = options.layerOpacity;
   const veil = effectiveOverlayReadabilityLiftVeil01(
@@ -68,27 +76,27 @@ export function buildEquirectangularGridOverlayRenderPlan(
   const items: RenderLineItem[] = [];
 
   for (const lon of meridianLongitudesDegForEquirectGrid(options.meridianStepDeg)) {
-    const x = mapXFromLongitudeDeg(lon, w);
+    const x = sceneXFromLongitudeDeg(lon, w, camera);
     const major = lon === 0;
     items.push({
       kind: "line",
       x1: x,
-      y1: 0,
+      y1: sceneYFromIdentityY(0, h, camera),
       x2: x,
-      y2: h,
+      y2: sceneYFromIdentityY(h, h, camera),
       stroke: major ? lineMajor : lineMinor,
       strokeWidthPx: major ? majorW : minorW,
     });
   }
 
   for (const lat of parallelLatitudesDegForEquirectGrid(options.parallelStepDeg)) {
-    const y = parallelYFromLatitudeDeg(lat, h);
+    const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lat, h), h, camera);
     const major = lat === 0;
     items.push({
       kind: "line",
-      x1: 0,
+      x1: sceneXFromIdentityX(0, w, camera),
       y1: y,
-      x2: w,
+      x2: sceneXFromIdentityX(w, w, camera),
       y2: y,
       stroke: major ? lineMajor : lineMinor,
       strokeWidthPx: major ? majorW : minorW,

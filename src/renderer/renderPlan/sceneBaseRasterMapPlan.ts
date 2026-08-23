@@ -15,6 +15,7 @@ import {
   type BaseMapPresentationConfig,
   baseMapPresentationToCssFilterString,
 } from "../../config/baseMapPresentation";
+import { IDENTITY_SCENE_CAMERA, sceneDestRectFromIdentityWorld, type SceneCamera } from "../../core/sceneCamera";
 import { mergeCssFilterParts, overlayReadabilityCssFilterAppend } from "../../core/overlayReadabilityRasterFilter";
 import type { RenderPlan } from "./renderPlanTypes";
 
@@ -27,6 +28,7 @@ export function buildBaseRasterMapRenderPlan(options: {
   src: string;
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   /** Family-level display tuning; same for every concrete month URL in a month-aware family. */
   presentation?: BaseMapPresentationConfig;
   /**
@@ -42,6 +44,11 @@ export function buildBaseRasterMapRenderPlan(options: {
   if (w <= 0 || h <= 0) {
     return { items: [] };
   }
+  const dest = sceneDestRectFromIdentityWorld(
+    w,
+    h,
+    options.camera ?? IDENTITY_SCENE_CAMERA,
+  );
   const pres = options.presentation;
   const presFilter =
     pres !== undefined ? baseMapPresentationToCssFilterString(pres) : undefined;
@@ -55,10 +62,10 @@ export function buildBaseRasterMapRenderPlan(options: {
       {
         kind: "imageBlit",
         src: options.src,
-        x: 0,
-        y: 0,
-        width: w,
-        height: h,
+        x: dest.x,
+        y: dest.y,
+        width: dest.width,
+        height: dest.height,
         ...(cssFilter !== undefined ? { cssFilter } : {}),
         ...(gamma !== undefined ? { gamma } : {}),
       },

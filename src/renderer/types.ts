@@ -11,6 +11,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { SceneCamera } from "../core/sceneCamera";
 import type { LayerId, LayerType } from "../layers/types";
 
 export interface FrameContext {
@@ -60,4 +61,9 @@ export interface SceneRenderInput {
   scene: SceneVisualContext;
   /** Resolved scene strip for map layers; clip origin and dimensions for compositing. */
   sceneLayerViewportPx: SceneLayerViewportPx;
+  /**
+   * Runtime view into already-projected scene space. Omitted means identity
+   * (2.0.0 full-world). Not a projection, not persisted, not a reference frame.
+   */
+  sceneCamera?: SceneCamera;
 }

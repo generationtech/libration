@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+import type { SceneCamera } from "../core/sceneCamera";
+import { IDENTITY_SCENE_CAMERA } from "../core/sceneCamera";
 import { sceneLayerViewportRectPx } from "../renderer/sceneViewportLayout";
 import type {
   FrameContext,
@@ -62,6 +64,8 @@ export function buildSceneRenderInput(options: {
    * Used only to derive {@link SceneRenderInput.sceneLayerViewportPx}; not forwarded on the input.
    */
   topChromeReservedHeightPx?: number;
+  /** Runtime scene camera; omitted means identity (2.0.0 full-world). */
+  sceneCamera?: SceneCamera;
 }): SceneRenderInput {
   const topChromePx = options.topChromeReservedHeightPx ?? 0;
   return {
@@ -70,5 +74,6 @@ export function buildSceneRenderInput(options: {
     layers: options.layers,
     scene: options.scene ?? {},
     sceneLayerViewportPx: sceneLayerViewportRectPx(options.viewport, topChromePx),
+    sceneCamera: options.sceneCamera ?? IDENTITY_SCENE_CAMERA,
   };
 }

@@ -356,7 +356,7 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Strategic sequence (zoom → pan → later scene reference frames) lives on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Zoom and pan are not startable from this file.
+Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan remains proposed ([LIB-081](work/LIB-081-scene-camera-pan.md)); later scene reference frames live on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Pan is not startable from this file.
 
 This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 

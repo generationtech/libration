@@ -18,6 +18,12 @@
  */
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneYFromIdentityY,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import { DEFAULT_LUNAR_LOCUS_STROKE_RGB } from "../../core/lunarLocus";
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
@@ -33,6 +39,7 @@ import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
 export interface LunarLocusRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: LunarLocusPayload;
 }
@@ -98,6 +105,7 @@ function pushWrappedOpenPolyline(
   stroke: string,
   strokeWidthPx: number,
   moonRadiusPx: number,
+  camera: SceneCamera,
 ): void {
   if (points.length < 2) {
     return;
@@ -107,8 +115,12 @@ function pushWrappedOpenPolyline(
   const moonLat = points[0]!.latDeg;
   const moonR = moonRadiusPx * 0.75;
   for (const offset of WORLD_COPIES_DEG) {
-    const moonX = equirectXFromUnwrappedLon(moonLon + offset, w);
-    const moonY = parallelYFromLatitudeDeg(moonLat, h);
+    const moonX = sceneXFromIdentityX(
+      equirectXFromUnwrappedLon(moonLon + offset, w),
+      w,
+      camera,
+    );
+    const moonY = sceneYFromIdentityY(parallelYFromLatitudeDeg(moonLat, h), h, camera);
     const moonOnScreen =
       Number.isFinite(moonX) &&
       Number.isFinite(moonY) &&
@@ -117,16 +129,20 @@ function pushWrappedOpenPolyline(
       moonY > -moonR * 2 &&
       moonY < h + moonR * 2;
     for (let i = 0; i < n - 1; i += 1) {
-      const x0 = equirectXFromUnwrappedLon(points[i]!.lonDeg + offset, w);
-      const x1 = equirectXFromUnwrappedLon(points[i + 1]!.lonDeg + offset, w);
-      const y0 = parallelYFromLatitudeDeg(points[i]!.latDeg, h);
-      const y1 = parallelYFromLatitudeDeg(points[i + 1]!.latDeg, h);
-      if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
+      const ix0 = equirectXFromUnwrappedLon(points[i]!.lonDeg + offset, w);
+      const ix1 = equirectXFromUnwrappedLon(points[i + 1]!.lonDeg + offset, w);
+      const iy0 = parallelYFromLatitudeDeg(points[i]!.latDeg, h);
+      const iy1 = parallelYFromLatitudeDeg(points[i + 1]!.latDeg, h);
+      if (!Number.isFinite(ix0) || !Number.isFinite(ix1)) {
         continue;
       }
-      if (Math.abs(x1 - x0) >= w * 0.5) {
+      if (Math.abs(ix1 - ix0) >= w * 0.5) {
         continue;
       }
+      const x0 = sceneXFromIdentityX(ix0, w, camera);
+      const x1 = sceneXFromIdentityX(ix1, w, camera);
+      const y0 = sceneYFromIdentityY(iy0, h, camera);
+      const y1 = sceneYFromIdentityY(iy1, h, camera);
       let sx0 = x0;
       let sy0 = y0;
       let sx1 = x1;
@@ -179,6 +195,7 @@ export function buildLunarLocusRenderPlan(options: LunarLocusRenderPlanOptions):
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   const op = Math.max(0, Math.min(1, options.layerOpacity));
   if (op <= 0) {
     return { items: [] };
@@ -193,6 +210,6 @@ export function buildLunarLocusRenderPlan(options: LunarLocusRenderPlanOptions):
   const stroke = strokeRgba(options.payload.strokeColor ?? DEFAULT_LUNAR_LOCUS_STROKE_RGB, strokeA);
   const moonRadiusPx = sublunarMarkerRadiusPx(w, lunarLocusMoonSizeFromPayload(options.payload));
   const items: RenderPlan["items"] = [];
-  pushWrappedOpenPolyline(items, options.payload.points, w, h, stroke, strokeW, moonRadiusPx);
+  pushWrappedOpenPolyline(items, options.payload.points, w, h, stroke, strokeW, moonRadiusPx, camera);
   return { items };
 }

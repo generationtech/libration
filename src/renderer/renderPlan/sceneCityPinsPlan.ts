@@ -17,7 +17,7 @@
  * path2d and text items only.
  */
 
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
@@ -25,13 +25,10 @@ import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
 import { circlePath2D } from "./circlePath2D";
 
-function mapLatToY(latDeg: number, viewportHeightPx: number): number {
-  return ((90 - latDeg) / 180) * viewportHeightPx;
-}
-
 export interface CityPinsRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: CityPinsPayload;
 }
@@ -46,6 +43,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const layerOp = options.layerOpacity;
   const { showLabels, labelMode, scale, cities, cityNameFontAssetId, dateTimeFontAssetId } =
@@ -72,8 +70,8 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   const items: RenderPlan["items"] = [];
 
   for (const city of cities) {
-    const x = mapXFromLongitudeDeg(city.lonDeg, w);
-    const y = mapLatToY(city.latDeg, h);
+    const x = sceneXFromLongitudeDeg(city.lonDeg, w, camera);
+    const y = sceneYFromLatitudeDeg(city.latDeg, h, camera);
     const r =
       scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
 

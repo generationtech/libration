@@ -16,7 +16,7 @@
  * {@link executeRenderPlanOnCanvas} applies radialGradientFill / path2d / line items only.
  */
 
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
@@ -43,16 +43,10 @@ import {
 } from "../../core/sublunarMarkerAppearance";
 import type { EarthShadowCueAppearance, EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
 
-function mapLatToY(latDeg: number, viewportHeightPx: number): number {
-  return ((90 - latDeg) / 180) * viewportHeightPx;
-}
-
-/**
- * Subsolar sun glyph at resolved map coordinates (same radii and paint order as legacy {@link CanvasRenderBackend}).
- */
 export function buildSubsolarMarkerRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   lonDeg: number;
   latDeg: number;
   readability?: OverlayReadabilityHints | null;
@@ -63,6 +57,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
   if (!(w > 0) || !(h > 0)) {
     return { items };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const v = effectiveOverlayReadabilityLiftVeil01(
     options.readability?.nightVeil01,
@@ -71,8 +66,8 @@ export function buildSubsolarMarkerRenderPlan(options: {
   const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.22 * v));
 
-  const cx = mapXFromLongitudeDeg(options.lonDeg, w);
-  const cy = mapLatToY(options.latDeg, h);
+  const cx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
+  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
   const r = Math.min(9, Math.max(4.5, w * 0.0055));
 
   const glow: RenderRadialGradientFillItem = {
@@ -140,6 +135,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
 export function buildSublunarMarkerRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   lonDeg: number;
   latDeg: number;
   illuminatedFraction: number;
@@ -159,6 +155,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   if (!(w > 0) || !(h > 0)) {
     return { items };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const v = effectiveOverlayReadabilityLiftVeil01(
     options.readability?.nightVeil01,
@@ -170,8 +167,8 @@ export function buildSublunarMarkerRenderPlan(options: {
   const appearance = normalizeSublunarMarkerAppearance(
     options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   );
-  const cx = mapXFromLongitudeDeg(options.lonDeg, w);
-  const cy = mapLatToY(options.latDeg, h);
+  const cx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
+  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
   const r = sublunarMarkerRadiusPx(w, appearance.size);
   const f = Math.min(1, Math.max(0, options.illuminatedFraction));
   const waxing = options.waxing;

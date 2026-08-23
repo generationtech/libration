@@ -29,6 +29,11 @@ describe("renderBridge", () => {
     });
     expect(input.scene).toEqual({});
     expect(input.layers).toEqual([]);
+    expect(input.sceneCamera).toEqual({
+      scale: 1,
+      centerU: 0.5,
+      centerV: 0.5,
+    });
     expect(input.sceneLayerViewportPx).toEqual({
       x: 0,
       y: 0,

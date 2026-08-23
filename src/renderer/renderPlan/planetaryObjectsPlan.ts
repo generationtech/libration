@@ -19,7 +19,14 @@
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont";
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
-import { mapXFromLongitudeDeg } from "../../core/equirectangularProjection";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneXFromLongitudeDeg,
+  sceneYFromIdentityY,
+  sceneYFromLatitudeDeg,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeAppearance";
 import { placeEclipseMapLabel, type LabelAvoidBox, type LabelAvoidDisc } from "../../core/eclipse/eclipseMapLabelPlacement";
 import {
@@ -58,6 +65,7 @@ function pushSeamAwarePolyline(
   h: number,
   stroke: string,
   strokeWidthPx: number,
+  camera: SceneCamera,
 ): void {
   if (points.length < 2) {
     return;
@@ -74,10 +82,10 @@ function pushSeamAwarePolyline(
     }
     const line: RenderLineItem = {
       kind: "line",
-      x1: x0,
-      y1: y0,
-      x2: x1,
-      y2: y1,
+      x1: sceneXFromIdentityX(x0, w, camera),
+      y1: sceneYFromIdentityY(y0, h, camera),
+      x2: sceneXFromIdentityX(x1, w, camera),
+      y2: sceneYFromIdentityY(y1, h, camera),
       stroke,
       strokeWidthPx,
       lineCap: "round",
@@ -89,6 +97,7 @@ function pushSeamAwarePolyline(
 export interface PlanetaryObjectsRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: PlanetaryObjectsPayload;
 }
@@ -104,6 +113,7 @@ export function buildPlanetaryObjectsRenderPlan(
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
   if (!options.payload.supported) {
     return { items: [] };
   }
@@ -132,6 +142,7 @@ export function buildPlanetaryObjectsRenderPlan(
         h,
         strokeRgba(body.color, a(locusAlpha)),
         locusWidth,
+        camera,
       );
     }
   }
@@ -142,8 +153,8 @@ export function buildPlanetaryObjectsRenderPlan(
     }
     const futurePts = [body.current, ...body.trackFuture];
     const pastPts = [...body.trackPast, body.current];
-    pushSeamAwarePolyline(items, futurePts, w, h, strokeRgba(body.color, a(0.38)), trackWidth);
-    pushSeamAwarePolyline(items, pastPts, w, h, strokeRgba(body.color, a(0.72)), trackWidth);
+    pushSeamAwarePolyline(items, futurePts, w, h, strokeRgba(body.color, a(0.38)), trackWidth, camera);
+    pushSeamAwarePolyline(items, pastPts, w, h, strokeRgba(body.color, a(0.72)), trackWidth, camera);
   }
 
   const glyphRadius = Math.min(8.5, Math.max(4.4, 4.8 * Math.max(0.7, w / 1400))) * sizeScale;
@@ -162,8 +173,8 @@ export function buildPlanetaryObjectsRenderPlan(
     if (!body.showCurrent || !body.current) {
       continue;
     }
-    const gx = mapXFromLongitudeDeg(body.current.lonDeg, w);
-    const gy = mapLatToY(body.current.latDeg, h);
+    const gx = sceneXFromLongitudeDeg(body.current.lonDeg, w, camera);
+    const gy = sceneYFromLatitudeDeg(body.current.latDeg, h, camera);
     if (!Number.isFinite(gx) || !Number.isFinite(gy)) {
       continue;
     }

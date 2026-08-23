@@ -3,12 +3,12 @@
 | Field | Value |
 |-------|-------|
 | ID | LIB-080 |
-| Status | proposed |
+| Status | complete |
 | Created | 2026-08-22 |
-| Approved | |
-| Completed | |
+| Approved | 2026-08-22 (human; this request) |
+| Completed | 2026-08-22 |
 
-Depends on human approval. Do not start until `docs/STATE.md` points here as `active`. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md), [ADR 0026](../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
+Human-authorized. This request explicitly authorizes approval and activation of scene camera zoom. Do not start [LIB-081](LIB-081-scene-camera-pan.md), pan, pinch, persistence, or scene reference frames. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md), [ADR 0026](../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
 ## Objective
 
@@ -78,12 +78,46 @@ Fill only when completing.
 
 **Implementation summary**
 
+Runtime `SceneCamera` (`scale`, `centerU`, `centerV` in normalized projected space) lives in `src/core/sceneCamera.ts` and is applied after equirectangular projection at RenderPlan construction. Identity (`scale = 1`, centre 0.5, 0.5) short-circuits to the 2.0.0 mapping. Wheel zoom on the scene strip is pointer-stable, clamped to scale 1…8 with the visible window inside the identity world. Reset view restores identity. Camera is a shell runtime ref — not persisted. Canvas still draws CSS primitives; no `ctx.scale()`.
+
 **Commands run**
+
+- `npx tsc --noEmit`
+- `npm test`
+- `npm run build`
+- `npm run dev` (http://localhost:1420, `strictPort: true`) plus Cursor built-in browser / CDP at inner **1920×1080** (`Emulation.setDeviceMetricsOverride` before reload)
 
 **Actual results**
 
+- `npx tsc --noEmit`: clean
+- `npm test`: 273 files / 2636 passed / 0 failed (re-run at completion)
+- `npm run build`: succeeded (`tsc && vite build`)
+
 **Visual verification**
+
+Cursor Browser, canonical inner 1920×1080. Device metrics set before navigation. Screenshots of the Cursor pane crop the left of that layout (accepted limitation of compositor capture vs canvas size; layout/canvas CSS were 1920×1080).
+
+- `baseline`: identity Reset disabled; zoom in / farther / max clamp (soft full-world raster, sharp CSS grid/markers, chrome unzoomed); zoom out to min clamp (Reset disabled again); Reset view restores identity; Config open while zoomed; Demo Playing at 60× while zoomed (HUD advanced; camera stayed zoomed); resize 1280×720 while zoomed kept Reset enabled and overlays registered; scene-strip wheel `preventDefault` with `scrollY = 0`; chrome-band wheel not consumed.
+- `lunar-track`: zoomed; track/grid in Pacific.
+- `lunar-locus` recent and `locusEpoch=standstill`: zoomed; geography/grid registered (standstill showed Baja/Mexico).
+- `moon-libration`: zoomed; Moon glyph screen-sized, map registered.
+- `solar-eclipse-total`: zoomed over Mexico; path, umbra/penumbra, marker, grid registered.
+- `solar-eclipse-dateline`: zoomed near antimeridian; grid/islands/path; no wrap redesign.
+- `clouds`: zoomed; cloud raster dest registered with geography/grid; Sun glyph not magnified.
+- `iss-presentation`: zoomed; ISS track registered with Mexico geography and terminator.
+- `earthquake-presentation`: zoomed about Hawaii; hover label `M4 · 12 km ENE of Pahala, Hawaii` at the marker.
 
 **Not verified**
 
+- Pinch / touch (out of scope).
+- Pixel-identical identity vs a stored 2.0.0 screenshot (qualitative; identity mapping covered by tests).
+- Full-canvas 1920×1080 PNG export (`canvas.toDataURL`); inspection used the Cursor pane crop of the 1920×1080 layout.
+- Wheel over Config panel body (Config was open while zoomed; chrome-band wheel was the automated non-scene check).
+- ISS glyph itself in the pane crop (track registration was visible).
+
 **Discovered, not done**
+
+- Horizontal wrap by translating `centerU` across ±180° is not a tiled repeating world. A1 clamp keeps the visible window inside `[0,1]²`. Dateline pan / extra raster copies are LIB-081 (or later), not a zoom defect.
+- Chrome structural meridians do not track the zoomed map (accepted).
+- Full-world rasters go soft when zoomed (accepted; no tiles).
+

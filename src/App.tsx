@@ -139,6 +139,14 @@ import {
   sceneLayerViewportRectPx,
 } from "./renderer/sceneViewportLayout";
 import type { SceneLayerViewportPx } from "./renderer/types";
+import {
+  IDENTITY_SCENE_CAMERA,
+  isIdentitySceneCamera,
+  sceneCameraFromWheelDelta,
+  wheelDeltaYToPixels,
+  zoomSceneCameraAboutScenePoint,
+  type SceneCamera,
+} from "./core/sceneCamera";
 import { runtimeIdForDynamicPointFeaturesSceneLayer } from "./layers/dynamicPointFeaturesOverlayLayer";
 import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayload";
 import { applyEarthquakePointerHoverToPayload } from "./layers/earthquakeHoverAnnotation";
@@ -295,6 +303,8 @@ export default function App() {
   const earthquakePointerSceneCssRef = useRef<{ x: number; y: number } | null>(
     null,
   );
+  const sceneCameraRef = useRef<SceneCamera>(IDENTITY_SCENE_CAMERA);
+  const [cameraIsIdentity, setCameraIsIdentity] = useState(true);
   const scenePointerLayoutRef = useRef<{
     canvasCssWidth: number;
     canvasCssHeight: number;
@@ -1059,6 +1069,7 @@ export default function App() {
           viewportWidthPx: sceneRect.width,
           viewportHeightPx: sceneRect.height,
           showLabelOnHover,
+          camera: sceneCameraRef.current,
         });
         return next === layer.data ? layer : { ...layer, data: next };
       });
@@ -1068,6 +1079,7 @@ export default function App() {
         layers: layersForRender,
         scene: { backgroundColor: "#1a1a1a" },
         topChromeReservedHeightPx: chromeState.topBand.height,
+        sceneCamera: sceneCameraRef.current,
       });
       if (import.meta.env.DEV) {
         const extra = getVisualScenarioExtraOverlayLayer({
@@ -1138,6 +1150,41 @@ export default function App() {
     canvas.addEventListener("pointerleave", onPointerLeave);
     canvas.addEventListener("pointercancel", onPointerLeave);
 
+    const onWheel = (event: WheelEvent): void => {
+      if (cancelled) return;
+      const layout = scenePointerLayoutRef.current;
+      if (layout === null) {
+        return;
+      }
+      const scenePt = canvasClientPointToSceneCss({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        canvasRect: canvas.getBoundingClientRect(),
+        canvasCssWidth: layout.canvasCssWidth,
+        canvasCssHeight: layout.canvasCssHeight,
+        sceneLayerViewportPx: layout.scene,
+      });
+      if (scenePt === null) {
+        return;
+      }
+      event.preventDefault();
+      const nextScale = sceneCameraFromWheelDelta(
+        sceneCameraRef.current.scale,
+        wheelDeltaYToPixels(event),
+      );
+      const next = zoomSceneCameraAboutScenePoint({
+        camera: sceneCameraRef.current,
+        nextScale,
+        sceneX: scenePt.x,
+        sceneY: scenePt.y,
+        widthPx: layout.scene.width,
+        heightPx: layout.scene.height,
+      });
+      sceneCameraRef.current = next;
+      setCameraIsIdentity(isIdentitySceneCamera(next));
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+
     void (async () => {
       const viewport = createViewportFromCanvas(canvas);
       await backend.initialize(viewport);
@@ -1156,6 +1203,7 @@ export default function App() {
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerleave", onPointerLeave);
       canvas.removeEventListener("pointercancel", onPointerLeave);
+      canvas.removeEventListener("wheel", onWheel);
       resizeObserver?.disconnect();
       stopLoop?.();
       window.removeEventListener("resize", onResize);
@@ -1196,6 +1244,18 @@ export default function App() {
         productInstantMs={eclipsePanelInstantMs}
         configOpen={isConfigOpen}
       />
+      <button
+        type="button"
+        className="scene-camera-reset"
+        aria-label="Reset map view"
+        disabled={cameraIsIdentity}
+        onClick={() => {
+          sceneCameraRef.current = IDENTITY_SCENE_CAMERA;
+          setCameraIsIdentity(true);
+        }}
+      >
+        Reset view
+      </button>
       <button
         type="button"
         className="config-launcher"

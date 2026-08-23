@@ -233,3 +233,38 @@ describe("LIB-060 pointer scan cost", () => {
     expect(fetchFn).not.toHaveBeenCalled();
   });
 });
+
+describe("LIB-080 earthquake hover through scene camera", () => {
+  it("hits a zoomed marker at its camera-mapped scene position, not the identity map point", () => {
+    const features = [
+      feature({ id: "a", lonDeg: -120, latDeg: 35, magnitude: 3.1 }),
+    ];
+    const camera = {
+      scale: 2,
+      centerU: 0.25,
+      centerV: 0.4,
+    } as const;
+    const identity = at(-120, 35);
+    expect(
+      resolveEarthquakeHoverId({
+        features,
+        pointerSceneCss: identity,
+        viewportWidthPx: W,
+        viewportHeightPx: H,
+        showLabelOnHover: true,
+        camera,
+      }),
+    ).toBeNull();
+    const hits = projectEarthquakeHoverHits(features, W, H, camera);
+    expect(
+      resolveEarthquakeHoverId({
+        features,
+        pointerSceneCss: { x: hits[0]!.x, y: hits[0]!.y },
+        viewportWidthPx: W,
+        viewportHeightPx: H,
+        showLabelOnHover: true,
+        camera,
+      }),
+    ).toBe("a");
+  });
+});

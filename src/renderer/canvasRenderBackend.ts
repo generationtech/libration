@@ -51,6 +51,10 @@ import { buildCityPinsRenderPlan } from "./renderPlan/sceneCityPinsPlan";
 import { buildDynamicPointFeaturesRenderPlan } from "./renderPlan/sceneDynamicPointFeaturesPlan";
 import { buildDynamicTracksRenderPlan } from "./renderPlan/sceneDynamicTracksPlan";
 import { buildSceneTextOverlayRenderPlan } from "./renderPlan/sceneTextOverlayPlan";
+import {
+  IDENTITY_SCENE_CAMERA,
+  type SceneCamera,
+} from "../core/sceneCamera";
 import type { RenderBackend } from "./RenderBackend";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
 
@@ -124,12 +128,13 @@ export class CanvasRenderBackend implements RenderBackend {
       ctx.translate(r.x, r.y);
     }
 
+    const camera = input.sceneCamera ?? IDENTITY_SCENE_CAMERA;
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of layers) {
       if (!layer.visible) continue;
       ctx.save();
       ctx.globalAlpha = layer.opacity;
-      this.drawLayer(ctx, layer, sceneViewport);
+      this.drawLayer(ctx, layer, sceneViewport, camera);
       ctx.restore();
     }
 
@@ -157,25 +162,26 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     switch (layer.type) {
       case "raster":
-        this.drawRasterLayer(ctx, layer, viewport);
+        this.drawRasterLayer(ctx, layer, viewport, camera);
         break;
       case "vector":
-        this.drawVectorLayer(ctx, layer, viewport);
+        this.drawVectorLayer(ctx, layer, viewport, camera);
         break;
       case "text":
         this.drawTextLayer(ctx, layer, viewport);
         break;
       case "illumination":
-        this.drawIlluminationLayer(ctx, layer, viewport);
+        this.drawIlluminationLayer(ctx, layer, viewport, camera);
         break;
       case "points":
-        this.drawPointsLayer(ctx, layer, viewport);
+        this.drawPointsLayer(ctx, layer, viewport, camera);
         break;
       case "tracks":
-        this.drawTracksLayer(ctx, layer, viewport);
+        this.drawTracksLayer(ctx, layer, viewport, camera);
         break;
       default:
         break;
@@ -223,6 +229,7 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     if (!isEquirectangularRasterPayload(layer.data)) {
       return;
@@ -239,6 +246,7 @@ export class CanvasRenderBackend implements RenderBackend {
         src: layer.data.src,
         viewportWidthPx: w,
         viewportHeightPx: h,
+        camera,
         presentation: layer.data.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
         readabilityNightVeil01: layer.data.readability?.nightVeil01,
         overlayReadabilityLiftScale01: layer.data.readability?.overlayReadabilityLiftScale01,
@@ -256,6 +264,7 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     if (!isSolarShadingPayload(layer.data)) {
       return;
@@ -310,6 +319,7 @@ export class CanvasRenderBackend implements RenderBackend {
       buildSolarShadingIlluminationRenderPlan({
         viewportWidthPx: w,
         viewportHeightPx: h,
+        camera,
         subsolarLatDeg,
         subsolarLonDeg,
         sublunarLatDeg,
@@ -338,6 +348,7 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     const w = viewport.width;
     const h = viewport.height;
@@ -352,6 +363,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildEquirectangularGridOverlayRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           meridianStepDeg,
           parallelStepDeg,
           layerOpacity: layer.opacity,
@@ -367,6 +379,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildEquirectangularPolylineOverlayRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           points,
           closed,
           layerOpacity: layer.opacity,
@@ -387,6 +400,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildLunarGroundTrackRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -399,6 +413,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildLunarLocusRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -411,6 +426,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildMilkyWayRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -423,6 +439,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildPlanetaryObjectsRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -435,6 +452,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildEquirectRegionOverlayRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -480,6 +498,7 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     if (isSubsolarMarkerPayload(layer.data)) {
       executeRenderPlanOnCanvas(
@@ -487,6 +506,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildSubsolarMarkerRenderPlan({
           viewportWidthPx: viewport.width,
           viewportHeightPx: viewport.height,
+          camera,
           lonDeg: layer.data.lonDeg,
           latDeg: layer.data.latDeg,
           readability: layer.data.readability ?? null,
@@ -500,6 +520,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildSublunarMarkerRenderPlan({
           viewportWidthPx: viewport.width,
           viewportHeightPx: viewport.height,
+          camera,
           lonDeg: layer.data.lonDeg,
           latDeg: layer.data.latDeg,
           illuminatedFraction: layer.data.illuminatedFraction,
@@ -526,6 +547,7 @@ export class CanvasRenderBackend implements RenderBackend {
         buildDynamicPointFeaturesRenderPlan({
           viewportWidthPx: w,
           viewportHeightPx: h,
+          camera,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -546,6 +568,7 @@ export class CanvasRenderBackend implements RenderBackend {
       buildCityPinsRenderPlan({
         viewportWidthPx: w,
         viewportHeightPx: h,
+        camera,
         layerOpacity: layer.opacity,
         payload: layer.data,
       }),
@@ -560,6 +583,7 @@ export class CanvasRenderBackend implements RenderBackend {
     ctx: CanvasRenderingContext2D,
     layer: RenderableLayerState,
     viewport: Viewport,
+    camera: SceneCamera,
   ): void {
     if (!isDynamicTracksPayload(layer.data)) {
       return;
@@ -574,6 +598,7 @@ export class CanvasRenderBackend implements RenderBackend {
       buildDynamicTracksRenderPlan({
         viewportWidthPx: w,
         viewportHeightPx: h,
+        camera,
         layerOpacity: layer.opacity,
         payload: layer.data,
       }),

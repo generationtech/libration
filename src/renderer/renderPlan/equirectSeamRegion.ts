@@ -17,6 +17,12 @@
  */
 
 import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
+import {
+  IDENTITY_SCENE_CAMERA,
+  sceneXFromIdentityX,
+  sceneYFromIdentityY,
+  type SceneCamera,
+} from "../../core/sceneCamera";
 import { createPathBuilder } from "./pathBuilder";
 import type { RenderPathDescriptor } from "./pathTypes";
 import {
@@ -79,6 +85,7 @@ function pathForCopy(
   offsetDeg: number,
   w: number,
   h: number,
+  camera: SceneCamera,
 ): EquirectProjectedCopy | null {
   if (lats.length < 3) {
     return null;
@@ -88,8 +95,12 @@ function pathForCopy(
   let minX = Infinity;
   let maxX = -Infinity;
   for (let i = 0; i < lats.length; i += 1) {
-    const x = equirectXFromUnwrappedLon(lons[i]! + offsetDeg, w);
-    const y = parallelYFromLatitudeDeg(lats[i]!, h);
+    const x = sceneXFromIdentityX(
+      equirectXFromUnwrappedLon(lons[i]! + offsetDeg, w),
+      w,
+      camera,
+    );
+    const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lats[i]!, h), h, camera);
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       continue;
     }
@@ -124,13 +135,14 @@ export function equirectRingToPathDescriptors(
   ring: EquirectRing,
   viewportWidthPx: number,
   viewportHeightPx: number,
-  options?: { polarCloseLatDeg?: number },
+  options?: { polarCloseLatDeg?: number; camera?: SceneCamera },
 ): RenderPathDescriptor[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
   if (w <= 0 || h <= 0 || ring.length < 3) {
     return [];
   }
+  const camera = options?.camera ?? IDENTITY_SCENE_CAMERA;
   const rawLons = ring.map((p) => p.lonDeg);
   const span = circularLongitudeSpanDeg(rawLons);
   const lats = ring.map((p) => p.latDeg);
@@ -149,7 +161,7 @@ export function equirectRingToPathDescriptors(
   }
   const copies: EquirectProjectedCopy[] = [];
   for (const offset of WORLD_COPIES_DEG) {
-    const d = pathForCopy(useLats, useLons, offset, w, h);
+    const d = pathForCopy(useLats, useLons, offset, w, h, camera);
     if (d) {
       copies.push(d);
     }
@@ -161,6 +173,7 @@ export function equirectPolylineToPathDescriptors(
   points: EquirectRing,
   viewportWidthPx: number,
   viewportHeightPx: number,
+  camera: SceneCamera = IDENTITY_SCENE_CAMERA,
 ): RenderPathDescriptor[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -176,8 +189,12 @@ export function equirectPolylineToPathDescriptors(
     let minX = Infinity;
     let maxX = -Infinity;
     for (let i = 0; i < lats.length; i += 1) {
-      const x = equirectXFromUnwrappedLon(lons[i]! + offset, w);
-      const y = parallelYFromLatitudeDeg(lats[i]!, h);
+      const x = sceneXFromIdentityX(
+        equirectXFromUnwrappedLon(lons[i]! + offset, w),
+        w,
+        camera,
+      );
+      const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lats[i]!, h), h, camera);
       if (!Number.isFinite(x) || !Number.isFinite(y)) {
         continue;
       }

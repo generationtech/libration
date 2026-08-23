@@ -17,7 +17,7 @@
  */
 
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
-import { mapXFromLongitudeDeg, mapYFromLatitudeDeg } from "../../core/equirectangularProjection";
+import { IDENTITY_SCENE_CAMERA, sceneXFromLongitudeDeg, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
   earthquakeMarkerRadiusPx,
   placeEarthquakeHoverLabel,
@@ -30,6 +30,7 @@ import { circlePath2D } from "./circlePath2D";
 export interface DynamicPointFeaturesRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
+  camera?: SceneCamera;
   layerOpacity: number;
   payload: DynamicPointFeaturesPayload;
 }
@@ -45,6 +46,7 @@ export function buildDynamicPointFeaturesRenderPlan(
   if (!(w > 0) || !(h > 0)) {
     return { items: [] };
   }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
 
   const layerOp = Math.max(0, Math.min(1, options.layerOpacity));
   const liftScale = options.payload.overlayReadabilityLiftScale01;
@@ -52,8 +54,8 @@ export function buildDynamicPointFeaturesRenderPlan(
   const labelSize = Math.min(11, Math.max(8, w * 0.012));
 
   for (const feature of options.payload.features) {
-    const x = mapXFromLongitudeDeg(feature.lonDeg, w);
-    const y = mapYFromLatitudeDeg(feature.latDeg, h);
+    const x = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
+    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera);
     const r = earthquakeMarkerRadiusPx(feature.magnitude, w);
 
     const v = effectiveOverlayReadabilityLiftVeil01(
