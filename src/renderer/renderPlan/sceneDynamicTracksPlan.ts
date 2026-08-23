@@ -30,6 +30,12 @@ import {
   type SceneCamera,
 } from "../../core/sceneCamera";
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLongitudeDeg,
+  sceneFrameLongitudesDeg,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
+import {
   issOrbitDistanceIndex,
   issOrbitFadeMultiplier,
 } from "../../core/issOrbitHorizon";
@@ -75,6 +81,7 @@ export interface DynamicTracksRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: DynamicTracksPayload;
 }
@@ -92,6 +99,7 @@ export function buildDynamicTracksRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const layerOp = Math.max(0, Math.min(1, options.layerOpacity));
   const liftScale = options.payload.overlayReadabilityLiftScale01;
@@ -132,6 +140,7 @@ export function buildDynamicTracksRenderPlan(
         w,
         h,
         camera,
+        frame,
         presentation.futureColor,
         a,
         0.38,
@@ -145,6 +154,7 @@ export function buildDynamicTracksRenderPlan(
         w,
         h,
         camera,
+        frame,
         presentation.pastColor,
         a,
         0.72,
@@ -156,10 +166,10 @@ export function buildDynamicTracksRenderPlan(
 
     const marker = current ?? samples[samples.length - 1]!;
     const nearestIdx = nearestSampleIndexByTime(samples, marker.timeMs);
-    const lons = samples.map((s) => s.lonDeg);
+    const lons = sceneFrameLongitudesDeg(samples.map((s) => s.lonDeg), frame);
     const unwrapped = samples.length >= 2 ? unwrappedLongitudes(lons) : lons;
-    const nearU = unwrapped[nearestIdx] ?? marker.lonDeg;
-    const markerU = unwrapLonNear(marker.lonDeg, nearU);
+    const nearU = unwrapped[nearestIdx] ?? sceneFrameLongitudeDeg(marker.lonDeg, frame);
+    const markerU = unwrapLonNear(sceneFrameLongitudeDeg(marker.lonDeg, frame), nearU);
     let tipIdentityX = equirectXFromUnwrappedLon(markerU, w);
     tipIdentityX = ((tipIdentityX % w) + w) % w;
     const tipY = sceneYFromIdentityY(mapLatToY(marker.latDeg, h), h, camera);
@@ -266,6 +276,7 @@ function pushFadedOrbitPolylines(
   w: number,
   h: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame,
   colorCss: string,
   a: (alpha: number) => number,
   baseAlpha: number,
@@ -283,6 +294,7 @@ function pushFadedOrbitPolylines(
       w,
       h,
       camera,
+      frame,
       strokeRgba(colorCss, a(baseAlpha * fade)),
       strokeWidthPx,
     );
@@ -331,13 +343,14 @@ function pushSeamAwarePolyline(
   w: number,
   h: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame,
   stroke: string,
   strokeWidthPx: number,
 ): void {
   if (points.length < 2) {
     return;
   }
-  const unwrapped = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const unwrapped = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 1; i < points.length; i += 1) {
     const y0 = mapLatToY(points[i - 1]!.latDeg, h);

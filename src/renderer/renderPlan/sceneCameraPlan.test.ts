@@ -25,6 +25,7 @@ import { buildSubsolarMarkerRenderPlan } from "./sceneSubsolarSublunarMarkersPla
 import { buildSolarShadingIlluminationRenderPlan } from "./sceneSolarShadingIlluminationPlan";
 import { getMoonlightPolicy } from "../../core/moonlightPolicy";
 import { DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE } from "../../core/sceneIlluminationPresentationDefaults";
+import { moonLongitudeLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 
 const W = 800;
 const H = 400;
@@ -211,5 +212,52 @@ describe("LIB-080 camera plan mapping", () => {
     }
     expect(pannedSample.strokeWidthPx).toBe(sample.strokeWidthPx);
     expect(panned.items.length).toBeGreaterThan(identity.items.length);
+  });
+});
+
+describe("LIB-083 Moon longitude-lock raster dest", () => {
+  const frame = moonLongitudeLockedSceneReferenceFrame(90);
+
+  it("shifts base-map and illumination dests by the same frame longitude offset", () => {
+    const base = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+    });
+    const shade = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 0,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 90,
+      lunarIlluminatedFraction: 0.5,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE),
+    });
+    expect(base.items.length).toBeGreaterThan(1);
+    expect(shade.items.length).toBe(base.items.length);
+    for (let i = 0; i < base.items.length; i += 1) {
+      const blit = base.items[i];
+      const patch = shade.items[i];
+      expect(blit?.kind).toBe("imageBlit");
+      expect(patch?.kind).toBe("rasterPatch");
+      if (blit?.kind !== "imageBlit" || patch?.kind !== "rasterPatch") {
+        return;
+      }
+      expect(patch.x).toBeCloseTo(blit.x, 8);
+      expect(patch.y).toBeCloseTo(blit.y, 8);
+      expect(patch.destWidth).toBeCloseTo(blit.width, 8);
+      expect(patch.destHeight).toBeCloseTo(blit.height, 8);
+    }
+    const xs = base.items
+      .filter((item) => item.kind === "imageBlit")
+      .map((item) => (item.kind === "imageBlit" ? item.x : 0));
+    const period = Math.abs(xs[1]! - xs[0]!);
+    expect(period).toBeCloseTo(W, 8);
   });
 });

@@ -20,6 +20,11 @@ import {
   type SceneCamera,
 } from "../../core/sceneCamera";
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLongitudesDeg,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
+import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
 } from "../../layers/overlayReadabilityHints";
@@ -40,6 +45,7 @@ export interface EquirectangularPolylineOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   readonly points: readonly { latDeg: number; lonDeg: number }[];
   closed: boolean;
   layerOpacity: number;
@@ -57,6 +63,7 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
   const pts = options.points;
   if (pts.length < 2) {
     return { items: [] };
@@ -70,7 +77,7 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
   const strokeA = Math.min(0.92 * op, baseStrokeA + 0.32 * veil * op);
   const stroke = strokeRgba(options.strokeColor ?? DEFAULT_SOLAR_ANALEMMA_STROKE_RGB, strokeA);
   const strokeW = astronomyPathStrokeWidthPx(veil, options.strokeThickness);
-  const lons = unwrappedLongitudes(pts.map((p) => p.lonDeg));
+  const lons = unwrappedLongitudes(sceneFrameLongitudesDeg(pts.map((p) => p.lonDeg), frame));
   const items: RenderLineItem[] = [];
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 

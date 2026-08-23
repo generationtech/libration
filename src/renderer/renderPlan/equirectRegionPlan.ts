@@ -20,6 +20,10 @@ import {
   sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { placeEclipseMapLabel } from "../../core/eclipse/eclipseMapLabelPlacement";
 import { cityPinNameLabelScreenBox } from "../../layers/cityPinsPayload";
 import { sublunarMarkerRadiusPx } from "../../core/sublunarMarkerAppearance";
@@ -44,6 +48,7 @@ export interface EquirectRegionOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: EquirectRegionOverlayPayload;
 }
@@ -70,20 +75,21 @@ function emitPointMarkerCopies(
   viewportHeightPx: number,
   opacity: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame,
 ): void {
   const scale = Number.isFinite(marker.radiusScale) ? Math.max(0.2, marker.radiusScale) : 1;
   const r = equirectPointMarkerBaseRadiusPx(viewportWidthPx) * scale;
   const haloR = r * 1.55;
   const underW = Math.max(2.4, r * 0.42);
   const strokeW = Math.max(1.15, r * 0.2);
-  const cy = sceneYFromLatitudeDeg(marker.latDeg, viewportHeightPx, camera);
+  const cy = sceneYFromLatitudeDeg(marker.latDeg, viewportHeightPx, camera, frame);
   const slop = r + 4;
   const copies = sceneCameraHorizontalWorldCopyOffsets(
     camera,
     viewportWidthPx,
     sceneCameraVectorWrapSlopPx(viewportWidthPx),
   );
-  const baseX = sceneXFromLongitudeDeg(marker.lonDeg, viewportWidthPx, camera);
+  const baseX = sceneXFromLongitudeDeg(marker.lonDeg, viewportWidthPx, camera, frame);
   for (const k of copies) {
     const cx = baseX + sceneXShiftForWorldCopy(viewportWidthPx, camera, k);
     if (cx + slop < 0 || cx - slop > viewportWidthPx) {
@@ -124,6 +130,7 @@ export function buildEquirectRegionOverlayRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
   const veil = effectiveOverlayReadabilityLiftVeil01(
     options.payload.readability?.nightVeil01,
     options.payload.readability?.overlayReadabilityLiftScale01,
@@ -141,6 +148,7 @@ export function buildEquirectRegionOverlayRenderPlan(
         for (const pathDescriptor of equirectRingToPathDescriptors(fill.ring, w, h, {
           polarCloseLatDeg: fill.polarCloseLatDeg,
           camera,
+          frame,
         })) {
           items.push(createDescriptorPathItem({ pathDescriptor, fill: color }));
         }
@@ -154,7 +162,7 @@ export function buildEquirectRegionOverlayRenderPlan(
       emit: () => {
         const color = scaleRgba(stroke.stroke, Math.min(1, op + 0.08));
         const width = stroke.strokeWidthPx * (1 + 0.25 * veil);
-        for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h, camera)) {
+        for (const pathDescriptor of equirectPolylineToPathDescriptors(stroke.points, w, h, camera, frame)) {
           items.push(
             createDescriptorPathItem({
               pathDescriptor,
@@ -171,15 +179,15 @@ export function buildEquirectRegionOverlayRenderPlan(
     op.emit();
   }
   for (const marker of options.payload.pointMarkers ?? []) {
-    emitPointMarkerCopies(items, marker, w, h, op, camera);
+    emitPointMarkerCopies(items, marker, w, h, op, camera, frame);
   }
   const labels = options.payload.labels ?? [];
   if (labels.length > 0) {
     const sizePx = Math.min(15, Math.max(11, w * 0.011));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
     const avoidDiscs = (options.payload.labelAvoidDiscs ?? []).flatMap((disc) => {
-      const y = sceneYFromLatitudeDeg(disc.latDeg, h, camera);
-      const baseX = sceneXFromLongitudeDeg(disc.lonDeg, w, camera);
+      const y = sceneYFromLatitudeDeg(disc.latDeg, h, camera, frame);
+      const baseX = sceneXFromLongitudeDeg(disc.lonDeg, w, camera, frame);
       const radiusPx = avoidHaloRadiusPx(w, disc.haloMultiplier);
       return copies.map((k) => ({
         x: baseX + sceneXShiftForWorldCopy(w, camera, k),
@@ -190,21 +198,21 @@ export function buildEquirectRegionOverlayRenderPlan(
     for (const marker of options.payload.pointMarkers ?? []) {
       const r = equirectPointMarkerBaseRadiusPx(w) * marker.radiusScale;
       avoidDiscs.push({
-        x: sceneXFromLongitudeDeg(marker.lonDeg, w, camera),
-        y: sceneYFromLatitudeDeg(marker.latDeg, h, camera),
+        x: sceneXFromLongitudeDeg(marker.lonDeg, w, camera, frame),
+        y: sceneYFromLatitudeDeg(marker.latDeg, h, camera, frame),
         radiusPx: r + 8,
       });
     }
     const avoidPolylines = (options.payload.labelPathHints ?? []).map((hint) => ({
       points: hint.points.map((p) => ({
-        x: sceneXFromLongitudeDeg(p.lonDeg, w, camera),
-        y: sceneYFromLatitudeDeg(p.latDeg, h, camera),
+        x: sceneXFromLongitudeDeg(p.lonDeg, w, camera, frame),
+        y: sceneYFromLatitudeDeg(p.latDeg, h, camera, frame),
       })),
     }));
     const avoidBoxes = (options.payload.labelAvoidCityLabels ?? []).map((city) =>
       cityPinNameLabelScreenBox({
-        pinX: sceneXFromLongitudeDeg(city.lonDeg, w, camera),
-        pinY: sceneYFromLatitudeDeg(city.latDeg, h, camera),
+        pinX: sceneXFromLongitudeDeg(city.lonDeg, w, camera, frame),
+        pinY: sceneYFromLatitudeDeg(city.latDeg, h, camera, frame),
         name: city.name,
         viewportWidthPx: w,
       }),
@@ -214,8 +222,8 @@ export function buildEquirectRegionOverlayRenderPlan(
         continue;
       }
       const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
-      const baseX = sceneXFromLongitudeDeg(label.lonDeg, w, camera);
-      const preferredY = sceneYFromLatitudeDeg(label.latDeg, h, camera);
+      const baseX = sceneXFromLongitudeDeg(label.lonDeg, w, camera, frame);
+      const preferredY = sceneYFromLatitudeDeg(label.latDeg, h, camera, frame);
       let preferredX = baseX;
       let best = Number.POSITIVE_INFINITY;
       for (const k of copies) {

@@ -454,6 +454,12 @@ Scene reference-frame foundation: Earth-fixed identity `SceneReferenceFrame` bef
 
 Verified: `npx tsc --noEmit` clean; `npm test` 275 files / 2673 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-D7xZFIy8.js`). Cursor Browser at inner 1920×1080: `baseline` (identity, zoom, pan, wrap, Reset), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at identity and after wrap. Visually unchanged from LIB-081.
 
+## 2026-08-23 — LIB-083 complete
+
+Moon longitude-locked scene frame: first production non-Earth-fixed `SceneReferenceFrame` (`moonAnchored`, longitude locked, latitude identity). Continuous unwrapped lunar anchor from the canonical UTC sublunar point; scene origin is the Moon meridian. Rasters shift horizontally then reuse periodic dest copies; vectors use scene-frame longitude then existing seam/camera wrap. Camera stays independent. Runtime Scene frame control is not persisted; Earth-fixed remains the load default. ADR 0027. Latitude lock (LIB-084) was not started.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2691 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-B0x-ndoG.js`). Cursor Browser at inner 1920×1080: Earth-fixed `baseline` regression; Moon-lock static (Moon x≈959.4 at identity) and 3600× Demo (Moon x stable, y moved, geography hash changed, camera not rewritten); Reset kept Moon-lock; reload returned Earth-fixed; `lunar-track` antimeridian samples; `lunar-locus` recent + standstill; `moon-libration`; `solar-eclipse-total` (Sun x=962); `solar-eclipse-dateline` (Sun x=960; left/right filled); `clouds`; `iss-presentation`; `earthquake-presentation` labels; resize 1280×720 while zoomed.
+
 
 
 

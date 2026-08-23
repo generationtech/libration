@@ -17,6 +17,10 @@ import {
   sceneDestRectsFromIdentityWorldWrapped,
   type SceneCamera,
 } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import type { CloudParticipationPresentationMode } from "../../core/cloudParticipationPolicy";
 import type { EmissiveNightLightsPresentationMode } from "../../core/emissiveNightLightsPolicy";
 import type { MoonlightPolicy } from "../../core/moonlightPolicy";
@@ -99,6 +103,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   subsolarLatDeg: number;
   subsolarLonDeg: number;
   sublunarLatDeg: number;
@@ -156,6 +161,7 @@ export function buildSolarShadingIlluminationRenderPlan(options: {
     w,
     h,
     options.camera ?? IDENTITY_SCENE_CAMERA,
+    options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME,
   );
 
   const rgba = new Uint8ClampedArray(sw * sh * 4);

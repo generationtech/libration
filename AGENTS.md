@@ -59,7 +59,7 @@ Stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md):
 8. Persist durable semantic ids, never resolved paths or URLs.
 9. No network access in the render path.
 10. Illumination composes upstream into one `rasterPatch`.
-11. Scene/map reference frame (Earth-fixed identity) is independent of camera and of civil-time reference.
+11. Scene/map reference frame (Earth-fixed default; Moon longitude-lock) is independent of camera and of civil-time reference.
 
 ## How to operate
 

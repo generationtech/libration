@@ -32,6 +32,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0024](0024-observational-quality-distinct-from-coverage.md) | Observational quality is distinct from coverage and may lose to better geometry |
 | [0025](0025-heterogeneous-display-normalized-before-shared-presentation.md) | Heterogeneous observational display rasters are normalized before shared presentation |
 | [0026](0026-scene-camera-independent-of-projection-and-reference-frame.md) | Scene camera is independent of projection, physical state, and scene reference frame |
+| [0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md) | Moon longitude-lock is a scene reference frame, not camera-follow |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

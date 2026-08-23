@@ -19,6 +19,10 @@
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
+import {
   earthquakeMarkerRadiusPx,
   placeEarthquakeHoverLabel,
 } from "../../core/earthquakeMarkerHover";
@@ -31,6 +35,7 @@ export interface DynamicPointFeaturesRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: DynamicPointFeaturesPayload;
 }
@@ -47,6 +52,7 @@ export function buildDynamicPointFeaturesRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const layerOp = Math.max(0, Math.min(1, options.layerOpacity));
   const liftScale = options.payload.overlayReadabilityLiftScale01;
@@ -55,9 +61,9 @@ export function buildDynamicPointFeaturesRenderPlan(
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const feature of options.payload.features) {
-    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera);
+    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera, frame);
     const r = earthquakeMarkerRadiusPx(feature.magnitude, w);
-    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
+    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera, frame);
 
     const v = effectiveOverlayReadabilityLiftVeil01(
       feature.readabilityNightVeil01,

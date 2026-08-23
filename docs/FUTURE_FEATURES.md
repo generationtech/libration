@@ -356,13 +356,15 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon-fixed / Sun-fixed live on [`docs/ROADMAP.md`](ROADMAP.md) phase C. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start Moon-fixed work from this file.
+Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon longitude-lock is implemented ([LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md)). Moon latitude lock / position-lock (LIB-084) and Sun-fixed remain on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start LIB-084 or Sun-fixed work from this file.
 
 This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 
-Candidates not absorbed by the camera sequence:
+Candidates not absorbed by the camera / Moon-longitude sequence:
 
-- scene reference-frame selector UI; animated transitions between Earth-fixed and entity-fixed; generic entity-fixed beyond Moon/Sun experiments.
+- Moon latitude lock / full Moon position-lock (the likely next slice: same `moonAnchored` kind with `latitudeLocked: true`).
+- Sun-fixed frame; generic entity-fixed beyond the Moon experiment.
+- polished scene reference-frame selector UI; animated transitions between Earth-fixed and entity-fixed.
 - full-world fixed view with additional aspect rules beyond the current scene-strip stretch.
 - orthographic globe.
 - perspective globe.

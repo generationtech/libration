@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./equirectPolylineOverlayPlan";
+import { moonLongitudeLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 
 describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
   it("emits at least one line for an open two-point path", () => {
@@ -103,6 +104,31 @@ describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
       expect(c.stroke).toMatch(/0,\s*255,\s*170/);
       expect(c.strokeWidthPx).toBeLessThan(b.strokeWidthPx);
       expect(custom.items.length).toBe(base.items.length);
+    }
+  });
+});
+
+describe("Moon longitude-lock polyline seams", () => {
+  it("does not emit a world-spanning chord for a path across the Moon-frame antipode", () => {
+    const frame = moonLongitudeLockedSceneReferenceFrame(0);
+    const plan = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame,
+      points: [
+        { latDeg: 0, lonDeg: 179 },
+        { latDeg: 0, lonDeg: -179 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      expect(Math.abs(item.x2 - item.x1)).toBeLessThan(360 * 0.5);
     }
   });
 });

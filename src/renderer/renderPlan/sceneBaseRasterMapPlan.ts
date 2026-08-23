@@ -16,6 +16,10 @@ import {
   baseMapPresentationToCssFilterString,
 } from "../../config/baseMapPresentation";
 import { IDENTITY_SCENE_CAMERA, sceneDestRectsFromIdentityWorldWrapped, type SceneCamera } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { mergeCssFilterParts, overlayReadabilityCssFilterAppend } from "../../core/overlayReadabilityRasterFilter";
 import type { RenderPlan } from "./renderPlanTypes";
 
@@ -29,6 +33,7 @@ export function buildBaseRasterMapRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   /** Family-level display tuning; same for every concrete month URL in a month-aware family. */
   presentation?: BaseMapPresentationConfig;
   /**
@@ -48,6 +53,7 @@ export function buildBaseRasterMapRenderPlan(options: {
     w,
     h,
     options.camera ?? IDENTITY_SCENE_CAMERA,
+    options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME,
   );
   const pres = options.presentation;
   const presFilter =

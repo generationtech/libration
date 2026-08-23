@@ -153,6 +153,17 @@ import { runtimeIdForDynamicPointFeaturesSceneLayer } from "./layers/dynamicPoin
 import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayload";
 import { applyEarthquakePointerHoverToPayload } from "./layers/earthquakeHoverAnnotation";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
+import { sublunarPoint } from "./core/sublunarPoint";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  moonLongitudeLockedSceneReferenceFrame,
+  type SceneReferenceFrame,
+} from "./core/sceneReferenceFrame";
+import {
+  nextMoonAnchorContinuousLonDeg,
+  sceneCameraAfterReferenceFrameKindChange,
+  type SceneReferenceFrameUiKind,
+} from "./core/moonLongitudeLockedAnchor";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -307,6 +318,12 @@ export default function App() {
   );
   const sceneCameraRef = useRef<SceneCamera>(IDENTITY_SCENE_CAMERA);
   const [cameraIsIdentity, setCameraIsIdentity] = useState(true);
+  const sceneFrameKindRef = useRef<SceneReferenceFrameUiKind>("earthFixed");
+  const [sceneFrameKind, setSceneFrameKind] = useState<SceneReferenceFrameUiKind>("earthFixed");
+  const moonAnchorContinuousLonRef = useRef<number | null>(null);
+  const sceneReferenceFrameRef = useRef<SceneReferenceFrame>(
+    EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  );
   const scenePointerLayoutRef = useRef<{
     canvasCssWidth: number;
     canvasCssHeight: number;
@@ -867,6 +884,19 @@ export default function App() {
           ),
         ),
       });
+      if (sceneFrameKindRef.current === "moonLongitudeLocked") {
+        const moon = sublunarPoint(time.now);
+        const continuous = nextMoonAnchorContinuousLonDeg({
+          previousContinuousLonDeg: moonAnchorContinuousLonRef.current,
+          nextCanonicalLonDeg: moon.lonDeg,
+          policy: "follow",
+        });
+        moonAnchorContinuousLonRef.current = continuous;
+        sceneReferenceFrameRef.current = moonLongitudeLockedSceneReferenceFrame(continuous);
+      } else {
+        moonAnchorContinuousLonRef.current = null;
+        sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
+      }
       const issAttachment = time.dynamicDataLifecycle;
       const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;
       const issLife =
@@ -1072,6 +1102,7 @@ export default function App() {
           viewportHeightPx: sceneRect.height,
           showLabelOnHover,
           camera: sceneCameraRef.current,
+          sceneReferenceFrame: sceneReferenceFrameRef.current,
         });
         return next === layer.data ? layer : { ...layer, data: next };
       });
@@ -1082,6 +1113,7 @@ export default function App() {
         scene: { backgroundColor: "#1a1a1a" },
         topChromeReservedHeightPx: chromeState.topBand.height,
         sceneCamera: sceneCameraRef.current,
+        sceneReferenceFrame: sceneReferenceFrameRef.current,
       });
       if (import.meta.env.DEV) {
         const extra = getVisualScenarioExtraOverlayLayer({
@@ -1391,6 +1423,29 @@ export default function App() {
         productInstantMs={eclipsePanelInstantMs}
         configOpen={isConfigOpen}
       />
+      <label className="scene-frame-control">
+        <span className="scene-frame-control__label">Scene frame</span>
+        <select
+          className="scene-frame-control__select"
+          aria-label="Scene frame"
+          data-testid="scene-frame-select"
+          value={sceneFrameKind}
+          onChange={(event) => {
+            const next = event.currentTarget.value as SceneReferenceFrameUiKind;
+            if (next === sceneFrameKindRef.current) {
+              return;
+            }
+            sceneFrameKindRef.current = next;
+            moonAnchorContinuousLonRef.current = null;
+            sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
+            setCameraIsIdentity(true);
+            setSceneFrameKind(next);
+          }}
+        >
+          <option value="earthFixed">Earth-fixed</option>
+          <option value="moonLongitudeLocked">Moon — longitude locked</option>
+        </select>
+      </label>
       <button
         type="button"
         className="scene-camera-reset"

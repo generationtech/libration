@@ -16,6 +16,7 @@ import {
   canonicalLongitudeDeg,
   continuousLongitudeFollowingCanonicalDeg,
   nearestEquivalentLongitudeDeg,
+  rebaseContinuousLongitudeDeg,
   relativeLongitudeFromContinuousAnchorDeg,
   wrappedLongitudeDeltaDeg,
 } from "./longitudeContinuity";
@@ -131,5 +132,21 @@ describe("relativeLongitudeFromContinuousAnchorDeg", () => {
   it("resolves a ~180° nearest-equivalent tie eastward (not antimeridian continuity)", () => {
     expect(relativeLongitudeFromContinuousAnchorDeg(0, 181)).toBe(179);
     expect(canonicalLongitudeDeg(179)).toBe(179);
+  });
+});
+
+describe("rebaseContinuousLongitudeDeg", () => {
+  it("folds exact 360° turns without changing the meridian", () => {
+    expect(rebaseContinuousLongitudeDeg(541)).toBe(181);
+    expect(rebaseContinuousLongitudeDeg(-541)).toBe(-181);
+    expect(canonicalLongitudeDeg(541)).toBe(canonicalLongitudeDeg(181));
+  });
+
+  it("does not change relative longitude of a point versus the rebased anchor", () => {
+    const before = 541;
+    const after = rebaseContinuousLongitudeDeg(before);
+    expect(relativeLongitudeFromContinuousAnchorDeg(-179, before)).toBe(
+      relativeLongitudeFromContinuousAnchorDeg(-179, after),
+    );
   });
 });

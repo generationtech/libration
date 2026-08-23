@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-22
+Updated: 2026-08-23
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-082](work/LIB-082-scene-reference-frame-foundation.md) — Scene reference-frame foundation. Earth-fixed identity transform before projection; longitude continuity primitives for a future entity-fixed anchor; shared canonical → frame → projection → camera mapping. `SceneCamera` unchanged. Moon-fixed / Sun-fixed were not started. Frame is not persisted.
+[LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md) — Moon longitude-locked scene frame (latitude unlocked). First production alternate scene reference frame. Continuous lunar anchor; whole-Earth raster/vector mapping; runtime Scene frame switch (not persisted). Earth-fixed remains the load default.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start Moon-fixed / Sun-fixed modes, pinch zoom, or camera persistence until a human approves and activates a new item. The next architectural phase, when scoped, is experimental Moon-fixed and/or Sun-fixed moving map ([`docs/ROADMAP.md`](ROADMAP.md) phase C).
+Do not start Moon latitude lock / position-lock (LIB-084), Sun-fixed, or generic entity-fixed. No approved work item is active.

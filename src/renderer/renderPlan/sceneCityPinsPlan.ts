@@ -18,6 +18,10 @@
  */
 
 import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import type { CityPinsPayload } from "../../layers/cityPinsPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
@@ -29,6 +33,7 @@ export interface CityPinsRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: CityPinsPayload;
 }
@@ -44,6 +49,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const layerOp = options.layerOpacity;
   const { showLabels, labelMode, scale, cities, cityNameFontAssetId, dateTimeFontAssetId } =
@@ -71,10 +77,10 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const city of cities) {
-    const y = sceneYFromLatitudeDeg(city.latDeg, h, camera);
+    const y = sceneYFromLatitudeDeg(city.latDeg, h, camera, frame);
     const r =
       scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
-    const baseX = sceneXFromLongitudeDeg(city.lonDeg, w, camera);
+    const baseX = sceneXFromLongitudeDeg(city.lonDeg, w, camera, frame);
 
     const v = effectiveOverlayReadabilityLiftVeil01(city.readabilityNightVeil01, liftScale);
     const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));

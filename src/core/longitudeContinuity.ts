@@ -104,6 +104,32 @@ export function continuousLongitudeFollowingCanonicalDeg(
 }
 
 /**
+ * Fold a continuous longitude by exact 360° turns into (−limit, limit] so
+ * prolonged animation does not accumulate unbounded revolutions.
+ *
+ * Subtracting 360k does not change relative longitude or raster registration
+ * once periodic world copies are applied. Do not canonicalize to (−180, 180]
+ * here — that would jump the dest by a non-period amount at ±180.
+ */
+export const CONTINUOUS_LONGITUDE_REBASE_LIMIT_DEG = 540;
+
+export function rebaseContinuousLongitudeDeg(
+  lonDeg: number,
+  limitDeg: number = CONTINUOUS_LONGITUDE_REBASE_LIMIT_DEG,
+): number {
+  let x = finiteOr(lonDeg, 0);
+  const limit = Math.abs(finiteOr(limitDeg, CONTINUOUS_LONGITUDE_REBASE_LIMIT_DEG));
+  const bound = limit > 0 ? limit : CONTINUOUS_LONGITUDE_REBASE_LIMIT_DEG;
+  while (x > bound) {
+    x -= 360;
+  }
+  while (x <= -bound) {
+    x += 360;
+  }
+  return x;
+}
+
+/**
  * Relative longitude of a geographic point versus a **continuous** anchor:
  *
  * `Δλ = nearestEquivalent(λ, λa_continuous) − λa_continuous`
@@ -112,8 +138,8 @@ export function continuousLongitudeFollowingCanonicalDeg(
  * same meridian as the anchor yields `0` even when the canonical value is
  * `−179` and the continuous anchor is `181`.
  *
- * This is the subtractive rule a future entity-fixed frame will use for
- * longitude. Latitude-relative behaviour is intentionally deferred.
+ * This is the subtractive rule Moon longitude-lock (and later entity-fixed
+ * frames) use for longitude. Latitude-relative behaviour is deferred.
  */
 export function relativeLongitudeFromContinuousAnchorDeg(
   lonDeg: number,

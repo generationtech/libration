@@ -25,6 +25,11 @@ import {
   sceneYFromIdentityY,
   type SceneCamera,
 } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLongitudesDeg,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { createPathBuilder } from "./pathBuilder";
 import type { RenderPathDescriptor } from "./pathTypes";
 import {
@@ -146,7 +151,7 @@ export function equirectRingToPathDescriptors(
   ring: EquirectRing,
   viewportWidthPx: number,
   viewportHeightPx: number,
-  options?: { polarCloseLatDeg?: number; camera?: SceneCamera },
+  options?: { polarCloseLatDeg?: number; camera?: SceneCamera; frame?: SceneReferenceFrame },
 ): RenderPathDescriptor[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -154,7 +159,8 @@ export function equirectRingToPathDescriptors(
     return [];
   }
   const camera = options?.camera ?? IDENTITY_SCENE_CAMERA;
-  const rawLons = ring.map((p) => p.lonDeg);
+  const frame = options?.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
+  const rawLons = sceneFrameLongitudesDeg(ring.map((p) => p.lonDeg), frame);
   const span = circularLongitudeSpanDeg(rawLons);
   const lats = ring.map((p) => p.latDeg);
   let useLats = lats;
@@ -185,6 +191,7 @@ export function equirectPolylineToPathDescriptors(
   viewportWidthPx: number,
   viewportHeightPx: number,
   camera: SceneCamera = IDENTITY_SCENE_CAMERA,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): RenderPathDescriptor[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -192,7 +199,7 @@ export function equirectPolylineToPathDescriptors(
     return [];
   }
   const lats = points.map((p) => p.latDeg);
-  const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const lons = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies: EquirectProjectedCopy[] = [];
   for (const offset of longitudeOffsetsForCameraWorldCopies(camera, w)) {
     const b = createPathBuilder();

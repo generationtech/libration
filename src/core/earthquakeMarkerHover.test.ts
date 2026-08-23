@@ -16,7 +16,7 @@ import {
   mapXFromLongitudeDeg,
   mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
-import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
+import { EARTH_FIXED_SCENE_REFERENCE_FRAME, moonLongitudeLockedSceneReferenceFrame } from "./sceneReferenceFrame";
 import {
   canonicalLatitudeDegFromSceneY,
   canonicalLongitudeDegFromSceneX,
@@ -308,5 +308,27 @@ describe("LIB-080 earthquake hover through scene camera", () => {
     const lonDelta = recoveredLon - 170;
     expect(Math.abs(lonDelta - Math.round(lonDelta / 360) * 360)).toBeLessThan(1e-8);
     expect(recoveredLat).toBeCloseTo(0, 8);
+  });
+
+  it("hits the canonical earthquake under Moon longitude-lock with pan and wrap", () => {
+    const features = [
+      feature({ id: "hawaii", lonDeg: -155.5, latDeg: 19.4, magnitude: 4 }),
+    ];
+    const frame = moonLongitudeLockedSceneReferenceFrame(40);
+    const camera = { scale: 2, centerU: 1.08, centerV: 0.45 } as const;
+    const hits = projectEarthquakeHoverHits(features, W, H, camera, frame);
+    const onScreen = hits.filter((hit) => hit.x >= 0 && hit.x <= W);
+    expect(onScreen.length).toBeGreaterThanOrEqual(1);
+    expect(
+      resolveEarthquakeHoverId({
+        features,
+        pointerSceneCss: { x: onScreen[0]!.x, y: onScreen[0]!.y },
+        viewportWidthPx: W,
+        viewportHeightPx: H,
+        showLabelOnHover: true,
+        camera,
+        sceneReferenceFrame: frame,
+      }),
+    ).toBe("hawaii");
   });
 });

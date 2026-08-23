@@ -70,7 +70,7 @@ export function buildSceneRenderInput(options: {
   sceneCamera?: SceneCamera;
   /**
    * Runtime scene/map reference frame; omitted means Earth-fixed identity.
-   * Not persisted. Not a camera.
+   * Not persisted. Not a camera. Production kinds include Moon longitude-lock.
    */
   sceneReferenceFrame?: SceneReferenceFrame;
 }): SceneRenderInput {

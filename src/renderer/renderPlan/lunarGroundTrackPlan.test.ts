@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { LUNAR_GROUND_TRACK_KIND, type LunarGroundTrackPayload } from "../../layers/lunarGroundTrackPayload";
+import { moonLongitudeLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 import { buildLunarGroundTrackRenderPlan } from "./lunarGroundTrackPlan";
 
 function payload(partial: Partial<LunarGroundTrackPayload> = {}): LunarGroundTrackPayload {
@@ -114,6 +115,28 @@ describe("buildLunarGroundTrackRenderPlan", () => {
       const pastA = Number(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/.exec(past.stroke)?.[1]);
       const futureA = Number(/rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/.exec(future.stroke)?.[1]);
       expect(futureA).toBeGreaterThan(pastA);
+    }
+  });
+
+  it("keeps Moon-frame dateline segments short rather than spanning the world", () => {
+    const plan = buildLunarGroundTrackRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame: moonLongitudeLockedSceneReferenceFrame(175),
+      layerOpacity: 1,
+      payload: payload({
+        past: [{ latDeg: 10, lonDeg: 170 }],
+        current: { latDeg: 10, lonDeg: 179 },
+        future: [{ latDeg: 10, lonDeg: -179 }],
+      }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      expect(Math.abs(item.x2 - item.x1)).toBeLessThan(360 * 0.5);
     }
   });
 });

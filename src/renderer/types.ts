@@ -70,7 +70,8 @@ export interface SceneRenderInput {
   /**
    * Scene/map reference frame applied before projection. Omitted means
    * Earth-fixed identity. Runtime only — not persisted, not `viewMode`, not
-   * civil-time reference. LIB-082 is always Earth-fixed.
+   * civil-time reference. Production kinds: Earth-fixed (default) and Moon
+   * longitude-lock (LIB-083).
    */
   sceneReferenceFrame?: SceneReferenceFrame;
 }

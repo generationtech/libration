@@ -57,7 +57,7 @@ import {
 } from "../core/sceneCamera";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
-  isIdentitySceneReferenceFrame,
+  type SceneReferenceFrame,
 } from "../core/sceneReferenceFrame";
 import type { RenderBackend } from "./RenderBackend";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
@@ -135,17 +135,12 @@ export class CanvasRenderBackend implements RenderBackend {
     const camera = input.sceneCamera ?? IDENTITY_SCENE_CAMERA;
     const sceneReferenceFrame =
       input.sceneReferenceFrame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
-    if (!isIdentitySceneReferenceFrame(sceneReferenceFrame)) {
-      throw new Error(
-        "[libration:canvas] non-Earth-fixed scene reference frames are not implemented",
-      );
-    }
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of layers) {
       if (!layer.visible) continue;
       ctx.save();
       ctx.globalAlpha = layer.opacity;
-      this.drawLayer(ctx, layer, sceneViewport, camera);
+      this.drawLayer(ctx, layer, sceneViewport, camera, sceneReferenceFrame);
       ctx.restore();
     }
 
@@ -174,25 +169,26 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     switch (layer.type) {
       case "raster":
-        this.drawRasterLayer(ctx, layer, viewport, camera);
+        this.drawRasterLayer(ctx, layer, viewport, camera, frame);
         break;
       case "vector":
-        this.drawVectorLayer(ctx, layer, viewport, camera);
+        this.drawVectorLayer(ctx, layer, viewport, camera, frame);
         break;
       case "text":
         this.drawTextLayer(ctx, layer, viewport);
         break;
       case "illumination":
-        this.drawIlluminationLayer(ctx, layer, viewport, camera);
+        this.drawIlluminationLayer(ctx, layer, viewport, camera, frame);
         break;
       case "points":
-        this.drawPointsLayer(ctx, layer, viewport, camera);
+        this.drawPointsLayer(ctx, layer, viewport, camera, frame);
         break;
       case "tracks":
-        this.drawTracksLayer(ctx, layer, viewport, camera);
+        this.drawTracksLayer(ctx, layer, viewport, camera, frame);
         break;
       default:
         break;
@@ -241,6 +237,7 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     if (!isEquirectangularRasterPayload(layer.data)) {
       return;
@@ -258,6 +255,7 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportWidthPx: w,
         viewportHeightPx: h,
         camera,
+        frame,
         presentation: layer.data.presentation ?? { ...DEFAULT_BASE_MAP_PRESENTATION },
         readabilityNightVeil01: layer.data.readability?.nightVeil01,
         overlayReadabilityLiftScale01: layer.data.readability?.overlayReadabilityLiftScale01,
@@ -276,6 +274,7 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     if (!isSolarShadingPayload(layer.data)) {
       return;
@@ -331,6 +330,7 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportWidthPx: w,
         viewportHeightPx: h,
         camera,
+        frame,
         subsolarLatDeg,
         subsolarLonDeg,
         sublunarLatDeg,
@@ -360,6 +360,7 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     const w = viewport.width;
     const h = viewport.height;
@@ -375,6 +376,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           meridianStepDeg,
           parallelStepDeg,
           layerOpacity: layer.opacity,
@@ -391,6 +393,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           points,
           closed,
           layerOpacity: layer.opacity,
@@ -412,6 +415,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -425,6 +429,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -438,6 +443,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -451,6 +457,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -464,6 +471,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -510,6 +518,7 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     if (isSubsolarMarkerPayload(layer.data)) {
       executeRenderPlanOnCanvas(
@@ -518,6 +527,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: viewport.width,
           viewportHeightPx: viewport.height,
           camera,
+        frame,
           lonDeg: layer.data.lonDeg,
           latDeg: layer.data.latDeg,
           readability: layer.data.readability ?? null,
@@ -532,6 +542,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: viewport.width,
           viewportHeightPx: viewport.height,
           camera,
+        frame,
           lonDeg: layer.data.lonDeg,
           latDeg: layer.data.latDeg,
           illuminatedFraction: layer.data.illuminatedFraction,
@@ -559,6 +570,7 @@ export class CanvasRenderBackend implements RenderBackend {
           viewportWidthPx: w,
           viewportHeightPx: h,
           camera,
+        frame,
           layerOpacity: layer.opacity,
           payload: layer.data,
         }),
@@ -580,6 +592,7 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportWidthPx: w,
         viewportHeightPx: h,
         camera,
+        frame,
         layerOpacity: layer.opacity,
         payload: layer.data,
       }),
@@ -595,6 +608,7 @@ export class CanvasRenderBackend implements RenderBackend {
     layer: RenderableLayerState,
     viewport: Viewport,
     camera: SceneCamera,
+    frame: SceneReferenceFrame,
   ): void {
     if (!isDynamicTracksPayload(layer.data)) {
       return;
@@ -610,6 +624,7 @@ export class CanvasRenderBackend implements RenderBackend {
         viewportWidthPx: w,
         viewportHeightPx: h,
         camera,
+        frame,
         layerOpacity: layer.opacity,
         payload: layer.data,
       }),

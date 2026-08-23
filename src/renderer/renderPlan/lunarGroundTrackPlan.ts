@@ -27,6 +27,11 @@ import {
   sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLongitudesDeg,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import type { LunarGroundTrackSample } from "../../core/lunarGroundTrack";
 import {
   DEFAULT_LUNAR_GROUND_TRACK_FUTURE_COLOR,
@@ -58,6 +63,7 @@ export interface LunarGroundTrackRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: LunarGroundTrackPayload;
 }
@@ -70,11 +76,12 @@ function pushSeamAwarePolyline(
   stroke: string,
   strokeWidthPx: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame,
 ): void {
   if (points.length < 2) {
     return;
   }
-  const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const lons = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
@@ -114,6 +121,7 @@ export function buildLunarGroundTrackRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
   const op = Math.max(0, Math.min(1, options.layerOpacity));
   if (op <= 0) {
     return { items: [] };
@@ -137,16 +145,16 @@ export function buildLunarGroundTrackRenderPlan(
 
   const pastPts = [...options.payload.past, options.payload.current];
   const futurePts = [options.payload.current, ...options.payload.future];
-  pushSeamAwarePolyline(items, pastPts, w, h, pastStroke, sw(1.15), camera);
-  pushSeamAwarePolyline(items, futurePts, w, h, futureStroke, sw(1.55), camera);
+  pushSeamAwarePolyline(items, pastPts, w, h, pastStroke, sw(1.15), camera, frame);
+  pushSeamAwarePolyline(items, futurePts, w, h, futureStroke, sw(1.55), camera, frame);
 
   const tickR = Math.min(3.2, Math.max(1.8, w * 0.0016));
   const tickFill = `rgba(200, 220, 245, ${a(0.72)})`;
   const tickStroke = `rgba(28, 40, 58, ${a(0.55)})`;
   const tickCopies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (const tick of options.payload.ticks) {
-    const cy = sceneYFromLatitudeDeg(tick.latDeg, h, camera);
-    const baseX = sceneXFromLongitudeDeg(tick.lonDeg, w, camera);
+    const cy = sceneYFromLatitudeDeg(tick.latDeg, h, camera, frame);
+    const baseX = sceneXFromLongitudeDeg(tick.lonDeg, w, camera, frame);
     for (const k of tickCopies) {
       const cx = baseX + sceneXShiftForWorldCopy(w, camera, k);
       if (!Number.isFinite(cx) || !Number.isFinite(cy)) {

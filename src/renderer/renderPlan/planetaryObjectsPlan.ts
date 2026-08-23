@@ -29,6 +29,11 @@ import {
   sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLongitudesDeg,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeAppearance";
 import { placeEclipseMapLabel, type LabelAvoidBox, type LabelAvoidDisc } from "../../core/eclipse/eclipseMapLabelPlacement";
 import {
@@ -68,11 +73,12 @@ function pushSeamAwarePolyline(
   stroke: string,
   strokeWidthPx: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame,
 ): void {
   if (points.length < 2) {
     return;
   }
-  const lons = unwrappedLongitudes(points.map((p) => p.lonDeg));
+  const lons = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 0; i < lons.length - 1; i += 1) {
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
@@ -103,6 +109,7 @@ export interface PlanetaryObjectsRenderPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   layerOpacity: number;
   payload: PlanetaryObjectsPayload;
 }
@@ -119,6 +126,7 @@ export function buildPlanetaryObjectsRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
   if (!options.payload.supported) {
     return { items: [] };
   }
@@ -148,6 +156,7 @@ export function buildPlanetaryObjectsRenderPlan(
         strokeRgba(body.color, a(locusAlpha)),
         locusWidth,
         camera,
+        frame,
       );
     }
   }
@@ -158,8 +167,8 @@ export function buildPlanetaryObjectsRenderPlan(
     }
     const futurePts = [body.current, ...body.trackFuture];
     const pastPts = [...body.trackPast, body.current];
-    pushSeamAwarePolyline(items, futurePts, w, h, strokeRgba(body.color, a(0.38)), trackWidth, camera);
-    pushSeamAwarePolyline(items, pastPts, w, h, strokeRgba(body.color, a(0.72)), trackWidth, camera);
+    pushSeamAwarePolyline(items, futurePts, w, h, strokeRgba(body.color, a(0.38)), trackWidth, camera, frame);
+    pushSeamAwarePolyline(items, pastPts, w, h, strokeRgba(body.color, a(0.72)), trackWidth, camera, frame);
   }
 
   const glyphRadius = Math.min(8.5, Math.max(4.4, 4.8 * Math.max(0.7, w / 1400))) * sizeScale;
@@ -179,8 +188,8 @@ export function buildPlanetaryObjectsRenderPlan(
     if (!body.showCurrent || !body.current) {
       continue;
     }
-    const baseX = sceneXFromLongitudeDeg(body.current.lonDeg, w, camera);
-    const gy = sceneYFromLatitudeDeg(body.current.latDeg, h, camera);
+    const baseX = sceneXFromLongitudeDeg(body.current.lonDeg, w, camera, frame);
+    const gy = sceneYFromLatitudeDeg(body.current.latDeg, h, camera, frame);
     const r = glyphRadius;
     for (const k of copies) {
       const gx = baseX + sceneXShiftForWorldCopy(w, camera, k);

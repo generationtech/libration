@@ -27,6 +27,10 @@ import {
   type SceneCamera,
 } from "../../core/sceneCamera";
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
+import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
 } from "../../layers/overlayReadabilityHints";
@@ -41,6 +45,7 @@ export interface EquirectangularGridOverlayPlanOptions {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   meridianStepDeg: number;
   parallelStepDeg: number;
   /** Same factor baked into RGBA alphas as legacy grid draw (layer opacity). */
@@ -61,6 +66,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
     return { items: [] };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const op = options.layerOpacity;
   const veil = effectiveOverlayReadabilityLiftVeil01(
@@ -81,7 +87,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
   const ySouth = sceneYFromIdentityY(h, h, camera);
 
   for (const lon of meridianLongitudesDegForEquirectGrid(options.meridianStepDeg)) {
-    const baseX = sceneXFromLongitudeDeg(lon, w, camera);
+    const baseX = sceneXFromLongitudeDeg(lon, w, camera, frame);
     const major = lon === 0;
     for (const k of copies) {
       const x = baseX + sceneXShiftForWorldCopy(w, camera, k);

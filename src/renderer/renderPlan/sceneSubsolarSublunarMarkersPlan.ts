@@ -18,6 +18,10 @@
 
 import { IDENTITY_SCENE_CAMERA, sceneCameraHorizontalWorldCopyOffsets, sceneXFromLongitudeDeg, sceneXShiftForWorldCopy, sceneYFromLatitudeDeg, type SceneCamera } from "../../core/sceneCamera";
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
+import {
   type OverlayReadabilityHints,
   effectiveOverlayReadabilityLiftVeil01,
 } from "../../layers/overlayReadabilityHints";
@@ -47,6 +51,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   lonDeg: number;
   latDeg: number;
   readability?: OverlayReadabilityHints | null;
@@ -58,6 +63,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
     return { items };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const v = effectiveOverlayReadabilityLiftVeil01(
     options.readability?.nightVeil01,
@@ -66,8 +72,8 @@ export function buildSubsolarMarkerRenderPlan(options: {
   const sw = (base: number) => Math.max(base, base * (1 + 0.65 * v));
   const a = (x: number) => Math.min(1, x * (1 + 0.22 * v));
 
-  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
-  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
+  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera, frame);
+  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera, frame);
   const r = Math.min(9, Math.max(4.5, w * 0.0055));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
@@ -144,6 +150,7 @@ export function buildSublunarMarkerRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
   camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
   lonDeg: number;
   latDeg: number;
   illuminatedFraction: number;
@@ -164,6 +171,7 @@ export function buildSublunarMarkerRenderPlan(options: {
     return { items };
   }
   const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
 
   const v = effectiveOverlayReadabilityLiftVeil01(
     options.readability?.nightVeil01,
@@ -175,8 +183,8 @@ export function buildSublunarMarkerRenderPlan(options: {
   const appearance = normalizeSublunarMarkerAppearance(
     options.appearance ?? DEFAULT_SUBLUNAR_MARKER_APPEARANCE,
   );
-  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera);
-  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera);
+  const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera, frame);
+  const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera, frame);
   const r = sublunarMarkerRadiusPx(w, appearance.size);
   const f = Math.min(1, Math.max(0, options.illuminatedFraction));
   const waxing = options.waxing;

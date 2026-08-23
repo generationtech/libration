@@ -17,7 +17,7 @@
  *
  * This is a view, not a projection and not a scene/map reference frame.
  * Canonical lon/lat pass through the scene/map reference frame (Earth-fixed
- * identity today), then {@link mapXFromLongitudeDeg} /
+ * identity or Moon longitude-lock), then {@link mapXFromLongitudeDeg} /
  * {@link mapYFromLatitudeDeg} onto the identity world strip; the camera then
  * maps that strip into scene CSS. Do not encode a frame by writing Moon/Sun
  * coordinates into `centerU` / `centerV`.
@@ -39,6 +39,7 @@ import {
   canonicalLonLatToSceneFrame,
   isIdentitySceneReferenceFrame,
   sceneFrameLonLatToCanonical,
+  sceneFrameRasterIdentityOriginX,
   type SceneReferenceFrame,
 } from "./sceneReferenceFrame";
 
@@ -251,15 +252,19 @@ export function sceneDestRectFromIdentityWorld(
   widthPx: number,
   heightPx: number,
   camera: SceneCamera,
+  identityOriginX = 0,
 ): { x: number; y: number; width: number; height: number } {
-  if (isIdentitySceneCamera(camera)) {
-    return { x: 0, y: 0, width: Math.max(0, widthPx), height: Math.max(0, heightPx) };
+  const w = Math.max(0, widthPx);
+  const h = Math.max(0, heightPx);
+  const originX = Number.isFinite(identityOriginX) ? identityOriginX : 0;
+  if (isIdentitySceneCamera(camera) && originX === 0) {
+    return { x: 0, y: 0, width: w, height: h };
   }
   return {
-    x: sceneXFromIdentityX(0, widthPx, camera),
-    y: sceneYFromIdentityY(0, heightPx, camera),
-    width: Math.max(0, widthPx) * camera.scale,
-    height: Math.max(0, heightPx) * camera.scale,
+    x: sceneXFromIdentityX(originX, w, camera),
+    y: sceneYFromIdentityY(0, h, camera),
+    width: w * camera.scale,
+    height: h * camera.scale,
   };
 }
 
@@ -289,17 +294,23 @@ export function sceneCameraVectorWrapSlopPx(widthPx: number): number {
  * At scale ≥ 1 the visible window is at most one world wide, so this is at most
  * two copies with slop 0. Vector slop restores the identity-camera `{-1,0,1}`
  * dateline remnants used by seam-unwrapped geometry.
+ *
+ * `identityOriginX` is the left edge of the strip being copied in identity-world
+ * pixels (0 for scene-frame vectors; a longitude-frame raster shift for Earth
+ * imagery). Default 0 preserves LIB-081 copy selection.
  */
 export function sceneCameraHorizontalWorldCopyOffsets(
   camera: SceneCamera,
   widthPx: number,
   slopPx = 0,
+  identityOriginX = 0,
 ): readonly number[] {
   const w = Math.max(0, widthPx);
   if (!(w > 0) || !(camera.scale > 0)) {
     return [0];
   }
-  const destX = sceneXFromIdentityX(0, w, camera);
+  const originX = Number.isFinite(identityOriginX) ? identityOriginX : 0;
+  const destX = sceneXFromIdentityX(originX, w, camera);
   const period = sceneCameraWorldPeriodPx(w, camera);
   if (!(period > 0) || !Number.isFinite(destX)) {
     return [0];
@@ -330,9 +341,11 @@ export function sceneDestRectsFromIdentityWorldWrapped(
   widthPx: number,
   heightPx: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): readonly { x: number; y: number; width: number; height: number }[] {
-  const base = sceneDestRectFromIdentityWorld(widthPx, heightPx, camera);
-  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, widthPx, 0);
+  const originX = sceneFrameRasterIdentityOriginX(widthPx, frame);
+  const base = sceneDestRectFromIdentityWorld(widthPx, heightPx, camera, originX);
+  const copies = sceneCameraHorizontalWorldCopyOffsets(camera, widthPx, 0, originX);
   if (copies.length === 1 && copies[0] === 0) {
     return [base];
   }
