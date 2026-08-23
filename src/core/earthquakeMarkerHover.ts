@@ -18,6 +18,10 @@
  */
 
 import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  type SceneReferenceFrame,
+} from "./sceneReferenceFrame";
+import {
   IDENTITY_SCENE_CAMERA,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromLongitudeDeg,
@@ -103,6 +107,7 @@ export function projectEarthquakeHoverHits(
   viewportWidthPx: number,
   viewportHeightPx: number,
   camera: SceneCamera = IDENTITY_SCENE_CAMERA,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): EarthquakeHoverHit[] {
   const w = viewportWidthPx;
   const h = viewportHeightPx;
@@ -115,8 +120,8 @@ export function projectEarthquakeHoverHits(
     const radiusPx = earthquakeMarkerRadiusPx(feature.magnitude, w);
     const persistent =
       feature.label !== undefined && feature.label.trim() !== "";
-    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera);
-    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera);
+    const y = sceneYFromLatitudeDeg(feature.latDeg, h, camera, frame);
+    const baseX = sceneXFromLongitudeDeg(feature.lonDeg, w, camera, frame);
     for (const k of copies) {
       const x = baseX + sceneXShiftForWorldCopy(w, camera, k);
       if (x < -hitMargin(radiusPx) || x > w + hitMargin(radiusPx)) {
@@ -198,6 +203,7 @@ export function resolveEarthquakeHoverId(options: {
   viewportHeightPx: number;
   showLabelOnHover: boolean;
   camera?: SceneCamera;
+  sceneReferenceFrame?: SceneReferenceFrame;
 }): string | null {
   if (!options.showLabelOnHover || options.pointerSceneCss === null) {
     return null;
@@ -207,6 +213,7 @@ export function resolveEarthquakeHoverId(options: {
     options.viewportWidthPx,
     options.viewportHeightPx,
     options.camera ?? IDENTITY_SCENE_CAMERA,
+    options.sceneReferenceFrame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME,
   );
   const picked = pickHoveredEarthquakeHit(
     hits,

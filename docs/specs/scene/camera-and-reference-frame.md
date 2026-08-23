@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference frames remain unscoped.
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon-fixed / Sun-fixed are not implemented.
 
 ---
 
@@ -101,6 +101,7 @@ Raster layers (`imageBlit`, illumination `rasterPatch`, Clouds) currently dest-b
 | `scene.viewMode` = `fullWorldFixed` | `SceneConfig` | Yes |
 | `scene.projectionId` = `equirectangular` | `SceneConfig` | Yes |
 | Scene camera | Runtime `SceneCamera` on `SceneRenderInput` (`scale`, `centerU`, `centerV`) | No (LIB-080) |
+| Scene/map reference frame | Runtime `SceneReferenceFrame` on `SceneRenderInput` (Earth-fixed identity) | No (LIB-082) |
 | Pointer scene CSS | `App.tsx` ref; earthquake hover only | No |
 | Demo playback | Runtime ref | Transport not persisted |
 
@@ -110,7 +111,7 @@ Raster layers (`imageBlit`, illumination `rasterPatch`, Clouds) currently dest-b
 
 Earth-fixed 2.0.0 already unwraps short-arc polylines and paints ±360° copies for loci, tracks, eclipse geography, and Milky Way (`equirectSeamPath.ts`, `equirectSeamRegion.ts`, lunar locus world copies). Illumination samples wrap longitude.
 
-LIB-081 adds viewport-intersecting **display copies** of that already-projected strip (`sceneCameraHorizontalWorldCopyOffsets`): rasters use dest-intersection (slop 0); seam-unwrapped vectors use 5% width slop; at most four copies. Canonical lon/lat is not mutated. That is still Earth-fixed strip periodicity, not a scene reference-frame transform. Entity-fixed motion will need wrap-aware or unwrapped longitude so 179° → −179° is not a visual jump. Do not implement that until reference-frame work. Do not discard the existing seam helpers.
+LIB-081 adds viewport-intersecting **display copies** of that already-projected strip (`sceneCameraHorizontalWorldCopyOffsets`): rasters use dest-intersection (slop 0); seam-unwrapped vectors use 5% width slop; at most four copies. Canonical lon/lat is not mutated. That is still Earth-fixed strip periodicity, not scene reference-frame longitude continuity. Camera wrapping and reference-frame continuity are separate problems.
 
 ### 4.6 Interactions today
 
@@ -163,8 +164,8 @@ SceneCamera = {
 1. Shell holds camera in a runtime ref (same family as demo playback and pointer CSS), default identity.
 2. Each frame, camera is attached to `SceneRenderInput` (or an equivalent view context built next to `sceneLayerViewportPx`).
 3. `CanvasRenderBackend` passes it into existing plan builders. It still must not read `SceneConfig` to invent camera behaviour.
-4. Plan builders: project lon/lat with the existing helpers onto the **identity world strip**, then apply the camera similarity (uniform scale about `centerU/V` into the scene rect). Raster dest rects use the same transform. Clip remains the scene strip.
-5. Inverse camera + inverse projection for pointer hit-testing (earthquake hover today).
+4. Plan builders: transform canonical lon/lat through the scene/map reference frame (Earth-fixed identity today), project with the existing helpers onto the **identity world strip**, then apply the camera similarity (uniform scale about `centerU/V` into the scene rect). Raster dest rects use the same camera transform. Clip remains the scene strip.
+5. Inverse camera + inverse projection + inverse frame for pointer hit-testing (earthquake hover today uses the shared forward mapping, which includes the frame).
 
 A1 may only *expose* scale. The struct should still include centre so pan is not a redesign, and so zoom-about-pointer can keep a projected point stable without calling that “pan navigation.”
 
@@ -174,30 +175,80 @@ A1 may only *expose* scale. The struct should still include centre so pan is not
 - Layer payloads (subsolar/sublunar points, tracks, loci, eclipse geography, ISS, planets, Clouds bytes).
 - `SceneConfig` composition, base-map family, illumination policy.
 - Chrome layout and drawing.
-- Scene reference-frame transform (later; identity today).
+- Scene reference-frame transform (LIB-082 Earth-fixed identity; later entity-fixed kinds).
 - Persistence and URL/shareable view (Phase E).
 
 ---
 
-## 6. Scene reference frame (later)
+## 6. Scene reference frame (LIB-082)
 
-A scene reference frame transforms **already-computed** geographic positions before projection.
+A scene/map reference frame transforms **already-computed** geographic positions **before** projection. It is not a camera, not a projection parameter, and not civil-time reference.
 
 ```text
-referenceFrame.anchor = Earth | Moon | Sun | (later) entity-id
-camera.scale = …
-camera.centerU/V = …
+canonical physical / geographic lon/lat
+        ↓
+scene reference-frame transform     (Earth-fixed identity in LIB-082)
+        ↓
+scene-frame lon/lat
+        ↓
+equirectangular projection
+        ↓
+SceneCamera (pan, zoom, horizontal wrap)
 ```
 
-Earth-fixed is identity: presentation coordinates = geographic coordinates. That is 2.0.0.
+**Canonical physical coordinates are authoritative.** Scene-frame coordinates are derived presentation state. Do not overwrite Moon, Sun, ISS, earthquake, or other entity lon/lat with frame-relative values.
 
-Entity-fixed is **not** “each frame assign camera centre to the entity.” Tracking that overwrites camera state and fights pan. The entity defines the origin of the projected world; the user still zooms and pans in that world.
+**Projection is separate.** Equirectangular helpers still map scene-frame lon/lat. Do not add Moon/Sun cases to generic projection helpers.
 
-Anchor selection must be generic for any entity that can supply a time-dependent geographic position. Moon-fixed and Sun-fixed are early demonstrations, not architecture.
+**Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. A future Moon-fixed mode must not write Moon coordinates into `centerU` / `centerV`.
 
-Do not implement this in A1–A2. Do not add Moon-specific branches to the camera.
+### 6.1 Earth-fixed identity (the only active frame)
 
-World wrapping for entity-fixed motion is a Phase B/C concern. Anticipate continuous/unwrapped longitude or equivalent wrap-aware presentation so antimeridian crossings do not jump. Reuse 2.0.0 seam helpers rather than inventing a second wrap model.
+`SceneReferenceFrame` currently has one kind: `earthFixed`. Forward and inverse are exact identity:
+
+```text
+sceneLongitude = canonicalLongitude
+sceneLatitude  = canonicalLatitude
+```
+
+No extra canonical wrap is applied on this path (LIB-081 numeric behaviour is preserved). Identity short-circuits the same way the identity camera does.
+
+Runtime location: `SceneRenderInput.sceneReferenceFrame`, defaulted in `buildSceneRenderInput`. Not persisted, not `scene.viewMode`, not URL/storage, no selector UI. The Canvas backend rejects any non-identity frame until a later item threads a live non-Earth-fixed frame into the shared mapping helpers.
+
+Shared mapping: `sceneXFromLongitudeDeg` / `sceneYFromLatitudeDeg` compose **frame → projection → camera**. Inverse: `canonicalLongitudeDegFromSceneX` / `canonicalLatitudeDegFromSceneY` compose **inverse camera → inverse projection → inverse frame**. Plan builders already call those lon/lat helpers, so they do not each implement `if EarthFixed`. Remaining seam for Phase C: pass the active non-identity frame into those helpers (optional argument already exists; default is Earth-fixed).
+
+### 6.2 Horizontal camera wrapping ≠ reference-frame longitude continuity
+
+LIB-081 copies the already-projected strip so a panned camera can show the dateline. That does not unwrap an anchor that crosses ±180°.
+
+Future entity-fixed frames need **continuous/unwrapped anchor longitude**. Primitives live in `src/core/longitudeContinuity.ts`:
+
+| Kind | Interval / behaviour |
+|------|----------------------|
+| Canonical longitude | (−180, 180]; `+180` kept; `−180` → `+180` |
+| Wrapped longitude delta | shortest signed eastward difference in (−180, 180]; 180° tie is `+180` east |
+| Continuous / unwrapped longitude | may leave ±180 (181, 541, …); used for anchors |
+| Nearest equivalent longitude | continuous value on the same meridian closest to a *near* longitude |
+
+Relative-longitude rule for a future frame anchored at continuous `λa`:
+
+```text
+Δλ = nearestEquivalent(λ, λa) − λa
+```
+
+Example: canonical entity longitude `−179°` with continuous anchor `181°` yields `Δλ = 0` (same meridian as an `181°` entity representation). The relative result is **not** re-wrapped to ±180.
+
+Latitude is not wrapped. Latitude-relative-to-anchor behaviour is **intentionally deferred**; Earth-fixed latitude is preserved exactly. The API does not subtract anchor latitude.
+
+Moon-fixed and Sun-fixed are **not** implemented in LIB-082. A test-only relative-longitude seam (`relativeLongitudeSceneFrameLonLat`) proves continuity without a production kind.
+
+### 6.3 Rasters
+
+Base map, illumination, and Clouds are Earth-fixed geographic imagery. Under Earth-fixed identity they do not move relative to vector geography (LIB-081 dest rects unchanged).
+
+A future non-identity longitude-relative frame must move that Earth raster in scene-frame space consistently with vector geography (typically a horizontal dest shift plus existing wrap copies). Raster reprojection, tiles, and new raster infrastructure are not part of LIB-082.
+
+Entity-fixed is **not** “each frame assign camera centre to the entity.” The entity defines the origin of the scene-frame world; the user still zooms and pans with `SceneCamera`.
 
 ---
 
@@ -292,7 +343,7 @@ Issue IDs continue `LIB-###`. Only listed work items exist as files; later slice
 | A — Camera foundation | A1 Zoom | [LIB-080](../../work/LIB-080-scene-camera-zoom.md) | complete |
 | A | A2 Pan | [LIB-081](../../work/LIB-081-scene-camera-pan.md) | complete |
 | A | A3 Camera consolidation | (incremental in A1/A2; no standalone LIB unless a gap remains) | — |
-| B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | unscoped | — |
+| B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md) | complete |
 | C | Experimental Moon-fixed and Sun-fixed moving map | unscoped | — |
 | D | Generalized entity-fixed anchor, if C validates | unscoped | — |
 | E | Refinements | unscoped; inventory in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#scene-view-and-projection) | — |
@@ -367,6 +418,14 @@ Implemented. Direction that shipped:
 - `touch-action: none`; single-finger Pointer Events pan; no pinch.
 
 Visual extras on the A1 fixtures: 1× horizontal wrap both directions, vertical no-op at 1×, zoom+pan at ~2×/~4×, dateline eclipse, clouds/ISS/earthquake wrap, resize while panned.
+
+### 12.4 Reference-frame foundation (B / LIB-082)
+
+Implemented as Earth-fixed identity. User-visible scene must match completed LIB-081.
+
+Automated: forward/inverse identity (no wrap drift); frame then projection then camera equals LIB-081 mapping (identity, zoom, pan, unwrapped `centerU`); wrapped display copies; hover through the inverse frame path; longitude continuity primitives; synthetic relative-longitude continuity across the antimeridian (not a production frame kind).
+
+Visual: regression of the A1/A2 fixture set. Any registration drift is a defect, not architectural noise.
 
 ---
 

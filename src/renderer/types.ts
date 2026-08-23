@@ -12,6 +12,7 @@
  */
 
 import type { SceneCamera } from "../core/sceneCamera";
+import type { SceneReferenceFrame } from "../core/sceneReferenceFrame";
 import type { LayerId, LayerType } from "../layers/types";
 
 export interface FrameContext {
@@ -66,4 +67,10 @@ export interface SceneRenderInput {
    * (2.0.0 full-world). Not a projection, not persisted, not a reference frame.
    */
   sceneCamera?: SceneCamera;
+  /**
+   * Scene/map reference frame applied before projection. Omitted means
+   * Earth-fixed identity. Runtime only — not persisted, not `viewMode`, not
+   * civil-time reference. LIB-082 is always Earth-fixed.
+   */
+  sceneReferenceFrame?: SceneReferenceFrame;
 }

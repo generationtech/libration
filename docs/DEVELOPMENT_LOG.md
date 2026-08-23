@@ -448,6 +448,13 @@ Scene camera pan: same runtime `SceneCamera` (`scale`, unwrapped `centerU`, lati
 
 Verified: `npx tsc --noEmit` clean; `npm test` 273 files / 2650 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-GLyrUHBn.js`). Cursor Browser at inner 1920×1080: `baseline` (identity, 1× wrap both ways, vertical 1× no-op, zoom+pan, pointer-stable zoom after pan, Reset, Config, resize 1280×720), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at identity and after wrap.
 
+## 2026-08-22 — LIB-082 complete
+
+Scene reference-frame foundation: Earth-fixed identity `SceneReferenceFrame` before projection, runtime on `SceneRenderInput`. Shared mapping is frame → projection → camera. Longitude continuity primitives (canonical, wrapped delta, nearest equivalent, continuous follow) for a future entity-fixed anchor. `SceneCamera` unchanged. No selector, persistence, or Moon/Sun mode.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 275 files / 2673 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-D7xZFIy8.js`). Cursor Browser at inner 1920×1080: `baseline` (identity, zoom, pan, wrap, Reset), `lunar-track`, `lunar-locus` recent + standstill, `moon-libration`, `solar-eclipse-total`, `solar-eclipse-dateline`, `clouds`, `iss-presentation`, `earthquake-presentation` hover at identity and after wrap. Visually unchanged from LIB-081.
+
+
 
 
 

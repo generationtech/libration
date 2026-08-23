@@ -20,7 +20,7 @@ Preserve these invariants:
 8. Base maps never define spatial truth.
 9. Scene view and projection are separate concepts. Camera is a view transform, not a projection change and not a mutation of entity/time state ([ADR 0026](docs/decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md)).
 10. Chrome is not a scene layer and is not transformed by the scene camera.
-11. Scene/map reference frame (Earth-fixed default) is independent of camera. Do not implement entity-fixed by overwriting camera centre.
+11. Scene/map reference frame (Earth-fixed identity; [LIB-082](docs/work/LIB-082-scene-reference-frame-foundation.md)) is independent of camera. Do not implement entity-fixed by overwriting camera centre.
 
 Do not collapse source, presentation, lifecycle, and rendering behavior into one structure.
 

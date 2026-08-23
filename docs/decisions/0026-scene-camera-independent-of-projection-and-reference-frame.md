@@ -17,7 +17,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 1. **Physical / astronomical state** is computed at the canonical UTC instant and is not modified by viewing. Entity lat/lon, tracks, loci, illumination geometry, and lifecycle snapshots do not change because the user zoomed or panned.
 
-2. **Scene reference frame** (future) is a transform of that state into the coordinates that projection consumes. Earth-fixed is identity and remains the default. Entity-fixed modes (Moon, Sun, later a generic anchor) change this transform. They must not be implemented by overwriting camera centre each frame.
+2. **Scene reference frame** is a transform of that state into the coordinates that projection consumes. Earth-fixed is identity, is the default, and is the only active production frame ([LIB-082](../work/LIB-082-scene-reference-frame-foundation.md)). Entity-fixed modes (Moon, Sun, later a generic anchor) change this transform and are not implemented here. They must not be implemented by overwriting camera centre each frame.
 
 3. **Projection** remains spatial truth. Equirectangular full-world mapping is unchanged by zoom or pan. Camera is not a projection parameter and not a new `projectionId`.
 
@@ -27,7 +27,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 6. **Zoom is implemented as a view transform at `RenderPlan` construction**, not as `ctx.scale` in a backend, not as a map-library viewport, and not as a persisted `viewMode` value. Camera state is runtime until a later persistence decision.
 
-Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). Zoom: [LIB-080](../work/LIB-080-scene-camera-zoom.md). Pan: [LIB-081](../work/LIB-081-scene-camera-pan.md).
+Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). Zoom: [LIB-080](../work/LIB-080-scene-camera-zoom.md). Pan: [LIB-081](../work/LIB-081-scene-camera-pan.md). Reference-frame foundation (Earth-fixed identity): [LIB-082](../work/LIB-082-scene-reference-frame-foundation.md).
 
 ## Consequences
 
@@ -40,8 +40,8 @@ Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/
 
 **Costs.**
 
-- Every scene plan builder that maps lon/lat or blits a full-world raster must use the shared view mapping, or that layer will desynchronize. Horizontal pan uses viewport-intersecting display copies of the identity strip (`centerU` unwrapped); those copies are rendering, not mutated entity state.
-- Pointer hit-testing (earthquake hover today) must invert the same mapping, including wrapped display instances.
+- Every scene plan builder that maps lon/lat or blits a full-world raster must use the shared view mapping, or that layer will desynchronize. Horizontal pan uses viewport-intersecting display copies of the identity strip (`centerU` unwrapped); those copies are rendering, not mutated entity state. Geographic mapping composes scene reference frame then projection then camera; Earth-fixed identity short-circuits so LIB-081 numbers are unchanged.
+- Pointer hit-testing (earthquake hover today) must invert the same mapping, including wrapped display instances and the inverse frame transform.
 - Chrome will no longer line up with zoomed meridians. That is accepted rather than zooming the time instrument.
 - Full-world rasters will look soft when zoomed in until a later tile/high-resolution effort (not part of this decision).
 

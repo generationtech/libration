@@ -356,7 +356,7 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); later scene reference frames live on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start reference-frame work from this file.
+Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon-fixed / Sun-fixed live on [`docs/ROADMAP.md`](ROADMAP.md) phase C. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start Moon-fixed work from this file.
 
 This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 

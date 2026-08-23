@@ -13,6 +13,8 @@
 
 import type { SceneCamera } from "../core/sceneCamera";
 import { IDENTITY_SCENE_CAMERA } from "../core/sceneCamera";
+import type { SceneReferenceFrame } from "../core/sceneReferenceFrame";
+import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "../core/sceneReferenceFrame";
 import { sceneLayerViewportRectPx } from "../renderer/sceneViewportLayout";
 import type {
   FrameContext,
@@ -66,6 +68,11 @@ export function buildSceneRenderInput(options: {
   topChromeReservedHeightPx?: number;
   /** Runtime scene camera; omitted means identity (2.0.0 full-world). */
   sceneCamera?: SceneCamera;
+  /**
+   * Runtime scene/map reference frame; omitted means Earth-fixed identity.
+   * Not persisted. Not a camera.
+   */
+  sceneReferenceFrame?: SceneReferenceFrame;
 }): SceneRenderInput {
   const topChromePx = options.topChromeReservedHeightPx ?? 0;
   return {
@@ -75,5 +82,6 @@ export function buildSceneRenderInput(options: {
     scene: options.scene ?? {},
     sceneLayerViewportPx: sceneLayerViewportRectPx(options.viewport, topChromePx),
     sceneCamera: options.sceneCamera ?? IDENTITY_SCENE_CAMERA,
+    sceneReferenceFrame: options.sceneReferenceFrame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME,
   };
 }

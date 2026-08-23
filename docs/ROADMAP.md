@@ -30,14 +30,14 @@ These themes are the product’s intended future shape. They become work only wh
 
 ### Preferred next development direction
 
-**Scene camera, then scene reference frame**, after the Libration **2.0.0** baseline. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md), [ADR 0026](decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md). Earth-fixed full-world presentation remains the default (identity camera). Do not start until a listed item is approved.
+**Scene camera, then scene reference frame**, after the Libration **2.0.0** baseline. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md), [ADR 0026](decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md). Earth-fixed full-world presentation remains the default (identity camera and Earth-fixed identity frame). Do not start a listed slice until a work item is approved.
 
 | Phase | Slice | Work item |
 |-------|--------|-----------|
 | A1 | Zoom (first implementation) | [LIB-080](work/LIB-080-scene-camera-zoom.md) complete |
 | A2 | Pan on the same camera | [LIB-081](work/LIB-081-scene-camera-pan.md) complete |
 | A3 | Camera consolidation | Incremental in A1/A2; no standalone LIB unless a gap remains |
-| B | Scene reference-frame foundation (not camera-follow) | Unscoped |
+| B | Scene reference-frame foundation (not camera-follow) | [LIB-082](work/LIB-082-scene-reference-frame-foundation.md) complete |
 | C | Experimental Moon-fixed and Sun-fixed moving map | Unscoped |
 | D | Generalized entity-fixed, if C validates | Unscoped |
 | E | Persistence, URL view, rotation, semantic zoom, tiles, globe, … | Unscoped; [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection) |

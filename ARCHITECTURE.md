@@ -279,7 +279,7 @@ This is distinct from **civil time** reference (display mode, IANA zone, referen
 
 **Rationale.** If entity tracking continuously overwrites camera centre, the user cannot pan or zoom relative to that frame, and the camera becomes a hidden second clock for geography. Keeping the transform off the camera lets Moon-fixed (or any anchor) coexist with user view control.
 
-**Consequence.** Do not implement entity-fixed mode by assigning camera centre to an entity each frame. Do not special-case the Moon in the camera. World wrapping for moving frames is a reference-frame concern; anticipate continuous/unwrapped longitude rather than treating 180° → −179° as a new world. This transform is not required for zoom. North-up / no map rotation remains the posture of the current development phase; rotation would be a later camera question, not a reference-frame shortcut.
+**Consequence.** Do not implement entity-fixed mode by assigning camera centre to an entity each frame. Do not special-case the Moon in the camera. World wrapping for moving frames is a reference-frame concern: use continuous/unwrapped longitude rather than treating 180° → −179° as a new world. Earth-fixed identity is the implemented production frame ([LIB-082](docs/work/LIB-082-scene-reference-frame-foundation.md)); Moon-fixed / Sun-fixed remain later. Latitude-relative frame behaviour is intentionally deferred. North-up / no map rotation remains the posture of the current development phase; rotation would be a later camera question, not a reference-frame shortcut.
 
 See [ADR 0026](docs/decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md) and [`docs/specs/scene/camera-and-reference-frame.md`](docs/specs/scene/camera-and-reference-frame.md).
 

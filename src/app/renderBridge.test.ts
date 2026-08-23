@@ -34,6 +34,7 @@ describe("renderBridge", () => {
       centerU: 0.5,
       centerV: 0.5,
     });
+    expect(input.sceneReferenceFrame).toEqual({ kind: "earthFixed" });
     expect(input.sceneLayerViewportPx).toEqual({
       x: 0,
       y: 0,

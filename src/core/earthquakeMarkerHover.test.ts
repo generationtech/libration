@@ -16,6 +16,11 @@ import {
   mapXFromLongitudeDeg,
   mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
+import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
+import {
+  canonicalLatitudeDegFromSceneY,
+  canonicalLongitudeDegFromSceneX,
+} from "./sceneCamera";
 import {
   earthquakeMarkerHitRadiusPx,
   earthquakeMarkerRadiusPx,
@@ -284,7 +289,24 @@ describe("LIB-080 earthquake hover through scene camera", () => {
         viewportHeightPx: H,
         showLabelOnHover: true,
         camera,
+        sceneReferenceFrame: EARTH_FIXED_SCENE_REFERENCE_FRAME,
       }),
     ).toBe("dateline");
+
+    const recoveredLon = canonicalLongitudeDegFromSceneX(
+      onScreen[0]!.x,
+      W,
+      camera,
+      EARTH_FIXED_SCENE_REFERENCE_FRAME,
+    );
+    const recoveredLat = canonicalLatitudeDegFromSceneY(
+      onScreen[0]!.y,
+      H,
+      camera,
+      EARTH_FIXED_SCENE_REFERENCE_FRAME,
+    );
+    const lonDelta = recoveredLon - 170;
+    expect(Math.abs(lonDelta - Math.round(lonDelta / 360) * 360)).toBeLessThan(1e-8);
+    expect(recoveredLat).toBeCloseTo(0, 8);
   });
 });

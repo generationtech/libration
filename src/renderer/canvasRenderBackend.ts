@@ -55,6 +55,10 @@ import {
   IDENTITY_SCENE_CAMERA,
   type SceneCamera,
 } from "../core/sceneCamera";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  isIdentitySceneReferenceFrame,
+} from "../core/sceneReferenceFrame";
 import type { RenderBackend } from "./RenderBackend";
 import type { RenderableLayerState, SceneRenderInput, Viewport } from "./types";
 
@@ -129,6 +133,13 @@ export class CanvasRenderBackend implements RenderBackend {
     }
 
     const camera = input.sceneCamera ?? IDENTITY_SCENE_CAMERA;
+    const sceneReferenceFrame =
+      input.sceneReferenceFrame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
+    if (!isIdentitySceneReferenceFrame(sceneReferenceFrame)) {
+      throw new Error(
+        "[libration:canvas] non-Earth-fixed scene reference frames are not implemented",
+      );
+    }
     const layers = [...input.layers].sort((a, b) => a.zIndex - b.zIndex);
     for (const layer of layers) {
       if (!layer.visible) continue;

@@ -16,10 +16,11 @@
  * equirectangular world space. Identity reproduces the 2.0.0 full-world view.
  *
  * This is a view, not a projection and not a scene/map reference frame.
- * Geographic lon/lat still project through {@link mapXFromLongitudeDeg} /
+ * Canonical lon/lat pass through the scene/map reference frame (Earth-fixed
+ * identity today), then {@link mapXFromLongitudeDeg} /
  * {@link mapYFromLatitudeDeg} onto the identity world strip; the camera then
- * maps that strip into scene CSS. A later Earth-fixed/entity-fixed transform
- * belongs *before* projection and must not overwrite camera centre.
+ * maps that strip into scene CSS. Do not encode a frame by writing Moon/Sun
+ * coordinates into `centerU` / `centerV`.
  *
  * Centre is normalized projected space, not CSS pixels, so resize reapplies
  * the same camera to the new scene rect. `centerU` is continuous / unwrapped
@@ -28,9 +29,18 @@
  */
 
 import {
+  latitudeDegFromMapY,
+  longitudeDegFromMapX,
   mapXFromLongitudeDeg,
   mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  canonicalLonLatToSceneFrame,
+  isIdentitySceneReferenceFrame,
+  sceneFrameLonLatToCanonical,
+  type SceneReferenceFrame,
+} from "./sceneReferenceFrame";
 
 export const SCENE_CAMERA_MIN_SCALE = 1;
 export const SCENE_CAMERA_MAX_SCALE = 8;
@@ -163,20 +173,77 @@ export function identityYFromSceneY(
   return ((sceneY - h * 0.5) / (camera.scale * h) + camera.centerV) * h;
 }
 
+/**
+ * Canonical geographic longitude → scene CSS x.
+ *
+ * Order: scene reference frame → equirectangular projection → camera.
+ * Earth-fixed identity short-circuits to the LIB-081 mapping.
+ */
 export function sceneXFromLongitudeDeg(
   lonDeg: number,
   widthPx: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): number {
-  return sceneXFromIdentityX(mapXFromLongitudeDeg(lonDeg, widthPx), widthPx, camera);
+  const sceneLon = isIdentitySceneReferenceFrame(frame)
+    ? lonDeg
+    : canonicalLonLatToSceneFrame({ lonDeg, latDeg: 0 }, frame).sceneLonDeg;
+  return sceneXFromIdentityX(mapXFromLongitudeDeg(sceneLon, widthPx), widthPx, camera);
 }
 
+/**
+ * Canonical geographic latitude → scene CSS y.
+ * Earth-fixed identity short-circuits. Latitude is not wrapped.
+ */
 export function sceneYFromLatitudeDeg(
   latDeg: number,
   heightPx: number,
   camera: SceneCamera,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): number {
-  return sceneYFromIdentityY(mapYFromLatitudeDeg(latDeg, heightPx), heightPx, camera);
+  const sceneLat = isIdentitySceneReferenceFrame(frame)
+    ? latDeg
+    : canonicalLonLatToSceneFrame({ lonDeg: 0, latDeg }, frame).sceneLatDeg;
+  return sceneYFromIdentityY(mapYFromLatitudeDeg(sceneLat, heightPx), heightPx, camera);
+}
+
+/**
+ * Inverse of {@link sceneXFromLongitudeDeg}: scene CSS x → canonical longitude.
+ * Order: inverse camera → inverse projection → inverse scene reference frame.
+ */
+export function canonicalLongitudeDegFromSceneX(
+  sceneX: number,
+  widthPx: number,
+  camera: SceneCamera,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
+): number {
+  const sceneLon = longitudeDegFromMapX(identityXFromSceneX(sceneX, widthPx, camera), widthPx);
+  if (isIdentitySceneReferenceFrame(frame)) {
+    return sceneLon;
+  }
+  return sceneFrameLonLatToCanonical(
+    { sceneLonDeg: sceneLon, sceneLatDeg: 0 },
+    frame,
+  ).lonDeg;
+}
+
+/**
+ * Inverse of {@link sceneYFromLatitudeDeg}: scene CSS y → canonical latitude.
+ */
+export function canonicalLatitudeDegFromSceneY(
+  sceneY: number,
+  heightPx: number,
+  camera: SceneCamera,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
+): number {
+  const sceneLat = latitudeDegFromMapY(identityYFromSceneY(sceneY, heightPx, camera), heightPx);
+  if (isIdentitySceneReferenceFrame(frame)) {
+    return sceneLat;
+  }
+  return sceneFrameLonLatToCanonical(
+    { sceneLonDeg: 0, sceneLatDeg: sceneLat },
+    frame,
+  ).latDeg;
 }
 
 /** Full-world raster dest rect in scene CSS (same similarity as vector mapping). */
@@ -293,8 +360,12 @@ export function sceneXsFromLongitudeDeg(
   widthPx: number,
   camera: SceneCamera,
   slopPx = 0,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): readonly number[] {
-  return sceneXsFromIdentityX(mapXFromLongitudeDeg(lonDeg, widthPx), widthPx, camera, slopPx);
+  const sceneLon = isIdentitySceneReferenceFrame(frame)
+    ? lonDeg
+    : canonicalLonLatToSceneFrame({ lonDeg, latDeg: 0 }, frame).sceneLonDeg;
+  return sceneXsFromIdentityX(mapXFromLongitudeDeg(sceneLon, widthPx), widthPx, camera, slopPx);
 }
 
 /**

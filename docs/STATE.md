@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-081](work/LIB-081-scene-camera-pan.md) — Scene camera pan. Pointer drag translation on the LIB-080 `SceneCamera`, continuous horizontal wrapping, bounded vertical movement, pointer-stable zoom after pan, Reset to identity `1, 0.5, 0.5`. Camera is not persisted. Scene reference frames were not started.
+[LIB-082](work/LIB-082-scene-reference-frame-foundation.md) — Scene reference-frame foundation. Earth-fixed identity transform before projection; longitude continuity primitives for a future entity-fixed anchor; shared canonical → frame → projection → camera mapping. `SceneCamera` unchanged. Moon-fixed / Sun-fixed were not started. Frame is not persisted.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start scene/map reference-frame work, pinch zoom, or camera persistence until a human approves and activates a new item. The next architectural phase, when scoped, is scene reference-frame foundation ([`docs/ROADMAP.md`](ROADMAP.md) phase B).
+Do not start Moon-fixed / Sun-fixed modes, pinch zoom, or camera persistence until a human approves and activates a new item. The next architectural phase, when scoped, is experimental Moon-fixed and/or Sun-fixed moving map ([`docs/ROADMAP.md`](ROADMAP.md) phase C).
