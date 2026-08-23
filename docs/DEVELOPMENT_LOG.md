@@ -478,6 +478,12 @@ Generalized anchored scene reference frames: production `SceneReferenceFrame` is
 
 Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2758 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-L7efeokj.js`). Cursor Browser at inner 1920×1080: five-mode regression vs LIB-085 (Earth-fixed, Moon longitude, Moon position, Sun longitude, Sun position); cross-anchor switching with camera reset; `clouds` / ISS / earthquakes / lunar-track / eclipse total and dateline; zoom then frame-switch; reload Earth-fixed; resize 1280×720 while zoomed in Sun position-lock.
 
+## 2026-08-23 — LIB-087 complete
+
+Automatic scene-cover zoom for anchored position-lock: camera policy chooses the minimum scale so the translated Earth covers the interior scene. Shared `lockMode: "position"` helper; not Moon/Sun branches. Explicit `off | auto | manual` runtime policy. Wheel zoom overrides; Reset and entering position-lock re-arm. Earth-fixed and longitude-lock stay identity. Cover updates scale only (`centerV` independent). ADR 0031.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 277 files / 2772 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-BdhmF60J.js`). Cursor Browser at inner 1920×1080: Moon/Sun position-lock cover with no N/S blank band; Moon/Sun stay at origin; longitude-lock and Earth-fixed identity; wheel override then time advance then Reset; `terminator` equinox and `night` solstice Sun position-lock; standstill lunar-locus animation; resize auto vs manual; overlays (`clouds`, ISS, total solar eclipse, lunar-track) registered under cover.
+
 
 
 

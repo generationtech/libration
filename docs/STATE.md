@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-086](work/LIB-086-generalize-anchored-scene-reference-frames.md) — Generalized anchored scene reference frames. Production model is Earth-fixed or anchored (`anchorKind` moon|sun, `lockMode` longitude|position). Five user-visible choices unchanged. No third anchor.
+[LIB-087](work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md) — Automatic scene-cover zoom for anchored position-locked frames. Camera policy only: Moon/Sun position-lock cover the interior scene; Earth-fixed and longitude-lock stay identity. Manual wheel zoom overrides; Reset and entering position-lock re-arm. ADR 0031.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start a third anchor kind, ISS-fixed, or generic entity-fixed. Await human scope.
+Await a human-approved work item. Do not start FUTURE_FEATURES or proposed items.

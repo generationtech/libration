@@ -42,6 +42,7 @@ These themes are the product’s intended future shape. They become work only wh
 | C2 | Moon latitude lock / position-locked frame | [LIB-084](work/LIB-084-moon-position-locked-scene-frame.md) complete |
 | C3 | Sun-anchored longitude-lock and position-lock | [LIB-085](work/LIB-085-sun-anchored-scene-frames.md) complete |
 | C4 | Shared anchored production model (Moon/Sun) | [LIB-086](work/LIB-086-generalize-anchored-scene-reference-frames.md) complete |
+| C5 | Automatic scene-cover zoom for position-lock | [LIB-087](work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md) complete |
 | D | Additional entity-fixed kinds, if they fit the LIB-086 model | Unscoped |
 | E | Persistence, URL view, rotation, semantic zoom, tiles, globe, … | Unscoped; [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection) |
 

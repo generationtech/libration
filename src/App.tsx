@@ -142,13 +142,18 @@ import type { SceneLayerViewportPx } from "./renderer/types";
 import {
   IDENTITY_SCENE_CAMERA,
   SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX,
-  isIdentitySceneCamera,
+  applyAutomaticSceneCoverScale,
+  defaultSceneCameraForCover,
+  isSceneCameraAtFrameDefault,
   panSceneCameraBySceneDelta,
+  sceneCameraCoverPolicyAfterFrameKindChange,
+  sceneCameraCoverPolicyAfterManualZoom,
   sceneCameraFromWheelDelta,
   sceneCameraVerticalExtentFromFrame,
   wheelDeltaYToPixels,
   zoomSceneCameraAboutScenePoint,
   type SceneCamera,
+  type SceneCameraCoverPolicy,
 } from "./core/sceneCamera";
 import { runtimeIdForDynamicPointFeaturesSceneLayer } from "./layers/dynamicPointFeaturesOverlayLayer";
 import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayload";
@@ -162,6 +167,7 @@ import {
 } from "./core/sceneReferenceFrame";
 import {
   isAnchoredSceneReferenceFrameUiKind,
+  isPositionLockedSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
   sceneFrameAnchorKindFromUiKind,
@@ -321,7 +327,9 @@ export default function App() {
     null,
   );
   const sceneCameraRef = useRef<SceneCamera>(IDENTITY_SCENE_CAMERA);
-  const [cameraIsIdentity, setCameraIsIdentity] = useState(true);
+  const sceneCameraCoverPolicyRef = useRef<SceneCameraCoverPolicy>("off");
+  const sceneCameraPanActiveRef = useRef(false);
+  const [cameraIsAtDefault, setCameraIsAtDefault] = useState(true);
   const sceneFrameKindRef = useRef<SceneReferenceFrameUiKind>("earthFixed");
   const [sceneFrameKind, setSceneFrameKind] = useState<SceneReferenceFrameUiKind>("earthFixed");
   const anchorContinuousLonRef = useRef<number | null>(null);
@@ -908,6 +916,15 @@ export default function App() {
         anchorContinuousLonRef.current = null;
         sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
       }
+      if (
+        sceneCameraCoverPolicyRef.current === "auto" &&
+        !sceneCameraPanActiveRef.current
+      ) {
+        sceneCameraRef.current = applyAutomaticSceneCoverScale(
+          sceneCameraRef.current,
+          sceneCameraVerticalExtentFromFrame(sceneReferenceFrameRef.current),
+        );
+      }
       const issAttachment = time.dynamicDataLifecycle;
       const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;
       const issLife =
@@ -1235,12 +1252,19 @@ export default function App() {
       }
       const wasActive = panDrag.active;
       panDrag = null;
+      sceneCameraPanActiveRef.current = false;
       if (canvas.hasPointerCapture(event.pointerId)) {
         canvas.releasePointerCapture(event.pointerId);
       }
       setCanvasCursor(scenePointFromClient(event), false);
       if (wasActive) {
-        setCameraIsIdentity(isIdentitySceneCamera(sceneCameraRef.current));
+        setCameraIsAtDefault(
+          isSceneCameraAtFrameDefault(
+            sceneCameraRef.current,
+            sceneReferenceFrameRef.current,
+            sceneCameraCoverPolicyRef.current,
+          ),
+        );
         earthquakePointerSceneCssRef.current = scenePointFromClient(event);
       }
     };
@@ -1290,8 +1314,9 @@ export default function App() {
             Math.hypot(dx, dy) >= SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX
           ) {
             panDrag.active = true;
+            sceneCameraPanActiveRef.current = true;
             earthquakePointerSceneCssRef.current = null;
-            setCameraIsIdentity(false);
+            setCameraIsAtDefault(false);
             setCanvasCursor(scenePt, true);
           }
           if (panDrag.active) {
@@ -1373,8 +1398,24 @@ export default function App() {
           sceneReferenceFrameRef.current,
         ),
       });
+      const prev = sceneCameraRef.current;
       sceneCameraRef.current = next;
-      setCameraIsIdentity(isIdentitySceneCamera(next));
+      if (
+        Math.abs(next.scale - prev.scale) > 1e-12 ||
+        Math.abs(next.centerU - prev.centerU) > 1e-12 ||
+        Math.abs(next.centerV - prev.centerV) > 1e-12
+      ) {
+        sceneCameraCoverPolicyRef.current = sceneCameraCoverPolicyAfterManualZoom(
+          sceneCameraCoverPolicyRef.current,
+        );
+      }
+      setCameraIsAtDefault(
+        isSceneCameraAtFrameDefault(
+          next,
+          sceneReferenceFrameRef.current,
+          sceneCameraCoverPolicyRef.current,
+        ),
+      );
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
@@ -1454,8 +1495,12 @@ export default function App() {
             }
             sceneFrameKindRef.current = next;
             anchorContinuousLonRef.current = null;
+            sceneCameraCoverPolicyRef.current =
+              sceneCameraCoverPolicyAfterFrameKindChange(
+                isPositionLockedSceneReferenceFrameUiKind(next),
+              );
             sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
-            setCameraIsIdentity(true);
+            setCameraIsAtDefault(true);
             setSceneFrameKind(next);
           }}
         >
@@ -1470,10 +1515,19 @@ export default function App() {
         type="button"
         className="scene-camera-reset"
         aria-label="Reset map view"
-        disabled={cameraIsIdentity}
+        disabled={cameraIsAtDefault}
         onClick={() => {
-          sceneCameraRef.current = IDENTITY_SCENE_CAMERA;
-          setCameraIsIdentity(true);
+          const positionLock = isPositionLockedSceneReferenceFrameUiKind(
+            sceneFrameKindRef.current,
+          );
+          sceneCameraCoverPolicyRef.current =
+            sceneCameraCoverPolicyAfterFrameKindChange(positionLock);
+          sceneCameraRef.current = positionLock
+            ? defaultSceneCameraForCover(
+                sceneCameraVerticalExtentFromFrame(sceneReferenceFrameRef.current),
+              )
+            : IDENTITY_SCENE_CAMERA;
+          setCameraIsAtDefault(true);
         }}
       >
         Reset view

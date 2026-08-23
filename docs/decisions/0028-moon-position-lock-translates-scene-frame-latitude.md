@@ -28,7 +28,7 @@ Two wrong implementations were available: writing Moon latitude into `SceneCamer
 
 8. **Projection.** `mapYFromLatitudeDeg` / `latitudeDegFromMapY` map scene-frame latitude linearly, including values outside geographic ±90°. They do not encode physical-latitude validation.
 
-9. **Camera.** Identity remains `scale = 1`, `centerU = 0.5`, `centerV = 0.5` and means the default **scene-frame** view (Moon at the defined centre in position-lock). Time updates must not write `centerV` from the Moon. At scale 1, vertical pan stays a no-op (`centerV = 0.5`); blank beyond the translated Earth is accepted. At scale > 1, user pan/zoom clamp against the scene-frame Earth extent (`south = −90 − moonAnchorLat`, `north = +90 − moonAnchorLat` in scene latitude), not hard-coded geographic `[0, 1]` placement. That clamp runs on interaction, not on every time tick.
+9. **Camera.** Identity remains `scale = 1`, `centerU = 0.5`, `centerV = 0.5` as the geometric identity of the camera struct. Time updates must not write `centerV` from the Moon. At scale 1, vertical pan stays a no-op (`centerV = 0.5`). At scale > 1, user pan/zoom clamp against the scene-frame Earth extent (`south = −90 − moonAnchorLat`, `north = +90 − moonAnchorLat` in scene latitude), not hard-coded geographic `[0, 1]` placement. That clamp runs on interaction, not on every time tick. The **product default view** for position-lock is no longer identity-plus-accepted-blank-bands; [ADR 0031](0031-position-lock-default-camera-is-automatic-scene-cover-zoom.md) / [LIB-087](../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md) make automatic scene-cover zoom the default camera policy. Frame mathematics, no-follow, and no-vertical-wrap in this record remain.
 
 10. **Switch and persistence.** Switching among Earth-fixed, Moon longitude-lock, and Moon position-lock resets the camera to identity. Reset view resets the camera only. Earth-fixed remains the load default. Frame selection is runtime-only.
 
@@ -45,7 +45,7 @@ Two wrong implementations were available: writing Moon latitude into `SceneCamer
 **Costs.**
 
 - Every geographic plan builder must apply the same latitude transform as longitude (shared helpers; rasters use dest shift).
-- Identity camera in position-lock can show blank beyond the translated Earth strip; that is the defined default view, not a defect.
+- Identity camera in position-lock can still show blank beyond the translated Earth strip; that remains geometrically valid and is reachable under a manual zoom override. The product default is automatic cover ([ADR 0031](0031-position-lock-default-camera-is-automatic-scene-cover-zoom.md)).
 - Chrome structural meridians remain a full-world Earth-fixed ruler.
 
 **Non-decisions.** Sun-fixed frames, generic entity pickers, frame persistence, map rotation, heading lock, vertical world wrapping, and polar mirroring are not authorized here.

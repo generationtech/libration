@@ -28,9 +28,11 @@
  *   subsolar latitude for the canonical UTC instant, derived explicitly
  *   at the application boundary.
  *
- * Camera: switching among the production frame configurations resets
- * the camera to identity. Reset view resets the camera only and does not
- * change the frame.
+ * Camera: switching among the production frame configurations reinitializes
+ * camera policy (identity for Earth-fixed / longitude-lock; automatic cover
+ * for position-lock). Reset view restores that frame's default camera and
+ * does not change the frame. Position-lock default is cover scale, not
+ * necessarily scale = 1.
  *
  * This module is not a generic entity-frame provider. Physical Moon/Sun
  * coordinates are supplied by the caller.
@@ -79,6 +81,12 @@ export function isAnchoredSceneReferenceFrameUiKind(
     isMoonAnchoredSceneReferenceFrameUiKind(kind) ||
     isSunAnchoredSceneReferenceFrameUiKind(kind)
   );
+}
+
+export function isPositionLockedSceneReferenceFrameUiKind(
+  kind: SceneReferenceFrameUiKind,
+): boolean {
+  return kind === "moonPositionLocked" || kind === "sunPositionLocked";
 }
 
 export function sceneFrameAnchorKindFromUiKind(
@@ -159,9 +167,11 @@ export function sceneReferenceFrameFromUiKind(
 }
 
 /**
- * Switching the production scene-frame configuration recenters to the identity
- * view of the destination frame so a leftover pan/zoom is not re-interpreted
- * in a different coordinate system. Scale is not preserved.
+ * Switching the production scene-frame configuration clears leftover pan/zoom
+ * so it is not re-interpreted in a different coordinate system. Returns
+ * identity; the render loop then applies automatic cover when the destination
+ * is position-lock. Scale is not preserved. Manual zoom override is not
+ * carried across kinds.
  */
 export function sceneCameraAfterReferenceFrameKindChange(): SceneCamera {
   return IDENTITY_SCENE_CAMERA;

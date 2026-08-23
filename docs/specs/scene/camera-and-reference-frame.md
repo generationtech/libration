@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). The shared anchored production model is implemented: [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md). Additional entity-fixed kinds are not implemented.
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). The shared anchored production model is implemented: [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md). Automatic scene-cover zoom for position-lock is implemented: [LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md). Additional entity-fixed kinds are not implemented.
 
 ---
 
@@ -256,7 +256,7 @@ The Moon maps to scene longitude `0°` (centre of the identity strip). Latitude 
 
 **Epoch policy.** While the mode stays active, time jumps (Demo, direct selection, tour) follow the nearest equivalent of the new canonical longitude. A new scene/frame epoch reinitializes from canonical longitude: first entry, reload, switching in from Earth-fixed. Switching out clears continuous state.
 
-**Camera on switch.** Changing among Earth-fixed, Moon longitude-lock, Moon position-lock, Sun longitude-lock, and Sun position-lock resets the camera to identity. Reset view resets the camera only.
+**Camera on switch.** Changing among Earth-fixed, Moon longitude-lock, Moon position-lock, Sun longitude-lock, and Sun position-lock reinitializes camera policy (identity, or automatic cover on the destination position-lock frame) and does not carry a manual zoom override. Reset view resets the camera only.
 
 **Rasters.** Shift the existing full-world equirectangular strip by `−λMoon_continuous / 360 × width` and paint periodic dest copies. Base map, illumination, and Clouds share that dest.
 
@@ -283,7 +283,7 @@ The Moon maps to scene `(0°, 0°)`. Scene-frame latitude is not geographic lati
 
 **Projection.** Equirectangular Y mapping is linear in scene-frame latitude, including values outside geographic ±90°.
 
-**Camera.** Identity (`1, 0.5, 0.5`) is the default scene-frame view (Moon at the defined centre). Time must not write `centerV`. At scale 1, `centerV` stays 0.5; blank beyond translated Earth is accepted. At scale > 1, pan/zoom clamp against the scene-frame Earth extent, on user interaction only.
+**Camera.** Identity (`1, 0.5, 0.5`) remains the geometric identity of the camera struct. For position-lock the **product default view** is automatic scene-cover zoom: the minimum scale so the origin-centred vertical window lies inside the translated Earth extent ([LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md), [ADR 0031](../../decisions/0031-position-lock-default-camera-is-automatic-scene-cover-zoom.md)). Time must not write `centerV`. Cover updates scale only. Manual wheel zoom suspends auto-cover; Reset view and entering position-lock re-arm it. At scale 1, `centerV` stays 0.5; blank beyond translated Earth is still what identity shows, and is reachable again under a manual zoom override. At scale > 1, pan/zoom clamp against the scene-frame Earth extent.
 
 See [ADR 0028](../../decisions/0028-moon-position-lock-translates-scene-frame-latitude.md).
 
@@ -317,7 +317,7 @@ sceneLat = canonicalLat − sunAnchorLat
 
 The subsolar point maps to scene `(0°, 0°)`. Scene-frame latitude may leave ±90°. Latitude is not periodic. Vertical Earth motion follows solar declination and is slow; verify with deterministic seasonal epochs, not real-time waiting.
 
-**Rasters / camera.** Same dest-shift and translated-Earth extent rules as Moon position-lock (§6.3), using the solar anchor.
+**Rasters / camera.** Same dest-shift and translated-Earth extent rules as Moon position-lock (§6.3), using the solar anchor. Product default camera is the same automatic cover policy as Moon position-lock ([LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md)).
 
 See [ADR 0029](../../decisions/0029-sun-anchoring-reuses-moon-axis-lock.md).
 
@@ -415,7 +415,7 @@ Decisions that can be made now:
 2. **`preventDefault` on scene-strip wheel** so the page does not scroll. The canvas is full-window; accidental document scroll is the main conflict.
 3. **Config / overlay wheel** continues to scroll those panels.
 4. **Minimum scale = 1.** 2.0.0 full-world is the most zoomed-out view. Zoom-out at identity is a no-op clamp.
-5. **Reset/default view** restores identity camera. Exact control (button vs key) may be chosen in A1; the behaviour is required.
+5. **Reset/default view** restores the frame default camera. Earth-fixed and longitude-lock: identity. Position-lock: current automatic cover (which may be `scale > 1`). Reset is disabled at that default. Exact control (button vs key) may be chosen in A1; the behaviour is required.
 6. **Earthquake hover** remains hover, not select. Hit-test through inverse camera.
 7. **No map rotation.**
 8. **Do not persist camera** in `LibrationConfigV2` in A1/A2. Identity is the default every session. Persistence is Phase E.
@@ -445,6 +445,9 @@ Issue IDs continue `LIB-###`. Only listed work items exist as files; later slice
 | B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md) | complete |
 | C | Experimental Moon longitude-locked moving map | [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md) | complete |
 | C2 | Moon latitude lock / position-locked frame | [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md) | complete |
+| C3 | Sun-anchored longitude-lock and position-lock | [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md) | complete |
+| C4 | Shared anchored production model (Moon/Sun) | [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md) | complete |
+| C5 | Automatic scene-cover zoom for position-lock | [LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md) | complete |
 | D | Generalized entity-fixed anchor, if C validates | — | unscoped |
 | E | Refinements | unscoped; inventory in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#scene-view-and-projection) | — |
 
@@ -561,6 +564,14 @@ Visual: five-mode regression matrix against LIB-085 (Earth-fixed, Moon longitude
 
 A third `anchorKind` is not in scope. A future geographic-subpoint anchor would extend `SceneFrameAnchorKind` only if it satisfies the contract in [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md).
 
+### 12.9 Automatic scene-cover zoom (LIB-087)
+
+Implemented. Camera policy only; frame mathematics unchanged from LIB-086.
+
+Automated: Earth-fixed and longitude-lock remain identity default; position-lock cover scale is shared (not Moon/Sun branched); ~0° latitude → scale ~1; ±latitude, lunar extreme, solar solstice cover and are the minimum sufficient scale; Moon/Sun latitudes fit max 8; auto-cover does not write `centerV` from the anchor; manual zoom policy suspends rewrite; Reset/frame-switch re-arm; resize does not change the normalized cover scale.
+
+Visual: Moon position-lock ordinary and extreme/standstill latitudes with no translation-caused top/bottom blank band; Moon stays frame-fixed; accelerated lunar-latitude animation with adapting zoom and no camera-follow; manual wheel override then time advance then Reset; Sun position-lock near equinox and solstice; Moon/Sun longitude-lock and Earth-fixed regression; resize with auto-cover and with manual override; representative overlays (base map, illumination, Clouds, Moon/Sun marker, lunar track or locus, ISS, eclipse geometry) remain registered.
+
 ---
 
 ## 13. Risks
@@ -580,4 +591,4 @@ Meaningful issues for implementers; not a backlog of extras.
 
 ## 14. Non-goals for the architecture phase and for A1
 
-Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, and the shared anchored production model are implemented (LIB-080–086).
+Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, the shared anchored production model, and position-lock automatic cover zoom are implemented (LIB-080–087).

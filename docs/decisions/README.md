@@ -36,6 +36,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0028](0028-moon-position-lock-translates-scene-frame-latitude.md) | Moon position-lock translates scene-frame latitude; it is not camera-follow |
 | [0029](0029-sun-anchoring-reuses-moon-axis-lock.md) | Sun anchoring reuses Moon axis-lock; it is not a second frame theory |
 | [0030](0030-anchored-scene-frames-are-one-production-kind.md) | Anchored scene frames are one production kind; Moon/Sun are `anchorKind` |
+| [0031](0031-position-lock-default-camera-is-automatic-scene-cover-zoom.md) | Position-lock default camera is automatic scene-cover zoom, not camera-follow |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

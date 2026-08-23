@@ -27,6 +27,11 @@
  * the same camera to the new scene rect. `centerU` is continuous / unwrapped
  * (horizontal world is periodic). `centerV` is clamped against the active
  * frame's scene-frame Earth extent. Not persisted.
+ *
+ * Position-lock default view is an automatic **cover** scale over that
+ * translated Earth extent (camera policy, not a frame transform). Manual
+ * wheel zoom suspends the policy; Reset view and entering position-lock
+ * re-arm it. Do not write the anchor into `centerV` to hide blank bands.
  */
 
 import {
@@ -67,7 +72,19 @@ export const SCENE_CAMERA_PAN_DRAG_THRESHOLD_PX = 4;
 export const SCENE_CAMERA_VECTOR_WRAP_SLOP_RATIO = 0.05;
 
 const IDENTITY_EPS = 1e-9;
+/** Skip tiny automatic cover-scale writes so time ticks do not jitter. */
+export const SCENE_CAMERA_COVER_SCALE_EPS = 1e-6;
 const MAX_WORLD_COPIES = 4;
+
+/**
+ * Runtime-only viewing policy. Not persisted, not part of `SceneCamera`,
+ * and not a scene-reference-frame field.
+ *
+ * - `off` — Earth-fixed / longitude-lock identity default
+ * - `auto` — position-lock cover scale tracks translated Earth
+ * - `manual` — user zoom override; cover no longer rewrites scale
+ */
+export type SceneCameraCoverPolicy = "off" | "auto" | "manual";
 
 export type SceneCamera = {
   readonly scale: number;
@@ -119,6 +136,133 @@ export function isIdentitySceneCamera(camera: SceneCamera): boolean {
   );
 }
 
+/**
+ * Minimum uniform scale so the visible vertical window, with the camera
+ * centred on the scene-frame origin (`centerV = 0.5`), lies entirely inside
+ * the translated Earth extent. Cover, not contain.
+ *
+ * Identity already maps the projected world onto the interior scene rect
+ * (stretched, not letterboxed), so the visible normalized-v half-span is
+ * `0.5 / scale` and viewport pixel height cancels. Aspect ratio does not
+ * change the required scale under this camera model.
+ */
+export function minimumScaleToCoverSceneFrameEarth(
+  extent: SceneCameraVerticalExtent,
+  centerV = 0.5,
+): number {
+  const vMin = finiteOr(extent.vMin, 0);
+  const vMax = finiteOr(extent.vMax, 1);
+  const headroom = Math.min(centerV - vMin, vMax - centerV);
+  if (!(headroom > 0) || !Number.isFinite(headroom)) {
+    return Number.POSITIVE_INFINITY;
+  }
+  const required = 0.5 / headroom;
+  if (!Number.isFinite(required) || required < SCENE_CAMERA_MIN_SCALE) {
+    return SCENE_CAMERA_MIN_SCALE;
+  }
+  return required;
+}
+
+export function sceneCameraVisibleNormalizedVInterval(camera: SceneCamera): {
+  readonly v0: number;
+  readonly v1: number;
+} {
+  const scale = Math.max(camera.scale, SCENE_CAMERA_MIN_SCALE);
+  const half = 0.5 / scale;
+  return { v0: camera.centerV - half, v1: camera.centerV + half };
+}
+
+export function coverScaleFitsCameraMaximum(requiredScale: number): boolean {
+  return (
+    Number.isFinite(requiredScale) &&
+    requiredScale <= SCENE_CAMERA_MAX_SCALE + SCENE_CAMERA_COVER_SCALE_EPS
+  );
+}
+
+export function defaultSceneCameraForCover(
+  extent: SceneCameraVerticalExtent,
+): SceneCamera {
+  const required = minimumScaleToCoverSceneFrameEarth(extent);
+  const scale = Math.min(
+    SCENE_CAMERA_MAX_SCALE,
+    Math.max(
+      SCENE_CAMERA_MIN_SCALE,
+      Number.isFinite(required) ? required : SCENE_CAMERA_MAX_SCALE,
+    ),
+  );
+  return clampSceneCamera({ scale, centerU: 0.5, centerV: 0.5 }, extent);
+}
+
+/**
+ * Update scale to the current cover requirement. Keeps `centerU` / `centerV`
+ * (clamp may trim vertical centre if the new scale no longer permits it).
+ * Does not write the anchor into the camera centre.
+ */
+export function applyAutomaticSceneCoverScale(
+  camera: SceneCamera,
+  extent: SceneCameraVerticalExtent,
+): SceneCamera {
+  const required = minimumScaleToCoverSceneFrameEarth(extent);
+  const scale = Math.min(
+    SCENE_CAMERA_MAX_SCALE,
+    Math.max(
+      SCENE_CAMERA_MIN_SCALE,
+      Number.isFinite(required) ? required : SCENE_CAMERA_MAX_SCALE,
+    ),
+  );
+  if (Math.abs(camera.scale - scale) <= SCENE_CAMERA_COVER_SCALE_EPS) {
+    return camera;
+  }
+  return clampSceneCamera({ ...camera, scale }, extent);
+}
+
+export function isSceneCameraAtCoverDefault(
+  camera: SceneCamera,
+  extent: SceneCameraVerticalExtent,
+): boolean {
+  const def = defaultSceneCameraForCover(extent);
+  return (
+    Math.abs(camera.scale - def.scale) <= SCENE_CAMERA_COVER_SCALE_EPS &&
+    Math.abs(camera.centerU - 0.5) <= IDENTITY_EPS &&
+    Math.abs(camera.centerV - 0.5) <= IDENTITY_EPS
+  );
+}
+
+export function sceneCameraCoverPolicyForFrame(
+  frame: SceneReferenceFrame,
+): Exclude<SceneCameraCoverPolicy, "manual"> {
+  return isPositionLockedSceneReferenceFrame(frame) ? "auto" : "off";
+}
+
+export function sceneCameraCoverPolicyAfterManualZoom(
+  policy: SceneCameraCoverPolicy,
+): SceneCameraCoverPolicy {
+  return policy === "auto" ? "manual" : policy;
+}
+
+export function sceneCameraCoverPolicyAfterFrameKindChange(
+  nextFrameIsPositionLock: boolean,
+): SceneCameraCoverPolicy {
+  return nextFrameIsPositionLock ? "auto" : "off";
+}
+
+export function isSceneCameraAtFrameDefault(
+  camera: SceneCamera,
+  frame: SceneReferenceFrame,
+  policy: SceneCameraCoverPolicy,
+): boolean {
+  if (policy === "manual") {
+    return false;
+  }
+  if (policy === "auto" && isPositionLockedSceneReferenceFrame(frame)) {
+    return isSceneCameraAtCoverDefault(
+      camera,
+      sceneCameraVerticalExtentFromFrame(frame),
+    );
+  }
+  return isIdentitySceneCamera(camera);
+}
+
 function finiteOr(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
 }
@@ -130,9 +274,10 @@ function finiteOr(value: number, fallback: number): number {
  *
  * At scale 1, `centerV` stays 0.5 (identity scene-frame view) even when
  * position-lock has translated Earth so it no longer fills the strip.
- * Blank beyond terrestrial latitude is the scene background. Do not rewrite
- * `centerV` from anchor latitude on time ticks — this clamp runs on user
- * pan/zoom only.
+ * Blank beyond terrestrial latitude is the scene background. Automatic
+ * cover may update **scale** on time ticks; it must not write `centerV`
+ * from the anchor. Clamp also runs when applying that cover scale and on
+ * user pan/zoom.
  *
  * At scale > 1 the visible window is smaller than Earth, so pan is clamped
  * to the scene-frame Earth interval (`verticalExtent`) rather than hard-coded

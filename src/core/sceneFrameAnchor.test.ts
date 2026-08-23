@@ -16,6 +16,7 @@ import { IDENTITY_SCENE_CAMERA } from "./sceneCamera";
 import {
   isAnchoredSceneReferenceFrameUiKind,
   isMoonAnchoredSceneReferenceFrameUiKind,
+  isPositionLockedSceneReferenceFrameUiKind,
   isSunAnchoredSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   nextMoonAnchorContinuousLonDeg,
@@ -87,6 +88,11 @@ describe("scene camera after reference-frame kind change", () => {
     expect(isSunAnchoredSceneReferenceFrameUiKind("moonLongitudeLocked")).toBe(false);
     expect(isAnchoredSceneReferenceFrameUiKind("earthFixed")).toBe(false);
     expect(isAnchoredSceneReferenceFrameUiKind("sunPositionLocked")).toBe(true);
+    expect(isPositionLockedSceneReferenceFrameUiKind("earthFixed")).toBe(false);
+    expect(isPositionLockedSceneReferenceFrameUiKind("moonLongitudeLocked")).toBe(false);
+    expect(isPositionLockedSceneReferenceFrameUiKind("moonPositionLocked")).toBe(true);
+    expect(isPositionLockedSceneReferenceFrameUiKind("sunPositionLocked")).toBe(true);
+    expect(isPositionLockedSceneReferenceFrameUiKind("sunLongitudeLocked")).toBe(false);
   });
 });
 
