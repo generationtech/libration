@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Sun-fixed and Moon latitude lock are not implemented.
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun-fixed is not implemented.
 
 ---
 
@@ -44,7 +44,7 @@ Do not conflate:
 ```text
 Physical / astronomical state     (entity lat/lon at the canonical UTC instant)
         ↓
-Scene reference-frame transform  (Earth-fixed identity or Moon longitude-lock)
+Scene reference-frame transform  (Earth-fixed identity, Moon longitude-lock, or Moon position-lock)
         ↓
 Map projection                   (equirectangular; spatial truth)
         ↓
@@ -60,7 +60,7 @@ This is a separation of responsibilities, not a required class diagram. Prefer t
 | Stage | Mutates physical/entity state? | Mutates time? | Lives with |
 |-------|--------------------------------|---------------|------------|
 | Astronomy / lifecycle | No — it *is* that state | No — consumes `TimeContext.now` | Layers, `src/core/` |
-| Scene reference frame | No | No | Transform **before** projection (Earth-fixed or Moon longitude-lock) |
+| Scene reference frame | No | No | Transform **before** projection (Earth-fixed, Moon longitude-lock, or Moon position-lock) |
 | Projection | No | No | `src/core/equirectangularProjection.ts` |
 | Scene camera | No | No | Runtime view state on the scene path |
 | Chrome | No | No | Screen-space; not camera-transformed |
@@ -101,7 +101,7 @@ Raster layers (`imageBlit`, illumination `rasterPatch`, Clouds) currently dest-b
 | `scene.viewMode` = `fullWorldFixed` | `SceneConfig` | Yes |
 | `scene.projectionId` = `equirectangular` | `SceneConfig` | Yes |
 | Scene camera | Runtime `SceneCamera` on `SceneRenderInput` (`scale`, `centerU`, `centerV`) | No (LIB-080) |
-| Scene/map reference frame | Runtime `SceneReferenceFrame` on `SceneRenderInput` (Earth-fixed default; Moon longitude-lock) | No (LIB-082 / LIB-083) |
+| Scene/map reference frame | Runtime `SceneReferenceFrame` on `SceneRenderInput` (Earth-fixed default; Moon longitude-lock; Moon position-lock) | No (LIB-082 / LIB-083 / LIB-084) |
 | Pointer scene CSS | `App.tsx` ref; earthquake hover only | No |
 | Demo playback | Runtime ref | Transport not persisted |
 
@@ -164,7 +164,7 @@ SceneCamera = {
 1. Shell holds camera in a runtime ref (same family as demo playback and pointer CSS), default identity.
 2. Each frame, camera is attached to `SceneRenderInput` (or an equivalent view context built next to `sceneLayerViewportPx`).
 3. `CanvasRenderBackend` passes it into existing plan builders. It still must not read `SceneConfig` to invent camera behaviour.
-4. Plan builders: transform canonical lon/lat through the scene/map reference frame (Earth-fixed identity or Moon longitude-lock), project with the existing helpers onto the **identity world strip**, then apply the camera similarity (uniform scale about `centerU/V` into the scene rect). Raster dest rects use the same camera transform plus, under Moon longitude-lock, a continuous horizontal strip shift. Clip remains the scene strip.
+4. Plan builders: transform canonical lon/lat through the scene/map reference frame (Earth-fixed identity, Moon longitude-lock, or Moon position-lock), project with the existing helpers onto the **identity world strip**, then apply the camera similarity (uniform scale about `centerU/V` into the scene rect). Raster dest rects use the same camera transform plus, under Moon-anchored frames, a continuous horizontal strip shift and, under position-lock, a vertical dest shift with no vertical wrap. Clip remains the scene strip.
 5. Inverse camera + inverse projection + inverse frame for pointer hit-testing (earthquake hover today uses the shared forward mapping, which includes the frame).
 
 A1 may only *expose* scale. The struct should still include centre so pan is not a redesign, and so zoom-about-pointer can keep a projected point stable without calling that “pan navigation.”
@@ -175,19 +175,19 @@ A1 may only *expose* scale. The struct should still include centre so pan is not
 - Layer payloads (subsolar/sublunar points, tracks, loci, eclipse geography, ISS, planets, Clouds bytes).
 - `SceneConfig` composition, base-map family, illumination policy.
 - Chrome layout and drawing.
-- Scene reference-frame transform (Earth-fixed identity; Moon longitude-lock).
+- Scene reference-frame transform (Earth-fixed identity; Moon longitude-lock; Moon position-lock).
 - Persistence and URL/shareable view (Phase E).
 
 ---
 
-## 6. Scene reference frame (LIB-082 / LIB-083)
+## 6. Scene reference frame (LIB-082 / LIB-083 / LIB-084)
 
 A scene/map reference frame transforms **already-computed** geographic positions **before** projection. It is not a camera, not a projection parameter, and not civil-time reference.
 
 ```text
 canonical physical / geographic lon/lat
         ↓
-scene reference-frame transform     (Earth-fixed identity, or Moon longitude-lock)
+scene reference-frame transform     (Earth-fixed identity, Moon longitude-lock, or Moon position-lock)
         ↓
 scene-frame lon/lat
         ↓
@@ -200,7 +200,7 @@ SceneCamera (pan, zoom, horizontal wrap)
 
 **Projection is separate.** Equirectangular helpers still map scene-frame lon/lat. Do not add Moon/Sun cases to generic projection helpers.
 
-**Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. Moon longitude-lock must not write Moon coordinates into `centerU` / `centerV`.
+**Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. Moon frames must not write Moon coordinates into `centerU` / `centerV`.
 
 ### 6.1 Earth-fixed identity (default)
 
@@ -234,17 +234,38 @@ The Moon maps to scene longitude `0°` (centre of the identity strip). Latitude 
 
 **Epoch policy.** While the mode stays active, time jumps (Demo, direct selection, tour) follow the nearest equivalent of the new canonical longitude. A new scene/frame epoch reinitializes from canonical longitude: first entry, reload, switching in from Earth-fixed. Switching out clears continuous state.
 
-**Camera on switch.** Changing Earth-fixed ↔ Moon longitude-lock resets the camera to identity. Reset view resets the camera only.
+**Camera on switch.** Changing among Earth-fixed, Moon longitude-lock, and Moon position-lock resets the camera to identity. Reset view resets the camera only.
 
 **Rasters.** Shift the existing full-world equirectangular strip by `−λMoon_continuous / 360 × width` and paint periodic dest copies. Base map, illumination, and Clouds share that dest.
 
 **Global branch cut.** Independent nearest-equivalent relative longitude has a seam ~180° from the Moon. Whole-Earth presentation uses periodic copies plus seam-aware path unwrap in scene-frame longitude. Canonical antimeridian, Moon-frame antipode, and camera display wrap are distinct.
 
-**UI.** Compact runtime **Scene frame** control: Earth-fixed / Moon — longitude locked. Not a generalized selector. Latitude lock is not exposed.
+**UI.** Compact runtime **Scene frame** control: Earth-fixed / Moon — longitude locked / Moon — position locked. Not a generalized selector.
 
 See [ADR 0027](../../decisions/0027-moon-longitude-lock-is-a-scene-reference-frame.md).
 
-### 6.3 Horizontal camera wrapping ≠ reference-frame longitude continuity
+### 6.3 Moon position-lock (LIB-084)
+
+Production kind `moonAnchored` with `longitudeLocked: true` and `latitudeLocked: true`. Same kind as longitude-lock; second supported axis configuration.
+
+```text
+sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
+sceneLat = canonicalLat − moonAnchorLat
+```
+
+The Moon maps to scene `(0°, 0°)`. Scene-frame latitude is not geographic latitude and may leave ±90°. Latitude is not periodic; do not wrap, mirror, or reuse longitude seam helpers vertically.
+
+**Anchor.** Longitude continuity is unchanged from §6.2. Latitude is the current sublunar latitude; there is no latitude continuity state.
+
+**Rasters.** Horizontal shift as in §6.2, plus vertical dest shift `−moonAnchorLat / 180 × height`. No vertical copies. Beyond the translated Earth strip, the scene shows the normal background.
+
+**Projection.** Equirectangular Y mapping is linear in scene-frame latitude, including values outside geographic ±90°.
+
+**Camera.** Identity (`1, 0.5, 0.5`) is the default scene-frame view (Moon at the defined centre). Time must not write `centerV`. At scale 1, `centerV` stays 0.5; blank beyond translated Earth is accepted. At scale > 1, pan/zoom clamp against the scene-frame Earth extent, on user interaction only.
+
+See [ADR 0028](../../decisions/0028-moon-position-lock-translates-scene-frame-latitude.md).
+
+### 6.4 Horizontal camera wrapping ≠ reference-frame longitude continuity
 
 LIB-081 copies the already-projected strip so a panned camera can show the dateline. That does not unwrap an anchor that crosses ±180°.
 
@@ -266,9 +287,9 @@ Relative-longitude rule for a frame anchored at continuous `λa`:
 
 The relative result is **not** re-wrapped to ±180.
 
-Latitude is not wrapped. Latitude-relative-to-anchor behaviour is **intentionally deferred** except the type seam `latitudeLocked: false` on the Moon kind. The API does not subtract Moon latitude in LIB-083.
+Latitude is not wrapped. Moon position-lock subtracts Moon anchor latitude (LIB-084); longitude-lock does not.
 
-Sun-fixed and generic entity-fixed are **not** implemented. Moon latitude lock is the likely next slice (LIB-084).
+Sun-fixed and generic entity-fixed are **not** implemented. A later generalization should reuse anchor + locked-axis semantics rather than invent independent special modes.
 
 Entity-fixed is **not** “each frame assign camera centre to the entity.” The entity defines the origin of the scene-frame world; the user still zooms and pans with `SceneCamera`.
 
@@ -367,7 +388,7 @@ Issue IDs continue `LIB-###`. Only listed work items exist as files; later slice
 | A | A3 Camera consolidation | (incremental in A1/A2; no standalone LIB unless a gap remains) | — |
 | B | Scene reference-frame foundation (Earth-fixed identity vs transform; not camera) | [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md) | complete |
 | C | Experimental Moon longitude-locked moving map | [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md) | complete |
-| C2 | Moon latitude lock / position-locked frame | LIB-084 | unscoped |
+| C2 | Moon latitude lock / position-locked frame | [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md) | complete |
 | D | Generalized entity-fixed anchor, if C validates | — | unscoped |
 | E | Refinements | unscoped; inventory in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md#scene-view-and-projection) | — |
 
@@ -458,6 +479,14 @@ Automated: Moon scene longitude is the frame origin; latitude identity; continuo
 
 Visual: Earth-fixed regression, then Moon-frame static/animated, lunar antimeridian, antipodal seam, `lunar-track`, `lunar-locus`, `moon-libration`, solar eclipse, `solar-eclipse-dateline`, Clouds, ISS, earthquake hover, resize. The Moon stays horizontally fixed in **scene-frame** longitude (not necessarily screen-centre after pan). Latitude remains unlocked.
 
+### 12.6 Moon position-lock (C2 / LIB-084)
+
+Implemented. Earth-fixed and longitude-lock remain distinct and must still match completed LIB-083.
+
+Automated: position-lock Moon origin `(0, 0)`; longitude-lock regression (`sceneLat = canonicalLat`); latitude forward/inverse including outside ±90°; linear projection outside geographic range; raster vertical dest shared by base map and illumination; vector/raster registration; camera composition; vertical Earth-extent clamp; Reset; frame-switch; hover after both-axis translation; time progression (Earth moves, Moon stays).
+
+Visual: Earth-fixed and longitude-lock regression; position-lock static (Moon at origin, Earth translated, no vertical wrap); animated (Moon X and Y fixed, Earth both axes); standstill/extreme latitude; lunar antimeridian with latitude lock; camera independence; Clouds; ISS; earthquake; eclipse; resize.
+
 ---
 
 ## 13. Risks
@@ -477,4 +506,4 @@ Meaningful issues for implementers; not a backlog of extras.
 
 ## 14. Non-goals for the architecture phase and for A1
 
-Do not: treat this spec as permission to start unscoped slices; implement Moon latitude lock, Sun-fixed, or generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, and Moon longitude-lock are implemented (LIB-080–083).
+Do not: treat this spec as permission to start unscoped slices; implement Sun-fixed or generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, and Moon position-lock are implemented (LIB-080–084).

@@ -23,7 +23,7 @@ import {
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
   sceneXShiftForWorldCopy,
-  sceneYFromIdentityY,
+  sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
 import {
@@ -37,7 +37,6 @@ import {
 import {
   meridianLongitudesDegForEquirectGrid,
   parallelLatitudesDegForEquirectGrid,
-  parallelYFromLatitudeDeg,
 } from "../../core/equirectangularGridSampling";
 import type { RenderLineItem, RenderPlan } from "./renderPlanTypes";
 
@@ -83,8 +82,8 @@ export function buildEquirectangularGridOverlayRenderPlan(
 
   const items: RenderLineItem[] = [];
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
-  const yNorth = sceneYFromIdentityY(0, h, camera);
-  const ySouth = sceneYFromIdentityY(h, h, camera);
+  const yNorth = sceneYFromLatitudeDeg(90, h, camera, frame);
+  const ySouth = sceneYFromLatitudeDeg(-90, h, camera, frame);
 
   for (const lon of meridianLongitudesDegForEquirectGrid(options.meridianStepDeg)) {
     const baseX = sceneXFromLongitudeDeg(lon, w, camera, frame);
@@ -104,7 +103,7 @@ export function buildEquirectangularGridOverlayRenderPlan(
   }
 
   for (const lat of parallelLatitudesDegForEquirectGrid(options.parallelStepDeg)) {
-    const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lat, h), h, camera);
+    const y = sceneYFromLatitudeDeg(lat, h, camera, frame);
     const major = lat === 0;
     for (const k of copies) {
       items.push({

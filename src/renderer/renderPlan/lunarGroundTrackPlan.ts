@@ -16,9 +16,9 @@
  * Past/future polylines and unlabeled 6-hour ticks are resolved here; the backend executes primitives.
  */
 
-import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  identityYFromCanonicalLatitudeDeg,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
@@ -87,8 +87,8 @@ function pushSeamAwarePolyline(
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
     const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
     const { x0, x1 } = adjustPairToShortStripPath(raw0, raw1, w);
-    const y0 = parallelYFromLatitudeDeg(points[i]!.latDeg, h);
-    const y1 = parallelYFromLatitudeDeg(points[i + 1]!.latDeg, h);
+    const y0 = identityYFromCanonicalLatitudeDeg(points[i]!.latDeg, h, frame);
+    const y1 = identityYFromCanonicalLatitudeDeg(points[i + 1]!.latDeg, h, frame);
     if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
       continue;
     }

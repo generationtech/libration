@@ -39,7 +39,7 @@ These themes are the product’s intended future shape. They become work only wh
 | A3 | Camera consolidation | Incremental in A1/A2; no standalone LIB unless a gap remains |
 | B | Scene reference-frame foundation (not camera-follow) | [LIB-082](work/LIB-082-scene-reference-frame-foundation.md) complete |
 | C | Experimental Moon longitude-locked moving map | [LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md) complete |
-| C2 | Moon latitude lock / position-locked frame | Unscoped (LIB-084 when approved) |
+| C2 | Moon latitude lock / position-locked frame | [LIB-084](work/LIB-084-moon-position-locked-scene-frame.md) complete |
 | D | Generalized entity-fixed, if C validates | Unscoped |
 | E | Persistence, URL view, rotation, semantic zoom, tiles, globe, … | Unscoped; [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection) |
 

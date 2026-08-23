@@ -12,20 +12,24 @@
  */
 
 /**
- * Runtime policy for the Moon longitude-locked scene frame (LIB-083).
+ * Runtime policy for Moon-anchored scene frames (LIB-083 longitude-lock,
+ * LIB-084 position-lock).
  *
  * Continuity:
- * - While Moon longitude-lock remains active, each new canonical sublunar
+ * - While a Moon-anchored frame remains active, each new canonical sublunar
  *   longitude follows the previous continuous anchor (nearest equivalent).
  *   Ordinary animation, Demo/high-speed time, direct time selection, and
  *   jumps all use this path so the map does not jump ~360° at ±180°.
  * - A new scene/frame epoch reinitializes from the canonical longitude
- *   (no multi-turn carry): first entry into Moon longitude-lock, reload,
- *   and switching back from Earth-fixed. Demo start/reset while already in
- *   Moon longitude-lock still follows (a time jump, not a new frame epoch).
+ *   (no multi-turn carry): first entry into a Moon-anchored frame, reload,
+ *   and switching among Earth-fixed / longitude-lock / position-lock.
+ *   Demo start/reset while already in a Moon-anchored frame still follows
+ *   (a time jump, not a new frame epoch).
+ * - Latitude has no continuity state: it is the current sublunar latitude.
  *
- * Camera: switching Earth-fixed ↔ Moon longitude-lock resets the camera to
- * identity. Reset view resets the camera only and does not change the frame.
+ * Camera: switching among the three production frame configurations resets
+ * the camera to identity. Reset view resets the camera only and does not
+ * change the frame.
  */
 
 import { IDENTITY_SCENE_CAMERA, type SceneCamera } from "./sceneCamera";
@@ -34,12 +38,21 @@ import {
   rebaseContinuousLongitudeDeg,
 } from "./longitudeContinuity";
 
-export type SceneReferenceFrameUiKind = "earthFixed" | "moonLongitudeLocked";
+export type SceneReferenceFrameUiKind =
+  | "earthFixed"
+  | "moonLongitudeLocked"
+  | "moonPositionLocked";
 
 export type MoonAnchorEpochPolicy = "follow" | "reinitialize";
 
+export function isMoonAnchoredSceneReferenceFrameUiKind(
+  kind: SceneReferenceFrameUiKind,
+): boolean {
+  return kind === "moonLongitudeLocked" || kind === "moonPositionLocked";
+}
+
 /**
- * Advance or replace the continuous lunar anchor.
+ * Advance or replace the continuous lunar longitude anchor.
  *
  * `previousContinuousLonDeg === null` always reinitializes (no prior epoch).
  */
@@ -58,9 +71,9 @@ export function nextMoonAnchorContinuousLonDeg(args: {
 }
 
 /**
- * Switching the production scene-frame kind recenters to the identity view of
- * the destination frame so a leftover pan/zoom is not re-interpreted in a
- * different coordinate system. Scale is not preserved.
+ * Switching the production scene-frame configuration recenters to the identity
+ * view of the destination frame so a leftover pan/zoom is not re-interpreted
+ * in a different coordinate system. Scale is not preserved.
  */
 export function sceneCameraAfterReferenceFrameKindChange(): SceneCamera {
   return IDENTITY_SCENE_CAMERA;

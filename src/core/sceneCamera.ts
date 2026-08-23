@@ -17,15 +17,15 @@
  *
  * This is a view, not a projection and not a scene/map reference frame.
  * Canonical lon/lat pass through the scene/map reference frame (Earth-fixed
- * identity or Moon longitude-lock), then {@link mapXFromLongitudeDeg} /
+ * identity, Moon longitude-lock, or Moon position-lock), then {@link mapXFromLongitudeDeg} /
  * {@link mapYFromLatitudeDeg} onto the identity world strip; the camera then
  * maps that strip into scene CSS. Do not encode a frame by writing Moon/Sun
  * coordinates into `centerU` / `centerV`.
  *
  * Centre is normalized projected space, not CSS pixels, so resize reapplies
  * the same camera to the new scene rect. `centerU` is continuous / unwrapped
- * (horizontal world is periodic). `centerV` is clamped so the viewport stays
- * inside the supported latitude extent. Not persisted.
+ * (horizontal world is periodic). `centerV` is clamped against the active
+ * frame's scene-frame Earth extent. Not persisted.
  */
 
 import {
@@ -38,8 +38,11 @@ import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   canonicalLonLatToSceneFrame,
   isIdentitySceneReferenceFrame,
+  isMoonPositionLockedSceneReferenceFrame,
+  sceneFrameLatitudeDeg,
   sceneFrameLonLatToCanonical,
   sceneFrameRasterIdentityOriginX,
+  sceneFrameRasterIdentityOriginY,
   type SceneReferenceFrame,
 } from "./sceneReferenceFrame";
 
@@ -82,6 +85,31 @@ export const IDENTITY_SCENE_CAMERA: SceneCamera = {
   centerV: 0.5,
 };
 
+/**
+ * Normalized projected-Y interval occupied by the geographic Earth under the
+ * active scene frame. Earth-fixed and Moon longitude-lock keep `[0, 1]`.
+ * Moon position-lock translates that interval by `anchorLat / 180`.
+ */
+export type SceneCameraVerticalExtent = {
+  readonly vMin: number;
+  readonly vMax: number;
+};
+
+export const IDENTITY_WORLD_VERTICAL_EXTENT: SceneCameraVerticalExtent = {
+  vMin: 0,
+  vMax: 1,
+};
+
+export function sceneCameraVerticalExtentFromFrame(
+  frame: SceneReferenceFrame,
+): SceneCameraVerticalExtent {
+  if (!isMoonPositionLockedSceneReferenceFrame(frame)) {
+    return IDENTITY_WORLD_VERTICAL_EXTENT;
+  }
+  const vMin = frame.anchorLatDeg / 180;
+  return { vMin, vMax: vMin + 1 };
+}
+
 export function isIdentitySceneCamera(camera: SceneCamera): boolean {
   return (
     camera.scale <= SCENE_CAMERA_MIN_SCALE + IDENTITY_EPS &&
@@ -96,21 +124,38 @@ function finiteOr(value: number, fallback: number): number {
 
 /**
  * Clamp scale to [1, 8] and keep the visible vertical window inside the
- * identity world. Horizontal centre is not clamped: the projected world is
- * periodic in longitude.
+ * supported Earth extent. Horizontal centre is not clamped: the projected
+ * world is periodic in longitude.
+ *
+ * At scale 1, `centerV` stays 0.5 (identity scene-frame view) even when
+ * position-lock has translated Earth so it no longer fills the strip.
+ * Blank beyond terrestrial latitude is the scene background. Do not rewrite
+ * `centerV` from Moon latitude on time ticks — this clamp runs on user
+ * pan/zoom only.
+ *
+ * At scale > 1 the visible window is smaller than Earth, so pan is clamped
+ * to the scene-frame Earth interval (`verticalExtent`) rather than hard-coded
+ * geographic `[0, 1]`.
  */
-export function clampSceneCamera(camera: SceneCamera): SceneCamera {
+export function clampSceneCamera(
+  camera: SceneCamera,
+  verticalExtent: SceneCameraVerticalExtent = IDENTITY_WORLD_VERTICAL_EXTENT,
+): SceneCamera {
   const scale = Math.min(
     SCENE_CAMERA_MAX_SCALE,
     Math.max(SCENE_CAMERA_MIN_SCALE, finiteOr(camera.scale, SCENE_CAMERA_MIN_SCALE)),
   );
   const half = 0.5 / scale;
-  const lo = half;
-  const hi = 1 - half;
+  const vMin = Number.isFinite(verticalExtent.vMin) ? verticalExtent.vMin : 0;
+  const vMax = Number.isFinite(verticalExtent.vMax) ? verticalExtent.vMax : 1;
+  const lo = scale <= SCENE_CAMERA_MIN_SCALE + IDENTITY_EPS ? 0.5 : vMin + half;
+  const hi = scale <= SCENE_CAMERA_MIN_SCALE + IDENTITY_EPS ? 0.5 : vMax - half;
+  const centerVRaw = finiteOr(camera.centerV, 0.5);
+  const centerV = lo <= hi ? Math.min(hi, Math.max(lo, centerVRaw)) : 0.5;
   return {
     scale,
     centerU: finiteOr(camera.centerU, 0.5),
-    centerV: Math.min(hi, Math.max(lo, finiteOr(camera.centerV, 0.5))),
+    centerV,
   };
 }
 
@@ -193,6 +238,18 @@ export function sceneXFromLongitudeDeg(
 }
 
 /**
+ * Canonical geographic latitude → identity-world Y (before camera).
+ * Applies the scene-frame latitude transform; does not wrap.
+ */
+export function identityYFromCanonicalLatitudeDeg(
+  latDeg: number,
+  heightPx: number,
+  frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
+): number {
+  return mapYFromLatitudeDeg(sceneFrameLatitudeDeg(latDeg, frame), heightPx);
+}
+
+/**
  * Canonical geographic latitude → scene CSS y.
  * Earth-fixed identity short-circuits. Latitude is not wrapped.
  */
@@ -253,16 +310,18 @@ export function sceneDestRectFromIdentityWorld(
   heightPx: number,
   camera: SceneCamera,
   identityOriginX = 0,
+  identityOriginY = 0,
 ): { x: number; y: number; width: number; height: number } {
   const w = Math.max(0, widthPx);
   const h = Math.max(0, heightPx);
   const originX = Number.isFinite(identityOriginX) ? identityOriginX : 0;
-  if (isIdentitySceneCamera(camera) && originX === 0) {
+  const originY = Number.isFinite(identityOriginY) ? identityOriginY : 0;
+  if (isIdentitySceneCamera(camera) && originX === 0 && originY === 0) {
     return { x: 0, y: 0, width: w, height: h };
   }
   return {
     x: sceneXFromIdentityX(originX, w, camera),
-    y: sceneYFromIdentityY(0, h, camera),
+    y: sceneYFromIdentityY(originY, h, camera),
     width: w * camera.scale,
     height: h * camera.scale,
   };
@@ -344,7 +403,8 @@ export function sceneDestRectsFromIdentityWorldWrapped(
   frame: SceneReferenceFrame = EARTH_FIXED_SCENE_REFERENCE_FRAME,
 ): readonly { x: number; y: number; width: number; height: number }[] {
   const originX = sceneFrameRasterIdentityOriginX(widthPx, frame);
-  const base = sceneDestRectFromIdentityWorld(widthPx, heightPx, camera, originX);
+  const originY = sceneFrameRasterIdentityOriginY(heightPx, frame);
+  const base = sceneDestRectFromIdentityWorld(widthPx, heightPx, camera, originX, originY);
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, widthPx, 0, originX);
   if (copies.length === 1 && copies[0] === 0) {
     return [base];
@@ -391,18 +451,23 @@ export function panSceneCameraBySceneDelta(args: {
   deltaSceneY: number;
   widthPx: number;
   heightPx: number;
+  verticalExtent?: SceneCameraVerticalExtent;
 }): SceneCamera {
   const w = Math.max(0, args.widthPx);
   const h = Math.max(0, args.heightPx);
   const scale = args.camera.scale;
+  const extent = args.verticalExtent ?? IDENTITY_WORLD_VERTICAL_EXTENT;
   if (!(w > 0) || !(h > 0) || !(scale > 0)) {
-    return clampSceneCamera(args.camera);
+    return clampSceneCamera(args.camera, extent);
   }
-  return clampSceneCamera({
-    scale,
-    centerU: args.camera.centerU - args.deltaSceneX / (scale * w),
-    centerV: args.camera.centerV - args.deltaSceneY / (scale * h),
-  });
+  return clampSceneCamera(
+    {
+      scale,
+      centerU: args.camera.centerU - args.deltaSceneX / (scale * w),
+      centerV: args.camera.centerV - args.deltaSceneY / (scale * h),
+    },
+    extent,
+  );
 }
 
 export function sceneCameraFromWheelDelta(
@@ -437,12 +502,14 @@ export function zoomSceneCameraAboutScenePoint(args: {
   sceneY: number;
   widthPx: number;
   heightPx: number;
+  verticalExtent?: SceneCameraVerticalExtent;
 }): SceneCamera {
   const { camera, sceneX, sceneY, widthPx, heightPx } = args;
   const w = Math.max(0, widthPx);
   const h = Math.max(0, heightPx);
+  const extent = args.verticalExtent ?? IDENTITY_WORLD_VERTICAL_EXTENT;
   if (!(w > 0) || !(h > 0)) {
-    return clampSceneCamera({ ...camera, scale: args.nextScale });
+    return clampSceneCamera({ ...camera, scale: args.nextScale }, extent);
   }
   const u = identityXFromSceneX(sceneX, w, camera) / w;
   const v = identityYFromSceneY(sceneY, h, camera) / h;
@@ -450,9 +517,12 @@ export function zoomSceneCameraAboutScenePoint(args: {
     SCENE_CAMERA_MAX_SCALE,
     Math.max(SCENE_CAMERA_MIN_SCALE, finiteOr(args.nextScale, camera.scale)),
   );
-  return clampSceneCamera({
-    scale: nextScale,
-    centerU: u - (sceneX - w * 0.5) / (nextScale * w),
-    centerV: v - (sceneY - h * 0.5) / (nextScale * h),
-  });
+  return clampSceneCamera(
+    {
+      scale: nextScale,
+      centerU: u - (sceneX - w * 0.5) / (nextScale * w),
+      centerV: v - (sceneY - h * 0.5) / (nextScale * h),
+    },
+    extent,
+  );
 }

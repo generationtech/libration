@@ -16,7 +16,7 @@
  * wrapped world copies so a dateline-crossing polygon does not span the map.
  */
 
-import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
+import { mapYFromLatitudeDeg } from "../../core/equirectangularProjection";
 import {
   IDENTITY_SCENE_CAMERA,
   sceneCameraHorizontalWorldCopyOffsets,
@@ -27,6 +27,7 @@ import {
 } from "../../core/sceneCamera";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  sceneFrameLatitudeDeg,
   sceneFrameLongitudesDeg,
   type SceneReferenceFrame,
 } from "../../core/sceneReferenceFrame";
@@ -116,7 +117,7 @@ function pathForCopy(
       w,
       camera,
     );
-    const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lats[i]!, h), h, camera);
+    const y = sceneYFromIdentityY(mapYFromLatitudeDeg(lats[i]!, h), h, camera);
     if (!Number.isFinite(x) || !Number.isFinite(y)) {
       continue;
     }
@@ -162,18 +163,20 @@ export function equirectRingToPathDescriptors(
   const frame = options?.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
   const rawLons = sceneFrameLongitudesDeg(ring.map((p) => p.lonDeg), frame);
   const span = circularLongitudeSpanDeg(rawLons);
-  const lats = ring.map((p) => p.latDeg);
+  const canonicalLats = ring.map((p) => p.latDeg);
+  const lats = canonicalLats.map((latDeg) => sceneFrameLatitudeDeg(latDeg, frame));
   let useLats = lats;
   let useLons =
     span > 270 ? unwrappedLongitudes(rawLons) : foldLongitudesIntoSmallestArc(rawLons);
   if (span > 270) {
-    const meanLat = lats.reduce((s, v) => s + v, 0) / lats.length;
+    const meanLat = canonicalLats.reduce((s, v) => s + v, 0) / canonicalLats.length;
     const hinted = options?.polarCloseLatDeg;
     const poleLat =
       typeof hinted === "number" && Number.isFinite(hinted) ? hinted : meanLat < 0 ? -90 : 90;
     const lo = Math.min(...useLons);
     const hi = Math.max(...useLons);
-    useLats = [...lats, poleLat, poleLat, lats[0]!];
+    const poleSceneLat = sceneFrameLatitudeDeg(poleLat, frame);
+    useLats = [...lats, poleSceneLat, poleSceneLat, lats[0]!];
     useLons = [...useLons, hi, lo, useLons[0]!];
   }
   const copies: EquirectProjectedCopy[] = [];
@@ -198,7 +201,7 @@ export function equirectPolylineToPathDescriptors(
   if (w <= 0 || h <= 0 || points.length < 2) {
     return [];
   }
-  const lats = points.map((p) => p.latDeg);
+  const lats = points.map((p) => sceneFrameLatitudeDeg(p.latDeg, frame));
   const lons = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies: EquirectProjectedCopy[] = [];
   for (const offset of longitudeOffsetsForCameraWorldCopies(camera, w)) {
@@ -212,7 +215,7 @@ export function equirectPolylineToPathDescriptors(
         w,
         camera,
       );
-      const y = sceneYFromIdentityY(parallelYFromLatitudeDeg(lats[i]!, h), h, camera);
+      const y = sceneYFromIdentityY(mapYFromLatitudeDeg(lats[i]!, h), h, camera);
       if (!Number.isFinite(x) || !Number.isFinite(y)) {
         continue;
       }

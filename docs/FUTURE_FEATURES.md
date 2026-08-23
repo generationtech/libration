@@ -356,13 +356,13 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon longitude-lock is implemented ([LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md)). Moon latitude lock / position-lock (LIB-084) and Sun-fixed remain on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start LIB-084 or Sun-fixed work from this file.
+Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon longitude-lock is implemented ([LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md)); Moon position-lock is implemented ([LIB-084](work/LIB-084-moon-position-locked-scene-frame.md)). Sun-fixed and generic entity-fixed remain on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start Sun-fixed or generic entity-fixed work from this file.
 
 This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 
-Candidates not absorbed by the camera / Moon-longitude sequence:
+Candidates not absorbed by the camera / Moon-frame sequence:
 
-- Moon latitude lock / full Moon position-lock (the likely next slice: same `moonAnchored` kind with `latitudeLocked: true`).
+- Generalize anchor + axis-lock semantics beyond Moon-specific production types (evaluate whether the existing shape becomes `anchor = Moon | Sun | future entity` with `lockLongitude` / `lockLatitude`, or a more type-safe equivalent).
 - Sun-fixed frame; generic entity-fixed beyond the Moon experiment.
 - polished scene reference-frame selector UI; animated transitions between Earth-fixed and entity-fixed.
 - full-world fixed view with additional aspect rules beyond the current scene-strip stretch.

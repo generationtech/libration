@@ -46,4 +46,4 @@ A naive implementation would write the Moon’s longitude into `SceneCamera.cent
 - Three seam concerns (canonical dateline, Moon-frame antipode, camera wrap) must stay aligned.
 - Chrome structural meridians remain a full-world Earth-fixed ruler and will not track the Moon-relative map.
 
-**Non-decisions.** Moon latitude lock, Sun-fixed frames, generic anchors, frame persistence, map rotation, and heading lock are not authorized here.
+**Non-decisions.** Sun-fixed frames, generic anchors, frame persistence, map rotation, and heading lock are not authorized here. Moon latitude lock / position-lock is decided in [ADR 0028](0028-moon-position-lock-translates-scene-frame-latitude.md).

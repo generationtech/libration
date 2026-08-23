@@ -145,6 +145,7 @@ import {
   isIdentitySceneCamera,
   panSceneCameraBySceneDelta,
   sceneCameraFromWheelDelta,
+  sceneCameraVerticalExtentFromFrame,
   wheelDeltaYToPixels,
   zoomSceneCameraAboutScenePoint,
   type SceneCamera,
@@ -157,9 +158,11 @@ import { sublunarPoint } from "./core/sublunarPoint";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   moonLongitudeLockedSceneReferenceFrame,
+  moonPositionLockedSceneReferenceFrame,
   type SceneReferenceFrame,
 } from "./core/sceneReferenceFrame";
 import {
+  isMoonAnchoredSceneReferenceFrameUiKind,
   nextMoonAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
   type SceneReferenceFrameUiKind,
@@ -884,7 +887,7 @@ export default function App() {
           ),
         ),
       });
-      if (sceneFrameKindRef.current === "moonLongitudeLocked") {
+      if (isMoonAnchoredSceneReferenceFrameUiKind(sceneFrameKindRef.current)) {
         const moon = sublunarPoint(time.now);
         const continuous = nextMoonAnchorContinuousLonDeg({
           previousContinuousLonDeg: moonAnchorContinuousLonRef.current,
@@ -892,7 +895,10 @@ export default function App() {
           policy: "follow",
         });
         moonAnchorContinuousLonRef.current = continuous;
-        sceneReferenceFrameRef.current = moonLongitudeLockedSceneReferenceFrame(continuous);
+        sceneReferenceFrameRef.current =
+          sceneFrameKindRef.current === "moonPositionLocked"
+            ? moonPositionLockedSceneReferenceFrame(continuous, moon.latDeg)
+            : moonLongitudeLockedSceneReferenceFrame(continuous, moon.latDeg);
       } else {
         moonAnchorContinuousLonRef.current = null;
         sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
@@ -1290,6 +1296,9 @@ export default function App() {
               deltaSceneY: dy,
               widthPx: layout.scene.width,
               heightPx: layout.scene.height,
+              verticalExtent: sceneCameraVerticalExtentFromFrame(
+                sceneReferenceFrameRef.current,
+              ),
             });
             setCanvasCursor(scenePt, true);
             return;
@@ -1355,6 +1364,9 @@ export default function App() {
         sceneY: scenePt.y,
         widthPx: layout.scene.width,
         heightPx: layout.scene.height,
+        verticalExtent: sceneCameraVerticalExtentFromFrame(
+          sceneReferenceFrameRef.current,
+        ),
       });
       sceneCameraRef.current = next;
       setCameraIsIdentity(isIdentitySceneCamera(next));
@@ -1444,6 +1456,7 @@ export default function App() {
         >
           <option value="earthFixed">Earth-fixed</option>
           <option value="moonLongitudeLocked">Moon — longitude locked</option>
+          <option value="moonPositionLocked">Moon — position locked</option>
         </select>
       </label>
       <button

@@ -17,9 +17,9 @@
  * Wrapped copies keep the figure associated with the Moon near ±180°.
  */
 
-import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  identityYFromCanonicalLatitudeDeg,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneCameraVectorWrapSlopPx,
   sceneXFromIdentityX,
@@ -130,7 +130,6 @@ function pushWrappedOpenPolyline(
   }
   const n = points.length;
   const moonLon = sceneFrameLongitudeDeg(points[0]!.lonDeg, frame);
-  const moonLat = points[0]!.latDeg;
   const moonR = moonRadiusPx * 0.75;
   for (const offset of longitudeOffsetsForCameraWorldCopies(camera, w)) {
     const moonX = sceneXFromIdentityX(
@@ -138,7 +137,11 @@ function pushWrappedOpenPolyline(
       w,
       camera,
     );
-    const moonY = sceneYFromIdentityY(parallelYFromLatitudeDeg(moonLat, h), h, camera);
+    const moonY = sceneYFromIdentityY(
+      identityYFromCanonicalLatitudeDeg(points[0]!.latDeg, h, frame),
+      h,
+      camera,
+    );
     const moonOnScreen =
       Number.isFinite(moonX) &&
       Number.isFinite(moonY) &&
@@ -155,8 +158,8 @@ function pushWrappedOpenPolyline(
         sceneFrameLongitudeDeg(points[i + 1]!.lonDeg, frame) + offset,
         w,
       );
-      const iy0 = parallelYFromLatitudeDeg(points[i]!.latDeg, h);
-      const iy1 = parallelYFromLatitudeDeg(points[i + 1]!.latDeg, h);
+      const iy0 = identityYFromCanonicalLatitudeDeg(points[i]!.latDeg, h, frame);
+      const iy1 = identityYFromCanonicalLatitudeDeg(points[i + 1]!.latDeg, h, frame);
       if (!Number.isFinite(ix0) || !Number.isFinite(ix1)) {
         continue;
       }

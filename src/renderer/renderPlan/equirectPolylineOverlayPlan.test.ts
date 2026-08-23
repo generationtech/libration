@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./equirectPolylineOverlayPlan";
-import { moonLongitudeLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
+import { moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 
 describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
   it("emits at least one line for an open two-point path", () => {
@@ -129,6 +129,30 @@ describe("Moon longitude-lock polyline seams", () => {
         continue;
       }
       expect(Math.abs(item.x2 - item.x1)).toBeLessThan(360 * 0.5);
+    }
+  });
+});
+
+describe("Moon position-lock polyline latitude", () => {
+  it("shifts geographic latitude by the Moon anchor without vertical wrapping", () => {
+    const frame = moonPositionLockedSceneReferenceFrame(0, 30);
+    const plan = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame,
+      points: [
+        { latDeg: 0, lonDeg: -10 },
+        { latDeg: 0, lonDeg: 10 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+    });
+    const line = plan.items.find((item) => item.kind === "line");
+    expect(line?.kind).toBe("line");
+    if (line?.kind === "line") {
+      const expectedY = ((90 - -30) / 180) * 180;
+      expect(line.y1).toBeCloseTo(expectedY, 8);
+      expect(line.y2).toBeCloseTo(expectedY, 8);
     }
   });
 });

@@ -17,7 +17,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 1. **Physical / astronomical state** is computed at the canonical UTC instant and is not modified by viewing. Entity lat/lon, tracks, loci, illumination geometry, and lifecycle snapshots do not change because the user zoomed or panned.
 
-2. **Scene reference frame** is a transform of that state into the coordinates that projection consumes. Earth-fixed is identity, is the default, and remains a production frame ([LIB-082](../work/LIB-082-scene-reference-frame-foundation.md)). Moon longitude-lock ([LIB-083](../work/LIB-083-moon-longitude-locked-scene-frame.md), [ADR 0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md)) is the first non-Earth-fixed production kind: longitude is locked to a continuous lunar subpoint; latitude remains physical. Entity-fixed must not be implemented by overwriting camera centre each frame.
+2. **Scene reference frame** is a transform of that state into the coordinates that projection consumes. Earth-fixed is identity, is the default, and remains a production frame ([LIB-082](../work/LIB-082-scene-reference-frame-foundation.md)). Moon longitude-lock ([LIB-083](../work/LIB-083-moon-longitude-locked-scene-frame.md), [ADR 0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md)) and Moon position-lock ([LIB-084](../work/LIB-084-moon-position-locked-scene-frame.md), [ADR 0028](0028-moon-position-lock-translates-scene-frame-latitude.md)) are the production non-Earth-fixed kinds on the same `moonAnchored` type. Entity-fixed must not be implemented by overwriting camera centre each frame.
 
 3. **Projection** remains spatial truth. Equirectangular full-world mapping is unchanged by zoom or pan. Camera is not a projection parameter and not a new `projectionId`.
 
@@ -27,7 +27,7 @@ Civil time already has a “reference frame” (display mode, IANA zone, referen
 
 6. **Zoom is implemented as a view transform at `RenderPlan` construction**, not as `ctx.scale` in a backend, not as a map-library viewport, and not as a persisted `viewMode` value. Camera state is runtime until a later persistence decision.
 
-Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). Zoom: [LIB-080](../work/LIB-080-scene-camera-zoom.md). Pan: [LIB-081](../work/LIB-081-scene-camera-pan.md). Reference-frame foundation (Earth-fixed identity): [LIB-082](../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock: [LIB-083](../work/LIB-083-moon-longitude-locked-scene-frame.md), [ADR 0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md).
+Intended structure: [`docs/specs/scene/camera-and-reference-frame.md`](../specs/scene/camera-and-reference-frame.md). Zoom: [LIB-080](../work/LIB-080-scene-camera-zoom.md). Pan: [LIB-081](../work/LIB-081-scene-camera-pan.md). Reference-frame foundation (Earth-fixed identity): [LIB-082](../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock: [LIB-083](../work/LIB-083-moon-longitude-locked-scene-frame.md), [ADR 0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md). Moon position-lock: [LIB-084](../work/LIB-084-moon-position-locked-scene-frame.md), [ADR 0028](0028-moon-position-lock-translates-scene-frame-latitude.md).
 
 ## Consequences
 

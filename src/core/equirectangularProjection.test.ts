@@ -19,6 +19,7 @@ import {
   computeRawDayLineSeamCenterX,
   INTERNATIONAL_DATE_LINE_LONGITUDE_DEG,
   longitudeDegFromMapX,
+  latitudeDegFromMapY,
   mapXFromLongitudeDeg,
   mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
@@ -109,6 +110,16 @@ describe("equirectangular longitude ↔ x (shared chrome + scene registration)",
     expect(mapYFromLatitudeDeg(90, 800)).toBe(0);
     expect(mapYFromLatitudeDeg(-90, 800)).toBe(800);
     expect(mapYFromLatitudeDeg(0, 800)).toBe(400);
+  });
+
+  it("projects scene-frame latitudes outside geographic ±90° linearly", () => {
+    const h = 180;
+    expect(mapYFromLatitudeDeg(108, h)).toBeCloseTo(((90 - 108) / 180) * h, 12);
+    expect(mapYFromLatitudeDeg(-108, h)).toBeCloseTo(((90 - -108) / 180) * h, 12);
+    expect(mapYFromLatitudeDeg(108, h)).toBeLessThan(0);
+    expect(mapYFromLatitudeDeg(-108, h)).toBeGreaterThan(h);
+    expect(latitudeDegFromMapY(mapYFromLatitudeDeg(108, h), h)).toBeCloseTo(108, 12);
+    expect(latitudeDegFromMapY(mapYFromLatitudeDeg(-108, h), h)).toBeCloseTo(-108, 12);
   });
 
   it("top-band tape anchor x matches scene pin x for the resolved reference meridian", () => {

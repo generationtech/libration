@@ -18,9 +18,9 @@
 
 import { parseCssColorToRgba8888 } from "../../color/contrastForegroundOnCssBackground";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont";
-import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  identityYFromCanonicalLatitudeDeg,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
@@ -61,8 +61,12 @@ function strokeRgba(css: string, alpha: number): string {
   return `rgba(${px.r}, ${px.g}, ${px.b}, ${alpha})`;
 }
 
-function mapLatToY(latDeg: number, viewportHeightPx: number): number {
-  return parallelYFromLatitudeDeg(latDeg, viewportHeightPx);
+function mapLatToY(
+  latDeg: number,
+  viewportHeightPx: number,
+  frame: SceneReferenceFrame,
+): number {
+  return identityYFromCanonicalLatitudeDeg(latDeg, viewportHeightPx, frame);
 }
 
 function pushSeamAwarePolyline(
@@ -84,8 +88,8 @@ function pushSeamAwarePolyline(
     const raw0 = equirectXFromUnwrappedLon(lons[i]!, w);
     const raw1 = equirectXFromUnwrappedLon(lons[i + 1]!, w);
     const { x0, x1 } = adjustPairToShortStripPath(raw0, raw1, w);
-    const y0 = mapLatToY(points[i]!.latDeg, h);
-    const y1 = mapLatToY(points[i + 1]!.latDeg, h);
+    const y0 = mapLatToY(points[i]!.latDeg, h, frame);
+    const y1 = mapLatToY(points[i + 1]!.latDeg, h, frame);
     if (!Number.isFinite(x0) || !Number.isFinite(x1) || !Number.isFinite(y0) || !Number.isFinite(y1)) {
       continue;
     }

@@ -23,10 +23,12 @@ import {
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
 import {
   IDENTITY_SCENE_CAMERA,
+  identityYFromCanonicalLatitudeDeg,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneXShiftForWorldCopy,
   sceneYFromIdentityY,
+  sceneYFromLatitudeDeg,
   type SceneCamera,
 } from "../../core/sceneCamera";
 import {
@@ -65,8 +67,12 @@ import {
 import { issStationGlyphPathDescriptor } from "./issStationGlyphPath";
 import { createDescriptorPathItem } from "./pathItemFactories";
 
-function mapLatToY(latDeg: number, viewportHeightPx: number): number {
-  return ((90 - latDeg) / 180) * viewportHeightPx;
+function mapLatToY(
+  latDeg: number,
+  viewportHeightPx: number,
+  frame: SceneReferenceFrame,
+): number {
+  return identityYFromCanonicalLatitudeDeg(latDeg, viewportHeightPx, frame);
 }
 
 function strokeRgba(css: string, alpha: number): string {
@@ -172,7 +178,7 @@ export function buildDynamicTracksRenderPlan(
     const markerU = unwrapLonNear(sceneFrameLongitudeDeg(marker.lonDeg, frame), nearU);
     let tipIdentityX = equirectXFromUnwrappedLon(markerU, w);
     tipIdentityX = ((tipIdentityX % w) + w) % w;
-    const tipY = sceneYFromIdentityY(mapLatToY(marker.latDeg, h), h, camera);
+    const tipY = sceneYFromLatitudeDeg(marker.latDeg, h, camera, frame);
     const r = Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, w / 1400))) * sizeScale;
     const tipCopies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
     const labelText =
@@ -353,8 +359,8 @@ function pushSeamAwarePolyline(
   const unwrapped = unwrappedLongitudes(sceneFrameLongitudesDeg(points.map((p) => p.lonDeg), frame));
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
   for (let i = 1; i < points.length; i += 1) {
-    const y0 = mapLatToY(points[i - 1]!.latDeg, h);
-    const y1 = mapLatToY(points[i]!.latDeg, h);
+    const y0 = mapLatToY(points[i - 1]!.latDeg, h, frame);
+    const y1 = mapLatToY(points[i]!.latDeg, h, frame);
     const rawX0 = equirectXFromUnwrappedLon(unwrapped[i - 1]!, w);
     const rawX1 = equirectXFromUnwrappedLon(unwrapped[i]!, w);
     const { x0, x1 } = adjustPairToShortStripPath(rawX0, rawX1, w);

@@ -11,9 +11,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-import { parallelYFromLatitudeDeg } from "../../core/equirectangularGridSampling";
 import {
   IDENTITY_SCENE_CAMERA,
+  identityYFromCanonicalLatitudeDeg,
   sceneCameraHorizontalWorldCopyOffsets,
   sceneXFromIdentityX,
   sceneYFromIdentityY,
@@ -87,8 +87,8 @@ export function buildEquirectangularPolylineOverlayRenderPlan(
     const raw0 = equirectXFromUnwrappedLon(u0, w);
     const raw1 = equirectXFromUnwrappedLon(u1, w);
     const { x0, x1 } = adjustPairToShortStripPath(raw0, raw1, w);
-    const y0 = parallelYFromLatitudeDeg(pts[i0]!.latDeg, h);
-    const y1 = parallelYFromLatitudeDeg(pts[i1]!.latDeg, h);
+    const y0 = identityYFromCanonicalLatitudeDeg(pts[i0]!.latDeg, h, frame);
+    const y1 = identityYFromCanonicalLatitudeDeg(pts[i1]!.latDeg, h, frame);
     if (!Number.isFinite(x0) || !Number.isFinite(x1)) {
       return;
     }

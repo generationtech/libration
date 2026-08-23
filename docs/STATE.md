@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md) — Moon longitude-locked scene frame (latitude unlocked). First production alternate scene reference frame. Continuous lunar anchor; whole-Earth raster/vector mapping; runtime Scene frame switch (not persisted). Earth-fixed remains the load default.
+[LIB-084](work/LIB-084-moon-position-locked-scene-frame.md) — Moon position-locked scene frame (`moonAnchored` with longitude and latitude locked). Same kind as LIB-083 longitude-lock; second axis configuration. Scene-frame latitude may leave geographic ±90°. Camera remains independent. Earth-fixed remains the load default.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start Moon latitude lock / position-lock (LIB-084), Sun-fixed, or generic entity-fixed. No approved work item is active.
+Do not start Sun-fixed or generic entity-fixed. Generalized anchor + axis-lock (roadmap phase D) remains unscoped.

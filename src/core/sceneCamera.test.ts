@@ -30,6 +30,7 @@ import {
   sceneCameraHorizontalWorldCopyOffsets,
   sceneDestRectFromIdentityWorld,
   sceneDestRectsFromIdentityWorldWrapped,
+  sceneCameraVerticalExtentFromFrame,
   sceneXFromIdentityX,
   sceneXFromLongitudeDeg,
   sceneXsFromLongitudeDeg,
@@ -38,6 +39,10 @@ import {
   zoomSceneCameraAboutScenePoint,
   type SceneCamera,
 } from "./sceneCamera";
+import {
+  moonLongitudeLockedSceneReferenceFrame,
+  moonPositionLockedSceneReferenceFrame,
+} from "./sceneReferenceFrame";
 
 const W = 800;
 const H = 400;
@@ -314,5 +319,39 @@ describe("scene camera raster dest and wheel", () => {
     expect(up).toBeGreaterThan(2);
     expect(down).toBeLessThan(2);
     expect(up * down).toBeCloseTo(4, 8);
+  });
+});
+
+describe("Moon position-lock camera vertical extent", () => {
+  const frame = moonPositionLockedSceneReferenceFrame(0, 28);
+  const extent = sceneCameraVerticalExtentFromFrame(frame);
+
+  it("translates Earth extent by Moon anchor latitude / 180", () => {
+    expect(extent.vMin).toBeCloseTo(28 / 180, 12);
+    expect(extent.vMax).toBeCloseTo(1 + 28 / 180, 12);
+    expect(sceneCameraVerticalExtentFromFrame(moonLongitudeLockedSceneReferenceFrame(0, 28))).toEqual(
+      { vMin: 0, vMax: 1 },
+    );
+  });
+
+  it("keeps identity centerV at scale 1 even when Earth is translated", () => {
+    const cam = clampSceneCamera({ scale: 1, centerU: 0.5, centerV: 0.9 }, extent);
+    expect(cam.centerV).toBeCloseTo(0.5, 10);
+  });
+
+  it("clamps zoomed pan to the translated Earth, not hard-coded [0, 1]", () => {
+    const north = clampSceneCamera({ scale: 2, centerU: 0.5, centerV: 0 }, extent);
+    expect(north.centerV).toBeCloseTo(extent.vMin + 0.25, 10);
+    const south = clampSceneCamera({ scale: 2, centerU: 0.5, centerV: 2 }, extent);
+    expect(south.centerV).toBeCloseTo(extent.vMax - 0.25, 10);
+  });
+
+  it("does not vertically wrap raster dest copies", () => {
+    const rects = sceneDestRectsFromIdentityWorldWrapped(W, H, IDENTITY_SCENE_CAMERA, frame);
+    expect(rects.length).toBeGreaterThan(0);
+    const ys = new Set(rects.map((r) => r.y));
+    expect(ys.size).toBe(1);
+    expect(rects[0]!.y).toBeCloseTo((28 / 180) * H, 8);
+    expect(rects[0]!.height).toBeCloseTo(H, 8);
   });
 });

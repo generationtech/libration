@@ -14,6 +14,7 @@
 import { describe, expect, it } from "vitest";
 import { IDENTITY_SCENE_CAMERA } from "./sceneCamera";
 import {
+  isMoonAnchoredSceneReferenceFrameUiKind,
   nextMoonAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
 } from "./moonLongitudeLockedAnchor";
@@ -53,5 +54,11 @@ describe("nextMoonAnchorContinuousLonDeg", () => {
 describe("scene camera after reference-frame kind change", () => {
   it("recenters to identity so a leftover pan is not re-interpreted", () => {
     expect(sceneCameraAfterReferenceFrameKindChange()).toEqual(IDENTITY_SCENE_CAMERA);
+  });
+
+  it("treats Earth-fixed, longitude-lock, and position-lock as distinct UI kinds", () => {
+    expect(isMoonAnchoredSceneReferenceFrameUiKind("earthFixed")).toBe(false);
+    expect(isMoonAnchoredSceneReferenceFrameUiKind("moonLongitudeLocked")).toBe(true);
+    expect(isMoonAnchoredSceneReferenceFrameUiKind("moonPositionLocked")).toBe(true);
   });
 });

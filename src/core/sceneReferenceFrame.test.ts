@@ -33,9 +33,15 @@ import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   canonicalLonLatToSceneFrame,
   isIdentitySceneReferenceFrame,
+  isMoonAnchoredSceneReferenceFrame,
   isMoonLongitudeLockedSceneReferenceFrame,
+  isMoonPositionLockedSceneReferenceFrame,
   moonLongitudeLockedSceneReferenceFrame,
+  moonPositionLockedSceneReferenceFrame,
+  sceneFrameLatitudeDeg,
   sceneFrameLonLatToCanonical,
+  sceneFrameRasterIdentityOriginX,
+  sceneFrameRasterIdentityOriginY,
 } from "./sceneReferenceFrame";
 
 const W = 800;
@@ -257,5 +263,144 @@ describe("Moon longitude-lock composed with camera", () => {
     expect(Math.abs(west - east)).toBeGreaterThan(350);
     expect(Math.abs(Math.abs(west) - 179)).toBeLessThan(1e-9);
     expect(Math.abs(Math.abs(east) - 179)).toBeLessThan(1e-9);
+  });
+});
+
+describe("Moon position-locked production frame", () => {
+  const moon = moonPositionLockedSceneReferenceFrame(40, 28);
+
+  it("is a production kind distinct from longitude-lock and Earth-fixed", () => {
+    expect(moon.kind).toBe("moonAnchored");
+    expect(moon.longitudeLocked).toBe(true);
+    expect(moon.latitudeLocked).toBe(true);
+    expect(isMoonPositionLockedSceneReferenceFrame(moon)).toBe(true);
+    expect(isMoonLongitudeLockedSceneReferenceFrame(moon)).toBe(false);
+    expect(isMoonAnchoredSceneReferenceFrame(moon)).toBe(true);
+    expect(isIdentitySceneReferenceFrame(moon)).toBe(false);
+    expect(
+      isMoonLongitudeLockedSceneReferenceFrame(moonLongitudeLockedSceneReferenceFrame(40, 28)),
+    ).toBe(true);
+    expect(
+      isMoonPositionLockedSceneReferenceFrame(moonLongitudeLockedSceneReferenceFrame(40, 28)),
+    ).toBe(false);
+  });
+
+  it("places the Moon at scene origin (0°, 0°)", () => {
+    const scene = canonicalLonLatToSceneFrame({ lonDeg: 40, latDeg: 28 }, moon);
+    expect(scene.sceneLonDeg).toBeCloseTo(0, 12);
+    expect(scene.sceneLatDeg).toBeCloseTo(0, 12);
+  });
+
+  it("does not make longitude-lock behave like position-lock", () => {
+    const lonOnly = moonLongitudeLockedSceneReferenceFrame(40, 28);
+    const scene = canonicalLonLatToSceneFrame({ lonDeg: 40, latDeg: 28 }, lonOnly);
+    expect(scene.sceneLonDeg).toBeCloseTo(0, 12);
+    expect(scene.sceneLatDeg).toBe(28);
+  });
+
+  it("subtracts Moon anchor latitude, including values outside geographic ±90°", () => {
+    expect(sceneFrameLatitudeDeg(80, moonPositionLockedSceneReferenceFrame(0, -28))).toBeCloseTo(
+      108,
+      12,
+    );
+    expect(sceneFrameLatitudeDeg(-80, moonPositionLockedSceneReferenceFrame(0, 28))).toBeCloseTo(
+      -108,
+      12,
+    );
+    expect(canonicalLonLatToSceneFrame({ lonDeg: 0, latDeg: 80 }, moon).sceneLatDeg).toBeCloseTo(
+      52,
+      12,
+    );
+  });
+
+  it("inverts forward mapping back to canonical geography", () => {
+    const canonical = { lonDeg: 12.5, latDeg: -33.9 };
+    const scene = canonicalLonLatToSceneFrame(canonical, moon);
+    const back = sceneFrameLonLatToCanonical(scene, moon);
+    expect(back.lonDeg).toBeCloseTo(canonical.lonDeg, 10);
+    expect(back.latDeg).toBeCloseTo(canonical.latDeg, 10);
+  });
+
+  it("inverts out-of-range scene latitudes at the geographic boundary", () => {
+    const frame = moonPositionLockedSceneReferenceFrame(0, 28);
+    const south = sceneFrameLonLatToCanonical({ sceneLonDeg: 0, sceneLatDeg: -108 }, frame);
+    expect(south.latDeg).toBeCloseTo(-80, 10);
+    const beyond = sceneFrameLonLatToCanonical({ sceneLonDeg: 0, sceneLatDeg: -130 }, frame);
+    expect(beyond.latDeg).toBe(-90);
+  });
+
+  it("keeps the Moon at scene origin as the longitude anchor follows the antimeridian", () => {
+    const canonicalAnchor = [178, 179, 180, -179, -178];
+    let continuous = canonicalAnchor[0]!;
+    for (const next of canonicalAnchor) {
+      continuous = continuousLongitudeFollowingCanonicalDeg(continuous, next);
+      const frame = moonPositionLockedSceneReferenceFrame(continuous, 12);
+      const scene = canonicalLonLatToSceneFrame({ lonDeg: next, latDeg: 12 }, frame);
+      expect(Math.abs(scene.sceneLonDeg)).toBeLessThan(1e-12);
+      expect(scene.sceneLatDeg).toBeCloseTo(0, 12);
+    }
+  });
+
+  it("moves Earth scene coordinates when the Moon latitude anchor changes, while the Moon stays at origin", () => {
+    const city = { lonDeg: 10, latDeg: 0 };
+    const t1 = moonPositionLockedSceneReferenceFrame(20, 10);
+    const t2 = moonPositionLockedSceneReferenceFrame(22, 16);
+    const moon1 = canonicalLonLatToSceneFrame({ lonDeg: 20, latDeg: 10 }, t1);
+    const moon2 = canonicalLonLatToSceneFrame({ lonDeg: 22, latDeg: 16 }, t2);
+    expect(moon1.sceneLonDeg).toBeCloseTo(0, 12);
+    expect(moon1.sceneLatDeg).toBeCloseTo(0, 12);
+    expect(moon2.sceneLonDeg).toBeCloseTo(0, 12);
+    expect(moon2.sceneLatDeg).toBeCloseTo(0, 12);
+    const city1 = canonicalLonLatToSceneFrame(city, t1);
+    const city2 = canonicalLonLatToSceneFrame(city, t2);
+    expect(city1.sceneLatDeg).toBeCloseTo(-10, 12);
+    expect(city2.sceneLatDeg).toBeCloseTo(-16, 12);
+    expect(city1.sceneLonDeg).not.toBeCloseTo(city2.sceneLonDeg, 8);
+  });
+});
+
+describe("Moon position-lock composed with camera", () => {
+  const frame = moonPositionLockedSceneReferenceFrame(90, 28);
+  const cameras: readonly { label: string; camera: SceneCamera }[] = [
+    { label: "identity camera", camera: IDENTITY_SCENE_CAMERA },
+    { label: "zoomed", camera: { scale: 2, centerU: 0.5, centerV: 0.5 } },
+    { label: "panned", camera: { scale: 1, centerU: 0.72, centerV: 0.5 } },
+    { label: "unwrapped centerU", camera: { scale: 3, centerU: 1.15, centerV: 0.42 } },
+  ];
+
+  it("puts the Moon at the scene-frame origin for every camera", () => {
+    for (const { camera } of cameras) {
+      const x = sceneXFromLongitudeDeg(90, W, camera, frame);
+      const y = sceneYFromLatitudeDeg(28, H, camera, frame);
+      const originX = sceneXFromLongitudeDeg(0, W, camera, EARTH_FIXED_SCENE_REFERENCE_FRAME);
+      const originY = sceneYFromLatitudeDeg(0, H, camera, EARTH_FIXED_SCENE_REFERENCE_FRAME);
+      expect(x).toBeCloseTo(originX, 10);
+      expect(y).toBeCloseTo(originY, 10);
+    }
+  });
+
+  it("round-trips forward then inverse under zoom, pan, and unwrapped centerU", () => {
+    for (const { camera } of cameras) {
+      const lon = -120;
+      const lat = 35;
+      const sx = sceneXFromLongitudeDeg(lon, W, camera, frame);
+      const sy = sceneYFromLatitudeDeg(lat, H, camera, frame);
+      expect(canonicalLongitudeDegFromSceneX(sx, W, camera, frame)).toBeCloseTo(lon, 8);
+      expect(canonicalLatitudeDegFromSceneY(sy, H, camera, frame)).toBeCloseTo(lat, 8);
+    }
+  });
+
+  it("registers a geographic point with the translated raster dest", () => {
+    const originX = sceneFrameRasterIdentityOriginX(W, frame);
+    const originY = sceneFrameRasterIdentityOriginY(H, frame);
+    const lon = 0;
+    const lat = 0;
+    const scene = canonicalLonLatToSceneFrame({ lonDeg: lon, latDeg: lat }, frame);
+    const expectedX = mapXFromLongitudeDeg(scene.sceneLonDeg, W);
+    const expectedY = mapYFromLatitudeDeg(scene.sceneLatDeg, H);
+    const rasterX = originX + mapXFromLongitudeDeg(lon, W);
+    const rasterY = originY + mapYFromLatitudeDeg(lat, H);
+    expect(rasterX).toBeCloseTo(expectedX, 10);
+    expect(rasterY).toBeCloseTo(expectedY, 10);
   });
 });

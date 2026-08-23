@@ -19,8 +19,14 @@
  * - scene drawing (canvas viewport width in `CanvasRenderBackend`),
  * - top-band longitude anchor and tape geometry (`buildDisplayChromeState` / `buildUtcTopScaleLayout`).
  *
- * Vertical latitude mapping is the matching linear contract (`(90 - lat) / 180 * height`):
+ * Vertical mapping is the matching linear contract (`(90 - lat) / 180 * height`):
  * y = 0 → +90°, y = heightPx → −90°. Hit-test and RenderPlan must use the same pair.
+ *
+ * These helpers map **scene-frame** lon/lat after the scene reference frame
+ * transform. Scene-frame latitude is not required to lie in geographic ±90°
+ * (Moon position-lock translates Earth). The mapping is linear and does not
+ * clamp, wrap, or reject out-of-range latitudes. Geographic ±90° validation
+ * belongs to canonical physical state, not this projection.
  */
 
 /**
@@ -36,8 +42,9 @@ export function mapXFromLongitudeDeg(lonDeg: number, widthPx: number): number {
 }
 
 /**
- * Maps geodetic latitude (degrees) to y on a full-height equirectangular strip:
- * y = 0 → +90°, y = heightPx → −90°.
+ * Maps scene-frame latitude (degrees) to y on a full-height equirectangular strip:
+ * y = 0 → +90°, y = heightPx → −90°. Linear; values outside geographic ±90°
+ * project outside `[0, heightPx]` and are not clamped or wrapped.
  */
 export function mapYFromLatitudeDeg(latDeg: number, heightPx: number): number {
   const h = Math.max(0, heightPx);
@@ -59,8 +66,9 @@ export function longitudeDegFromMapX(x: number, widthPx: number): number {
 }
 
 /**
- * Inverse of {@link mapYFromLatitudeDeg}: y on the strip → geodetic latitude (degrees).
- * y = 0 → +90°, y = heightPx → −90°.
+ * Inverse of {@link mapYFromLatitudeDeg}: y on the strip → scene-frame latitude (degrees).
+ * y = 0 → +90°, y = heightPx → −90°. Linear; y outside the strip yields
+ * latitudes outside geographic ±90°.
  */
 export function latitudeDegFromMapY(y: number, heightPx: number): number {
   const h = Math.max(0, heightPx);
