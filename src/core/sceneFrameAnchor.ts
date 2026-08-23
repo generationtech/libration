@@ -12,9 +12,9 @@
  */
 
 /**
- * Runtime policy for Moon- and Sun-anchored scene frames.
+ * Runtime policy for anchored scene frames (currently Moon and Sun).
  *
- * Continuity (same deterministic policy for both anchors):
+ * Continuity (anchor-agnostic; depends on longitude values, not body type):
  * - While an anchored frame remains active, each new canonical longitude
  *   follows the previous continuous anchor (nearest equivalent).
  *   Ordinary animation, Demo/high-speed time, direct time selection, and
@@ -25,11 +25,15 @@
  *   Demo start/reset while already in an anchored frame still follows
  *   (a time jump, not a new frame epoch).
  * - Latitude has no continuity state: it is the current sublunar or
- *   subsolar latitude for the canonical UTC instant.
+ *   subsolar latitude for the canonical UTC instant, derived explicitly
+ *   at the application boundary.
  *
  * Camera: switching among the production frame configurations resets
  * the camera to identity. Reset view resets the camera only and does not
  * change the frame.
+ *
+ * This module is not a generic entity-frame provider. Physical Moon/Sun
+ * coordinates are supplied by the caller.
  */
 
 import { IDENTITY_SCENE_CAMERA, type SceneCamera } from "./sceneCamera";
@@ -39,10 +43,8 @@ import {
 } from "./longitudeContinuity";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
-  moonLongitudeLockedSceneReferenceFrame,
-  moonPositionLockedSceneReferenceFrame,
-  sunLongitudeLockedSceneReferenceFrame,
-  sunPositionLockedSceneReferenceFrame,
+  anchoredSceneReferenceFrame,
+  type SceneFrameAnchorKind,
   type SceneReferenceFrame,
 } from "./sceneReferenceFrame";
 
@@ -53,9 +55,10 @@ export type SceneReferenceFrameUiKind =
   | "sunLongitudeLocked"
   | "sunPositionLocked";
 
-export type MoonAnchorEpochPolicy = "follow" | "reinitialize";
+export type AnchorEpochPolicy = "follow" | "reinitialize";
 
-export type AnchorEpochPolicy = MoonAnchorEpochPolicy;
+/** @deprecated Use {@link AnchorEpochPolicy}. */
+export type MoonAnchorEpochPolicy = AnchorEpochPolicy;
 
 export function isMoonAnchoredSceneReferenceFrameUiKind(
   kind: SceneReferenceFrameUiKind,
@@ -78,11 +81,20 @@ export function isAnchoredSceneReferenceFrameUiKind(
   );
 }
 
+export function sceneFrameAnchorKindFromUiKind(
+  kind: SceneReferenceFrameUiKind,
+): SceneFrameAnchorKind | null {
+  if (kind === "earthFixed") {
+    return null;
+  }
+  return isMoonAnchoredSceneReferenceFrameUiKind(kind) ? "moon" : "sun";
+}
+
 /**
  * Advance or replace a continuous longitude anchor.
  *
  * `previousContinuousLonDeg === null` always reinitializes (no prior epoch).
- * Shared by Moon and Sun; not a generic entity-frame type.
+ * Shared by every production anchor; depends on longitude values only.
  */
 export function nextAnchorContinuousLonDeg(args: {
   readonly previousContinuousLonDeg: number | null;
@@ -98,10 +110,11 @@ export function nextAnchorContinuousLonDeg(args: {
   );
 }
 
+/** @deprecated Use {@link nextAnchorContinuousLonDeg}. */
 export function nextMoonAnchorContinuousLonDeg(args: {
   readonly previousContinuousLonDeg: number | null;
   readonly nextCanonicalLonDeg: number;
-  readonly policy: MoonAnchorEpochPolicy;
+  readonly policy: AnchorEpochPolicy;
 }): number {
   return nextAnchorContinuousLonDeg(args);
 }
@@ -115,13 +128,33 @@ export function sceneReferenceFrameFromUiKind(
     case "earthFixed":
       return EARTH_FIXED_SCENE_REFERENCE_FRAME;
     case "moonLongitudeLocked":
-      return moonLongitudeLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+      return anchoredSceneReferenceFrame({
+        anchorKind: "moon",
+        lockMode: "longitude",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
     case "moonPositionLocked":
-      return moonPositionLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+      return anchoredSceneReferenceFrame({
+        anchorKind: "moon",
+        lockMode: "position",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
     case "sunLongitudeLocked":
-      return sunLongitudeLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+      return anchoredSceneReferenceFrame({
+        anchorKind: "sun",
+        lockMode: "longitude",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
     case "sunPositionLocked":
-      return sunPositionLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+      return anchoredSceneReferenceFrame({
+        anchorKind: "sun",
+        lockMode: "position",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
   }
 }
 

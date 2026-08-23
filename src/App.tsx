@@ -164,9 +164,10 @@ import {
   isAnchoredSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
+  sceneFrameAnchorKindFromUiKind,
   sceneReferenceFrameFromUiKind,
   type SceneReferenceFrameUiKind,
-} from "./core/moonLongitudeLockedAnchor";
+} from "./core/sceneFrameAnchor";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -889,10 +890,9 @@ export default function App() {
       });
       const frameKind = sceneFrameKindRef.current;
       if (isAnchoredSceneReferenceFrameUiKind(frameKind)) {
+        const anchorKind = sceneFrameAnchorKindFromUiKind(frameKind);
         const anchor =
-          frameKind === "sunLongitudeLocked" || frameKind === "sunPositionLocked"
-            ? subsolarPoint(time.now)
-            : sublunarPoint(time.now);
+          anchorKind === "sun" ? subsolarPoint(time.now) : sublunarPoint(time.now);
         const continuous = nextAnchorContinuousLonDeg({
           previousContinuousLonDeg: anchorContinuousLonRef.current,
           nextCanonicalLonDeg: anchor.lonDeg,

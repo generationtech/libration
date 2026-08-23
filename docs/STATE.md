@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-085](work/LIB-085-sun-anchored-scene-frames.md) — Sun-anchored scene frames (`sunAnchored` longitude-lock and position-lock). Same axis-lock semantics as Moon. Camera remains independent. Earth-fixed remains the load default. Generic entity-fixed was not started.
+[LIB-086](work/LIB-086-generalize-anchored-scene-reference-frames.md) — Generalized anchored scene reference frames. Production model is Earth-fixed or anchored (`anchorKind` moon|sun, `lockMode` longitude|position). Five user-visible choices unchanged. No third anchor.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start generic entity-fixed. Generalized anchor + axis-lock (roadmap phase D) remains unscoped.
+Do not start a third anchor kind, ISS-fixed, or generic entity-fixed. Await human scope.

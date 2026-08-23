@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). Generic entity-fixed is not implemented.
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). The shared anchored production model is implemented: [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md). Additional entity-fixed kinds are not implemented.
 
 ---
 
@@ -180,14 +180,14 @@ A1 may only *expose* scale. The struct should still include centre so pan is not
 
 ---
 
-## 6. Scene reference frame (LIB-082 / LIB-083 / LIB-084 / LIB-085)
+## 6. Scene reference frame (LIB-082 / LIB-083 / LIB-084 / LIB-085 / LIB-086)
 
 A scene/map reference frame transforms **already-computed** geographic positions **before** projection. It is not a camera, not a projection parameter, and not civil-time reference.
 
 ```text
 canonical physical / geographic lon/lat
         ↓
-scene reference-frame transform     (Earth-fixed identity; Moon/Sun longitude-lock or position-lock)
+scene reference-frame transform     (Earth-fixed identity; anchored longitude-lock or position-lock)
         ↓
 scene-frame lon/lat
         ↓
@@ -201,6 +201,28 @@ SceneCamera (pan, zoom, horizontal wrap)
 **Projection is separate.** Equirectangular helpers still map scene-frame lon/lat. Do not add Moon/Sun cases to generic projection helpers.
 
 **Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. Anchored frames must not write Moon or Sun coordinates into `centerU` / `centerV`.
+
+### 6.0 Production model (LIB-086)
+
+Production `SceneReferenceFrame` is:
+
+```text
+earthFixed                          identity
+
+anchored
+    anchorKind                      moon | sun
+    lockMode                        longitude | position
+    continuousAnchorLonDeg
+    anchorLatDeg
+```
+
+`lockMode: longitude` is longitude locked with latitude identity. `lockMode: position` is both axes locked. Latitude-only lock and unlocked anchored frames are not constructible.
+
+Moon and Sun are `anchorKind` values on the same architecture. Forward/inverse transform, raster dest shift, camera vertical extent, and longitude continuity branch on Earth-fixed vs anchored and on `lockMode` — not on which body is the anchor. Physical derivation remains explicit at the application boundary: canonical instant → sublunar point (Moon) or subsolar point (Sun). Runtime policy: `src/core/sceneFrameAnchor.ts`.
+
+User-visible Scene frame control still has five choices. Those UI ids map into this production type. They are not themselves transform kinds.
+
+See [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md).
 
 ### 6.1 Earth-fixed identity (default)
 
@@ -219,7 +241,7 @@ Shared mapping: `sceneXFromLongitudeDeg` / `sceneYFromLatitudeDeg` compose **fra
 
 ### 6.2 Moon longitude-lock (LIB-083)
 
-Production kind `moonAnchored` with `longitudeLocked: true` and `latitudeLocked: false`. First supported anchor-axis mode: **longitude locked, latitude unlocked**.
+User-visible Moon longitude-lock. Production: `anchored` with `anchorKind: "moon"` and `lockMode: "longitude"`.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
@@ -246,7 +268,7 @@ See [ADR 0027](../../decisions/0027-moon-longitude-lock-is-a-scene-reference-fra
 
 ### 6.3 Moon position-lock (LIB-084)
 
-Production kind `moonAnchored` with `longitudeLocked: true` and `latitudeLocked: true`. Same kind as longitude-lock; second supported axis configuration.
+User-visible Moon position-lock. Production: `anchored` with `anchorKind: "moon"` and `lockMode: "position"`. Same architecture as longitude-lock; second supported lock mode.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
@@ -267,7 +289,7 @@ See [ADR 0028](../../decisions/0028-moon-position-lock-translates-scene-frame-la
 
 ### 6.4 Sun longitude-lock (LIB-085)
 
-Production kind `sunAnchored` with `longitudeLocked: true` and `latitudeLocked: false`. Same axis-lock semantics as §6.2; second real anchor.
+User-visible Sun longitude-lock. Production: `anchored` with `anchorKind: "sun"` and `lockMode: "longitude"`. Same lock semantics as §6.2; second real `anchorKind`.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λSun_continuous) − λSun_continuous
@@ -286,7 +308,7 @@ See [ADR 0029](../../decisions/0029-sun-anchoring-reuses-moon-axis-lock.md).
 
 ### 6.5 Sun position-lock (LIB-085)
 
-Production kind `sunAnchored` with `longitudeLocked: true` and `latitudeLocked: true`. Same kind as Sun longitude-lock; second Sun axis configuration.
+User-visible Sun position-lock. Production: `anchored` with `anchorKind: "sun"` and `lockMode: "position"`. Same lock mode as §6.3; solar `anchorKind`.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λSun_continuous) − λSun_continuous
@@ -529,6 +551,16 @@ Automated: five production configurations; Sun longitude origin; Sun position or
 
 Visual: Earth-fixed and Moon regression; Sun longitude-lock static/animated; solar antimeridian; Sun position-lock static and seasonal comparison; camera independence; illumination/Clouds registration; Moon/lunar layers; ISS; earthquakes; solar eclipse total and dateline; resize.
 
+### 12.8 Shared anchored production model (LIB-086)
+
+Implemented. User-visible behaviour must match completed LIB-085. No new frame choice.
+
+Automated: Moon and Sun anchored frames share one structural type except `anchorKind`, coordinates, and `lockMode`; lock semantics independent of `anchorKind`; identical numeric anchors produce identical forward/inverse/raster/camera-extent results; Earth-fixed identity; five UI choices map to the expected production frames; retained Moon/Sun acceptance tests.
+
+Visual: five-mode regression matrix against LIB-085 (Earth-fixed, Moon longitude-lock, Moon position-lock, Sun longitude-lock, Sun position-lock); cross-anchor switching with camera reset; representative layers; camera independence; resize.
+
+A third `anchorKind` is not in scope. A future geographic-subpoint anchor would extend `SceneFrameAnchorKind` only if it satisfies the contract in [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md).
+
 ---
 
 ## 13. Risks
@@ -548,4 +580,4 @@ Meaningful issues for implementers; not a backlog of extras.
 
 ## 14. Non-goals for the architecture phase and for A1
 
-Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, and Sun anchoring are implemented (LIB-080–085).
+Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, and the shared anchored production model are implemented (LIB-080–086).

@@ -17,10 +17,11 @@
  *
  * This is a view, not a projection and not a scene/map reference frame.
  * Canonical lon/lat pass through the scene/map reference frame (Earth-fixed
- * identity, Moon/Sun longitude-lock, or Moon/Sun position-lock), then {@link mapXFromLongitudeDeg} /
+ * identity, or an anchored longitude-lock / position-lock), then {@link mapXFromLongitudeDeg} /
  * {@link mapYFromLatitudeDeg} onto the identity world strip; the camera then
- * maps that strip into scene CSS. Do not encode a frame by writing Moon/Sun
- * coordinates into `centerU` / `centerV`.
+ * maps that strip into scene CSS. Do not encode a frame by writing the
+ * anchor into `centerU` / `centerV`. Vertical extent uses lock semantics,
+ * not Moon-vs-Sun identity.
  *
  * Centre is normalized projected space, not CSS pixels, so resize reapplies
  * the same camera to the new scene rect. `centerU` is continuous / unwrapped
@@ -38,7 +39,7 @@ import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   canonicalLonLatToSceneFrame,
   isIdentitySceneReferenceFrame,
-  isLatitudeLockedSceneReferenceFrame,
+  isPositionLockedSceneReferenceFrame,
   sceneFrameLatitudeDeg,
   sceneFrameLonLatToCanonical,
   sceneFrameRasterIdentityOriginX,
@@ -103,7 +104,7 @@ export const IDENTITY_WORLD_VERTICAL_EXTENT: SceneCameraVerticalExtent = {
 export function sceneCameraVerticalExtentFromFrame(
   frame: SceneReferenceFrame,
 ): SceneCameraVerticalExtent {
-  if (!isLatitudeLockedSceneReferenceFrame(frame)) {
+  if (!isPositionLockedSceneReferenceFrame(frame)) {
     return IDENTITY_WORLD_VERTICAL_EXTENT;
   }
   const vMin = frame.anchorLatDeg / 180;

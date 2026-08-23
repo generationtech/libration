@@ -472,6 +472,12 @@ Sun-anchored scene frames: production `sunAnchored` longitude-lock and position-
 
 Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2750 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-BnY_0Jdt.js`). Cursor Browser at inner 1920×1080: Earth-fixed and Moon regression; Sun longitude-lock static (Sun x≈960) and 3600× Demo (Sun X stable, Earth moved, camera not rewritten); Sun position-lock origin at y≈574; seasonal equinox vs December solstice (Sun origin fixed, Earth vertical placement differs); `lunar-track` Moon-as-non-anchor; `solar-eclipse-total` / `solar-eclipse-dateline`; `clouds`; `iss-presentation`; `earthquake-presentation`; camera zoom/pan/reset; frame-switch camera reset; reload Earth-fixed; resize 1280×720 while zoomed.
 
+## 2026-08-23 — LIB-086 complete
+
+Generalized anchored scene reference frames: production `SceneReferenceFrame` is Earth-fixed or one `anchored` kind (`anchorKind` moon|sun, `lockMode` longitude|position). Moon/Sun are configuration of the same transform/raster/camera/continuity path. Runtime policy renamed to `sceneFrameAnchor.ts`. Five user-visible choices unchanged. ADR 0030. No third anchor.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2758 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-L7efeokj.js`). Cursor Browser at inner 1920×1080: five-mode regression vs LIB-085 (Earth-fixed, Moon longitude, Moon position, Sun longitude, Sun position); cross-anchor switching with camera reset; `clouds` / ISS / earthquakes / lunar-track / eclipse total and dateline; zoom then frame-switch; reload Earth-fixed; resize 1280×720 while zoomed in Sun position-lock.
+
 
 
 

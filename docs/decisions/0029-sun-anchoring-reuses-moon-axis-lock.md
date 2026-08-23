@@ -1,6 +1,6 @@
 # 0029 — Sun anchoring reuses Moon axis-lock; it is not a second frame theory
 
-- **Status:** Accepted
+- **Status:** Accepted; sibling-kind representation superseded by [0030](0030-anchored-scene-frames-are-one-production-kind.md)
 - **Date:** 2026-08-23
 - **Work item:** [LIB-085](../work/LIB-085-sun-anchored-scene-frames.md)
 

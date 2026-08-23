@@ -40,6 +40,7 @@ import {
   type SceneCamera,
 } from "./sceneCamera";
 import {
+  anchoredSceneReferenceFrame,
   moonLongitudeLockedSceneReferenceFrame,
   moonPositionLockedSceneReferenceFrame,
   sunLongitudeLockedSceneReferenceFrame,
@@ -389,5 +390,39 @@ describe("Sun position-lock camera vertical extent", () => {
     expect(ys.size).toBe(1);
     expect(rects[0]!.y).toBeCloseTo((23.4 / 180) * H, 8);
     expect(rects[0]!.height).toBeCloseTo(H, 8);
+  });
+});
+
+describe("camera vertical extent depends on lock semantics, not anchor kind", () => {
+  it("matches for Moon and Sun given the same numeric position-lock values", () => {
+    const moon = anchoredSceneReferenceFrame({
+      anchorKind: "moon",
+      lockMode: "position",
+      continuousAnchorLonDeg: 10,
+      anchorLatDeg: 20,
+    });
+    const sun = anchoredSceneReferenceFrame({
+      anchorKind: "sun",
+      lockMode: "position",
+      continuousAnchorLonDeg: 10,
+      anchorLatDeg: 20,
+    });
+    expect(sceneCameraVerticalExtentFromFrame(moon)).toEqual(
+      sceneCameraVerticalExtentFromFrame(sun),
+    );
+    expect(sceneCameraVerticalExtentFromFrame(moon)).toEqual({
+      vMin: 20 / 180,
+      vMax: 1 + 20 / 180,
+    });
+    expect(
+      sceneCameraVerticalExtentFromFrame(
+        anchoredSceneReferenceFrame({
+          anchorKind: "sun",
+          lockMode: "longitude",
+          continuousAnchorLonDeg: 10,
+          anchorLatDeg: 20,
+        }),
+      ),
+    ).toEqual({ vMin: 0, vMax: 1 });
   });
 });
