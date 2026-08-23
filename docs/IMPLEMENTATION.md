@@ -252,6 +252,14 @@ Marker scale is driven only by the converged intrinsic height. Row height is int
 
 ## 6. Scene and layer architecture
 
+### Scene view (2.0.0)
+
+`SceneConfig.viewMode` is persisted and currently only `fullWorldFixed`. `projectionId` is `equirectangular`. There is no scene camera. Plan builders map the full world linearly onto the scene strip (`mapXFromLongitudeDeg` / matching latitude helpers in `src/core/equirectangularProjection.ts`) and emit marker radii and stroke widths in CSS pixels. The canvas backend clips to `sceneLayerViewportPx`, then calls those builders with the strip width/height (`src/renderer/canvasRenderBackend.ts`). Resize remaps the full world to the new strip.
+
+Pointer hover (earthquakes) converts client coordinates into scene-strip CSS (`canvasClientPointToSceneCss`) and hits discs in that same identity mapping. There is no wheel zoom or drag pan. Chrome uses the same full-width longitude basis and is painted after the scene; it is not a scene layer.
+
+Intended camera and map-reference-frame evolution (not current behaviour): [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md).
+
 ### Layer contract
 
 A layer (`src/layers/types.ts`) declares a `LayerType` — one of `raster`, `vector`, `points`, `tracks`, `heatmap`, `text`, `illumination` — and produces a time-resolved state from a `TimeContext`. RenderPlan builders convert that state into primitives.
@@ -638,7 +646,7 @@ Presentation overrides (brightness, contrast, gamma, saturation) are per-family 
 
 Onboarding a new family uses `npm run maps:prep -- --update-catalog` against a curated source TIFF. Provenance, licensing, dateline-roll handling, and resampling procedure for every asset live in [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md); the curation policy lives in [`docs/maps/MAP_ASSET_STRATEGY.md`](maps/MAP_ASSET_STRATEGY.md). Do not duplicate provenance elsewhere.
 
-Base maps are **substrates**. Spatial truth is the projection (`src/core/equirectangularProjection.ts`), never the image.
+Base maps are **substrates**. Spatial truth is the projection (`src/core/equirectangularProjection.ts`), never the image. The 2.0.0 view is identity: full world fills the scene strip. Scene camera is not implemented; see [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) for the intended boundary.
 
 ---
 
@@ -735,5 +743,6 @@ Tests are colocated as `*.test.ts` / `*.test.tsx` next to the modules they cover
 - [`docs/PROJECT_STRATEGY.md`](PROJECT_STRATEGY.md) — what the product is for.
 - [`docs/specs/scene/dynamic-data-lifecycle.md`](specs/scene/dynamic-data-lifecycle.md) — the dynamic-data contract in full.
 - [`docs/specs/scene/eclipse-system.md`](specs/scene/eclipse-system.md) — Eclipse System architecture; E1–E6 are production. Remaining eclipse ideas stay unapproved in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md).
+- [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) — intended scene camera and map reference frame; zoom is not current behaviour.
 - [`docs/maps/MAP_ASSET_SOURCES.md`](maps/MAP_ASSET_SOURCES.md) — asset provenance and licensing.
 - [`docs/history/`](history/) — how the system was built, for when the *why* is not in the code.

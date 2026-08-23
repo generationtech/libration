@@ -8,7 +8,7 @@ It is not a commitment to implement anything. It is a retention document so that
 
 **It is not a status surface.** For what the product does today see [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md). Nothing here should be read as approved or scheduled work; an idea reaching this list means only that it was worth keeping.
 
-The Eclipse System (E1–E6) is production. Remaining ideas in [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy) are unapproved. The strongest remaining candidate in that family is [lunar visibility and moonlight geometry](#lunar-visibility-and-moonlight-geometry). It is not approved.
+The Eclipse System (E1–E6) is production. Remaining ideas in [Moon, Sun-Moon-Earth, and observer astronomy](#moon-sun-moon-earth-and-observer-astronomy) are unapproved. **Lunar visibility and moonlight geometry** remains the strongest candidate in that family; it is not approved. Strategic next direction is scene camera then scene reference frame ([`docs/ROADMAP.md`](ROADMAP.md)), not this inventory.
 
 ## Status vocabulary
 
@@ -23,7 +23,7 @@ Several sections describe extensions to subsystems that already exist. Those sub
 
 This family is the retained product intent from the post-[LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) architecture discussion. Moon visual development through LIB-011 is complete. The Eclipse System through E6 is production ([LIB-012](work/LIB-012-eclipse-system-architecture.md) through [LIB-019](work/LIB-019-eclipse-product-polish.md)). Ranking below is future-work preference only: it is not permission to start implementation, and it is not an E7.
 
-Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
+Strategic pointer: [`docs/ROADMAP.md`](ROADMAP.md) (preferred next is scene camera / map reference frame, not this family). Current development state: [`docs/STATE.md`](STATE.md). What already exists: [`docs/IMPLEMENTATION.md`](IMPLEMENTATION.md).
 
 ### Ranking
 
@@ -356,26 +356,34 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Blocked until scene view work is opened.
+Strategic sequence (zoom → pan → later scene reference frames) lives on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Zoom and pan are not startable from this file.
 
-Candidates:
+This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 
-- zoom.
-- pan.
-- full-world fixed view with preserved aspect rules.
+Candidates not absorbed by the camera sequence:
+
+- scene reference-frame selector UI; animated transitions between Earth-fixed and entity-fixed; generic entity-fixed beyond Moon/Sun experiments.
+- full-world fixed view with additional aspect rules beyond the current scene-strip stretch.
 - orthographic globe.
 - perspective globe.
 - Mercator.
 - Robinson.
 - Winkel Tripel.
 - projection switcher.
-- inverse projection for pointer hover.
+- inverse projection for a general pointer inspector (earthquake hover already inverts the scene mapping).
 - click-to-inspect lat/lon/time. A richer Moon inspection surface is a separate idea; see [Reference-city Moon altitude and azimuth](#reference-city-moon-altitude-and-azimuth).
-- viewport clipping.
+- viewport clipping beyond the existing scene-strip clip.
 - tile preparation.
 - high-resolution map assets.
+- camera-state persistence; URL/shareable view.
+- map rotation; heading / orientation lock.
+- semantic zoom (layer density by scale).
+- entity-relative path/trail presentation.
+- one-click reset/recenter polish beyond the zoom/pan reset requirement.
 
 ## Time and reference-frame features
+
+This section is **civil time** presentation (display mode, zone, reference city). It is not the scene/map reference frame (Earth-fixed vs entity-fixed) in [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md).
 
 Candidates:
 

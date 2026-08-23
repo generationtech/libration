@@ -20,8 +20,8 @@ Then, for ordinary implementation, read [`ARCHITECTURE.md`](ARCHITECTURE.md) and
 
 | Task | Also read |
 |------|-----------|
-| Rendering, chrome, layout | Implementation §4–5; ADRs 0001–0002; Cursor rule `010` |
-| Scene, layers, base maps | Implementation §6, §10; `docs/maps/`; Cursor rule `030` |
+| Rendering, chrome, layout | Implementation §4–5; ADRs 0001–0002, 0026; Cursor rule `010` |
+| Scene, layers, base maps | Implementation §6, §10; `docs/maps/`; camera/reference-frame spec; Cursor rules `020`, `030` |
 | Configuration or persistence | Implementation §7; Cursor rule `020` |
 | Time or display modes | Implementation §8; ADR 0004; ADR 0013 (current-only live-enough gate) |
 | Dynamic data | `docs/specs/scene/dynamic-data-lifecycle.md`; ADR 0005; ADR 0013 |
@@ -54,11 +54,12 @@ Stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md):
 3. Backends must not inspect configuration to decide product behaviour.
 4. `SceneConfig` is authoritative for scene content.
 5. Chrome is screen-space and reserves layout before the scene viewport.
-6. Projection defines spatial truth; base maps are substrates.
+6. Projection defines spatial truth; base maps are substrates. Scene camera (when present) is a view, not a projection and not a mutation of entity state.
 7. One canonical UTC instant per frame; display modes format, never mutate.
 8. Persist durable semantic ids, never resolved paths or URLs.
 9. No network access in the render path.
 10. Illumination composes upstream into one `rasterPatch`.
+11. Scene/map reference frame (Earth-fixed default) is independent of camera and of civil-time reference.
 
 ## How to operate
 

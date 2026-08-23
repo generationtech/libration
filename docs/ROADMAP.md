@@ -20,7 +20,7 @@ An idea on this page is direction, not permission to start — except items list
 
 ## Approved, not started
 
-None.
+None. Proposed camera slices [LIB-080](work/LIB-080-scene-camera-zoom.md) (zoom) and [LIB-081](work/LIB-081-scene-camera-pan.md) (pan) are not approved.
 
 ---
 
@@ -30,9 +30,21 @@ These themes are the product’s intended future shape. They become work only wh
 
 ### Preferred next development direction
 
+**Scene camera, then scene reference frame**, after the Libration **2.0.0** baseline. Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md), [ADR 0026](decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md). Earth-fixed full-world presentation remains the default (identity camera). Do not start until a listed item is approved.
+
+| Phase | Slice | Work item |
+|-------|--------|-----------|
+| A1 | Zoom (first implementation) | [LIB-080](work/LIB-080-scene-camera-zoom.md) proposed |
+| A2 | Pan on the same camera | [LIB-081](work/LIB-081-scene-camera-pan.md) proposed |
+| A3 | Camera consolidation | Incremental in A1/A2; no standalone LIB unless a gap remains |
+| B | Scene reference-frame foundation (not camera-follow) | Unscoped |
+| C | Experimental Moon-fixed and Sun-fixed moving map | Unscoped |
+| D | Generalized entity-fixed, if C validates | Unscoped |
+| E | Persistence, URL view, rotation, semantic zoom, tiles, globe, … | Unscoped; [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection) |
+
 Moon visual development through [LIB-011](work/LIB-011-observer-oriented-lunar-libration.md) is complete. The Eclipse System sequence is complete: architecture ([LIB-012](work/LIB-012-eclipse-system-architecture.md)), authority selection ([LIB-013](work/LIB-013-eclipse-authority-evaluation.md)), E1 live solar footprint ([LIB-014](work/LIB-014-solar-eclipse-live-footprint.md)), E2 solar forecast window ([LIB-015](work/LIB-015-solar-eclipse-forecast.md)), E3 lunar eclipse truth/visibility ([LIB-016](work/LIB-016-lunar-eclipse-truth-and-visibility.md)), E4 reference-city eclipse circumstances ([LIB-017](work/LIB-017-reference-city-eclipse-circumstances.md)), E5 live alignment / beam ([LIB-018](work/LIB-018-eclipse-alignment-beam.md)), and E6 configuration completeness / event information / product polish ([LIB-019](work/LIB-019-eclipse-product-polish.md)). [LIB-020](work/LIB-020-eclipse-reconciliation-and-lunar-forecast.md) is a post-completion reconciliation (label toggle, HUD spacing, factory-default diagnosis, lunar forecast on the existing service). [LIB-021](work/LIB-021-lunar-eclipse-visual-reconciliation.md) is a further presentation reconciliation (map info panel, moonlight attenuation, spatial Earth-shadow, label avoidance). Neither is E7. No further eclipse LIB work is approved.
 
-The strongest remaining candidate in that family is **lunar visibility and moonlight geometry** (an ambient overlay, not a continuation of the Eclipse System). Product intent: [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#lunar-visibility-and-moonlight-geometry). It is **not** approved. Other lunar and Sun–Moon–Earth ideas, and deferred eclipse extras, remain unapproved backlog.
+**Lunar visibility and moonlight geometry** (an ambient overlay, not a continuation of the Eclipse System) remains a candidate in that family, not the preferred next direction. Product intent: [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#lunar-visibility-and-moonlight-geometry). It is **not** approved. Other lunar and Sun–Moon–Earth ideas, and deferred eclipse extras, remain unapproved backlog.
 
 ### Visual verification and contributor workflow
 
@@ -52,7 +64,7 @@ Deepen the existing upstream illumination and overlay-readability model: per-lay
 
 ### Scene view and projection (Phase 11)
 
-Zoom, pan, viewport clipping, tiles, alternate projections, globe or perspective view, pointer inspection. Unlocks denser regional dynamic products. Not approved as a work item.
+Zoom, pan, and a scene camera independent of projection and of a later entity-fixed map frame are the **preferred next development direction** (see above). Globe, perspective, alternate projections, tiles, and pointer inspection remain unapproved extras in [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection). Not an invitation to start those extras.
 
 ### Presets (Phase 12)
 

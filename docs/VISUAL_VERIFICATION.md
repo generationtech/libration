@@ -72,6 +72,18 @@ A work item does not mechanically need every scenario.
 
 Do not ritualistically run every scene when they cannot reveal anything relevant.
 
+### Scene camera (zoom / pan)
+
+When a work item can change scene viewing (starting with [LIB-080](work/LIB-080-scene-camera-zoom.md)):
+
+- Identity camera must match the 2.0.0 full-world default on `baseline` (chrome unzoomed; map fills the scene strip).
+- Exercise zoom in, zoom out, min/max clamp, reset, and resize while zoomed on existing scenarios — do not add a parallel `?zoom=` fixture unless a later item proves it necessary.
+- Overlay registration: lunar track/locus (including standstill and dateline), Sun/Moon glyphs, at least one solar eclipse, Clouds or ISS as relevant, earthquake hover if that layer is in play.
+- Time animation while zoomed (Demo on a frozen scenario, then play).
+- Confirm wheel-over-Config does not zoom the map, and that the page does not scroll under scene-strip wheel.
+
+Case list: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md) §12. Pan combinations wait for [LIB-081](work/LIB-081-scene-camera-pan.md).
+
 ## Scenario catalog
 
 Scenarios are development-only fixtures. They feed ordinary configuration and demo-time inputs through existing startup boundaries. They are not a parallel renderer.

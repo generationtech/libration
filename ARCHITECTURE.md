@@ -189,7 +189,7 @@ See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-raster
 
 **Rationale.** Chrome is the instrument's frame of reference. Making it a scene layer would subject the reading surface to projection, camera, and layer-ordering concerns that have nothing to do with reading time.
 
-**Consequence.** Chrome and scene are separate rendering passes over the same surface. Chrome elements are positioned in CSS pixels, even when their position is *derived* from longitude.
+**Consequence.** Chrome and scene are separate rendering passes over the same surface. Chrome elements are positioned in CSS pixels, even when their position is *derived* from longitude. A scene camera (zoom, pan) transforms scene-strip content only. It must not scale, translate, or rotate chrome. Structural meridians register with the map at the identity camera (the 2.0.0 full-world view); when the camera is not identity, chrome remains a full-world instrument ruler.
 
 ### 5.2 Chrome reserves layout before the scene viewport is resolved
 
@@ -205,7 +205,7 @@ See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-raster
 
 **Rationale.** This is the longitude-first thesis made visible. Structural columns are geography and register exactly with the map. The phased tape is civil time and slides continuously against an anchored read point. Civil offsets are not multiples of 15° and political zones do not follow meridians, so any attempt to make one grid serve both purposes must falsify one of them.
 
-**Consequence.** Two independent x-derivations exist by design. See [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md#5-chrome-coordinate-model) before modifying top-band geometry.
+**Consequence.** Two independent x-derivations exist by design. See [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md#5-chrome-coordinate-model) before modifying top-band geometry. Do not “fix” zoomed-map misregistration by driving chrome from the scene camera.
 
 ### 5.4 Persisted chrome state is single-sourced and derived at runtime
 
@@ -229,11 +229,11 @@ See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-raster
 
 ### 6.2 Scene view and projection are separate concepts
 
-**Boundary.** What is being projected and how the viewer is looking at it are distinct.
+**Boundary.** What is being projected and how the viewer is looking at it are distinct. Projection maps reference-frame coordinates into projected map space. The scene camera maps that projected space into the scene strip (scale and translation). `scene.viewMode` is a persisted framing family (`fullWorldFixed` in 2.0.0), not the camera.
 
-**Rationale.** Keeping them separate is what allows viewing behaviour to change without redefining spatial truth.
+**Rationale.** Keeping them separate is what allows viewing behaviour to change without redefining spatial truth. Zoom and pan are looks at the projected world. They are not a new projection and not a new astronomical model.
 
-**Consequence.** Month-aware base-map switching is **asset resolution**, not camera behaviour. Camera-like features affect the view, not the projection contract.
+**Consequence.** Month-aware base-map switching is **asset resolution**, not camera behaviour. Camera-like features affect the view, not the projection contract. Do not implement zoom by changing equirectangular parameters, by scaling the backend drawing context (which would scale strokes and type), or by mutating entity coordinates. Intended camera insertion: [`docs/specs/scene/camera-and-reference-frame.md`](docs/specs/scene/camera-and-reference-frame.md). See [ADR 0026](docs/decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
 ### 6.3 `SceneConfig` is authoritative for scene content
 
@@ -260,6 +260,28 @@ See [ADR 0002](docs/decisions/0002-single-upstream-planetary-illumination-raster
 **Consequence.** Adding a family is a curation step producing a catalog entry, not a file drop. Provenance and licensing have a definite home.
 
 See [ADR 0003](docs/decisions/0003-bundled-base-map-catalog-with-durable-family-ids.md). The same posture applies to the bundled solar eclipse authority: versioned NASA-derived JSON, no runtime fetch, independent of ambient Sun/Moon astronomy ([ADR 0008](docs/decisions/0008-bundled-nasa-solar-eclipse-authority.md)). Apparent planetary positions for Mercury–Neptune plus Pluto use a bundled offline ephemeris at the canonical product UTC ([ADR 0016](docs/decisions/0016-offline-planetary-ephemeris-authority.md)), independent of both ambient Sun/Moon series and eclipse catalogs. The Milky Way overlay is an extended celestial structure, not a planetary point: IAU 1958 Galactic directions projected to terrestrial zenith at the same product UTC ([ADR 0017](docs/decisions/0017-offline-iau-galactic-zenith-projection-authority.md)). A Milky Way Viewing Window is a derived **reference-city** event from that Galactic center plus astronomical darkness and existing physical moonlight ([ADR 0018](docs/decisions/0018-milky-way-viewing-window-is-a-reference-city-event.md), [ADR 0021](docs/decisions/0021-one-primary-milky-way-viewing-event.md)); it is local, not global eclipse geography, and not a visibility score.
+
+### 6.6 Scene camera does not mutate physical or product state
+
+**Boundary.** Zoom, pan, and other scene-camera parameters change only how the projected world is shown in the scene strip. They must not change the canonical UTC instant, astronomical calculations, entity geographic positions, lifecycle snapshots, illumination policy, or durable `SceneConfig` composition.
+
+**Rationale.** Libration is a time and world instrument. If viewing the map also moved the Moon, the terminator, or product time, the display would no longer be an instrument. Camera state is a look, not a second world.
+
+**Consequence.** Camera state is runtime view state unless a later decision explicitly persists it. Identity camera is the 2.0.0 full-world presentation. Pointer hit-testing must invert the same mapping used to draw. Screen-space styling (marker size, stroke width, chrome) is allowed to remain stable while geographic geometry scales.
+
+See [ADR 0026](docs/decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
+
+### 6.7 Scene reference frame is independent of camera
+
+**Boundary.** The scene/map reference frame is the coordinate frame in which world state is presented to projection. Earth-fixed is identity and is the default (2.0.0). A later entity-fixed frame (Moon, Sun, or a generic position-bearing entity) is a transform **before** projection. It is not camera-follow.
+
+This is distinct from **civil time** reference (display mode, IANA zone, reference city), which already exists and is unchanged.
+
+**Rationale.** If entity tracking continuously overwrites camera centre, the user cannot pan or zoom relative to that frame, and the camera becomes a hidden second clock for geography. Keeping the transform off the camera lets Moon-fixed (or any anchor) coexist with user view control.
+
+**Consequence.** Do not implement entity-fixed mode by assigning camera centre to an entity each frame. Do not special-case the Moon in the camera. World wrapping for moving frames is a reference-frame concern; anticipate continuous/unwrapped longitude rather than treating 180° → −179° as a new world. This transform is not required for zoom. North-up / no map rotation remains the posture of the current development phase; rotation would be a later camera question, not a reference-frame shortcut.
+
+See [ADR 0026](docs/decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md) and [`docs/specs/scene/camera-and-reference-frame.md`](docs/specs/scene/camera-and-reference-frame.md).
 
 ---
 
