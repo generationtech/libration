@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { LUNAR_GROUND_TRACK_KIND, type LunarGroundTrackPayload } from "../../layers/lunarGroundTrackPayload";
-import { moonLongitudeLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
+import { moonLongitudeLockedSceneReferenceFrame, sunLongitudeLockedSceneReferenceFrame, sunPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 import { buildLunarGroundTrackRenderPlan } from "./lunarGroundTrackPlan";
 
 function payload(partial: Partial<LunarGroundTrackPayload> = {}): LunarGroundTrackPayload {
@@ -137,6 +137,49 @@ describe("buildLunarGroundTrackRenderPlan", () => {
         continue;
       }
       expect(Math.abs(item.x2 - item.x1)).toBeLessThan(360 * 0.5);
+    }
+  });
+
+  it("transforms the lunar track as ordinary geography under a Sun frame, not as the origin", () => {
+    const sun = sunLongitudeLockedSceneReferenceFrame(0);
+    const plan = buildLunarGroundTrackRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame: sun,
+      layerOpacity: 1,
+      payload: payload({
+        past: [{ latDeg: 10, lonDeg: 40 }],
+        current: { latDeg: 10, lonDeg: 50 },
+        future: [{ latDeg: 10, lonDeg: 60 }],
+      }),
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    const xs = lines.flatMap((item) =>
+      item.kind === "line" ? [item.x1, item.x2] : [],
+    );
+    expect(xs.every((x) => Math.abs(x - 180) > 20)).toBe(true);
+  });
+
+  it("shifts lunar-track latitude under Sun position-lock", () => {
+    const sun = sunPositionLockedSceneReferenceFrame(0, 30);
+    const plan = buildLunarGroundTrackRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame: sun,
+      layerOpacity: 1,
+      payload: payload({
+        past: [{ latDeg: 0, lonDeg: -10 }],
+        current: { latDeg: 0, lonDeg: 0 },
+        future: [{ latDeg: 0, lonDeg: 10 }],
+      }),
+    });
+    const line = plan.items.find((item) => item.kind === "line");
+    expect(line?.kind).toBe("line");
+    if (line?.kind === "line") {
+      const expectedY = ((90 - -30) / 180) * 180;
+      expect(line.y1).toBeCloseTo(expectedY, 8);
+      expect(line.y2).toBeCloseTo(expectedY, 8);
     }
   });
 });

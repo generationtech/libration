@@ -155,16 +155,16 @@ import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayl
 import { applyEarthquakePointerHoverToPayload } from "./layers/earthquakeHoverAnnotation";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
 import { sublunarPoint } from "./core/sublunarPoint";
+import { subsolarPoint } from "./core/subsolarPoint";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
-  moonLongitudeLockedSceneReferenceFrame,
-  moonPositionLockedSceneReferenceFrame,
   type SceneReferenceFrame,
 } from "./core/sceneReferenceFrame";
 import {
-  isMoonAnchoredSceneReferenceFrameUiKind,
-  nextMoonAnchorContinuousLonDeg,
+  isAnchoredSceneReferenceFrameUiKind,
+  nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
+  sceneReferenceFrameFromUiKind,
   type SceneReferenceFrameUiKind,
 } from "./core/moonLongitudeLockedAnchor";
 import "./App.css";
@@ -323,7 +323,7 @@ export default function App() {
   const [cameraIsIdentity, setCameraIsIdentity] = useState(true);
   const sceneFrameKindRef = useRef<SceneReferenceFrameUiKind>("earthFixed");
   const [sceneFrameKind, setSceneFrameKind] = useState<SceneReferenceFrameUiKind>("earthFixed");
-  const moonAnchorContinuousLonRef = useRef<number | null>(null);
+  const anchorContinuousLonRef = useRef<number | null>(null);
   const sceneReferenceFrameRef = useRef<SceneReferenceFrame>(
     EARTH_FIXED_SCENE_REFERENCE_FRAME,
   );
@@ -887,20 +887,25 @@ export default function App() {
           ),
         ),
       });
-      if (isMoonAnchoredSceneReferenceFrameUiKind(sceneFrameKindRef.current)) {
-        const moon = sublunarPoint(time.now);
-        const continuous = nextMoonAnchorContinuousLonDeg({
-          previousContinuousLonDeg: moonAnchorContinuousLonRef.current,
-          nextCanonicalLonDeg: moon.lonDeg,
+      const frameKind = sceneFrameKindRef.current;
+      if (isAnchoredSceneReferenceFrameUiKind(frameKind)) {
+        const anchor =
+          frameKind === "sunLongitudeLocked" || frameKind === "sunPositionLocked"
+            ? subsolarPoint(time.now)
+            : sublunarPoint(time.now);
+        const continuous = nextAnchorContinuousLonDeg({
+          previousContinuousLonDeg: anchorContinuousLonRef.current,
+          nextCanonicalLonDeg: anchor.lonDeg,
           policy: "follow",
         });
-        moonAnchorContinuousLonRef.current = continuous;
-        sceneReferenceFrameRef.current =
-          sceneFrameKindRef.current === "moonPositionLocked"
-            ? moonPositionLockedSceneReferenceFrame(continuous, moon.latDeg)
-            : moonLongitudeLockedSceneReferenceFrame(continuous, moon.latDeg);
+        anchorContinuousLonRef.current = continuous;
+        sceneReferenceFrameRef.current = sceneReferenceFrameFromUiKind(
+          frameKind,
+          continuous,
+          anchor.latDeg,
+        );
       } else {
-        moonAnchorContinuousLonRef.current = null;
+        anchorContinuousLonRef.current = null;
         sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
       }
       const issAttachment = time.dynamicDataLifecycle;
@@ -1448,7 +1453,7 @@ export default function App() {
               return;
             }
             sceneFrameKindRef.current = next;
-            moonAnchorContinuousLonRef.current = null;
+            anchorContinuousLonRef.current = null;
             sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
             setCameraIsIdentity(true);
             setSceneFrameKind(next);
@@ -1457,6 +1462,8 @@ export default function App() {
           <option value="earthFixed">Earth-fixed</option>
           <option value="moonLongitudeLocked">Moon — longitude locked</option>
           <option value="moonPositionLocked">Moon — position locked</option>
+          <option value="sunLongitudeLocked">Sun — longitude locked</option>
+          <option value="sunPositionLocked">Sun — position locked</option>
         </select>
       </label>
       <button

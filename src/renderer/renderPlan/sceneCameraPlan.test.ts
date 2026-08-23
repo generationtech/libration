@@ -25,7 +25,7 @@ import { buildSubsolarMarkerRenderPlan } from "./sceneSubsolarSublunarMarkersPla
 import { buildSolarShadingIlluminationRenderPlan } from "./sceneSolarShadingIlluminationPlan";
 import { getMoonlightPolicy } from "../../core/moonlightPolicy";
 import { DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE } from "../../core/sceneIlluminationPresentationDefaults";
-import { moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
+import { moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame, sunLongitudeLockedSceneReferenceFrame, sunPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 
 const W = 800;
 const H = 400;
@@ -317,6 +317,135 @@ describe("LIB-084 Moon position-lock raster dest", () => {
     expect(blit?.kind).toBe("imageBlit");
     if (blit?.kind === "imageBlit") {
       expect(blit.y).toBeCloseTo(0, 8);
+    }
+  });
+});
+
+describe("LIB-085 Sun longitude-lock raster dest", () => {
+  const frame = sunLongitudeLockedSceneReferenceFrame(90);
+
+  it("shifts base-map and illumination dests by the same frame longitude offset", () => {
+    const base = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+    });
+    const shade = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+      subsolarLatDeg: 0,
+      subsolarLonDeg: 90,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 0.5,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE),
+    });
+    expect(base.items.length).toBeGreaterThan(1);
+    expect(shade.items.length).toBe(base.items.length);
+    for (let i = 0; i < base.items.length; i += 1) {
+      const blit = base.items[i];
+      const patch = shade.items[i];
+      expect(blit?.kind).toBe("imageBlit");
+      expect(patch?.kind).toBe("rasterPatch");
+      if (blit?.kind !== "imageBlit" || patch?.kind !== "rasterPatch") {
+        return;
+      }
+      expect(patch.x).toBeCloseTo(blit.x, 8);
+      expect(patch.y).toBeCloseTo(blit.y, 8);
+      expect(patch.destWidth).toBeCloseTo(blit.width, 8);
+      expect(patch.destHeight).toBeCloseTo(blit.height, 8);
+      expect(blit.y).toBeCloseTo(0, 8);
+    }
+    const xs = base.items
+      .filter((item) => item.kind === "imageBlit")
+      .map((item) => (item.kind === "imageBlit" ? item.x : 0));
+    const period = Math.abs(xs[1]! - xs[0]!);
+    expect(period).toBeCloseTo(W, 8);
+  });
+
+  it("places the Sun marker on the scene-frame origin meridian", () => {
+    const plan = buildSubsolarMarkerRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+      lonDeg: 90,
+      latDeg: 12,
+    });
+    const originX = sceneXFromLongitudeDeg(0, W, IDENTITY_SCENE_CAMERA);
+    const originY = sceneYFromLatitudeDeg(12, H, IDENTITY_SCENE_CAMERA);
+    const fill = plan.items.find((item) => item.kind === "radialGradientFill");
+    expect(fill?.kind).toBe("radialGradientFill");
+    if (fill?.kind === "radialGradientFill") {
+      expect(fill.clipCx).toBeCloseTo(originX, 8);
+      expect(fill.clipCy).toBeCloseTo(originY, 8);
+    }
+  });
+});
+
+describe("LIB-085 Sun position-lock raster dest", () => {
+  const frame = sunPositionLockedSceneReferenceFrame(90, 23.4);
+
+  it("shifts base-map and illumination dests by the same longitude and latitude offset", () => {
+    const base = buildBaseRasterMapRenderPlan({
+      src: WORLD_EQUIRECTANGULAR_SRC,
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+    });
+    const shade = buildSolarShadingIlluminationRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+      subsolarLatDeg: 23.4,
+      subsolarLonDeg: 90,
+      sublunarLatDeg: 0,
+      sublunarLonDeg: 0,
+      lunarIlluminatedFraction: 0.5,
+      layerOpacity: 1,
+      moonlightPolicy: getMoonlightPolicy(DEFAULT_SCENE_MOONLIGHT_PRESENTATION_MODE),
+    });
+    expect(base.items.length).toBeGreaterThan(1);
+    expect(shade.items.length).toBe(base.items.length);
+    for (let i = 0; i < base.items.length; i += 1) {
+      const blit = base.items[i];
+      const patch = shade.items[i];
+      expect(blit?.kind).toBe("imageBlit");
+      expect(patch?.kind).toBe("rasterPatch");
+      if (blit?.kind !== "imageBlit" || patch?.kind !== "rasterPatch") {
+        return;
+      }
+      expect(patch.x).toBeCloseTo(blit.x, 8);
+      expect(patch.y).toBeCloseTo(blit.y, 8);
+      expect(patch.destWidth).toBeCloseTo(blit.width, 8);
+      expect(patch.destHeight).toBeCloseTo(blit.height, 8);
+      expect(blit.y).toBeCloseTo((23.4 / 180) * H, 8);
+    }
+  });
+
+  it("places the Sun marker at scene origin", () => {
+    const plan = buildSubsolarMarkerRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+      lonDeg: 90,
+      latDeg: 23.4,
+    });
+    const originX = sceneXFromLongitudeDeg(0, W, IDENTITY_SCENE_CAMERA);
+    const originY = sceneYFromLatitudeDeg(0, H, IDENTITY_SCENE_CAMERA);
+    const fill = plan.items.find((item) => item.kind === "radialGradientFill");
+    expect(fill?.kind).toBe("radialGradientFill");
+    if (fill?.kind === "radialGradientFill") {
+      expect(fill.clipCx).toBeCloseTo(originX, 8);
+      expect(fill.clipCy).toBeCloseTo(originY, 8);
     }
   });
 });

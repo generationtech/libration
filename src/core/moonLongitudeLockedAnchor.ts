@@ -12,22 +12,22 @@
  */
 
 /**
- * Runtime policy for Moon-anchored scene frames (LIB-083 longitude-lock,
- * LIB-084 position-lock).
+ * Runtime policy for Moon- and Sun-anchored scene frames.
  *
- * Continuity:
- * - While a Moon-anchored frame remains active, each new canonical sublunar
- *   longitude follows the previous continuous anchor (nearest equivalent).
+ * Continuity (same deterministic policy for both anchors):
+ * - While an anchored frame remains active, each new canonical longitude
+ *   follows the previous continuous anchor (nearest equivalent).
  *   Ordinary animation, Demo/high-speed time, direct time selection, and
  *   jumps all use this path so the map does not jump ~360° at ±180°.
  * - A new scene/frame epoch reinitializes from the canonical longitude
- *   (no multi-turn carry): first entry into a Moon-anchored frame, reload,
- *   and switching among Earth-fixed / longitude-lock / position-lock.
- *   Demo start/reset while already in a Moon-anchored frame still follows
+ *   (no multi-turn carry): first entry into an anchored frame, reload,
+ *   and switching among Earth-fixed / Moon modes / Sun modes.
+ *   Demo start/reset while already in an anchored frame still follows
  *   (a time jump, not a new frame epoch).
- * - Latitude has no continuity state: it is the current sublunar latitude.
+ * - Latitude has no continuity state: it is the current sublunar or
+ *   subsolar latitude for the canonical UTC instant.
  *
- * Camera: switching among the three production frame configurations resets
+ * Camera: switching among the production frame configurations resets
  * the camera to identity. Reset view resets the camera only and does not
  * change the frame.
  */
@@ -37,13 +37,25 @@ import {
   continuousLongitudeFollowingCanonicalDeg,
   rebaseContinuousLongitudeDeg,
 } from "./longitudeContinuity";
+import {
+  EARTH_FIXED_SCENE_REFERENCE_FRAME,
+  moonLongitudeLockedSceneReferenceFrame,
+  moonPositionLockedSceneReferenceFrame,
+  sunLongitudeLockedSceneReferenceFrame,
+  sunPositionLockedSceneReferenceFrame,
+  type SceneReferenceFrame,
+} from "./sceneReferenceFrame";
 
 export type SceneReferenceFrameUiKind =
   | "earthFixed"
   | "moonLongitudeLocked"
-  | "moonPositionLocked";
+  | "moonPositionLocked"
+  | "sunLongitudeLocked"
+  | "sunPositionLocked";
 
 export type MoonAnchorEpochPolicy = "follow" | "reinitialize";
+
+export type AnchorEpochPolicy = MoonAnchorEpochPolicy;
 
 export function isMoonAnchoredSceneReferenceFrameUiKind(
   kind: SceneReferenceFrameUiKind,
@@ -51,15 +63,31 @@ export function isMoonAnchoredSceneReferenceFrameUiKind(
   return kind === "moonLongitudeLocked" || kind === "moonPositionLocked";
 }
 
+export function isSunAnchoredSceneReferenceFrameUiKind(
+  kind: SceneReferenceFrameUiKind,
+): boolean {
+  return kind === "sunLongitudeLocked" || kind === "sunPositionLocked";
+}
+
+export function isAnchoredSceneReferenceFrameUiKind(
+  kind: SceneReferenceFrameUiKind,
+): boolean {
+  return (
+    isMoonAnchoredSceneReferenceFrameUiKind(kind) ||
+    isSunAnchoredSceneReferenceFrameUiKind(kind)
+  );
+}
+
 /**
- * Advance or replace the continuous lunar longitude anchor.
+ * Advance or replace a continuous longitude anchor.
  *
  * `previousContinuousLonDeg === null` always reinitializes (no prior epoch).
+ * Shared by Moon and Sun; not a generic entity-frame type.
  */
-export function nextMoonAnchorContinuousLonDeg(args: {
+export function nextAnchorContinuousLonDeg(args: {
   readonly previousContinuousLonDeg: number | null;
   readonly nextCanonicalLonDeg: number;
-  readonly policy: MoonAnchorEpochPolicy;
+  readonly policy: AnchorEpochPolicy;
 }): number {
   const canonical = args.nextCanonicalLonDeg;
   if (args.previousContinuousLonDeg === null || args.policy === "reinitialize") {
@@ -68,6 +96,33 @@ export function nextMoonAnchorContinuousLonDeg(args: {
   return rebaseContinuousLongitudeDeg(
     continuousLongitudeFollowingCanonicalDeg(args.previousContinuousLonDeg, canonical),
   );
+}
+
+export function nextMoonAnchorContinuousLonDeg(args: {
+  readonly previousContinuousLonDeg: number | null;
+  readonly nextCanonicalLonDeg: number;
+  readonly policy: MoonAnchorEpochPolicy;
+}): number {
+  return nextAnchorContinuousLonDeg(args);
+}
+
+export function sceneReferenceFrameFromUiKind(
+  kind: SceneReferenceFrameUiKind,
+  continuousAnchorLonDeg: number,
+  anchorLatDeg: number,
+): SceneReferenceFrame {
+  switch (kind) {
+    case "earthFixed":
+      return EARTH_FIXED_SCENE_REFERENCE_FRAME;
+    case "moonLongitudeLocked":
+      return moonLongitudeLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+    case "moonPositionLocked":
+      return moonPositionLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+    case "sunLongitudeLocked":
+      return sunLongitudeLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+    case "sunPositionLocked":
+      return sunPositionLockedSceneReferenceFrame(continuousAnchorLonDeg, anchorLatDeg);
+  }
 }
 
 /**

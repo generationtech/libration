@@ -17,7 +17,7 @@
  *
  * This is a view, not a projection and not a scene/map reference frame.
  * Canonical lon/lat pass through the scene/map reference frame (Earth-fixed
- * identity, Moon longitude-lock, or Moon position-lock), then {@link mapXFromLongitudeDeg} /
+ * identity, Moon/Sun longitude-lock, or Moon/Sun position-lock), then {@link mapXFromLongitudeDeg} /
  * {@link mapYFromLatitudeDeg} onto the identity world strip; the camera then
  * maps that strip into scene CSS. Do not encode a frame by writing Moon/Sun
  * coordinates into `centerU` / `centerV`.
@@ -38,7 +38,7 @@ import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   canonicalLonLatToSceneFrame,
   isIdentitySceneReferenceFrame,
-  isMoonPositionLockedSceneReferenceFrame,
+  isLatitudeLockedSceneReferenceFrame,
   sceneFrameLatitudeDeg,
   sceneFrameLonLatToCanonical,
   sceneFrameRasterIdentityOriginX,
@@ -87,8 +87,8 @@ export const IDENTITY_SCENE_CAMERA: SceneCamera = {
 
 /**
  * Normalized projected-Y interval occupied by the geographic Earth under the
- * active scene frame. Earth-fixed and Moon longitude-lock keep `[0, 1]`.
- * Moon position-lock translates that interval by `anchorLat / 180`.
+ * active scene frame. Earth-fixed and longitude-lock keep `[0, 1]`.
+ * Position-lock translates that interval by `anchorLat / 180`.
  */
 export type SceneCameraVerticalExtent = {
   readonly vMin: number;
@@ -103,7 +103,7 @@ export const IDENTITY_WORLD_VERTICAL_EXTENT: SceneCameraVerticalExtent = {
 export function sceneCameraVerticalExtentFromFrame(
   frame: SceneReferenceFrame,
 ): SceneCameraVerticalExtent {
-  if (!isMoonPositionLockedSceneReferenceFrame(frame)) {
+  if (!isLatitudeLockedSceneReferenceFrame(frame)) {
     return IDENTITY_WORLD_VERTICAL_EXTENT;
   }
   const vMin = frame.anchorLatDeg / 180;
@@ -130,7 +130,7 @@ function finiteOr(value: number, fallback: number): number {
  * At scale 1, `centerV` stays 0.5 (identity scene-frame view) even when
  * position-lock has translated Earth so it no longer fills the strip.
  * Blank beyond terrestrial latitude is the scene background. Do not rewrite
- * `centerV` from Moon latitude on time ticks — this clamp runs on user
+ * `centerV` from anchor latitude on time ticks — this clamp runs on user
  * pan/zoom only.
  *
  * At scale > 1 the visible window is smaller than Earth, so pan is clamped

@@ -466,6 +466,12 @@ Moon position-locked scene frame: same `moonAnchored` kind with `latitudeLocked:
 
 Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2712 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-Dtgih3Ma.js`). Cursor Browser at inner 1920×1080: Earth-fixed and longitude-lock regression; position-lock static (Moon at origin, Earth translated, bottom/top blank as designed) and 86400× Demo (Moon X/Y fixed, geography moved, camera not rewritten); standstill extreme latitude; `lunar-track`; `lunar-locus` recent + standstill; `moon-libration`; `solar-eclipse-total` / `solar-eclipse-dateline`; `clouds`; `iss-presentation`; `earthquake-presentation`; camera zoom/pan/wrap/reset; frame-switch camera reset; reload Earth-fixed; resize 1280×720 while zoomed.
 
+## 2026-08-23 — LIB-085 complete
+
+Sun-anchored scene frames: production `sunAnchored` longitude-lock and position-lock using the same axis-lock transform as Moon. Continuous solar longitude from the canonical UTC subsolar point; scene origin is the subsolar meridian (not civil noon). Rasters share dest shift with illumination and Clouds. Camera stays independent. Runtime Scene frame control has five choices. ADR 0029. Generic entity-fixed was not started.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 276 files / 2750 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-BnY_0Jdt.js`). Cursor Browser at inner 1920×1080: Earth-fixed and Moon regression; Sun longitude-lock static (Sun x≈960) and 3600× Demo (Sun X stable, Earth moved, camera not rewritten); Sun position-lock origin at y≈574; seasonal equinox vs December solstice (Sun origin fixed, Earth vertical placement differs); `lunar-track` Moon-as-non-anchor; `solar-eclipse-total` / `solar-eclipse-dateline`; `clouds`; `iss-presentation`; `earthquake-presentation`; camera zoom/pan/reset; frame-switch camera reset; reload Earth-fixed; resize 1280×720 while zoomed.
+
 
 
 

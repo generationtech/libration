@@ -16,7 +16,7 @@ import {
   mapXFromLongitudeDeg,
   mapYFromLatitudeDeg,
 } from "./equirectangularProjection";
-import { EARTH_FIXED_SCENE_REFERENCE_FRAME, moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame } from "./sceneReferenceFrame";
+import { EARTH_FIXED_SCENE_REFERENCE_FRAME, moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame, sunPositionLockedSceneReferenceFrame } from "./sceneReferenceFrame";
 import {
   canonicalLatitudeDegFromSceneY,
   canonicalLongitudeDegFromSceneX,
@@ -337,6 +337,35 @@ describe("LIB-080 earthquake hover through scene camera", () => {
       feature({ id: "valparaiso", lonDeg: -71.6, latDeg: -33.05, magnitude: 3.2 }),
     ];
     const frame = moonPositionLockedSceneReferenceFrame(40, 18);
+    const camera = { scale: 2, centerU: 1.08, centerV: 0.42 } as const;
+    const hits = projectEarthquakeHoverHits(features, W, H, camera, frame);
+    const onScreen = hits.filter((hit) => hit.x >= 0 && hit.x <= W);
+    expect(onScreen.length).toBeGreaterThanOrEqual(1);
+    expect(
+      resolveEarthquakeHoverId({
+        features,
+        pointerSceneCss: { x: onScreen[0]!.x, y: onScreen[0]!.y },
+        viewportWidthPx: W,
+        viewportHeightPx: H,
+        showLabelOnHover: true,
+        camera,
+        sceneReferenceFrame: frame,
+      }),
+    ).toBe("valparaiso");
+    const recoveredLat = canonicalLatitudeDegFromSceneY(
+      onScreen[0]!.y,
+      H,
+      camera,
+      frame,
+    );
+    expect(recoveredLat).toBeCloseTo(-33.05, 6);
+  });
+
+  it("hits the canonical earthquake under Sun position-lock with pan and wrap", () => {
+    const features = [
+      feature({ id: "valparaiso", lonDeg: -71.6, latDeg: -33.05, magnitude: 3.2 }),
+    ];
+    const frame = sunPositionLockedSceneReferenceFrame(40, 18);
     const camera = { scale: 2, centerU: 1.08, centerV: 0.42 } as const;
     const hits = projectEarthquakeHoverHits(features, W, H, camera, frame);
     const onScreen = hits.filter((hit) => hit.x >= 0 && hit.x <= W);

@@ -14,10 +14,15 @@
 import { describe, expect, it } from "vitest";
 import { IDENTITY_SCENE_CAMERA } from "./sceneCamera";
 import {
+  isAnchoredSceneReferenceFrameUiKind,
   isMoonAnchoredSceneReferenceFrameUiKind,
+  isSunAnchoredSceneReferenceFrameUiKind,
+  nextAnchorContinuousLonDeg,
   nextMoonAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
+  sceneReferenceFrameFromUiKind,
 } from "./moonLongitudeLockedAnchor";
+import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
 
 describe("nextMoonAnchorContinuousLonDeg", () => {
   it("reinitializes from canonical longitude when there is no prior epoch", () => {
@@ -56,9 +61,61 @@ describe("scene camera after reference-frame kind change", () => {
     expect(sceneCameraAfterReferenceFrameKindChange()).toEqual(IDENTITY_SCENE_CAMERA);
   });
 
-  it("treats Earth-fixed, longitude-lock, and position-lock as distinct UI kinds", () => {
+  it("treats Earth-fixed, Moon, and Sun axis-lock modes as distinct UI kinds", () => {
     expect(isMoonAnchoredSceneReferenceFrameUiKind("earthFixed")).toBe(false);
     expect(isMoonAnchoredSceneReferenceFrameUiKind("moonLongitudeLocked")).toBe(true);
     expect(isMoonAnchoredSceneReferenceFrameUiKind("moonPositionLocked")).toBe(true);
+    expect(isMoonAnchoredSceneReferenceFrameUiKind("sunLongitudeLocked")).toBe(false);
+    expect(isSunAnchoredSceneReferenceFrameUiKind("sunLongitudeLocked")).toBe(true);
+    expect(isSunAnchoredSceneReferenceFrameUiKind("sunPositionLocked")).toBe(true);
+    expect(isSunAnchoredSceneReferenceFrameUiKind("moonLongitudeLocked")).toBe(false);
+    expect(isAnchoredSceneReferenceFrameUiKind("earthFixed")).toBe(false);
+    expect(isAnchoredSceneReferenceFrameUiKind("sunPositionLocked")).toBe(true);
+  });
+});
+
+describe("nextAnchorContinuousLonDeg", () => {
+  it("is the same primitive Moon and Sun continuity use", () => {
+    expect(
+      nextAnchorContinuousLonDeg({
+        previousContinuousLonDeg: 181,
+        nextCanonicalLonDeg: -178,
+        policy: "follow",
+      }),
+    ).toBe(182);
+    expect(
+      nextMoonAnchorContinuousLonDeg({
+        previousContinuousLonDeg: 181,
+        nextCanonicalLonDeg: -178,
+        policy: "follow",
+      }),
+    ).toBe(182);
+  });
+});
+
+describe("sceneReferenceFrameFromUiKind", () => {
+  it("builds all five production configurations", () => {
+    expect(sceneReferenceFrameFromUiKind("earthFixed", 10, 5).kind).toBe("earthFixed");
+    expect(sceneReferenceFrameFromUiKind("moonLongitudeLocked", 10, 5)).toMatchObject({
+      kind: "moonAnchored",
+      latitudeLocked: false,
+    });
+    expect(sceneReferenceFrameFromUiKind("moonPositionLocked", 10, 5)).toMatchObject({
+      kind: "moonAnchored",
+      latitudeLocked: true,
+    });
+    expect(sceneReferenceFrameFromUiKind("sunLongitudeLocked", 10, 5)).toMatchObject({
+      kind: "sunAnchored",
+      latitudeLocked: false,
+    });
+    expect(sceneReferenceFrameFromUiKind("sunPositionLocked", 10, 5)).toMatchObject({
+      kind: "sunAnchored",
+      latitudeLocked: true,
+    });
+  });
+
+  it("does not reuse leftover camera when switching kinds", () => {
+    expect(sceneCameraAfterReferenceFrameKindChange()).toEqual(IDENTITY_SCENE_CAMERA);
+    expect(EARTH_FIXED_SCENE_REFERENCE_FRAME.kind).toBe("earthFixed");
   });
 });

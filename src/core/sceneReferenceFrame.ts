@@ -25,16 +25,22 @@
  * - `earthFixed` — identity; default
  * - `moonAnchored` with longitude locked and latitude identity (LIB-083)
  * - `moonAnchored` with longitude and latitude locked (LIB-084 position-lock)
+ * - `sunAnchored` with longitude locked and latitude identity (LIB-085)
+ * - `sunAnchored` with longitude and latitude locked (LIB-085 position-lock)
+ *
+ * Moon and Sun share the same axis-lock transform. They remain distinct
+ * production kinds so the second real anchor can be proven before a generic
+ * entity-frame type is introduced.
  *
  * Frame-relative coordinates are derived presentation state. Canonical
  * entity lon/lat must not be overwritten to fake a moving map.
  *
- * Sign convention for Moon longitude-lock:
- *   sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
- * Positive scene longitude is east of the Moon. The Moon itself maps to 0°.
+ * Sign convention for longitude-lock:
+ *   sceneLon = nearestEquivalent(canonicalLon, λAnchor_continuous) − λAnchor_continuous
+ * Positive scene longitude is east of the anchor. The anchor itself maps to 0°.
  *
- * Latitude (LIB-083): identity, `sceneLat = canonicalLat`.
- * Latitude (LIB-084 position-lock): `sceneLat = canonicalLat − moonAnchorLat`.
+ * Latitude (longitude-lock): identity, `sceneLat = canonicalLat`.
+ * Latitude (position-lock): `sceneLat = canonicalLat − anchorLat`.
  * Scene-frame latitude is not periodic and may leave geographic ±90°.
  */
 
@@ -44,26 +50,29 @@ import {
   relativeLongitudeFromContinuousAnchorDeg,
 } from "./longitudeContinuity";
 
-export type SceneReferenceFrameKind = "earthFixed" | "moonAnchored";
+export type SceneReferenceFrameKind = "earthFixed" | "moonAnchored" | "sunAnchored";
 
 export type EarthFixedSceneReferenceFrame = {
   readonly kind: "earthFixed";
 };
 
-type MoonAnchoredSceneReferenceFrameBase = {
-  readonly kind: "moonAnchored";
+/**
+ * Shared axis-lock fields for production Moon/Sun anchored frames.
+ * Not a generic entity-frame abstraction.
+ */
+export type AnchoredAxisLock = {
   readonly longitudeLocked: true;
-  /**
-   * Continuous / unwrapped lunar geographic longitude (degrees east).
-   * May leave (−180, 180]. Do not canonicalize this value per frame.
-   */
+  readonly latitudeLocked: boolean;
   readonly continuousAnchorLonDeg: number;
-  /**
-   * Geographic sublunar latitude (degrees) for the canonical frame instant.
-   * Not wrapped. Used when {@link MoonPositionLockedSceneReferenceFrame.latitudeLocked}
-   * is true; stored on longitude-lock as well so the shape stays one kind.
-   */
   readonly anchorLatDeg: number;
+};
+
+type MoonAnchoredSceneReferenceFrameBase = AnchoredAxisLock & {
+  readonly kind: "moonAnchored";
+};
+
+type SunAnchoredSceneReferenceFrameBase = AnchoredAxisLock & {
+  readonly kind: "sunAnchored";
 };
 
 /**
@@ -85,7 +94,31 @@ export type MoonAnchoredSceneReferenceFrame =
   | MoonLongitudeLockedSceneReferenceFrame
   | MoonPositionLockedSceneReferenceFrame;
 
-export type SceneReferenceFrame = EarthFixedSceneReferenceFrame | MoonAnchoredSceneReferenceFrame;
+/**
+ * Sun-anchored scene frame with longitude locked and latitude identity (LIB-085).
+ * Scene longitude zero is the current subsolar meridian, not civil clock noon.
+ */
+export type SunLongitudeLockedSceneReferenceFrame = SunAnchoredSceneReferenceFrameBase & {
+  readonly latitudeLocked: false;
+};
+
+/**
+ * Sun-anchored scene frame with both axes locked (LIB-085). The subsolar point
+ * maps to scene-frame origin (0°, 0°).
+ */
+export type SunPositionLockedSceneReferenceFrame = SunAnchoredSceneReferenceFrameBase & {
+  readonly latitudeLocked: true;
+};
+
+export type SunAnchoredSceneReferenceFrame =
+  | SunLongitudeLockedSceneReferenceFrame
+  | SunPositionLockedSceneReferenceFrame;
+
+export type AnchoredSceneReferenceFrame =
+  | MoonAnchoredSceneReferenceFrame
+  | SunAnchoredSceneReferenceFrame;
+
+export type SceneReferenceFrame = EarthFixedSceneReferenceFrame | AnchoredSceneReferenceFrame;
 
 export const EARTH_FIXED_SCENE_REFERENCE_FRAME: EarthFixedSceneReferenceFrame = {
   kind: "earthFixed",
@@ -102,16 +135,27 @@ function geographicLatitudeDeg(value: number): number {
   return Math.max(-90, Math.min(90, value));
 }
 
+function anchoredAxisLock(
+  continuousAnchorLonDeg: number,
+  anchorLatDeg: number,
+  latitudeLocked: boolean,
+): AnchoredAxisLock {
+  return {
+    longitudeLocked: true,
+    latitudeLocked,
+    continuousAnchorLonDeg: finiteLon(continuousAnchorLonDeg),
+    anchorLatDeg: geographicLatitudeDeg(anchorLatDeg),
+  };
+}
+
 export function moonLongitudeLockedSceneReferenceFrame(
   continuousAnchorLonDeg: number,
   anchorLatDeg = 0,
 ): MoonLongitudeLockedSceneReferenceFrame {
   return {
     kind: "moonAnchored",
-    longitudeLocked: true,
+    ...anchoredAxisLock(continuousAnchorLonDeg, anchorLatDeg, false),
     latitudeLocked: false,
-    continuousAnchorLonDeg: finiteLon(continuousAnchorLonDeg),
-    anchorLatDeg: geographicLatitudeDeg(anchorLatDeg),
   };
 }
 
@@ -121,10 +165,30 @@ export function moonPositionLockedSceneReferenceFrame(
 ): MoonPositionLockedSceneReferenceFrame {
   return {
     kind: "moonAnchored",
-    longitudeLocked: true,
+    ...anchoredAxisLock(continuousAnchorLonDeg, anchorLatDeg, true),
     latitudeLocked: true,
-    continuousAnchorLonDeg: finiteLon(continuousAnchorLonDeg),
-    anchorLatDeg: geographicLatitudeDeg(anchorLatDeg),
+  };
+}
+
+export function sunLongitudeLockedSceneReferenceFrame(
+  continuousAnchorLonDeg: number,
+  anchorLatDeg = 0,
+): SunLongitudeLockedSceneReferenceFrame {
+  return {
+    kind: "sunAnchored",
+    ...anchoredAxisLock(continuousAnchorLonDeg, anchorLatDeg, false),
+    latitudeLocked: false,
+  };
+}
+
+export function sunPositionLockedSceneReferenceFrame(
+  continuousAnchorLonDeg: number,
+  anchorLatDeg: number,
+): SunPositionLockedSceneReferenceFrame {
+  return {
+    kind: "sunAnchored",
+    ...anchoredAxisLock(continuousAnchorLonDeg, anchorLatDeg, true),
+    latitudeLocked: true,
   };
 }
 
@@ -138,6 +202,18 @@ export function isMoonAnchoredSceneReferenceFrame(
   frame: SceneReferenceFrame,
 ): frame is MoonAnchoredSceneReferenceFrame {
   return frame.kind === "moonAnchored";
+}
+
+export function isSunAnchoredSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is SunAnchoredSceneReferenceFrame {
+  return frame.kind === "sunAnchored";
+}
+
+export function isAnchoredSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is AnchoredSceneReferenceFrame {
+  return frame.kind === "moonAnchored" || frame.kind === "sunAnchored";
 }
 
 export function isMoonLongitudeLockedSceneReferenceFrame(
@@ -160,6 +236,36 @@ export function isMoonPositionLockedSceneReferenceFrame(
   );
 }
 
+export function isSunLongitudeLockedSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is SunLongitudeLockedSceneReferenceFrame {
+  return (
+    frame.kind === "sunAnchored" &&
+    frame.longitudeLocked === true &&
+    frame.latitudeLocked === false
+  );
+}
+
+export function isSunPositionLockedSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is SunPositionLockedSceneReferenceFrame {
+  return (
+    frame.kind === "sunAnchored" &&
+    frame.longitudeLocked === true &&
+    frame.latitudeLocked === true
+  );
+}
+
+/**
+ * Latitude-locked (position-lock) Moon or Sun frame. Shared by raster Y and
+ * camera vertical extent so the two anchors keep one formula.
+ */
+export function isLatitudeLockedSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is MoonPositionLockedSceneReferenceFrame | SunPositionLockedSceneReferenceFrame {
+  return isAnchoredSceneReferenceFrame(frame) && frame.latitudeLocked === true;
+}
+
 export function isIdentitySceneReferenceFrame(frame: SceneReferenceFrame): boolean {
   return isEarthFixedSceneReferenceFrame(frame);
 }
@@ -180,9 +286,9 @@ export type SceneFrameLonLat = {
   readonly sceneLatDeg: number;
 };
 
-function moonSceneLongitudeDeg(
+function anchoredSceneLongitudeDeg(
   canonicalLonDeg: number,
-  frame: MoonAnchoredSceneReferenceFrame,
+  frame: AnchoredAxisLock,
 ): number {
   return relativeLongitudeFromContinuousAnchorDeg(
     canonicalLonDeg,
@@ -190,9 +296,9 @@ function moonSceneLongitudeDeg(
   );
 }
 
-function moonSceneLatitudeDeg(
+function anchoredSceneLatitudeDeg(
   canonicalLatDeg: number,
-  frame: MoonAnchoredSceneReferenceFrame,
+  frame: AnchoredAxisLock,
 ): number {
   if (!frame.latitudeLocked) {
     return canonicalLatDeg;
@@ -200,13 +306,25 @@ function moonSceneLatitudeDeg(
   return canonicalLatDeg - frame.anchorLatDeg;
 }
 
+function anchoredCanonicalFromScene(
+  scene: SceneFrameLonLat,
+  frame: AnchoredAxisLock,
+): CanonicalLonLat {
+  return {
+    lonDeg: canonicalLongitudeDeg(scene.sceneLonDeg + frame.continuousAnchorLonDeg),
+    latDeg: frame.latitudeLocked
+      ? geographicLatitudeDeg(scene.sceneLatDeg + frame.anchorLatDeg)
+      : scene.sceneLatDeg,
+  };
+}
+
 /**
  * Canonical geographic coordinates → scene-frame coordinates.
  *
  * Earth-fixed is exact identity (same numbers, no canonical wrap) so LIB-081
- * mapping is unchanged. Moon longitude-lock subtracts the continuous lunar
+ * mapping is unchanged. Anchored longitude-lock subtracts the continuous
  * anchor from longitude and leaves latitude unchanged. Position-lock also
- * subtracts Moon anchor latitude (no wrap, no clamp to ±90°).
+ * subtracts anchor latitude (no wrap, no clamp to ±90°).
  */
 export function canonicalLonLatToSceneFrame(
   canonical: CanonicalLonLat,
@@ -219,18 +337,19 @@ export function canonicalLonLatToSceneFrame(
         sceneLatDeg: canonical.latDeg,
       };
     case "moonAnchored":
+    case "sunAnchored":
       return {
-        sceneLonDeg: moonSceneLongitudeDeg(canonical.lonDeg, frame),
-        sceneLatDeg: moonSceneLatitudeDeg(canonical.latDeg, frame),
+        sceneLonDeg: anchoredSceneLongitudeDeg(canonical.lonDeg, frame),
+        sceneLatDeg: anchoredSceneLatitudeDeg(canonical.latDeg, frame),
       };
   }
 }
 
 /**
  * Scene-frame coordinates → canonical geographic coordinates.
- * Earth-fixed is exact identity. Moon longitude-lock adds the continuous
- * anchor and canonicalizes longitude. Position-lock adds Moon anchor
- * latitude and clamps the result to geographic ±90°.
+ * Earth-fixed is exact identity. Anchored longitude-lock adds the continuous
+ * anchor and canonicalizes longitude. Position-lock adds anchor latitude
+ * and clamps the result to geographic ±90°.
  */
 export function sceneFrameLonLatToCanonical(
   scene: SceneFrameLonLat,
@@ -243,12 +362,8 @@ export function sceneFrameLonLatToCanonical(
         latDeg: scene.sceneLatDeg,
       };
     case "moonAnchored":
-      return {
-        lonDeg: canonicalLongitudeDeg(scene.sceneLonDeg + frame.continuousAnchorLonDeg),
-        latDeg: frame.latitudeLocked
-          ? geographicLatitudeDeg(scene.sceneLatDeg + frame.anchorLatDeg)
-          : scene.sceneLatDeg,
-      };
+    case "sunAnchored":
+      return anchoredCanonicalFromScene(scene, frame);
   }
 }
 
@@ -268,15 +383,15 @@ export function sceneFrameLongitudeDeg(
 }
 
 /**
- * Scene-frame latitude of a canonical parallel. Earth-fixed and Moon
- * longitude-lock return the input unchanged. Position-lock subtracts
- * Moon anchor latitude and does not wrap or clamp.
+ * Scene-frame latitude of a canonical parallel. Earth-fixed and longitude-lock
+ * return the input unchanged. Position-lock subtracts anchor latitude and
+ * does not wrap or clamp.
  */
 export function sceneFrameLatitudeDeg(
   canonicalLatDeg: number,
   frame: SceneReferenceFrame,
 ): number {
-  if (isIdentitySceneReferenceFrame(frame) || !isMoonPositionLockedSceneReferenceFrame(frame)) {
+  if (isIdentitySceneReferenceFrame(frame) || !isLatitudeLockedSceneReferenceFrame(frame)) {
     return canonicalLatDeg;
   }
   return canonicalLonLatToSceneFrame({ lonDeg: 0, latDeg: canonicalLatDeg }, frame)
@@ -305,7 +420,7 @@ export function sceneFrameLatitudesDeg(
   canonicalLats: readonly number[],
   frame: SceneReferenceFrame,
 ): number[] {
-  if (isIdentitySceneReferenceFrame(frame) || !isMoonPositionLockedSceneReferenceFrame(frame)) {
+  if (isIdentitySceneReferenceFrame(frame) || !isLatitudeLockedSceneReferenceFrame(frame)) {
     return canonicalLats.slice();
   }
   return canonicalLats.map((latDeg) => sceneFrameLatitudeDeg(latDeg, frame));
@@ -314,18 +429,18 @@ export function sceneFrameLatitudesDeg(
 /**
  * Identity-world X origin of the canonical Earth raster under this frame.
  *
- * Longitude-locked Moon frames shift the equirectangular strip by
+ * Longitude-locked anchored frames shift the equirectangular strip by
  * `−continuousAnchorLon / 360 × width` so the image stays registered with
  * vector geography without resampling. Earth-fixed is 0.
  *
  * Uses the continuous anchor, not nearest-equivalent of a sample meridian,
- * so the dest does not jump 360° at the lunar antimeridian.
+ * so the dest does not jump 360° at the anchor antimeridian.
  */
 export function sceneFrameRasterIdentityOriginX(
   widthPx: number,
   frame: SceneReferenceFrame,
 ): number {
-  if (!isMoonAnchoredSceneReferenceFrame(frame)) {
+  if (!isAnchoredSceneReferenceFrame(frame)) {
     return 0;
   }
   return (
@@ -337,8 +452,8 @@ export function sceneFrameRasterIdentityOriginX(
 /**
  * Identity-world Y origin of the canonical Earth raster under this frame.
  *
- * Position-lock shifts the strip by `−moonAnchorLat / 180 × height` so
- * geographic +90° lands at scene-frame latitude `90 − moonAnchorLat`.
+ * Position-lock shifts the strip by `−anchorLat / 180 × height` so
+ * geographic +90° lands at scene-frame latitude `90 − anchorLat`.
  * Longitude-lock and Earth-fixed are 0. Latitude is not periodic: do not
  * emit vertical copies of this dest.
  */
@@ -346,7 +461,7 @@ export function sceneFrameRasterIdentityOriginY(
   heightPx: number,
   frame: SceneReferenceFrame,
 ): number {
-  if (!isMoonPositionLockedSceneReferenceFrame(frame)) {
+  if (!isLatitudeLockedSceneReferenceFrame(frame)) {
     return 0;
   }
   return (
@@ -361,7 +476,7 @@ export function sceneFrameRasterIdentityOriginY(
  * `sceneLon = nearestEquivalent(canonicalLon, continuousAnchorLon) − continuousAnchorLon`
  *
  * Latitude is passed through unchanged. Subtracting anchor latitude is the
- * production {@link moonPositionLockedSceneReferenceFrame} path, not this helper.
+ * production position-lock path, not this helper.
  */
 export function relativeLongitudeSceneFrameLonLat(
   canonical: CanonicalLonLat,

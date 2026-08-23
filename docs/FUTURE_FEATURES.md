@@ -356,14 +356,14 @@ Planetary illumination and overlay readability are existing upstream subsystems;
 
 ## Scene view and projection
 
-Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon longitude-lock is implemented ([LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md)); Moon position-lock is implemented ([LIB-084](work/LIB-084-moon-position-locked-scene-frame.md)). Sun-fixed and generic entity-fixed remain on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start Sun-fixed or generic entity-fixed work from this file.
+Strategic sequence: zoom is implemented ([LIB-080](work/LIB-080-scene-camera-zoom.md)); pan is implemented ([LIB-081](work/LIB-081-scene-camera-pan.md)); Earth-fixed reference-frame foundation is implemented ([LIB-082](work/LIB-082-scene-reference-frame-foundation.md)); Moon longitude-lock is implemented ([LIB-083](work/LIB-083-moon-longitude-locked-scene-frame.md)); Moon position-lock is implemented ([LIB-084](work/LIB-084-moon-position-locked-scene-frame.md)); Sun longitude-lock and Sun position-lock are implemented ([LIB-085](work/LIB-085-sun-anchored-scene-frames.md)). Generic entity-fixed remains on [`docs/ROADMAP.md`](ROADMAP.md). Architecture: [`docs/specs/scene/camera-and-reference-frame.md`](specs/scene/camera-and-reference-frame.md). Do not start generic entity-fixed work from this file.
 
 This list is **map** viewing and projection, not [civil time reference](#time-and-reference-frame-features).
 
 Candidates not absorbed by the camera / Moon-frame sequence:
 
-- Generalize anchor + axis-lock semantics beyond Moon-specific production types (evaluate whether the existing shape becomes `anchor = Moon | Sun | future entity` with `lockLongitude` / `lockLatitude`, or a more type-safe equivalent).
-- Sun-fixed frame; generic entity-fixed beyond the Moon experiment.
+- Generalize the now-proven Moon/Sun anchor + axis-lock architecture (evaluate whether the existing shape becomes `anchorKind = Moon | Sun` with `longitudeLocked` / `latitudeLocked`, or a more type-safe equivalent). Additional entities remain later.
+- Generic entity-fixed beyond Moon and Sun; ISS-fixed, storm/aircraft/ship frames.
 - polished scene reference-frame selector UI; animated transitions between Earth-fixed and entity-fixed.
 - full-world fixed view with additional aspect rules beyond the current scene-strip stretch.
 - orthographic globe.

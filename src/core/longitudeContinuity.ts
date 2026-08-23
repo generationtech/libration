@@ -138,8 +138,9 @@ export function rebaseContinuousLongitudeDeg(
  * same meridian as the anchor yields `0` even when the canonical value is
  * `−179` and the continuous anchor is `181`.
  *
- * This is the subtractive rule Moon longitude-lock (and later entity-fixed
- * frames) use for longitude. Latitude-relative behaviour is deferred.
+ * This is the subtractive rule Moon and Sun longitude-lock (and later
+ * entity-fixed frames) use for longitude. Latitude-relative behaviour is
+ * the production position-lock path.
  */
 export function relativeLongitudeFromContinuousAnchorDeg(
   lonDeg: number,

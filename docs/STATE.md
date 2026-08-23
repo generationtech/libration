@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-084](work/LIB-084-moon-position-locked-scene-frame.md) — Moon position-locked scene frame (`moonAnchored` with longitude and latitude locked). Same kind as LIB-083 longitude-lock; second axis configuration. Scene-frame latitude may leave geographic ±90°. Camera remains independent. Earth-fixed remains the load default.
+[LIB-085](work/LIB-085-sun-anchored-scene-frames.md) — Sun-anchored scene frames (`sunAnchored` longitude-lock and position-lock). Same axis-lock semantics as Moon. Camera remains independent. Earth-fixed remains the load default. Generic entity-fixed was not started.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start Sun-fixed or generic entity-fixed. Generalized anchor + axis-lock (roadmap phase D) remains unscoped.
+Do not start generic entity-fixed. Generalized anchor + axis-lock (roadmap phase D) remains unscoped.

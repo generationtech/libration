@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 import { buildEquirectangularPolylineOverlayRenderPlan } from "./equirectPolylineOverlayPlan";
-import { moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
+import { moonLongitudeLockedSceneReferenceFrame, moonPositionLockedSceneReferenceFrame, sunLongitudeLockedSceneReferenceFrame, sunPositionLockedSceneReferenceFrame } from "../../core/sceneReferenceFrame";
 
 describe("buildEquirectangularPolylineOverlayRenderPlan", () => {
   it("emits at least one line for an open two-point path", () => {
@@ -151,6 +151,53 @@ describe("Moon position-lock polyline latitude", () => {
     expect(line?.kind).toBe("line");
     if (line?.kind === "line") {
       const expectedY = ((90 - -30) / 180) * 180;
+      expect(line.y1).toBeCloseTo(expectedY, 8);
+      expect(line.y2).toBeCloseTo(expectedY, 8);
+    }
+  });
+});
+
+describe("Sun-frame polyline seams and eclipse geography", () => {
+  it("does not emit a world-spanning chord across the Sun-frame antipode", () => {
+    const frame = sunLongitudeLockedSceneReferenceFrame(0);
+    const plan = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame,
+      points: [
+        { latDeg: 0, lonDeg: 179 },
+        { latDeg: 0, lonDeg: -179 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+    });
+    const lines = plan.items.filter((item) => item.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const item of lines) {
+      if (item.kind !== "line") {
+        continue;
+      }
+      expect(Math.abs(item.x2 - item.x1)).toBeLessThan(360 * 0.5);
+    }
+  });
+
+  it("transforms eclipse-like path latitude under Sun position-lock", () => {
+    const frame = sunPositionLockedSceneReferenceFrame(40, 20);
+    const plan = buildEquirectangularPolylineOverlayRenderPlan({
+      viewportWidthPx: 360,
+      viewportHeightPx: 180,
+      frame,
+      points: [
+        { latDeg: 10, lonDeg: 30 },
+        { latDeg: 10, lonDeg: 50 },
+      ],
+      closed: false,
+      layerOpacity: 1,
+    });
+    const line = plan.items.find((item) => item.kind === "line");
+    expect(line?.kind).toBe("line");
+    if (line?.kind === "line") {
+      const expectedY = ((90 - (10 - 20)) / 180) * 180;
       expect(line.y1).toBeCloseTo(expectedY, 8);
       expect(line.y2).toBeCloseTo(expectedY, 8);
     }
