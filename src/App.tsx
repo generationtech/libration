@@ -116,6 +116,7 @@ import {
   issProvenanceFromPreparedTrack,
   originStampFromPreparedEquirect,
   originStampFromPreparedPointFeatures,
+  resolveAuthoritativeIssCanonicalPosition,
   resolveCloudsProvenance,
   resolveEarthquakeProvenance,
   reviveDisposedDynamicLifecycleHost,
@@ -168,10 +169,14 @@ import {
   nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
   sceneReferenceFrameFromUiKind,
+  sceneReferenceFrameUiKindWhenTargetUnavailable,
   trackableMapObjectIdFromUiKind,
   type SceneReferenceFrameUiKind,
 } from "./core/sceneFrameAnchor";
-import { resolveTrackableMapObjectAtInstant } from "./core/trackableMapObject";
+import {
+  resolveTrackableMapObject,
+  trackableMapObjectAuthoritativeStateAt,
+} from "./core/trackableMapObject";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -330,6 +335,8 @@ export default function App() {
   const [cameraIsAtDefault, setCameraIsAtDefault] = useState(true);
   const sceneFrameKindRef = useRef<SceneReferenceFrameUiKind>("earthFixed");
   const [sceneFrameKind, setSceneFrameKind] = useState<SceneReferenceFrameUiKind>("earthFixed");
+  const [issTrackingAvailable, setIssTrackingAvailable] = useState(false);
+  const issTrackingAvailableRef = useRef(false);
   const anchorContinuousLonRef = useRef<number | null>(null);
   const sceneReferenceFrameRef = useRef<SceneReferenceFrame>(
     EARTH_FIXED_SCENE_REFERENCE_FRAME,
@@ -894,21 +901,59 @@ export default function App() {
           ),
         ),
       });
-      const frameKind = sceneFrameKindRef.current;
+      const issAttachment = time.dynamicDataLifecycle;
+      const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;
+      const issLife =
+        issAttachment?.getLifecycleState(ISS_ORBITAL_TRACK_SOURCE_ID).state ??
+        "idle";
+      const issPosition = resolveAuthoritativeIssCanonicalPosition({
+        preparedTracks: issView,
+        lifecycleState: issLife,
+        productUtcMs: time.now,
+      });
+      const issAvailable = issPosition !== null;
+      if (issAvailable !== issTrackingAvailableRef.current) {
+        issTrackingAvailableRef.current = issAvailable;
+        setIssTrackingAvailable(issAvailable);
+      }
+      const requestedKind = sceneFrameKindRef.current;
+      const frameKind = sceneReferenceFrameUiKindWhenTargetUnavailable(requestedKind, {
+        moon: true,
+        sun: true,
+        iss: issAvailable,
+      });
+      if (frameKind !== requestedKind) {
+        sceneFrameKindRef.current = frameKind;
+        anchorContinuousLonRef.current = null;
+        sceneCameraCoverPolicyRef.current = sceneCameraCoverPolicyAfterFrameKindChange(
+          isPositionLockedSceneReferenceFrameUiKind(frameKind),
+        );
+        sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
+        setCameraIsAtDefault(true);
+        setSceneFrameKind(frameKind);
+      }
       const target = trackableMapObjectIdFromUiKind(frameKind);
       if (target !== null) {
-        const position = resolveTrackableMapObjectAtInstant(target, time.now);
-        const continuous = nextAnchorContinuousLonDeg({
-          previousContinuousLonDeg: anchorContinuousLonRef.current,
-          nextCanonicalLonDeg: position.lonDeg,
-          policy: "follow",
-        });
-        anchorContinuousLonRef.current = continuous;
-        sceneReferenceFrameRef.current = sceneReferenceFrameFromUiKind(
-          frameKind,
-          continuous,
-          position.latDeg,
+        const position = resolveTrackableMapObject(
+          target,
+          trackableMapObjectAuthoritativeStateAt(time.now, issPosition),
         );
+        if (position === null) {
+          anchorContinuousLonRef.current = null;
+          sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
+        } else {
+          const continuous = nextAnchorContinuousLonDeg({
+            previousContinuousLonDeg: anchorContinuousLonRef.current,
+            nextCanonicalLonDeg: position.lonDeg,
+            policy: "follow",
+          });
+          anchorContinuousLonRef.current = continuous;
+          sceneReferenceFrameRef.current = sceneReferenceFrameFromUiKind(
+            frameKind,
+            continuous,
+            position.latDeg,
+          );
+        }
       } else {
         anchorContinuousLonRef.current = null;
         sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
@@ -922,11 +967,6 @@ export default function App() {
           sceneCameraVerticalExtentFromFrame(sceneReferenceFrameRef.current),
         );
       }
-      const issAttachment = time.dynamicDataLifecycle;
-      const issView = issAttachment?.getPreparedTracks(ISS_ORBITAL_TRACK_SOURCE_ID) ?? null;
-      const issLife =
-        issAttachment?.getLifecycleState(ISS_ORBITAL_TRACK_SOURCE_ID).state ??
-        "idle";
       const nextIssHint = issConfigStatusHint({
         enabled: derivedAppConfigRef.current.layers.orbitalTracks,
         productTimeLiveEnough: liveEnough,
@@ -1490,6 +1530,12 @@ export default function App() {
             if (next === sceneFrameKindRef.current) {
               return;
             }
+            if (
+              trackableMapObjectIdFromUiKind(next) === "iss" &&
+              !issTrackingAvailableRef.current
+            ) {
+              return;
+            }
             sceneFrameKindRef.current = next;
             anchorContinuousLonRef.current = null;
             sceneCameraCoverPolicyRef.current =
@@ -1506,6 +1552,12 @@ export default function App() {
           <option value="moonPositionLocked">Moon — position locked</option>
           <option value="sunLongitudeLocked">Sun — longitude locked</option>
           <option value="sunPositionLocked">Sun — position locked</option>
+          <option value="issLongitudeLocked" disabled={!issTrackingAvailable}>
+            ISS — longitude locked
+          </option>
+          <option value="issPositionLocked" disabled={!issTrackingAvailable}>
+            ISS — position locked
+          </option>
         </select>
       </label>
       <button

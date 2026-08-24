@@ -695,12 +695,12 @@ describe("Sun position-lock composed with camera", () => {
 });
 
 describe("shared anchored production model", () => {
-  const ANCHORS = ["moon", "sun"] as const;
+  const ANCHORS = ["moon", "sun", "iss"] as const;
   const LON = 40;
   const LAT = 28;
   const POINT = { lonDeg: 12.5, latDeg: -33.9 };
 
-  it("gives Moon and Sun the same structural shape except identity, coordinates, and lock mode", () => {
+  it("gives Moon, Sun, and ISS the same structural shape except identity, coordinates, and lock mode", () => {
     const moonLon = anchoredSceneReferenceFrame({
       target: "moon",
       lockMode: "longitude",
@@ -842,11 +842,23 @@ describe("shared anchored production model", () => {
       continuousAnchorLonDeg: LON,
       anchorLatDeg: LAT,
     });
+    const iss = anchoredSceneReferenceFrame({
+      target: "iss",
+      lockMode: "position",
+      continuousAnchorLonDeg: LON,
+      anchorLatDeg: LAT,
+    });
     expect(sceneCameraVerticalExtentFromFrame(moon)).toEqual(
       sceneCameraVerticalExtentFromFrame(sun),
     );
+    expect(sceneCameraVerticalExtentFromFrame(moon)).toEqual(
+      sceneCameraVerticalExtentFromFrame(iss),
+    );
     expect(minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(moon))).toBe(
       minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(sun)),
+    );
+    expect(minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(moon))).toBe(
+      minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(iss)),
     );
   });
 });

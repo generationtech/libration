@@ -104,9 +104,17 @@ describe("minimumScaleToCoverSceneFrameEarth", () => {
       continuousAnchorLonDeg: 40,
       anchorLatDeg: 18,
     });
+    const iss = anchoredSceneReferenceFrame({
+      target: "iss",
+      lockMode: "position",
+      continuousAnchorLonDeg: 40,
+      anchorLatDeg: 18,
+    });
     const moonScale = minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(moon));
     const sunScale = minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(sun));
+    const issScale = minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(iss));
     expect(moonScale).toBe(sunScale);
+    expect(moonScale).toBe(issScale);
     expect(moonScale).toBeCloseTo(1 / (1 - 18 / 90), 12);
   });
 

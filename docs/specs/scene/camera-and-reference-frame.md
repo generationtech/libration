@@ -8,7 +8,7 @@ It owns intended structure, insertion points, rendering categories, interaction 
 
 It does **not** own current implementation truth ([`docs/IMPLEMENTATION.md`](../../IMPLEMENTATION.md)), current status ([`docs/STATE.md`](../../STATE.md)), or permission to start work ([`docs/WORKFLOW.md`](../../WORKFLOW.md)). Speculative extras stay in [`docs/FUTURE_FEATURES.md`](../../FUTURE_FEATURES.md). Durable invariants are in [`ARCHITECTURE.md`](../../../ARCHITECTURE.md) and [ADR 0026](../../decisions/0026-scene-camera-independent-of-projection-and-reference-frame.md).
 
-No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). The shared anchored production model is implemented: [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md). Automatic scene-cover zoom for position-lock is implemented: [LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md). Additional entity-fixed kinds are not implemented.
+No production code is implied by this file existing in isolation. Zoom (A1) is implemented: [LIB-080](../../work/LIB-080-scene-camera-zoom.md). Pan (A2) is implemented: [LIB-081](../../work/LIB-081-scene-camera-pan.md). Scene reference-frame foundation (B) is implemented as Earth-fixed identity: [LIB-082](../../work/LIB-082-scene-reference-frame-foundation.md). Moon longitude-lock (first Phase C slice) is implemented: [LIB-083](../../work/LIB-083-moon-longitude-locked-scene-frame.md). Moon position-lock is implemented: [LIB-084](../../work/LIB-084-moon-position-locked-scene-frame.md). Sun longitude-lock and Sun position-lock are implemented: [LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md). The shared anchored production model is implemented: [LIB-086](../../work/LIB-086-generalize-anchored-scene-reference-frames.md). Automatic scene-cover zoom for position-lock is implemented: [LIB-087](../../work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md). The trackable-map-object target identity is implemented: [LIB-088](../../work/LIB-088-trackable-map-object-foundation.md). ISS is a production trackable target: [LIB-089](../../work/LIB-089-iss-tracking-target.md). Additional entity-fixed kinds beyond Moon, Sun, and ISS are not implemented.
 
 ---
 
@@ -202,7 +202,7 @@ SceneCamera (pan, zoom, horizontal wrap)
 
 **Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. Anchored frames must not write Moon or Sun coordinates into `centerU` / `centerV`.
 
-### 6.0 Production model (LIB-086 / LIB-088)
+### 6.0 Production model (LIB-086 / LIB-088 / LIB-089)
 
 Production `SceneReferenceFrame` is:
 
@@ -210,7 +210,7 @@ Production `SceneReferenceFrame` is:
 earthFixed                          identity (not a target)
 
 anchored
-    target                          TrackableMapObjectId   (moon | sun)
+    target                          TrackableMapObjectId   (moon | sun | iss)
     lockMode                        longitude | position
     continuousAnchorLonDeg
     anchorLatDeg
@@ -218,11 +218,11 @@ anchored
 
 `lockMode: longitude` is longitude locked with latitude identity. `lockMode: position` is both axes locked. Latitude-only lock and unlocked anchored frames are not constructible.
 
-Moon and Sun are production **trackable map object** identities (`src/core/trackableMapObject.ts`). Forward/inverse transform, raster dest shift, camera vertical extent, longitude continuity, and automatic cover branch on Earth-fixed vs anchored and on `lockMode` — not on which object is the target. Target resolution is a separate seam: canonical instant + authoritative product state → canonical lon/lat, then the frame is built from those numbers. Moon uses the existing `sublunarPoint`; Sun uses the existing `subsolarPoint`. Runtime policy: `src/core/sceneFrameAnchor.ts`.
+Moon, Sun, and ISS are production **trackable map object** identities (`src/core/trackableMapObject.ts`). Forward/inverse transform, raster dest shift, camera vertical extent, longitude continuity, and automatic cover branch on Earth-fixed vs anchored and on `lockMode` — not on which object is the target. Target resolution is a separate seam: canonical instant + authoritative product state → canonical lon/lat, then the frame is built from those numbers. Moon uses the existing `sublunarPoint`; Sun uses the existing `subsolarPoint`; ISS uses the existing ISS current sample (`resolveIssCurrentSample`) when the overlay would itself paint (`issTrackShouldPaint`). Runtime policy: `src/core/sceneFrameAnchor.ts`. ISS availability: [ADR 0033](../../decisions/0033-iss-tracking-reuses-anchored-frame-target-architecture.md).
 
-User-visible Scene frame control still has five choices. Those UI ids map into Earth-fixed or `target + lockMode`. They are not themselves transform kinds.
+User-visible Scene frame control currently has seven transitional choices. Those UI ids map into Earth-fixed or `target + lockMode`. They are not themselves transform kinds.
 
-See [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md) and [ADR 0032](../../decisions/0032-anchored-frames-target-a-trackable-map-object.md).
+See [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md), [ADR 0032](../../decisions/0032-anchored-frames-target-a-trackable-map-object.md), and [ADR 0033](../../decisions/0033-iss-tracking-reuses-anchored-frame-target-architecture.md).
 
 ### 6.0.1 Trackability contract
 
@@ -235,7 +235,7 @@ A rendered map object may become a tracking target only if it provides:
 5. Position-lock that is meaningful as north-up map translation (not heading-up chase).
 6. Displayed map position that matches the resolver’s canonical coordinates.
 
-Future targets may be **dynamic** (Moon, Sun, later ISS) or **static** (later city pins). The frame does not require motion. Clickable object selection is not implemented. Earthquakes are not tracking targets.
+Future targets may be **dynamic** (Moon, Sun, ISS) or **static** (later city pins). The frame does not require motion. Clickable object selection is not implemented. Earthquakes are not tracking targets.
 
 ### 6.1 Earth-fixed identity (default)
 
@@ -269,13 +269,13 @@ The Moon maps to scene longitude `0°` (centre of the identity strip). Latitude 
 
 **Epoch policy.** While the mode stays active, time jumps (Demo, direct selection, tour) follow the nearest equivalent of the new canonical longitude. A new scene/frame epoch reinitializes from canonical longitude: first entry, reload, switching in from Earth-fixed. Switching out clears continuous state.
 
-**Camera on switch.** Changing among Earth-fixed, Moon longitude-lock, Moon position-lock, Sun longitude-lock, and Sun position-lock reinitializes camera policy (identity, or automatic cover on the destination position-lock frame) and does not carry a manual zoom override. Reset view resets the camera only.
+**Camera on switch.** Changing among Earth-fixed, Moon, Sun, and ISS lock modes reinitializes camera policy (identity, or automatic cover on the destination position-lock frame) and does not carry a manual zoom override. Reset view resets the camera only. Continuity is tracking-session-local: a kind switch reinitializes continuous longitude from the new target.
 
 **Rasters.** Shift the existing full-world equirectangular strip by `−λMoon_continuous / 360 × width` and paint periodic dest copies. Base map, illumination, and Clouds share that dest.
 
 **Global branch cut.** Independent nearest-equivalent relative longitude has a seam ~180° from the Moon. Whole-Earth presentation uses periodic copies plus seam-aware path unwrap in scene-frame longitude. Canonical antimeridian, Moon-frame antipode, and camera display wrap are distinct.
 
-**UI.** Compact runtime **Scene frame** control: Earth-fixed / Moon — longitude locked / Moon — position locked / Sun — longitude locked / Sun — position locked. Not a generalized selector.
+**UI.** Compact runtime **Scene frame** control: Earth-fixed plus Moon / Sun / ISS longitude-lock and position-lock (seven transitional choices). Not a generalized selector.
 
 See [ADR 0027](../../decisions/0027-moon-longitude-lock-is-a-scene-reference-frame.md).
 
@@ -334,6 +334,32 @@ The subsolar point maps to scene `(0°, 0°)`. Scene-frame latitude may leave ±
 
 See [ADR 0029](../../decisions/0029-sun-anchoring-reuses-moon-axis-lock.md).
 
+### 6.5.1 ISS longitude-lock (LIB-089)
+
+User-visible ISS longitude-lock. Production: `anchored` with `target: "iss"` and `lockMode: "longitude"`. Same transform as Moon/Sun longitude-lock.
+
+```text
+sceneLon = nearestEquivalent(canonicalLon, λIss_continuous) − λIss_continuous
+sceneLat = canonicalLat
+```
+
+The ISS sub-satellite point maps to scene longitude `0°`. Physical ISS latitude remains unlocked, so the glyph moves north/south as the orbit progresses. Earth translates horizontally. Camera default is identity. Automatic cover is not applied merely because the target is ISS.
+
+Authoritative position is the existing ISS current sample at the canonical product instant, not a second propagator. Tracking is unavailable when that sample is missing or would not paint.
+
+### 6.5.2 ISS position-lock (LIB-089)
+
+User-visible ISS position-lock. Production: `anchored` with `target: "iss"` and `lockMode: "position"`. Same transform and cover policy as Moon/Sun position-lock.
+
+```text
+sceneLon = nearestEquivalent(canonicalLon, λIss_continuous) − λIss_continuous
+sceneLat = canonicalLat − issAnchorLat
+```
+
+The ISS maps to scene `(0°, 0°)` because it uses the same canonical position that resolved the anchor. Cover scale is `1 / (1 − |anchorLat| / 90)` from the resolved ISS latitude, not a hard-coded inclination. Manual override, Reset, pan, and camera independence are unchanged.
+
+See [ADR 0033](../../decisions/0033-iss-tracking-reuses-anchored-frame-target-architecture.md).
+
 ### 6.6 Horizontal camera wrapping ≠ reference-frame longitude continuity
 
 LIB-081 copies the already-projected strip so a panned camera can show the dateline. That does not unwrap an anchor that crosses ±180°.
@@ -356,9 +382,9 @@ Relative-longitude rule for a frame anchored at continuous `λa`:
 
 The relative result is **not** re-wrapped to ±180.
 
-Latitude is not wrapped. Position-lock subtracts the active anchor latitude (Moon: LIB-084; Sun: LIB-085); longitude-lock does not.
+Latitude is not wrapped. Position-lock subtracts the active anchor latitude (Moon, Sun, or ISS); longitude-lock does not.
 
-Sun longitude-lock and Sun position-lock are implemented ([LIB-085](../../work/LIB-085-sun-anchored-scene-frames.md), [ADR 0029](../../decisions/0029-sun-anchoring-reuses-moon-axis-lock.md)). Generic entity-fixed is **not** implemented. A later generalization should reuse the now-proven Moon/Sun anchor + locked-axis semantics rather than invent independent special modes.
+ISS longitude-lock and ISS position-lock are implemented ([LIB-089](../../work/LIB-089-iss-tracking-target.md), [ADR 0033](../../decisions/0033-iss-tracking-reuses-anchored-frame-target-architecture.md)). Further trackable targets are **not** implemented. A later target should reuse this identity + resolution + common lock-mode path rather than invent a special transform.
 
 Entity-fixed is **not** “each frame assign camera centre to the entity.” The entity defines the origin of the scene-frame world; the user still zooms and pans with `SceneCamera`.
 
@@ -583,7 +609,15 @@ Automated: Moon and Sun have distinct stable target identities; five UI choices 
 
 Visual: five-mode regression against LIB-087 including auto-cover and manual override; cross-target switching; representative overlays; resize.
 
-A new production target is not in scope here. Adding ISS (or another object) means adding a `TrackableMapObjectId`, resolving its canonical lon/lat, and exposing UI — reusing the existing anchored frame, continuity, and cover. See [ADR 0032](../../decisions/0032-anchored-frames-target-a-trackable-map-object.md).
+### 12.8.2 ISS tracking target (LIB-089)
+
+Implemented. ISS is a third `TrackableMapObjectId`. No new reference-frame transform, camera, wrap, or cover architecture.
+
+Automated: `"iss"` identity; valid ISS state resolves to canonical lon/lat; missing/invalid ISS cannot construct an anchored frame; Moon/Sun resolution unchanged; seven UI choices map to Earth-fixed or `target + lockMode`; ISS longitude-lock (scene lon ≈ 0, scene lat = ISS lat); ISS position-lock (origin); same-state invariant; antimeridian and multi-turn continuity; auto-cover at equator / mid / ~51.6° from generic formula; manual override / Reset / frame switch; camera independence; raster/vector registration; ISS track registration; inverse hover.
+
+Visual: `iss-presentation` ISS longitude-lock (meridian lock, north/south motion, registered track, no antimeridian jump); ISS position-lock (origin, both-axis Earth motion, auto-cover vs latitude); accelerated Demo orbit; equator vs high-latitude cover; manual override then Reset; pan; Moon ↔ Sun ↔ ISS switches; resize auto vs manual; representative overlays. On `baseline`, ISS options are disabled until a valid ISS position exists.
+
+A redesigned Tracking target + Tracking mode control is not in scope here.
 
 ### 12.9 Automatic scene-cover zoom (LIB-087)
 
@@ -612,4 +646,4 @@ Meaningful issues for implementers; not a backlog of extras.
 
 ## 14. Non-goals for the architecture phase and for A1
 
-Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, the shared anchored production model, position-lock automatic cover zoom, and the trackable-map-object target identity are implemented (LIB-080–088). Additional targets (ISS, cities, planets) are not authorized by this spec.
+Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, the shared anchored production model, position-lock automatic cover zoom, the trackable-map-object target identity, and ISS tracking are implemented (LIB-080–089). Further targets (cities, planets) and a redesigned selector are not authorized by this spec.

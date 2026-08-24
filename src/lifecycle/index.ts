@@ -492,6 +492,15 @@ export {
   tleLinesFromTrackProperties,
 } from "./issOrbitalTrackAcquisition";
 
+export {
+  resolveAuthoritativeIssCanonicalPosition,
+  resolveAuthoritativeIssCanonicalPositionFromAttachment,
+} from "./issAuthoritativePosition";
+
+export type {
+  IssAuthoritativePositionInputs,
+} from "./issAuthoritativePosition";
+
 export type {
   IssConfigStatusHint,
   IssTleFreshnessBand,

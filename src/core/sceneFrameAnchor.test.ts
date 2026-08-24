@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { IDENTITY_SCENE_CAMERA } from "./sceneCamera";
 import {
   isAnchoredSceneReferenceFrameUiKind,
+  isIssAnchoredSceneReferenceFrameUiKind,
   isMoonAnchoredSceneReferenceFrameUiKind,
   isPositionLockedSceneReferenceFrameUiKind,
   isSunAnchoredSceneReferenceFrameUiKind,
@@ -24,6 +25,7 @@ import {
   sceneCameraAfterReferenceFrameKindChange,
   sceneFrameAnchorKindFromUiKind,
   sceneReferenceFrameFromUiKind,
+  sceneReferenceFrameUiKindWhenTargetUnavailable,
   trackableMapObjectIdFromUiKind,
 } from "./sceneFrameAnchor";
 import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
@@ -95,6 +97,12 @@ describe("scene camera after reference-frame kind change", () => {
     expect(isPositionLockedSceneReferenceFrameUiKind("moonPositionLocked")).toBe(true);
     expect(isPositionLockedSceneReferenceFrameUiKind("sunPositionLocked")).toBe(true);
     expect(isPositionLockedSceneReferenceFrameUiKind("sunLongitudeLocked")).toBe(false);
+    expect(isIssAnchoredSceneReferenceFrameUiKind("issLongitudeLocked")).toBe(true);
+    expect(isIssAnchoredSceneReferenceFrameUiKind("issPositionLocked")).toBe(true);
+    expect(isIssAnchoredSceneReferenceFrameUiKind("sunPositionLocked")).toBe(false);
+    expect(isAnchoredSceneReferenceFrameUiKind("issPositionLocked")).toBe(true);
+    expect(isPositionLockedSceneReferenceFrameUiKind("issPositionLocked")).toBe(true);
+    expect(isPositionLockedSceneReferenceFrameUiKind("issLongitudeLocked")).toBe(false);
   });
 });
 
@@ -117,7 +125,7 @@ describe("nextMoonAnchorContinuousLonDeg", () => {
 });
 
 describe("sceneReferenceFrameFromUiKind", () => {
-  it("maps all five UI choices onto Earth-fixed or the shared anchored model", () => {
+  it("maps all seven UI choices onto Earth-fixed or the shared anchored model", () => {
     expect(sceneReferenceFrameFromUiKind("earthFixed", 10, 5)).toEqual(
       EARTH_FIXED_SCENE_REFERENCE_FRAME,
     );
@@ -149,6 +157,20 @@ describe("sceneReferenceFrameFromUiKind", () => {
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 5,
     });
+    expect(sceneReferenceFrameFromUiKind("issLongitudeLocked", 10, 5)).toEqual({
+      kind: "anchored",
+      target: "iss",
+      lockMode: "longitude",
+      continuousAnchorLonDeg: 10,
+      anchorLatDeg: 5,
+    });
+    expect(sceneReferenceFrameFromUiKind("issPositionLocked", 10, 5)).toEqual({
+      kind: "anchored",
+      target: "iss",
+      lockMode: "position",
+      continuousAnchorLonDeg: 10,
+      anchorLatDeg: 5,
+    });
   });
 
   it("does not reuse leftover camera when switching kinds", () => {
@@ -156,7 +178,7 @@ describe("sceneReferenceFrameFromUiKind", () => {
     expect(EARTH_FIXED_SCENE_REFERENCE_FRAME.kind).toBe("earthFixed");
   });
 
-  it("maps the five UI choices onto Earth-fixed or target + lockMode", () => {
+  it("maps the seven UI choices onto Earth-fixed or target + lockMode", () => {
     expect(trackableMapObjectIdFromUiKind("earthFixed")).toBeNull();
     expect(anchoredSceneFrameLockModeFromUiKind("earthFixed")).toBeNull();
     expect(trackableMapObjectIdFromUiKind("moonLongitudeLocked")).toBe("moon");
@@ -167,6 +189,28 @@ describe("sceneReferenceFrameFromUiKind", () => {
     expect(anchoredSceneFrameLockModeFromUiKind("sunLongitudeLocked")).toBe("longitude");
     expect(trackableMapObjectIdFromUiKind("sunPositionLocked")).toBe("sun");
     expect(anchoredSceneFrameLockModeFromUiKind("sunPositionLocked")).toBe("position");
+    expect(trackableMapObjectIdFromUiKind("issLongitudeLocked")).toBe("iss");
+    expect(anchoredSceneFrameLockModeFromUiKind("issLongitudeLocked")).toBe("longitude");
+    expect(trackableMapObjectIdFromUiKind("issPositionLocked")).toBe("iss");
+    expect(anchoredSceneFrameLockModeFromUiKind("issPositionLocked")).toBe("position");
     expect(sceneFrameAnchorKindFromUiKind("moonLongitudeLocked")).toBe("moon");
+    expect(sceneFrameAnchorKindFromUiKind("issPositionLocked")).toBe("iss");
+  });
+
+  it("falls back to Earth-fixed when ISS tracking is unavailable", () => {
+    const available = { moon: true, sun: true, iss: false };
+    expect(
+      sceneReferenceFrameUiKindWhenTargetUnavailable("issLongitudeLocked", available),
+    ).toBe("earthFixed");
+    expect(
+      sceneReferenceFrameUiKindWhenTargetUnavailable("issPositionLocked", available),
+    ).toBe("earthFixed");
+    expect(
+      sceneReferenceFrameUiKindWhenTargetUnavailable("sunLongitudeLocked", {
+        moon: true,
+        sun: true,
+        iss: true,
+      }),
+    ).toBe("sunLongitudeLocked");
   });
 });

@@ -19,6 +19,11 @@ import {
   issOrbitLineWidthPx,
   type IssOrbitalPresentation,
 } from "../../core/issOrbitalPresentation";
+import { IDENTITY_SCENE_CAMERA, sceneYFromLatitudeDeg } from "../../core/sceneCamera";
+import {
+  issLongitudeLockedSceneReferenceFrame,
+  issPositionLockedSceneReferenceFrame,
+} from "../../core/sceneReferenceFrame";
 import { DYNAMIC_TRACKS_KIND, type DynamicTracksPayload } from "../../layers/dynamicTracksPayload";
 import { buildDynamicTracksRenderPlan } from "./sceneDynamicTracksPlan";
 
@@ -303,5 +308,86 @@ describe("LIB-038 ISS presentation RenderPlan", () => {
     expect(alphas.length).toBeGreaterThan(1);
     expect(alphas[0]!).toBeGreaterThan(alphas[alphas.length - 1]!);
     expect(past.every((i) => i.kind === "line" && /255,\s*0,\s*0/.test(i.stroke))).toBe(true);
+  });
+});
+
+describe("LIB-089 ISS track under anchored frames", () => {
+  const W = 1800;
+  const H = 900;
+  const issLon = -179;
+  const issLat = 11.5;
+  const wrapPayload: DynamicTracksPayload = {
+    kind: DYNAMIC_TRACKS_KIND,
+    tracks: [
+      {
+        id: "iss",
+        label: "ISS",
+        samples: [
+          { lonDeg: 170, latDeg: 10, timeMs: NOW - 120_000 },
+          { lonDeg: 175, latDeg: 11, timeMs: NOW - 60_000 },
+          { lonDeg: -175, latDeg: 12, timeMs: NOW + 60_000 },
+          { lonDeg: -170, latDeg: 13, timeMs: NOW + 120_000 },
+        ],
+        pastSamples: [
+          { lonDeg: 170, latDeg: 10, timeMs: NOW - 120_000 },
+          { lonDeg: 175, latDeg: 11, timeMs: NOW - 60_000 },
+          { lonDeg: issLon, latDeg: issLat, timeMs: NOW },
+        ],
+        futureSamples: [
+          { lonDeg: issLon, latDeg: issLat, timeMs: NOW },
+          { lonDeg: -175, latDeg: 12, timeMs: NOW + 60_000 },
+          { lonDeg: -170, latDeg: 13, timeMs: NOW + 120_000 },
+        ],
+      },
+    ],
+    currentPosition: { lonDeg: issLon, latDeg: issLat, timeMs: NOW },
+    presentation: { ...DEFAULT_ISS_ORBITAL_PRESENTATION },
+  };
+
+  it("keeps the current glyph registered with the track under ISS longitude-lock and the antimeridian", () => {
+    const frame = issLongitudeLockedSceneReferenceFrame(issLon, issLat);
+    const plan = buildDynamicTracksRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      layerOpacity: 1,
+      payload: wrapPayload,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+    });
+    const texts = plan.items.filter((i) => i.kind === "text");
+    expect(texts).toHaveLength(1);
+    if (texts[0]?.kind === "text") {
+      expect(texts[0].x).toBeGreaterThan(W * 0.45);
+      expect(texts[0].x).toBeLessThan(W * 0.65);
+          const expectedY = sceneYFromLatitudeDeg(issLat, H, IDENTITY_SCENE_CAMERA, frame);
+          expect(Math.abs(texts[0].y - expectedY)).toBeLessThan(8);
+    }
+    const lines = plan.items.filter((i) => i.kind === "line");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      if (line.kind !== "line") continue;
+      expect(Math.abs(line.x2 - line.x1)).toBeLessThan(W * 0.5);
+    }
+  });
+
+  it("places the current glyph at the scene origin under ISS position-lock", () => {
+    const frame = issPositionLockedSceneReferenceFrame(issLon, issLat);
+    const plan = buildDynamicTracksRenderPlan({
+      viewportWidthPx: W,
+      viewportHeightPx: H,
+      layerOpacity: 1,
+      payload: wrapPayload,
+      camera: IDENTITY_SCENE_CAMERA,
+      frame,
+    });
+    const texts = plan.items.filter((i) => i.kind === "text");
+    expect(texts).toHaveLength(1);
+    if (texts[0]?.kind === "text") {
+      expect(texts[0].x).toBeGreaterThan(W * 0.45);
+      expect(texts[0].x).toBeLessThan(W * 0.65);
+      const expectedY = sceneYFromLatitudeDeg(issLat, H, IDENTITY_SCENE_CAMERA, frame);
+      expect(expectedY).toBeCloseTo(H / 2, 8);
+      expect(Math.abs(texts[0].y - expectedY)).toBeLessThan(8);
+    }
   });
 });

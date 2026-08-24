@@ -29,7 +29,7 @@
  * - `longitude` — longitude locked, latitude identity
  * - `position` — longitude and latitude locked
  *
- * Moon and Sun are the first production {@link TrackableMapObjectId} values.
+ * Moon, Sun, and ISS are the production {@link TrackableMapObjectId} values.
  * Forward/inverse math, raster dest, and camera extent branch on Earth-fixed
  * vs anchored and on lock mode — not on which object is the target. Target
  * resolution (canonical lon/lat) happens before this module builds a frame.
@@ -107,6 +107,20 @@ export type SunPositionLockedSceneReferenceFrame = AnchoredSceneReferenceFrame &
 export type SunAnchoredSceneReferenceFrame =
   | SunLongitudeLockedSceneReferenceFrame
   | SunPositionLockedSceneReferenceFrame;
+
+export type IssLongitudeLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
+  readonly target: "iss";
+  readonly lockMode: "longitude";
+};
+
+export type IssPositionLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
+  readonly target: "iss";
+  readonly lockMode: "position";
+};
+
+export type IssAnchoredSceneReferenceFrame =
+  | IssLongitudeLockedSceneReferenceFrame
+  | IssPositionLockedSceneReferenceFrame;
 
 export type SceneReferenceFrame = EarthFixedSceneReferenceFrame | AnchoredSceneReferenceFrame;
 
@@ -205,6 +219,30 @@ export function sunPositionLockedSceneReferenceFrame(
   );
 }
 
+export function issLongitudeLockedSceneReferenceFrame(
+  continuousAnchorLonDeg: number,
+  anchorLatDeg = 0,
+): IssLongitudeLockedSceneReferenceFrame {
+  return buildAnchoredSceneReferenceFrame(
+    "iss",
+    "longitude",
+    continuousAnchorLonDeg,
+    anchorLatDeg,
+  );
+}
+
+export function issPositionLockedSceneReferenceFrame(
+  continuousAnchorLonDeg: number,
+  anchorLatDeg: number,
+): IssPositionLockedSceneReferenceFrame {
+  return buildAnchoredSceneReferenceFrame(
+    "iss",
+    "position",
+    continuousAnchorLonDeg,
+    anchorLatDeg,
+  );
+}
+
 export function isEarthFixedSceneReferenceFrame(
   frame: SceneReferenceFrame,
 ): frame is EarthFixedSceneReferenceFrame {
@@ -221,6 +259,12 @@ export function isSunAnchoredSceneReferenceFrame(
   frame: SceneReferenceFrame,
 ): frame is SunAnchoredSceneReferenceFrame {
   return frame.kind === "anchored" && frame.target === "sun";
+}
+
+export function isIssAnchoredSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is IssAnchoredSceneReferenceFrame {
+  return frame.kind === "anchored" && frame.target === "iss";
 }
 
 export function isAnchoredSceneReferenceFrame(
@@ -265,6 +309,26 @@ export function isSunPositionLockedSceneReferenceFrame(
   return (
     frame.kind === "anchored" &&
     frame.target === "sun" &&
+    frame.lockMode === "position"
+  );
+}
+
+export function isIssLongitudeLockedSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is IssLongitudeLockedSceneReferenceFrame {
+  return (
+    frame.kind === "anchored" &&
+    frame.target === "iss" &&
+    frame.lockMode === "longitude"
+  );
+}
+
+export function isIssPositionLockedSceneReferenceFrame(
+  frame: SceneReferenceFrame,
+): frame is IssPositionLockedSceneReferenceFrame {
+  return (
+    frame.kind === "anchored" &&
+    frame.target === "iss" &&
     frame.lockMode === "position"
   );
 }

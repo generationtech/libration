@@ -12,7 +12,7 @@
  */
 
 /**
- * Runtime policy for anchored scene frames (currently Moon and Sun targets).
+ * Runtime policy for anchored scene frames (Moon, Sun, and ISS targets).
  *
  * Continuity (target-agnostic; depends on longitude values, not object type):
  * - While an anchored frame remains active, each new canonical longitude
@@ -21,7 +21,9 @@
  *   jumps all use this path so the map does not jump ~360° at ±180°.
  * - A new scene/frame epoch reinitializes from the canonical longitude
  *   (no multi-turn carry): first entry into an anchored frame, reload,
- *   and switching among Earth-fixed / Moon modes / Sun modes.
+ *   and switching among Earth-fixed / Moon / Sun / ISS modes.
+ *   Continuity is tracking-session-local: switching target clears the
+ *   previous continuous longitude rather than carrying it across objects.
  *   Demo start/reset while already in an anchored frame still follows
  *   (a time jump, not a new frame epoch).
  * - Latitude has no continuity state: it is the resolved target latitude
@@ -35,8 +37,8 @@
  * necessarily scale = 1.
  *
  * This module is not a generic entity-frame provider. Target identity is
- * mapped from the five UI choices; resolved canonical coordinates are
- * supplied by the caller.
+ * mapped from the seven transitional UI choices; resolved canonical
+ * coordinates are supplied by the caller.
  */
 
 import { IDENTITY_SCENE_CAMERA, type SceneCamera } from "./sceneCamera";
@@ -57,7 +59,19 @@ export type SceneReferenceFrameUiKind =
   | "moonLongitudeLocked"
   | "moonPositionLocked"
   | "sunLongitudeLocked"
-  | "sunPositionLocked";
+  | "sunPositionLocked"
+  | "issLongitudeLocked"
+  | "issPositionLocked";
+
+export const SCENE_REFERENCE_FRAME_UI_KINDS = [
+  "earthFixed",
+  "moonLongitudeLocked",
+  "moonPositionLocked",
+  "sunLongitudeLocked",
+  "sunPositionLocked",
+  "issLongitudeLocked",
+  "issPositionLocked",
+] as const satisfies readonly SceneReferenceFrameUiKind[];
 
 export type AnchorEpochPolicy = "follow" | "reinitialize";
 
@@ -76,19 +90,30 @@ export function isSunAnchoredSceneReferenceFrameUiKind(
   return kind === "sunLongitudeLocked" || kind === "sunPositionLocked";
 }
 
+export function isIssAnchoredSceneReferenceFrameUiKind(
+  kind: SceneReferenceFrameUiKind,
+): boolean {
+  return kind === "issLongitudeLocked" || kind === "issPositionLocked";
+}
+
 export function isAnchoredSceneReferenceFrameUiKind(
   kind: SceneReferenceFrameUiKind,
 ): boolean {
   return (
     isMoonAnchoredSceneReferenceFrameUiKind(kind) ||
-    isSunAnchoredSceneReferenceFrameUiKind(kind)
+    isSunAnchoredSceneReferenceFrameUiKind(kind) ||
+    isIssAnchoredSceneReferenceFrameUiKind(kind)
   );
 }
 
 export function isPositionLockedSceneReferenceFrameUiKind(
   kind: SceneReferenceFrameUiKind,
 ): boolean {
-  return kind === "moonPositionLocked" || kind === "sunPositionLocked";
+  return (
+    kind === "moonPositionLocked" ||
+    kind === "sunPositionLocked" ||
+    kind === "issPositionLocked"
+  );
 }
 
 export function trackableMapObjectIdFromUiKind(
@@ -97,7 +122,13 @@ export function trackableMapObjectIdFromUiKind(
   if (kind === "earthFixed") {
     return null;
   }
-  return isMoonAnchoredSceneReferenceFrameUiKind(kind) ? "moon" : "sun";
+  if (isMoonAnchoredSceneReferenceFrameUiKind(kind)) {
+    return "moon";
+  }
+  if (isSunAnchoredSceneReferenceFrameUiKind(kind)) {
+    return "sun";
+  }
+  return "iss";
 }
 
 /** @deprecated Use {@link trackableMapObjectIdFromUiKind}. */
@@ -114,6 +145,23 @@ export function anchoredSceneFrameLockModeFromUiKind(
     return null;
   }
   return isPositionLockedSceneReferenceFrameUiKind(kind) ? "position" : "longitude";
+}
+
+/**
+ * ISS tracking is unavailable unless an authoritative ISS position exists.
+ * An active ISS UI kind must fall back to Earth-fixed rather than construct
+ * an anchored frame from missing coordinates. Moon and Sun remain always
+ * resolvable.
+ */
+export function sceneReferenceFrameUiKindWhenTargetUnavailable(
+  kind: SceneReferenceFrameUiKind,
+  available: Readonly<Record<TrackableMapObjectId, boolean>>,
+): SceneReferenceFrameUiKind {
+  const target = trackableMapObjectIdFromUiKind(kind);
+  if (target !== null && available[target] === false) {
+    return "earthFixed";
+  }
+  return kind;
 }
 
 /**
@@ -177,6 +225,20 @@ export function sceneReferenceFrameFromUiKind(
     case "sunPositionLocked":
       return anchoredSceneReferenceFrame({
         target: "sun",
+        lockMode: "position",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
+    case "issLongitudeLocked":
+      return anchoredSceneReferenceFrame({
+        target: "iss",
+        lockMode: "longitude",
+        continuousAnchorLonDeg,
+        anchorLatDeg,
+      });
+    case "issPositionLocked":
+      return anchoredSceneReferenceFrame({
+        target: "iss",
         lockMode: "position",
         continuousAnchorLonDeg,
         anchorLatDeg,

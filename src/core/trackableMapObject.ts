@@ -12,7 +12,7 @@
  */
 
 /**
- * Trackable map object identity and resolution (LIB-088).
+ * Trackable map object identity and resolution (LIB-088 / LIB-089).
  *
  * A trackable map object is a rendered/physical object that can expose an
  * authoritative canonical geographic lon/lat for the current frame instant
@@ -24,19 +24,21 @@
  * - `SceneReferenceFrame` — how already-resolved geography is expressed
  *
  * Identity is stable and independent of current coordinates. Moon remains
- * Moon as it moves. Production identities here are only `moon` and `sun`.
+ * Moon as it moves. Production identities here are `moon`, `sun`, and `iss`.
  * Earth-fixed is not a target. This module is not a plugin registry.
  *
- * Resolution consumes the same authoritative sublunar / subsolar state the
- * rest of the product already uses. It does not recompute astronomy.
+ * Resolution consumes already-authoritative product state. It does not
+ * recompute astronomy or orbital mechanics. ISS coordinates are supplied
+ * by the caller from the existing ISS lifecycle path; they are never
+ * invented here.
  */
 
 import { sublunarPoint } from "./sublunarPoint";
 import { subsolarPoint } from "./subsolarPoint";
 
-export const TRACKABLE_MAP_OBJECT_IDS = ["moon", "sun"] as const;
+export const TRACKABLE_MAP_OBJECT_IDS = ["moon", "sun", "iss"] as const;
 
-/** Stable production identities. ISS/city/planet values are not added here. */
+/** Stable production identities. City/planet/Milky Way values are not added here. */
 export type TrackableMapObjectId = (typeof TRACKABLE_MAP_OBJECT_IDS)[number];
 
 /** Canonical geographic position used as resolved anchor state. */
@@ -48,51 +50,80 @@ export type TrackableMapObjectCanonicalPosition = {
 /**
  * Authoritative lon/lat already computed for the frame instant.
  * Callers supply existing product state; they do not invent a second ephemeris.
+ * ISS is nullable: tracking is unavailable when no valid position exists.
  */
 export type TrackableMapObjectAuthoritativeState = {
   readonly moon: TrackableMapObjectCanonicalPosition;
   readonly sun: TrackableMapObjectCanonicalPosition;
+  readonly iss: TrackableMapObjectCanonicalPosition | null;
 };
 
 export function isTrackableMapObjectId(value: string): value is TrackableMapObjectId {
-  return value === "moon" || value === "sun";
+  return value === "moon" || value === "sun" || value === "iss";
 }
 
 /**
  * Map a target identity onto already-authoritative canonical coordinates.
  *
  * Object-specific knowledge lives here. Reference-frame math must not.
+ * Returns `null` only when the target is ISS and no valid position was supplied.
+ * Never fabricates ISS coordinates.
  */
+export function resolveTrackableMapObject(
+  target: "moon" | "sun",
+  state: TrackableMapObjectAuthoritativeState,
+): TrackableMapObjectCanonicalPosition;
 export function resolveTrackableMapObject(
   target: TrackableMapObjectId,
   state: TrackableMapObjectAuthoritativeState,
-): TrackableMapObjectCanonicalPosition {
+): TrackableMapObjectCanonicalPosition | null;
+export function resolveTrackableMapObject(
+  target: TrackableMapObjectId,
+  state: TrackableMapObjectAuthoritativeState,
+): TrackableMapObjectCanonicalPosition | null {
   switch (target) {
     case "moon":
       return { lonDeg: state.moon.lonDeg, latDeg: state.moon.latDeg };
     case "sun":
       return { lonDeg: state.sun.lonDeg, latDeg: state.sun.latDeg };
+    case "iss":
+      return state.iss === null
+        ? null
+        : { lonDeg: state.iss.lonDeg, latDeg: state.iss.latDeg };
   }
 }
 
-/** Gather the Moon/Sun authoritative points the product already computes. */
+/** Gather Moon/Sun authorities. ISS must be supplied from the existing ISS pipeline. */
 export function trackableMapObjectAuthoritativeStateAt(
   canonicalInstantMs: number,
+  iss: TrackableMapObjectCanonicalPosition | null = null,
 ): TrackableMapObjectAuthoritativeState {
   const moon = sublunarPoint(canonicalInstantMs);
   const sun = subsolarPoint(canonicalInstantMs);
   return {
     moon: { lonDeg: moon.lonDeg, latDeg: moon.latDeg },
     sun: { lonDeg: sun.lonDeg, latDeg: sun.latDeg },
+    iss,
   };
 }
 
 export function resolveTrackableMapObjectAtInstant(
+  target: "moon" | "sun",
+  canonicalInstantMs: number,
+  iss?: TrackableMapObjectCanonicalPosition | null,
+): TrackableMapObjectCanonicalPosition;
+export function resolveTrackableMapObjectAtInstant(
   target: TrackableMapObjectId,
   canonicalInstantMs: number,
-): TrackableMapObjectCanonicalPosition {
+  iss?: TrackableMapObjectCanonicalPosition | null,
+): TrackableMapObjectCanonicalPosition | null;
+export function resolveTrackableMapObjectAtInstant(
+  target: TrackableMapObjectId,
+  canonicalInstantMs: number,
+  iss: TrackableMapObjectCanonicalPosition | null = null,
+): TrackableMapObjectCanonicalPosition | null {
   return resolveTrackableMapObject(
     target,
-    trackableMapObjectAuthoritativeStateAt(canonicalInstantMs),
+    trackableMapObjectAuthoritativeStateAt(canonicalInstantMs, iss),
   );
 }

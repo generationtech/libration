@@ -490,6 +490,12 @@ Trackable map object foundation: anchored frames now carry `target: TrackableMap
 
 Verified: `npx tsc --noEmit` clean; `npm test` 278 files / 2778 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-CkBe6pSA.js`). Cursor Browser at inner 1920×1080: five-mode regression vs LIB-087; cross-target switching with camera/cover reset; wheel override then Reset; `clouds` / ISS / lunar-track / total solar eclipse; `terminator` and `night` Sun position-lock cover; resize 1280×720 auto-cover vs manual override.
 
+## 2026-08-24 — LIB-089 complete
+
+ISS tracking target: `"iss"` is a third `TrackableMapObjectId`. Longitude-lock and position-lock reuse the existing anchored frame. Resolution consumes the ISS overlay’s current sample at product UTC (`issTrackShouldPaint` + `resolveIssCurrentSample`); no second propagator. ISS options are listed but disabled without a valid position; active ISS tracking falls back to Earth-fixed. Continuity is tracking-session-local. Generic auto-cover uses actual ISS latitude. Transitional seven-choice Scene frame selector. ADR 0033. Cities/planets/Milky Way/earthquakes and selector redesign remain out of scope.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 280 files / 2804 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-DV0J5AQ6.js`). Cursor Browser at inner 1920×1080: `iss-presentation` ISS longitude-lock (meridian x=959, N/S motion) and position-lock (origin, auto-cover, 60× Demo, track L/C/R thirds); pan then Reset; Moon/Sun/ISS frame switches; resize 1280×720 auto-cover; `baseline` / `clouds` / `earthquake-presentation` ISS options disabled.
+
 
 
 

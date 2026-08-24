@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-088](work/LIB-088-trackable-map-object-foundation.md) — Trackable map object foundation. Anchored frames now target a stable `TrackableMapObjectId` (`moon` | `sun`); resolution is separate from reference-frame math. Five Scene frame choices unchanged. ADR 0032. ISS tracking not started.
+[LIB-089](work/LIB-089-iss-tracking-target.md) — ISS tracking target. `"iss"` is a third `TrackableMapObjectId`. Longitude-lock and position-lock reuse the existing anchored frame, ISS overlay authority, generic continuity, and LIB-087 auto-cover. Transitional seven-choice Scene frame selector. ADR 0033.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Await a human-approved work item. Do not start FUTURE_FEATURES or proposed items.
+Await human scope. Do not start D2 (further targets / selector UX), click-to-track, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.
