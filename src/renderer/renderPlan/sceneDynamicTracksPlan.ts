@@ -92,6 +92,86 @@ export interface DynamicTracksRenderPlanOptions {
   payload: DynamicTracksPayload;
 }
 
+export type IssCurrentGlyphCopy = {
+  sceneX: number;
+  sceneY: number;
+  renderedRadiusPx: number;
+};
+
+/** Painted ISS current-glyph radius used by the tracks plan and by click-to-track. */
+export function issCurrentGlyphRadiusPx(
+  viewportWidthPx: number,
+  sizeScale: number,
+): number {
+  return (
+    Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, viewportWidthPx / 1400))) *
+    sizeScale
+  );
+}
+
+/**
+ * Scene copies of the current ISS glyph, using the same unwrap + wrap-copy
+ * path as {@link buildDynamicTracksRenderPlan}.
+ */
+export function collectIssCurrentGlyphCopies(options: {
+  viewportWidthPx: number;
+  viewportHeightPx: number;
+  camera?: SceneCamera;
+  frame?: SceneReferenceFrame;
+  payload: DynamicTracksPayload;
+}): IssCurrentGlyphCopy[] {
+  const w = options.viewportWidthPx;
+  const h = options.viewportHeightPx;
+  if (!(w > 0) || !(h > 0)) {
+    return [];
+  }
+  const camera = options.camera ?? IDENTITY_SCENE_CAMERA;
+  const frame = options.frame ?? EARTH_FIXED_SCENE_REFERENCE_FRAME;
+  const presentation: IssOrbitalPresentation =
+    options.payload.presentation ?? DEFAULT_ISS_ORBITAL_PRESENTATION;
+  const sizeScale = issGlyphSizeScale(presentation.glyphSize);
+  const r = issCurrentGlyphRadiusPx(w, sizeScale);
+  const current = options.payload.currentPosition;
+  const track = options.payload.tracks.find((row) => row.samples.length > 0);
+  const samples = track?.samples;
+  const marker = current ?? samples?.[samples.length - 1];
+  if (marker === undefined) {
+    return [];
+  }
+  const nearestIdx =
+    samples !== undefined && samples.length > 0
+      ? nearestSampleIndexByTime(samples, marker.timeMs)
+      : 0;
+  const lons =
+    samples !== undefined && samples.length > 0
+      ? sceneFrameLongitudesDeg(
+          samples.map((s) => s.lonDeg),
+          frame,
+        )
+      : [sceneFrameLongitudeDeg(marker.lonDeg, frame)];
+  const unwrapped = lons.length >= 2 ? unwrappedLongitudes(lons) : lons;
+  const nearU =
+    unwrapped[nearestIdx] ?? sceneFrameLongitudeDeg(marker.lonDeg, frame);
+  const markerU = unwrapLonNear(
+    sceneFrameLongitudeDeg(marker.lonDeg, frame),
+    nearU,
+  );
+  let tipIdentityX = equirectXFromUnwrappedLon(markerU, w);
+  tipIdentityX = ((tipIdentityX % w) + w) % w;
+  const tipY = sceneYFromLatitudeDeg(marker.latDeg, h, camera, frame);
+  const copies: IssCurrentGlyphCopy[] = [];
+  for (const copy of sceneCameraHorizontalWorldCopyOffsets(camera, w)) {
+    const tipX =
+      sceneXFromIdentityX(tipIdentityX, w, camera) +
+      sceneXShiftForWorldCopy(w, camera, copy);
+    if (tipX < -r * 6 || tipX > w + r * 6) {
+      continue;
+    }
+    copies.push({ sceneX: tipX, sceneY: tipY, renderedRadiusPx: r });
+  }
+  return copies;
+}
+
 /**
  * Builds a {@link RenderPlan} for dynamic tracks: trail lines + current-position glyph + optional label.
  * Future segments are drawn first, then past, then the current glyph so the marker stays primary.
@@ -179,7 +259,7 @@ export function buildDynamicTracksRenderPlan(
     let tipIdentityX = equirectXFromUnwrappedLon(markerU, w);
     tipIdentityX = ((tipIdentityX % w) + w) % w;
     const tipY = sceneYFromLatitudeDeg(marker.latDeg, h, camera, frame);
-    const r = Math.min(8, Math.max(4.2, 4.4 * Math.max(0.7, w / 1400))) * sizeScale;
+    const r = issCurrentGlyphRadiusPx(w, sizeScale);
     const tipCopies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
     const labelText =
       presentation.labelEnabled &&

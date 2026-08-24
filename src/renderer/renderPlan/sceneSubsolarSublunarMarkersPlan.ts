@@ -47,6 +47,11 @@ import {
 } from "../../core/sublunarMarkerAppearance";
 import type { EarthShadowCueAppearance, EarthShadowOverlayAppearance } from "../../layers/sublunarMarkerPayload";
 
+/** Painted Sun-disc radius used by the marker plan and by click-to-track hits. */
+export function subsolarMarkerRadiusPx(viewportWidthPx: number): number {
+  return Math.min(9, Math.max(4.5, viewportWidthPx * 0.0055));
+}
+
 export function buildSubsolarMarkerRenderPlan(options: {
   viewportWidthPx: number;
   viewportHeightPx: number;
@@ -74,7 +79,7 @@ export function buildSubsolarMarkerRenderPlan(options: {
 
   const baseCx = sceneXFromLongitudeDeg(options.lonDeg, w, camera, frame);
   const cy = sceneYFromLatitudeDeg(options.latDeg, h, camera, frame);
-  const r = Math.min(9, Math.max(4.5, w * 0.0055));
+  const r = subsolarMarkerRadiusPx(w);
   const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
 
   for (const k of copies) {

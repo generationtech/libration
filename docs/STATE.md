@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-090](work/LIB-090-tracking-target-and-mode-ux-foundation.md) — Tracking target and mode UX foundation. Orthogonal Target + Mode chrome over the proven anchored-frame architecture. Earth-fixed is no target. Mode retained across Moon/Sun/ISS at runtime. Canonical `setTrackingTarget` seam; click-to-track not implemented. ADR 0034.
+[LIB-091](work/LIB-091-direct-click-to-track-for-map-objects.md) — Direct click-to-track for map objects. Clicking a rendered Moon, Sun, or ISS glyph sets Tracking target through `setTrackingTarget`; remembered mode is retained. Scene-space semantic hit targets; wrapped copies share one id. ADR 0035.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Await human scope. Do not start click-to-track, further targets, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.
+Await human scope. Do not start cities, planets, Milky Way, earthquakes-as-targets, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.

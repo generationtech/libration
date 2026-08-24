@@ -502,6 +502,12 @@ Tracking target + Tracking mode UX: two orthogonal chrome controls over the prov
 
 Verified: `npx tsc --noEmit` clean; `npm test` 281 files / 2815 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-DIw7MObM.js`). Cursor Browser at inner 1920×1080: Target/Mode chrome; Earth-fixed with Mode disabled; Moon/Sun/ISS target+mode matrix; mode retention; reload restores Earth-fixed; ISS disabled on `baseline` / `clouds` / `earthquake-presentation`; ISS enabled on `iss-presentation`; 1280×720 chrome no overlap.
 
+## 2026-08-24 — LIB-091 complete
+
+Direct click-to-track for rendered Moon, Sun, and ISS: scene-space semantic hit targets from the same glyph copies as paint; `setTrackingTarget` only; remembered mode retained; wrapped copies share one id; pan vs click reuses the 4px threshold. Cities, planets, Milky Way, and earthquakes were not added. ADR 0035.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 283 files / 2833 passed / 0 failed; `npm run build` succeeded (`tsc && vite build`; `dist/assets/index-BBdSE1i3.js`). Cursor Browser at inner 1920×1080: `baseline` click Sun/Moon, empty geography, ISS disabled; `iss-presentation` ISS both modes, Moon→Sun→ISS under Longitude, wrap-copy click, pan discrimination, same-target no-op, cursor pointer/grab; `earthquake-presentation` quake click does not track; 1280×720 ISS click and chrome usable.
+
 
 
 

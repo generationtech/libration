@@ -59,7 +59,7 @@ Stated with rationale in [`ARCHITECTURE.md`](ARCHITECTURE.md):
 8. Persist durable semantic ids, never resolved paths or URLs.
 9. No network access in the render path.
 10. Illumination composes upstream into one `rasterPatch`.
-11. Scene/map reference frame (Earth-fixed default; anchored Moon/Sun/ISS longitude-lock and position-lock) is independent of camera and of civil-time reference. User-facing tracking is Tracking target + Tracking mode; those map into one anchored frame. Anchored frames target a trackable map object identity; target resolution is separate from frame math. Position-lock automatic scene-cover zoom is camera policy, not a frame transform and not camera-follow. Direct rendered-object selection is not implemented; the canonical seam is `setTrackingTarget`.
+11. Scene/map reference frame (Earth-fixed default; anchored Moon/Sun/ISS longitude-lock and position-lock) is independent of camera and of civil-time reference. User-facing tracking is Tracking target + Tracking mode; those map into one anchored frame. Anchored frames target a trackable map object identity; target resolution is separate from frame math. Position-lock automatic scene-cover zoom is camera policy, not a frame transform and not camera-follow. Direct selection of rendered Moon, Sun, and ISS glyphs sets Tracking target through `setTrackingTarget`; remembered mode is retained. Cities, planets, Milky Way, and earthquakes are not click-to-track.
 
 ## How to operate
 

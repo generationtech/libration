@@ -40,6 +40,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0032](0032-anchored-frames-target-a-trackable-map-object.md) | Anchored frames target a trackable map object; resolution is separate from frame math |
 | [0033](0033-iss-tracking-reuses-anchored-frame-target-architecture.md) | ISS tracking reuses the anchored-frame target architecture; availability follows existing ISS validity |
 | [0034](0034-tracking-ui-is-orthogonal-target-and-mode.md) | User-facing tracking is orthogonal target + mode; production frames remain Earth-fixed vs anchored |
+| [0035](0035-click-to-track-uses-scene-space-semantic-hit-targets.md) | Click-to-track picks Moon/Sun/ISS in scene space and calls `setTrackingTarget` |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

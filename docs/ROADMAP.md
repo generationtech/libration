@@ -46,6 +46,7 @@ These themes are the product’s intended future shape. They become work only wh
 | C6 | Trackable map object foundation | [LIB-088](work/LIB-088-trackable-map-object-foundation.md) complete |
 | D | ISS as the first additional trackable target | [LIB-089](work/LIB-089-iss-tracking-target.md) complete |
 | D2 | Tracking target + Tracking mode UX (existing Moon/Sun/ISS set) | [LIB-090](work/LIB-090-tracking-target-and-mode-ux-foundation.md) complete |
+| D2.5 | Direct click-to-track for rendered Moon, Sun, and ISS | [LIB-091](work/LIB-091-direct-click-to-track-for-map-objects.md) complete |
 | D3 | Further trackable targets (cities/planets if they fit; not a generic picker yet) | Unscoped |
 | E | Persistence, URL view, rotation, semantic zoom, tiles, globe, … | Unscoped; [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md#scene-view-and-projection) |
 

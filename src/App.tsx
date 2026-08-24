@@ -183,9 +183,15 @@ import {
   type TrackingSelectionState,
 } from "./core/trackingSelection";
 import {
+  applyTrackableMapObjectClick,
+  pickTrackableMapObjectHit,
+  type TrackableMapObjectHitTarget,
+} from "./core/trackableMapObjectHit";
+import {
   resolveTrackableMapObject,
   trackableMapObjectAuthoritativeStateAt,
 } from "./core/trackableMapObject";
+import { collectTrackableMapObjectHitTargets } from "./renderer/trackableMapObjectHitTargets";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -348,6 +354,10 @@ export default function App() {
   );
   const [issTrackingAvailable, setIssTrackingAvailable] = useState(false);
   const issTrackingAvailableRef = useRef(false);
+  const trackableHitTargetsRef = useRef<TrackableMapObjectHitTarget[]>([]);
+  const commitTrackingSelectionRef = useRef<(next: TrackingSelectionState) => void>(
+    () => {},
+  );
   const anchorContinuousLonRef = useRef<number | null>(null);
   const sceneReferenceFrameRef = useRef<SceneReferenceFrame>(
     EARTH_FIXED_SCENE_REFERENCE_FRAME,
@@ -400,6 +410,7 @@ export default function App() {
     trackingSelectionRef.current = next;
     setTrackingSelection(next);
   };
+  commitTrackingSelectionRef.current = commitTrackingSelection;
 
   const requestDemoPause = useCallback(() => {
     demoTransportActionRef.current = "pause";
@@ -1190,6 +1201,13 @@ export default function App() {
         });
         return next === layer.data ? layer : { ...layer, data: next };
       });
+      trackableHitTargetsRef.current = collectTrackableMapObjectHitTargets({
+        layers: layersForRender,
+        viewportWidthPx: sceneRect.width,
+        viewportHeightPx: sceneRect.height,
+        camera: sceneCameraRef.current,
+        frame: sceneReferenceFrameRef.current,
+      });
       const input = buildSceneRenderInput({
         frame: frameCtx,
         viewport,
@@ -1290,7 +1308,16 @@ export default function App() {
         return;
       }
       canvas.classList.remove("is-panning");
-      canvas.style.cursor = scenePt !== null ? "grab" : "";
+      if (scenePt === null) {
+        canvas.style.cursor = "";
+        return;
+      }
+      const hit = pickTrackableMapObjectHit(
+        trackableHitTargetsRef.current,
+        scenePt.x,
+        scenePt.y,
+      );
+      canvas.style.cursor = hit !== null ? "pointer" : "grab";
     };
 
     type PanDragSession = {
@@ -1396,7 +1423,34 @@ export default function App() {
       syncPointerFromEvent(event);
     };
     const onPointerUp = (event: PointerEvent): void => {
+      const session = panDrag;
+      const wasActive =
+        session !== null &&
+        event.pointerId === session.pointerId &&
+        session.active;
+      const scenePt = scenePointFromClient(event);
       endPanDrag(event);
+      if (
+        session === null ||
+        event.pointerId !== session.pointerId ||
+        wasActive ||
+        scenePt === null
+      ) {
+        return;
+      }
+      const next = applyTrackableMapObjectClick({
+        current: trackingSelectionRef.current,
+        hits: trackableHitTargetsRef.current,
+        pointerX: scenePt.x,
+        pointerY: scenePt.y,
+        panBecameActive: false,
+        available: {
+          moon: true,
+          sun: true,
+          iss: issTrackingAvailableRef.current,
+        },
+      });
+      commitTrackingSelectionRef.current(next);
     };
     const onPointerLeave = (): void => {
       if (panDrag?.active === true) {

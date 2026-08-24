@@ -28,9 +28,9 @@
  * Mode is a runtime preference retained across target switches; it is not
  * persisted. Reload returns to Earth-fixed with the default mode.
  *
- * Direct rendered-object selection (not implemented here) must call
+ * Direct rendered-object selection (LIB-091) must call
  * {@link setTrackingTarget} rather than synthesizing chrome events or
- * constructing frames in UI code.
+ * constructing frames in UI code. Hit testing lives outside this module.
  */
 
 import {
@@ -100,7 +100,7 @@ export function trackingSelectionEffectiveLockMode(
 }
 
 /**
- * Canonical operation for chrome and for a later rendered-object click.
+ * Canonical operation for chrome and for rendered-object click-to-track.
  * Refuses an unavailable target rather than silently substituting another.
  * Does not change remembered mode.
  */
