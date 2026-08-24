@@ -159,21 +159,19 @@ import { runtimeIdForDynamicPointFeaturesSceneLayer } from "./layers/dynamicPoin
 import { isDynamicPointFeaturesPayload } from "./layers/dynamicPointFeaturesPayload";
 import { applyEarthquakePointerHoverToPayload } from "./layers/earthquakeHoverAnnotation";
 import { addEquirectBaseMapImageLoadFailure } from "./layers/baseMapEquirectImageExclusions";
-import { sublunarPoint } from "./core/sublunarPoint";
-import { subsolarPoint } from "./core/subsolarPoint";
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   type SceneReferenceFrame,
 } from "./core/sceneReferenceFrame";
 import {
-  isAnchoredSceneReferenceFrameUiKind,
   isPositionLockedSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
-  sceneFrameAnchorKindFromUiKind,
   sceneReferenceFrameFromUiKind,
+  trackableMapObjectIdFromUiKind,
   type SceneReferenceFrameUiKind,
 } from "./core/sceneFrameAnchor";
+import { resolveTrackableMapObjectAtInstant } from "./core/trackableMapObject";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -897,20 +895,19 @@ export default function App() {
         ),
       });
       const frameKind = sceneFrameKindRef.current;
-      if (isAnchoredSceneReferenceFrameUiKind(frameKind)) {
-        const anchorKind = sceneFrameAnchorKindFromUiKind(frameKind);
-        const anchor =
-          anchorKind === "sun" ? subsolarPoint(time.now) : sublunarPoint(time.now);
+      const target = trackableMapObjectIdFromUiKind(frameKind);
+      if (target !== null) {
+        const position = resolveTrackableMapObjectAtInstant(target, time.now);
         const continuous = nextAnchorContinuousLonDeg({
           previousContinuousLonDeg: anchorContinuousLonRef.current,
-          nextCanonicalLonDeg: anchor.lonDeg,
+          nextCanonicalLonDeg: position.lonDeg,
           policy: "follow",
         });
         anchorContinuousLonRef.current = continuous;
         sceneReferenceFrameRef.current = sceneReferenceFrameFromUiKind(
           frameKind,
           continuous,
-          anchor.latDeg,
+          position.latDeg,
         );
       } else {
         anchorContinuousLonRef.current = null;

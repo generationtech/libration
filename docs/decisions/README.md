@@ -35,8 +35,9 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0027](0027-moon-longitude-lock-is-a-scene-reference-frame.md) | Moon longitude-lock is a scene reference frame, not camera-follow |
 | [0028](0028-moon-position-lock-translates-scene-frame-latitude.md) | Moon position-lock translates scene-frame latitude; it is not camera-follow |
 | [0029](0029-sun-anchoring-reuses-moon-axis-lock.md) | Sun anchoring reuses Moon axis-lock; it is not a second frame theory |
-| [0030](0030-anchored-scene-frames-are-one-production-kind.md) | Anchored scene frames are one production kind; Moon/Sun are `anchorKind` |
+| [0030](0030-anchored-scene-frames-are-one-production-kind.md) | Anchored scene frames are one production kind; Moon/Sun identity later became `target` ([0032](0032-anchored-frames-target-a-trackable-map-object.md)) |
 | [0031](0031-position-lock-default-camera-is-automatic-scene-cover-zoom.md) | Position-lock default camera is automatic scene-cover zoom, not camera-follow |
+| [0032](0032-anchored-frames-target-a-trackable-map-object.md) | Anchored frames target a trackable map object; resolution is separate from frame math |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

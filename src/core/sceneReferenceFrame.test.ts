@@ -28,6 +28,8 @@ import {
   sceneYFromIdentityY,
   sceneYFromLatitudeDeg,
   type SceneCamera,
+  minimumScaleToCoverSceneFrameEarth,
+  sceneCameraVerticalExtentFromFrame,
   zoomSceneCameraAboutScenePoint,
 } from "./sceneCamera";
 import {
@@ -163,7 +165,7 @@ describe("Moon longitude-locked production frame", () => {
 
   it("is a production kind that is not identity", () => {
     expect(moon.kind).toBe("anchored");
-    expect(moon.anchorKind).toBe("moon");
+    expect(moon.target).toBe("moon");
     expect(moon.lockMode).toBe("longitude");
     expect(isMoonLongitudeLockedSceneReferenceFrame(moon)).toBe(true);
     expect(isIdentitySceneReferenceFrame(moon)).toBe(false);
@@ -281,7 +283,7 @@ describe("Moon position-locked production frame", () => {
 
   it("is a production kind distinct from longitude-lock and Earth-fixed", () => {
     expect(moon.kind).toBe("anchored");
-    expect(moon.anchorKind).toBe("moon");
+    expect(moon.target).toBe("moon");
     expect(moon.lockMode).toBe("position");
     expect(isMoonPositionLockedSceneReferenceFrame(moon)).toBe(true);
     expect(isMoonLongitudeLockedSceneReferenceFrame(moon)).toBe(false);
@@ -420,7 +422,7 @@ describe("Sun longitude-locked production frame", () => {
 
   it("is a production kind distinct from Moon and Earth-fixed", () => {
     expect(sun.kind).toBe("anchored");
-    expect(sun.anchorKind).toBe("sun");
+    expect(sun.target).toBe("sun");
     expect(sun.lockMode).toBe("longitude");
     expect(isSunLongitudeLockedSceneReferenceFrame(sun)).toBe(true);
     expect(isSunPositionLockedSceneReferenceFrame(sun)).toBe(false);
@@ -538,7 +540,7 @@ describe("Sun position-locked production frame", () => {
 
   it("is a production kind distinct from longitude-lock, Moon, and Earth-fixed", () => {
     expect(sun.kind).toBe("anchored");
-    expect(sun.anchorKind).toBe("sun");
+    expect(sun.target).toBe("sun");
     expect(sun.lockMode).toBe("position");
     expect(isSunPositionLockedSceneReferenceFrame(sun)).toBe(true);
     expect(isSunLongitudeLockedSceneReferenceFrame(sun)).toBe(false);
@@ -700,13 +702,13 @@ describe("shared anchored production model", () => {
 
   it("gives Moon and Sun the same structural shape except identity, coordinates, and lock mode", () => {
     const moonLon = anchoredSceneReferenceFrame({
-      anchorKind: "moon",
+      target: "moon",
       lockMode: "longitude",
       continuousAnchorLonDeg: LON,
       anchorLatDeg: LAT,
     });
     const sunLon = anchoredSceneReferenceFrame({
-      anchorKind: "sun",
+      target: "sun",
       lockMode: "longitude",
       continuousAnchorLonDeg: LON,
       anchorLatDeg: LAT,
@@ -723,24 +725,24 @@ describe("shared anchored production model", () => {
       continuousAnchorLonDeg: LON,
       anchorLatDeg: LAT,
     });
-    expect(moonLon.anchorKind).toBe("moon");
-    expect(sunLon.anchorKind).toBe("sun");
+    expect(moonLon.target).toBe("moon");
+    expect(sunLon.target).toBe("sun");
     expect(moonLongitudeLockedSceneReferenceFrame(LON, LAT)).toEqual(moonLon);
     expect(sunLongitudeLockedSceneReferenceFrame(LON, LAT)).toEqual(sunLon);
     expect(moonPositionLockedSceneReferenceFrame(LON, LAT).lockMode).toBe("position");
     expect(sunPositionLockedSceneReferenceFrame(LON, LAT).lockMode).toBe("position");
   });
 
-  it("applies longitude and position lock independently of anchor kind", () => {
-    for (const anchorKind of ANCHORS) {
+  it("applies longitude and position lock independently of target identity", () => {
+    for (const target of ANCHORS) {
       const lonLock = anchoredSceneReferenceFrame({
-        anchorKind,
+        target,
         lockMode: "longitude",
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
       });
       const posLock = anchoredSceneReferenceFrame({
-        anchorKind,
+        target,
         lockMode: "position",
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
@@ -759,13 +761,13 @@ describe("shared anchored production model", () => {
   it("transforms the same canonical point identically for Moon and Sun identity", () => {
     for (const lockMode of ["longitude", "position"] as const) {
       const moon = anchoredSceneReferenceFrame({
-        anchorKind: "moon",
+        target: "moon",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
       });
       const sun = anchoredSceneReferenceFrame({
-        anchorKind: "sun",
+        target: "sun",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
@@ -779,13 +781,13 @@ describe("shared anchored production model", () => {
   it("inverts identically for Moon and Sun identity", () => {
     for (const lockMode of ["longitude", "position"] as const) {
       const moon = anchoredSceneReferenceFrame({
-        anchorKind: "moon",
+        target: "moon",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
       });
       const sun = anchoredSceneReferenceFrame({
-        anchorKind: "sun",
+        target: "sun",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
@@ -797,16 +799,16 @@ describe("shared anchored production model", () => {
     }
   });
 
-  it("shifts rasters from numeric frame values, not anchor kind", () => {
+  it("shifts rasters from numeric frame values, not target identity", () => {
     for (const lockMode of ["longitude", "position"] as const) {
       const moon = anchoredSceneReferenceFrame({
-        anchorKind: "moon",
+        target: "moon",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
       });
       const sun = anchoredSceneReferenceFrame({
-        anchorKind: "sun",
+        target: "sun",
         lockMode,
         continuousAnchorLonDeg: LON,
         anchorLatDeg: LAT,
@@ -818,12 +820,33 @@ describe("shared anchored production model", () => {
       sceneFrameRasterIdentityOriginY(
         H,
         anchoredSceneReferenceFrame({
-          anchorKind: "moon",
+          target: "moon",
           lockMode: "longitude",
           continuousAnchorLonDeg: LON,
           anchorLatDeg: LAT,
         }),
       ),
     ).toBe(0);
+  });
+
+  it("yields the same camera extent and cover scale for the same numbers regardless of target", () => {
+    const moon = anchoredSceneReferenceFrame({
+      target: "moon",
+      lockMode: "position",
+      continuousAnchorLonDeg: LON,
+      anchorLatDeg: LAT,
+    });
+    const sun = anchoredSceneReferenceFrame({
+      target: "sun",
+      lockMode: "position",
+      continuousAnchorLonDeg: LON,
+      anchorLatDeg: LAT,
+    });
+    expect(sceneCameraVerticalExtentFromFrame(moon)).toEqual(
+      sceneCameraVerticalExtentFromFrame(sun),
+    );
+    expect(minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(moon))).toBe(
+      minimumScaleToCoverSceneFrameEarth(sceneCameraVerticalExtentFromFrame(sun)),
+    );
   });
 });

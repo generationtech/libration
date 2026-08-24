@@ -22,17 +22,17 @@
  * - civil/display time reference (IANA zone, reference city)
  *
  * Production kinds:
- * - `earthFixed` — identity; default
- * - `anchored` — Moon or Sun (`anchorKind`) with a proven lock mode
+ * - `earthFixed` — identity; default; not a trackable target
+ * - `anchored` — a trackable map object (`target`) with a proven lock mode
  *
  * Lock modes currently shipped:
  * - `longitude` — longitude locked, latitude identity
  * - `position` — longitude and latitude locked
  *
- * Moon and Sun are configuration of the same anchored architecture. Forward
- * and inverse math, raster dest, and camera extent branch on Earth-fixed vs
- * anchored and on lock mode — not on which body is the anchor. Anchor
- * physical-state derivation stays at the application boundary.
+ * Moon and Sun are the first production {@link TrackableMapObjectId} values.
+ * Forward/inverse math, raster dest, and camera extent branch on Earth-fixed
+ * vs anchored and on lock mode — not on which object is the target. Target
+ * resolution (canonical lon/lat) happens before this module builds a frame.
  *
  * Frame-relative coordinates are derived presentation state. Canonical
  * entity lon/lat must not be overwritten to fake a moving map.
@@ -51,11 +51,11 @@ import {
   canonicalLongitudeDeg,
   relativeLongitudeFromContinuousAnchorDeg,
 } from "./longitudeContinuity";
+import type { TrackableMapObjectId } from "./trackableMapObject";
+
+export type { TrackableMapObjectId } from "./trackableMapObject";
 
 export type SceneReferenceFrameKind = "earthFixed" | "anchored";
-
-/** Production anchors proven by LIB-083–085. Future kinds may extend this union. */
-export type SceneFrameAnchorKind = "moon" | "sun";
 
 /**
  * Proven axis combinations for an anchored frame.
@@ -74,19 +74,19 @@ export type EarthFixedSceneReferenceFrame = {
 
 export type AnchoredSceneReferenceFrame = {
   readonly kind: "anchored";
-  readonly anchorKind: SceneFrameAnchorKind;
+  readonly target: TrackableMapObjectId;
   readonly lockMode: AnchoredSceneFrameLockMode;
   readonly continuousAnchorLonDeg: number;
   readonly anchorLatDeg: number;
 };
 
 export type MoonLongitudeLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
-  readonly anchorKind: "moon";
+  readonly target: "moon";
   readonly lockMode: "longitude";
 };
 
 export type MoonPositionLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
-  readonly anchorKind: "moon";
+  readonly target: "moon";
   readonly lockMode: "position";
 };
 
@@ -95,12 +95,12 @@ export type MoonAnchoredSceneReferenceFrame =
   | MoonPositionLockedSceneReferenceFrame;
 
 export type SunLongitudeLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
-  readonly anchorKind: "sun";
+  readonly target: "sun";
   readonly lockMode: "longitude";
 };
 
 export type SunPositionLockedSceneReferenceFrame = AnchoredSceneReferenceFrame & {
-  readonly anchorKind: "sun";
+  readonly target: "sun";
   readonly lockMode: "position";
 };
 
@@ -126,17 +126,17 @@ function geographicLatitudeDeg(value: number): number {
 }
 
 function buildAnchoredSceneReferenceFrame<
-  K extends SceneFrameAnchorKind,
+  K extends TrackableMapObjectId,
   M extends AnchoredSceneFrameLockMode,
 >(
-  anchorKind: K,
+  target: K,
   lockMode: M,
   continuousAnchorLonDeg: number,
   anchorLatDeg: number,
-): AnchoredSceneReferenceFrame & { readonly anchorKind: K; readonly lockMode: M } {
+): AnchoredSceneReferenceFrame & { readonly target: K; readonly lockMode: M } {
   return {
     kind: "anchored",
-    anchorKind,
+    target,
     lockMode,
     continuousAnchorLonDeg: finiteLon(continuousAnchorLonDeg),
     anchorLatDeg: geographicLatitudeDeg(anchorLatDeg),
@@ -144,13 +144,13 @@ function buildAnchoredSceneReferenceFrame<
 }
 
 export function anchoredSceneReferenceFrame(args: {
-  readonly anchorKind: SceneFrameAnchorKind;
+  readonly target: TrackableMapObjectId;
   readonly lockMode: AnchoredSceneFrameLockMode;
   readonly continuousAnchorLonDeg: number;
   readonly anchorLatDeg?: number;
 }): AnchoredSceneReferenceFrame {
   return buildAnchoredSceneReferenceFrame(
-    args.anchorKind,
+    args.target,
     args.lockMode,
     args.continuousAnchorLonDeg,
     args.anchorLatDeg ?? 0,
@@ -214,13 +214,13 @@ export function isEarthFixedSceneReferenceFrame(
 export function isMoonAnchoredSceneReferenceFrame(
   frame: SceneReferenceFrame,
 ): frame is MoonAnchoredSceneReferenceFrame {
-  return frame.kind === "anchored" && frame.anchorKind === "moon";
+  return frame.kind === "anchored" && frame.target === "moon";
 }
 
 export function isSunAnchoredSceneReferenceFrame(
   frame: SceneReferenceFrame,
 ): frame is SunAnchoredSceneReferenceFrame {
-  return frame.kind === "anchored" && frame.anchorKind === "sun";
+  return frame.kind === "anchored" && frame.target === "sun";
 }
 
 export function isAnchoredSceneReferenceFrame(
@@ -234,7 +234,7 @@ export function isMoonLongitudeLockedSceneReferenceFrame(
 ): frame is MoonLongitudeLockedSceneReferenceFrame {
   return (
     frame.kind === "anchored" &&
-    frame.anchorKind === "moon" &&
+    frame.target === "moon" &&
     frame.lockMode === "longitude"
   );
 }
@@ -244,7 +244,7 @@ export function isMoonPositionLockedSceneReferenceFrame(
 ): frame is MoonPositionLockedSceneReferenceFrame {
   return (
     frame.kind === "anchored" &&
-    frame.anchorKind === "moon" &&
+    frame.target === "moon" &&
     frame.lockMode === "position"
   );
 }
@@ -254,7 +254,7 @@ export function isSunLongitudeLockedSceneReferenceFrame(
 ): frame is SunLongitudeLockedSceneReferenceFrame {
   return (
     frame.kind === "anchored" &&
-    frame.anchorKind === "sun" &&
+    frame.target === "sun" &&
     frame.lockMode === "longitude"
   );
 }
@@ -264,14 +264,14 @@ export function isSunPositionLockedSceneReferenceFrame(
 ): frame is SunPositionLockedSceneReferenceFrame {
   return (
     frame.kind === "anchored" &&
-    frame.anchorKind === "sun" &&
+    frame.target === "sun" &&
     frame.lockMode === "position"
   );
 }
 
 /**
  * Position-lock (latitude translated). Shared by raster Y and camera vertical
- * extent so lock semantics, not anchor identity, drive those systems.
+ * extent so lock semantics, not target identity, drive those systems.
  */
 export function isPositionLockedSceneReferenceFrame(
   frame: SceneReferenceFrame,
@@ -347,7 +347,7 @@ function anchoredCanonicalFromScene(
  * anchor from longitude and leaves latitude unchanged. Position-lock also
  * subtracts anchor latitude (no wrap, no clamp to ±90°).
  *
- * Branch is Earth-fixed vs anchored, then lock mode. Anchor identity is not
+ * Branch is Earth-fixed vs anchored, then lock mode. Target identity is not
  * a transform input.
  */
 export function canonicalLonLatToSceneFrame(

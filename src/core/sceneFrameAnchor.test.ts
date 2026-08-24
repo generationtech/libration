@@ -20,9 +20,11 @@ import {
   isSunAnchoredSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   nextMoonAnchorContinuousLonDeg,
+  anchoredSceneFrameLockModeFromUiKind,
   sceneCameraAfterReferenceFrameKindChange,
   sceneFrameAnchorKindFromUiKind,
   sceneReferenceFrameFromUiKind,
+  trackableMapObjectIdFromUiKind,
 } from "./sceneFrameAnchor";
 import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
 
@@ -121,28 +123,28 @@ describe("sceneReferenceFrameFromUiKind", () => {
     );
     expect(sceneReferenceFrameFromUiKind("moonLongitudeLocked", 10, 5)).toEqual({
       kind: "anchored",
-      anchorKind: "moon",
+      target: "moon",
       lockMode: "longitude",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 5,
     });
     expect(sceneReferenceFrameFromUiKind("moonPositionLocked", 10, 5)).toEqual({
       kind: "anchored",
-      anchorKind: "moon",
+      target: "moon",
       lockMode: "position",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 5,
     });
     expect(sceneReferenceFrameFromUiKind("sunLongitudeLocked", 10, 5)).toEqual({
       kind: "anchored",
-      anchorKind: "sun",
+      target: "sun",
       lockMode: "longitude",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 5,
     });
     expect(sceneReferenceFrameFromUiKind("sunPositionLocked", 10, 5)).toEqual({
       kind: "anchored",
-      anchorKind: "sun",
+      target: "sun",
       lockMode: "position",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 5,
@@ -154,11 +156,17 @@ describe("sceneReferenceFrameFromUiKind", () => {
     expect(EARTH_FIXED_SCENE_REFERENCE_FRAME.kind).toBe("earthFixed");
   });
 
-  it("exposes Moon and Sun as UI-to-anchorKind mapping, not transform kinds", () => {
-    expect(sceneFrameAnchorKindFromUiKind("earthFixed")).toBeNull();
+  it("maps the five UI choices onto Earth-fixed or target + lockMode", () => {
+    expect(trackableMapObjectIdFromUiKind("earthFixed")).toBeNull();
+    expect(anchoredSceneFrameLockModeFromUiKind("earthFixed")).toBeNull();
+    expect(trackableMapObjectIdFromUiKind("moonLongitudeLocked")).toBe("moon");
+    expect(anchoredSceneFrameLockModeFromUiKind("moonLongitudeLocked")).toBe("longitude");
+    expect(trackableMapObjectIdFromUiKind("moonPositionLocked")).toBe("moon");
+    expect(anchoredSceneFrameLockModeFromUiKind("moonPositionLocked")).toBe("position");
+    expect(trackableMapObjectIdFromUiKind("sunLongitudeLocked")).toBe("sun");
+    expect(anchoredSceneFrameLockModeFromUiKind("sunLongitudeLocked")).toBe("longitude");
+    expect(trackableMapObjectIdFromUiKind("sunPositionLocked")).toBe("sun");
+    expect(anchoredSceneFrameLockModeFromUiKind("sunPositionLocked")).toBe("position");
     expect(sceneFrameAnchorKindFromUiKind("moonLongitudeLocked")).toBe("moon");
-    expect(sceneFrameAnchorKindFromUiKind("moonPositionLocked")).toBe("moon");
-    expect(sceneFrameAnchorKindFromUiKind("sunLongitudeLocked")).toBe("sun");
-    expect(sceneFrameAnchorKindFromUiKind("sunPositionLocked")).toBe("sun");
   });
 });

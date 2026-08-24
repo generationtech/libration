@@ -12,9 +12,9 @@
  */
 
 /**
- * Runtime policy for anchored scene frames (currently Moon and Sun).
+ * Runtime policy for anchored scene frames (currently Moon and Sun targets).
  *
- * Continuity (anchor-agnostic; depends on longitude values, not body type):
+ * Continuity (target-agnostic; depends on longitude values, not object type):
  * - While an anchored frame remains active, each new canonical longitude
  *   follows the previous continuous anchor (nearest equivalent).
  *   Ordinary animation, Demo/high-speed time, direct time selection, and
@@ -24,9 +24,9 @@
  *   and switching among Earth-fixed / Moon modes / Sun modes.
  *   Demo start/reset while already in an anchored frame still follows
  *   (a time jump, not a new frame epoch).
- * - Latitude has no continuity state: it is the current sublunar or
- *   subsolar latitude for the canonical UTC instant, derived explicitly
- *   at the application boundary.
+ * - Latitude has no continuity state: it is the resolved target latitude
+ *   for the canonical UTC instant, supplied by the caller after target
+ *   resolution.
  *
  * Camera: switching among the production frame configurations reinitializes
  * camera policy (identity for Earth-fixed / longitude-lock; automatic cover
@@ -34,8 +34,9 @@
  * does not change the frame. Position-lock default is cover scale, not
  * necessarily scale = 1.
  *
- * This module is not a generic entity-frame provider. Physical Moon/Sun
- * coordinates are supplied by the caller.
+ * This module is not a generic entity-frame provider. Target identity is
+ * mapped from the five UI choices; resolved canonical coordinates are
+ * supplied by the caller.
  */
 
 import { IDENTITY_SCENE_CAMERA, type SceneCamera } from "./sceneCamera";
@@ -46,8 +47,9 @@ import {
 import {
   EARTH_FIXED_SCENE_REFERENCE_FRAME,
   anchoredSceneReferenceFrame,
-  type SceneFrameAnchorKind,
+  type AnchoredSceneFrameLockMode,
   type SceneReferenceFrame,
+  type TrackableMapObjectId,
 } from "./sceneReferenceFrame";
 
 export type SceneReferenceFrameUiKind =
@@ -89,13 +91,29 @@ export function isPositionLockedSceneReferenceFrameUiKind(
   return kind === "moonPositionLocked" || kind === "sunPositionLocked";
 }
 
-export function sceneFrameAnchorKindFromUiKind(
+export function trackableMapObjectIdFromUiKind(
   kind: SceneReferenceFrameUiKind,
-): SceneFrameAnchorKind | null {
+): TrackableMapObjectId | null {
   if (kind === "earthFixed") {
     return null;
   }
   return isMoonAnchoredSceneReferenceFrameUiKind(kind) ? "moon" : "sun";
+}
+
+/** @deprecated Use {@link trackableMapObjectIdFromUiKind}. */
+export function sceneFrameAnchorKindFromUiKind(
+  kind: SceneReferenceFrameUiKind,
+): TrackableMapObjectId | null {
+  return trackableMapObjectIdFromUiKind(kind);
+}
+
+export function anchoredSceneFrameLockModeFromUiKind(
+  kind: SceneReferenceFrameUiKind,
+): AnchoredSceneFrameLockMode | null {
+  if (kind === "earthFixed") {
+    return null;
+  }
+  return isPositionLockedSceneReferenceFrameUiKind(kind) ? "position" : "longitude";
 }
 
 /**
@@ -137,28 +155,28 @@ export function sceneReferenceFrameFromUiKind(
       return EARTH_FIXED_SCENE_REFERENCE_FRAME;
     case "moonLongitudeLocked":
       return anchoredSceneReferenceFrame({
-        anchorKind: "moon",
+        target: "moon",
         lockMode: "longitude",
         continuousAnchorLonDeg,
         anchorLatDeg,
       });
     case "moonPositionLocked":
       return anchoredSceneReferenceFrame({
-        anchorKind: "moon",
+        target: "moon",
         lockMode: "position",
         continuousAnchorLonDeg,
         anchorLatDeg,
       });
     case "sunLongitudeLocked":
       return anchoredSceneReferenceFrame({
-        anchorKind: "sun",
+        target: "sun",
         lockMode: "longitude",
         continuousAnchorLonDeg,
         anchorLatDeg,
       });
     case "sunPositionLocked":
       return anchoredSceneReferenceFrame({
-        anchorKind: "sun",
+        target: "sun",
         lockMode: "position",
         continuousAnchorLonDeg,
         anchorLatDeg,

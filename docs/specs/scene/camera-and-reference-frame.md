@@ -202,15 +202,15 @@ SceneCamera (pan, zoom, horizontal wrap)
 
 **Camera is separate.** `SceneCamera` remains `{ scale, centerU, centerV }` over projected scene-frame space. Do not put frame type, time, anchor entity, or longitude-normalization policy on the camera. Anchored frames must not write Moon or Sun coordinates into `centerU` / `centerV`.
 
-### 6.0 Production model (LIB-086)
+### 6.0 Production model (LIB-086 / LIB-088)
 
 Production `SceneReferenceFrame` is:
 
 ```text
-earthFixed                          identity
+earthFixed                          identity (not a target)
 
 anchored
-    anchorKind                      moon | sun
+    target                          TrackableMapObjectId   (moon | sun)
     lockMode                        longitude | position
     continuousAnchorLonDeg
     anchorLatDeg
@@ -218,11 +218,24 @@ anchored
 
 `lockMode: longitude` is longitude locked with latitude identity. `lockMode: position` is both axes locked. Latitude-only lock and unlocked anchored frames are not constructible.
 
-Moon and Sun are `anchorKind` values on the same architecture. Forward/inverse transform, raster dest shift, camera vertical extent, and longitude continuity branch on Earth-fixed vs anchored and on `lockMode` — not on which body is the anchor. Physical derivation remains explicit at the application boundary: canonical instant → sublunar point (Moon) or subsolar point (Sun). Runtime policy: `src/core/sceneFrameAnchor.ts`.
+Moon and Sun are production **trackable map object** identities (`src/core/trackableMapObject.ts`). Forward/inverse transform, raster dest shift, camera vertical extent, longitude continuity, and automatic cover branch on Earth-fixed vs anchored and on `lockMode` — not on which object is the target. Target resolution is a separate seam: canonical instant + authoritative product state → canonical lon/lat, then the frame is built from those numbers. Moon uses the existing `sublunarPoint`; Sun uses the existing `subsolarPoint`. Runtime policy: `src/core/sceneFrameAnchor.ts`.
 
-User-visible Scene frame control still has five choices. Those UI ids map into this production type. They are not themselves transform kinds.
+User-visible Scene frame control still has five choices. Those UI ids map into Earth-fixed or `target + lockMode`. They are not themselves transform kinds.
 
-See [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md).
+See [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md) and [ADR 0032](../../decisions/0032-anchored-frames-target-a-trackable-map-object.md).
+
+### 6.0.1 Trackability contract
+
+A rendered map object may become a tracking target only if it provides:
+
+1. A stable identity independent of current coordinates.
+2. Authoritative canonical geographic lon/lat.
+3. Coordinates for the same canonical UTC instant as the rendered frame.
+4. If it moves, longitude that can be followed continuously through ±180°.
+5. Position-lock that is meaningful as north-up map translation (not heading-up chase).
+6. Displayed map position that matches the resolver’s canonical coordinates.
+
+Future targets may be **dynamic** (Moon, Sun, later ISS) or **static** (later city pins). The frame does not require motion. Clickable object selection is not implemented. Earthquakes are not tracking targets.
 
 ### 6.1 Earth-fixed identity (default)
 
@@ -241,7 +254,7 @@ Shared mapping: `sceneXFromLongitudeDeg` / `sceneYFromLatitudeDeg` compose **fra
 
 ### 6.2 Moon longitude-lock (LIB-083)
 
-User-visible Moon longitude-lock. Production: `anchored` with `anchorKind: "moon"` and `lockMode: "longitude"`.
+User-visible Moon longitude-lock. Production: `anchored` with `target: "moon"` and `lockMode: "longitude"`.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
@@ -268,7 +281,7 @@ See [ADR 0027](../../decisions/0027-moon-longitude-lock-is-a-scene-reference-fra
 
 ### 6.3 Moon position-lock (LIB-084)
 
-User-visible Moon position-lock. Production: `anchored` with `anchorKind: "moon"` and `lockMode: "position"`. Same architecture as longitude-lock; second supported lock mode.
+User-visible Moon position-lock. Production: `anchored` with `target: "moon"` and `lockMode: "position"`. Same architecture as longitude-lock; second supported lock mode.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λMoon_continuous) − λMoon_continuous
@@ -289,7 +302,7 @@ See [ADR 0028](../../decisions/0028-moon-position-lock-translates-scene-frame-la
 
 ### 6.4 Sun longitude-lock (LIB-085)
 
-User-visible Sun longitude-lock. Production: `anchored` with `anchorKind: "sun"` and `lockMode: "longitude"`. Same lock semantics as §6.2; second real `anchorKind`.
+User-visible Sun longitude-lock. Production: `anchored` with `target: "sun"` and `lockMode: "longitude"`. Same lock semantics as §6.2; second production target.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λSun_continuous) − λSun_continuous
@@ -308,7 +321,7 @@ See [ADR 0029](../../decisions/0029-sun-anchoring-reuses-moon-axis-lock.md).
 
 ### 6.5 Sun position-lock (LIB-085)
 
-User-visible Sun position-lock. Production: `anchored` with `anchorKind: "sun"` and `lockMode: "position"`. Same lock mode as §6.3; solar `anchorKind`.
+User-visible Sun position-lock. Production: `anchored` with `target: "sun"` and `lockMode: "position"`. Same lock mode as §6.3; solar target.
 
 ```text
 sceneLon = nearestEquivalent(canonicalLon, λSun_continuous) − λSun_continuous
@@ -558,11 +571,19 @@ Visual: Earth-fixed and Moon regression; Sun longitude-lock static/animated; sol
 
 Implemented. User-visible behaviour must match completed LIB-085. No new frame choice.
 
-Automated: Moon and Sun anchored frames share one structural type except `anchorKind`, coordinates, and `lockMode`; lock semantics independent of `anchorKind`; identical numeric anchors produce identical forward/inverse/raster/camera-extent results; Earth-fixed identity; five UI choices map to the expected production frames; retained Moon/Sun acceptance tests.
+Automated: Moon and Sun anchored frames share one structural type except `target`, coordinates, and `lockMode`; lock semantics independent of `target`; identical numeric anchors produce identical forward/inverse/raster/camera-extent/cover-scale results; Earth-fixed identity; five UI choices map to Earth-fixed or `target + lockMode`; retained Moon/Sun acceptance tests.
 
 Visual: five-mode regression matrix against LIB-085 (Earth-fixed, Moon longitude-lock, Moon position-lock, Sun longitude-lock, Sun position-lock); cross-anchor switching with camera reset; representative layers; camera independence; resize.
 
-A third `anchorKind` is not in scope. A future geographic-subpoint anchor would extend `SceneFrameAnchorKind` only if it satisfies the contract in [ADR 0030](../../decisions/0030-anchored-scene-frames-are-one-production-kind.md).
+### 12.8.1 Trackable map object foundation (LIB-088)
+
+Implemented. User-visible behaviour must match completed LIB-087. No new frame choice.
+
+Automated: Moon and Sun have distinct stable target identities; five UI choices map to Earth-fixed or `target + lockMode`; Moon resolves from existing sublunar state and Sun from existing subsolar state; identical numeric anchors produce identical forward/inverse/raster/extent/cover results regardless of target; continuity remains target-independent; retained Moon/Sun acceptance, frame-switch, and inverse hover tests.
+
+Visual: five-mode regression against LIB-087 including auto-cover and manual override; cross-target switching; representative overlays; resize.
+
+A new production target is not in scope here. Adding ISS (or another object) means adding a `TrackableMapObjectId`, resolving its canonical lon/lat, and exposing UI — reusing the existing anchored frame, continuity, and cover. See [ADR 0032](../../decisions/0032-anchored-frames-target-a-trackable-map-object.md).
 
 ### 12.9 Automatic scene-cover zoom (LIB-087)
 
@@ -591,4 +612,4 @@ Meaningful issues for implementers; not a backlog of extras.
 
 ## 14. Non-goals for the architecture phase and for A1
 
-Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, the shared anchored production model, and position-lock automatic cover zoom are implemented (LIB-080–087).
+Do not: treat this spec as permission to start unscoped slices; implement generic entity-fixed without a work item; rotate the map; redesign unrelated UI; change astronomy; rewrite 2.0.0 illumination, eclipse, Clouds, or chrome to match an idealized camera module; add map libraries, tiles, or URL view state; broaden into globe/Mercator work. Zoom, pan, Earth-fixed identity, Moon longitude-lock, Moon position-lock, Sun anchoring, the shared anchored production model, position-lock automatic cover zoom, and the trackable-map-object target identity are implemented (LIB-080–088). Additional targets (ISS, cities, planets) are not authorized by this spec.

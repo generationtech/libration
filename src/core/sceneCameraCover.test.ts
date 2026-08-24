@@ -91,15 +91,15 @@ describe("minimumScaleToCoverSceneFrameEarth", () => {
     );
   });
 
-  it("is a shared position-lock formula, not Moon/Sun specific", () => {
+  it("is a shared position-lock formula, independent of target identity", () => {
     const moon = anchoredSceneReferenceFrame({
-      anchorKind: "moon",
+      target: "moon",
       lockMode: "position",
       continuousAnchorLonDeg: 40,
       anchorLatDeg: 18,
     });
     const sun = anchoredSceneReferenceFrame({
-      anchorKind: "sun",
+      target: "sun",
       lockMode: "position",
       continuousAnchorLonDeg: 40,
       anchorLatDeg: 18,

@@ -1,6 +1,6 @@
 # Development state
 
-Updated: 2026-08-23
+Updated: 2026-08-24
 Status: AWAITING SCOPE
 
 ## Active work item
@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-087](work/LIB-087-automatic-scene-cover-zoom-for-position-locked-frames.md) — Automatic scene-cover zoom for anchored position-locked frames. Camera policy only: Moon/Sun position-lock cover the interior scene; Earth-fixed and longitude-lock stay identity. Manual wheel zoom overrides; Reset and entering position-lock re-arm. ADR 0031.
+[LIB-088](work/LIB-088-trackable-map-object-foundation.md) — Trackable map object foundation. Anchored frames now target a stable `TrackableMapObjectId` (`moon` | `sun`); resolution is separate from reference-frame math. Five Scene frame choices unchanged. ADR 0032. ISS tracking not started.
 
 ## Blockers
 

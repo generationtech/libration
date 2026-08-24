@@ -484,6 +484,12 @@ Automatic scene-cover zoom for anchored position-lock: camera policy chooses the
 
 Verified: `npx tsc --noEmit` clean; `npm test` 277 files / 2772 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-BdhmF60J.js`). Cursor Browser at inner 1920×1080: Moon/Sun position-lock cover with no N/S blank band; Moon/Sun stay at origin; longitude-lock and Earth-fixed identity; wheel override then time advance then Reset; `terminator` equinox and `night` solstice Sun position-lock; standstill lunar-locus animation; resize auto vs manual; overlays (`clouds`, ISS, total solar eclipse, lunar-track) registered under cover.
 
+## 2026-08-24 — LIB-088 complete
+
+Trackable map object foundation: anchored frames now carry `target: TrackableMapObjectId` (`moon` | `sun`) instead of a Moon/Sun-specific `anchorKind`. Target resolution uses existing sublunar/subsolar authorities and is separate from frame math. Five user-visible Scene frame choices unchanged. Cover, continuity, and camera stay target-agnostic. ADR 0032. ISS tracking not started.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 278 files / 2778 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-CkBe6pSA.js`). Cursor Browser at inner 1920×1080: five-mode regression vs LIB-087; cross-target switching with camera/cover reset; wheel override then Reset; `clouds` / ISS / lunar-track / total solar eclipse; `terminator` and `night` Sun position-lock cover; resize 1280×720 auto-cover vs manual override.
+
 
 
 

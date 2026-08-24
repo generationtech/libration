@@ -393,16 +393,16 @@ describe("Sun position-lock camera vertical extent", () => {
   });
 });
 
-describe("camera vertical extent depends on lock semantics, not anchor kind", () => {
+describe("camera vertical extent depends on lock semantics, not target identity", () => {
   it("matches for Moon and Sun given the same numeric position-lock values", () => {
     const moon = anchoredSceneReferenceFrame({
-      anchorKind: "moon",
+      target: "moon",
       lockMode: "position",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 20,
     });
     const sun = anchoredSceneReferenceFrame({
-      anchorKind: "sun",
+      target: "sun",
       lockMode: "position",
       continuousAnchorLonDeg: 10,
       anchorLatDeg: 20,
@@ -417,7 +417,7 @@ describe("camera vertical extent depends on lock semantics, not anchor kind", ()
     expect(
       sceneCameraVerticalExtentFromFrame(
         anchoredSceneReferenceFrame({
-          anchorKind: "sun",
+          target: "sun",
           lockMode: "longitude",
           continuousAnchorLonDeg: 10,
           anchorLatDeg: 20,
