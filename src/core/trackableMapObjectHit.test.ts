@@ -20,7 +20,7 @@ import {
 import { sceneCameraCoverPolicyAfterFrameKindChange } from "./sceneCamera";
 import { sceneCameraAfterReferenceFrameKindChange } from "./sceneFrameAnchor";
 import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
-import { TRACKABLE_MAP_OBJECT_IDS } from "./trackableMapObject";
+import { TRACKABLE_MAP_OBJECT_IDS, cityTrackableMapObjectId, planetTrackableMapObjectId, trackableMapObjectIdEquals } from "./trackableMapObject";
 import {
   TRACKABLE_MAP_OBJECT_HIT_MIN_RADIUS_PX,
   TRACKABLE_MAP_OBJECT_HIT_PADDING_PX,
@@ -221,4 +221,72 @@ describe("LIB-091 trackable map-object hit testing", () => {
     expect(isTrackingSelectionPositionLocked(lonClick)).toBe(false);
     expect(sceneCameraCoverPolicyAfterFrameKindChange(false)).toBe("off");
   });
+
+  it("clicks a city or planet through setTrackingTarget and retains mode", () => {
+    const london = cityTrackableMapObjectId("city.london");
+    const jupiter = planetTrackableMapObjectId("jupiter");
+    const available = {
+      moon: true,
+      sun: true,
+      iss: true,
+      cities: new Set(["city.london"]),
+      planets: new Set(["jupiter"] as const),
+    };
+    const fromCity = applyTrackableMapObjectClick({
+      current: selection(null, "position"),
+      hits: [hit(london, 40, 40)],
+      pointerX: 40,
+      pointerY: 40,
+      panBecameActive: false,
+      available,
+    });
+    expect(fromCity).toEqual(selection(london, "position"));
+    expect(fromCity).toEqual(setTrackingTarget(selection(null, "position"), london, available));
+    const fromPlanet = applyTrackableMapObjectClick({
+      current: selection(london, "longitude"),
+      hits: [hit(jupiter, 10, 10)],
+      pointerX: 10,
+      pointerY: 10,
+      panBecameActive: false,
+      available,
+    });
+    expect(fromPlanet).toEqual(selection(jupiter, "longitude"));
+    const same = applyTrackableMapObjectClick({
+      current: fromPlanet,
+      hits: [hit(jupiter, 10, 10)],
+      pointerX: 10,
+      pointerY: 10,
+      panBecameActive: false,
+      available,
+    });
+    expect(same).toEqual(fromPlanet);
+    expect(trackingSelectionTransition(fromPlanet, same)).toMatchObject({
+      selectionChanged: false,
+      reinitializeCamera: false,
+      reinitializeContinuity: false,
+    });
+  });
+
+  it("gives wrapped city copies one identity and prefers nearest center, then tie key", () => {
+    const london = cityTrackableMapObjectId("city.london");
+    const copies = collectWrappedPointGlyphCopies({
+      lonDeg: 0,
+      latDeg: 10,
+      viewportWidthPx: 800,
+      viewportHeightPx: 400,
+      camera: clampSceneCamera({ ...IDENTITY_SCENE_CAMERA, centerU: 0 }),
+      frame: EARTH_FIXED_SCENE_REFERENCE_FRAME,
+      renderedRadiusPx: 4,
+      xClipRadiusMultiple: 8,
+    });
+    const hits = hitTargetsFromGlyphCopies(london, copies, 800, 400);
+    expect(hits.length).toBeGreaterThan(1);
+    expect(hits.every((row) => trackableMapObjectIdEquals(row.target, london))).toBe(true);
+    const jupiter = planetTrackableMapObjectId("jupiter");
+    const overlap = [hit(london, 0, 0, 20), hit(jupiter, 0, 0, 20), hit("moon", 0, 0, 20)];
+    expect(pickTrackableMapObjectHit(overlap, 0, 0)?.target).toBe("moon");
+    const cityPlanet = [hit(london, 0, 0, 20), hit(jupiter, 0, 0, 20)];
+    expect(pickTrackableMapObjectHit(cityPlanet, 0, 0)?.target).toEqual(jupiter);
+  });
 });
+

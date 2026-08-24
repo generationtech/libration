@@ -25,6 +25,14 @@ export function cityPinScaleFactor(scale: CityPinsScale): number {
   return scale === "small" ? 0.82 : scale === "large" ? 1.22 : 1;
 }
 
+/** Painted city-pin disc radius in CSS pixels (same formula as the scene plan). */
+export function cityPinDiscRadiusPx(
+  viewportWidthPx: number,
+  scale: CityPinsScale = "medium",
+): number {
+  return cityPinScaleFactor(scale) * Math.min(4, Math.max(2.5, viewportWidthPx * 0.0028));
+}
+
 /**
  * Screen-space axis-aligned box of the city-name line (left of the pin disc,
  * name to the right). Read-only layout handoff for lunar eclipse labels —
@@ -38,7 +46,7 @@ export function cityPinNameLabelScreenBox(args: {
   readonly scale?: CityPinsScale;
 }): { readonly left: number; readonly right: number; readonly top: number; readonly bottom: number } {
   const scaleFactor = cityPinScaleFactor(args.scale ?? "medium");
-  const r = scaleFactor * Math.min(4, Math.max(2.5, args.viewportWidthPx * 0.0028));
+  const r = cityPinDiscRadiusPx(args.viewportWidthPx, args.scale ?? "medium");
   const nameSize = scaleFactor * Math.min(13, Math.max(10, args.viewportWidthPx * 0.016));
   const left = args.pinX + r + 7 * scaleFactor;
   const width = Math.max(nameSize, args.name.length * nameSize * CITY_PIN_LABEL_WIDTH_PER_EM);

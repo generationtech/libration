@@ -508,6 +508,12 @@ Direct click-to-track for rendered Moon, Sun, and ISS: scene-space semantic hit 
 
 Verified: `npx tsc --noEmit` clean; `npm test` 283 files / 2833 passed / 0 failed; `npm run build` succeeded (`tsc && vite build`; `dist/assets/index-BBdSE1i3.js`). Cursor Browser at inner 1920×1080: `baseline` click Sun/Moon, empty geography, ISS disabled; `iss-presentation` ISS both modes, Moon→Sun→ISS under Longitude, wrap-copy click, pan discrimination, same-target no-op, cursor pointer/grab; `earthquake-presentation` quake click does not track; 1280×720 ISS click and chrome usable.
 
+## 2026-08-24 — LIB-092 complete
+
+City and planet tracking targets: structured `{ kind: "city" | "planet", id }` identities reuse existing pin/body ids and painted coordinates; native Target optgroups; LIB-091 click-to-track seam; generic longitude/position lock and auto-cover. No new frame or camera math. Eligible planets: Mercury–Neptune plus Pluto when a current glyph is painted. Earthquakes remain hover-only. Milky Way not a target. ADR 0036.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 284 files / 2853 passed / 0 failed; `npm run build` succeeded (`tsc && vite build`; `dist/assets/index-Ba8vts8g.js`). Cursor Browser at inner 1920×1080: `baseline` grouped Target with 9 cities, Knoxville dropdown Longitude/Position, Knoxville→Moon retains Position; `planetary-objects` eight planets, Jupiter/Saturn dropdown, mode retention; `earthquake-presentation` quake click stays Earth-fixed; 1280×720 grouped chrome no overlap.
+
 
 
 

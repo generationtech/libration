@@ -5,11 +5,13 @@ Status: AWAITING SCOPE
 
 ## Active work item
 
-None
+None. Do not start unscoped work.
 
 ## Last completed
 
-[LIB-091](work/LIB-091-direct-click-to-track-for-map-objects.md) — Direct click-to-track for map objects. Clicking a rendered Moon, Sun, or ISS glyph sets Tracking target through `setTrackingTarget`; remembered mode is retained. Scene-space semantic hit targets; wrapped copies share one id. ADR 0035.
+[LIB-092](work/LIB-092-city-and-planet-tracking-targets.md) — City and planet tracking targets. Rendered city pins and eligible planetary current glyphs are independently trackable through the existing identity → resolution → `setTrackingTarget` → anchored frame → camera/cover → click-to-track stack. Structured city/planet identities; native grouped Target control; LIB-091 hit seam. No Milky Way. No earthquake tracking. No new frame or camera mathematics. ADR 0036.
+
+Previous: [LIB-091](work/LIB-091-direct-click-to-track-for-map-objects.md) — Direct click-to-track for Moon, Sun, and ISS. ADR 0035.
 
 ## Blockers
 
@@ -49,4 +51,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Await human scope. Do not start cities, planets, Milky Way, earthquakes-as-targets, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.
+Do not start unscoped work. Do not start Milky Way tracking or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.

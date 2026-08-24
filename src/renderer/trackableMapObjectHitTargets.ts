@@ -28,6 +28,11 @@ import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE, sublunarMarkerRadiusPx } from "../c
 import { isDynamicTracksPayload } from "../layers/dynamicTracksPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
+import { cityTrackableMapObjectId, planetTrackableMapObjectId } from "../core/trackableMapObject";
+import { cityPinDiscRadiusPx } from "../layers/cityPinsPayload";
+import { isCityPinsPayload } from "../layers/cityPinsPayload";
+import { isPlanetaryObjectsPayload } from "../layers/planetaryObjectsPayload";
+import { planetaryCurrentGlyphRadiusPx } from "../core/planetaryObjectsPresentation";
 import type { RenderableLayerState } from "./types";
 import {
   collectIssCurrentGlyphCopies,
@@ -112,6 +117,61 @@ export function collectTrackableMapObjectHitTargets(options: {
           h,
         ),
       );
+      continue;
+    }
+    if (isCityPinsPayload(data)) {
+      const r = cityPinDiscRadiusPx(w, data.scale);
+      for (const city of data.cities) {
+        if (city.id.length === 0 || !Number.isFinite(city.lonDeg) || !Number.isFinite(city.latDeg)) {
+          continue;
+        }
+        hits.push(
+          ...hitTargetsFromGlyphCopies(
+            cityTrackableMapObjectId(city.id),
+            collectWrappedPointGlyphCopies({
+              lonDeg: city.lonDeg,
+              latDeg: city.latDeg,
+              viewportWidthPx: w,
+              viewportHeightPx: h,
+              camera: options.camera,
+              frame: options.frame,
+              renderedRadiusPx: r,
+              xClipRadiusMultiple: 8,
+            }),
+            w,
+            h,
+          ),
+        );
+      }
+      continue;
+    }
+    if (isPlanetaryObjectsPayload(data)) {
+      const r = planetaryCurrentGlyphRadiusPx(w, data.presentation.glyphSize);
+      for (const body of data.bodies) {
+        if (!body.showCurrent || body.current === null) {
+          continue;
+        }
+        if (!Number.isFinite(body.current.lonDeg) || !Number.isFinite(body.current.latDeg)) {
+          continue;
+        }
+        hits.push(
+          ...hitTargetsFromGlyphCopies(
+            planetTrackableMapObjectId(body.id),
+            collectWrappedPointGlyphCopies({
+              lonDeg: body.current.lonDeg,
+              latDeg: body.current.latDeg,
+              viewportWidthPx: w,
+              viewportHeightPx: h,
+              camera: options.camera,
+              frame: options.frame,
+              renderedRadiusPx: r,
+              xClipRadiusMultiple: 4,
+            }),
+            w,
+            h,
+          ),
+        );
+      }
     }
   }
   return hits;

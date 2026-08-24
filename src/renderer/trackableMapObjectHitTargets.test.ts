@@ -13,6 +13,16 @@
 
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ISS_ORBITAL_PRESENTATION } from "../core/issOrbitalPresentation";
+import { DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID } from "../config/appConfig";
+import { DEFAULT_PLANETARY_OBJECTS_PRESENTATION } from "../core/planetaryObjectsPresentation";
+import {
+  cityTrackableMapObjectId,
+  planetTrackableMapObjectId,
+  trackableMapObjectIdEquals,
+} from "../core/trackableMapObject";
+import { CITY_PINS_KIND, type CityPinsPayload } from "../layers/cityPinsPayload";
+import { PLANETARY_OBJECTS_KIND, type PlanetaryObjectsPayload } from "../layers/planetaryObjectsPayload";
+import { collectTrackableTargetCatalog } from "./trackableTargetCatalog";
 import {
   IDENTITY_SCENE_CAMERA,
   clampSceneCamera,
@@ -217,5 +227,66 @@ describe("LIB-091 trackable hit-target collection", () => {
       }),
     ]);
     expect(quakes).toEqual([]);
+  });
+
+  it("emits city pin and current-planet hit targets from painted payloads, not earthquakes", () => {
+    const font = DEFAULT_TOP_BAND_TEXT_HOUR_MARKER_FONT_ASSET_ID;
+    const cityPayload: CityPinsPayload = {
+      kind: CITY_PINS_KIND,
+      cities: [
+        {
+          id: "city.london",
+          name: "London",
+          latDeg: 51.5074,
+          lonDeg: -0.1278,
+          localTimeLabel: "12:00",
+        },
+      ],
+      showLabels: true,
+      labelMode: "city",
+      scale: "medium",
+      cityNameFontAssetId: font,
+      dateTimeFontAssetId: font,
+    };
+    const planetPayload: PlanetaryObjectsPayload = {
+      kind: PLANETARY_OBJECTS_KIND,
+      supported: true,
+      presentation: DEFAULT_PLANETARY_OBJECTS_PRESENTATION,
+      bodies: [
+        {
+          id: "jupiter",
+          displayName: "Jupiter",
+          color: "#c9a36a",
+          current: { lonDeg: 40, latDeg: 12 },
+          trackPast: [],
+          trackFuture: [],
+          locus: [],
+          showCurrent: true,
+          showLabel: false,
+          showTrack: false,
+          showLocus: false,
+        },
+      ],
+    };
+    const hits = collect([
+      layer("cities", "points", cityPayload),
+      layer("planets", "points", planetPayload),
+    ]);
+    expect(hits.some((hit) => trackableMapObjectIdEquals(hit.target, cityTrackableMapObjectId("city.london")))).toBe(
+      true,
+    );
+    expect(
+      hits.some((hit) => trackableMapObjectIdEquals(hit.target, planetTrackableMapObjectId("jupiter"))),
+    ).toBe(true);
+    const catalog = collectTrackableTargetCatalog([
+      layer("cities", "points", cityPayload),
+      layer("planets", "points", planetPayload),
+    ]);
+    expect(catalog.cities).toEqual([
+      { id: "city.london", name: "London", lonDeg: -0.1278, latDeg: 51.5074 },
+    ]);
+    expect(catalog.planets).toEqual([
+      { id: "jupiter", displayName: "Jupiter", lonDeg: 40, latDeg: 12 },
+    ]);
   });
 });

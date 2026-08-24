@@ -12,7 +12,7 @@
  */
 
 /**
- * Trackable map object identity and resolution (LIB-088 / LIB-089).
+ * Trackable map object identity and resolution (LIB-088 / LIB-089 / LIB-092).
  *
  * A trackable map object is a rendered/physical object that can expose an
  * authoritative canonical geographic lon/lat for the current frame instant
@@ -24,22 +24,44 @@
  * - `SceneReferenceFrame` — how already-resolved geography is expressed
  *
  * Identity is stable and independent of current coordinates. Moon remains
- * Moon as it moves. Production identities here are `moon`, `sun`, and `iss`.
- * Earth-fixed is not a target. This module is not a plugin registry.
+ * Moon as it moves; a city remains that city. Named identities are `moon`,
+ * `sun`, and `iss`. Cities and planets use structured identities that reuse
+ * canonical `CityPinEntry.id` and `PlanetaryBodyId`. Earth-fixed is not a
+ * target. This module is not a plugin registry.
  *
  * Resolution consumes already-authoritative product state. It does not
- * recompute astronomy or orbital mechanics. ISS coordinates are supplied
- * by the caller from the existing ISS lifecycle path; they are never
+ * recompute astronomy or orbital mechanics. ISS, city, and planet coordinates
+ * are supplied by the caller from existing product paths; they are never
  * invented here.
  */
 
+import { isPlanetaryBodyId, type PlanetaryBodyId } from "./planetaryBodies";
 import { sublunarPoint } from "./sublunarPoint";
 import { subsolarPoint } from "./subsolarPoint";
 
 export const TRACKABLE_MAP_OBJECT_IDS = ["moon", "sun", "iss"] as const;
 
-/** Stable production identities. City/planet/Milky Way values are not added here. */
-export type TrackableMapObjectId = (typeof TRACKABLE_MAP_OBJECT_IDS)[number];
+/** Named production identities (Moon, Sun, ISS). */
+export type NamedTrackableMapObjectId = (typeof TRACKABLE_MAP_OBJECT_IDS)[number];
+
+export type CityTrackableMapObjectId = {
+  readonly kind: "city";
+  readonly id: string;
+};
+
+export type PlanetTrackableMapObjectId = {
+  readonly kind: "planet";
+  readonly id: PlanetaryBodyId;
+};
+
+/**
+ * Stable production identities. Structured city/planet values reuse canonical
+ * pin and body ids. Do not compare structured values with `===`.
+ */
+export type TrackableMapObjectId =
+  | NamedTrackableMapObjectId
+  | CityTrackableMapObjectId
+  | PlanetTrackableMapObjectId;
 
 /** Canonical geographic position used as resolved anchor state. */
 export type TrackableMapObjectCanonicalPosition = {
@@ -50,24 +72,88 @@ export type TrackableMapObjectCanonicalPosition = {
 /**
  * Authoritative lon/lat already computed for the frame instant.
  * Callers supply existing product state; they do not invent a second ephemeris.
- * ISS is nullable: tracking is unavailable when no valid position exists.
+ * ISS/city/planet entries are omitted or empty when unavailable; never fabricate.
  */
 export type TrackableMapObjectAuthoritativeState = {
   readonly moon: TrackableMapObjectCanonicalPosition;
   readonly sun: TrackableMapObjectCanonicalPosition;
   readonly iss: TrackableMapObjectCanonicalPosition | null;
+  readonly cities?: ReadonlyMap<string, TrackableMapObjectCanonicalPosition>;
+  readonly planets?: ReadonlyMap<PlanetaryBodyId, TrackableMapObjectCanonicalPosition>;
 };
 
-export function isTrackableMapObjectId(value: string): value is TrackableMapObjectId {
+export function cityTrackableMapObjectId(id: string): CityTrackableMapObjectId {
+  return { kind: "city", id };
+}
+
+export function planetTrackableMapObjectId(id: PlanetaryBodyId): PlanetTrackableMapObjectId {
+  return { kind: "planet", id };
+}
+
+export function isNamedTrackableMapObjectId(value: unknown): value is NamedTrackableMapObjectId {
   return value === "moon" || value === "sun" || value === "iss";
+}
+
+export function isTrackableMapObjectId(value: unknown): value is TrackableMapObjectId {
+  if (isNamedTrackableMapObjectId(value)) {
+    return true;
+  }
+  if (value === null || typeof value !== "object") {
+    return false;
+  }
+  const rec = value as { kind?: unknown; id?: unknown };
+  if (rec.kind === "city") {
+    return typeof rec.id === "string" && rec.id.length > 0;
+  }
+  if (rec.kind === "planet") {
+    return typeof rec.id === "string" && isPlanetaryBodyId(rec.id);
+  }
+  return false;
+}
+
+/**
+ * Semantic identity equality. Structured city/planet ids compare by kind+id,
+ * not object reference.
+ */
+export function trackableMapObjectIdEquals(
+  a: TrackableMapObjectId | null,
+  b: TrackableMapObjectId | null,
+): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+  if (typeof a === "string" || typeof b === "string") {
+    return a === b;
+  }
+  return a.kind === b.kind && a.id === b.id;
+}
+
+/**
+ * Deterministic overlap tie key: named Moon/Sun/ISS first (existing order),
+ * then planets, then cities. Not a hand-maintained global target list.
+ */
+export function trackableMapObjectIdTieKey(target: TrackableMapObjectId): string {
+  if (target === "moon") {
+    return "0:0:moon";
+  }
+  if (target === "sun") {
+    return "0:1:sun";
+  }
+  if (target === "iss") {
+    return "0:2:iss";
+  }
+  if (target.kind === "planet") {
+    return `1:${target.id}`;
+  }
+  return `2:${target.id}`;
 }
 
 /**
  * Map a target identity onto already-authoritative canonical coordinates.
  *
  * Object-specific knowledge lives here. Reference-frame math must not.
- * Returns `null` only when the target is ISS and no valid position was supplied.
- * Never fabricates ISS coordinates.
+ * Returns `null` when the target has no supplied valid position (ISS, missing
+ * city, or planet without a current mapped point). Never fabricates coordinates.
  */
 export function resolveTrackableMapObject(
   target: "moon" | "sun",
@@ -81,22 +167,35 @@ export function resolveTrackableMapObject(
   target: TrackableMapObjectId,
   state: TrackableMapObjectAuthoritativeState,
 ): TrackableMapObjectCanonicalPosition | null {
-  switch (target) {
-    case "moon":
-      return { lonDeg: state.moon.lonDeg, latDeg: state.moon.latDeg };
-    case "sun":
-      return { lonDeg: state.sun.lonDeg, latDeg: state.sun.latDeg };
-    case "iss":
-      return state.iss === null
-        ? null
-        : { lonDeg: state.iss.lonDeg, latDeg: state.iss.latDeg };
+  if (target === "moon") {
+    return { lonDeg: state.moon.lonDeg, latDeg: state.moon.latDeg };
   }
+  if (target === "sun") {
+    return { lonDeg: state.sun.lonDeg, latDeg: state.sun.latDeg };
+  }
+  if (target === "iss") {
+    return state.iss === null
+      ? null
+      : { lonDeg: state.iss.lonDeg, latDeg: state.iss.latDeg };
+  }
+  if (target.kind === "city") {
+    const pos = state.cities?.get(target.id);
+    return pos === undefined ? null : { lonDeg: pos.lonDeg, latDeg: pos.latDeg };
+  }
+  const pos = state.planets?.get(target.id);
+  return pos === undefined ? null : { lonDeg: pos.lonDeg, latDeg: pos.latDeg };
 }
 
-/** Gather Moon/Sun authorities. ISS must be supplied from the existing ISS pipeline. */
+export type TrackableMapObjectAuthoritativeExtras = {
+  readonly cities?: ReadonlyMap<string, TrackableMapObjectCanonicalPosition>;
+  readonly planets?: ReadonlyMap<PlanetaryBodyId, TrackableMapObjectCanonicalPosition>;
+};
+
+/** Gather Moon/Sun authorities. ISS, cities, and planets come from existing product paths. */
 export function trackableMapObjectAuthoritativeStateAt(
   canonicalInstantMs: number,
   iss: TrackableMapObjectCanonicalPosition | null = null,
+  extras?: TrackableMapObjectAuthoritativeExtras,
 ): TrackableMapObjectAuthoritativeState {
   const moon = sublunarPoint(canonicalInstantMs);
   const sun = subsolarPoint(canonicalInstantMs);
@@ -104,6 +203,8 @@ export function trackableMapObjectAuthoritativeStateAt(
     moon: { lonDeg: moon.lonDeg, latDeg: moon.latDeg },
     sun: { lonDeg: sun.lonDeg, latDeg: sun.latDeg },
     iss,
+    ...(extras?.cities !== undefined ? { cities: extras.cities } : {}),
+    ...(extras?.planets !== undefined ? { planets: extras.planets } : {}),
   };
 }
 
@@ -116,14 +217,16 @@ export function resolveTrackableMapObjectAtInstant(
   target: TrackableMapObjectId,
   canonicalInstantMs: number,
   iss?: TrackableMapObjectCanonicalPosition | null,
+  extras?: TrackableMapObjectAuthoritativeExtras,
 ): TrackableMapObjectCanonicalPosition | null;
 export function resolveTrackableMapObjectAtInstant(
   target: TrackableMapObjectId,
   canonicalInstantMs: number,
   iss: TrackableMapObjectCanonicalPosition | null = null,
+  extras?: TrackableMapObjectAuthoritativeExtras,
 ): TrackableMapObjectCanonicalPosition | null {
   return resolveTrackableMapObject(
     target,
-    trackableMapObjectAuthoritativeStateAt(canonicalInstantMs, iss),
+    trackableMapObjectAuthoritativeStateAt(canonicalInstantMs, iss, extras),
   );
 }

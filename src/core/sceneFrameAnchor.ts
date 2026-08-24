@@ -55,7 +55,9 @@ import {
   type TrackableMapObjectId,
 } from "./sceneReferenceFrame";
 import {
+  isTrackableTargetAvailable,
   sceneReferenceFrameFromTrackingSelection,
+  type TrackableTargetAvailability,
   type TrackingSelectionState,
 } from "./trackingSelection";
 
@@ -160,10 +162,10 @@ export function anchoredSceneFrameLockModeFromUiKind(
  */
 export function sceneReferenceFrameUiKindWhenTargetUnavailable(
   kind: SceneReferenceFrameUiKind,
-  available: Readonly<Record<TrackableMapObjectId, boolean>>,
+  available: TrackableTargetAvailability,
 ): SceneReferenceFrameUiKind {
   const target = trackableMapObjectIdFromUiKind(kind);
-  if (target !== null && available[target] === false) {
+  if (target !== null && !isTrackableTargetAvailable(target, available)) {
     return "earthFixed";
   }
   return kind;

@@ -38,6 +38,7 @@ import { astronomyPathStrokeWidthPx } from "../../core/astronomyOverlayStrokeApp
 import { placeEclipseMapLabel, type LabelAvoidBox, type LabelAvoidDisc } from "../../core/eclipse/eclipseMapLabelPlacement";
 import {
   PLANETARY_LOCUS_OPACITY_01,
+  planetaryCurrentGlyphRadiusPx,
   planetaryGlyphSizeScale,
 } from "../../core/planetaryObjectsPresentation";
 import type { PlanetarySubpointDeg } from "../../core/planetarySubpoint";
@@ -175,7 +176,7 @@ export function buildPlanetaryObjectsRenderPlan(
     pushSeamAwarePolyline(items, pastPts, w, h, strokeRgba(body.color, a(0.72)), trackWidth, camera, frame);
   }
 
-  const glyphRadius = Math.min(8.5, Math.max(4.4, 4.8 * Math.max(0.7, w / 1400))) * sizeScale;
+  const glyphRadius = planetaryCurrentGlyphRadiusPx(w, pres.glyphSize);
   const placedGlyphs: LabelAvoidDisc[] = [];
   const glyphCenters: Array<{
     id: string;

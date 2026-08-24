@@ -29,8 +29,9 @@
  * accessible clicking; small enough to avoid frequent accidental selection.
  *
  * Overlap policy: nearest hit-target center to the pointer wins. If two
- * distances are effectively tied, {@link TRACKABLE_MAP_OBJECT_IDS} order
- * is the deterministic secondary key (moon, then sun, then iss).
+ * distances are effectively tied, {@link trackableMapObjectIdTieKey} is the
+ * deterministic secondary key (moon, then sun, then iss, then planets,
+ * then cities).
  */
 
 import {
@@ -47,6 +48,8 @@ import {
 } from "./sceneReferenceFrame";
 import {
   TRACKABLE_MAP_OBJECT_IDS,
+  isNamedTrackableMapObjectId,
+  trackableMapObjectIdTieKey,
   type TrackableMapObjectId,
 } from "./trackableMapObject";
 import {
@@ -85,7 +88,13 @@ export function trackableMapObjectHitRadiusPx(renderedRadiusPx: number): number 
 }
 
 export function trackableMapObjectHitTieRank(target: TrackableMapObjectId): number {
-  return TRACKABLE_MAP_OBJECT_IDS.indexOf(target);
+  return isNamedTrackableMapObjectId(target)
+    ? TRACKABLE_MAP_OBJECT_IDS.indexOf(target)
+    : Number.POSITIVE_INFINITY;
+}
+
+export function trackableMapObjectHitTieKey(target: TrackableMapObjectId): string {
+  return trackableMapObjectIdTieKey(target);
 }
 
 /**
@@ -193,7 +202,7 @@ export function pickTrackableMapObjectHit(
       continue;
     }
     if (Math.abs(dist - bestDist) <= TRACKABLE_MAP_OBJECT_HIT_TIE_EPSILON_PX) {
-      if (trackableMapObjectHitTieRank(hit.target) < trackableMapObjectHitTieRank(best.target)) {
+      if (trackableMapObjectHitTieKey(hit.target) < trackableMapObjectHitTieKey(best.target)) {
         best = hit;
         bestDist = dist;
       }

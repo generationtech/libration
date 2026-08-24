@@ -23,7 +23,7 @@ import {
   type SceneReferenceFrame,
 } from "../../core/sceneReferenceFrame";
 import { PRODUCT_TEXT_RENDERER_DEFAULT_FONT_ASSET_ID } from "../../config/productTextFont.ts";
-import type { CityPinsPayload } from "../../layers/cityPinsPayload";
+import { cityPinDiscRadiusPx, type CityPinsPayload } from "../../layers/cityPinsPayload";
 import { effectiveOverlayReadabilityLiftVeil01 } from "../../layers/overlayReadabilityHints";
 import { defaultFontAssetRegistry } from "../../typography/fontAssetRegistry";
 import type { RenderPath2DItem, RenderPlan, RenderTextItem } from "./renderPlanTypes";
@@ -78,8 +78,7 @@ export function buildCityPinsRenderPlan(options: CityPinsRenderPlanOptions): Ren
 
   for (const city of cities) {
     const y = sceneYFromLatitudeDeg(city.latDeg, h, camera, frame);
-    const r =
-      scaleFactor * Math.min(4, Math.max(2.5, w * 0.0028));
+    const r = cityPinDiscRadiusPx(w, scale);
     const baseX = sceneXFromLongitudeDeg(city.lonDeg, w, camera, frame);
 
     const v = effectiveOverlayReadabilityLiftVeil01(city.readabilityNightVeil01, liftScale);

@@ -70,7 +70,7 @@
 
 .scene-tracking-controls {
   position: fixed;
-  right: 10.55rem;
+  right: 15.4rem;
   bottom: 0.75rem;
   z-index: 30;
   display: flex;
@@ -99,7 +99,7 @@
 
 .scene-tracking-control__select {
   margin: 0;
-  max-width: 7.6rem;
+  max-width: 12.5rem;
   font: inherit;
   font-size: 0.75rem;
   line-height: 1.2;

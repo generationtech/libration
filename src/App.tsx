@@ -174,12 +174,13 @@ import {
   isTrackingModeActive,
   isTrackingSelectionPositionLocked,
   parseTrackingModeSelectValue,
-  parseTrackingTargetSelectValue,
   sceneReferenceFrameFromTrackingSelection,
   setTrackingMode,
   setTrackingTarget,
   trackingSelectionTransition,
+  trackingTargetSelectModel,
   trackingTargetSelectValue,
+  tryParseTrackingTargetSelectValue,
   type TrackingSelectionState,
 } from "./core/trackingSelection";
 import {
@@ -187,11 +188,18 @@ import {
   pickTrackableMapObjectHit,
   type TrackableMapObjectHitTarget,
 } from "./core/trackableMapObjectHit";
+import type { PlanetaryBodyId } from "./core/planetaryBodies";
 import {
   resolveTrackableMapObject,
   trackableMapObjectAuthoritativeStateAt,
 } from "./core/trackableMapObject";
 import { collectTrackableMapObjectHitTargets } from "./renderer/trackableMapObjectHitTargets";
+import {
+  collectTrackableTargetCatalog,
+  trackableAuthoritativeMapsFromCatalog,
+  trackableTargetAvailabilityFromCatalog,
+  trackingTargetUiCatalogKey,
+} from "./renderer/trackableTargetCatalog";
 import "./App.css";
 
 const CONFIG_PANEL_DOM_ID = "libration-config-shell";
@@ -354,6 +362,16 @@ export default function App() {
   );
   const [issTrackingAvailable, setIssTrackingAvailable] = useState(false);
   const issTrackingAvailableRef = useRef(false);
+  const trackingAvailabilityRef = useRef({
+    moon: true,
+    sun: true,
+    iss: false,
+  });
+  const trackingTargetUiCatalogKeyRef = useRef("");
+  const [trackingTargetUiCatalog, setTrackingTargetUiCatalog] = useState({
+    cities: [] as readonly { id: string; name: string }[],
+    planets: [] as readonly { id: PlanetaryBodyId; displayName: string }[],
+  });
   const trackableHitTargetsRef = useRef<TrackableMapObjectHitTarget[]>([]);
   const commitTrackingSelectionRef = useRef<(next: TrackingSelectionState) => void>(
     () => {},
@@ -957,46 +975,6 @@ export default function App() {
         issTrackingAvailableRef.current = issAvailable;
         setIssTrackingAvailable(issAvailable);
       }
-      const available = { moon: true, sun: true, iss: issAvailable } as const;
-      commitTrackingSelection(
-        applyTrackingTargetAvailability(trackingSelectionRef.current, available),
-      );
-      const selection = trackingSelectionRef.current;
-      const target = selection.target;
-      if (target !== null) {
-        const position = resolveTrackableMapObject(
-          target,
-          trackableMapObjectAuthoritativeStateAt(time.now, issPosition),
-        );
-        if (position === null) {
-          anchorContinuousLonRef.current = null;
-          sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
-        } else {
-          const continuous = nextAnchorContinuousLonDeg({
-            previousContinuousLonDeg: anchorContinuousLonRef.current,
-            nextCanonicalLonDeg: position.lonDeg,
-            policy: "follow",
-          });
-          anchorContinuousLonRef.current = continuous;
-          sceneReferenceFrameRef.current = sceneReferenceFrameFromTrackingSelection(
-            selection,
-            continuous,
-            position.latDeg,
-          );
-        }
-      } else {
-        anchorContinuousLonRef.current = null;
-        sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
-      }
-      if (
-        sceneCameraCoverPolicyRef.current === "auto" &&
-        !sceneCameraPanActiveRef.current
-      ) {
-        sceneCameraRef.current = applyAutomaticSceneCoverScale(
-          sceneCameraRef.current,
-          sceneCameraVerticalExtentFromFrame(sceneReferenceFrameRef.current),
-        );
-      }
       const nextIssHint = issConfigStatusHint({
         enabled: derivedAppConfigRef.current.layers.orbitalTracks,
         productTimeLiveEnough: liveEnough,
@@ -1109,6 +1087,63 @@ export default function App() {
       const registry = registryRef.current;
       registry.update(time);
       const layers = buildRenderableLayerStates(registry, time);
+      const catalog = collectTrackableTargetCatalog(layers);
+      const catalogKey = trackingTargetUiCatalogKey(catalog);
+      if (catalogKey !== trackingTargetUiCatalogKeyRef.current) {
+        trackingTargetUiCatalogKeyRef.current = catalogKey;
+        setTrackingTargetUiCatalog({
+          cities: catalog.cities.map((city) => ({ id: city.id, name: city.name })),
+          planets: catalog.planets.map((planet) => ({
+            id: planet.id,
+            displayName: planet.displayName,
+          })),
+        });
+      }
+      const maps = trackableAuthoritativeMapsFromCatalog(catalog);
+      const available = trackableTargetAvailabilityFromCatalog(catalog, issAvailable);
+      trackingAvailabilityRef.current = available;
+      commitTrackingSelection(
+        applyTrackingTargetAvailability(trackingSelectionRef.current, available),
+      );
+      const selection = trackingSelectionRef.current;
+      const target = selection.target;
+      if (target !== null) {
+        const position = resolveTrackableMapObject(
+          target,
+          trackableMapObjectAuthoritativeStateAt(time.now, issPosition, {
+            cities: maps.cities,
+            planets: maps.planets,
+          }),
+        );
+        if (position === null) {
+          anchorContinuousLonRef.current = null;
+          sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
+        } else {
+          const continuous = nextAnchorContinuousLonDeg({
+            previousContinuousLonDeg: anchorContinuousLonRef.current,
+            nextCanonicalLonDeg: position.lonDeg,
+            policy: "follow",
+          });
+          anchorContinuousLonRef.current = continuous;
+          sceneReferenceFrameRef.current = sceneReferenceFrameFromTrackingSelection(
+            selection,
+            continuous,
+            position.latDeg,
+          );
+        }
+      } else {
+        anchorContinuousLonRef.current = null;
+        sceneReferenceFrameRef.current = EARTH_FIXED_SCENE_REFERENCE_FRAME;
+      }
+      if (
+        sceneCameraCoverPolicyRef.current === "auto" &&
+        !sceneCameraPanActiveRef.current
+      ) {
+        sceneCameraRef.current = applyAutomaticSceneCoverScale(
+          sceneCameraRef.current,
+          sceneCameraVerticalExtentFromFrame(sceneReferenceFrameRef.current),
+        );
+      }
       frameNumber += 1;
       const frameCtx = {
         frameNumber,
@@ -1444,11 +1479,7 @@ export default function App() {
         pointerX: scenePt.x,
         pointerY: scenePt.y,
         panBecameActive: false,
-        available: {
-          moon: true,
-          sun: true,
-          iss: issTrackingAvailableRef.current,
-        },
+        available: trackingAvailabilityRef.current,
       });
       commitTrackingSelectionRef.current(next);
     };
@@ -1561,6 +1592,14 @@ export default function App() {
 
   const eclipseInfoConfig = useMemo(() => workingV2Ref.current, [configViewTick]);
 
+  const trackingTargetOptions = trackingTargetSelectModel(trackingTargetUiCatalog, {
+    moon: true,
+    sun: true,
+    iss: issTrackingAvailable,
+    cities: new Set(trackingTargetUiCatalog.cities.map((city) => city.id)),
+    planets: new Set(trackingTargetUiCatalog.planets.map((planet) => planet.id)),
+  });
+
   return (
     <div className={isConfigOpen ? "app-shell app-shell--config-open" : "app-shell"}>
       {import.meta.env.DEV && scenarioRuntime.kind === "applied" ? (
@@ -1600,31 +1639,33 @@ export default function App() {
             data-testid="tracking-target-select"
             value={trackingTargetSelectValue(trackingSelection.target)}
             onChange={(event) => {
-              const raw = event.currentTarget.value;
-              if (
-                raw !== "earthFixed" &&
-                raw !== "moon" &&
-                raw !== "sun" &&
-                raw !== "iss"
-              ) {
+              const parsed = tryParseTrackingTargetSelectValue(event.currentTarget.value);
+              if (!parsed.ok) {
                 return;
               }
-              const target = parseTrackingTargetSelectValue(raw);
               commitTrackingSelection(
-                setTrackingTarget(trackingSelectionRef.current, target, {
-                  moon: true,
-                  sun: true,
-                  iss: issTrackingAvailableRef.current,
-                }),
+                setTrackingTarget(
+                  trackingSelectionRef.current,
+                  parsed.target,
+                  trackingAvailabilityRef.current,
+                ),
               );
             }}
           >
-            <option value="earthFixed">Earth-fixed</option>
-            <option value="moon">Moon</option>
-            <option value="sun">Sun</option>
-            <option value="iss" disabled={!issTrackingAvailable}>
-              ISS
-            </option>
+            {trackingTargetOptions.ungrouped.map((option) => (
+              <option key={option.value} value={option.value} disabled={option.disabled}>
+                {option.label}
+              </option>
+            ))}
+            {trackingTargetOptions.groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </label>
         <label className="scene-tracking-control">

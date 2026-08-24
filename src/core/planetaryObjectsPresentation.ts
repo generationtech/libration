@@ -177,6 +177,17 @@ export function planetaryGlyphSizeScale(size: PlanetaryGlyphSizeId): number {
   return PLANETARY_GLYPH_SIZE_SCALE[isOneOf(size, PLANETARY_GLYPH_SIZE_IDS) ? size : DEFAULT_PLANETARY_GLYPH_SIZE];
 }
 
+/** Painted current-planet glyph radius in CSS pixels (same formula as the scene plan). */
+export function planetaryCurrentGlyphRadiusPx(
+  viewportWidthPx: number,
+  glyphSize: PlanetaryGlyphSizeId,
+): number {
+  return (
+    Math.min(8.5, Math.max(4.4, 4.8 * Math.max(0.7, viewportWidthPx / 1400))) *
+    planetaryGlyphSizeScale(glyphSize)
+  );
+}
+
 export function planetaryGlyphSizeLabel(id: PlanetaryGlyphSizeId): string {
   switch (id) {
     case "small":

@@ -12,7 +12,7 @@
  */
 
 /**
- * Runtime tracking selection (LIB-090).
+ * Runtime tracking selection (LIB-090 / LIB-092).
  *
  * User-facing tracking is two orthogonal concepts:
  * - Tracking target — which map object is tracked, or none (Earth-fixed)
@@ -31,6 +31,9 @@
  * Direct rendered-object selection (LIB-091) must call
  * {@link setTrackingTarget} rather than synthesizing chrome events or
  * constructing frames in UI code. Hit testing lives outside this module.
+ *
+ * Native `<select>` option values are UI encoding only. They are not
+ * production identity and must not be consumed by reference-frame math.
  */
 
 import {
@@ -39,8 +42,12 @@ import {
   type AnchoredSceneFrameLockMode,
   type SceneReferenceFrame,
 } from "./sceneReferenceFrame";
+import { isPlanetaryBodyId, type PlanetaryBodyId } from "./planetaryBodies";
 import {
-  isTrackableMapObjectId,
+  cityTrackableMapObjectId,
+  isNamedTrackableMapObjectId,
+  planetTrackableMapObjectId,
+  trackableMapObjectIdEquals,
   type TrackableMapObjectId,
 } from "./trackableMapObject";
 
@@ -66,7 +73,17 @@ export const DEFAULT_TRACKING_SELECTION: TrackingSelectionState = {
   rememberedMode: DEFAULT_TRACKING_LOCK_MODE,
 };
 
-export type TrackableTargetAvailability = Readonly<Record<TrackableMapObjectId, boolean>>;
+/**
+ * Named targets are unavailable only when explicitly `false`. City and planet
+ * targets are available only when present in the corresponding set.
+ */
+export type TrackableTargetAvailability = {
+  readonly moon: boolean;
+  readonly sun: boolean;
+  readonly iss: boolean;
+  readonly cities?: ReadonlySet<string>;
+  readonly planets?: ReadonlySet<PlanetaryBodyId>;
+};
 
 export type TrackingSelectionTransition = {
   readonly previous: TrackingSelectionState;
@@ -76,11 +93,60 @@ export type TrackingSelectionTransition = {
   readonly reinitializeCamera: boolean;
 };
 
+export type TrackingTargetSelectOption = {
+  readonly value: string;
+  readonly label: string;
+  readonly disabled?: boolean;
+};
+
+export type TrackingTargetSelectGroup = {
+  readonly label: string;
+  readonly options: readonly TrackingTargetSelectOption[];
+};
+
+export type TrackingTargetSelectModel = {
+  readonly ungrouped: readonly TrackingTargetSelectOption[];
+  readonly groups: readonly TrackingTargetSelectGroup[];
+};
+
+export type TrackingTargetSelectCatalog = {
+  readonly cities: readonly { readonly id: string; readonly name: string }[];
+  readonly planets: readonly {
+    readonly id: PlanetaryBodyId;
+    readonly displayName: string;
+  }[];
+};
+
+export type TrackingTargetSelectParseResult =
+  | { readonly ok: true; readonly target: TrackableMapObjectId | null }
+  | { readonly ok: false };
+
+export function isTrackableTargetAvailable(
+  target: TrackableMapObjectId,
+  available: TrackableTargetAvailability,
+): boolean {
+  if (target === "moon") {
+    return available.moon !== false;
+  }
+  if (target === "sun") {
+    return available.sun !== false;
+  }
+  if (target === "iss") {
+    return available.iss !== false;
+  }
+  if (target.kind === "city") {
+    return available.cities?.has(target.id) === true;
+  }
+  return available.planets?.has(target.id) === true;
+}
+
 export function trackingSelectionEquals(
   a: TrackingSelectionState,
   b: TrackingSelectionState,
 ): boolean {
-  return a.target === b.target && a.rememberedMode === b.rememberedMode;
+  return (
+    trackableMapObjectIdEquals(a.target, b.target) && a.rememberedMode === b.rememberedMode
+  );
 }
 
 export function isTrackingModeActive(selection: TrackingSelectionState): boolean {
@@ -112,7 +178,10 @@ export function setTrackingTarget(
   if (target === null) {
     return { target: null, rememberedMode: current.rememberedMode };
   }
-  if (available[target] === false) {
+  if (!isTrackableTargetAvailable(target, available)) {
+    return current;
+  }
+  if (trackableMapObjectIdEquals(current.target, target)) {
     return current;
   }
   return { target, rememberedMode: current.rememberedMode };
@@ -126,14 +195,14 @@ export function setTrackingMode(
 }
 
 /**
- * When the selected target becomes unavailable (ISS policy), fall back to
- * Earth-fixed and keep the remembered mode.
+ * When the selected target becomes unavailable, fall back to Earth-fixed and
+ * keep the remembered mode.
  */
 export function applyTrackingTargetAvailability(
   current: TrackingSelectionState,
   available: TrackableTargetAvailability,
 ): TrackingSelectionState {
-  if (current.target === null || available[current.target] !== false) {
+  if (current.target === null || isTrackableTargetAvailable(current.target, available)) {
     return current;
   }
   return { target: null, rememberedMode: current.rememberedMode };
@@ -159,7 +228,7 @@ export function trackingSelectionChangesEffectiveFrame(
   previous: TrackingSelectionState,
   next: TrackingSelectionState,
 ): boolean {
-  if (previous.target !== next.target) {
+  if (!trackableMapObjectIdEquals(previous.target, next.target)) {
     return true;
   }
   if (next.target === null) {
@@ -176,28 +245,108 @@ export function trackingSelectionTransition(
     previous,
     next,
     selectionChanged: !trackingSelectionEquals(previous, next),
-    reinitializeContinuity: previous.target !== next.target,
+    reinitializeContinuity: !trackableMapObjectIdEquals(previous.target, next.target),
     reinitializeCamera: trackingSelectionChangesEffectiveFrame(previous, next),
   };
 }
 
-export function trackingTargetSelectValue(
-  target: TrackableMapObjectId | null,
-): TrackingTargetSelectValue {
-  return target === null ? "earthFixed" : target;
+/** Native-select option value. UI encoding, not production identity. */
+export function trackingTargetSelectValue(target: TrackableMapObjectId | null): string {
+  if (target === null) {
+    return "earthFixed";
+  }
+  if (typeof target === "string") {
+    return target;
+  }
+  if (target.kind === "city") {
+    return `city:${encodeURIComponent(target.id)}`;
+  }
+  return `planet:${target.id}`;
 }
 
+export function tryParseTrackingTargetSelectValue(
+  value: string,
+): TrackingTargetSelectParseResult {
+  if (value === "earthFixed") {
+    return { ok: true, target: null };
+  }
+  if (isNamedTrackableMapObjectId(value)) {
+    return { ok: true, target: value };
+  }
+  if (value.startsWith("city:")) {
+    let id: string;
+    try {
+      id = decodeURIComponent(value.slice("city:".length));
+    } catch {
+      return { ok: false };
+    }
+    if (id.length === 0) {
+      return { ok: false };
+    }
+    return { ok: true, target: cityTrackableMapObjectId(id) };
+  }
+  if (value.startsWith("planet:")) {
+    const id = value.slice("planet:".length);
+    if (!isPlanetaryBodyId(id)) {
+      return { ok: false };
+    }
+    return { ok: true, target: planetTrackableMapObjectId(id) };
+  }
+  return { ok: false };
+}
+
+/**
+ * Earth-fixed and unparseable strings both yield `null`. Prefer
+ * {@link tryParseTrackingTargetSelectValue} when invalid input must not
+ * switch to Earth-fixed.
+ */
 export function parseTrackingTargetSelectValue(
   value: string,
 ): TrackableMapObjectId | null {
-  if (value === "earthFixed") {
-    return null;
-  }
-  return isTrackableMapObjectId(value) ? value : null;
+  const parsed = tryParseTrackingTargetSelectValue(value);
+  return parsed.ok ? parsed.target : null;
 }
 
 export function parseTrackingModeSelectValue(
   value: string,
 ): AnchoredSceneFrameLockMode | null {
   return value === "longitude" || value === "position" ? value : null;
+}
+
+export function trackingTargetSelectModel(
+  catalog: TrackingTargetSelectCatalog,
+  available: TrackableTargetAvailability,
+): TrackingTargetSelectModel {
+  const celestial: TrackingTargetSelectOption[] = [
+    { value: "moon", label: "Moon" },
+    { value: "sun", label: "Sun" },
+    ...catalog.planets.map((planet) => ({
+      value: trackingTargetSelectValue(planetTrackableMapObjectId(planet.id)),
+      label: planet.displayName,
+    })),
+  ];
+  const spacecraft: TrackingTargetSelectOption[] = [
+    {
+      value: "iss",
+      label: "ISS",
+      disabled: available.iss === false,
+    },
+  ];
+  const groups: TrackingTargetSelectGroup[] = [
+    { label: "Celestial", options: celestial },
+    { label: "Spacecraft", options: spacecraft },
+  ];
+  if (catalog.cities.length > 0) {
+    groups.push({
+      label: "Cities",
+      options: catalog.cities.map((city) => ({
+        value: trackingTargetSelectValue(cityTrackableMapObjectId(city.id)),
+        label: city.name,
+      })),
+    });
+  }
+  return {
+    ungrouped: [{ value: "earthFixed", label: "Earth-fixed" }],
+    groups,
+  };
 }
