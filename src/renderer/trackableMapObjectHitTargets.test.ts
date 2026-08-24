@@ -288,5 +288,6 @@ describe("LIB-091 trackable hit-target collection", () => {
     expect(catalog.planets).toEqual([
       { id: "jupiter", displayName: "Jupiter", lonDeg: 40, latDeg: 12 },
     ]);
+    expect(catalog.milkyWayPoints).toEqual([]);
   });
 });

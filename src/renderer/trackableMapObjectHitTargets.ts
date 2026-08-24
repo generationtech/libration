@@ -28,15 +28,17 @@ import { DEFAULT_SUBLUNAR_MARKER_APPEARANCE, sublunarMarkerRadiusPx } from "../c
 import { isDynamicTracksPayload } from "../layers/dynamicTracksPayload";
 import { isSubsolarMarkerPayload } from "../layers/subsolarMarkerPayload";
 import { isSublunarMarkerPayload } from "../layers/sublunarMarkerPayload";
-import { cityTrackableMapObjectId, planetTrackableMapObjectId } from "../core/trackableMapObject";
+import { cityTrackableMapObjectId, milkyWayPointTrackableMapObjectId, planetTrackableMapObjectId } from "../core/trackableMapObject";
 import { cityPinDiscRadiusPx } from "../layers/cityPinsPayload";
 import { isCityPinsPayload } from "../layers/cityPinsPayload";
+import { isMilkyWayPayload } from "../layers/milkyWayPayload";
 import { isPlanetaryObjectsPayload } from "../layers/planetaryObjectsPayload";
 import { planetaryCurrentGlyphRadiusPx } from "../core/planetaryObjectsPresentation";
 import type { RenderableLayerState } from "./types";
 import {
   collectIssCurrentGlyphCopies,
 } from "./renderPlan/sceneDynamicTracksPlan";
+import { milkyWayPointGlyphRadiusPx } from "./renderPlan/milkyWayPlan";
 import { subsolarMarkerRadiusPx } from "./renderPlan/sceneSubsolarSublunarMarkersPlan";
 
 export function collectTrackableMapObjectHitTargets(options: {
@@ -172,6 +174,60 @@ export function collectTrackableMapObjectHitTargets(options: {
           ),
         );
       }
+      continue;
+    }
+    if (!isMilkyWayPayload(data) || !data.supported || data.geometry === null) {
+      continue;
+    }
+    const geom = data.geometry;
+    const pres = data.presentation;
+    if (
+      pres.galacticCenterEnabled &&
+      geom.galacticCenter &&
+      Number.isFinite(geom.galacticCenter.lonDeg) &&
+      Number.isFinite(geom.galacticCenter.latDeg)
+    ) {
+      hits.push(
+        ...hitTargetsFromGlyphCopies(
+          milkyWayPointTrackableMapObjectId("galacticCenter"),
+          collectWrappedPointGlyphCopies({
+            lonDeg: geom.galacticCenter.lonDeg,
+            latDeg: geom.galacticCenter.latDeg,
+            viewportWidthPx: w,
+            viewportHeightPx: h,
+            camera: options.camera,
+            frame: options.frame,
+            renderedRadiusPx: milkyWayPointGlyphRadiusPx(w, "center"),
+            xClipRadiusMultiple: 4,
+          }),
+          w,
+          h,
+        ),
+      );
+    }
+    if (
+      pres.galacticAnticenterEnabled &&
+      geom.galacticAnticenter &&
+      Number.isFinite(geom.galacticAnticenter.lonDeg) &&
+      Number.isFinite(geom.galacticAnticenter.latDeg)
+    ) {
+      hits.push(
+        ...hitTargetsFromGlyphCopies(
+          milkyWayPointTrackableMapObjectId("galacticAnticenter"),
+          collectWrappedPointGlyphCopies({
+            lonDeg: geom.galacticAnticenter.lonDeg,
+            latDeg: geom.galacticAnticenter.latDeg,
+            viewportWidthPx: w,
+            viewportHeightPx: h,
+            camera: options.camera,
+            frame: options.frame,
+            renderedRadiusPx: milkyWayPointGlyphRadiusPx(w, "anticenter"),
+            xClipRadiusMultiple: 4,
+          }),
+          w,
+          h,
+        ),
+      );
     }
   }
   return hits;

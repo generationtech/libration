@@ -36,6 +36,7 @@ describe("TrackableMapObjectId", () => {
     expect(isTrackableMapObjectId("iss")).toBe(true);
     expect(isTrackableMapObjectId("earth")).toBe(false);
     expect(isTrackableMapObjectId("city")).toBe(false);
+    expect(isTrackableMapObjectId("milkyWay")).toBe(false);
     expect("moon").not.toBe("sun");
     expect("iss").not.toBe("moon");
   });

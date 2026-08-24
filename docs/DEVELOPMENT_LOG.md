@@ -514,6 +514,13 @@ City and planet tracking targets: structured `{ kind: "city" | "planet", id }` i
 
 Verified: `npx tsc --noEmit` clean; `npm test` 284 files / 2853 passed / 0 failed; `npm run build` succeeded (`tsc && vite build`; `dist/assets/index-Ba8vts8g.js`). Cursor Browser at inner 1920×1080: `baseline` grouped Target with 9 cities, Knoxville dropdown Longitude/Position, Knoxville→Moon retains Position; `planetary-objects` eight planets, Jupiter/Saturn dropdown, mode retention; `earthquake-presentation` quake click stays Earth-fixed; 1280×720 grouped chrome no overlap.
 
+## 2026-08-24 — LIB-093 complete
+
+Galactic Center and Galactic Anticenter tracking targets: structured `{ kind: "milkyWayPoint", id }` identities reuse existing Milky Way tagged-point geometry and painted lon/lat; Celestial grouping after planets; LIB-091 click-to-track seam; generic longitude/position lock and auto-cover. No synthetic `"milkyWay"` target. The galactic-plane band is not trackable. Earthquakes remain hover-only. No new frame or camera math. ADR 0037. Completes the currently requested map-object tracking classes with legitimate point semantics.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 285 files / 2871 passed / 0 failed; `npm run build` succeeded (`tsc && vite build`; `dist/assets/index-oBGPhiwN.js`). Cursor Browser at inner 1920×1080: `milky-way` Galactic Center in Celestial, no generic Milky Way option; Center Longitude/Position; Anticenter after enabling the glyph; Position sequence Moon → Galactic Center → Jupiter → Knoxville → Galactic Anticenter → Sun; Demo 60× retention; `earthquake-presentation` geography click stays Earth-fixed; `iss-presentation` ISS enabled; 1280×720 grouping usable, no chrome overlap.
+
+
 
 
 

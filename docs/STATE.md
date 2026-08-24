@@ -5,13 +5,13 @@ Status: AWAITING SCOPE
 
 ## Active work item
 
-None. Do not start unscoped work.
+None. Awaiting human scope.
 
 ## Last completed
 
-[LIB-092](work/LIB-092-city-and-planet-tracking-targets.md) — City and planet tracking targets. Rendered city pins and eligible planetary current glyphs are independently trackable through the existing identity → resolution → `setTrackingTarget` → anchored frame → camera/cover → click-to-track stack. Structured city/planet identities; native grouped Target control; LIB-091 hit seam. No Milky Way. No earthquake tracking. No new frame or camera mathematics. ADR 0036.
+[LIB-093](work/LIB-093-galactic-center-and-anticenter-tracking-targets.md) — Galactic Center and Galactic Anticenter tracking targets. ADR 0037.
 
-Previous: [LIB-091](work/LIB-091-direct-click-to-track-for-map-objects.md) — Direct click-to-track for Moon, Sun, and ISS. ADR 0035.
+Previous: [LIB-092](work/LIB-092-city-and-planet-tracking-targets.md) — City and planet tracking targets. ADR 0036.
 
 ## Blockers
 
@@ -51,4 +51,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Do not start unscoped work. Do not start Milky Way tracking or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.
+Await human scope. Do not start a generic target picker, galactic-plane band tracking, earthquake tracking, or any other unscoped item.

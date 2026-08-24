@@ -42,6 +42,7 @@ An ADR belongs here when a future developer could plausibly reconsider the decis
 | [0034](0034-tracking-ui-is-orthogonal-target-and-mode.md) | User-facing tracking is orthogonal target + mode; production frames remain Earth-fixed vs anchored |
 | [0035](0035-click-to-track-uses-scene-space-semantic-hit-targets.md) | Click-to-track picks Moon/Sun/ISS in scene space and calls `setTrackingTarget` |
 | [0036](0036-city-and-planet-tracking-reuses-structured-target-identity.md) | Cities and eligible planets are structured trackable identities on the existing stack |
+| [0037](0037-galactic-center-and-anticenter-tracking-reuses-existing-milky-way-points.md) | Galactic Center and Anticenter are explicit Milky Way point targets; there is no synthetic `"milkyWay"` target |
 
 Format: `NNNN-short-title.md`, with Context, Decision, Consequences, and Status.
 

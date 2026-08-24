@@ -12,7 +12,7 @@
  */
 
 /**
- * Runtime tracking selection (LIB-090 / LIB-092).
+ * Runtime tracking selection (LIB-090 / LIB-092 / LIB-093).
  *
  * User-facing tracking is two orthogonal concepts:
  * - Tracking target — which map object is tracked, or none (Earth-fixed)
@@ -45,9 +45,12 @@ import {
 import { isPlanetaryBodyId, type PlanetaryBodyId } from "./planetaryBodies";
 import {
   cityTrackableMapObjectId,
+  isMilkyWayPointId,
   isNamedTrackableMapObjectId,
+  milkyWayPointTrackableMapObjectId,
   planetTrackableMapObjectId,
   trackableMapObjectIdEquals,
+  type MilkyWayPointId,
   type TrackableMapObjectId,
 } from "./trackableMapObject";
 
@@ -74,8 +77,9 @@ export const DEFAULT_TRACKING_SELECTION: TrackingSelectionState = {
 };
 
 /**
- * Named targets are unavailable only when explicitly `false`. City and planet
- * targets are available only when present in the corresponding set.
+ * Named targets are unavailable only when explicitly `false`. City, planet,
+ * and Milky Way point targets are available only when present in the
+ * corresponding set (planet-style omit: not listed when not rendered).
  */
 export type TrackableTargetAvailability = {
   readonly moon: boolean;
@@ -83,6 +87,7 @@ export type TrackableTargetAvailability = {
   readonly iss: boolean;
   readonly cities?: ReadonlySet<string>;
   readonly planets?: ReadonlySet<PlanetaryBodyId>;
+  readonly milkyWayPoints?: ReadonlySet<MilkyWayPointId>;
 };
 
 export type TrackingSelectionTransition = {
@@ -115,6 +120,10 @@ export type TrackingTargetSelectCatalog = {
     readonly id: PlanetaryBodyId;
     readonly displayName: string;
   }[];
+  readonly milkyWayPoints?: readonly {
+    readonly id: MilkyWayPointId;
+    readonly label: string;
+  }[];
 };
 
 export type TrackingTargetSelectParseResult =
@@ -137,7 +146,10 @@ export function isTrackableTargetAvailable(
   if (target.kind === "city") {
     return available.cities?.has(target.id) === true;
   }
-  return available.planets?.has(target.id) === true;
+  if (target.kind === "planet") {
+    return available.planets?.has(target.id) === true;
+  }
+  return available.milkyWayPoints?.has(target.id) === true;
 }
 
 export function trackingSelectionEquals(
@@ -261,7 +273,10 @@ export function trackingTargetSelectValue(target: TrackableMapObjectId | null): 
   if (target.kind === "city") {
     return `city:${encodeURIComponent(target.id)}`;
   }
-  return `planet:${target.id}`;
+  if (target.kind === "planet") {
+    return `planet:${target.id}`;
+  }
+  return `milkyway:${target.id}`;
 }
 
 export function tryParseTrackingTargetSelectValue(
@@ -291,6 +306,13 @@ export function tryParseTrackingTargetSelectValue(
       return { ok: false };
     }
     return { ok: true, target: planetTrackableMapObjectId(id) };
+  }
+  if (value.startsWith("milkyway:")) {
+    const id = value.slice("milkyway:".length);
+    if (!isMilkyWayPointId(id)) {
+      return { ok: false };
+    }
+    return { ok: true, target: milkyWayPointTrackableMapObjectId(id) };
   }
   return { ok: false };
 }
@@ -323,6 +345,10 @@ export function trackingTargetSelectModel(
     ...catalog.planets.map((planet) => ({
       value: trackingTargetSelectValue(planetTrackableMapObjectId(planet.id)),
       label: planet.displayName,
+    })),
+    ...(catalog.milkyWayPoints ?? []).map((point) => ({
+      value: trackingTargetSelectValue(milkyWayPointTrackableMapObjectId(point.id)),
+      label: point.label,
     })),
   ];
   const spacecraft: TrackingTargetSelectOption[] = [

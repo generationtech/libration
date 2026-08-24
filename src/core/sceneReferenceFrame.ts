@@ -29,7 +29,8 @@
  * - `longitude` — longitude locked, latitude identity
  * - `position` — longitude and latitude locked
  *
- * Moon, Sun, and ISS are the production {@link TrackableMapObjectId} values.
+ * Moon, Sun, and ISS are named production {@link TrackableMapObjectId} values.
+ * Cities, planets, and Milky Way tagged points use structured identities.
  * Forward/inverse math, raster dest, and camera extent branch on Earth-fixed
  * vs anchored and on lock mode — not on which object is the target. Target
  * resolution (canonical lon/lat) happens before this module builds a frame.

@@ -68,6 +68,15 @@ const DAY_ALPHA = 0.28;
 const NIGHT_ALPHA = 0.78;
 const UNIFORM_ALPHA = 0.62;
 
+/** Painted Galactic Center / Anticenter glyph radius (same formula as draw). */
+export function milkyWayPointGlyphRadiusPx(
+  viewportWidthPx: number,
+  point: "center" | "anticenter",
+): number {
+  const glyphScale = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, viewportWidthPx / 1400)));
+  return point === "center" ? glyphScale : glyphScale * 0.72;
+}
+
 const CONTOUR_BASE_ALPHA: Record<MilkyWayGcAltitudeContourDeg, number> = {
   0: 0.22,
   30: 0.35,
@@ -393,7 +402,6 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
   }
   }
 
-  const glyphScale = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, w / 1400)));
   const placedGlyphs: LabelAvoidDisc[] = [];
   const avoidPaths: LabelPathPolyline[] = [];
   if (geom && pres.planeEnabled && geom.plane.length >= 2) {
@@ -457,7 +465,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
     const gy = sceneYFromLatitudeDeg(point.latDeg, h, camera, frame);
     const baseX = sceneXFromLongitudeDeg(point.lonDeg, w, camera, frame);
     const copies = sceneCameraHorizontalWorldCopyOffsets(camera, w);
-    const scale = kind === "center" ? glyphScale : glyphScale * 0.72;
+    const scale = milkyWayPointGlyphRadiusPx(w, kind);
     let first: { x: number; y: number; r: number } | null = null;
     for (const k of copies) {
       const gx = baseX + sceneXShiftForWorldCopy(w, camera, k);
@@ -562,7 +570,7 @@ export function buildMilkyWayRenderPlan(options: MilkyWayRenderPlanOptions): Ren
     if (Number.isFinite(preferredX) && Number.isFinite(preferredY)) {
       const avoidDiscs = [...placedGlyphs];
       if (avoidDiscs.length === 0) {
-        const r = Math.min(9, Math.max(4.6, 5.2 * Math.max(0.7, w / 1400))) + 3;
+        const r = milkyWayPointGlyphRadiusPx(w, "center") + 3;
         avoidDiscs.push({ x: preferredX, y: preferredY, radiusPx: r });
       }
       const labelSize = Math.min(11, Math.max(8, w * 0.012));

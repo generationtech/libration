@@ -31,7 +31,7 @@
  * Overlap policy: nearest hit-target center to the pointer wins. If two
  * distances are effectively tied, {@link trackableMapObjectIdTieKey} is the
  * deterministic secondary key (moon, then sun, then iss, then planets,
- * then cities).
+ * then Milky Way tagged points, then cities).
  */
 
 import {

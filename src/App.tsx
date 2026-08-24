@@ -192,6 +192,7 @@ import type { PlanetaryBodyId } from "./core/planetaryBodies";
 import {
   resolveTrackableMapObject,
   trackableMapObjectAuthoritativeStateAt,
+  type MilkyWayPointId,
 } from "./core/trackableMapObject";
 import { collectTrackableMapObjectHitTargets } from "./renderer/trackableMapObjectHitTargets";
 import {
@@ -371,6 +372,7 @@ export default function App() {
   const [trackingTargetUiCatalog, setTrackingTargetUiCatalog] = useState({
     cities: [] as readonly { id: string; name: string }[],
     planets: [] as readonly { id: PlanetaryBodyId; displayName: string }[],
+    milkyWayPoints: [] as readonly { id: MilkyWayPointId; label: string }[],
   });
   const trackableHitTargetsRef = useRef<TrackableMapObjectHitTarget[]>([]);
   const commitTrackingSelectionRef = useRef<(next: TrackingSelectionState) => void>(
@@ -1097,6 +1099,10 @@ export default function App() {
             id: planet.id,
             displayName: planet.displayName,
           })),
+          milkyWayPoints: catalog.milkyWayPoints.map((point) => ({
+            id: point.id,
+            label: point.label,
+          })),
         });
       }
       const maps = trackableAuthoritativeMapsFromCatalog(catalog);
@@ -1113,6 +1119,7 @@ export default function App() {
           trackableMapObjectAuthoritativeStateAt(time.now, issPosition, {
             cities: maps.cities,
             planets: maps.planets,
+            milkyWayPoints: maps.milkyWayPoints,
           }),
         );
         if (position === null) {
@@ -1598,6 +1605,7 @@ export default function App() {
     iss: issTrackingAvailable,
     cities: new Set(trackingTargetUiCatalog.cities.map((city) => city.id)),
     planets: new Set(trackingTargetUiCatalog.planets.map((planet) => planet.id)),
+    milkyWayPoints: new Set(trackingTargetUiCatalog.milkyWayPoints.map((point) => point.id)),
   });
 
   return (

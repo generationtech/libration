@@ -12,7 +12,8 @@
  */
 
 /**
- * Trackable map object identity and resolution (LIB-088 / LIB-089 / LIB-092).
+ * Trackable map object identity and resolution (LIB-088 / LIB-089 / LIB-092 /
+ * LIB-093).
  *
  * A trackable map object is a rendered/physical object that can expose an
  * authoritative canonical geographic lon/lat for the current frame instant
@@ -25,14 +26,15 @@
  *
  * Identity is stable and independent of current coordinates. Moon remains
  * Moon as it moves; a city remains that city. Named identities are `moon`,
- * `sun`, and `iss`. Cities and planets use structured identities that reuse
- * canonical `CityPinEntry.id` and `PlanetaryBodyId`. Earth-fixed is not a
- * target. This module is not a plugin registry.
+ * `sun`, and `iss`. Cities, planets, and Milky Way tagged points use
+ * structured identities. There is no synthetic `"milkyWay"` target: the two
+ * legitimate point identities are Galactic Center and Galactic Anticenter.
+ * Earth-fixed is not a target. This module is not a plugin registry.
  *
  * Resolution consumes already-authoritative product state. It does not
- * recompute astronomy or orbital mechanics. ISS, city, and planet coordinates
- * are supplied by the caller from existing product paths; they are never
- * invented here.
+ * recompute astronomy or orbital mechanics. ISS, city, planet, and Milky Way
+ * point coordinates are supplied by the caller from existing product paths;
+ * they are never invented here.
  */
 
 import { isPlanetaryBodyId, type PlanetaryBodyId } from "./planetaryBodies";
@@ -54,14 +56,29 @@ export type PlanetTrackableMapObjectId = {
   readonly id: PlanetaryBodyId;
 };
 
+export const MILKY_WAY_POINT_IDS = ["galacticCenter", "galacticAnticenter"] as const;
+export type MilkyWayPointId = (typeof MILKY_WAY_POINT_IDS)[number];
+
+export const MILKY_WAY_POINT_LABELS: Record<MilkyWayPointId, string> = {
+  galacticCenter: "Galactic Center",
+  galacticAnticenter: "Galactic Anticenter",
+};
+
+export type MilkyWayPointTrackableMapObjectId = {
+  readonly kind: "milkyWayPoint";
+  readonly id: MilkyWayPointId;
+};
+
 /**
- * Stable production identities. Structured city/planet values reuse canonical
- * pin and body ids. Do not compare structured values with `===`.
+ * Stable production identities. Structured city/planet/Milky Way point values
+ * reuse canonical ids. Do not compare structured values with `===`. There is
+ * no synthetic `"milkyWay"` identity.
  */
 export type TrackableMapObjectId =
   | NamedTrackableMapObjectId
   | CityTrackableMapObjectId
-  | PlanetTrackableMapObjectId;
+  | PlanetTrackableMapObjectId
+  | MilkyWayPointTrackableMapObjectId;
 
 /** Canonical geographic position used as resolved anchor state. */
 export type TrackableMapObjectCanonicalPosition = {
@@ -72,7 +89,8 @@ export type TrackableMapObjectCanonicalPosition = {
 /**
  * Authoritative lon/lat already computed for the frame instant.
  * Callers supply existing product state; they do not invent a second ephemeris.
- * ISS/city/planet entries are omitted or empty when unavailable; never fabricate.
+ * ISS/city/planet/Milky Way point entries are omitted or empty when
+ * unavailable; never fabricate.
  */
 export type TrackableMapObjectAuthoritativeState = {
   readonly moon: TrackableMapObjectCanonicalPosition;
@@ -80,6 +98,7 @@ export type TrackableMapObjectAuthoritativeState = {
   readonly iss: TrackableMapObjectCanonicalPosition | null;
   readonly cities?: ReadonlyMap<string, TrackableMapObjectCanonicalPosition>;
   readonly planets?: ReadonlyMap<PlanetaryBodyId, TrackableMapObjectCanonicalPosition>;
+  readonly milkyWayPoints?: ReadonlyMap<MilkyWayPointId, TrackableMapObjectCanonicalPosition>;
 };
 
 export function cityTrackableMapObjectId(id: string): CityTrackableMapObjectId {
@@ -90,8 +109,18 @@ export function planetTrackableMapObjectId(id: PlanetaryBodyId): PlanetTrackable
   return { kind: "planet", id };
 }
 
+export function milkyWayPointTrackableMapObjectId(
+  id: MilkyWayPointId,
+): MilkyWayPointTrackableMapObjectId {
+  return { kind: "milkyWayPoint", id };
+}
+
 export function isNamedTrackableMapObjectId(value: unknown): value is NamedTrackableMapObjectId {
   return value === "moon" || value === "sun" || value === "iss";
+}
+
+export function isMilkyWayPointId(value: unknown): value is MilkyWayPointId {
+  return value === "galacticCenter" || value === "galacticAnticenter";
 }
 
 export function isTrackableMapObjectId(value: unknown): value is TrackableMapObjectId {
@@ -107,6 +136,9 @@ export function isTrackableMapObjectId(value: unknown): value is TrackableMapObj
   }
   if (rec.kind === "planet") {
     return typeof rec.id === "string" && isPlanetaryBodyId(rec.id);
+  }
+  if (rec.kind === "milkyWayPoint") {
+    return isMilkyWayPointId(rec.id);
   }
   return false;
 }
@@ -130,7 +162,8 @@ export function trackableMapObjectIdEquals(
 
 /**
  * Deterministic overlap tie key: named Moon/Sun/ISS first (existing order),
- * then planets, then cities. Not a hand-maintained global target list.
+ * then planets, then Milky Way tagged points, then cities. Not a
+ * hand-maintained global target list.
  */
 export function trackableMapObjectIdTieKey(target: TrackableMapObjectId): string {
   if (target === "moon") {
@@ -145,7 +178,10 @@ export function trackableMapObjectIdTieKey(target: TrackableMapObjectId): string
   if (target.kind === "planet") {
     return `1:${target.id}`;
   }
-  return `2:${target.id}`;
+  if (target.kind === "milkyWayPoint") {
+    return `2:${target.id}`;
+  }
+  return `3:${target.id}`;
 }
 
 /**
@@ -153,7 +189,8 @@ export function trackableMapObjectIdTieKey(target: TrackableMapObjectId): string
  *
  * Object-specific knowledge lives here. Reference-frame math must not.
  * Returns `null` when the target has no supplied valid position (ISS, missing
- * city, or planet without a current mapped point). Never fabricates coordinates.
+ * city, planet without a current mapped point, or a Milky Way tagged point
+ * that is not currently rendered). Never fabricates coordinates.
  */
 export function resolveTrackableMapObject(
   target: "moon" | "sun",
@@ -182,16 +219,21 @@ export function resolveTrackableMapObject(
     const pos = state.cities?.get(target.id);
     return pos === undefined ? null : { lonDeg: pos.lonDeg, latDeg: pos.latDeg };
   }
-  const pos = state.planets?.get(target.id);
+  if (target.kind === "planet") {
+    const pos = state.planets?.get(target.id);
+    return pos === undefined ? null : { lonDeg: pos.lonDeg, latDeg: pos.latDeg };
+  }
+  const pos = state.milkyWayPoints?.get(target.id);
   return pos === undefined ? null : { lonDeg: pos.lonDeg, latDeg: pos.latDeg };
 }
 
 export type TrackableMapObjectAuthoritativeExtras = {
   readonly cities?: ReadonlyMap<string, TrackableMapObjectCanonicalPosition>;
   readonly planets?: ReadonlyMap<PlanetaryBodyId, TrackableMapObjectCanonicalPosition>;
+  readonly milkyWayPoints?: ReadonlyMap<MilkyWayPointId, TrackableMapObjectCanonicalPosition>;
 };
 
-/** Gather Moon/Sun authorities. ISS, cities, and planets come from existing product paths. */
+/** Gather Moon/Sun authorities. ISS, cities, planets, and Milky Way points come from existing product paths. */
 export function trackableMapObjectAuthoritativeStateAt(
   canonicalInstantMs: number,
   iss: TrackableMapObjectCanonicalPosition | null = null,
@@ -205,6 +247,7 @@ export function trackableMapObjectAuthoritativeStateAt(
     iss,
     ...(extras?.cities !== undefined ? { cities: extras.cities } : {}),
     ...(extras?.planets !== undefined ? { planets: extras.planets } : {}),
+    ...(extras?.milkyWayPoints !== undefined ? { milkyWayPoints: extras.milkyWayPoints } : {}),
   };
 }
 
