@@ -9,7 +9,7 @@ None
 
 ## Last completed
 
-[LIB-089](work/LIB-089-iss-tracking-target.md) — ISS tracking target. `"iss"` is a third `TrackableMapObjectId`. Longitude-lock and position-lock reuse the existing anchored frame, ISS overlay authority, generic continuity, and LIB-087 auto-cover. Transitional seven-choice Scene frame selector. ADR 0033.
+[LIB-090](work/LIB-090-tracking-target-and-mode-ux-foundation.md) — Tracking target and mode UX foundation. Orthogonal Target + Mode chrome over the proven anchored-frame architecture. Earth-fixed is no target. Mode retained across Moon/Sun/ISS at runtime. Canonical `setTrackingTarget` seam; click-to-track not implemented. ADR 0034.
 
 ## Blockers
 
@@ -49,4 +49,4 @@ Those WEATHER-5 investigations must not spawn new corrective Clouds LIBs.
 
 ## Next action
 
-Await human scope. Do not start D2 (further targets / selector UX), click-to-track, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.
+Await human scope. Do not start click-to-track, further targets, or other [`docs/FUTURE_FEATURES.md`](FUTURE_FEATURES.md) ideas.

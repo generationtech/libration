@@ -27,6 +27,7 @@ import {
   sceneReferenceFrameFromUiKind,
   sceneReferenceFrameUiKindWhenTargetUnavailable,
   trackableMapObjectIdFromUiKind,
+  trackingSelectionFromUiKind,
 } from "./sceneFrameAnchor";
 import { EARTH_FIXED_SCENE_REFERENCE_FRAME } from "./sceneReferenceFrame";
 
@@ -212,5 +213,36 @@ describe("sceneReferenceFrameFromUiKind", () => {
         iss: true,
       }),
     ).toBe("sunLongitudeLocked");
+  });
+
+  it("maps combined UI kinds through orthogonal tracking selection", () => {
+    expect(trackingSelectionFromUiKind("earthFixed")).toEqual({
+      target: null,
+      rememberedMode: "position",
+    });
+    expect(trackingSelectionFromUiKind("moonLongitudeLocked")).toEqual({
+      target: "moon",
+      rememberedMode: "longitude",
+    });
+    expect(trackingSelectionFromUiKind("moonPositionLocked")).toEqual({
+      target: "moon",
+      rememberedMode: "position",
+    });
+    expect(trackingSelectionFromUiKind("sunLongitudeLocked")).toEqual({
+      target: "sun",
+      rememberedMode: "longitude",
+    });
+    expect(trackingSelectionFromUiKind("sunPositionLocked")).toEqual({
+      target: "sun",
+      rememberedMode: "position",
+    });
+    expect(trackingSelectionFromUiKind("issLongitudeLocked")).toEqual({
+      target: "iss",
+      rememberedMode: "longitude",
+    });
+    expect(trackingSelectionFromUiKind("issPositionLocked")).toEqual({
+      target: "iss",
+      rememberedMode: "position",
+    });
   });
 });

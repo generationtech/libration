@@ -165,14 +165,23 @@ import {
   type SceneReferenceFrame,
 } from "./core/sceneReferenceFrame";
 import {
-  isPositionLockedSceneReferenceFrameUiKind,
   nextAnchorContinuousLonDeg,
   sceneCameraAfterReferenceFrameKindChange,
-  sceneReferenceFrameFromUiKind,
-  sceneReferenceFrameUiKindWhenTargetUnavailable,
-  trackableMapObjectIdFromUiKind,
-  type SceneReferenceFrameUiKind,
 } from "./core/sceneFrameAnchor";
+import {
+  DEFAULT_TRACKING_SELECTION,
+  applyTrackingTargetAvailability,
+  isTrackingModeActive,
+  isTrackingSelectionPositionLocked,
+  parseTrackingModeSelectValue,
+  parseTrackingTargetSelectValue,
+  sceneReferenceFrameFromTrackingSelection,
+  setTrackingMode,
+  setTrackingTarget,
+  trackingSelectionTransition,
+  trackingTargetSelectValue,
+  type TrackingSelectionState,
+} from "./core/trackingSelection";
 import {
   resolveTrackableMapObject,
   trackableMapObjectAuthoritativeStateAt,
@@ -333,8 +342,10 @@ export default function App() {
   const sceneCameraCoverPolicyRef = useRef<SceneCameraCoverPolicy>("off");
   const sceneCameraPanActiveRef = useRef(false);
   const [cameraIsAtDefault, setCameraIsAtDefault] = useState(true);
-  const sceneFrameKindRef = useRef<SceneReferenceFrameUiKind>("earthFixed");
-  const [sceneFrameKind, setSceneFrameKind] = useState<SceneReferenceFrameUiKind>("earthFixed");
+  const trackingSelectionRef = useRef<TrackingSelectionState>(DEFAULT_TRACKING_SELECTION);
+  const [trackingSelection, setTrackingSelection] = useState<TrackingSelectionState>(
+    DEFAULT_TRACKING_SELECTION,
+  );
   const [issTrackingAvailable, setIssTrackingAvailable] = useState(false);
   const issTrackingAvailableRef = useRef(false);
   const anchorContinuousLonRef = useRef<number | null>(null);
@@ -370,6 +381,25 @@ export default function App() {
   const dynamicLifecycleHostRef = useRef(
     createDynamicDataLifecycleHost(devCloudsSectorDebugHostDeps()),
   );
+
+  const commitTrackingSelection = (next: TrackingSelectionState): void => {
+    const transition = trackingSelectionTransition(trackingSelectionRef.current, next);
+    if (!transition.selectionChanged) {
+      return;
+    }
+    if (transition.reinitializeContinuity) {
+      anchorContinuousLonRef.current = null;
+    }
+    if (transition.reinitializeCamera) {
+      sceneCameraCoverPolicyRef.current = sceneCameraCoverPolicyAfterFrameKindChange(
+        isTrackingSelectionPositionLocked(next),
+      );
+      sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
+      setCameraIsAtDefault(true);
+    }
+    trackingSelectionRef.current = next;
+    setTrackingSelection(next);
+  };
 
   const requestDemoPause = useCallback(() => {
     demoTransportActionRef.current = "pause";
@@ -916,23 +946,12 @@ export default function App() {
         issTrackingAvailableRef.current = issAvailable;
         setIssTrackingAvailable(issAvailable);
       }
-      const requestedKind = sceneFrameKindRef.current;
-      const frameKind = sceneReferenceFrameUiKindWhenTargetUnavailable(requestedKind, {
-        moon: true,
-        sun: true,
-        iss: issAvailable,
-      });
-      if (frameKind !== requestedKind) {
-        sceneFrameKindRef.current = frameKind;
-        anchorContinuousLonRef.current = null;
-        sceneCameraCoverPolicyRef.current = sceneCameraCoverPolicyAfterFrameKindChange(
-          isPositionLockedSceneReferenceFrameUiKind(frameKind),
-        );
-        sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
-        setCameraIsAtDefault(true);
-        setSceneFrameKind(frameKind);
-      }
-      const target = trackableMapObjectIdFromUiKind(frameKind);
+      const available = { moon: true, sun: true, iss: issAvailable } as const;
+      commitTrackingSelection(
+        applyTrackingTargetAvailability(trackingSelectionRef.current, available),
+      );
+      const selection = trackingSelectionRef.current;
+      const target = selection.target;
       if (target !== null) {
         const position = resolveTrackableMapObject(
           target,
@@ -948,8 +967,8 @@ export default function App() {
             policy: "follow",
           });
           anchorContinuousLonRef.current = continuous;
-          sceneReferenceFrameRef.current = sceneReferenceFrameFromUiKind(
-            frameKind,
+          sceneReferenceFrameRef.current = sceneReferenceFrameFromTrackingSelection(
+            selection,
             continuous,
             position.latDeg,
           );
@@ -1518,56 +1537,73 @@ export default function App() {
         productInstantMs={eclipsePanelInstantMs}
         configOpen={isConfigOpen}
       />
-      <label className="scene-frame-control">
-        <span className="scene-frame-control__label">Scene frame</span>
-        <select
-          className="scene-frame-control__select"
-          aria-label="Scene frame"
-          data-testid="scene-frame-select"
-          value={sceneFrameKind}
-          onChange={(event) => {
-            const next = event.currentTarget.value as SceneReferenceFrameUiKind;
-            if (next === sceneFrameKindRef.current) {
-              return;
-            }
-            if (
-              trackableMapObjectIdFromUiKind(next) === "iss" &&
-              !issTrackingAvailableRef.current
-            ) {
-              return;
-            }
-            sceneFrameKindRef.current = next;
-            anchorContinuousLonRef.current = null;
-            sceneCameraCoverPolicyRef.current =
-              sceneCameraCoverPolicyAfterFrameKindChange(
-                isPositionLockedSceneReferenceFrameUiKind(next),
+      <div className="scene-tracking-controls">
+        <label className="scene-tracking-control">
+          <span className="scene-tracking-control__label">Target</span>
+          <select
+            className="scene-tracking-control__select"
+            aria-label="Tracking target"
+            data-testid="tracking-target-select"
+            value={trackingTargetSelectValue(trackingSelection.target)}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              if (
+                raw !== "earthFixed" &&
+                raw !== "moon" &&
+                raw !== "sun" &&
+                raw !== "iss"
+              ) {
+                return;
+              }
+              const target = parseTrackingTargetSelectValue(raw);
+              commitTrackingSelection(
+                setTrackingTarget(trackingSelectionRef.current, target, {
+                  moon: true,
+                  sun: true,
+                  iss: issTrackingAvailableRef.current,
+                }),
               );
-            sceneCameraRef.current = sceneCameraAfterReferenceFrameKindChange();
-            setCameraIsAtDefault(true);
-            setSceneFrameKind(next);
-          }}
-        >
-          <option value="earthFixed">Earth-fixed</option>
-          <option value="moonLongitudeLocked">Moon — longitude locked</option>
-          <option value="moonPositionLocked">Moon — position locked</option>
-          <option value="sunLongitudeLocked">Sun — longitude locked</option>
-          <option value="sunPositionLocked">Sun — position locked</option>
-          <option value="issLongitudeLocked" disabled={!issTrackingAvailable}>
-            ISS — longitude locked
-          </option>
-          <option value="issPositionLocked" disabled={!issTrackingAvailable}>
-            ISS — position locked
-          </option>
-        </select>
-      </label>
+            }}
+          >
+            <option value="earthFixed">Earth-fixed</option>
+            <option value="moon">Moon</option>
+            <option value="sun">Sun</option>
+            <option value="iss" disabled={!issTrackingAvailable}>
+              ISS
+            </option>
+          </select>
+        </label>
+        <label className="scene-tracking-control">
+          <span className="scene-tracking-control__label">Mode</span>
+          <select
+            className="scene-tracking-control__select"
+            aria-label="Tracking mode"
+            data-testid="tracking-mode-select"
+            disabled={!isTrackingModeActive(trackingSelection)}
+            value={trackingSelection.rememberedMode}
+            onChange={(event) => {
+              const mode = parseTrackingModeSelectValue(event.currentTarget.value);
+              if (mode === null) {
+                return;
+              }
+              commitTrackingSelection(
+                setTrackingMode(trackingSelectionRef.current, mode),
+              );
+            }}
+          >
+            <option value="longitude">Longitude</option>
+            <option value="position">Position</option>
+          </select>
+        </label>
+      </div>
       <button
         type="button"
         className="scene-camera-reset"
         aria-label="Reset map view"
         disabled={cameraIsAtDefault}
         onClick={() => {
-          const positionLock = isPositionLockedSceneReferenceFrameUiKind(
-            sceneFrameKindRef.current,
+          const positionLock = isTrackingSelectionPositionLocked(
+            trackingSelectionRef.current,
           );
           sceneCameraCoverPolicyRef.current =
             sceneCameraCoverPolicyAfterFrameKindChange(positionLock);

@@ -36,9 +36,12 @@
  * does not change the frame. Position-lock default is cover scale, not
  * necessarily scale = 1.
  *
- * This module is not a generic entity-frame provider. Target identity is
- * mapped from the seven transitional UI choices; resolved canonical
- * coordinates are supplied by the caller.
+ * This module owns anchored-frame runtime policy (longitude continuity and
+ * camera reset on an effective frame-configuration change). User-facing
+ * tracking selection lives in `trackingSelection.ts`. Target resolution
+ * lives in `trackableMapObject.ts`. Production frames live in
+ * `sceneReferenceFrame.ts`. Combined UI kind strings remain as compatibility
+ * aliases; new UI must not depend on them.
  */
 
 import { IDENTITY_SCENE_CAMERA, type SceneCamera } from "./sceneCamera";
@@ -47,12 +50,14 @@ import {
   rebaseContinuousLongitudeDeg,
 } from "./longitudeContinuity";
 import {
-  EARTH_FIXED_SCENE_REFERENCE_FRAME,
-  anchoredSceneReferenceFrame,
   type AnchoredSceneFrameLockMode,
   type SceneReferenceFrame,
   type TrackableMapObjectId,
 } from "./sceneReferenceFrame";
+import {
+  sceneReferenceFrameFromTrackingSelection,
+  type TrackingSelectionState,
+} from "./trackingSelection";
 
 export type SceneReferenceFrameUiKind =
   | "earthFixed"
@@ -193,57 +198,26 @@ export function nextMoonAnchorContinuousLonDeg(args: {
   return nextAnchorContinuousLonDeg(args);
 }
 
+/** @deprecated Combined UI kinds. Prefer {@link trackingSelectionFromUiKind}. */
+export function trackingSelectionFromUiKind(
+  kind: SceneReferenceFrameUiKind,
+): TrackingSelectionState {
+  return {
+    target: trackableMapObjectIdFromUiKind(kind),
+    rememberedMode: anchoredSceneFrameLockModeFromUiKind(kind) ?? "position",
+  };
+}
+
 export function sceneReferenceFrameFromUiKind(
   kind: SceneReferenceFrameUiKind,
   continuousAnchorLonDeg: number,
   anchorLatDeg: number,
 ): SceneReferenceFrame {
-  switch (kind) {
-    case "earthFixed":
-      return EARTH_FIXED_SCENE_REFERENCE_FRAME;
-    case "moonLongitudeLocked":
-      return anchoredSceneReferenceFrame({
-        target: "moon",
-        lockMode: "longitude",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-    case "moonPositionLocked":
-      return anchoredSceneReferenceFrame({
-        target: "moon",
-        lockMode: "position",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-    case "sunLongitudeLocked":
-      return anchoredSceneReferenceFrame({
-        target: "sun",
-        lockMode: "longitude",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-    case "sunPositionLocked":
-      return anchoredSceneReferenceFrame({
-        target: "sun",
-        lockMode: "position",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-    case "issLongitudeLocked":
-      return anchoredSceneReferenceFrame({
-        target: "iss",
-        lockMode: "longitude",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-    case "issPositionLocked":
-      return anchoredSceneReferenceFrame({
-        target: "iss",
-        lockMode: "position",
-        continuousAnchorLonDeg,
-        anchorLatDeg,
-      });
-  }
+  return sceneReferenceFrameFromTrackingSelection(
+    trackingSelectionFromUiKind(kind),
+    continuousAnchorLonDeg,
+    anchorLatDeg,
+  );
 }
 
 /**

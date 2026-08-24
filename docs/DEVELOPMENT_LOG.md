@@ -496,6 +496,12 @@ ISS tracking target: `"iss"` is a third `TrackableMapObjectId`. Longitude-lock a
 
 Verified: `npx tsc --noEmit` clean; `npm test` 280 files / 2804 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-DV0J5AQ6.js`). Cursor Browser at inner 1920×1080: `iss-presentation` ISS longitude-lock (meridian x=959, N/S motion) and position-lock (origin, auto-cover, 60× Demo, track L/C/R thirds); pan then Reset; Moon/Sun/ISS frame switches; resize 1280×720 auto-cover; `baseline` / `clouds` / `earthquake-presentation` ISS options disabled.
 
+## 2026-08-24 — LIB-090 complete
+
+Tracking target + Tracking mode UX: two orthogonal chrome controls over the proven anchored-frame architecture. Earth-fixed is no target. Runtime `rememberedMode` (default Position) is retained across Moon/Sun/ISS and while Earth-fixed; not persisted. `setTrackingTarget` is the canonical seam; click-to-track not implemented. Combined UI kinds remain compatibility aliases. Frame math, auto-cover, ISS availability, and Reset-camera semantics unchanged. ADR 0034.
+
+Verified: `npx tsc --noEmit` clean; `npm test` 281 files / 2815 passed / 0 failed; `npm run build` succeeded (`dist/assets/index-DIw7MObM.js`). Cursor Browser at inner 1920×1080: Target/Mode chrome; Earth-fixed with Mode disabled; Moon/Sun/ISS target+mode matrix; mode retention; reload restores Earth-fixed; ISS disabled on `baseline` / `clouds` / `earthquake-presentation`; ISS enabled on `iss-presentation`; 1280×720 chrome no overlap.
+
 
 
 
